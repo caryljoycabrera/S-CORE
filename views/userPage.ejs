@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S-CORE Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="student-side">
+    <div class="div">
+      <!-- Header Section -->
+      <div class="overlap">
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/userpage" class="text-wrapper">S-CORE</a>
+        <span class="text-wrapper-2">Welcome, <%= name %>!</span>
+         <div class="dropdown-wrapper">
+      <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+        <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+        <div class="user">
+      <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+        </div>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <a href="/profile">My Profile</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+      </div>
+      <!-- Main Action Cards -->
+      <div class="action-cards-container">
+        <div class="action-card" onclick="location.href='/requestapproval'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/File.png" alt="Request Approval" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Request Approval</h3>
+          <p class="card-subtitle">Submit materials for approval</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/servicerequest'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Repair.png" alt="Request Service" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Request Service</h3>
+          <p class="card-subtitle">Request deliverables</p>
+          <div class="card-arrow">→</div>
+        </div>
+        <div class="action-card" onclick="location.href='/allRequestsUser'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Stats.png" alt="Request Service" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Track All Requests</h3>
+          <p class="card-subtitle">Manage all your requests</p>
+          <div class="card-arrow">→</div>
+        </div>
+      </div>
+      
+
+      <!-- Recent Activity Section -->
+       <%
+      function timeAgo(date) {
+        const now = new Date();
+        const diff = now - new Date(date);
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+        if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+        return `${days} day${days === 1 ? '' : 's'} ago`;
+      }
+      %>
+      
+  <div class="activity-section">
+  <div class="section-header" style="justify-content: space-between; align-items: center;">
+    <h2 class="section-title">Recent Activity</h2>
+    <a href="/allRequestsUser" class="view-all-btn">View All</a>
+  </div>
+
+  <div class="activity-grid">
+    <% if (recentActivity.length === 0) { %>
+      <p>No recent activity yet.</p>
+    <% } else {
+      recentActivity.forEach(activity => {
+        const statusClass = activity.status.toLowerCase();
+
+        let icon;
+        switch (statusClass) {
+          case 'approved':
+            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+            break;
+          case 'pending':
+            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+            break;
+          case 'inreview':
+            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M15 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M12 9v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    </svg>`;
+            break;
+          case 'rejected':
+            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+            break;
+          default:
+            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    </svg>`;
+        }
+    %>
+      <div class="activity-card <%= statusClass %>">
+        <div class="activity-icon">
+          <%- icon %>
+        </div>
+        <div class="activity-content">
+          <h4><%= activity.title %></h4>
+          <p><%= activity.description.length > 60 ? activity.description.slice(0, 60) + '...' : activity.description %></p>
+          <span class="activity-time"><%= timeAgo(activity.updatedAt) %></span>
+        </div>
+        <div class="status-badge <%= statusClass %>"><%= activity.status %></div>
+      </div>
+    <% }); } %>
+  </div>
+</div>
+      
+
+      <!-- Quick Stats -->
+      <div class="stats-container">
+        <div class="stats-card">
+          <div class="stat-number"><%= totalRequests %></div>
+          <div class="stat-label">Total Requests</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= approvedRequests %></div>
+          <div class="stat-label">Approved</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= pendingRequests %></div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= inReviewRequests %></div>
+          <div class="stat-label">For Revision</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    // Close dropdown if clicking outside
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+
+    // Add hover animations for action cards
+    document.querySelectorAll('.action-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-8px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+      });
+    });
+
+    
+
+  </script>
+</body>
+</html>

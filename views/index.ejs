@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1280, initial-scale=1.0" />
+  <title>Login Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-image: url('Picture/Background.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(64, 139, 78, 0.1), rgba(39, 87, 48, 0.2));
+      backdrop-filter: blur(2px);
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      padding: 30px;
+      border-radius: 24px;
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      transform: translateY(0);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .login-container:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .login-container img.logo {
+      width: 120px;
+      margin-bottom: 30px;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+      transition: transform 0.3s ease;
+    }
+
+    .login-container img.logo:hover {
+      transform: scale(1.05);
+    }
+
+    .welcome-text {
+      font-size: 28px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #275730, #408b4e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #6b7280;
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+
+    .input-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(145deg, #ffffff, #f8f9fa);
+      border: 2px solid transparent;
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .input-group::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #408b4e, #275730);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+
+    .input-group:hover {
+      border-color: rgba(64, 139, 78, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .input-group:focus-within {
+      border-color: #408b4e;
+      box-shadow: 
+        0 0 0 4px rgba(64, 139, 78, 0.1),
+        0 8px 20px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .input-group img {
+      width: 32px;
+      height: 32px;
+      margin-right: 16px;
+      opacity: 0.7;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .input-group:focus-within img {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .input-group input {
+      border: none;
+      outline: none;
+      font-size: 16px;
+      font-weight: 500;
+      width: 100%;
+      background-color: transparent;
+      color: #1f2937;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Hide browser's default password reveal button */
+    .input-group input[type="password"]::-ms-reveal,
+    .input-group input[type="password"]::-ms-clear {
+      display: none;
+    }
+
+    .input-group input[type="password"]::-webkit-credentials-auto-fill-button,
+    .input-group input[type="password"]::-webkit-strong-password-auto-fill-button {
+      display: none !important;
+    }
+
+    /* For newer versions of Edge and Chrome */
+    .input-group input[type="password"]::-webkit-textfield-decoration-container {
+      visibility: hidden;
+    }
+
+    .input-group input::placeholder {
+      color: #9ca3af;
+      font-weight: 400;
+      transition: color 0.3s ease;
+    }
+
+    .input-group:focus-within input::placeholder {
+      color: #6b7280;
+    }
+
+    .password-toggle {
+      cursor: pointer;
+      margin-left: 8px;
+      padding: 4px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .password-toggle:hover {
+      background: rgba(64, 139, 78, 0.1);
+      transform: scale(1.1);
+    }
+
+    .eye-icon {
+      width: 20px;
+      height: 20px;
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+    }
+
+    .password-toggle:hover .eye-icon {
+      opacity: 1;
+    }
+
+    .remember-section {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      margin-bottom: 32px;
+      padding: 4px 0;
+    }
+
+    .remember-checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: #408b4e;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: transform 0.3s ease;
+    }
+
+    .remember-checkbox:hover {
+      transform: scale(1.1);
+    }
+
+    .text-wrapper-3 {
+      font-size: 16px;
+      color: #374151;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .text-wrapper-3:hover {
+      color: #275730;
+    }
+
+    .login-button {
+      width: 100%;
+      height: 56px;
+      background: linear-gradient(135deg, #408b4e, #275730);
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 18px;
+      color: #fff;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s ease;
+      box-shadow: 
+        0 4px 12px rgba(64, 139, 78, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .login-button:hover {
+      background: linear-gradient(135deg, #2f6e3b, #1e4a23);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 20px rgba(64, 139, 78, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .login-button:hover::before {
+      left: 100%;
+    }
+
+    .login-button:active {
+      transform: translateY(0);
+    }
+
+    .register-text {
+      font-size: 16px;
+      color: #6b7280;
+      margin-top: 32px;
+      font-weight: 400;
+    }
+
+    .link {
+      color: #408b4e;
+      text-decoration: none;
+      margin-left: 5px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(135deg, #408b4e, #275730);
+      transition: width 0.3s ease;
+    }
+
+    .link:hover {
+      color: #275730;
+      transform: translateY(-1px);
+    }
+
+    .link:hover::after {
+      width: 100%;
+    }
+
+    .forgot-link {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 15px;
+      color: #6b7280;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .forgot-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: #6b7280;
+      transition: width 0.3s ease;
+    }
+
+    .forgot-link:hover {
+      color: #374151;
+      transform: translateY(-1px);
+    }
+
+    .forgot-link:hover::after {
+      width: 100%;
+    }
+
+    .error-message {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      color: #dc2626;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      border: 1px solid #fca5a5;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 20%, 40%, 60%, 80%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    }
+
+    @media (max-width: 500px) {
+      .login-container {
+        padding: 30px 24px;
+        margin: 20px;
+        border-radius: 20px;
+      }
+
+      .welcome-text {
+        font-size: 24px;
+      }
+
+      .input-group {
+        padding: 14px 16px;
+      }
+
+      .input-group img {
+        width: 28px;
+        height: 28px;
+        margin-right: 12px;
+      }
+
+      .input-group input {
+        font-size: 16px;
+      }
+
+      .login-button {
+        height: 52px;
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img class="logo" src="/Picture/logo.jpg" alt="Logo" />
+    
+    <h1 class="welcome-text">S-CORE</h1>
+    <p class="subtitle">Sign in to your account</p>
+
+    <form action="/login" method="POST">
+      <div class="input-group">
+        <img src="/Picture/usericon.png" alt="User Icon" />
+        <input type="text" name="username" placeholder="Username" required />
+      </div>
+      
+      <div class="input-group">
+        <img src="/Picture/key.png" alt="Lock Icon" />
+        <input type="password" name="password" id="password" placeholder="Password" required />
+        <div class="password-toggle" onclick="togglePassword()">
+          <svg class="eye-icon" id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </div>
+      </div>
+      
+      <div class="remember-section">
+        <input type="checkbox" name="remember" class="remember-checkbox" id="remember" />
+        <label for="remember" class="text-wrapper-3">Remember me</label>
+      </div>
+
+      <!-- Error Message if Login Fails -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="error-message"><%= error %></div>
+      <% } %>
+
+      <button type="submit" class="login-button">Sign In</button>
+    </form>
+
+    <p class="register-text">
+      Don't have an account?
+      <a href="/register" class="link">Create one</a>
+    </p>
+    <a href="#" class="forgot-link">Forgot your password?</a>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('eyeIcon');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.innerHTML = `
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+        `;
+      } else {
+        passwordInput.type = 'password';
+        eyeIcon.innerHTML = `
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

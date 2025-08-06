@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile</title>
+  <link rel="stylesheet" href="/style.css" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<style>
+ /* Button to toggle custom org input */
+.toggle-org-button {
+  background: none;
+  color: #198754;
+  font-size: 0.875rem;
+  padding: 0;
+  margin-top: 0.5rem;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Add button styling */
+.add-org-button {
+  background-color: #198754;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 0 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* Select2 adjustments */
+.select2-container--default .select2-selection--multiple {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.375rem;
+  background-color: #fff;
+  min-height: 38px;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: #198754;
+  border: none;
+  color: white;
+  font-weight: 500;
+  padding: 0 8px;
+  margin-top: 4px;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  color: white;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+</style>
+
+
+</head>
+<body>
+  <!-- Header -->
+  <header class="overlap">
+    <div class="group">
+      <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+    </div>
+    <a href="/userpage" class="text-wrapper">S-CORE</a>
+    <span class="text-wrapper-2">My Profile</span>
+
+    <div class="dropdown-wrapper">
+      <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+        <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+        <div class="user">
+<img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+        </div>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <a href="/profile">My Profile</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Profile Content -->
+  <main class="student-side">
+    <div class="div">
+        <section class="activity-section">
+        <div class="section-header">
+            <div class="profile-info">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+     alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+            <div>
+                <h2><%= user.fName %> <%= user.lName %></h2>
+                <p style="color: #6b7280;">Student</p>
+            </div>
+            </div>
+            <a href="/userpage" class="view-all-btn" style="display:inline-block;">
+            ← Back to Dashboard
+            </a>
+        </div>
+
+        <div class="profile-table" style="background:white; border-radius:24px; box-shadow:var(--card-shadow); padding:2.5rem;">
+            <table class="requests-table" style="border:none;">
+            <tbody>
+                <tr><td class="label">Full Name:</td><td><%= user.fName %> <%= user.mName %> <%= user.lName %></td></tr>
+                <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
+                <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
+                <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
+                <tr><td class="label">Organization:</td><td><%= user.studentOrganization || 'None' %></td></tr>
+                <tr><td class="label">Course/Year/Section:</td><td><%= user.cys || 'N/A' %></td></tr>
+                <tr><td class="label">Student ID:</td><td><%= user.studentId || 'N/A' %></td></tr>
+            </tbody>
+            </table>
+
+            <div style="margin-top:2rem; display:flex; gap:1rem;">
+<button id="openUpdateProfile" class="view-all-btn">Update Profile</button>
+<button id="openChangePassword" class="view-all-btn">Change Password</button>
+<button id="openPictureModal" class="view-all-btn" type="button">Update Profile Picture</button>
+            </div>
+        </div>
+        </section>
+    </div>
+    </main>
+
+    <!-- Modals -->
+        <!-- Update Profile Modal -->
+    <div id="updateProfileModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h2 class="modal-title">Update Profile</h2>
+        <span class="close" onclick="closeModal('updateProfileModal')">&times;</span>
+        </div>
+        <form id="updateProfileForm" class="modal-form">
+        <div class="form-group">
+            <label for="fName">First Name</label>
+            <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="mName">Middle Name</label>
+            <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="lName">Last Name</label>
+            <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="email">Email (cannot be changed)</label>
+            <input name="email" id="email" type="email" value="<%= user.email %>" disabled />
+        </div>
+        <div class="form-group">
+            <label for="username">Username (cannot be changed)</label>
+            <input name="username" id="username" type="text" value="<%= user.username %>" disabled />
+        </div>
+        <div class="form-group">
+            <label for="phoneNumber">Phone Number</label>
+            <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
+        </div>
+
+        <!-- !!!!!!Organization Section / need ng drop down list again na nakaselect uli ung 
+         mga orgs nila and pedeng magadd or delete/ kulang nlng dito is ung makasearch and makasave sa database-->
+        <div class="form-group">
+          <label for="studentOrganization">Student Organization</label>
+          <select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%"></select>
+
+          <button type="button" class="toggle-org-button" onclick="toggleCustomOrg()">Click here if Student Organization is not in the list</button>
+
+          <div id="customOrgContainer" style="display: none; margin-top: 0.5rem;">
+            <label for="otherOrganization">Add Other Student Organization</label>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+              <input type="text" id="otherOrganization" placeholder="Enter organization name" class="form-control" />
+              <button type="button" id="addOrganizationButton" class="add-org-button">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+            <label for="cys">Course / Year / Section</label>
+            <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" />
+        </div>
+        <div class="form-group">
+            <label for="studentId">Student ID</label>
+            <input name="studentId" id="studentId" type="text" value="<%= user.studentId || '' %>" />
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save Changes</button>
+        </div>
+        </form>
+    </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h2 class="modal-title">Change Password</h2>
+        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+        </div>
+        <form id="passwordForm" class="modal-form">
+        <div class="form-group">
+            <label for="oldPassword">Old Password</label>
+            <input name="oldPassword" id="oldPassword" type="password" required />
+        </div>
+        <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <input name="newPassword" id="newPassword" type="password" required />
+        </div>
+        <div class="form-actions">
+            <button type="submit">Update Password</button>
+        </div>
+        </form>
+    </div>
+    </div>
+
+   
+ <!-- Update Profile Picture Modal -->
+<div id="pictureModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Update Profile Picture</h2>
+      <span class="close" onclick="closeModal('pictureModal')">&times;</span>
+    </div>
+    <form id="pictureForm" method="POST" action="/profile/upload-picture" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="formFile">Choose new profile picture</label>
+      <input class="form-control" type="file" id="formFile" name="profilePicture" accept="image/*" required>
+    </div>
+    <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
+      <button type="submit" class="submit-btn" style="background: var(--success); color: white;">Upload</button>
+    </div>
+  </form>
+
+    <form id="deletePictureForm" method="POST" action="/profile/delete-picture">
+      <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
+        <button type="submit" class="delete-btn" style="background: var(--danger); color: white;">Delete Profile Picture</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <script>
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+
+// FIXED MODAL OPENERS
+document.getElementById('openUpdateProfile').onclick = () => openModal('updateProfileModal');
+document.getElementById('openChangePassword').onclick = () => openModal('passwordModal');
+document.getElementById('openPictureModal').onclick = () => openModal('pictureModal');
+    function openModal(id) {
+  const modal = document.getElementById(id);
+  modal.style.display = 'flex';
+
+  if (id === 'updateProfileModal') {
+    // Reinitialize Select2 when modal is shown
+    const select = $('#studentOrganization');
+    if (!select.hasClass('select2-hidden-accessible')) {
+      select.select2({
+        placeholder: "Search or select organizations",
+        allowClear: true,
+        width: '100%'
+      });
+
+      // Add options if not already populated
+      const organizationOptions = [
+        "University Student Government (USG)",
+        "Internal Audit Service (IAS)",
+        "University Student Election Commission (USEC)",
+        "Office of the Solicitor General (OSG)",
+        "College of Business Administration and Accountancy Student Government (CBAASG)",
+        "Business Management Program Council (BMPC)",
+        "Junior Philippine Institute of Accountants (JPIA)",
+        "Marketing Management Program Council (MMPC)",
+        "College of Education Student Government (COEdSG)",
+        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
+        "Architecture Program Council (ArchPC)",
+        "Civil Engineering Program Council (CEEPC)",
+        "Computer Engineering Program Council (CpEPC)",
+        "Electrical Engineering Program Council (EEEPC)",
+        "Electronics Engineering Program Council (ECEPC)",
+        "Industrial Engineering Program Council (IEEPC)",
+        "Mechanical Engineering Program Council (MEEPC)",
+        "Multimedia Arts Program Council (MMAPC)",
+        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
+        "College of Criminal Justice Education Student Government (CCJESG)",
+        "Criminology Program Council (CrimPC)",
+        "Forensic Science Program Council (FScPC)",
+        "College of Liberal Arts and Communication Student Government (CLACSG)",
+        "Communication Program Council (CPC)",
+        "International Development Program Council (IDPC)",
+        "Political Science Program Council (PSPC)",
+        "Psychology Program Council (PPC)",
+        "College of Science Student Government (COSSG)",
+        "Applied Mathematics Program Council (AMPC)",
+        "Biology Program Council (BioPC)",
+        "College of Information and Computer Studies Student Government (CICSSG)",
+        "Computer Science Program Council (CSPC)",
+        "Information Technology Program Council (ITPC)",
+        "DLSU-D Chorale (CHORALE)",
+        "Lasallian Symphony Orchestra (LSO)",
+        "La Salle Filipiniana Dance Company (LSFDC)",
+        "Lasallian Pointes N’ Flexes Dance Company (LPNFDC)",
+        "Lasallian Pop Band (LPB)",
+        "Teatro Lasalliana (TEATRO)",
+        "Visual and Performing Arts Production Unit (VPAPU)",
+        "Heraldo Filipino",
+        "Vicissitude",
+        "Council of Student Organizations (CSO)",
+        "Business Operations Management Society (BOMS)",
+        "Junior Marketing Association (JMA)",
+        "DLSU-D Psychological Society (DPS)",
+        "DLSU-D Pre-Medical Society (DPMS)",
+        "Hotel and Restaurant Management Society (HRMS)",
+        "Turismo Lasalleño Society (TLS)",
+        "Lasallian Educators Society (LES)",
+        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
+        "DLSU-D Pre-Law Society (DPLS)",
+        "Astraeus Literary and Arts Guild",
+        "Accounting Enrichment Society (ACES)",
+        "Circle of Student Assistants (COSA)",
+        "DLSU-D Lifters",
+        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
+        "DLSU-D United Patriots Football Club",
+        "Junior Financial Executives Institute of the Philippines (JFINEX)",
+        "Marché Société (MS)",
+        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
+        "SINAG Society of Leaders (SISOL)",
+        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
+        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
+        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
+        "LS Verde of Campus Sustainability Office",
+        "Students’ Extension of Resources through Voluntary Effort (SERVE) of LCDC",
+        "Green FM of Communications and Journalism Department",
+        "International Students’ Association (ISA) of International Students Office",
+        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+      ];
+
+      const currentOrgs = `<%= user.studentOrganization || '' %>`.split(',').map(o => o.trim()).filter(Boolean);
+
+      organizationOptions.forEach(org => {
+        const exists = currentOrgs.includes(org);
+        if (select.find(`option[value="${org}"]`).length === 0) {
+          const option = new Option(org, org, exists, exists);
+          select.append(option);
+        }
+      });
+
+      currentOrgs.forEach(org => {
+        if (!organizationOptions.includes(org)) {
+          if (select.find(`option[value="${org}"]`).length === 0) {
+            const option = new Option(org, org, true, true);
+            select.append(option);
+          }
+        }
+      });
+
+      select.trigger('change');
+    }
+  }
+}
+
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    window.onclick = function (e) {
+        ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
+        if (e.target.id === id) closeModal(id);
+        });
+    };
+
+  // AJAX: Update Profile
+ document.getElementById('updateProfileForm').onsubmit = async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const data = {};
+
+  formData.forEach((value, key) => {
+    if (key in data) {
+      if (!Array.isArray(data[key])) {
+        data[key] = [data[key]];
+      }
+      data[key].push(value);
+    } else {
+      data[key] = value;
+    }
+  });
+
+  const res = await fetch('/profile/update-popup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  if (res.ok) {
+    location.reload();
+  } else {
+    alert('Update failed');
+  }
+};
+
+
+  // AJAX: Change Password
+  document.getElementById('passwordForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    const res = await fetch('/profile/change-password-popup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      alert('Password updated');
+      closeModal('passwordModal');
+    } else {
+      const err = await res.text();
+      alert(err);
+    }
+  };
+
+  // AJAX: Update Profile Picture
+  document.querySelectorAll('.view-all-btn')[3].onclick = () => openModal('pictureModal');
+ document.getElementById('pictureForm').onsubmit = async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch('/profile/upload-picture', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+
+    alert('Profile picture updated!');
+    location.reload();
+  } catch (error) {
+    alert('Error uploading picture: ' + error.message);
+  }
+};
+
+// AJAX: Delete Profile Picture
+document.getElementById('deletePictureForm').onsubmit = async function (e) {
+  e.preventDefault();
+
+  if (!confirm('Are you sure you want to delete your profile picture?')) return;
+
+  const res = await fetch('/profile/delete-picture', {
+    method: 'POST'
+  });
+
+  if (res.ok) {
+    alert('Profile picture deleted.');
+    location.reload();
+  } else {
+    const err = await res.text();
+    alert('Error: ' + err);
+  }
+};
+
+
+
+function toggleCustomOrg() {
+  const container = document.getElementById('customOrgContainer');
+  container.style.display = container.style.display === 'none' ? 'block' : 'none';
+}
+
+document.getElementById('addOrganizationButton')?.addEventListener('click', function () {
+  const input = document.getElementById('otherOrganization');
+  const orgName = input.value.trim();
+  const select = $('#studentOrganization');
+
+  if (orgName) {
+    if (select.find(`option[value="${orgName}"]`).length === 0) {
+      const newOption = new Option(orgName, orgName, true, true);
+      select.append(newOption).trigger('change');
+    }
+
+    const selected = select.val() || [];
+    if (!selected.includes(orgName)) {
+      selected.push(orgName);
+      select.val(selected).trigger('change');
+    }
+
+    input.value = '';
+  } else {
+    alert('Please enter an organization name.');
+  }
+});
+
+
+  </script>
+
+</body>
+</html>

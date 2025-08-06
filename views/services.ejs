@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Manage Services</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="student-side">
+    <div class="div">
+
+      <!-- Header -->
+      <div class="overlap">
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+        <span class="text-wrapper-2">Manage Services</span>
+
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="/Picture/user.png" alt="Admin Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/profileadmin">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section -->
+      <section class="activity-section">
+        <div class="section-header">
+          <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
+            <div>
+              <h2 style="margin-bottom: 0.25rem;">Service Requests</h2>
+              <p style="color: #6b7280;">Review and manage student service requests</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+          <a href="/admin/all-requests" class="view-all-btn">All Requests</a>
+          <a href="/admin/approvals" class="view-all-btn">Approvals</a>
+          <a href="/admin/services" class="view-all-btn" style="background: var(--primary-green); color: white;">Services</a>
+          <a href="/admin/users" class="view-all-btn">Users</a>
+        </nav>
+
+        <!-- Table -->
+        <section class="table-section" style="overflow-x:auto;">
+          <table class="requests-table">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Student</th>
+                <th>Title</th>
+                <th>Organization</th>
+                <th>Status</th>
+                <th>Assigned Units</th>
+                <th>Deadline</th>
+                <th>Date Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% serviceRequests.forEach(request => { %>
+              <tr class="service-row"
+                data-id="<%= request._id %>"
+                data-title="<%= request.title %>"
+                data-organization="<%= request.organization %>"
+                data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
+                data-description="<%= request.description %>"
+                data-deadline="<%= request.deadline ? new Date(request.deadline).toISOString().slice(0, 10) : '' %>"
+                data-status="<%= request.status %>"
+                data-student="<%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %>">
+                <td><%= request._id.toString().slice(-6) %></td>
+                <td><%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %></td>
+                <td><%= request.title %></td>
+                <td><%= request.organization %></td>
+                <td>
+                  <span class="status-badge <%= request.status.toLowerCase() %>">
+                    <%= request.status %>
+                  </span>
+                </td>
+                <td><%= request.assignedUnits || 'Not yet assigned' %></td>
+                <td><%= request.deadline ? new Date(request.deadline).toLocaleDateString() : 'N/A' %></td>
+                <td><%= new Date(request.createdAt).toLocaleString() %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </section>
+
+        <a href="/admin" class="view-all-btn" style="margin-top: 1rem; display: inline-block;">← Back to Dashboard</a>
+      </section>
+    </div>
+  </div>
+
+  <div id="serviceModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <header class="modal-header">
+        <span class="modal-title">Service Request Details</span>
+        <span class="close" id="closeServiceModal">&times;</span>
+        </header>
+        <div class="modal-body">
+        <form class="modal-form" action="/admin/service/update-status" method="POST">
+            <input type="hidden" name="requestId" id="serviceRequestId" />
+            <p><strong>Student:</strong> <span id="serviceStudent"></span></p>
+            <p><strong>Title:</strong> <span id="serviceTitle"></span></p>
+            <p><strong>Organization:</strong> <span id="serviceOrganization"></span></p>
+            <p><strong>Description:</strong> <span id="serviceDescription"></span></p>
+            <p><strong>Deadline:</strong> <span id="serviceDeadline"></span></p>
+
+            <div class="form-group">
+            <label for="serviceStatus">Status:</label>
+            <select name="status" id="serviceStatus">
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+            </div>
+
+            <div class="form-group">
+            <label for="assignedUnits">Assigned Units:</label>
+            <select id="assignedUnits" name="assignedUnits">
+              <option value="">Not yet assigned</option>
+              <option value="Social Media Unit">Social Media Unit</option>
+              <option value="Graphics Unit">Graphics Unit</option>
+              <option value="Multimedia Unit">Multimedia Unit</option>
+              <option value="Public Relations Unit">Public Relations Unit</option>
+            </select>
+
+            <div class="form-actions">
+            <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Update</button>
+            </div>
+        </form>
+        </div>
+    </div>
+    </div>
+
+  <script>
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+
+    const serviceModal = document.getElementById("serviceModal");
+    const closeServiceModal = document.getElementById("closeServiceModal");
+
+    closeServiceModal.onclick = () => serviceModal.style.display = 'none';
+
+    window.onclick = function(event) {
+        if (event.target === serviceModal) serviceModal.style.display = 'none';
+    }
+
+    document.querySelectorAll('.service-row').forEach(row => {
+        row.addEventListener('click', () => {
+        document.getElementById("serviceStudent").innerText = row.dataset.student;
+        document.getElementById("serviceTitle").innerText = row.dataset.title;
+        document.getElementById("serviceOrganization").innerText = row.dataset.organization;
+        document.getElementById("serviceDescription").innerText = row.dataset.description;
+        document.getElementById("serviceDeadline").innerText = row.dataset.deadline;
+        document.getElementById("serviceStatus").value = row.dataset.status;
+        document.getElementById("serviceRequestId").value = row.dataset.id;
+        serviceModal.style.display = 'flex';
+        });
+    });
+
+    function toggleDropdown() {
+        const menu = document.getElementById("dropdownMenu");
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+        const toggle = document.querySelector(".dropdown-toggle");
+        const menu = document.getElementById("dropdownMenu");
+        if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+        }
+    });
+  </script>
+</body>
+</html>

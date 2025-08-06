@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Manage Users</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="student-side">
+    <div class="div">
+
+      <!-- Header -->
+      <div class="overlap">
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+        <span class="text-wrapper-2">Manage Users</span>
+
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="/Picture/user.png" alt="Admin Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/profileadmin">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section -->
+      <section class="activity-section">
+        <div class="section-header">
+          <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
+            <div>
+              <h2 style="margin-bottom: 0.25rem;">Registered Users</h2>
+              <p style="color: #6b7280;">View and update student accounts</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+          <a href="/admin/approvals" class="view-all-btn">Approvals</a>
+          <a href="/admin/services" class="view-all-btn">Services</a>
+          <a href="/admin/users" class="view-all-btn" style="background: var(--primary-green); color: white;">Users</a>
+        </nav>
+
+        <!-- Table -->
+        <section class="table-section" style="overflow-x:auto;">
+          <table class="requests-table">
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Course/Yr/Sec</th>
+                <th>Organization</th>
+                <th>Phone</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% users.forEach(u => { %>
+              <tr class="user-row"
+                data-id="<%= u._id %>"
+                data-fname="<%= u.fName %>"
+                data-lname="<%= u.lName %>"
+                data-username="<%= u.username %>"
+                data-email="<%= u.email %>"
+                data-cys="<%= u.cys %>"
+                data-organization="<%= u.studentOrganization %>"
+                data-phone="<%= u.phoneNumber %>"
+                data-role="<%= u.role %>">
+                <td><%= u._id.toString().slice(-6) %></td>
+                <td><%= u.fName %> <%= u.lName %></td>
+                <td><%= u.username %></td>
+                <td><%= u.email %></td>
+                <td><%= u.cys %></td>
+                <td><%= u.studentOrganization %></td>
+                <td><%= u.phoneNumber %></td>
+                <td><%= u.role %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </section>
+
+        <a href="/admin" class="view-all-btn" style="margin-top: 1rem; display: inline-block;">← Back to Dashboard</a>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="userModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <header class="modal-header">
+        <span class="modal-title">Edit User Info</span>
+        <span class="close" id="closeUserModal">&times;</span>
+      </header>
+      <div class="modal-form">
+        <form action="/admin/user/update" method="POST">
+          <input type="hidden" name="userId" id="editUserId" />
+          <div class="form-group">
+            <label>First Name:</label>
+            <input type="text" name="fName" id="editFName" required />
+          </div>
+          <div class="form-group">
+            <label>Last Name:</label>
+            <input type="text" name="lName" id="editLName" required />
+          </div>
+          <div class="form-group">
+            <label>Email:</label>
+            <input type="email" name="email" id="editEmail" required />
+          </div>
+          <div class="form-group">
+            <label>Phone:</label>
+            <input type="text" name="phoneNumber" id="editPhone" />
+          </div>
+          <div class="form-group">
+            <label>Course/Yr/Sec:</label>
+            <input type="text" name="cys" id="editCYS" />
+          </div>
+          <div class="form-group">
+            <label>Organization:</label>
+            <input type="text" name="studentOrganization" id="editOrg" />
+          </div>
+          <div class="form-group">
+            <label>Role:</label>
+            <select name="role" id="editRole">
+              <option value="student">Student</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+
+    const userModal = document.getElementById("userModal");
+    const closeUserModal = document.getElementById("closeUserModal");
+
+    closeUserModal.onclick = () => userModal.style.display = 'none';
+    window.onclick = e => { if (e.target === userModal) userModal.style.display = 'none'; }
+
+    document.querySelectorAll('.user-row').forEach(row => {
+      row.addEventListener('click', () => {
+        document.getElementById('editUserId').value = row.dataset.id;
+        document.getElementById('editFName').value = row.dataset.fname;
+        document.getElementById('editLName').value = row.dataset.lname;
+        document.getElementById('editEmail').value = row.dataset.email;
+        document.getElementById('editPhone').value = row.dataset.phone;
+        document.getElementById('editCYS').value = row.dataset.cys;
+        document.getElementById('editOrg').value = row.dataset.organization;
+        document.getElementById('editRole').value = row.dataset.role;
+
+        userModal.style.display = 'flex';
+      });
+    });
+  </script>
+</body>
+</html>

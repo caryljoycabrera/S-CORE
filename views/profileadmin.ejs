@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="overlap">
+    <div class="group">
+      <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+    </div>
+    <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+    <span class="text-wrapper-2">My Profile</span>
+
+    <div class="dropdown-wrapper">
+      <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+        <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+        <div class="user">
+          <img class="user-icon" src="/Picture/user.png" alt="User Icon" />
+        </div>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <a href="/profile">My Profile</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Profile Content -->
+  <main class="student-side">
+    <div class="div">
+        <section class="activity-section">
+        <div class="section-header">
+            <div class="profile-info">
+            <img src="/Picture/user.png" alt="Profile Picture"
+                class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+            <div>
+                <h2><%= user.fName %> <%= user.lName %></h2>
+                <p style="color: #6b7280;">Admin</p>
+            </div>
+            </div>
+            <a href="/admin" class="view-all-btn" style="display:inline-block;">
+            ← Back to Dashboard
+            </a>
+        </div>
+
+        <div class="profile-table" style="background:white; border-radius:24px; box-shadow:var(--card-shadow); padding:2.5rem;">
+            <table class="requests-table" style="border:none;">
+            <tbody>
+                <tr><td class="label">Full Name:</td><td><%= user.fName %> <%= user.mName %> <%= user.lName %></td></tr>
+                <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
+                <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
+                <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
+                <tr><td class="label">Organization:</td><td><%= user.studentOrganization || 'None' %></td></tr>
+                <tr><td class="label">Course/Year/Section:</td><td><%= user.cys || 'N/A' %></td></tr>
+            </tbody>
+            </table>
+
+            <div style="margin-top:2rem; display:flex; gap:1rem;">
+            <button class="view-all-btn">Update Profile</button>
+            <button class="view-all-btn">Change Password</button>
+            <button class="view-all-btn">Update Profile Picture</button>
+            </div>
+        </div>
+        </section>
+    </div>
+    </main>
+
+    <!-- Modals -->
+        <!-- Update Profile Modal -->
+    <div id="updateProfileModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h2 class="modal-title">Update Profile</h2>
+        <span class="close" onclick="closeModal('updateProfileModal')">&times;</span>
+        </div>
+        <form id="updateProfileForm" class="modal-form">
+        <div class="form-group">
+            <label for="fName">First Name</label>
+            <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="mName">Middle Name</label>
+            <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="lName">Last Name</label>
+            <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="email">Email (cannot be changed)</label>
+            <input name="email" id="email" type="email" value="<%= user.email %>" disabled />
+        </div>
+        <div class="form-group">
+            <label for="username">Username (cannot be changed)</label>
+            <input name="username" id="username" type="text" value="<%= user.username %>" disabled />
+        </div>
+        <div class="form-group">
+            <label for="phoneNumber">Phone Number</label>
+            <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
+        </div>
+        <div class="form-group">
+            <label for="studentOrganization">Organization</label>
+            <input name="studentOrganization" id="studentOrganization" type="text" value="<%= user.studentOrganization || '' %>" />
+        </div>
+        <div class="form-group">
+            <label for="cys">Course / Year / Section</label>
+            <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" />
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save Changes</button>
+        </div>
+        </form>
+    </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h2 class="modal-title">Change Password</h2>
+        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+        </div>
+        <form id="passwordForm" class="modal-form">
+        <div class="form-group">
+            <label for="oldPassword">Old Password</label>
+            <input name="oldPassword" id="oldPassword" type="password" required />
+        </div>
+        <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <input name="newPassword" id="newPassword" type="password" required />
+        </div>
+        <div class="form-actions">
+            <button type="submit">Update Password</button>
+        </div>
+        </form>
+    </div>
+    </div>
+
+  <script>
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+
+    document.querySelectorAll('.view-all-btn')[1].onclick = () => openModal('updateProfileModal');
+    document.querySelectorAll('.view-all-btn')[2].onclick = () => openModal('passwordModal');
+
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    window.onclick = function (e) {
+        ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
+        if (e.target.id === id) closeModal(id);
+        });
+    };
+
+  // AJAX: Update Profile
+  document.getElementById('updateProfileForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    const res = await fetch('/profile/update-popup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) location.reload();
+    else alert('Update failed');
+  };
+
+  // AJAX: Change Password
+  document.getElementById('passwordForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    const res = await fetch('/profile/change-password-popup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      alert('Password updated');
+      closeModal('passwordModal');
+    } else {
+      const err = await res.text();
+      alert(err);
+    }
+  };
+  </script>
+
+</body>
+</html>

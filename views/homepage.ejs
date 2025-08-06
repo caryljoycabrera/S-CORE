@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DLSU-D Strategic Communications Office | Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-green: #1a5d1a;
+      --secondary-green: #2d7a2d;
+      --accent-green: #4caf50;
+      --light-green: #e8f5e8;
+      --dark-green: #0d2818;
+      --gold: #ffd700;
+      --text-dark: #1a2e1a;
+      --text-light: #4a5d4a;
+      --background: #fafcfa;
+      --white: #ffffff;
+      --shadow: rgba(26, 93, 26, 0.1);
+      --gradient: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--background);
+      color: var(--text-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: linear-gradient(45deg, #f0f8f0, #e8f5e8, #f5faf5);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+
+    .bg-animation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at 20% 80%, rgba(26, 93, 26, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(45, 122, 45, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(76, 175, 80, 0.02) 0%, transparent 50%);
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Enhanced Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(26, 93, 26, 0.1);
+      padding: 15px 0;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .navbar.scrolled {
+      padding: 10px 0;
+      box-shadow: 0 4px 20px rgba(26, 93, 26, 0.1);
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 30px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo-area img {
+      height: 50px;
+      border-radius: 12px;
+      transition: transform 0.3s ease;
+    }
+
+    .logo-area img:hover {
+      transform: scale(1.05);
+    }
+
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-green);
+      user-select: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: var(--text-dark);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      color: var(--primary-green);
+      background: var(--light-green);
+      transform: translateY(-2px);
+    }
+
+    .cta-nav {
+      background: var(--gradient) !important;
+      color: var(--white) !important;
+      padding: 12px 24px !important;
+      border-radius: 25px !important;
+      font-weight: 600 !important;
+      box-shadow: 0 4px 15px rgba(26, 93, 26, 0.3);
+    }
+
+    .cta-nav:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(26, 93, 26, 0.4);
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 100px 0 50px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero-content h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 25px;
+      line-height: 1.2;
+    }
+
+    .hero-highlight {
+      background: linear-gradient(120deg, var(--accent-green) 0%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-content p {
+      font-size: 1.3rem;
+      color: var(--text-light);
+      margin-bottom: 35px;
+      line-height: 1.8;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: var(--gradient);
+      color: var(--white);
+      padding: 18px 35px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(26, 93, 26, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(26, 93, 26, 0.4);
+    }
+
+    .btn-secondary {
+      color: var(--primary-green);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      color: var(--secondary-green);
+      transform: translateX(5px);
+    }
+
+    .hero-visual {
+      position: relative;
+    }
+
+    .hero-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(26, 93, 26, 0.1);
+      border: 1px solid rgba(26, 93, 26, 0.1);
+      animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .pledge-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--primary-green);
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .pledge-item {
+      margin-bottom: 20px;
+    }
+
+    .pledge-item h4 {
+      color: var(--secondary-green);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .pledge-item p {
+      color: var(--text-light);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* About Section */
+    .about-section {
+      padding: 100px 0;
+      background: var(--white);
+    }
+
+    .section-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 30px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      color: var(--text-dark);
+      margin-bottom: 20px;
+    }
+
+    .section-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-light);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 80px;
+    }
+
+    .about-content h3 {
+      font-size: 2rem;
+      color: var(--text-dark);
+      margin-bottom: 25px;
+    }
+
+    .about-content p {
+      font-size: 1.1rem;
+      color: var(--text-light);
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+
+    .about-visual {
+      position: relative;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+
+    .feature-card {
+      background: var(--light-green);
+      padding: 40px 30px;
+      border-radius: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(26, 93, 26, 0.15);
+      border-color: var(--accent-green);
+    }
+
+    .feature-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 1.5rem;
+      color: var(--white);
+    }
+
+    .feature-card h4 {
+      font-size: 1.3rem;
+      color: var(--text-dark);
+      margin-bottom: 15px;
+    }
+
+    .feature-card p {
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    /* Services Section */
+    .services-section {
+      padding: 100px 0;
+      background: var(--light-green);
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 40px;
+    }
+
+    .service-card {
+      background: var(--white);
+      padding: 50px 40px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(26, 93, 26, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--gradient);
+    }
+
+    .service-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 60px rgba(26, 93, 26, 0.15);
+    }
+
+    .service-number {
+      display: inline-block;
+      background: var(--gradient);
+      color: var(--white);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 40px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .service-card h3 {
+      font-size: 1.5rem;
+      color: var(--text-dark);
+      margin-bottom: 15px;
+    }
+
+    .service-card p {
+      color: var(--text-light);
+      line-height: 1.7;
+    }
+
+    /* Team Section */
+    .team-section {
+      padding: 100px 0;
+      background: var(--white);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 40px;
+    }
+
+    .team-card {
+      background: var(--white);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 15px 50px rgba(26, 93, 26, 0.1);
+      transition: all 0.3s ease;
+      border: 2px solid var(--light-green);
+    }
+
+    .team-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 25px 70px rgba(26, 93, 26, 0.2);
+      border-color: var(--accent-green);
+    }
+
+    .team-info {
+      padding: 40px 30px;
+    }
+
+    .team-info h4 {
+      font-size: 1.3rem;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    .team-role {
+      color: var(--accent-green);
+      font-weight: 600;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+    }
+
+    .team-contact {
+      font-size: 0.95rem;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .team-contact a {
+      color: var(--primary-green);
+      text-decoration: none;
+    }
+
+    .team-contact a:hover {
+      text-decoration: underline;
+    }
+
+    /* Contact Section */
+    .contact-section {
+      padding: 100px 0;
+      background: var(--dark-green);
+      color: var(--white);
+    }
+
+    .contact-content {
+      text-align: center;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .contact-content h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      margin-bottom: 20px;
+      color: var(--white);
+    }
+
+    .contact-content .intro-text {
+      font-size: 1.3rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 60px;
+      line-height: 1.6;
+    }
+
+    .contact-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, auto);
+      gap: 30px;
+      margin-bottom: 60px;
+    }
+
+    .contact-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 40px 30px;
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .contact-card:hover {
+      transform: translateY(-10px);
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--gold);
+    }
+
+    .contact-card-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 25px;
+      font-size: 2rem;
+      color: var(--dark-green);
+      font-weight: 700;
+    }
+
+    .contact-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: var(--white);
+    }
+
+    .contact-card p {
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .contact-card a {
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .contact-card a:hover {
+      color: #ffed4e;
+      text-decoration: underline;
+    }
+
+    .btn-cta {
+      background: var(--gold);
+      color: var(--dark-green);
+      padding: 20px 50px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      min-width: 280px;
+      justify-content: center;
+    }
+
+    .btn-cta:hover {
+      background: #ffed4e;
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(255, 215, 0, 0.4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--white);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--gold);
+      color: var(--gold);
+      box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+    }
+
+    .social-section {
+      text-align: center;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .social-section h3 {
+      font-size: 1.3rem;
+      margin-bottom: 25px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .social-link {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      text-decoration: none;
+      font-size: 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 2px solid transparent;
+    }
+
+    .social-link:hover {
+      background: var(--gold);
+      color: var(--dark-green);
+      transform: translateY(-5px);
+      border-color: var(--gold);
+      box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--text-dark);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 50px 0 30px;
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 30px;
+    }
+
+    .footer p {
+      margin-bottom: 10px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 20px 0;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--gold);
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .hero-container,
+      .about-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .contact-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-content h1 {
+        font-size: 2.5rem;
+      }
+
+      .contact-content h2 {
+        font-size: 2.5rem;
+      }
+
+      .section-title {
+        font-size: 2.2rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-primary,
+      .btn-secondary,
+      .btn-cta {
+        text-align: center;
+        justify-content: center;
+      }
+
+      .team-grid,
+      .services-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .social-links {
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+    }
+
+    /* Smooth Animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Loading Animation */
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease;
+    }
+
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--light-green);
+      border-top: 4px solid var(--primary-green);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading" id="loading">
+    <div class="loader"></div>
+  </div>
+
+  <!-- Animated Background -->
+  <div class="bg-animation"></div>
+
+  <!-- Enhanced Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <div class="logo-area">
+        <img src="https://iili.io/F62tQZG.jpg" alt="DLSU-D Logo">
+        <span class="logo-text">Strategic Communications Office</span>
+      </div>
+              <div class="nav-links">
+        <a href="#home" class="nav-link">Home</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#services" class="nav-link">Services</a>
+        <a href="#team" class="nav-link">Team</a>
+        <a href="#contact" class="nav-link">Contact</a>
+        <a href="/login" class="nav-link cta-nav">S-CORE Portal</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="hero-container">
+      <div class="hero-content fade-in">
+        <h1>Empowering Communication, <span class="hero-highlight">Building Connections</span></h1>
+        <p>The Strategic Communications Office identifies information needs across our academic community and develops innovative communication strategies that create an accurate, inspiring image of De La Salle University-Dasmariñas.</p>
+        <div class="hero-buttons">
+          <a href="#contact" class="btn-primary">
+            Connect With Us →
+          </a>
+          <a href="#about" class="btn-secondary">
+            Learn More →
+          </a>
+        </div>
+      </div>
+      <div class="hero-visual fade-in">
+        <div class="hero-card">
+          <h3 class="pledge-title">Our SCO Pledge</h3>
+          <div class="pledge-item">
+            <h4>Creativity</h4>
+            <p>To bring out the best of the community through projects of high aesthetic quality</p>
+          </div>
+          <div class="pledge-item">
+            <h4>Efficiency</h4>
+            <p>To operate resourcefully and accurately in upholding the image of the University</p>
+          </div>
+          <div class="pledge-item">
+            <h4>Dedication</h4>
+            <p>To commit ourselves in fulfilling the communication needs of the Institution</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section class="about-section" id="about">
+    <div class="section-container">
+      <div class="section-header fade-in">
+        <h2 class="section-title">About Our Office</h2>
+        <p class="section-subtitle">Dedicated to excellence in institutional communication and community engagement</p>
+      </div>
+      <div class="about-grid">
+        <div class="about-content fade-in">
+          <h3>Our Mission</h3>
+          <p>The Strategic Communications Office serves as the primary hub for institutional communication at De La Salle University-Dasmariñas. We identify the diverse information needs of different offices within our academic community and develop comprehensive communication strategies to meet those needs effectively.</p>
+          <p>Through innovative approaches and creative solutions, we produce high-quality institutional information materials, establish meaningful linkages with mass media, and formulate strategic marketing initiatives that accurately represent our University's values and achievements.</p>
+        </div>
+        <div class="about-visual fade-in">
+          <div class="feature-grid">
+            <div class="feature-card">
+              <div class="feature-icon">📱</div>
+              <h4>Digital Excellence</h4>
+              <p>Leveraging cutting-edge digital platforms for maximum reach and engagement</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🎨</div>
+              <h4>Creative Design</h4>
+              <p>Producing visually stunning materials that reflect our institution's prestige</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📊</div>
+              <h4>Strategic Planning</h4>
+              <p>Data-driven communication strategies for measurable impact</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🤝</div>
+              <h4>Community Focus</h4>
+              <p>Building stronger connections within our academic community</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section class="services-section" id="services">
+    <div class="section-container">
+      <div class="section-header fade-in">
+        <h2 class="section-title">Our Services</h2>
+        <p class="section-subtitle">Comprehensive communication solutions tailored to your needs</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card fade-in">
+          <span class="service-number">01</span>
+          <h3>Content Creation & Strategy</h3>
+          <p>We develop compelling content strategies and create high-quality materials including brochures, newsletters, digital content, and multimedia presentations that effectively communicate your message to target audiences.</p>
+        </div>
+        <div class="service-card fade-in">
+          <span class="service-number">02</span>
+          <h3>Media Relations & Outreach</h3>
+          <p>Building and maintaining strong relationships with media outlets, managing press releases, coordinating interviews, and ensuring positive coverage of university events and achievements.</p>
+        </div>
+        <div class="service-card fade-in">
+          <span class="service-number">03</span>
+          <h3>Digital Marketing & Social Media</h3>
+          <p>Comprehensive digital marketing strategies including social media management, website content, online campaigns, and digital advertising to enhance the university's online presence.</p>
+        </div>
+        <div class="service-card fade-in">
+          <span class="service-number">04</span>
+          <h3>Brand Management & Design</h3>
+          <p>Ensuring consistent brand representation across all communication materials, developing visual identity guidelines, and creating professional designs that uphold the university's image.</p>
+        </div>
+        <div class="service-card fade-in">
+          <span class="service-number">05</span>
+          <h3>Event Communication</h3>
+          <p>Complete communication support for university events including promotional materials, media coverage coordination, live event documentation, and post-event reporting.</p>
+        </div>
+        <div class="service-card fade-in">
+          <span class="service-number">06</span>
+          <h3>Crisis Communication</h3>
+          <p>Strategic communication planning for sensitive situations, reputation management, and coordinated response strategies to maintain the university's positive image during challenging times.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team Section -->
+  <section class="team-section" id="team">
+    <div class="section-container">
+      <div class="section-header fade-in">
+        <h2 class="section-title">Meet Our Team</h2>
+        <p class="section-subtitle">Dedicated professionals committed to excellence in communication</p>
+      </div>
+      <div class="team-grid">
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Ma. Erika Villanueva</h4>
+            <div class="team-role">SCO Director</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:erika.villanueva@dlsud.edu.ph">erika.villanueva@dlsud.edu.ph</a></p>
+              <p><strong>Phone:</strong> (046) 481-1900 local 1201</p>
+              <p><strong>Office:</strong> 2nd Floor, Ayuntamiento De Gonzalez Bldg.</p>
+            </div>
+          </div>
+        </div>
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Joseph Fernandez</h4>
+            <div class="team-role">Communications Coordinator</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:joseph.fernandez@dlsud.edu.ph">joseph.fernandez@dlsud.edu.ph</a></p>
+              <p><strong>Phone:</strong> (046) 481-1900 local 1212</p>
+              <p><strong>Specialization:</strong> Media Relations & Content Strategy</p>
+            </div>
+          </div>
+        </div>
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Alyssa Santos</h4>
+            <div class="team-role">Digital Communications Specialist</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:alyssa.santos@dlsud.edu.ph">alyssa.santos@dlsud.edu.ph</a></p>
+              <p><strong>Phone:</strong> (046) 481-1900 local 1223</p>
+              <p><strong>Specialization:</strong> Digital Marketing & Social Media</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section class="contact-section" id="contact">
+    <div class="section-container">
+      <div class="contact-content fade-in">
+        <h2>Let's Connect</h2>
+        <p class="intro-text">Ready to elevate your communication strategy? We're here to help you connect with your audience effectively and build meaningful relationships that drive success.</p>
+        
+        <div class="contact-cards">
+          <div class="contact-card fade-in">
+            <div class="contact-card-icon">📧</div>
+            <h3>Email Us</h3>
+            <p>Get in touch with our team for inquiries, collaboration opportunities, or communication support.</p>
+            <a href="mailto:sco@dlsud.edu.ph">sco@dlsud.edu.ph</a>
+          </div>
+          
+          <div class="contact-card fade-in">
+            <div class="contact-card-icon">📞</div>
+            <h3>Call Us</h3>
+            <p>Speak directly with our communication experts for immediate assistance and consultation.</p>
+            <a href="tel:+6346481190">(046) 481-1900 local 1200</a>
+          </div>
+          
+          <div class="contact-card fade-in">
+            <div class="contact-card-icon">📍</div>
+            <h3>Visit Us</h3>
+            <p>Meet us in person at our office for detailed discussions and strategic planning sessions.</p>
+            <p>2nd Floor, Ayuntamiento De Gonzalez Bldg.<br>DLSU-Dasmariñas, Cavite</p>
+          </div>
+          
+          <div class="contact-card fade-in">
+            <div class="contact-card-icon">⏰</div>
+            <h3>Office Hours</h3>
+            <p>We're available during regular business hours to serve you better.</p>
+            <p><strong>Monday - Friday:</strong> 8:00 AM - 5:00 PM<br><strong>Saturday:</strong> 8:00 AM - 12:00 PM</p>
+          </div>
+        </div>
+
+        <div class="social-section fade-in">
+          <h3>Follow Us on Social Media</h3>
+          <div class="social-links">
+            <a href="https://facebook.com/dlsud" target="_blank" class="social-link" title="Facebook">f</a>
+            <a href="https://twitter.com/dlsud" target="_blank" class="social-link" title="Twitter">𝕏</a>
+            <a href="https://instagram.com/dlsud" target="_blank" class="social-link" title="Instagram">📷</a>
+            <a href="https://linkedin.com/school/dlsud" target="_blank" class="social-link" title="LinkedIn">in</a>
+            <a href="https://youtube.com/dlsud" target="_blank" class="social-link" title="YouTube">▶</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="https://dlsud.edu.ph" target="_blank">DLSU-D Main Site</a>
+      </div>
+      <p>&copy; <span id="currentYear"></span> Strategic Communications Office, De La Salle University-Dasmariñas</p>
+      <p>Committed to Excellence in Communication | Building Stronger Communities</p>
+    </div>
+  </footer>
+
+  <!-- JavaScript for Enhanced Functionality -->
+  <script>
+    // Loading Screen
+    window.addEventListener('load', function() {
+      const loading = document.getElementById('loading');
+      loading.style.opacity = '0';
+      setTimeout(() => {
+        loading.style.display = 'none';
+      }, 500);
+    });
+
+    // Dynamic Year
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    // Navbar Scroll Effect
+    window.addEventListener('scroll', function() {
+      const navbar = document.getElementById('navbar');
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+
+    // Smooth Scrolling for Navigation Links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          const offsetTop = target.offsetTop - 80;
+          window.scrollTo({
+            top: offsetTop,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+
+    // Intersection Observer for Fade-in Animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationDelay = '0.1s';
+          entry.target.classList.add('fade-in');
+        }
+      });
+    }, observerOptions);
+
+    // Observe all elements with fade-in class
+    document.querySelectorAll('.fade-in').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Add some interactive hover effects
+    document.querySelectorAll('.team-card, .service-card, .feature-card, .contact-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-10px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+      });
+    });
+
+    // Parallax effect for hero section
+    window.addEventListener('scroll', function() {
+      const scrolled = window.pageYOffset;
+      const hero = document.querySelector('.hero');
+      if (hero) {
+        hero.style.transform = `translateY(${scrolled * 0.3}px)`;
+      }
+    });
+
+    // Add click effects to buttons
+    document.querySelectorAll('.btn-primary, .btn-secondary, .btn-cta, .cta-nav').forEach(button => {
+      button.addEventListener('click', function(e) {
+        // Create ripple effect
+        const ripple = document.createElement('span');
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.cssText = `
+          position: absolute;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          transform: scale(0);
+          animation: ripple 0.6s linear;
+          width: ${size}px;
+          height: ${size}px;
+          left: ${x}px;
+          top: ${y}px;
+        `;
+        
+        this.style.position = 'relative';
+        this.style.overflow = 'hidden';
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+          ripple.remove();
+        }, 600);
+      });
+    });
+
+    // Add ripple animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple {
+        to {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Enhanced contact card interactions
+    document.querySelectorAll('.contact-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        const icon = this.querySelector('.contact-card-icon');
+        icon.style.transform = 'scale(1.1) rotate(5deg)';
+      });
+      
+      card.addEventListener('mouseleave', function() {
+        const icon = this.querySelector('.contact-card-icon');
+        icon.style.transform = 'scale(1) rotate(0deg)';
+      });
+    });
+
+    // Social links hover effects
+    document.querySelectorAll('.social-link').forEach(link => {
+      link.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-5px) scale(1.1)';
+      });
+      
+      link.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+      });
+    });
+  </script>
+</body>
+</html>

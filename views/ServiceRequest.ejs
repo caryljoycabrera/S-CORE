@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Request for Service</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="student-side">
+    <div class="div">
+      <!-- Header -->
+      <div class="overlap">
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/userpage" class="text-wrapper">S-CORE</a>
+        <span class="text-wrapper-2">Request Service</span>
+
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile & Request Button -->
+      <section class="activity-section">
+        <div class="section-header">
+          <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
+      <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+         alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+             <div>
+              <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
+              <p style="color: #6b7280;">Student</p>
+            </div>
+          </div>
+          <button class="view-all-btn" id="openModalBtn">+ Request Service</button>
+        </div>
+
+        <!-- Tabs -->
+        <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+          <a href="/allRequestsUser" class="view-all-btn">All Requests</a>
+          <a href="/Requestapproval" class="view-all-btn">View Request Approvals</a>
+          <a href="/ServiceRequest" class="view-all-btn" style="background: var(--primary-green); color: white;">View Service Requests</a>
+        </nav>
+
+        <!-- Table -->
+        <section class="table-section" style="overflow-x: auto;">
+          <table class="requests-table" style="width: 100%; border-collapse: collapse; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
+            <thead style="background: var(--light-green); color: var(--primary-green);">
+              <tr>
+                <th>Request ID</th>
+                <th>Project Title</th>
+                <th>Status</th>
+                <th>Organization</th>
+                <th>Assigned Unit</th>
+                <th>Date Submitted</th>
+                <th>Requested Deadline</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% serviceRequests.forEach(request => { %>
+                <tr class="request-row"
+                  data-id="<%= request._id %>"
+                  data-title="<%= request.title %>"
+                  data-status="<%= request.status %>"
+                  data-organization="<%= request.organization %>"
+                  data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
+                  data-datetime="<%= request.datetime.toLocaleString() %>"
+                  data-deadline="<%= request.deadline.toLocaleString() %>"
+                  data-description="<%= request.description %>" 
+                  data-file="<%= request.file ? request.file : '' %>">
+                  <td><%= request._id.toString().slice(-6) %></td>
+                  <td><%= request.title %></td>  
+                  <td>
+                    <span class="status-badge <%= request.status.toLowerCase() %>">
+                      <%= request.status %>
+                    </span>
+                  </td>
+                  <td><%= request.organization %></td>
+                  <td><%= request.assignedUnits || 'Not yet assigned' %></td>
+                  <td><%= request.datetime.toLocaleString() %></td>
+                  <td><%= request.deadline.toLocaleString() %></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </section>
+      </section>
+
+      <a href="/userpage" class="view-all-btn" style="display: inline-block;">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Create Service Request Modal -->
+  <div id="requestModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <header class="modal-header">
+        <span class="modal-title">Create a Service Request</span>
+        <span class="close" id="closeModalBtn">&times;</span>
+      </header>
+      <form class="modal-form" action="/submit-service-request" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="projectTitle">Name of Request/Project Title:</label>
+          <input type="text" id="projectTitle" name="projectTitle" required />
+        </div>
+        <div class="form-group">
+          <label for="organization">Organization:</label>
+          <input type="text" id="organization" name="organization" value="<%= user.studentOrganization %>" required />
+        </div>
+        <div class="form-group">
+          <label for="description">Description:</label>
+          <textarea id="description" name="description" rows="5" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="uploadServiceFile">Upload File:</label>
+          <input type="file" id="uploadServiceFile" name="uploadServiceFile" />
+        </div>
+        <div class="form-group">
+          <label for="deadline">Deadline:</label>
+          <input type="datetime-local" id="deadline" name="deadline" required />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Submit</button>
+          <button type="button" class="view-all-btn" id="cancelModalBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Request Details Modal -->
+  <div id="detailsModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <header class="modal-header">
+        <span class="modal-title">Service Request Details</span>
+        <span class="close" id="closeDetailsModal">&times;</span>
+      </header>
+      <div class="modal-body">
+        <p><strong>Title:</strong> <span id="detailTitle"></span></p>
+        <p><strong>Organization:</strong> <span id="detailOrganization"></span></p>
+        <p><strong>Description:</strong> <span id="detailDescription"></span></p>
+        <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+        <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
+        <p><strong>Date Submitted:</strong> <span id="detailDatetime"></span></p>
+        <p><strong>Requested Deadline:</strong> <span id="detailDeadline"></span></p>
+        <div id="file-preview" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    const openModalBtn = document.getElementById('openModalBtn');
+    const requestModal = document.getElementById('requestModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const detailModal = document.getElementById("detailsModal");
+    const closeDetailsModal = document.getElementById("closeDetailsModal");
+
+    openModalBtn.onclick = () => requestModal.style.display = 'flex';
+    closeModalBtn.onclick = () => requestModal.style.display = 'none';
+    cancelModalBtn.onclick = () => requestModal.style.display = 'none';
+    closeDetailsModal.onclick = () => detailModal.style.display = 'none';
+
+    window.onclick = function(event) {
+      if (event.target === requestModal) requestModal.style.display = 'none';
+      if (event.target === detailModal) detailModal.style.display = 'none';
+    }
+
+    document.querySelectorAll('.request-row').forEach(row => {
+      row.addEventListener('click', () => {
+        document.getElementById("detailTitle").innerText = row.dataset.title;
+        document.getElementById("detailOrganization").innerText = row.dataset.organization;
+        document.getElementById("detailDescription").innerText = row.dataset.description || 'N/A';
+        document.getElementById("detailStatus").innerText = row.dataset.status;
+        document.getElementById("detailUnits").innerText = row.dataset.units;
+        document.getElementById("detailDatetime").innerText = row.dataset.datetime;
+        document.getElementById("detailDeadline").innerText = row.dataset.deadline;
+
+        const file = row.dataset.file;
+        const previewContainer = document.getElementById('file-preview');
+        previewContainer.innerHTML = '';
+        if (file) {
+          const fileUrl = `/uploads/${file}`;
+          const ext = file.split('.').pop().toLowerCase();
+          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            previewContainer.innerHTML = `<img src="${fileUrl}" alt="Uploaded Image" style="max-width:100%; border-radius: 8px;" /><br><a href="${fileUrl}" target="_blank">Open Image</a>`;
+          } else if (ext === 'pdf') {
+            previewContainer.innerHTML = `<embed src="${fileUrl}" width="100%" height="400px" /><br><a href="${fileUrl}" target="_blank">Open PDF</a>`;
+          } else {
+            previewContainer.innerHTML = `<p>Click to download:</p><a href="${fileUrl}" target="_blank">Download File (${file})</a>`;
+          }
+        } else {
+          previewContainer.innerHTML = `<p>No file uploaded.</p>`;
+        }
+        detailModal.style.display = 'flex';
+      });
+    });
+
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

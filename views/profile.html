@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile</title>
+  <link rel="stylesheet" href="/style.css" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .toggle-org-button {
+  background: none;
+  color: #007bff;
+  font-size: 0.875rem;
+  padding: 0;
+  margin: 0.25rem 0;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.add-org-button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 0 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+</style>
+
+
+</head>
+<body>
+  <!-- Header -->
+  <header class="overlap">
+    <div class="group">
+      <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+    </div>
+    <a href="/userpage" class="text-wrapper">S-CORE</a>
+    <span class="text-wrapper-2">My Profile</span>
+
+    <div class="dropdown-wrapper">
+      <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+        <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+        <div class="user">
+<img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+        </div>
+      </div>
+      <div class="dropdown-menu" id="dropdownMenu">
+        <a href="/profile">My Profile</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Profile Content -->
+  <main class="student-side">
+    <div class="div">
+        <section class="activity-section">
+        <div class="section-header">
+            <div class="profile-info">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+     alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+            <div>
+                <h2><%= user.fName %> <%= user.lName %></h2>
+                <p style="color: #6b7280;">Student</p>
+            </div>
+            </div>
+            <a href="/userpage" class="view-all-btn" style="display:inline-block;">
+            ← Back to Dashboard
+            </a>
+        </div>
+
+        <div class="profile-table" style="background:white; border-radius:24px; box-shadow:var(--card-shadow); padding:2.5rem;">
+            <table class="requests-table" style="border:none;">
+            <tbody>
+                <tr><td class="label">Full Name:</td><td><%= user.fName %> <%= user.mName %> <%= user.lName %></td></tr>
+                <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
+                <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
+                <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
+                <tr><td class="label">Organization:</td><td><%= user.studentOrganization || 'None' %></td></tr>
+                <tr><td class="label">Course/Year/Section:</td><td><%= user.cys || 'N/A' %></td></tr>
+                <tr><td class="label">Student ID:</td><td><%= user.studentId || 'N/A' %></td></tr>
+            </tbody>
+            </table>
+
+            <div style="margin-top:2rem; display:flex; gap:1rem;">
+            <button class="view-all-btn">Update Profile</button>
+            <button class="view-all-btn">Change Password</button>
+            <button class="view-all-btn" type="button" onclick="openModal('pictureModal')">Update Profile Picture</button>
+            </div>
+        </div>
+        </section>
+    </div>
+    </main>
+
+    <!-- Modals -->
+        <!-- Update Profile Modal -->
+    <div id="updateProfileModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h2 class="modal-title">Update Profile</h2>
+        <span class="close" onclick="closeModal('updateProfileModal')">&times;</span>
+        </div>
+        <form id="updateProfileForm" class="modal-form">
+        <div class="form-group">
+            <label for="fName">First Name</label>
+            <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="mName">Middle Name</label>
+            <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="lName">Last Name</label>
+            <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
+        </div>
+        <div class="form-group">
+            <label for="email">Email (cannot be changed)</label>
+            <input name="email" id="email" type="email" value="<%= user.email %>" disabled />
+        </div>
+        <div class="form-group">
+            <label for="username">Username (cannot be changed)</label>
+            <input name="username" id="username" type="text" value="<%= user.username %>" disabled />
+        </div>
+        <div class="form-group">
+            <label for="phoneNumber">Phone Number</label>
+            <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
+        </div>
+        <div class="form-group">
+            <label for="studentOrganization">Organization</label>
+<select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%">
+  <!-- JavaScript will populate this -->
+</select>
+<button type="button" class="toggle-org-button" onclick="toggleCustomOrg()">Click here if Student Organization is not in the List</button>
+
+<div class="form-group" id="customOrgContainer" style="display: none;">
+  <label for="otherOrganization">Add Other Student Organization</label>
+  <div class="custom-org-input-wrapper" style="display: flex; gap: 0.5rem;">
+    <input type="text" id="otherOrganization" placeholder="Enter organization name" />
+    <button type="button" id="addOrganizationButton" class="add-org-button">+</button>
+  </div>
+</div>
+
+        </div>
+        <div class="form-group">
+            <label for="cys">Course / Year / Section</label>
+            <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" />
+        </div>
+        <div class="form-group">
+            <label for="studentId">Student ID</label>
+            <input name="studentId" id="studentId" type="text" value="<%= user.studentId || '' %>" />
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save Changes</button>
+        </div>
+        </form>
+    </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h2 class="modal-title">Change Password</h2>
+        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+        </div>
+        <form id="passwordForm" class="modal-form">
+        <div class="form-group">
+            <label for="oldPassword">Old Password</label>
+            <input name="oldPassword" id="oldPassword" type="password" required />
+        </div>
+        <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <input name="newPassword" id="newPassword" type="password" required />
+        </div>
+        <div class="form-actions">
+            <button type="submit">Update Password</button>
+        </div>
+        </form>
+    </div>
+    </div>
+
+   
+ <!-- Update Profile Picture Modal -->
+<div id="pictureModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Update Profile Picture</h2>
+      <span class="close" onclick="closeModal('pictureModal')">&times;</span>
+    </div>
+    <form id="pictureForm" method="POST" action="/profile/upload-picture" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="formFile">Choose new profile picture</label>
+      <input class="form-control" type="file" id="formFile" name="profilePicture" accept="image/*" required>
+    </div>
+    <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
+      <button type="submit" class="submit-btn" style="background: var(--success); color: white;">Upload</button>
+    </div>
+  </form>
+
+    <form id="deletePictureForm" method="POST" action="/profile/delete-picture">
+      <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
+        <button type="submit" class="delete-btn" style="background: var(--danger); color: white;">Delete Profile Picture</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <script>
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+
+    document.querySelectorAll('.view-all-btn')[1].onclick = () => openModal('updateProfileModal');
+    document.querySelectorAll('.view-all-btn')[2].onclick = () => openModal('passwordModal');
+
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    window.onclick = function (e) {
+        ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
+        if (e.target.id === id) closeModal(id);
+        });
+    };
+
+  // AJAX: Update Profile
+  document.getElementById('updateProfileForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    const res = await fetch('/profile/update-popup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) location.reload();
+    else alert('Update failed');
+  };
+
+  // AJAX: Change Password
+  document.getElementById('passwordForm').onsubmit = async function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    const res = await fetch('/profile/change-password-popup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      alert('Password updated');
+      closeModal('passwordModal');
+    } else {
+      const err = await res.text();
+      alert(err);
+    }
+  };
+
+  // AJAX: Update Profile Picture
+  document.querySelectorAll('.view-all-btn')[3].onclick = () => openModal('pictureModal');
+ document.getElementById('pictureForm').onsubmit = async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch('/profile/upload-picture', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+
+    alert('Profile picture updated!');
+    location.reload();
+  } catch (error) {
+    alert('Error uploading picture: ' + error.message);
+  }
+};
+
+// AJAX: Delete Profile Picture
+document.getElementById('deletePictureForm').onsubmit = async function (e) {
+  e.preventDefault();
+
+  if (!confirm('Are you sure you want to delete your profile picture?')) return;
+
+  const res = await fetch('/profile/delete-picture', {
+    method: 'POST'
+  });
+
+  if (res.ok) {
+    alert('Profile picture deleted.');
+    location.reload();
+  } else {
+    const err = await res.text();
+    alert('Error: ' + err);
+  }
+};
+const organizationOptions = [
+  "University Student Government (USG)",
+  "Internal Audit Service (IAS)",
+  "University Student Election Commission (USEC)",
+  "Office of the Solicitor General (OSG)",
+  // ...(add all other orgs here)
+  "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+];
+
+$(document).ready(function () {
+  const select = $('#studentOrganization');
+
+  // Populate org options
+  organizationOptions.forEach(org => {
+    const option = new Option(org, org, false, false);
+    select.append(option);
+  });
+
+  // Set current values from server-rendered string (split if comma-separated)
+  const currentOrgs = `<%= user.studentOrganization || '' %>`.split(',').map(o => o.trim()).filter(Boolean);
+  select.val(currentOrgs).trigger('change');
+
+  // Initialize Select2
+  select.select2({
+    placeholder: "Search or select organizations",
+    allowClear: true,
+    width: '100%'
+  });
+});
+
+// Toggle custom org input
+function toggleCustomOrg() {
+  const container = document.getElementById('customOrgContainer');
+  container.style.display = container.style.display === 'none' ? 'block' : 'none';
+}
+
+// Add new organization to Select2
+document.getElementById('addOrganizationButton')?.addEventListener('click', function () {
+  const input = document.getElementById('otherOrganization');
+  const orgName = input.value.trim();
+  const select = $('#studentOrganization');
+
+  if (orgName) {
+    // Check if it already exists
+    if (select.find(`option[value="${orgName}"]`).length === 0) {
+      const newOption = new Option(orgName, orgName, true, true);
+      select.append(newOption);
+    }
+
+    // Select it
+    const current = select.val() || [];
+    if (!current.includes(orgName)) {
+      current.push(orgName);
+      select.val(current).trigger('change');
+    }
+
+    input.value = '';
+  } else {
+    alert('Please enter an organization name.');
+  }
+});
+
+  </script>
+
+</body>
+</html>

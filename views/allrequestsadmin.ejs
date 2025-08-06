@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - All Requests</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="student-side">
+    <div class="div">
+
+      <!-- Header -->
+      <div class="overlap">
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+        <span class="text-wrapper-2">All Requests</span>
+
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="/Picture/user.png" alt="Admin Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/profileadmin">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section -->
+      <section class="activity-section">
+        <div class="section-header">
+          <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
+            <div>
+              <h2 style="margin-bottom: 0.25rem;">All Requests Overview</h2>
+              <p style="color: #6b7280;">View and manage all student requests in one place</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+          <a href="/admin/all-requests" class="view-all-btn" style="background: var(--primary-green); color: white;">All Requests</a>
+          <a href="/admin/approvals" class="view-all-btn">Approvals</a>
+          <a href="/admin/services" class="view-all-btn">Services</a>
+          <a href="/admin/users" class="view-all-btn">Users</a>
+        </nav>
+
+        <!-- Filter Options -->
+        <div class="filter-section">
+          <div class="filter-container">
+            <div class="filter-group">
+              <label class="filter-label">Filter by:</label>
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="typeFilter" class="filter-sublabel">Type</label>
+                  <select id="typeFilter" class="filter-select">
+                    <option value="all">All Types</option>
+                    <option value="Request Approval">Request Approval</option>
+                    <option value="Service Request">Service Request</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="statusFilter" class="filter-sublabel">Status</label>
+                  <select id="statusFilter" class="filter-select">
+                    <option value="all">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="For Revision">For Revision</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="studentFilter" class="filter-sublabel">Student</label>
+                  <input type="text" id="studentFilter" class="filter-input" placeholder="Search student name...">
+                </div>
+                <div class="filter-item">
+                  <label for="organizationFilter" class="filter-sublabel">Organization</label>
+                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search organization...">
+                </div>
+              </div>
+            </div>
+            <div class="filter-actions">
+              <button id="clearFilters" class="clear-filters-btn">
+                <span>🗑️</span> Clear All
+              </button>
+              <div class="results-count">
+                <span id="resultsCount">Showing all requests</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <section class="table-section" style="overflow-x: auto;">
+          <table class="requests-table" style="width: 100%; border-collapse: collapse; background: white;">
+            <thead style="background: var(--light-green); color: var(--primary-green);">
+              <tr>
+                <th>Request ID</th>
+                <th>Type</th>
+                <th>Student</th>
+                <th>Project Title</th>
+                <th>Organization</th>
+                <th>Status</th>
+                <th>Assigned Units</th>
+                <th>Date Submitted</th>
+              </tr>
+            </thead>
+            <tbody id="requestsTableBody">
+              <% allRequests.forEach(request => { %>
+              <tr class="request-row"
+                  data-id="<%= request._id %>"
+                  data-type="<%= request.type %>"
+                  data-title="<%= request.title %>"
+                  data-status="<%= request.status %>"
+                  data-organization="<%= request.organization %>"
+                  data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
+                  data-datetime="<%= request.datetime.toLocaleString() %>"
+                  data-description="<%= request.description %>" 
+                  data-file="<%= request.file || '' %>"
+                  data-deadline="<%= request.deadline ? request.deadline.toLocaleString() : '' %>"
+                  data-student="<%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %>">
+                <td><%= request._id.toString().slice(-6) %></td>
+                <td>
+                  <% if (request.type === 'Request Approval') { %>
+                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #dbeafe; color: #1e40af;">
+                      <%= request.type %>
+                    </span>
+                  <% } else { %>
+                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #fef3c7; color: #92400e;">
+                      <%= request.type %>
+                    </span>
+                  <% } %>
+                </td>
+                <td><%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %></td>
+                <td><%= request.title %></td>
+                <td><%= request.organization %></td>
+                <td>
+                  <span class="status-badge <%= request.status.toLowerCase() %>">
+                    <%= request.status %>
+                  </span>
+                </td>
+                <td><%= request.assignedUnits || 'Not yet assigned' %></td>
+                <td><%= request.datetime.toLocaleString() %></td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+
+          <% if (allRequests.length === 0) { %>
+          <div style="text-align: center; padding: 2rem; color: #6b7280;">
+            <p>No requests found.</p>
+          </div>
+          <% } %>
+        </section>
+
+        <!-- Back to Dashboard -->
+        <a href="/admin" class="view-all-btn" style="margin-top: 1rem; display: inline-block;">← Back to Dashboard</a>
+      </section>
+    </div>
+  </div>
+
+  <!-- Request Details Modal -->
+  <div id="detailsModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <header class="modal-header">
+        <span class="modal-title">Request Details</span>
+        <span class="close" id="closeDetailsModal">&times;</span>
+      </header>
+      <div class="modal-body">
+        <p><strong>Type:</strong> <span id="detailType"></span></p>
+        <p><strong>Student:</strong> <span id="detailStudent"></span></p>
+        <p><strong>Title:</strong> <span id="detailTitle"></span></p>
+        <p><strong>Organization:</strong> <span id="detailOrganization"></span></p>
+        <p><strong>Description:</strong> <span id="detailDescription"></span></p>
+        <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+        <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
+        <p><strong>Date Submitted:</strong> <span id="detailDatetime"></span></p>
+        <p id="deadlineSection" style="display: none;"><strong>Deadline:</strong> <span id="detailDeadline"></span></p>
+        <div id="file-preview" style="margin-top:1rem;"></div>
+        <form class="modal-form" id="updateForm" method="POST" style="margin-top: 1rem;">
+          <input type="hidden" id="updateRequestId" name="requestId" />
+          <div class="form-group">
+            <label for="status">Status:</label>
+            <select id="status" name="status">
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="For Revision">For Revision</option>
+            </select>
+          </div>
+          <div class="form-group" id="assignedUnitsGroup">
+            <label for="assignedUnits">Assigned Units:</label>
+            <select id="assignedUnits" name="assignedUnits">
+              <option value="">Not yet assigned</option>
+              <option value="Social Media Unit">Social Media Unit</option>
+              <option value="Graphics Unit">Graphics Unit</option>
+              <option value="Multimedia Unit">Multimedia Unit</option>
+              <option value="Public Relations Unit">Public Relations Unit</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Logic -->
+  <script>
+    const detailModal = document.getElementById("detailsModal");
+    const closeDetailsModal = document.getElementById("closeDetailsModal");
+    const typeFilter = document.getElementById("typeFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const clearFiltersBtn = document.getElementById("clearFilters");
+    const tableBody = document.getElementById("requestsTableBody");
+    const allRows = Array.from(document.querySelectorAll('.request-row'));
+
+    closeDetailsModal.onclick = () => detailModal.style.display = 'none';
+
+    window.onclick = function(event) {
+      if (event.target === detailModal) detailModal.style.display = 'none';
+    }
+
+    // Enhanced filter functionality
+    function filterRequests() {
+      const typeValue = typeFilter.value.toLowerCase();
+      const statusValue = statusFilter.value.toLowerCase();
+      const studentValue = document.getElementById('studentFilter').value.toLowerCase();
+      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+      
+      let visibleCount = 0;
+
+      allRows.forEach(row => {
+        const rowType = row.dataset.type.toLowerCase();
+        const rowStatus = row.dataset.status.toLowerCase();
+        const rowStudent = row.dataset.student.toLowerCase();
+        const rowOrganization = row.dataset.organization.toLowerCase();
+
+        const typeMatch = typeValue === 'all' || rowType.includes(typeValue);
+        const statusMatch = statusValue === 'all' || rowStatus === statusValue;
+        const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
+        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
+
+        const isVisible = typeMatch && statusMatch && studentMatch && organizationMatch;
+        row.style.display = isVisible ? '' : 'none';
+        
+        if (isVisible) visibleCount++;
+      });
+
+      // Update results count
+      const totalCount = allRows.length;
+      const resultsCount = document.getElementById('resultsCount');
+      if (visibleCount === totalCount) {
+        resultsCount.textContent = `Showing all ${totalCount} requests`;
+      } else {
+        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+      }
+
+      // Show no results message if needed
+      toggleNoResultsMessage(visibleCount === 0);
+    }
+
+    function toggleNoResultsMessage(show) {
+      let noResultsRow = document.getElementById('noResultsRow');
+      
+      if (show && !noResultsRow) {
+        const tbody = document.getElementById('requestsTableBody');
+        noResultsRow = document.createElement('tr');
+        noResultsRow.id = 'noResultsRow';
+        noResultsRow.innerHTML = `
+          <td colspan="8" style="text-align: center; padding: 3rem; color: #6b7280;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
+            <p>Try adjusting your filters to see more results.</p>
+          </td>
+        `;
+        tbody.appendChild(noResultsRow);
+      } else if (!show && noResultsRow) {
+        noResultsRow.remove();
+      }
+    }
+
+    typeFilter.addEventListener('change', filterRequests);
+    statusFilter.addEventListener('change', filterRequests);
+    document.getElementById('studentFilter').addEventListener('input', filterRequests);
+    document.getElementById('organizationFilter').addEventListener('input', filterRequests);
+
+    clearFiltersBtn.addEventListener('click', () => {
+      typeFilter.value = 'all';
+      statusFilter.value = 'all';
+      document.getElementById('studentFilter').value = '';
+      document.getElementById('organizationFilter').value = '';
+      filterRequests();
+    });
+
+    // Row click functionality
+    document.querySelectorAll('.request-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const requestType = row.dataset.type;
+        
+        document.getElementById("detailType").innerText = requestType;
+        document.getElementById("detailStudent").innerText = row.dataset.student;
+        document.getElementById("detailTitle").innerText = row.dataset.title;
+        document.getElementById("detailOrganization").innerText = row.dataset.organization;
+        document.getElementById("detailDescription").innerText = row.dataset.description || 'N/A';
+        document.getElementById("detailStatus").innerText = row.dataset.status;
+        document.getElementById("detailUnits").innerText = row.dataset.units;
+        document.getElementById("detailDatetime").innerText = row.dataset.datetime;
+
+        // Handle deadline (only for Service Requests)
+        const deadlineSection = document.getElementById("deadlineSection");
+        if (requestType === 'Service Request' && row.dataset.deadline) {
+          deadlineSection.style.display = 'block';
+          document.getElementById("detailDeadline").innerText = row.dataset.deadline;
+        } else {
+          deadlineSection.style.display = 'none';
+        }
+
+        // Set form action and show/hide assigned units based on type
+        const updateForm = document.getElementById("updateForm");
+        const assignedUnitsGroup = document.getElementById("assignedUnitsGroup");
+        
+        if (requestType === 'Request Approval') {
+          updateForm.action = '/admin/approval/update-status';
+          assignedUnitsGroup.style.display = 'block';
+        } else {
+          updateForm.action = '/admin/service/update-status';
+          assignedUnitsGroup.style.display = 'none';
+        }
+
+        document.getElementById("updateRequestId").value = row.dataset.id;
+        document.getElementById("status").value = row.dataset.status;
+        document.getElementById("assignedUnits").value = row.dataset.units === 'Not yet assigned' ? '' : row.dataset.units;
+
+        // File preview
+        const file = row.dataset.file;
+        const previewContainer = document.getElementById('file-preview');
+        previewContainer.innerHTML = '';
+        if (file) {
+          const fileUrl = `/uploads/${file}`;
+          const ext = file.split('.').pop().toLowerCase();
+          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            previewContainer.innerHTML = `<img src="${fileUrl}" style="max-width:100%; border-radius:8px;" /><br><a href="${fileUrl}" target="_blank">Open Image</a>`;
+          } else if (ext === 'pdf') {
+            previewContainer.innerHTML = `<embed src="${fileUrl}" width="100%" height="400px" /><br><a href="${fileUrl}" target="_blank">Open PDF</a>`;
+          } else {
+            previewContainer.innerHTML = `<p>Click to download:</p><a href="${fileUrl}" target="_blank">Download File (${file})</a>`;
+          }
+        } else {
+          previewContainer.innerHTML = `<p>No file uploaded.</p>`;
+        }
+
+        detailModal.style.display = 'flex';
+      });
+    });
+
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

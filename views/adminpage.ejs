@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S-CORE Admin Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="student-side">
+    <!-- Header Section -->
+    <div class="overlap">
+      <div class="group">
+        <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+      </div>
+      <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+      <span class="text-wrapper-2">Welcome, Admin <%= name %>!</span>
+
+      <div class="dropdown-wrapper">
+        <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+          <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+          <div class="user">
+            <img class="user-icon" src="/Picture/user.png" alt="Admin Icon" />
+          </div>
+        </div>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a href="/profileadmin">My Profile</a>
+          <a href="/logout">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="div">
+      <!-- Admin Action Cards -->
+      <div class="action-cards-container">
+        <div class="action-card" onclick="location.href='/admin/approvals'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/File.png" alt="Manage Approvals" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Manage Approvals</h3>
+          <p class="card-subtitle">Review and process approval requests</p>
+          <% if (stats.pendingApprovals > 0) { %>
+            <div style="position: absolute; top: 1rem; right: 4rem; background: var(--danger); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">
+              <%= stats.pendingApprovals %>
+            </div>
+          <% } %>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/services'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Repair.png" alt="Manage Services" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Manage Services</h3>
+          <p class="card-subtitle">Handle service requests</p>
+          <% if (stats.pendingServices > 0) { %>
+            <div style="position: absolute; top: 1rem; right: 4rem; background: var(--danger); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">
+              <%= stats.pendingServices %>
+            </div>
+          <% } %>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/users'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/user.png" alt="User Accounts" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">User Accounts</h3>
+          <p class="card-subtitle">Manage student accounts</p>
+          <div class="card-arrow">→</div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Section -->
+      <div class="activity-section">
+        <div class="section-header">
+          <h2 class="section-title">System Status</h2>
+        </div>
+        
+        <div class="activity-grid">
+          <div class="activity-card approved">
+            <div class="activity-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h4>System Online</h4>
+              <p>All services running normally</p>
+              <span class="activity-time">Active</span>
+            </div>
+            <div class="status-badge approved">Online</div>
+          </div>
+
+          <div class="activity-card pending">
+            <div class="activity-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h4>Pending Reviews</h4>
+              <p><%= stats.pendingApprovals + stats.pendingServices %> items need attention</p>
+              <span class="activity-time">Requires action</span>
+            </div>
+            <div class="status-badge pending">Pending</div>
+          </div>
+
+          <div class="activity-card approved">
+            <div class="activity-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M16 21V5A2 2 0 0 0 14 3H10A2 2 0 0 0 8 5V21L12 19L16 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h4>Database</h4>
+              <p>MongoDB connection stable</p>
+              <span class="activity-time">Connected</span>
+            </div>
+            <div class="status-badge approved">Healthy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="stats-section">
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.totalUsers || 0 %></div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.totalApprovals || 0 %></div>
+          <div class="stat-label">Total Approvals</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.totalServices || 0 %></div>
+          <div class="stat-label">Service Requests</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.pendingApprovals || 0 %></div>
+          <div class="stat-label">Pending Approvals</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.pendingServices || 0%></div>
+          <div class="stat-label">Pending Services</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function toggleDropdown() {
+      const menu = document.getElementById("dropdownMenu");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    // Close dropdown if clicking outside
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (!toggle.contains(event.target)) {
+        menu.style.display = "none";
+      }
+    });
+
+    // Add hover animations for action cards
+    document.querySelectorAll('.action-card').forEach(card => {
+      card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-8px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+      });
+    });
+  </script>
+</body>
+</html>
