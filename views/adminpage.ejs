@@ -89,6 +89,15 @@
           <p class="card-subtitle">Manage user accounts</p>
           <div class="card-arrow">→</div>
         </div>
+
+       
+        <div class="calendar-standalone" style="background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; margin-left: 1rem; min-width: 260px; max-width: 320px;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <img src="/Picture/calendar.png" alt="Calendar" style="width: 32px; height: 32px;">
+            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600;">Calendar</h3>
+          </div>
+          <div id="calendar-standalone"></div>
+        </div>
       </div>
 
       <!-- Recent Activity Section -->
@@ -196,6 +205,27 @@
         this.style.transform = 'translateY(0) scale(1)';
       });
     });
+
+    // Render standalone calendar
+    (function() {
+      const calendar = document.getElementById('calendar-standalone');
+      if (!calendar) return;
+      const now = new Date();
+      const month = now.toLocaleString('default', { month: 'long' });
+      const year = now.getFullYear();
+      const firstDay = new Date(year, now.getMonth(), 1).getDay();
+      const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
+      let html = `<div style="font-weight:600; text-align:center;">${month} ${year}</div>`;
+      html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:0.9em;margin-top:4px;">';
+      ['S','M','T','W','T','F','S'].forEach(d=>html+=`<div style="font-weight:600;text-align:center;">${d}</div>`);
+      for(let i=0;i<firstDay;i++) html+='<div></div>';
+      for(let d=1;d<=daysInMonth;d++) {
+        const isToday = d === now.getDate();
+        html += `<div style="padding:4px 0;border-radius:4px;text-align:center;${isToday?'background:#007bff;color:#fff;':''}">${d}</div>`;
+      }
+      html += '</div>';
+      calendar.innerHTML = html;
+    })();
   </script>
 </body>
 </html>
