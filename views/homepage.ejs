@@ -39,7 +39,6 @@
       overflow-x: hidden;
     }
 
-    /* Animated Background */
     .bg-animation {
       position: fixed;
       top: 0;
@@ -71,7 +70,6 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* Enhanced Navbar */
     .navbar {
       position: fixed;
       top: 0;
@@ -95,7 +93,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0 30px;
+      padding: 0 20px;
     }
 
     .logo-area {
@@ -105,7 +103,7 @@
     }
 
     .logo-area img {
-      height: 50px;
+      height: 40px;
       border-radius: 12px;
       transition: transform 0.3s ease;
     }
@@ -116,7 +114,7 @@
 
     .logo-text {
       font-family: 'Playfair Display', serif;
-      font-size: 1.8rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: var(--primary-green);
       user-select: none;
@@ -144,6 +142,11 @@
       transform: translateY(-2px);
     }
 
+    .nav-link.active {
+      color: var(--primary-green);
+      background: var(--light-green);
+    }
+
     .cta-nav {
       background: var(--gradient) !important;
       color: var(--white) !important;
@@ -158,12 +161,70 @@
       box-shadow: 0 6px 20px rgba(26, 93, 26, 0.4);
     }
 
-    /* Hero Section */
+    .mobile-menu-toggle {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .mobile-menu-toggle span {
+      width: 25px;
+      height: 3px;
+      background: var(--primary-green);
+      margin: 3px 0;
+      transition: 0.3s;
+      border-radius: 2px;
+    }
+
+    .mobile-menu-toggle.active span:nth-child(1) {
+      transform: rotate(-45deg) translate(-5px, 6px);
+    }
+
+    .mobile-menu-toggle.active span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .mobile-menu-toggle.active span:nth-child(3) {
+      transform: rotate(45deg) translate(-5px, -6px);
+    }
+
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      top: 80px;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(26, 93, 26, 0.1);
+      box-shadow: 0 4px 20px rgba(26, 93, 26, 0.1);
+      z-index: 999;
+    }
+
+    .mobile-nav.active {
+      display: block;
+    }
+
+    .mobile-nav-links {
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 15px;
+    }
+
+    .mobile-nav .nav-link {
+      padding: 15px 20px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+
     .hero {
       min-height: 100vh;
       display: flex;
       align-items: center;
-      padding: 100px 0 50px;
+      padding: 120px 0 50px;
       position: relative;
       overflow: hidden;
     }
@@ -171,7 +232,7 @@
     .hero-container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 0 30px;
+      padding: 0 20px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 60px;
@@ -254,12 +315,12 @@
       padding: 40px;
       box-shadow: 0 20px 60px rgba(26, 93, 26, 0.1);
       border: 1px solid rgba(26, 93, 26, 0.1);
-      animation: float 6s ease-in-out infinite;
+      animation: moveUp 2s ease-out forwards;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
+    @keyframes moveUp {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(-20px); }
     }
 
     .pledge-title {
@@ -289,7 +350,6 @@
       line-height: 1.6;
     }
 
-    /* About Section */
     .about-section {
       padding: 100px 0;
       background: var(--white);
@@ -298,7 +358,7 @@
     .section-container {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 0 30px;
+      padding: 0 20px;
     }
 
     .section-header {
@@ -390,7 +450,6 @@
       line-height: 1.6;
     }
 
-    /* Services Section */
     .services-section {
       padding: 100px 0;
       background: var(--light-green);
@@ -451,7 +510,6 @@
       line-height: 1.7;
     }
 
-    /* Team Section */
     .team-section {
       padding: 100px 0;
       background: var(--white);
@@ -512,7 +570,6 @@
       text-decoration: underline;
     }
 
-    /* Contact Section */
     .contact-section {
       padding: 100px 0;
       background: var(--dark-green);
@@ -680,7 +737,6 @@
       box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
     }
 
-    /* Footer */
     .footer {
       background: var(--text-dark);
       color: rgba(255, 255, 255, 0.8);
@@ -691,7 +747,7 @@
     .footer-content {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 0 30px;
+      padding: 0 20px;
     }
 
     .footer p {
@@ -715,37 +771,98 @@
       color: var(--gold);
     }
 
-    /* Mobile Responsiveness */
+    @media (max-width: 1024px) {
+      .logo-text {
+        font-size: 1.2rem;
+      }
+
+      .hero-content h1 {
+        font-size: 3rem;
+      }
+
+      .section-title {
+        font-size: 2.5rem;
+      }
+
+      .contact-content h2 {
+        font-size: 3rem;
+      }
+    }
+
     @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .mobile-menu-toggle {
+        display: flex;
+      }
+
+      .logo-area {
+        gap: 10px;
+      }
+
+      .logo-area img {
+        height: 35px;
+      }
+
+      .logo-text {
+        font-size: 1rem;
+      }
+
+      .hero {
+        padding: 100px 0 50px;
+        min-height: auto;
+      }
+
       .hero-container,
       .about-grid {
         grid-template-columns: 1fr;
         gap: 40px;
       }
 
+      .hero-content h1 {
+        font-size: 2.2rem;
+        text-align: center;
+      }
+
+      .hero-content p {
+        font-size: 1.1rem;
+        text-align: center;
+      }
+
+      .hero-card {
+        padding: 30px 25px;
+      }
+
+      .pledge-title {
+        font-size: 1.5rem;
+      }
+
       .contact-cards {
         grid-template-columns: 1fr;
       }
 
-      .hero-content h1 {
-        font-size: 2.5rem;
-      }
-
       .contact-content h2 {
-        font-size: 2.5rem;
-      }
-
-      .section-title {
         font-size: 2.2rem;
       }
 
-      .nav-links {
-        display: none;
+      .contact-content .intro-text {
+        font-size: 1.1rem;
+      }
+
+      .section-title {
+        font-size: 2rem;
+      }
+
+      .section-subtitle {
+        font-size: 1.1rem;
       }
 
       .hero-buttons {
         flex-direction: column;
         align-items: stretch;
+        gap: 15px;
       }
 
       .btn-primary,
@@ -753,20 +870,140 @@
       .btn-cta {
         text-align: center;
         justify-content: center;
+        padding: 16px 30px;
+        font-size: 1rem;
       }
 
-      .team-grid,
+      .feature-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+
+      .feature-card {
+        padding: 30px 25px;
+      }
+
       .services-grid {
         grid-template-columns: 1fr;
+        gap: 30px;
+      }
+
+      .service-card {
+        padding: 40px 30px;
+      }
+
+      .team-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
       }
 
       .social-links {
         flex-wrap: wrap;
         gap: 15px;
       }
+
+      .social-link {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+      }
+
+      .contact-card {
+        padding: 30px 25px;
+      }
+
+      .contact-card-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+      }
+
+      .footer-links {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .about-content h3 {
+        font-size: 1.6rem;
+        text-align: center;
+      }
+
+      .about-content p {
+        font-size: 1rem;
+        text-align: center;
+      }
+
+      .btn-cta {
+        min-width: auto;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+      }
     }
 
-    /* Smooth Animations */
+    @media (max-width: 480px) {
+      .nav-container {
+        padding: 0 15px;
+      }
+
+      .section-container {
+        padding: 0 15px;
+      }
+
+      .hero-container {
+        padding: 0 15px;
+      }
+
+      .logo-text {
+        display: block;
+        font-size: 0.9rem;
+      }
+
+      .hero-content h1 {
+        font-size: 1.8rem;
+        line-height: 1.3;
+      }
+
+      .hero-content p {
+        font-size: 1rem;
+      }
+
+      .hero-card {
+        padding: 25px 20px;
+      }
+
+      .pledge-title {
+        font-size: 1.3rem;
+      }
+
+      .section-title {
+        font-size: 1.8rem;
+      }
+
+      .contact-content h2 {
+        font-size: 2rem;
+      }
+
+      .feature-card,
+      .service-card,
+      .team-card .team-info,
+      .contact-card {
+        padding: 25px 20px;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        padding: 14px 25px;
+        font-size: 0.95rem;
+      }
+
+      .social-link {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+      }
+    }
+
     .fade-in {
       opacity: 0;
       transform: translateY(30px);
@@ -780,7 +1017,6 @@
       }
     }
 
-    /* Loading Animation */
     .loading {
       position: fixed;
       top: 0;
@@ -811,38 +1047,50 @@
   </style>
 </head>
 <body>
-  <!-- Loading Screen -->
   <div class="loading" id="loading">
     <div class="loader"></div>
   </div>
 
-  <!-- Animated Background -->
   <div class="bg-animation"></div>
 
-  <!-- Enhanced Navbar -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <div class="logo-area">
         <img src="https://iili.io/F62tQZG.jpg" alt="DLSU-D Logo">
         <span class="logo-text">Strategic Communications Office</span>
       </div>
-              <div class="nav-links">
+      <div class="nav-links">
         <a href="#home" class="nav-link">Home</a>
         <a href="#about" class="nav-link">About</a>
         <a href="#services" class="nav-link">Services</a>
         <a href="#team" class="nav-link">Team</a>
         <a href="#contact" class="nav-link">Contact</a>
-        <a href="/login" class="nav-link cta-nav">S-CORE Portal</a>
+        <a href="/login" class="nav-link cta-nav">Access S-CORE</a>
+      </div>
+      <div class="mobile-menu-toggle" id="mobileMenuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
     </div>
   </nav>
 
-  <!-- Hero Section -->
+  <div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-links">
+      <a href="#home" class="nav-link">Home</a>
+      <a href="#about" class="nav-link">About</a>
+      <a href="#services" class="nav-link">Services</a>
+      <a href="#team" class="nav-link">Team</a>
+      <a href="#contact" class="nav-link">Contact</a>
+      <a href="/login" class="nav-link cta-nav">Access S-CORE</a>
+    </div>
+  </div>
+
   <section class="hero" id="home">
     <div class="hero-container">
       <div class="hero-content fade-in">
         <h1>Empowering Communication, <span class="hero-highlight">Building Connections</span></h1>
-        <p>The Strategic Communications Office identifies information needs across our academic community and develops innovative communication strategies that create an accurate, inspiring image of De La Salle University-Dasmariñas.</p>
+        <p>The Strategic Communications Office identifies the information needs of the different offices of the academic community and develops appropriate communication strategies to meet those needs. It produces institutional information materials, establishes linkages with the mass media and formulates marketing strategies that create an accurate image of the University.</p>
         <div class="hero-buttons">
           <a href="#contact" class="btn-primary">
             Connect With Us →
@@ -872,7 +1120,6 @@
     </div>
   </section>
 
-  <!-- About Section -->
   <section class="about-section" id="about">
     <div class="section-container">
       <div class="section-header fade-in">
@@ -913,18 +1160,17 @@
     </div>
   </section>
 
-  <!-- Services Section -->
   <section class="services-section" id="services">
     <div class="section-container">
       <div class="section-header fade-in">
         <h2 class="section-title">Our Services</h2>
-        <p class="section-subtitle">Comprehensive communication solutions tailored to your needs</p>
+        <p class="section-subtitle">Comprehensive communication solutions tailored to the needs of the institution</p>
       </div>
       <div class="services-grid">
         <div class="service-card fade-in">
           <span class="service-number">01</span>
           <h3>Content Creation & Strategy</h3>
-          <p>We develop compelling content strategies and create high-quality materials including brochures, newsletters, digital content, and multimedia presentations that effectively communicate your message to target audiences.</p>
+          <p>We develop compelling content strategies and create high-quality materials including brochures, newsletters, digital content, and multimedia presentations that effectively communicate the university's message to target audiences.</p>
         </div>
         <div class="service-card fade-in">
           <span class="service-number">02</span>
@@ -955,7 +1201,6 @@
     </div>
   </section>
 
-  <!-- Team Section -->
   <section class="team-section" id="team">
     <div class="section-container">
       <div class="section-header fade-in">
@@ -965,34 +1210,73 @@
       <div class="team-grid">
         <div class="team-card fade-in">
           <div class="team-info">
-            <h4>Ma. Erika Villanueva</h4>
+            <h4>Wynne Angelyne O. Chui, MDMG</h4>
             <div class="team-role">SCO Director</div>
             <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:erika.villanueva@dlsud.edu.ph">erika.villanueva@dlsud.edu.ph</a></p>
-              <p><strong>Phone:</strong> (046) 481-1900 local 1201</p>
-              <p><strong>Office:</strong> 2nd Floor, Ayuntamiento De Gonzalez Bldg.</p>
+              <p><strong>Email:</strong> <a href="mailto:scodirector@dlsud.edu.ph">scodirector@dlsud.edu.ph</a></p>
             </div>
           </div>
         </div>
         <div class="team-card fade-in">
           <div class="team-info">
-            <h4>Joseph Fernandez</h4>
-            <div class="team-role">Communications Coordinator</div>
+            <h4>Ma. Carmila R. Ferrer</h4>
+            <div class="team-role">Institutional Secretary</div>
             <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:joseph.fernandez@dlsud.edu.ph">joseph.fernandez@dlsud.edu.ph</a></p>
-              <p><strong>Phone:</strong> (046) 481-1900 local 1212</p>
-              <p><strong>Specialization:</strong> Media Relations & Content Strategy</p>
+              <p><strong>Email:</strong> <a href="mailto:scosecretary@dlsud.edu.ph">scosecretary@dlsud.edu.ph</a></p>
             </div>
           </div>
         </div>
         <div class="team-card fade-in">
           <div class="team-info">
-            <h4>Alyssa Santos</h4>
-            <div class="team-role">Digital Communications Specialist</div>
+            <h4>Amvher A. Pamaran</h4>
+            <div class="team-role">Social Media Manager</div>
             <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:alyssa.santos@dlsud.edu.ph">alyssa.santos@dlsud.edu.ph</a></p>
-              <p><strong>Phone:</strong> (046) 481-1900 local 1223</p>
-              <p><strong>Specialization:</strong> Digital Marketing & Social Media</p>
+              <p><strong>Email:</strong> <a href="mailto:"></a></p>
+            </div>
+          </div>
+        </div>
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Jacquelyn M. Torres</h4>
+            <div class="team-role">Public Relations Officer</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:"></a></p>
+            </div>
+          </div>
+        </div>
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Christopher John B. Catapang</h4>
+            <div class="team-role">Graphics/Design and Layout Artist</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:"></a></p>
+            </div>
+          </div>
+        </div>
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Zildjian Malachi M. Periodico</h4>
+            <div class="team-role">Graphics/Design and Layout Artist</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:"></a></p>
+            </div>
+          </div>
+        </div>
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Joseph Neil P. Romerosa</h4>
+            <div class="team-role">Multimedia Artist</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:"></a></p>
+            </div>
+          </div>
+        </div>
+        <div class="team-card fade-in">
+          <div class="team-info">
+            <h4>Evie Rose C. San Jose</h4>
+            <div class="team-role">Multimedia Artist</div>
+            <div class="team-contact">
+              <p><strong>Email:</strong> <a href="mailto:"></a></p>
             </div>
           </div>
         </div>
@@ -1000,12 +1284,11 @@
     </div>
   </section>
 
-  <!-- Contact Section -->
   <section class="contact-section" id="contact">
     <div class="section-container">
       <div class="contact-content fade-in">
-        <h2>Let's Connect</h2>
-        <p class="intro-text">Ready to elevate your communication strategy? We're here to help you connect with your audience effectively and build meaningful relationships that drive success.</p>
+        <h2>Contact Us</h2>
+        <p class="intro-text">Let us know if you have concerns.</p>
         
         <div class="contact-cards">
           <div class="contact-card fade-in">
@@ -1018,40 +1301,37 @@
           <div class="contact-card fade-in">
             <div class="contact-card-icon">📞</div>
             <h3>Call Us</h3>
-            <p>Speak directly with our communication experts for immediate assistance and consultation.</p>
-            <a href="tel:+6346481190">(046) 481-1900 local 1200</a>
+            <p>Speak directly with us for immediate assistance and consultation.</p>
+            <a href="tel:+6346481190">(046) 481-1900 local 3031</a>
           </div>
           
           <div class="contact-card fade-in">
             <div class="contact-card-icon">📍</div>
             <h3>Visit Us</h3>
             <p>Meet us in person at our office for detailed discussions and strategic planning sessions.</p>
-            <p>2nd Floor, Ayuntamiento De Gonzalez Bldg.<br>DLSU-Dasmariñas, Cavite</p>
+            <p>2nd Floor, Ayuntamiento De Gonzalez Building<br>DLSU-Dasmariñas, Cavite</p>
           </div>
           
           <div class="contact-card fade-in">
             <div class="contact-card-icon">⏰</div>
             <h3>Office Hours</h3>
             <p>We're available during regular business hours to serve you better.</p>
-            <p><strong>Monday - Friday:</strong> 8:00 AM - 5:00 PM<br><strong>Saturday:</strong> 8:00 AM - 12:00 PM</p>
+            <p><strong>Monday - Friday:</strong> 8:00 AM - 5:00 PM</p>
           </div>
         </div>
 
         <div class="social-section fade-in">
           <h3>Follow Us on Social Media</h3>
           <div class="social-links">
-            <a href="https://facebook.com/dlsud" target="_blank" class="social-link" title="Facebook">f</a>
-            <a href="https://twitter.com/dlsud" target="_blank" class="social-link" title="Twitter">𝕏</a>
-            <a href="https://instagram.com/dlsud" target="_blank" class="social-link" title="Instagram">📷</a>
-            <a href="https://linkedin.com/school/dlsud" target="_blank" class="social-link" title="LinkedIn">in</a>
-            <a href="https://youtube.com/dlsud" target="_blank" class="social-link" title="YouTube">▶</a>
+            <a href="https://facebook.com/DLSU.Dasmarinas" target="_blank" class="social-link" title="Facebook">f</a>
+            <a href="https://facebook.com/dlsudsco" target="_blank" class="social-link" title="Facebook">f</a>
+            <a href="https://youtube.com/@DLSUDasmaOfficial" target="_blank" class="social-link" title="YouTube">▶</a>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-links">
@@ -1062,9 +1342,7 @@
     </div>
   </footer>
 
-  <!-- JavaScript for Enhanced Functionality -->
   <script>
-    // Loading Screen
     window.addEventListener('load', function() {
       const loading = document.getElementById('loading');
       loading.style.opacity = '0';
@@ -1073,10 +1351,54 @@
       }, 500);
     });
 
-    // Dynamic Year
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
-    // Navbar Scroll Effect
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const mobileNav = document.getElementById('mobileNav');
+
+    mobileMenuToggle.addEventListener('click', function() {
+      this.classList.toggle('active');
+      mobileNav.classList.toggle('active');
+    });
+
+    function updateActiveNavLink() {
+      const navLinks = document.querySelectorAll('.nav-link:not(.cta-nav)');
+      navLinks.forEach(link => link.classList.remove('active'));
+      
+      const sections = document.querySelectorAll('section[id]');
+      let current = '';
+      
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 100;
+        if (window.scrollY >= sectionTop) {
+          current = section.getAttribute('id');
+        }
+      });
+      
+      if (current) {
+        const activeLink = document.querySelector(`a[href="#${current}"]`);
+        if (activeLink && !activeLink.classList.contains('cta-nav')) {
+          activeLink.classList.add('active');
+        }
+      }
+    }
+
+    window.addEventListener('scroll', updateActiveNavLink);
+
+    document.querySelectorAll('.mobile-nav .nav-link').forEach(link => {
+      link.addEventListener('click', function() {
+        mobileMenuToggle.classList.remove('active');
+        mobileNav.classList.remove('active');
+      });
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!mobileMenuToggle.contains(e.target) && !mobileNav.contains(e.target)) {
+        mobileMenuToggle.classList.remove('active');
+        mobileNav.classList.remove('active');
+      }
+    });
+
     window.addEventListener('scroll', function() {
       const navbar = document.getElementById('navbar');
       if (window.scrollY > 50) {
@@ -1086,7 +1408,6 @@
       }
     });
 
-    // Smooth Scrolling for Navigation Links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function(e) {
         e.preventDefault();
@@ -1101,7 +1422,6 @@
       });
     });
 
-    // Intersection Observer for Fade-in Animations
     const observerOptions = {
       threshold: 0.1,
       rootMargin: '0px 0px -50px 0px'
@@ -1116,12 +1436,10 @@
       });
     }, observerOptions);
 
-    // Observe all elements with fade-in class
     document.querySelectorAll('.fade-in').forEach(el => {
       observer.observe(el);
     });
 
-    // Add some interactive hover effects
     document.querySelectorAll('.team-card, .service-card, .feature-card, .contact-card').forEach(card => {
       card.addEventListener('mouseenter', function() {
         this.style.transform = 'translateY(-10px) scale(1.02)';
@@ -1132,19 +1450,8 @@
       });
     });
 
-    // Parallax effect for hero section
-    window.addEventListener('scroll', function() {
-      const scrolled = window.pageYOffset;
-      const hero = document.querySelector('.hero');
-      if (hero) {
-        hero.style.transform = `translateY(${scrolled * 0.3}px)`;
-      }
-    });
-
-    // Add click effects to buttons
     document.querySelectorAll('.btn-primary, .btn-secondary, .btn-cta, .cta-nav').forEach(button => {
       button.addEventListener('click', function(e) {
-        // Create ripple effect
         const ripple = document.createElement('span');
         const rect = this.getBoundingClientRect();
         const size = Math.max(rect.width, rect.height);
@@ -1173,7 +1480,6 @@
       });
     });
 
-    // Add ripple animation
     const style = document.createElement('style');
     style.textContent = `
       @keyframes ripple {
@@ -1185,7 +1491,6 @@
     `;
     document.head.appendChild(style);
 
-    // Enhanced contact card interactions
     document.querySelectorAll('.contact-card').forEach(card => {
       card.addEventListener('mouseenter', function() {
         const icon = this.querySelector('.contact-card-icon');
@@ -1198,7 +1503,6 @@
       });
     });
 
-    // Social links hover effects
     document.querySelectorAll('.social-link').forEach(link => {
       link.addEventListener('mouseenter', function() {
         this.style.transform = 'translateY(-5px) scale(1.1)';
