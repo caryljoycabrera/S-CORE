@@ -34,6 +34,22 @@
     <div class="div">
       <!-- Admin Action Cards -->
       <div class="action-cards-container">
+
+        <div class="action-card" onclick="location.href='/admin/allrequestsadmin'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Track All Requests</h3>
+          <p class="card-subtitle">Manage all requests</p>
+          <% if (stats.pendingServices > 0) { %>
+            <div style="position: absolute; top: 1rem; right: 4rem; background: var(--danger); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">
+              <%= stats.pendingServices %>
+            </div>
+          <% } %>
+          <div class="card-arrow">→</div>
+        </div>
+
         <div class="action-card" onclick="location.href='/admin/approvals'">
           <div class="card-icon-wrapper">
             <img src="/Picture/File.png" alt="Manage Approvals" class="card-icon" />
@@ -70,7 +86,7 @@
             <div class="icon-glow"></div>
           </div>
           <h3 class="card-title">User Accounts</h3>
-          <p class="card-subtitle">Manage student accounts</p>
+          <p class="card-subtitle">Manage user accounts</p>
           <div class="card-arrow">→</div>
         </div>
       </div>

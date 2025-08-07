@@ -39,7 +39,7 @@
           <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
             <div>
               <h2 style="margin-bottom: 0.25rem;">Service Requests</h2>
-              <p style="color: #6b7280;">Review and manage student service requests</p>
+              <p style="color: #6b7280;">Review and manage user service requests</p>
             </div>
           </div>
         </div>
@@ -58,7 +58,7 @@
             <thead>
               <tr>
                 <th>Request ID</th>
-                <th>Student</th>
+                <th>User</th>
                 <th>Title</th>
                 <th>Organization</th>
                 <th>Status</th>
@@ -110,7 +110,7 @@
         <div class="modal-body">
         <form class="modal-form" action="/admin/service/update-status" method="POST">
             <input type="hidden" name="requestId" id="serviceRequestId" />
-            <p><strong>Student:</strong> <span id="serviceStudent"></span></p>
+            <p><strong>User:</strong> <span id="serviceStudent"></span></p>
             <p><strong>Title:</strong> <span id="serviceTitle"></span></p>
             <p><strong>Organization:</strong> <span id="serviceOrganization"></span></p>
             <p><strong>Description:</strong> <span id="serviceDescription"></span></p>
