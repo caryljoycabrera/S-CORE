@@ -222,7 +222,7 @@ app.post('/login', async (req, res) => {
 
     req.session.userId = user._id;
 
-    return res.redirect(user.role === 'admin' ? '/admin' : '/userPage');
+    return res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).render('error', { message: 'Login failed.' });
@@ -233,14 +233,14 @@ app.get('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
       console.log('Logout error:', err);
-      return res.redirect('/userPage');
+      return res.redirect('/dashboard');
     }
     res.redirect('/');
   });
 });
 
 // User Routes
-app.get('/userpage', requireLogin, async (req, res) => {
+app.get('/dashboard', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
 
@@ -284,31 +284,43 @@ app.get('/userpage', requireLogin, async (req, res) => {
   }
 });
 
-app.get('/Requestapproval', async (req, res) => {
+app.get('/request-approvals', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   try {
     const user = await User.findById(req.session.userId);
     const approvals = await RequestApproval.find({ userId: user._id }).sort({ createdAt: -1 });
-    res.render('Requestapproval', { approvals, user });
+    
+    const allRequests = approvals.map(r => ({ 
+      ...r.toObject(), 
+      type: "Request Approval" 
+    }));
+    
+    res.render('Requestapproval', { approvals, user, allRequests });
   } catch (err) {
     console.error('Error loading approvals:', err);
     res.status(500).send('Error loading page');
   }
 });
 
-app.get('/ServiceRequest', async (req, res) => {
+app.get('/service-requests', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   try {
     const user = await User.findById(req.session.userId);
     const serviceRequests = await ServiceRequest.find({ userId: user._id }).sort({ createdAt: -1 });
-    res.render('ServiceRequest', { user, serviceRequests });
+    
+    const allRequests = serviceRequests.map(r => ({ 
+      ...r.toObject(), 
+      type: "Service Request" 
+    }));
+    
+    res.render('ServiceRequest', { user, serviceRequests, allRequests });
   } catch (err) {
     console.error('Error loading service requests:', err);
     res.status(500).render('error', { message: 'Error loading page' });
   }
 });
 
-app.get('/allRequestsUser', async (req, res) => {
+app.get('/all-requests', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   try {
     const user = await User.findById(req.session.userId);
@@ -338,7 +350,7 @@ app.get('/profile', async (req, res) => {
   }
 });
 
-app.get('/profileadmin', async (req, res) => {
+app.get('/admin/profile', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   try {
     const user = await User.findById(req.session.userId);
@@ -382,18 +394,37 @@ app.get('/admin', requireAdmin, async (req, res) => {
 });
 
 app.get('/admin/approvals', requireAdmin, async (req, res) => {
-  const approvals = await RequestApproval.find().populate('userId');
-  res.render('approvals', { approvals, user: req.user });
+  const approvals = await RequestApproval.find().populate('userId').lean();
+  
+  // Add displayOrganization logic
+  const approvalsWithDisplay = approvals.map(approval => ({
+    ...approval,
+    displayOrganization: approval.userId?.userType === 'nonstudent' ? approval.userId.affiliation : approval.organization
+  }));
+  
+  res.render('approvals', { approvals: approvalsWithDisplay, user: req.user });
 });
 
 app.get('/admin/services', requireAdmin, async (req, res) => {
-  const serviceRequests = await ServiceRequest.find().populate('userId');
-  res.render('services', { serviceRequests, user: req.user });
+  const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+  
+  const serviceRequestsWithDisplay = serviceRequests.map(service => ({
+    ...service,
+    displayOrganization: service.userId?.userType === 'nonstudent' ? service.userId.affiliation : service.organization
+  }));
+  
+  res.render('services', { serviceRequests: serviceRequestsWithDisplay, user: req.user });
 });
 
 app.get('/admin/users', requireAdmin, async (req, res) => {
-  const users = await User.find();
-  res.render('users', { users, user: req.user });
+  const users = await User.find().lean();
+  
+  const usersWithDisplay = users.map(user => ({
+    ...user,
+    displayOrganization: user.userType === 'nonstudent' ? user.affiliation : user.studentOrganization
+  }));
+  
+  res.render('users', { users: usersWithDisplay, user: req.user });
 });
 
 app.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
@@ -433,9 +464,23 @@ app.post('/admin/user/update', requireAdmin, async (req, res) => {
   } = req.body;
 
   try {
-    await User.findByIdAndUpdate(userId, {
-      fName, lName, email, phoneNumber, cys, studentOrganization, role
-    });
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).render('error', { message: 'User not found.' });
+    }
+
+    const updateData = {
+      fName, lName, email, phoneNumber, role
+    };
+
+    if (user.userType === 'student') {
+      updateData.cys = cys;
+      updateData.studentOrganization = studentOrganization;
+    } else {
+      updateData.affiliation = studentOrganization;
+    }
+
+    await User.findByIdAndUpdate(userId, updateData);
 
     res.redirect('/admin/users');
   } catch (err) {
@@ -449,10 +494,18 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
     const approvals = await RequestApproval.find().populate('userId').lean();
     const serviceRequests = await ServiceRequest.find().populate('userId').lean();
 
-    // Combine all requests with type identifier
+    // Combine all requests with type identifier and organization/affiliation logic
     const allRequests = [
-      ...approvals.map(r => ({ ...r, type: "Request Approval" })),
-      ...serviceRequests.map(r => ({ ...r, type: "Service Request" }))
+      ...approvals.map(r => ({ 
+        ...r, 
+        type: "Request Approval",
+        displayOrganization: r.userId?.userType === 'nonstudent' ? r.userId.affiliation : r.organization
+      })),
+      ...serviceRequests.map(r => ({ 
+        ...r, 
+        type: "Service Request",
+        displayOrganization: r.userId?.userType === 'nonstudent' ? r.userId.affiliation : r.organization
+      }))
     ];
 
     // Sort by creation date (newest first)
@@ -472,17 +525,27 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
 //update profile details
 app.post('/profile/update-popup', async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
-  const { fName, mName, lName, email, username, phoneNumber, studentOrganization, cys } = req.body;
+  const { fName, mName, lName, email, username, phoneNumber, studentOrganization, cys, studentId, affiliation } = req.body;
   try {
-    await User.findByIdAndUpdate(req.session.userId, {
-      fName, mName, lName, email, username, phoneNumber, studentOrganization, cys
-    });
+    const user = await User.findById(req.session.userId);
+    const updateData = { fName, mName, lName, email, username, phoneNumber };
+    
+    if (user.userType === 'student') {
+      updateData.studentOrganization = studentOrganization;
+      updateData.cys = cys;
+      updateData.studentId = studentId;
+    } else {
+      updateData.affiliation = affiliation;
+    }
+    
+    await User.findByIdAndUpdate(req.session.userId, updateData);
     res.status(200).send('Profile updated');
   } catch (err) {
     console.error('Popup profile update error:', err);
     res.status(500).send('Update failed');
   }
 });
+
 //change password
 app.post('/profile/change-password-popup', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -546,14 +609,21 @@ app.post('/profile/delete-picture', async (req, res) => {
   }
 });
 
-
-app.post('/profileadmin/update-popup', async (req, res) => {
+app.post('/admin/profile/update-popup', async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
   const { fName, mName, lName, email, username, phoneNumber, studentOrganization, cys } = req.body;
   try {
-    await User.findByIdAndUpdate(req.session.userId, {
-      fName, mName, lName, email, username, phoneNumber, studentOrganization, cys
-    });
+    const user = await User.findById(req.session.userId);
+    const updateData = { fName, mName, lName, email, username, phoneNumber };
+    
+    if (user.userType === 'student') {
+      updateData.studentOrganization = studentOrganization;
+      updateData.cys = cys;
+    } else {
+      updateData.affiliation = studentOrganization;
+    }
+    
+    await User.findByIdAndUpdate(req.session.userId, updateData);
     res.status(200).send('Profile updated');
   } catch (err) {
     console.error('Popup profile update error:', err);
@@ -561,7 +631,7 @@ app.post('/profileadmin/update-popup', async (req, res) => {
   }
 });
 
-app.post('/profileadmin/change-password-popup', async (req, res) => {
+app.post('/admin/profile/change-password-popup', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   if (!req.session.userId) return res.status(401).send('Unauthorized');
   try {
@@ -584,15 +654,18 @@ app.post('/submit-request-approval', upload.single('upload'), async (req, res) =
   const { projectTitle, organization, description } = req.body;
   const filePath = req.file?.filename || null;
   try {
+    const user = await User.findById(req.session.userId);
+    const actualOrganization = user.userType === 'nonstudent' ? user.affiliation : organization;
+    
     const newRequest = new RequestApproval({
       title: projectTitle,
-      organization,
+      organization: actualOrganization,
       description,
       userId: req.session.userId,
       file: filePath
     });
     await newRequest.save();
-    res.redirect('/Requestapproval');
+    res.redirect('/request-approvals');
   } catch (err) {
     console.error('Error saving request approval:', err);
     res.status(500).send('Failed to save approval request');
@@ -604,16 +677,19 @@ app.post('/submit-service-request', upload.single('uploadServiceFile'), async (r
   const { projectTitle, organization, description, deadline } = req.body;
   const filePath = req.file?.filename || null;
   try {
+    const user = await User.findById(req.session.userId);
+    const actualOrganization = user.userType === 'nonstudent' ? user.affiliation : organization;
+    
     const newRequest = new ServiceRequest({
       title: projectTitle,
-      organization,
+      organization: actualOrganization,
       description,
       deadline,
       userId: req.session.userId,
       file: filePath
     });
     await newRequest.save();
-    res.redirect('/ServiceRequest');
+    res.redirect('/service-requests');
   } catch (err) {
     console.error('Error saving service request:', err);
     res.status(500).send('Failed to save service request');

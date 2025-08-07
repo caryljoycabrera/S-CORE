@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Header -->
   <header class="overlap">
     <div class="group">
       <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
@@ -24,13 +23,12 @@
         </div>
       </div>
       <div class="dropdown-menu" id="dropdownMenu">
-        <a href="/profile">My Profile</a>
+        <a href="/admin/profile">My Profile</a>
         <a href="/logout">Logout</a>
       </div>
     </div>
   </header>
 
-  <!-- Main Profile Content -->
   <main class="student-side">
     <div class="div">
         <section class="activity-section">
@@ -55,8 +53,12 @@
                 <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
                 <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
                 <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
+                <% if (user.userType === 'student') { %>
                 <tr><td class="label">Organization:</td><td><%= user.studentOrganization || 'None' %></td></tr>
                 <tr><td class="label">Course/Year/Section:</td><td><%= user.cys || 'N/A' %></td></tr>
+                <% } else { %>
+                <tr><td class="label">Office/Department:</td><td><%= user.affiliation || 'None' %></td></tr>
+                <% } %>
             </tbody>
             </table>
 
@@ -70,8 +72,6 @@
     </div>
     </main>
 
-    <!-- Modals -->
-        <!-- Update Profile Modal -->
     <div id="updateProfileModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
@@ -104,13 +104,22 @@
             <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
         </div>
         <div class="form-group">
-            <label for="studentOrganization">Organization</label>
-            <input name="studentOrganization" id="studentOrganization" type="text" value="<%= user.studentOrganization || '' %>" />
+            <label for="studentOrganization" id="orgLabel">
+            <% if (user.userType === 'student') { %>
+                Organization
+            <% } else { %>
+                Office/Department
+            <% } %>
+            </label>
+            <input name="studentOrganization" id="studentOrganization" type="text" 
+                   value="<%= user.userType === 'student' ? (user.studentOrganization || '') : (user.affiliation || '') %>" />
         </div>
-        <div class="form-group">
+        <% if (user.userType === 'student') { %>
+        <div class="form-group" id="cysGroup">
             <label for="cys">Course / Year / Section</label>
             <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" />
         </div>
+        <% } %>
         <div class="form-actions">
             <button type="submit">Save Changes</button>
         </div>
@@ -118,7 +127,6 @@
     </div>
     </div>
 
-    <!-- Change Password Modal -->
     <div id="passwordModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
@@ -172,13 +180,12 @@
         });
     };
 
-  // AJAX: Update Profile
   document.getElementById('updateProfileForm').onsubmit = async function (e) {
     e.preventDefault();
     const form = e.target;
     const data = Object.fromEntries(new FormData(form).entries());
 
-    const res = await fetch('/profile/update-popup', {
+    const res = await fetch('/admin/profile/update-popup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -187,13 +194,12 @@
     else alert('Update failed');
   };
 
-  // AJAX: Change Password
   document.getElementById('passwordForm').onsubmit = async function (e) {
     e.preventDefault();
     const form = e.target;
     const data = Object.fromEntries(new FormData(form).entries());
 
-    const res = await fetch('/profile/change-password-popup', {
+    const res = await fetch('/admin/profile/change-password-popup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - Manage Users</title>
+  <title>Manage Users</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 </head>
@@ -11,7 +11,6 @@
   <div class="student-side">
     <div class="div">
 
-      <!-- Header -->
       <div class="overlap">
         <div class="group">
           <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
@@ -27,24 +26,22 @@
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/profileadmin">My Profile</a>
+            <a href="/admin/profile">My Profile</a>
             <a href="/logout">Logout</a>
           </div>
         </div>
       </div>
 
-      <!-- Section -->
       <section class="activity-section">
         <div class="section-header">
           <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
             <div>
               <h2 style="margin-bottom: 0.25rem;">Registered Users</h2>
-              <p style="color: #6b7280;">View and update student accounts</p>
+              <p style="color: #6b7280;">View and update user accounts</p>
             </div>
           </div>
         </div>
 
-        <!-- Navigation -->
         <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
           <a href="/admin/all-requests" class="view-all-btn">All Requests</a>
           <a href="/admin/approvals" class="view-all-btn">Approvals</a>
@@ -52,7 +49,48 @@
           <a href="/admin/users" class="view-all-btn" style="background: var(--primary-green); color: white;">Users</a>
         </nav>
 
-        <!-- Table -->
+        <div class="filter-section">
+          <div class="filter-container">
+            <div class="filter-group">
+              <label class="filter-label">Filter by:</label>
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="userIdFilter" class="filter-sublabel">User ID</label>
+                  <input type="text" id="userIdFilter" class="filter-input" placeholder="Search user ID...">
+                </div>
+                <div class="filter-item">
+                  <label for="nameFilter" class="filter-sublabel">Name</label>
+                  <input type="text" id="nameFilter" class="filter-input" placeholder="Search name...">
+                </div>
+                <div class="filter-item">
+                  <label for="usernameFilter" class="filter-sublabel">Username</label>
+                  <input type="text" id="usernameFilter" class="filter-input" placeholder="Search username...">
+                </div>
+                <div class="filter-item">
+                  <label for="emailFilter" class="filter-sublabel">Email</label>
+                  <input type="text" id="emailFilter" class="filter-input" placeholder="Search email...">
+                </div>
+                <div class="filter-item">
+                  <label for="cysFilter" class="filter-sublabel">Course/Yr/Sec</label>
+                  <input type="text" id="cysFilter" class="filter-input" placeholder="Search CYS...">
+                </div>
+                <div class="filter-item">
+                  <label for="organizationFilter" class="filter-sublabel">Office/Department/Organization</label>
+                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search organization...">
+                </div>
+              </div>
+            </div>
+            <div class="filter-actions">
+              <button id="clearFilters" class="clear-filters-btn">
+                <span>🗑️</span> Clear All
+              </button>
+              <div class="results-count">
+                <span id="resultsCount">Showing all users</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <section class="table-section" style="overflow-x:auto;">
           <table class="requests-table">
             <thead>
@@ -62,35 +100,44 @@
                 <th>Username</th>
                 <th>Email</th>
                 <th>Course/Yr/Sec</th>
-                <th>Organization</th>
+                <th>Office/Department/Organization</th>
                 <th>Phone</th>
                 <th>Role</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="usersTableBody">
               <% users.forEach(u => { %>
               <tr class="user-row"
                 data-id="<%= u._id %>"
+                data-user-id="<%= u._id.toString().slice(-6) %>"
                 data-fname="<%= u.fName %>"
                 data-lname="<%= u.lName %>"
+                data-fullname="<%= u.fName %> <%= u.lName %>"
                 data-username="<%= u.username %>"
                 data-email="<%= u.email %>"
-                data-cys="<%= u.cys %>"
-                data-organization="<%= u.studentOrganization %>"
+                data-cys="<%= u.cys || '' %>"
+                data-organization="<%= u.displayOrganization || '' %>"
                 data-phone="<%= u.phoneNumber %>"
-                data-role="<%= u.role %>">
+                data-role="<%= u.role %>"
+                data-usertype="<%= u.userType %>">
                 <td><%= u._id.toString().slice(-6) %></td>
                 <td><%= u.fName %> <%= u.lName %></td>
                 <td><%= u.username %></td>
                 <td><%= u.email %></td>
-                <td><%= u.cys %></td>
-                <td><%= u.studentOrganization %></td>
+                <td><%= u.userType === 'student' ? (u.cys || 'N/A') : 'N/A' %></td>
+                <td><%= u.displayOrganization || 'N/A' %></td>
                 <td><%= u.phoneNumber %></td>
                 <td><%= u.role %></td>
               </tr>
               <% }) %>
             </tbody>
           </table>
+
+          <% if (users.length === 0) { %>
+          <div style="text-align: center; padding: 2rem; color: #6b7280;">
+            <p>No users found.</p>
+          </div>
+          <% } %>
         </section>
 
         <a href="/admin" class="view-all-btn" style="margin-top: 1rem; display: inline-block;">← Back to Dashboard</a>
@@ -98,7 +145,6 @@
     </div>
   </div>
 
-  <!-- Modal -->
   <div id="userModal" class="modal" style="display:none;">
     <div class="modal-content">
       <header class="modal-header">
@@ -124,18 +170,18 @@
             <label>Phone:</label>
             <input type="text" name="phoneNumber" id="editPhone" />
           </div>
-          <div class="form-group">
+          <div class="form-group" id="cysGroup">
             <label>Course/Yr/Sec:</label>
             <input type="text" name="cys" id="editCYS" />
           </div>
           <div class="form-group">
-            <label>Organization:</label>
+            <label id="orgLabel">Organization:</label>
             <input type="text" name="studentOrganization" id="editOrg" />
           </div>
           <div class="form-group">
             <label>Role:</label>
             <select name="role" id="editRole">
-              <option value="student">Student</option>
+              <option value="user">User</option>
               <option value="admin">Admin</option>
             </select>
           </div>
@@ -148,6 +194,123 @@
   </div>
 
   <script>
+    const userModal = document.getElementById("userModal");
+    const closeUserModal = document.getElementById("closeUserModal");
+    const clearFiltersBtn = document.getElementById("clearFilters");
+    const tableBody = document.getElementById("usersTableBody");
+    const allRows = Array.from(document.querySelectorAll('.user-row'));
+
+    closeUserModal.onclick = () => userModal.style.display = 'none';
+    window.onclick = e => { if (e.target === userModal) userModal.style.display = 'none'; }
+
+    function filterUsers() {
+      const userIdValue = document.getElementById('userIdFilter').value.toLowerCase();
+      const nameValue = document.getElementById('nameFilter').value.toLowerCase();
+      const usernameValue = document.getElementById('usernameFilter').value.toLowerCase();
+      const emailValue = document.getElementById('emailFilter').value.toLowerCase();
+      const cysValue = document.getElementById('cysFilter').value.toLowerCase();
+      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+      
+      let visibleCount = 0;
+
+      allRows.forEach(row => {
+        const rowUserId = row.dataset.userId.toLowerCase();
+        const rowFullname = row.dataset.fullname.toLowerCase();
+        const rowUsername = row.dataset.username.toLowerCase();
+        const rowEmail = row.dataset.email.toLowerCase();
+        const rowCys = row.dataset.cys.toLowerCase();
+        const rowOrganization = row.dataset.organization.toLowerCase();
+
+        const userIdMatch = userIdValue === '' || rowUserId.includes(userIdValue);
+        const nameMatch = nameValue === '' || rowFullname.includes(nameValue);
+        const usernameMatch = usernameValue === '' || rowUsername.includes(usernameValue);
+        const emailMatch = emailValue === '' || rowEmail.includes(emailValue);
+        const cysMatch = cysValue === '' || rowCys.includes(cysValue);
+        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
+
+        const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && organizationMatch;
+        row.style.display = isVisible ? '' : 'none';
+        
+        if (isVisible) visibleCount++;
+      });
+
+      const totalCount = allRows.length;
+      const resultsCount = document.getElementById('resultsCount');
+      if (visibleCount === totalCount) {
+        resultsCount.textContent = `Showing all ${totalCount} users`;
+      } else {
+        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} users`;
+      }
+
+      toggleNoResultsMessage(visibleCount === 0);
+    }
+
+    function toggleNoResultsMessage(show) {
+      let noResultsRow = document.getElementById('noResultsRow');
+      
+      if (show && !noResultsRow) {
+        const tbody = document.getElementById('usersTableBody');
+        noResultsRow = document.createElement('tr');
+        noResultsRow.id = 'noResultsRow';
+        noResultsRow.innerHTML = `
+          <td colspan="8" style="text-align: center; padding: 3rem; color: #6b7280;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No users found</h3>
+            <p>Try adjusting your filters to see more results.</p>
+          </td>
+        `;
+        tbody.appendChild(noResultsRow);
+      } else if (!show && noResultsRow) {
+        noResultsRow.remove();
+      }
+    }
+
+    document.getElementById('userIdFilter').addEventListener('input', filterUsers);
+    document.getElementById('nameFilter').addEventListener('input', filterUsers);
+    document.getElementById('usernameFilter').addEventListener('input', filterUsers);
+    document.getElementById('emailFilter').addEventListener('input', filterUsers);
+    document.getElementById('cysFilter').addEventListener('input', filterUsers);
+    document.getElementById('organizationFilter').addEventListener('input', filterUsers);
+
+    clearFiltersBtn.addEventListener('click', () => {
+      document.getElementById('userIdFilter').value = '';
+      document.getElementById('nameFilter').value = '';
+      document.getElementById('usernameFilter').value = '';
+      document.getElementById('emailFilter').value = '';
+      document.getElementById('cysFilter').value = '';
+      document.getElementById('organizationFilter').value = '';
+      filterUsers();
+    });
+
+    document.querySelectorAll('.user-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const userType = row.dataset.usertype;
+        const cysGroup = document.getElementById('cysGroup');
+        const orgLabel = document.getElementById('orgLabel');
+        
+        document.getElementById('editUserId').value = row.dataset.id;
+        document.getElementById('editFName').value = row.dataset.fname;
+        document.getElementById('editLName').value = row.dataset.lname;
+        document.getElementById('editEmail').value = row.dataset.email;
+        document.getElementById('editPhone').value = row.dataset.phone;
+        document.getElementById('editRole').value = row.dataset.role;
+        
+        if (userType === 'student') {
+          cysGroup.style.display = 'block';
+          orgLabel.textContent = 'Organization:';
+          document.getElementById('editCYS').value = row.dataset.cys;
+        } else {
+          cysGroup.style.display = 'none';
+          orgLabel.textContent = 'Office/Department:';
+          document.getElementById('editCYS').value = '';
+        }
+        
+        document.getElementById('editOrg').value = row.dataset.organization;
+
+        userModal.style.display = 'flex';
+      });
+    });
+
     function toggleDropdown() {
       const menu = document.getElementById("dropdownMenu");
       menu.style.display = menu.style.display === "block" ? "none" : "block";
@@ -159,27 +322,6 @@
       if (!toggle.contains(event.target)) {
         menu.style.display = "none";
       }
-    });
-
-    const userModal = document.getElementById("userModal");
-    const closeUserModal = document.getElementById("closeUserModal");
-
-    closeUserModal.onclick = () => userModal.style.display = 'none';
-    window.onclick = e => { if (e.target === userModal) userModal.style.display = 'none'; }
-
-    document.querySelectorAll('.user-row').forEach(row => {
-      row.addEventListener('click', () => {
-        document.getElementById('editUserId').value = row.dataset.id;
-        document.getElementById('editFName').value = row.dataset.fname;
-        document.getElementById('editLName').value = row.dataset.lname;
-        document.getElementById('editEmail').value = row.dataset.email;
-        document.getElementById('editPhone').value = row.dataset.phone;
-        document.getElementById('editCYS').value = row.dataset.cys;
-        document.getElementById('editOrg').value = row.dataset.organization;
-        document.getElementById('editRole').value = row.dataset.role;
-
-        userModal.style.display = 'flex';
-      });
     });
   </script>
 </body>

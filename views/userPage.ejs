@@ -16,7 +16,7 @@
         <div class="group">
           <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
         </div>
-        <a href="/userpage" class="text-wrapper">S-CORE</a>
+        <a href="/dashboard" class="text-wrapper">S-CORE</a>
         <span class="text-wrapper-2">Welcome, <%= name %>!</span>
          <div class="dropdown-wrapper">
       <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
@@ -33,7 +33,17 @@
       </div>
       <!-- Main Action Cards -->
       <div class="action-cards-container">
-        <div class="action-card" onclick="location.href='/requestapproval'">
+        <div class="action-card" onclick="location.href='/all-requests'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Track All Requests</h3>
+          <p class="card-subtitle">Manage all your requests</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/request-approvals'">
           <div class="card-icon-wrapper">
             <img src="/Picture/File.png" alt="Request Approval" class="card-icon" />
             <div class="icon-glow"></div>
@@ -43,22 +53,13 @@
           <div class="card-arrow">→</div>
         </div>
 
-        <div class="action-card" onclick="location.href='/servicerequest'">
+        <div class="action-card" onclick="location.href='/service-requests'">
           <div class="card-icon-wrapper">
             <img src="/Picture/Repair.png" alt="Request Service" class="card-icon" />
             <div class="icon-glow"></div>
           </div>
           <h3 class="card-title">Request Service</h3>
           <p class="card-subtitle">Request deliverables</p>
-          <div class="card-arrow">→</div>
-        </div>
-        <div class="action-card" onclick="location.href='/allRequestsUser'">
-          <div class="card-icon-wrapper">
-            <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
-            <div class="icon-glow"></div>
-          </div>
-          <h3 class="card-title">Track All Requests</h3>
-          <p class="card-subtitle">Manage all your requests</p>
           <div class="card-arrow">→</div>
         </div>
       </div>
@@ -83,7 +84,7 @@
   <div class="activity-section">
   <div class="section-header" style="justify-content: space-between; align-items: center;">
     <h2 class="section-title">Recent Activity</h2>
-    <a href="/allRequestsUser" class="view-all-btn">View All</a>
+    <a href="/all-requests" class="view-all-btn">View All</a>
   </div>
 
   <div class="activity-grid">

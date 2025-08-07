@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Request for Approval</title>
+  <title>All Requests</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="student-side">
     <div class="div">
-      <!-- Header -->
       <div class="overlap">
         <div class="group">
           <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
         </div>
-        <a href="/userpage" class="text-wrapper">S-CORE</a>
-        <span class="text-wrapper-2">Request for Approval</span>
+        <a href="/dashboard" class="text-wrapper">S-CORE</a>
+        <span class="text-wrapper-2">All Requests</span>
 
         <div class="dropdown-wrapper">
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
@@ -32,105 +31,143 @@
         </div>
       </div>
 
-      <!-- Profile & Request Button -->
       <section class="activity-section">
         <div class="section-header">
           <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
             <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
-     alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+                 alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
               <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
-              <p style="color: #6b7280;">Student</p>
+              <p style="color: #6b7280;"><%= user.userType === 'student' ? 'Student' : 'Non-Student' %></p>
             </div>
           </div>
         </div>
 
-        <!-- Tabs -->
         <nav class="tabs" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-          <a href="/allRequestsUser" class="view-all-btn" style="background: var(--primary-green); color: white;">All Requests</a>
-          <a href="/Requestapproval" class="view-all-btn">View Request Approvals</a>
-          <a href="/ServiceRequest" class="view-all-btn">View Service Requests</a>
+          <a href="/all-requests" class="view-all-btn" style="background: var(--primary-green); color: white;">All Requests</a>
+          <a href="/request-approvals" class="view-all-btn">Request Approvals</a>
+          <a href="/service-requests" class="view-all-btn">Service Requests</a>
         </nav>
 
-        <!-- Table -->
-      <!-- Table for All Requests -->
+        <div class="filter-section">
+          <div class="filter-container">
+            <div class="filter-group">
+              <label class="filter-label">Filter by:</label>
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="typeFilter" class="filter-sublabel">Type</label>
+                  <select id="typeFilter" class="filter-select">
+                    <option value="all">All Types</option>
+                    <option value="Request Approval">Request Approval</option>
+                    <option value="Service Request">Service Request</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="statusFilter" class="filter-sublabel">Status</label>
+                  <select id="statusFilter" class="filter-select">
+                    <option value="all">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="For Revision">For Revision</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="titleFilter" class="filter-sublabel">Title</label>
+                  <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
+                </div>
+                <div class="filter-item">
+                  <label for="organizationFilter" class="filter-sublabel">Office/Department/Organization</label>
+                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search organization...">
+                </div>
+              </div>
+              <br>
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                  <input type="date" id="dateFromFilter" class="filter-input">
+                </div>
+                <div class="filter-item">
+                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                  <input type="date" id="dateToFilter" class="filter-input">
+                </div>
+              </div>
+            </div>
+            <div class="filter-actions">
+              <button id="clearFilters" class="clear-filters-btn">
+                <span>🗑️</span> Clear All
+              </button>
+              <div class="results-count">
+                <span id="resultsCount">Showing all requests</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <section class="table-section" style="overflow-x: auto;">
           <table class="requests-table" style="width: 100%; border-collapse: collapse; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
               <tr>
                 <th>Request ID</th>
+                <th>Type</th>
                 <th>Project Title</th>
+                <th>Office/Department/Organization</th>
                 <th>Status</th>
-                <th>Organization</th>
                 <th>Assigned Unit</th>
                 <th>Date Submitted</th>
               </tr>
             </thead>
-            <tbody>
-              <% approvals.forEach(request => { %>
+            <tbody id="requestsTableBody">
+              <% allRequests.forEach(request => { %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
+                  data-type="<%= request.type %>"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status %>"
-                  data-organization="<%= request.organization %>"
+                  data-organization="<%= user.userType === 'nonstudent' ? user.affiliation : request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
-                  data-datetime="<%= request.datetime.toLocaleString() %>"
+                  data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
+                  data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
+                  data-deadline="<%= request.deadline ? request.deadline.toLocaleString() : 'N/A' %>"
                   data-description="<%= request.description %>" 
                   data-file="<%= request.file ? request.file : '' %>">
                 <td><%= request._id.toString().slice(-6) %></td>
+                <td>
+                  <% if (request.type === 'Request Approval') { %>
+                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #dbeafe; color: #1e40af;">
+                      Approval
+                    </span>
+                  <% } else { %>
+                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #fef3c7; color: #92400e;">
+                      Service
+                    </span>
+                  <% } %>
+                </td>
                 <td><%= request.title %></td>
+                <td><%= user.userType === 'nonstudent' ? user.affiliation : request.organization %></td>
                 <td>
                   <span class="status-badge <%= request.status.toLowerCase() %>">
                     <%= request.status %>
                   </span>
                 </td>
-                <td><%= request.organization %></td>
                 <td><%= request.assignedUnits || 'Not yet assigned' %></td>
-                <td><%= request.datetime.toLocaleString() %></td>
+                <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
               </tr>
               <% }); %>
             </tbody>
           </table>
-        </section>
-        </section>
-      <a href="/userpage" class="view-all-btn" style="display: inline-block;">← Back to Dashboard</a>
-    </div>
-    
-  </div>
 
-  <!-- Create Request Modal -->
-  <div id="requestModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <header class="modal-header">
-        <span class="modal-title">Create a Request for Approval</span>
-        <span class="close" id="closeModalBtn">&times;</span>
-      </header>
-      <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-          <label for="projectTitle">Project/Event Title:</label>
-          <input type="text" id="projectTitle" name="projectTitle" required />
-        </div>
-        <div class="form-group">
-          <label for="organization">Organization:</label>
-          <input type="text" id="organization" name="organization" value="<%= user.studentOrganization %>" required />
-        </div>
-        <div class="form-group">
-          <label for="description">Description:</label>
-          <textarea id="description" name="description" rows="5" required></textarea>
-        </div>
-        <div class="form-group">
-          <label for="upload">Upload File:</label>
-          <input type="file" id="upload" name="upload" required />
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Submit</button>
-          <button type="button" class="view-all-btn" id="cancelModalBtn">Cancel</button>
-        </div>
-      </form>
+          <% if (!allRequests || allRequests.length === 0) { %>
+          <div style="text-align: center; padding: 2rem; color: #6b7280;">
+            <p>No requests found.</p>
+          </div>
+          <% } %>
+        </section>
+      </section>
+      <a href="/dashboard" class="view-all-btn" style="display: inline-block;">← Back to Dashboard</a>
     </div>
   </div>
 
-  <!-- Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
     <div class="modal-content">
       <header class="modal-header">
@@ -138,44 +175,134 @@
         <span class="close" id="closeDetailsModal">&times;</span>
       </header>
       <div class="modal-body">
+        <p><strong>Type:</strong> <span id="detailType"></span></p>
         <p><strong>Title:</strong> <span id="detailTitle"></span></p>
-        <p><strong>Organization:</strong> <span id="detailOrganization"></span></p>
+        <p><strong>Office/Department/Organization:</strong> <span id="detailOrganization"></span></p>
         <p><strong>Description:</strong> <span id="detailDescription"></span></p>
         <p><strong>Status:</strong> <span id="detailStatus"></span></p>
         <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
         <p><strong>Date Submitted:</strong> <span id="detailDatetime"></span></p>
+        <div id="deadlineSection" style="display: none;">
+          <p><strong>Requested Deadline:</strong> <span id="detailDeadline"></span></p>
+        </div>
         <div id="file-preview" style="margin-top:1rem;"></div>
       </div>
     </div>
   </div>
 
-  <!-- JavaScript -->
   <script>
-    const openModalBtn = document.getElementById('openModalBtn');
-    const requestModal = document.getElementById('requestModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const cancelModalBtn = document.getElementById('cancelModalBtn');
     const detailModal = document.getElementById("detailsModal");
     const closeDetailsModal = document.getElementById("closeDetailsModal");
+    const typeFilter = document.getElementById("typeFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const clearFiltersBtn = document.getElementById("clearFilters");
+    const tableBody = document.getElementById("requestsTableBody");
+    const allRows = Array.from(document.querySelectorAll('.request-row'));
 
-    openModalBtn.onclick = () => requestModal.style.display = 'flex';
-    closeModalBtn.onclick = () => requestModal.style.display = 'none';
-    cancelModalBtn.onclick = () => requestModal.style.display = 'none';
     closeDetailsModal.onclick = () => detailModal.style.display = 'none';
 
     window.onclick = function(event) {
-      if (event.target === requestModal) requestModal.style.display = 'none';
       if (event.target === detailModal) detailModal.style.display = 'none';
     }
 
+    function filterRequests() {
+      const typeValue = typeFilter.value.toLowerCase();
+      const statusValue = statusFilter.value.toLowerCase();
+      const titleValue = document.getElementById('titleFilter').value.toLowerCase();
+      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+      const dateFromValue = document.getElementById('dateFromFilter').value;
+      const dateToValue = document.getElementById('dateToFilter').value;
+      
+      let visibleCount = 0;
+
+      allRows.forEach(row => {
+        const rowType = row.dataset.type.toLowerCase();
+        const rowStatus = row.dataset.status.toLowerCase();
+        const rowTitle = row.dataset.title.toLowerCase();
+        const rowOrganization = row.dataset.organization.toLowerCase();
+        const rowDate = row.dataset.date;
+
+        const typeMatch = typeValue === 'all' || rowType === typeValue;
+        const statusMatch = statusValue === 'all' || rowStatus === statusValue;
+        const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
+        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
+        
+        let dateMatch = true;
+        if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
+        if (dateToValue && rowDate > dateToValue) dateMatch = false;
+
+        const isVisible = typeMatch && statusMatch && titleMatch && organizationMatch && dateMatch;
+        row.style.display = isVisible ? '' : 'none';
+        
+        if (isVisible) visibleCount++;
+      });
+
+      const totalCount = allRows.length;
+      const resultsCount = document.getElementById('resultsCount');
+      if (visibleCount === totalCount) {
+        resultsCount.textContent = `Showing all ${totalCount} requests`;
+      } else {
+        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+      }
+
+      toggleNoResultsMessage(visibleCount === 0);
+    }
+
+    function toggleNoResultsMessage(show) {
+      let noResultsRow = document.getElementById('noResultsRow');
+      
+      if (show && !noResultsRow) {
+        const tbody = document.getElementById('requestsTableBody');
+        noResultsRow = document.createElement('tr');
+        noResultsRow.id = 'noResultsRow';
+        noResultsRow.innerHTML = `
+          <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
+            <p>Try adjusting your filters to see more results.</p>
+          </td>
+        `;
+        tbody.appendChild(noResultsRow);
+      } else if (!show && noResultsRow) {
+        noResultsRow.remove();
+      }
+    }
+
+    typeFilter.addEventListener('change', filterRequests);
+    statusFilter.addEventListener('change', filterRequests);
+    document.getElementById('titleFilter').addEventListener('input', filterRequests);
+    document.getElementById('organizationFilter').addEventListener('input', filterRequests);
+    document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
+    document.getElementById('dateToFilter').addEventListener('change', filterRequests);
+
+    clearFiltersBtn.addEventListener('click', () => {
+      typeFilter.value = 'all';
+      statusFilter.value = 'all';
+      document.getElementById('titleFilter').value = '';
+      document.getElementById('organizationFilter').value = '';
+      document.getElementById('dateFromFilter').value = '';
+      document.getElementById('dateToFilter').value = '';
+      filterRequests();
+    });
+
     document.querySelectorAll('.request-row').forEach(row => {
       row.addEventListener('click', () => {
+        document.getElementById("detailType").innerText = row.dataset.type;
         document.getElementById("detailTitle").innerText = row.dataset.title;
         document.getElementById("detailOrganization").innerText = row.dataset.organization;
         document.getElementById("detailDescription").innerText = row.dataset.description || 'N/A';
         document.getElementById("detailStatus").innerText = row.dataset.status;
         document.getElementById("detailUnits").innerText = row.dataset.units;
         document.getElementById("detailDatetime").innerText = row.dataset.datetime;
+
+        const deadlineSection = document.getElementById("deadlineSection");
+        const deadline = row.dataset.deadline;
+        if (deadline && deadline !== 'N/A') {
+          document.getElementById("detailDeadline").innerText = deadline;
+          deadlineSection.style.display = 'block';
+        } else {
+          deadlineSection.style.display = 'none';
+        }
 
         const file = row.dataset.file;
         const previewContainer = document.getElementById('file-preview');

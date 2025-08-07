@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - All Requests</title>
+  <title>All Requests</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 </head>
@@ -27,7 +27,7 @@
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/profileadmin">My Profile</a>
+            <a href="/admin/profile">My Profile</a>
             <a href="/logout">Logout</a>
           </div>
         </div>
@@ -59,6 +59,10 @@
               <label class="filter-label">Filter by:</label>
               <div class="filter-controls">
                 <div class="filter-item">
+                  <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
+                  <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
+                </div>
+                <div class="filter-item">
                   <label for="typeFilter" class="filter-sublabel">Type</label>
                   <select id="typeFilter" class="filter-select">
                     <option value="all">All Types</option>
@@ -81,8 +85,19 @@
                   <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
                 </div>
                 <div class="filter-item">
-                  <label for="organizationFilter" class="filter-sublabel">Organization</label>
-                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search organization...">
+                  <label for="organizationFilter" class="filter-sublabel">Office/Department/Organization</label>
+                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search office/department/organization...">
+                </div>
+              </div>
+              <br>
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                  <input type="date" id="dateFromFilter" class="filter-input">
+                </div>
+                <div class="filter-item">
+                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                  <input type="date" id="dateToFilter" class="filter-input">
                 </div>
               </div>
             </div>
@@ -106,7 +121,7 @@
                 <th>Type</th>
                 <th>User</th>
                 <th>Project Title</th>
-                <th>Organization</th>
+                <th>Office/Department/Organization</th>
                 <th>Status</th>
                 <th>Assigned Units</th>
                 <th>Date Submitted</th>
@@ -116,12 +131,14 @@
               <% allRequests.forEach(request => { %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
+                  data-request-id="<%= request._id.toString().slice(-6) %>"
                   data-type="<%= request.type %>"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status %>"
-                  data-organization="<%= request.organization %>"
+                  data-organization="<%= request.displayOrganization || request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
-                  data-datetime="<%= request.datetime.toLocaleString() %>"
+                  data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
+                  data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
                   data-description="<%= request.description %>" 
                   data-file="<%= request.file || '' %>"
                   data-deadline="<%= request.deadline ? request.deadline.toLocaleString() : '' %>"
@@ -140,14 +157,14 @@
                 </td>
                 <td><%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %></td>
                 <td><%= request.title %></td>
-                <td><%= request.organization %></td>
+                <td><%= request.displayOrganization || request.organization %></td>
                 <td>
                   <span class="status-badge <%= request.status.toLowerCase() %>">
                     <%= request.status %>
                   </span>
                 </td>
                 <td><%= request.assignedUnits || 'Not yet assigned' %></td>
-                <td><%= request.datetime.toLocaleString() %></td>
+                <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
               </tr>
               <% }); %>
             </tbody>
@@ -177,7 +194,7 @@
         <p><strong>Type:</strong> <span id="detailType"></span></p>
         <p><strong>User:</strong> <span id="detailStudent"></span></p>
         <p><strong>Title:</strong> <span id="detailTitle"></span></p>
-        <p><strong>Organization:</strong> <span id="detailOrganization"></span></p>
+        <p><strong>Office/Department/Organization:</strong> <span id="detailOrganization"></span></p>
         <p><strong>Description:</strong> <span id="detailDescription"></span></p>
         <p><strong>Status:</strong> <span id="detailStatus"></span></p>
         <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
@@ -229,33 +246,41 @@
       if (event.target === detailModal) detailModal.style.display = 'none';
     }
 
-    // Enhanced filter functionality
     function filterRequests() {
+      const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
       const typeValue = typeFilter.value.toLowerCase();
       const statusValue = statusFilter.value.toLowerCase();
       const studentValue = document.getElementById('studentFilter').value.toLowerCase();
       const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+      const dateFromValue = document.getElementById('dateFromFilter').value;
+      const dateToValue = document.getElementById('dateToFilter').value;
       
       let visibleCount = 0;
 
       allRows.forEach(row => {
+        const rowRequestId = row.dataset.requestId.toLowerCase();
         const rowType = row.dataset.type.toLowerCase();
         const rowStatus = row.dataset.status.toLowerCase();
         const rowStudent = row.dataset.student.toLowerCase();
         const rowOrganization = row.dataset.organization.toLowerCase();
+        const rowDate = row.dataset.date;
 
+        const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
         const typeMatch = typeValue === 'all' || rowType.includes(typeValue);
         const statusMatch = statusValue === 'all' || rowStatus === statusValue;
         const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
         const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
 
-        const isVisible = typeMatch && statusMatch && studentMatch && organizationMatch;
+        let dateMatch = true;
+        if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
+        if (dateToValue && rowDate > dateToValue) dateMatch = false;
+
+        const isVisible = requestIdMatch && typeMatch && statusMatch && studentMatch && organizationMatch && dateMatch;
         row.style.display = isVisible ? '' : 'none';
         
         if (isVisible) visibleCount++;
       });
 
-      // Update results count
       const totalCount = allRows.length;
       const resultsCount = document.getElementById('resultsCount');
       if (visibleCount === totalCount) {
@@ -264,7 +289,6 @@
         resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
       }
 
-      // Show no results message if needed
       toggleNoResultsMessage(visibleCount === 0);
     }
 
@@ -288,20 +312,25 @@
       }
     }
 
+    document.getElementById('requestIdFilter').addEventListener('input', filterRequests);
     typeFilter.addEventListener('change', filterRequests);
     statusFilter.addEventListener('change', filterRequests);
     document.getElementById('studentFilter').addEventListener('input', filterRequests);
     document.getElementById('organizationFilter').addEventListener('input', filterRequests);
+    document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
+    document.getElementById('dateToFilter').addEventListener('change', filterRequests);
 
     clearFiltersBtn.addEventListener('click', () => {
+      document.getElementById('requestIdFilter').value = '';
       typeFilter.value = 'all';
       statusFilter.value = 'all';
       document.getElementById('studentFilter').value = '';
       document.getElementById('organizationFilter').value = '';
+      document.getElementById('dateFromFilter').value = '';
+      document.getElementById('dateToFilter').value = '';
       filterRequests();
     });
 
-    // Row click functionality
     document.querySelectorAll('.request-row').forEach(row => {
       row.addEventListener('click', () => {
         const requestType = row.dataset.type;
@@ -315,7 +344,6 @@
         document.getElementById("detailUnits").innerText = row.dataset.units;
         document.getElementById("detailDatetime").innerText = row.dataset.datetime;
 
-        // Handle deadline (only for Service Requests)
         const deadlineSection = document.getElementById("deadlineSection");
         if (requestType === 'Service Request' && row.dataset.deadline) {
           deadlineSection.style.display = 'block';
@@ -324,7 +352,6 @@
           deadlineSection.style.display = 'none';
         }
 
-        // Set form action and show/hide assigned units based on type
         const updateForm = document.getElementById("updateForm");
         const assignedUnitsGroup = document.getElementById("assignedUnitsGroup");
         
@@ -340,7 +367,6 @@
         document.getElementById("status").value = row.dataset.status;
         document.getElementById("assignedUnits").value = row.dataset.units === 'Not yet assigned' ? '' : row.dataset.units;
 
-        // File preview
         const file = row.dataset.file;
         const previewContainer = document.getElementById('file-preview');
         previewContainer.innerHTML = '';

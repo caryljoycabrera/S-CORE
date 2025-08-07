@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - Manage Approvals</title>
+  <title>Manage Approvals</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 </head>
@@ -11,7 +11,6 @@
   <div class="student-side">
     <div class="div">
 
-      <!-- Header -->
       <div class="overlap">
         <div class="group">
           <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
@@ -27,13 +26,12 @@
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/profileadmin">My Profile</a>
+            <a href="/admin/profile">My Profile</a>
             <a href="/logout">Logout</a>
           </div>
         </div>
       </div>
 
-      <!-- Section -->
       <section class="activity-section">
         <div class="section-header">
           <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
@@ -44,7 +42,6 @@
           </div>
         </div>
 
-        <!-- Navigation -->
         <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
           <a href="/admin/all-requests" class="view-all-btn">All Requests</a>
           <a href="/admin/approvals" class="view-all-btn" style="background: var(--primary-green); color: white;">Approvals</a>
@@ -52,7 +49,57 @@
           <a href="/admin/users" class="view-all-btn">Users</a>
         </nav>
 
-        <!-- Table -->
+        <div class="filter-section">
+          <div class="filter-container">
+            <div class="filter-group">
+              <label class="filter-label">Filter by:</label>
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
+                  <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
+                </div>
+                <div class="filter-item">
+                  <label for="statusFilter" class="filter-sublabel">Status</label>
+                  <select id="statusFilter" class="filter-select">
+                    <option value="all">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="For Revision">For Revision</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="studentFilter" class="filter-sublabel">User</label>
+                  <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
+                </div>
+                <div class="filter-item">
+                  <label for="organizationFilter" class="filter-sublabel">Office/Department/Organization</label>
+                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search office/department/organization...">
+                </div>
+              </div>
+              <br>
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                  <input type="date" id="dateFromFilter" class="filter-input">
+                </div>
+                <div class="filter-item">
+                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                  <input type="date" id="dateToFilter" class="filter-input">
+                </div>
+              </div>
+            </div>
+            <div class="filter-actions">
+              <button id="clearFilters" class="clear-filters-btn">
+                <span>🗑️</span> Clear All
+              </button>
+              <div class="results-count">
+                <span id="resultsCount">Showing all requests</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <section class="table-section" style="overflow-x: auto;">
           <table class="requests-table" style="width: 100%; border-collapse: collapse; background: white;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
@@ -60,28 +107,30 @@
                 <th>Request ID</th>
                 <th>User</th>
                 <th>Project Title</th>
-                <th>Organization</th>
+                <th>Office/Department/Organization</th>
                 <th>Status</th>
                 <th>Assigned Units</th>
                 <th>Date Submitted</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="requestsTableBody">
               <% approvals.forEach(request => { %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
+                  data-request-id="<%= request._id.toString().slice(-6) %>"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status %>"
-                  data-organization="<%= request.organization %>"
+                  data-organization="<%= request.displayOrganization || request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
                   data-datetime="<%= request.datetime.toLocaleString() %>"
+                  data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
                   data-description="<%= request.description %>" 
                   data-file="<%= request.file || '' %>"
                   data-student="<%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %>">
                 <td><%= request._id.toString().slice(-6) %></td>
                 <td><%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %></td>
                 <td><%= request.title %></td>
-                <td><%= request.organization %></td>
+                <td><%= request.displayOrganization || request.organization %></td>
                 <td>
                   <span class="status-badge <%= request.status.toLowerCase() %>">
                     <%= request.status %>
@@ -93,15 +142,19 @@
               <% }); %>
             </tbody>
           </table>
+
+          <% if (approvals.length === 0) { %>
+          <div style="text-align: center; padding: 2rem; color: #6b7280;">
+            <p>No approval requests found.</p>
+          </div>
+          <% } %>
         </section>
 
-        <!-- Back to Dashboard -->
         <a href="/admin" class="view-all-btn" style="margin-top: 1rem; display: inline-block;">← Back to Dashboard</a>
       </section>
     </div>
   </div>
 
-  <!-- Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
     <div class="modal-content">
       <header class="modal-header">
@@ -111,7 +164,7 @@
       <div class="modal-body">
         <p><strong>User:</strong> <span id="detailStudent"></span></p>
         <p><strong>Title:</strong> <span id="detailTitle"></span></p>
-        <p><strong>Organization:</strong> <span id="detailOrganization"></span></p>
+        <p><strong>Office/Department/Organization:</strong> <span id="detailOrganization"></span></p>
         <p><strong>Description:</strong> <span id="detailDescription"></span></p>
         <p><strong>Status:</strong> <span id="detailStatus"></span></p>
         <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
@@ -146,16 +199,99 @@
     </div>
   </div>
 
-  <!-- JS Logic -->
   <script>
     const detailModal = document.getElementById("detailsModal");
     const closeDetailsModal = document.getElementById("closeDetailsModal");
+    const statusFilter = document.getElementById("statusFilter");
+    const clearFiltersBtn = document.getElementById("clearFilters");
+    const tableBody = document.getElementById("requestsTableBody");
+    const allRows = Array.from(document.querySelectorAll('.request-row'));
 
     closeDetailsModal.onclick = () => detailModal.style.display = 'none';
 
     window.onclick = function(event) {
       if (event.target === detailModal) detailModal.style.display = 'none';
     }
+
+    function filterRequests() {
+      const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
+      const statusValue = statusFilter.value.toLowerCase();
+      const studentValue = document.getElementById('studentFilter').value.toLowerCase();
+      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+      const dateFromValue = document.getElementById('dateFromFilter').value;
+      const dateToValue = document.getElementById('dateToFilter').value;
+      
+      let visibleCount = 0;
+
+      allRows.forEach(row => {
+        const rowRequestId = row.dataset.requestId.toLowerCase();
+        const rowStatus = row.dataset.status.toLowerCase();
+        const rowStudent = row.dataset.student.toLowerCase();
+        const rowOrganization = row.dataset.organization.toLowerCase();
+        const rowDate = row.dataset.date;
+
+        const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
+        const statusMatch = statusValue === 'all' || rowStatus === statusValue;
+        const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
+        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
+
+        let dateMatch = true;
+        if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
+        if (dateToValue && rowDate > dateToValue) dateMatch = false;
+
+        const isVisible = requestIdMatch && statusMatch && studentMatch && organizationMatch && dateMatch;
+        row.style.display = isVisible ? '' : 'none';
+        
+        if (isVisible) visibleCount++;
+      });
+
+      const totalCount = allRows.length;
+      const resultsCount = document.getElementById('resultsCount');
+      if (visibleCount === totalCount) {
+        resultsCount.textContent = `Showing all ${totalCount} requests`;
+      } else {
+        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+      }
+
+      toggleNoResultsMessage(visibleCount === 0);
+    }
+
+    function toggleNoResultsMessage(show) {
+      let noResultsRow = document.getElementById('noResultsRow');
+      
+      if (show && !noResultsRow) {
+        const tbody = document.getElementById('requestsTableBody');
+        noResultsRow = document.createElement('tr');
+        noResultsRow.id = 'noResultsRow';
+        noResultsRow.innerHTML = `
+          <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
+            <p>Try adjusting your filters to see more results.</p>
+          </td>
+        `;
+        tbody.appendChild(noResultsRow);
+      } else if (!show && noResultsRow) {
+        noResultsRow.remove();
+      }
+    }
+
+    document.getElementById('requestIdFilter').addEventListener('input', filterRequests);
+    statusFilter.addEventListener('change', filterRequests);
+    document.getElementById('studentFilter').addEventListener('input', filterRequests);
+    document.getElementById('organizationFilter').addEventListener('input', filterRequests);
+    document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
+    document.getElementById('dateToFilter').addEventListener('change', filterRequests);
+
+    clearFiltersBtn.addEventListener('click', () => {
+      document.getElementById('requestIdFilter').value = '';
+      statusFilter.value = 'all';
+      document.getElementById('studentFilter').value = '';
+      document.getElementById('organizationFilter').value = '';
+      document.getElementById('dateFromFilter').value = '';
+      document.getElementById('dateToFilter').value = '';
+      filterRequests();
+    });
 
     document.querySelectorAll('.request-row').forEach(row => {
       row.addEventListener('click', () => {

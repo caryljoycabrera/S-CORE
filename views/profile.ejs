@@ -9,7 +9,6 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <style>
- /* Button to toggle custom org input */
 .toggle-org-button {
   background: none;
   color: #198754;
@@ -21,7 +20,6 @@
   text-align: left;
 }
 
-/* Add button styling */
 .add-org-button {
   background-color: #198754;
   border: none;
@@ -33,7 +31,6 @@
   border-radius: 4px;
 }
 
-/* Select2 adjustments */
 .select2-container--default .select2-selection--multiple {
   border-radius: 4px;
   border: 1px solid #ced4da;
@@ -56,18 +53,14 @@
   margin-right: 6px;
   font-weight: bold;
 }
-
 </style>
-<!--TESTING NG GITHUBBBBBB HEHEH-->
-
 </head>
 <body>
-  <!-- Header -->
   <header class="overlap">
     <div class="group">
       <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
     </div>
-    <a href="/userpage" class="text-wrapper">S-CORE</a>
+    <a href="/dashboard" class="text-wrapper">S-CORE</a>
     <span class="text-wrapper-2">My Profile</span>
 
     <div class="dropdown-wrapper">
@@ -84,7 +77,6 @@
     </div>
   </header>
 
-  <!-- Main Profile Content -->
   <main class="student-side">
     <div class="div">
         <section class="activity-section">
@@ -94,10 +86,10 @@
      alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
                 <h2><%= user.fName %> <%= user.lName %></h2>
-                <p style="color: #6b7280;">Student</p>
+                <p style="color: #6b7280;"><%= user.userType === 'student' ? 'Student' : 'Staff' %></p>
             </div>
             </div>
-            <a href="/userpage" class="view-all-btn" style="display:inline-block;">
+            <a href="/dashboard" class="view-all-btn" style="display:inline-block;">
             ← Back to Dashboard
             </a>
         </div>
@@ -109,9 +101,13 @@
                 <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
                 <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
                 <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
+                <% if (user.userType === 'student') { %>
                 <tr><td class="label">Organization:</td><td><%= user.studentOrganization || 'None' %></td></tr>
                 <tr><td class="label">Course/Year/Section:</td><td><%= user.cys || 'N/A' %></td></tr>
                 <tr><td class="label">Student ID:</td><td><%= user.studentId || 'N/A' %></td></tr>
+                <% } else { %>
+                <tr><td class="label">Office/Department:</td><td><%= user.affiliation || 'None' %></td></tr>
+                <% } %>
             </tbody>
             </table>
 
@@ -125,8 +121,6 @@
     </div>
     </main>
 
-    <!-- Modals -->
-        <!-- Update Profile Modal -->
     <div id="updateProfileModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
@@ -159,8 +153,7 @@
             <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
         </div>
 
-        <!-- !!!!!!Organization Section / need ng drop down list again na nakaselect uli ung 
-         mga orgs nila and pedeng magadd or delete/ kulang nlng dito is ung makasearch and makasave sa database-->
+        <% if (user.userType === 'student') { %>
         <div class="form-group">
           <label for="studentOrganization">Student Organization</label>
           <select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%"></select>
@@ -184,6 +177,13 @@
             <label for="studentId">Student ID</label>
             <input name="studentId" id="studentId" type="text" value="<%= user.studentId || '' %>" />
         </div>
+        <% } else { %>
+        <div class="form-group">
+            <label for="affiliation">Office/Department</label>
+            <input name="affiliation" id="affiliation" type="text" value="<%= user.affiliation || '' %>" />
+        </div>
+        <% } %>
+
         <div class="form-actions">
             <button type="submit">Save Changes</button>
         </div>
@@ -191,7 +191,6 @@
     </div>
     </div>
 
-    <!-- Change Password Modal -->
     <div id="passwordModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
@@ -214,8 +213,6 @@
     </div>
     </div>
 
-   
- <!-- Update Profile Picture Modal -->
 <div id="pictureModal" class="modal" style="display: none;">
   <div class="modal-content">
     <div class="modal-header">
@@ -254,16 +251,15 @@
       }
     });
 
-// FIXED MODAL OPENERS
 document.getElementById('openUpdateProfile').onclick = () => openModal('updateProfileModal');
 document.getElementById('openChangePassword').onclick = () => openModal('passwordModal');
 document.getElementById('openPictureModal').onclick = () => openModal('pictureModal');
+
     function openModal(id) {
   const modal = document.getElementById(id);
   modal.style.display = 'flex';
 
-  if (id === 'updateProfileModal') {
-    // Reinitialize Select2 when modal is shown
+  if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
     const select = $('#studentOrganization');
     if (!select.hasClass('select2-hidden-accessible')) {
       select.select2({
@@ -272,7 +268,6 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
         width: '100%'
       });
 
-      // Add options if not already populated
       const organizationOptions = [
         "University Student Government (USG)",
         "Internal Audit Service (IAS)",
@@ -310,7 +305,7 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
         "DLSU-D Chorale (CHORALE)",
         "Lasallian Symphony Orchestra (LSO)",
         "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N’ Flexes Dance Company (LPNFDC)",
+        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
         "Lasallian Pop Band (LPB)",
         "Teatro Lasalliana (TEATRO)",
         "Visual and Performing Arts Production Unit (VPAPU)",
@@ -340,9 +335,9 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
         "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
         "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
         "LS Verde of Campus Sustainability Office",
-        "Students’ Extension of Resources through Voluntary Effort (SERVE) of LCDC",
+        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
         "Green FM of Communications and Journalism Department",
-        "International Students’ Association (ISA) of International Students Office",
+        "International Students' Association (ISA) of International Students Office",
         "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
       ];
 
@@ -370,7 +365,6 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
   }
 }
 
-
     function closeModal(id) {
         document.getElementById(id).style.display = 'none';
     }
@@ -381,7 +375,6 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
         });
     };
 
-  // AJAX: Update Profile
  document.getElementById('updateProfileForm').onsubmit = async function (e) {
   e.preventDefault();
   const form = e.target;
@@ -412,8 +405,6 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
   }
 };
 
-
-  // AJAX: Change Password
   document.getElementById('passwordForm').onsubmit = async function (e) {
     e.preventDefault();
     const form = e.target;
@@ -434,8 +425,6 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
     }
   };
 
-  // AJAX: Update Profile Picture
-  document.querySelectorAll('.view-all-btn')[3].onclick = () => openModal('pictureModal');
  document.getElementById('pictureForm').onsubmit = async function (e) {
   e.preventDefault();
   const form = e.target;
@@ -459,7 +448,6 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
   }
 };
 
-// AJAX: Delete Profile Picture
 document.getElementById('deletePictureForm').onsubmit = async function (e) {
   e.preventDefault();
 
@@ -477,8 +465,6 @@ document.getElementById('deletePictureForm').onsubmit = async function (e) {
     alert('Error: ' + err);
   }
 };
-
-
 
 function toggleCustomOrg() {
   const container = document.getElementById('customOrgContainer');
@@ -507,7 +493,6 @@ document.getElementById('addOrganizationButton')?.addEventListener('click', func
     alert('Please enter an organization name.');
   }
 });
-
 
   </script>
 
