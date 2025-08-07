@@ -392,6 +392,14 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
     }
   });
 
+  // --- Fix: Get selected organizations from Select2 ---
+  if (document.getElementById('studentOrganization')) {
+    const selectedOrgs = $('#studentOrganization').val() || [];
+    // Send as comma-separated string (adjust if your backend expects array)
+    data.studentOrganization = selectedOrgs.join(',');
+  }
+  // ---------------------------------------------------
+
   const res = await fetch('/profile/update-popup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

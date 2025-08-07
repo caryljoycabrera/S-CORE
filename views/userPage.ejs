@@ -6,12 +6,117 @@
   <title>S-CORE Dashboard</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-</head>
+  <style>
+    /* Calendar Theme Styles */
+    .calendar-standalone {
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      margin: 2rem 0 0 0;
+      min-width: 280px;
+      max-width: 320px;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
 
+    .calendar-standalone:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .calendar-title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1f2937;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .calendar-month-year {
+      font-size: 0.9rem;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      font-size: 0.875rem;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .calendar-day-header {
+      font-weight: 600;
+      text-align: center;
+      padding: 8px 4px;
+      color: #6b7280;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .calendar-day {
+      padding: 8px 4px;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #374151;
+      font-weight: 500;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
+      background-color: #f3f4f6;
+      transform: scale(1.05);
+    }
+
+    .calendar-today {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    .calendar-empty {
+      cursor: default;
+    }
+
+    .calendar-icon {
+      width: 20px;
+      height: 20px;
+      color: #6b7280;
+      margin-right: 0.5rem;
+    }
+
+    /* Enhanced action card hover effects to match calendar */
+    .action-card {
+      transition: all 0.3s ease;
+    }
+
+    .action-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+  </style>
+</head>
 <body>
   <div class="student-side">
     <div class="div">
-      <!-- Header Section -->
       <div class="overlap">
         <div class="group">
           <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
@@ -31,7 +136,6 @@
       </div>
     </div>
       </div>
-      <!-- Main Action Cards -->
       <div class="action-cards-container">
         <div class="action-card" onclick="location.href='/all-requests'">
           <div class="card-icon-wrapper">
@@ -62,43 +166,26 @@
           <p class="card-subtitle">Request deliverables</p>
           <div class="card-arrow">→</div>
         </div>
-      </div>
 
-      <!-- Calendar Section: styled the same as admin page -->
-      <div class="calendar-standalone" style="background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; margin: 2rem 0 0 0; min-width: 260px; max-width: 320px;">
-        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-          <img src="/Picture/calendar.png" alt="Calendar" style="width: 32px; height: 32px;">
-          <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600;">Calendar</h3>
+        <div class="calendar-standalone">
+          <div class="calendar-header">
+            <div style="display: flex; align-items: center;">
+              <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <h3 class="calendar-title">Calendar</h3>
+            </div>
+            <div class="calendar-month-year" id="calendar-month-year"></div>
+          </div>
+          <div id="calendar-standalone" class="calendar-grid"></div>
         </div>
-        <div id="calendar-standalone"></div>
+
       </div>
 
-      <script>
-        // Render standalone calendar (same as admin page)
-        (function() {
-          const calendar = document.getElementById('calendar-standalone');
-          if (!calendar) return;
-          const now = new Date();
-          const month = now.toLocaleString('default', { month: 'long' });
-          const year = now.getFullYear();
-          const firstDay = new Date(year, now.getMonth(), 1).getDay();
-          const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
-          let html = `<div style="font-weight:600; text-align:center;">${month} ${year}</div>`;
-          html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:0.9em;margin-top:4px;">';
-          ['S','M','T','W','T','F','S'].forEach(d=>html+=`<div style="font-weight:600;text-align:center;">${d}</div>`);
-          for(let i=0;i<firstDay;i++) html+='<div></div>';
-          for(let d=1;d<=daysInMonth;d++) {
-            const isToday = d === now.getDate();
-            html += `<div style="padding:4px 0;border-radius:4px;text-align:center;${isToday?'background:#007bff;color:#fff;':''}">${d}</div>`;
-          }
-          html += '</div>';
-          calendar.innerHTML = html;
-        })();
-      </script>
-      
-
-      <!-- Recent Activity Section -->
-       <%
+      <%
       function timeAgo(date) {
         const now = new Date();
         const diff = now - new Date(date);
@@ -174,7 +261,6 @@
 </div>
       
 
-      <!-- Quick Stats -->
       <div class="stats-container">
         <div class="stats-card">
           <div class="stat-number"><%= totalRequests %></div>
@@ -194,8 +280,7 @@
         </div>
       </div>
 
-      <!-- Calendar Section -->
-  <script>
+      <script>
     function toggleDropdown() {
       const menu = document.getElementById("dropdownMenu");
       menu.style.display = menu.style.display === "block" ? "none" : "block";
@@ -221,8 +306,43 @@
       });
     });
 
-    
+    // Enhanced calendar rendering with proper theming
+    (function() {
+      const calendar = document.getElementById('calendar-standalone');
+      const monthYear = document.getElementById('calendar-month-year');
+      if (!calendar || !monthYear) return;
 
+      const now = new Date();
+      const month = now.toLocaleString('default', { month: 'long' });
+      const year = now.getFullYear();
+      const firstDay = new Date(year, now.getMonth(), 1).getDay();
+      const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
+      
+      // Set month and year in header
+      monthYear.textContent = `${month} ${year}`;
+      
+      let html = '';
+      
+      // Day headers
+      const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      dayHeaders.forEach(day => {
+        html += `<div class="calendar-day-header">${day}</div>`;
+      });
+      
+      // Empty cells for days before month starts
+      for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-day calendar-empty"></div>';
+      }
+      
+      // Days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = day === now.getDate();
+        const className = isToday ? 'calendar-day calendar-today' : 'calendar-day';
+        html += `<div class="${className}">${day}</div>`;
+      }
+      
+      calendar.innerHTML = html;
+    })();
   </script>
 </body>
 </html>
