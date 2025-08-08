@@ -9,6 +9,14 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <style>
+ .select2-container--default .select2-selection--single {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.375rem;
+  background-color: #fff;
+  min-height: 38px;
+}
+ 
 .toggle-org-button {
   background: none;
   color: #198754;
@@ -30,7 +38,13 @@
   cursor: pointer;
   border-radius: 4px;
 }
+.select2-container {
+  z-index: 9999; /* keep it above the modal backdrop */
+}
 
+.select2-dropdown {
+  z-index: 99999; /* ensure dropdown itself is above everything */
+}
 .select2-container--default .select2-selection--multiple {
   border-radius: 4px;
   border: 1px solid #ced4da;
@@ -179,8 +193,10 @@
         </div>
         <% } else { %>
         <div class="form-group">
-            <label for="affiliation">Office/Department</label>
-            <input name="affiliation" id="affiliation" type="text" value="<%= user.affiliation || '' %>" />
+          <label for="officeSelect">Office/Department</label>
+          <select name="affiliation" id="officeSelect" style="width: 100%">
+            <!-- options will be filled dynamically -->
+          </select>
         </div>
         <% } %>
 
@@ -255,17 +271,18 @@ document.getElementById('openUpdateProfile').onclick = () => openModal('updatePr
 document.getElementById('openChangePassword').onclick = () => openModal('passwordModal');
 document.getElementById('openPictureModal').onclick = () => openModal('pictureModal');
 
-    function openModal(id) {
+function openModal(id) {
   const modal = document.getElementById(id);
   modal.style.display = 'flex';
-
+  //student logic
   if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
     const select = $('#studentOrganization');
     if (!select.hasClass('select2-hidden-accessible')) {
       select.select2({
         placeholder: "Search or select organizations",
         allowClear: true,
-        width: '100%'
+        width: '100%',
+        dropdownParent: $('#updateProfileModal')
       });
 
       const organizationOptions = [
@@ -341,7 +358,10 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
         "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
       ];
 
-      const currentOrgs = `<%= user.studentOrganization || '' %>`.split(',').map(o => o.trim()).filter(Boolean);
+      const currentOrgs = `<%= user.studentOrganization || '' %>`
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean);
 
       organizationOptions.forEach(org => {
         const exists = currentOrgs.includes(org);
@@ -363,7 +383,148 @@ document.getElementById('openPictureModal').onclick = () => openModal('pictureMo
       select.trigger('change');
     }
   }
-}
+
+  // NON-STUDENT LOGIC
+  if (id === 'updateProfileModal' && '<%= user.userType %>' !== 'student') {
+    const select = $('#officeSelect');
+    if (!select.hasClass('select2-hidden-accessible')) {
+      const officeOptions = [
+          "Office of the President",
+          "Office of the Chief Administrative Officer",
+          "Office of the Provost",
+          "Office of the Chief Lasallian Mission Officer",
+          "Office of the Principal",
+          "Corporate and Executive Management Office",
+          "Center for Heritage Conservation",
+          "Museo De La Salle",
+          "Risk, Compliance and Audit Office",
+          "University Chaplain",
+          "Office of the Vice President for Administrative Services",
+          "Office of the Vice President for Finance",
+          "Office of the Vice President for Global Engagement and External Relations",
+          "Human Resource Management Office",
+          "Strategic Communications Office",
+          "Ancillary and Asset Management Office",
+          "Legal Counsel",
+          "Data Protection Office",
+          "Campus Development Office",
+          "Buildings and Facilities Maintenance Office",
+          "Campus Sustainability Office",
+          "General Services Office",
+          "Green Architecture and Campus Planning Office",
+          "Information and Communications Technology Center",
+          "Accounting Office",
+          "Treasury Office",
+          "Advancement and Alumni Relations Office",
+          "Lasallian Community Development Center",
+          "Linkages and Scholarship Office",
+          "Office of the Vice Provost for Academics",
+          "Office of the Deputy Provost for Research",
+          "Academic Planning and Quality Management",
+          "College of Law",
+          "College of Professional and Graduate Studies",
+          "School of Innovative and Flexible Learning",
+          "School of Governance, Public Service, and Corporate Leadership",
+          "Aklatang Emilio Aguinaldo-Information Resource Center",
+          "Center for Student Admissions",
+          "University Registrar",
+          "Cavite Studies Center",
+          "University Research Office",
+          "Herminia D. Torres Quality Assurance Office",
+          "Center for Innovative Learning Program",
+          "Center for Curriculum Development and Instruction",
+          "Language Learning Center",
+          "Center for Artificial Intelligence",
+          "Center for Creative Program",
+          "Academy of Continuing Education",
+          "College of Business Administration and Accountancy",
+          "Accountancy Department",
+          "Allied Business Department",
+          "Business Management Department",
+          "Marketing Department",
+          "College of Criminal Justice Education",
+          "College of Education",
+          "Physical Education Department",
+          "Professional Education Department",
+          "Religious Education Department",
+          "College of Engineering, Architecture and Technology",
+          "Architecture Department",
+          "Engineering Department",
+          "Graphics Design and Multimedia Department",
+          "Center of Technology",
+          "College of Information and Computer Studies",
+          "Computer Studies Department",
+          "Information Technology Department",
+          "College of Liberal Arts and Communication",
+          "Communication and Journalism Department",
+          "Languages and Literature Department",
+          "Social Sciences Department",
+          "Philosophy and Psychology Department",
+          "College of Tourism and Hospitality Management",
+          "Hospitality Management Department",
+          "Tourism Management Department",
+          "College of Science",
+          "Biological Sciences Department",
+          "Mathematics & Statistics Department",
+          "Physical Sciences Department",
+          "Office of Student Services",
+          "Student Development and Activities Office",
+          "Student Welfare and Formation Office",
+          "Student Wellness Center",
+          "NSTP-CWTS",
+          "Campus Ministry Office",
+          "DLS Bahay Pag-asa Dasmariñas",
+          "Night College",
+          "Sports Development Office",
+          "University Lasallian Family Office",
+          "Basic Education",
+          "Office of the Associate Principal for Academics and Research",
+          "Office of the Associate Principal for Administrative Services and Student Affairs",
+          "Dormitory",
+          "Materials Reproduction Office / Food Services Office",
+          "Retreat and Conference Center / Sports & Recreation Complex",
+          "Warehouse Office",
+          "Safety & Health Office",
+          "Purchasing Office",
+          "Transportation Office",
+          "Facilities Maintenance Office",
+          "Housekeeping & Grounds",
+          "De La Salle Dasmariñas Alumni Association",
+          "DLSU-D Development Cooperative",
+          "Faculty Organization",
+          "KABALIKAT ng DLSU-D Inc.",
+          "Parents Organization La Salle Cavite",
+          "Human Resource Management Office"
+      ] ;
+
+          const currentOffice = `<%= user.affiliation || '' %>`.trim();
+
+          // Clear old options first
+          select.empty();
+
+          // Add predefined options
+          officeOptions.forEach(office => {
+            const isSelected = office === currentOffice;
+            select.append(new Option(office, office, isSelected, isSelected));
+          });
+
+          // If user has a custom office, add it
+          if (currentOffice && !officeOptions.includes(currentOffice)) {
+            select.append(new Option(currentOffice, currentOffice, true, true));
+          }
+
+          // Init select2 after options are appended
+          select.select2({
+            placeholder: "Search or select an office/department",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#updateProfileModal')
+          });
+
+          select.trigger('change');
+        }
+      }
+    }
 
     function closeModal(id) {
         document.getElementById(id).style.display = 'none';
@@ -501,6 +662,11 @@ document.getElementById('addOrganizationButton')?.addEventListener('click', func
     alert('Please enter an organization name.');
   }
 });
+
+//update office/department based on user type
+//nonstudent
+//OFFICE/DEPARTMENT SELECTION
+
 
   </script>
 

@@ -5,7 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Profile</title>
   <link rel="stylesheet" href="/style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<style>
+ 
+ 
+.toggle-org-button {
+  background: none;
+  color: #198754;
+  font-size: 0.875rem;
+  padding: 0;
+  margin-top: 0.5rem;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.add-org-button {
+  background-color: #198754;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 0 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+  
+   .select2-container--default .select2-selection--single {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.375rem;
+  background-color: #fff;
+  min-height: 38px;
+}
+
+.select2-container--default .select2-selection--multiple {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.375rem;
+  background-color: #fff;
+  min-height: 38px;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: #198754;
+  border: none;
+  color: white;
+  font-weight: 500;
+  padding: 0 8px;
+  margin-top: 4px;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  color: white;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+
+</style>
+
 </head>
 <body>
   <header class="overlap">
@@ -19,7 +80,7 @@
       <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
         <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
         <div class="user">
-          <img class="user-icon" src="/Picture/user.png" alt="User Icon" />
+<img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
         </div>
       </div>
       <div class="dropdown-menu" id="dropdownMenu">
@@ -33,9 +94,9 @@
     <div class="div">
         <section class="activity-section">
         <div class="section-header">
-            <div class="profile-info">
-            <img src="/Picture/user.png" alt="Profile Picture"
-                class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+             <div class="profile-info">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+     alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
                 <h2><%= user.fName %> <%= user.lName %></h2>
                 <p style="color: #6b7280;">Admin</p>
@@ -53,79 +114,111 @@
                 <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
                 <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
                 <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
-                <% if (user.userType === 'student') { %>
-                <tr><td class="label">Organization:</td><td><%= user.studentOrganization || 'None' %></td></tr>
-                <tr><td class="label">Course/Year/Section:</td><td><%= user.cys || 'N/A' %></td></tr>
-                <% } else { %>
-                <tr><td class="label">Office/Department:</td><td><%= user.affiliation || 'None' %></td></tr>
-                <% } %>
+            <tr>
+            <td class="label">
+              <% if (user.userType === 'student') { %>
+                Organization:
+              <% } else { %>
+                Office/Department:
+              <% } %>
+            </td>
+            <td>
+              <% if (user.userType === 'student') { %>
+                <%= user.studentOrganization && user.studentOrganization.length ? user.studentOrganization.join(', ') : 'None' %>
+              <% } else { %>
+                <%= user.affiliation && user.affiliation.trim() !== '' ? user.affiliation : 'None' %>
+              <% } %>
+            </td>
+          </tr>
+
+
             </tbody>
             </table>
 
-            <div style="margin-top:2rem; display:flex; gap:1rem;">
-            <button class="view-all-btn">Update Profile</button>
-            <button class="view-all-btn">Change Password</button>
-            <button class="view-all-btn">Update Profile Picture</button>
+             <div style="margin-top:2rem; display:flex; gap:1rem;">
+<button id="openUpdateProfile" class="view-all-btn">Update Profile</button>
+<button id="openChangePassword" class="view-all-btn">Change Password</button>
+<button id="openPictureModal" class="view-all-btn" type="button">Update Profile Picture</button>
             </div>
         </div>
         </section>
     </div>
     </main>
 
-    <div id="updateProfileModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-        <h2 class="modal-title">Update Profile</h2>
-        <span class="close" onclick="closeModal('updateProfileModal')">&times;</span>
-        </div>
-        <form id="updateProfileForm" class="modal-form">
-        <div class="form-group">
-            <label for="fName">First Name</label>
-            <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
-        </div>
-        <div class="form-group">
-            <label for="mName">Middle Name</label>
-            <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
-        </div>
-        <div class="form-group">
-            <label for="lName">Last Name</label>
-            <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
-        </div>
-        <div class="form-group">
-            <label for="email">Email (cannot be changed)</label>
-            <input name="email" id="email" type="email" value="<%= user.email %>" disabled />
-        </div>
-        <div class="form-group">
-            <label for="username">Username (cannot be changed)</label>
-            <input name="username" id="username" type="text" value="<%= user.username %>" disabled />
-        </div>
-        <div class="form-group">
-            <label for="phoneNumber">Phone Number</label>
-            <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
-        </div>
-        <div class="form-group">
-            <label for="studentOrganization" id="orgLabel">
+  <div id="updateProfileModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Update Profile</h2>
+      <span class="close" onclick="closeModal('updateProfileModal')">&times;</span>
+    </div>
+      <input type="hidden" name="userId" value="<%= user._id %>" />
+
+    <form id="updateProfileForm" class="modal-form">
+      <div class="form-group">
+        <label for="fName">First Name</label>
+        <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
+      </div>
+
+      <div class="form-group">
+        <label for="mName">Middle Name</label>
+        <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+      </div>
+
+      <div class="form-group">
+        <label for="lName">Last Name</label>
+        <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email (cannot be changed)</label>
+        <input name="email" id="email" type="email" value="<%= user.email %>" disabled />
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username (cannot be changed)</label>
+        <input name="username" id="username" type="text" value="<%= user.username %>" disabled />
+      </div>
+
+      <div class="form-group">
+        <label for="phoneNumber">Phone Number</label>
+        <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
+      </div>
             <% if (user.userType === 'student') { %>
-                Organization
-            <% } else { %>
-                Office/Department
-            <% } %>
-            </label>
-            <input name="studentOrganization" id="studentOrganization" type="text" 
-                   value="<%= user.userType === 'student' ? (user.studentOrganization || '') : (user.affiliation || '') %>" />
+                <div class="form-group">
+          <label for="studentOrganizationSelect">Organization(s)</label>
+          <select name="studentOrganization" id="studentOrganizationSelect" multiple="multiple" style="width: 100%;">
+            <!-- JS will populate options -->
+          </select>
+
+            <button type="button" class="toggle-org-button" onclick="toggleCustomOrg()">Click here if Student Organization is not in the list</button>
+
+          <div id="customOrgContainer" style="display: none; margin-top: 0.5rem;">
+            <label for="otherOrganization">Add Other Student Organization</label>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+              <input type="text" id="otherOrganization" placeholder="Enter organization name" class="form-control" />
+              <button type="button" id="addOrganizationButton" class="add-org-button">+</button>
+            </div>
+          </div>
         </div>
-        <% if (user.userType === 'student') { %>
-        <div class="form-group" id="cysGroup">
-            <label for="cys">Course / Year / Section</label>
-            <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" />
+
+      <% } else { %>
+  
+        <div class="form-group">
+          <label for="officeSelect">Office/Department</label>
+          <select name="affiliation" id="officeSelect" style="width: 100%">
+            <!-- Options will be populated dynamically by JS -->
+          </select>
         </div>
-        <% } %>
-        <div class="form-actions">
-            <button type="submit">Save Changes</button>
-        </div>
-        </form>
-    </div>
-    </div>
+      <% } %>
+
+
+      <div class="form-actions">
+        <button type="submit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
     <div id="passwordModal" class="modal" style="display: none;">
     <div class="modal-content">
@@ -149,6 +242,30 @@
     </div>
     </div>
 
+    <div id="pictureModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Update Profile Picture</h2>
+      <span class="close" onclick="closeModal('pictureModal')">&times;</span>
+    </div>
+    <form id="pictureForm" method="POST" action="/profileadmin/upload-picture" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="formFile">Choose new profile picture</label>
+      <input class="form-control" type="file" id="formFile" name="profilePicture" accept="image/*" required>
+    </div>
+    <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
+      <button type="submit" class="submit-btn" style="background: var(--success); color: white;">Upload</button>
+    </div>
+  </form>
+
+    <form id="deletePictureForm" method="POST" action="/profileadmin/delete-picture">
+      <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
+        <button type="submit" class="delete-btn" style="background: var(--danger); color: white;">Delete Profile Picture</button>
+      </div>
+    </form>
+  </div>
+</div>
+
   <script>
     function toggleDropdown() {
       const menu = document.getElementById("dropdownMenu");
@@ -163,12 +280,271 @@
       }
     });
 
-    document.querySelectorAll('.view-all-btn')[1].onclick = () => openModal('updateProfileModal');
-    document.querySelectorAll('.view-all-btn')[2].onclick = () => openModal('passwordModal');
+    document.getElementById('openUpdateProfile').onclick = () => openModal('updateProfileModal');
+    document.getElementById('openChangePassword').onclick = () => openModal('passwordModal');
+    document.getElementById('openPictureModal').onclick = () => openModal('pictureModal');
 
-    function openModal(id) {
-        document.getElementById(id).style.display = 'flex';
+ function openModal(id) {
+  const modal = document.getElementById(id);
+  modal.style.display = 'flex';
+
+  if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
+    const select = $('#studentOrganizationSelect');
+
+    if (!select.hasClass('select2-hidden-accessible')) {
+      select.select2({
+        placeholder: "Search or select organizations",
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#updateProfileModal')
+      });
     }
+
+      const organizationOptions = [
+        "University Student Government (USG)",
+        "Internal Audit Service (IAS)",
+        "University Student Election Commission (USEC)",
+        "Office of the Solicitor General (OSG)",
+        "College of Business Administration and Accountancy Student Government (CBAASG)",
+        "Business Management Program Council (BMPC)",
+        "Junior Philippine Institute of Accountants (JPIA)",
+        "Marketing Management Program Council (MMPC)",
+        "College of Education Student Government (COEdSG)",
+        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
+        "Architecture Program Council (ArchPC)",
+        "Civil Engineering Program Council (CEEPC)",
+        "Computer Engineering Program Council (CpEPC)",
+        "Electrical Engineering Program Council (EEEPC)",
+        "Electronics Engineering Program Council (ECEPC)",
+        "Industrial Engineering Program Council (IEEPC)",
+        "Mechanical Engineering Program Council (MEEPC)",
+        "Multimedia Arts Program Council (MMAPC)",
+        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
+        "College of Criminal Justice Education Student Government (CCJESG)",
+        "Criminology Program Council (CrimPC)",
+        "Forensic Science Program Council (FScPC)",
+        "College of Liberal Arts and Communication Student Government (CLACSG)",
+        "Communication Program Council (CPC)",
+        "International Development Program Council (IDPC)",
+        "Political Science Program Council (PSPC)",
+        "Psychology Program Council (PPC)",
+        "College of Science Student Government (COSSG)",
+        "Applied Mathematics Program Council (AMPC)",
+        "Biology Program Council (BioPC)",
+        "College of Information and Computer Studies Student Government (CICSSG)",
+        "Computer Science Program Council (CSPC)",
+        "Information Technology Program Council (ITPC)",
+        "DLSU-D Chorale (CHORALE)",
+        "Lasallian Symphony Orchestra (LSO)",
+        "La Salle Filipiniana Dance Company (LSFDC)",
+        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
+        "Lasallian Pop Band (LPB)",
+        "Teatro Lasalliana (TEATRO)",
+        "Visual and Performing Arts Production Unit (VPAPU)",
+        "Heraldo Filipino",
+        "Vicissitude",
+        "Council of Student Organizations (CSO)",
+        "Business Operations Management Society (BOMS)",
+        "Junior Marketing Association (JMA)",
+        "DLSU-D Psychological Society (DPS)",
+        "DLSU-D Pre-Medical Society (DPMS)",
+        "Hotel and Restaurant Management Society (HRMS)",
+        "Turismo Lasalleño Society (TLS)",
+        "Lasallian Educators Society (LES)",
+        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
+        "DLSU-D Pre-Law Society (DPLS)",
+        "Astraeus Literary and Arts Guild",
+        "Accounting Enrichment Society (ACES)",
+        "Circle of Student Assistants (COSA)",
+        "DLSU-D Lifters",
+        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
+        "DLSU-D United Patriots Football Club",
+        "Junior Financial Executives Institute of the Philippines (JFINEX)",
+        "Marché Société (MS)",
+        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
+        "SINAG Society of Leaders (SISOL)",
+        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
+        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
+        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
+        "LS Verde of Campus Sustainability Office",
+        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
+        "Green FM of Communications and Journalism Department",
+        "International Students' Association (ISA) of International Students Office",
+        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+      ];
+
+       // Parse current organizations safely
+    let currentOrgs = [];
+    try {
+      currentOrgs = JSON.parse('<%- JSON.stringify(user.studentOrganization || []) %>');
+    } catch {
+      currentOrgs = (`<%= user.studentOrganization || '' %>`).split(',').map(o => o.trim()).filter(Boolean);
+    }
+
+    // Clear existing options
+    select.empty();
+
+    // Add predefined orgs
+    organizationOptions.forEach(org => {
+      const isSelected = currentOrgs.includes(org);
+      const option = new Option(org, org, isSelected, isSelected);
+      select.append(option);
+    });
+
+    // Add any current orgs not in predefined
+    currentOrgs.forEach(org => {
+      if (!organizationOptions.includes(org)) {
+        const option = new Option(org, org, true, true);
+        select.append(option);
+      }
+    });
+
+    select.val(currentOrgs).trigger('change');
+  }
+  }
+
+  // NON-STUDENT LOGIC
+  if (id === 'updateProfileModal' && '<%= user.userType %>' !== 'student') {
+    const select = $('#officeSelect');
+    if (!select.hasClass('select2-hidden-accessible')) {
+      const officeOptions = [
+          "Office of the President",
+          "Office of the Chief Administrative Officer",
+          "Office of the Provost",
+          "Office of the Chief Lasallian Mission Officer",
+          "Office of the Principal",
+          "Corporate and Executive Management Office",
+          "Center for Heritage Conservation",
+          "Museo De La Salle",
+          "Risk, Compliance and Audit Office",
+          "University Chaplain",
+          "Office of the Vice President for Administrative Services",
+          "Office of the Vice President for Finance",
+          "Office of the Vice President for Global Engagement and External Relations",
+          "Human Resource Management Office",
+          "Strategic Communications Office",
+          "Ancillary and Asset Management Office",
+          "Legal Counsel",
+          "Data Protection Office",
+          "Campus Development Office",
+          "Buildings and Facilities Maintenance Office",
+          "Campus Sustainability Office",
+          "General Services Office",
+          "Green Architecture and Campus Planning Office",
+          "Information and Communications Technology Center",
+          "Accounting Office",
+          "Treasury Office",
+          "Advancement and Alumni Relations Office",
+          "Lasallian Community Development Center",
+          "Linkages and Scholarship Office",
+          "Office of the Vice Provost for Academics",
+          "Office of the Deputy Provost for Research",
+          "Academic Planning and Quality Management",
+          "College of Law",
+          "College of Professional and Graduate Studies",
+          "School of Innovative and Flexible Learning",
+          "School of Governance, Public Service, and Corporate Leadership",
+          "Aklatang Emilio Aguinaldo-Information Resource Center",
+          "Center for Student Admissions",
+          "University Registrar",
+          "Cavite Studies Center",
+          "University Research Office",
+          "Herminia D. Torres Quality Assurance Office",
+          "Center for Innovative Learning Program",
+          "Center for Curriculum Development and Instruction",
+          "Language Learning Center",
+          "Center for Artificial Intelligence",
+          "Center for Creative Program",
+          "Academy of Continuing Education",
+          "College of Business Administration and Accountancy",
+          "Accountancy Department",
+          "Allied Business Department",
+          "Business Management Department",
+          "Marketing Department",
+          "College of Criminal Justice Education",
+          "College of Education",
+          "Physical Education Department",
+          "Professional Education Department",
+          "Religious Education Department",
+          "College of Engineering, Architecture and Technology",
+          "Architecture Department",
+          "Engineering Department",
+          "Graphics Design and Multimedia Department",
+          "Center of Technology",
+          "College of Information and Computer Studies",
+          "Computer Studies Department",
+          "Information Technology Department",
+          "College of Liberal Arts and Communication",
+          "Communication and Journalism Department",
+          "Languages and Literature Department",
+          "Social Sciences Department",
+          "Philosophy and Psychology Department",
+          "College of Tourism and Hospitality Management",
+          "Hospitality Management Department",
+          "Tourism Management Department",
+          "College of Science",
+          "Biological Sciences Department",
+          "Mathematics & Statistics Department",
+          "Physical Sciences Department",
+          "Office of Student Services",
+          "Student Development and Activities Office",
+          "Student Welfare and Formation Office",
+          "Student Wellness Center",
+          "NSTP-CWTS",
+          "Campus Ministry Office",
+          "DLS Bahay Pag-asa Dasmariñas",
+          "Night College",
+          "Sports Development Office",
+          "University Lasallian Family Office",
+          "Basic Education",
+          "Office of the Associate Principal for Academics and Research",
+          "Office of the Associate Principal for Administrative Services and Student Affairs",
+          "Dormitory",
+          "Materials Reproduction Office / Food Services Office",
+          "Retreat and Conference Center / Sports & Recreation Complex",
+          "Warehouse Office",
+          "Safety & Health Office",
+          "Purchasing Office",
+          "Transportation Office",
+          "Facilities Maintenance Office",
+          "Housekeeping & Grounds",
+          "De La Salle Dasmariñas Alumni Association",
+          "DLSU-D Development Cooperative",
+          "Faculty Organization",
+          "KABALIKAT ng DLSU-D Inc.",
+          "Parents Organization La Salle Cavite",
+          "Human Resource Management Office"
+      ] ;
+
+          const currentOffice = `<%= user.affiliation || '' %>`.trim();
+
+          // Clear old options first
+          select.empty();
+
+          // Add predefined options
+          officeOptions.forEach(office => {
+            const isSelected = office === currentOffice;
+            select.append(new Option(office, office, isSelected, isSelected));
+          });
+
+          // If user has a custom office, add it
+          if (currentOffice && !officeOptions.includes(currentOffice)) {
+            select.append(new Option(currentOffice, currentOffice, true, true));
+          }
+
+          // Init select2 after options are appended
+          select.select2({
+            placeholder: "Search or select an office/department",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#updateProfileModal')
+          });
+
+          select.trigger('change');
+        }
+      }
+    
+
 
     function closeModal(id) {
         document.getElementById(id).style.display = 'none';
@@ -180,39 +556,149 @@
         });
     };
 
-  document.getElementById('updateProfileForm').onsubmit = async function (e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = Object.fromEntries(new FormData(form).entries());
+ document.getElementById('updateProfileForm').onsubmit = async function (e) {
+  e.preventDefault();
+  const form = e.target;
 
-    const res = await fetch('/admin/profile/update-popup', {
+  let data = {};
+  const formData = new FormData(form);
+
+  for (const [key, value] of formData.entries()) {
+    data[key] = value;
+  }
+
+  // For student users, override studentOrganization with select2 selected array
+  if (document.getElementById('studentOrganizationSelect')) {
+    const selectedOrgs = $('#studentOrganizationSelect').val() || [];
+    data.studentOrganization = selectedOrgs;
+  }
+
+  const res = await fetch('/admin/profile/update-popup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+
+  if (res.ok) {
+    location.reload();
+  } else {
+    alert('Update failed');
+  }
+};
+
+
+    document.getElementById('passwordForm').onsubmit = async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      const res = await fetch('/admin/profile/change-password-popup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        alert('Password updated');
+        closeModal('passwordModal');
+      } else {
+        const err = await res.text();
+        alert(err);
+      }
+    };
+document.getElementById('pictureForm').onsubmit = async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch('/profileadmin/upload-picture', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData
     });
-    if (res.ok) location.reload();
-    else alert('Update failed');
-  };
 
-  document.getElementById('passwordForm').onsubmit = async function (e) {
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+
+    alert('Profile picture updated!');
+    location.reload();
+  } catch (error) {
+    alert('Error uploading picture: ' + error.message);
+  }
+};
+
+
+
+  document.getElementById('deletePictureForm').onsubmit = async function (e) {
     e.preventDefault();
-    const form = e.target;
-    const data = Object.fromEntries(new FormData(form).entries());
 
-    const res = await fetch('/admin/profile/change-password-popup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+    if (!confirm('Are you sure you want to delete your profile picture?')) return;
+
+    const res = await fetch('/profileadmin/delete-picture', {
+      method: 'POST'
     });
 
     if (res.ok) {
-      alert('Password updated');
-      closeModal('passwordModal');
+      alert('Profile picture deleted.');
+      location.reload();
     } else {
       const err = await res.text();
-      alert(err);
+      alert('Error: ' + err);
     }
   };
+document.getElementById('addOrganizationButton').addEventListener('click', () => {
+  const input = document.getElementById('otherOrganization');
+  const newOrg = input.value.trim();
+  if (!newOrg) {
+    alert('Please enter an organization name.');
+    return;
+  }
+
+  const select = $('#studentOrganizationSelect');
+
+  // Case-insensitive duplicate check
+  const optionExists = select.find('option').filter(function() {
+    return $(this).val().toLowerCase() === newOrg.toLowerCase();
+  }).length > 0;
+
+  if (optionExists) {
+    alert('This organization is already added.');
+    return;
+  }
+
+  // Append new option, not selected yet
+      const newOption = new Option(newOrg, newOrg, true, true); // mark selected now
+      select.append(newOption);
+
+      let currentSelected = select.val() || [];
+      if (!currentSelected.includes(newOrg)) {
+        currentSelected.push(newOrg);
+      }
+      select.val(currentSelected).trigger('change');
+
+  input.value = '';
+});
+
+
+
+//add org
+  function toggleCustomOrg() {
+  const container = document.getElementById('customOrgContainer');
+  if (container.style.display === 'none' || container.style.display === '') {
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+
+
+
+
+  
+
   </script>
 
 </body>

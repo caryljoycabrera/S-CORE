@@ -808,9 +808,9 @@ label {
           <input type="text" name="lastName" placeholder="Last Name" required />
         </div>
         <div class="input-group">
-          <input type="text" name="affiliation" placeholder="Office/Department" />
-        </div>
-      
+        <label for="nonStudentOffice" class="input-label">Office/Department</label>
+        <select name="affiliation" id="nonStudentOffice" style="width: 100%" required></select>
+      </div>
       </div>
 
       <!-- Common fields -->
@@ -1068,7 +1068,9 @@ function toggleUserTypeFields() {
       });
     }
   }
-  //organization 
+
+
+//organization 
   function toggleCustomOrg() {
   const customOrgContainer = document.getElementById('customOrgContainer');
   customOrgContainer.style.display = customOrgContainer.style.display === 'none' ? 'block' : 'none';
@@ -1215,6 +1217,132 @@ $(document).ready(function () {
     alert('Please enter an organization name.');
   }
 });
+
+
+//OFFICE/DEPARTMENT SELECTION
+$(document).ready(function() {
+  const officeOptions = [
+    "Office of the President",
+    "Office of the Chief Administrative Officer",
+    "Office of the Provost",
+    "Office of the Chief Lasallian Mission Officer",
+    "Office of the Principal",
+    "Corporate and Executive Management Office",
+    "Center for Heritage Conservation",
+    "Museo De La Salle",
+    "Risk, Compliance and Audit Office",
+    "University Chaplain",
+    "Office of the Vice President for Administrative Services",
+    "Office of the Vice President for Finance",
+    "Office of the Vice President for Global Engagement and External Relations",
+    "Human Resource Management Office",
+    "Strategic Communications Office",
+    "Ancillary and Asset Management Office",
+    "Legal Counsel",
+    "Data Protection Office",
+    "Campus Development Office",
+    "Buildings and Facilities Maintenance Office",
+    "Campus Sustainability Office",
+    "General Services Office",
+    "Green Architecture and Campus Planning Office",
+    "Information and Communications Technology Center",
+    "Accounting Office",
+    "Treasury Office",
+    "Advancement and Alumni Relations Office",
+    "Lasallian Community Development Center",
+    "Linkages and Scholarship Office",
+    "Office of the Vice Provost for Academics",
+    "Office of the Deputy Provost for Research",
+    "Academic Planning and Quality Management",
+    "College of Law",
+    "College of Professional and Graduate Studies",
+    "School of Innovative and Flexible Learning",
+    "School of Governance, Public Service, and Corporate Leadership",
+    "Aklatang Emilio Aguinaldo-Information Resource Center",
+    "Center for Student Admissions",
+    "University Registrar",
+    "Cavite Studies Center",
+    "University Research Office",
+    "Herminia D. Torres Quality Assurance Office",
+    "Center for Innovative Learning Program",
+    "Center for Curriculum Development and Instruction",
+    "Language Learning Center",
+    "Center for Artificial Intelligence",
+    "Center for Creative Program",
+    "Academy of Continuing Education",
+    "College of Business Administration and Accountancy",
+    "Accountancy Department",
+    "Allied Business Department",
+    "Business Management Department",
+    "Marketing Department",
+    "College of Criminal Justice Education",
+    "College of Education",
+    "Physical Education Department",
+    "Professional Education Department",
+    "Religious Education Department",
+    "College of Engineering, Architecture and Technology",
+    "Architecture Department",
+    "Engineering Department",
+    "Graphics Design and Multimedia Department",
+    "Center of Technology",
+    "College of Information and Computer Studies",
+    "Computer Studies Department",
+    "Information Technology Department",
+    "College of Liberal Arts and Communication",
+    "Communication and Journalism Department",
+    "Languages and Literature Department",
+    "Social Sciences Department",
+    "Philosophy and Psychology Department",
+    "College of Tourism and Hospitality Management",
+    "Hospitality Management Department",
+    "Tourism Management Department",
+    "College of Science",
+    "Biological Sciences Department",
+    "Mathematics & Statistics Department",
+    "Physical Sciences Department",
+    "Office of Student Services",
+    "Student Development and Activities Office",
+    "Student Welfare and Formation Office",
+    "Student Wellness Center",
+    "NSTP-CWTS",
+    "Campus Ministry Office",
+    "DLS Bahay Pag-asa Dasmariñas",
+    "Night College",
+    "Sports Development Office",
+    "University Lasallian Family Office",
+    "Basic Education",
+    "Office of the Associate Principal for Academics and Research",
+    "Office of the Associate Principal for Administrative Services and Student Affairs",
+    "Dormitory",
+    "Materials Reproduction Office / Food Services Office",
+    "Retreat and Conference Center / Sports & Recreation Complex",
+    "Warehouse Office",
+    "Safety & Health Office",
+    "Purchasing Office",
+    "Transportation Office",
+    "Facilities Maintenance Office",
+    "Housekeeping & Grounds",
+    "De La Salle Dasmariñas Alumni Association",
+    "DLSU-D Development Cooperative",
+    "Faculty Organization",
+    "KABALIKAT ng DLSU-D Inc.",
+    "Parents Organization La Salle Cavite"
+  ];
+
+  const $select = $("#nonStudentOffice");
+  officeOptions.forEach(function(office) {
+    $select.append(new Option(office, office));
+  });
+
+  $select.select2({
+    placeholder: "Select an office",
+    allowClear: true,
+    width: "100%"
+  });
+});
+
+
+
 
   // Run on page load in case form is preserved by browser
   window.addEventListener('DOMContentLoaded', () => {

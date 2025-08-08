@@ -127,9 +127,9 @@
       <div class="dropdown-wrapper">
         <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
           <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-          <div class="user">
-            <img class="user-icon" src="/Picture/user.png" alt="Admin Icon" />
-          </div>
+           <div class="user">
+<img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+        </div>
         </div>
         <div class="dropdown-menu" id="dropdownMenu">
           <a href="/admin/profile">My Profile</a>

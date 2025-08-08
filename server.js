@@ -11,8 +11,11 @@ const app = express();
 const port = 8080;
 const uri = 'mongodb+srv://scoadmin:JoJiCa52425@cluster0.18ajqou.mongodb.net/';
 
+
+
 const PROJECT_ROOT = path.resolve(__dirname);
 const UPLOADS_DIR = path.join(PROJECT_ROOT, 'uploads');
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // ======= Middleware Configuration =======
 
@@ -294,7 +297,7 @@ app.get('/request-approvals', async (req, res) => {
       ...r.toObject(), 
       type: "Request Approval" 
     }));
-    
+     const submitted = req.query.submitted === 'true';
     res.render('Requestapproval', { approvals, user, allRequests });
   } catch (err) {
     console.error('Error loading approvals:', err);
@@ -522,7 +525,7 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
 });
 
 /*****Profile Actions*****/
-//update profile details
+// user update profile details
 app.post('/profile/update-popup', async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
   const { fName, mName, lName, email, username, phoneNumber, studentOrganization, cys, studentId, affiliation } = req.body;
@@ -531,12 +534,12 @@ app.post('/profile/update-popup', async (req, res) => {
     const updateData = { fName, mName, lName, email, username, phoneNumber };
     
     if (user.userType === 'student') {
-      updateData.studentOrganization = studentOrganization;
-      updateData.cys = cys;
-      updateData.studentId = studentId;
-    } else {
-      updateData.affiliation = affiliation;
-    }
+        updateData.studentOrganization = studentOrganization;
+        updateData.cys = cys;
+      } else {
+        updateData.affiliation = affiliation;  // <-- use affiliation, not studentOrganization here
+      }
+
     
     await User.findByIdAndUpdate(req.session.userId, updateData);
     res.status(200).send('Profile updated');
@@ -609,27 +612,44 @@ app.post('/profile/delete-picture', async (req, res) => {
   }
 });
 
-app.post('/admin/profile/update-popup', async (req, res) => {
+//admin profile actions
+
+app.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
-  const { fName, mName, lName, email, username, phoneNumber, studentOrganization, cys } = req.body;
+  
+  const { userId, fName, mName, lName, email, username, phoneNumber, studentOrganization, cys, affiliation } = req.body;
+
+  // For security: optionally verify admin or self
+  if (!userId) return res.status(400).send('Missing user ID');
+
   try {
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send('User not found');
+
     const updateData = { fName, mName, lName, email, username, phoneNumber };
-    
+
     if (user.userType === 'student') {
-      updateData.studentOrganization = studentOrganization;
+      // studentOrganization from front end may be array or comma string
+      if (typeof studentOrganization === 'string') {
+        updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (Array.isArray(studentOrganization)) {
+        updateData.studentOrganization = studentOrganization;
+      } else {
+        updateData.studentOrganization = [];
+      }
       updateData.cys = cys;
     } else {
-      updateData.affiliation = studentOrganization;
+      updateData.affiliation = affiliation;
     }
-    
-    await User.findByIdAndUpdate(req.session.userId, updateData);
+
+    await User.findByIdAndUpdate(userId, updateData);
     res.status(200).send('Profile updated');
   } catch (err) {
     console.error('Popup profile update error:', err);
     res.status(500).send('Update failed');
   }
 });
+
 
 app.post('/admin/profile/change-password-popup', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -647,6 +667,61 @@ app.post('/admin/profile/change-password-popup', async (req, res) => {
     res.status(500).send('Password change failed');
   }
 });
+
+// ===== Admin profile picture upload =====
+app.post('/profileadmin/upload-picture', requireAdmin, upload.single('profilePicture'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).send('No file uploaded.');
+
+    // Remove old picture file (if any) and update DB in one go
+    const user = await User.findById(req.session.userId).lean();
+    if (!user) return res.status(404).send('User not found.');
+
+    if (user.profilePicture) {
+      const oldPath = path.join(UPLOADS_DIR, user.profilePicture);
+      if (fs.existsSync(oldPath)) {
+        try { fs.unlinkSync(oldPath); } catch (e) { console.warn('Could not delete old file', e); }
+      }
+    }
+
+    // Update only profilePicture field and skip running validators on other fields
+    await User.findByIdAndUpdate(req.session.userId,
+      { $set: { profilePicture: req.file.filename } },
+      { runValidators: false }
+    );
+
+    res.status(200).send('Profile picture updated.');
+  } catch (err) {
+    console.error('Error uploading picture:', err);
+    res.status(500).send('Error uploading picture');
+  }
+});
+
+// ===== Admin profile picture delete =====
+app.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId).lean();
+    if (!user) return res.status(404).send('User not found.');
+
+    if (user.profilePicture) {
+      const oldPath = path.join(UPLOADS_DIR, user.profilePicture);
+      if (fs.existsSync(oldPath)) {
+        try { fs.unlinkSync(oldPath); } catch (e) { console.warn('Could not delete file', e); }
+      }
+
+      // Remove reference (skip validation)
+      await User.findByIdAndUpdate(req.session.userId, { $unset: { profilePicture: "" } }, { runValidators: false });
+    }
+
+    res.status(200).send('Profile picture deleted.');
+  } catch (err) {
+    console.error('Error deleting picture:', err);
+    res.status(500).send('Error deleting picture');
+  }
+});
+
+
+
 
 // File Upload Handlers
 app.post('/submit-request-approval', upload.single('upload'), async (req, res) => {

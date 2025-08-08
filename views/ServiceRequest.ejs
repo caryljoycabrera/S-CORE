@@ -6,6 +6,30 @@
   <title>Request for Service</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  .modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: white;
+  border-radius: 1rem;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+.modal-title.warning {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(194, 122, 40);
+}
+</style>
 </head>
 <body>
   <div class="student-side">
@@ -178,7 +202,8 @@
         </div>
         <div class="form-group">
           <label for="deadline">Deadline:</label>
-          <input type="datetime-local" id="deadline" name="deadline" required />
+          <input type="datetime-local" id="deadline" name="deadline" required min="<%= new Date().toISOString().slice(0,16) %>" />
+
         </div>
         <div class="form-actions">
           <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Submit</button>
@@ -210,6 +235,27 @@
       </div>
     </div>
   </div>
+
+  <!-- Deadline Warning Modal -->
+<div id="deadlineWarningModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <header class="modal-header">
+      <span class="modal-title warning" >Deadline Warning</span>
+      <span class="close" id="closeDeadlineWarningModal">&times;</span>
+    </header>
+    <div class="modal-body" style="padding: 1rem; font-size: 1rem; color: #374151;">
+    <p>Thank you for submitting your request for approval.</p>
+    <br>
+  <p>Please take a moment to carefully review the information you have provided to ensure its accuracy.</p>
+  <p>The S-CORE team will provide feedback within <strong>three (3) business days</strong>, indicating whether your request is <strong>approved</strong>, <strong>requires revisions</strong>, or has been <strong>rejected</strong>.</p>
+
+    </div>
+    <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 1rem;">
+      <button id="deadlineProceedBtn" class="view-all-btn" style="background: rgb(194, 122, 40); color: white;">Proceed</button>
+      <button id="deadlineCancelBtn" class="view-all-btn" style="background: #e5e7eb; color: #374151;">Cancel</button>
+    </div>
+  </div>
+</div>
 
   <script>
     const openModalBtn = document.getElementById('openModalBtn');
@@ -359,6 +405,77 @@
         menu.style.display = "none";
       }
     });
+
+    //warning for less than 5 days submission of service request
+ const deadlineWarningModal = document.getElementById('deadlineWarningModal');
+const closeDeadlineWarningModal = document.getElementById('closeDeadlineWarningModal');
+const deadlineProceedBtn = document.getElementById('deadlineProceedBtn');
+const deadlineCancelBtn = document.getElementById('deadlineCancelBtn');
+const serviceRequestForm = document.querySelector('#requestModal form');
+
+serviceRequestForm.addEventListener('submit', function(e) {
+  const deadlineInput = document.getElementById('deadline').value;
+  if (!deadlineInput) return; // required validation handles empty
+
+  const now = new Date();
+  const deadlineDate = new Date(deadlineInput);
+
+  now.setHours(0,0,0,0);
+  deadlineDate.setHours(0,0,0,0);
+
+  if (deadlineDate <= now) {
+    alert('Deadline must be in the future.');
+    e.preventDefault();
+    return;
+  }
+
+  const workingDaysDiff = countWorkingDays(now, deadlineDate);
+
+  if (workingDaysDiff < 5) {
+    e.preventDefault(); // prevent form submission
+    // Show the warning modal
+    deadlineWarningModal.style.display = 'flex';
+  }
+});
+
+
+// Close modal handlers
+closeDeadlineWarningModal.onclick = () => {
+  deadlineWarningModal.style.display = 'none';
+};
+
+deadlineCancelBtn.onclick = () => {
+  deadlineWarningModal.style.display = 'none';
+};
+
+// When user clicks proceed, submit the form programmatically
+deadlineProceedBtn.onclick = () => {
+  deadlineWarningModal.style.display = 'none';
+  serviceRequestForm.submit();
+};
+
+// Close modal on outside click
+window.onclick = function(event) {
+  if (event.target === deadlineWarningModal) {
+    deadlineWarningModal.style.display = 'none';
+  }
+};
+function countWorkingDays(startDate, endDate) {
+  let count = 0;
+  let curDate = new Date(startDate);
+
+  while (curDate < endDate) {
+    const day = curDate.getDay();
+    // Weekdays are Monday(1) to Friday(5)
+    if (day !== 0 && day !== 6) {
+      count++;
+    }
+    curDate.setDate(curDate.getDate() + 1);
+  }
+  return count;
+}
+
+ 
   </script>
 </body>
 </html>

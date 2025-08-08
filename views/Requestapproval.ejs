@@ -6,6 +6,30 @@
   <title>Request for Approval</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+   .modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal-content {
+  background: white;
+  border-radius: 1rem;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+.modal-title.submission {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: rgb(194, 122, 40);
+}
+</style>
 </head>
 <body>
   <div class="student-side">
@@ -156,7 +180,7 @@
         <span class="modal-title">Create a Request for Approval</span>
         <span class="close" id="closeModalBtn">&times;</span>
       </header>
-      <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data">
+<form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
         <div class="form-group">
           <label for="projectTitle">Project/Event Title:</label>
           <input type="text" id="projectTitle" name="projectTitle" required />
@@ -225,6 +249,28 @@
     </div>
   </div>
 
+  <!-- Submission Confirmation Modal -->
+<div id="submissionConfirmationModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <header class="modal-header">
+      <span class="modal-title submission">Request Submitted</span>
+      <span class="close" id="closeSubmissionConfirmation">&times;</span>
+    </header>
+    <div class="modal-body" style="padding: 1rem 2rem;">
+  <p>Thank you for submitting your request for approval.</p>
+      <br>
+  <p>Please take a moment to carefully review the information you have provided to ensure its accuracy before finalizing.</p>
+  <p>The S-CORE team strives to provide feedback within <strong>three (3) working days</strong>, though requests may be processed sooner if possible. This timeline will always be respected unless the office is experiencing a high volume of requests or is temporarily busy.</p>
+      <br>
+  <p>We appreciate your understanding and patience as we work to process your request efficiently.</p>
+      <button id="okSubmissionBtn" class="view-all-btn" style="background: rgb(194, 122, 40); color: white; margin-top: 1rem;">OK</button>
+      <button id="CancelBtn" class="view-all-btn" style="background: #e5e7eb; color: #374151;">Cancel</button>
+
+    </div>
+  </div>
+</div>
+
+
   <script>
     function pad(n) { return n < 10 ? '0' + n : n; }
     function formatDateTimeLocal(date) {
@@ -245,6 +291,25 @@
     const clearFiltersBtn = document.getElementById("clearFilters");
     const tableBody = document.getElementById("requestsTableBody");
     const allRows = Array.from(document.querySelectorAll('.request-row'));
+    const submissionModal = document.getElementById('submissionConfirmationModal');
+    const closeSubmissionBtn = document.getElementById('closeSubmissionConfirmation');
+    const okSubmissionBtn = document.getElementById('okSubmissionBtn');
+
+    closeSubmissionBtn.onclick = () => {
+      submissionModal.style.display = 'none';
+    };
+
+    okSubmissionBtn.onclick = () => {
+      submissionModal.style.display = 'none';
+    };
+
+    // Close modal when clicking outside of content
+    window.onclick = function(event) {
+      if (event.target === submissionModal) {
+        submissionModal.style.display = 'none';
+      }
+    }
+
 
     openModalBtn.onclick = () => {
       requestModal.style.display = 'flex';
@@ -387,6 +452,39 @@
         menu.style.display = "none";
       }
     });
+    //show submission confirmation modal
+  function handleSubmit(event) {
+  event.preventDefault(); // stop immediate submit
+
+  const submissionModal = document.getElementById('submissionConfirmationModal');
+  submissionModal.style.display = 'flex';
+
+  function submitForm() {
+    submissionModal.style.display = 'none';
+    // remove listeners after submit to avoid duplicates
+    okSubmissionBtn.removeEventListener('click', submitForm);
+    closeSubmissionConfirmation.removeEventListener('click', submitForm);
+
+    // submit the form now
+    event.target.submit();
+  }
+
+  const okSubmissionBtn = document.getElementById('okSubmissionBtn');
+  const closeSubmissionConfirmation = document.getElementById('closeSubmissionConfirmation');
+
+  okSubmissionBtn.addEventListener('click', submitForm);
+  closeSubmissionConfirmation.addEventListener('click', submitForm);
+}
+const cancelSubmissionBtn = document.getElementById('CancelBtn');
+
+cancelSubmissionBtn.onclick = () => {
+  // Just hide the submission confirmation modal
+  submissionModal.style.display = 'none';
+  // The request form modal is still open so user can edit
+};
+
+
+
   </script>
 </body>
 </html>
