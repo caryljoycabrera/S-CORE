@@ -163,7 +163,24 @@
         </div>
         <div class="form-group">
           <label for="organization">Organization:</label>
-          <input type="text" id="organization" name="organization" value="<%= user.studentOrganization %>" required />
+          <%
+            let orgs = [];
+            if (Array.isArray(user.studentOrganization)) {
+              // If it's an array with a single comma-separated string, split it
+              if (user.studentOrganization.length === 1 && user.studentOrganization[0].includes(',')) {
+                orgs = user.studentOrganization[0].split(',').map(o => o.trim()).filter(Boolean);
+              } else {
+                orgs = user.studentOrganization;
+              }
+            } else if (typeof user.studentOrganization === 'string') {
+              orgs = user.studentOrganization.split(',').map(o => o.trim()).filter(Boolean);
+            }
+          %>
+          <select id="organization" name="organization" required>
+            <% orgs.forEach(function(org) { %>
+              <option value="<%= org %>"><%= org %></option>
+            <% }); %>
+          </select>
         </div>
         <div class="form-group">
           <label for="description">Description:</label>
@@ -172,6 +189,10 @@
         <div class="form-group">
           <label for="upload">Upload File:</label>
           <input type="file" id="upload" name="upload" required />
+        </div>
+        <div class="form-group">
+          <label for="deadline">Requested Deadline:</label>
+          <input type="datetime-local" id="deadline" name="deadline" readonly required />
         </div>
         <div class="form-actions">
           <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Submit</button>
@@ -205,6 +226,15 @@
   </div>
 
   <script>
+    function pad(n) { return n < 10 ? '0' + n : n; }
+    function formatDateTimeLocal(date) {
+      return date.getFullYear() + '-' +
+        pad(date.getMonth() + 1) + '-' +
+        pad(date.getDate()) + 'T' +
+        pad(date.getHours()) + ':' +
+        pad(date.getMinutes());
+    }
+
     const openModalBtn = document.getElementById('openModalBtn');
     const requestModal = document.getElementById('requestModal');
     const closeModalBtn = document.getElementById('closeModalBtn');
@@ -216,7 +246,12 @@
     const tableBody = document.getElementById("requestsTableBody");
     const allRows = Array.from(document.querySelectorAll('.request-row'));
 
-    openModalBtn.onclick = () => requestModal.style.display = 'flex';
+    openModalBtn.onclick = () => {
+      requestModal.style.display = 'flex';
+      const now = new Date();
+      const deadline = addBusinessDays(now, 3);
+      document.getElementById('deadline').value = formatDateTimeLocal(deadline);
+    };
     closeModalBtn.onclick = () => requestModal.style.display = 'none';
     cancelModalBtn.onclick = () => requestModal.style.display = 'none';
     closeDetailsModal.onclick = () => detailModal.style.display = 'none';
