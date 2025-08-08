@@ -131,6 +131,7 @@
                 <th>Status</th>
                 <th>Assigned Units</th>
                 <th>Date Submitted</th>
+                <th>Deadline</th> <!-- Added Deadline column -->
               </tr>
             </thead>
             <tbody id="requestsTableBody">
@@ -157,6 +158,7 @@
                 </td>
                 <td><%= request.assignedUnits || 'Not yet assigned' %></td>
                 <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
+                <td><%= request.deadline ? request.deadline.toLocaleString() : 'N/A' %></td> <!-- Added Deadline cell -->
               </tr>
               <% }); %>
             </tbody>
@@ -181,48 +183,43 @@
         <span class="close" id="closeModalBtn">&times;</span>
       </header>
 <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
-        <div class="form-group">
-          <label for="projectTitle">Project/Event Title:</label>
-          <input type="text" id="projectTitle" name="projectTitle" required />
-        </div>
-        <div class="form-group">
-          <label for="organization">Organization:</label>
-          <%
-            let orgs = [];
-            if (Array.isArray(user.studentOrganization)) {
-              // If it's an array with a single comma-separated string, split it
-              if (user.studentOrganization.length === 1 && user.studentOrganization[0].includes(',')) {
-                orgs = user.studentOrganization[0].split(',').map(o => o.trim()).filter(Boolean);
-              } else {
-                orgs = user.studentOrganization;
-              }
-            } else if (typeof user.studentOrganization === 'string') {
-              orgs = user.studentOrganization.split(',').map(o => o.trim()).filter(Boolean);
-            }
-          %>
-          <select id="organization" name="organization" required>
-            <% orgs.forEach(function(org) { %>
-              <option value="<%= org %>"><%= org %></option>
-            <% }); %>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="description">Description:</label>
-          <textarea id="description" name="description" rows="5" required></textarea>
-        </div>
-        <div class="form-group">
-          <label for="upload">Upload File:</label>
-          <input type="file" id="upload" name="upload" required />
-        </div>
-        <div class="form-group">
-          <label for="deadline">Requested Deadline:</label>
-          <input type="datetime-local" id="deadline" name="deadline" readonly required />
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Submit</button>
-          <button type="button" class="view-all-btn" id="cancelModalBtn">Cancel</button>
-        </div>
-      </form>
+  <div class="form-group">
+    <label for="projectTitle">Project/Event Title:</label>
+    <input type="text" id="projectTitle" name="projectTitle" required />
+  </div>
+  <div class="form-group">
+    <label for="organization">Organization:</label>
+    <%
+      let orgs = [];
+      if (Array.isArray(user.studentOrganization)) {
+        if (user.studentOrganization.length === 1 && user.studentOrganization[0].includes(',')) {
+          orgs = user.studentOrganization[0].split(',').map(o => o.trim()).filter(Boolean);
+        } else {
+          orgs = user.studentOrganization;
+        }
+      } else if (typeof user.studentOrganization === 'string') {
+        orgs = user.studentOrganization.split(',').map(o => o.trim()).filter(Boolean);
+      }
+    %>
+    <select id="organization" name="organization" required>
+      <% orgs.forEach(function(org) { %>
+        <option value="<%= org %>"><%= org %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="description">Description:</label>
+    <textarea id="description" name="description" rows="5" required></textarea>
+  </div>
+  <div class="form-group">
+    <label for="upload">Upload File:</label>
+    <input type="file" id="upload" name="upload" required />
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Submit</button>
+    <button type="button" class="view-all-btn" id="cancelModalBtn">Cancel</button>
+  </div>
+</form>
     </div>
   </div>
 
@@ -313,9 +310,6 @@
 
     openModalBtn.onclick = () => {
       requestModal.style.display = 'flex';
-      const now = new Date();
-      const deadline = addBusinessDays(now, 3);
-      document.getElementById('deadline').value = formatDateTimeLocal(deadline);
     };
     closeModalBtn.onclick = () => requestModal.style.display = 'none';
     cancelModalBtn.onclick = () => requestModal.style.display = 'none';
