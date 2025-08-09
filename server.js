@@ -11,8 +11,6 @@ const app = express();
 const port = 8080;
 const uri = 'mongodb+srv://scoadmin:JoJiCa52425@cluster0.18ajqou.mongodb.net/';
 
-
-
 const PROJECT_ROOT = path.resolve(__dirname);
 const UPLOADS_DIR = path.join(PROJECT_ROOT, 'uploads');
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -93,6 +91,7 @@ const requestApprovalSchema = new mongoose.Schema({
   organization: String,
   description: String,
   datetime: { type: Date, default: Date.now },
+  deadline: { type: Date },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, default: 'Pending' },
   assignedUnits: { type: String, default: 'Not yet assigned' },
@@ -111,6 +110,35 @@ const serviceRequestSchema = new mongoose.Schema({
   file: String
 }, { timestamps: true });
 const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
+
+// New Conversation Schema
+const conversationSchema = new mongoose.Schema({
+  serviceRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  messages: [{
+    senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    senderRole: { type: String, enum: ['user', 'admin'], required: true },
+    content: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now },
+    isRead: { type: Boolean, default: false }
+  }]
+}, { timestamps: true });
+const Conversation = mongoose.model('Conversation', conversationSchema);
+
+// Helper function to add working days (excludes weekends)
+function addWorkingDays(date, days) {
+  const result = new Date(date);
+  let addedDays = 0;
+  
+  while (addedDays < days) {
+    result.setDate(result.getDate() + 1);
+    // Skip weekends (0 = Sunday, 6 = Saturday)
+    if (result.getDay() !== 0 && result.getDay() !== 6) {
+      addedDays++;
+    }
+  }
+  
+  return result;
+}
 
 // ======= Helper Middleware =======
 function requireAdmin(req, res, next) {
@@ -460,6 +488,28 @@ app.post('/admin/service/update-status', requireAdmin, async (req, res) => {
   }
 });
 
+// New route to update service request deadline
+app.post('/admin/service/update-deadline', requireAdmin, async (req, res) => {
+  const { requestId, deadline } = req.body;
+
+  try {
+    if (!deadline) {
+      return res.status(400).json({ success: false, message: 'Deadline is required' });
+    }
+
+    const deadlineDate = new Date(deadline);
+    if (deadlineDate <= new Date()) {
+      return res.status(400).json({ success: false, message: 'Deadline must be in the future' });
+    }
+
+    await ServiceRequest.findByIdAndUpdate(requestId, { deadline: deadlineDate });
+    res.json({ success: true, message: 'Deadline updated successfully' });
+  } catch (err) {
+    console.error('Error updating deadline:', err);
+    res.status(500).json({ success: false, message: 'Failed to update deadline' });
+  }
+});
+
 app.post('/admin/user/update', requireAdmin, async (req, res) => {
   const {
     userId, fName, lName, email,
@@ -521,6 +571,118 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error loading all requests:', err);
     res.status(500).render('error', { message: 'Failed to load all requests page.' });
+  }
+});
+
+// Conversation Routes
+app.get('/api/conversation/:serviceRequestId', requireLogin, async (req, res) => {
+  try {
+    const { serviceRequestId } = req.params;
+    const user = await User.findById(req.session.userId);
+    
+    // Check if user has access to this conversation
+    const serviceRequest = await ServiceRequest.findById(serviceRequestId);
+    if (!serviceRequest) {
+      return res.status(404).json({ error: 'Service request not found' });
+    }
+    
+    // Only allow admin or the user who created the request
+    if (user.role !== 'admin' && serviceRequest.userId.toString() !== req.session.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    let conversation = await Conversation.findOne({ serviceRequestId }).populate('messages.senderId', 'fName lName role');
+    
+    if (!conversation) {
+      conversation = new Conversation({
+        serviceRequestId,
+        messages: []
+      });
+      await conversation.save();
+    }
+    
+    res.json(conversation);
+  } catch (err) {
+    console.error('Error fetching conversation:', err);
+    res.status(500).json({ error: 'Failed to fetch conversation' });
+  }
+});
+
+app.post('/api/conversation/:serviceRequestId/message', requireLogin, async (req, res) => {
+  try {
+    const { serviceRequestId } = req.params;
+    const { content } = req.body;
+    const user = await User.findById(req.session.userId);
+    
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ error: 'Message content is required' });
+    }
+    
+    // Check if user has access
+    const serviceRequest = await ServiceRequest.findById(serviceRequestId);
+    if (!serviceRequest) {
+      return res.status(404).json({ error: 'Service request not found' });
+    }
+    
+    if (user.role !== 'admin' && serviceRequest.userId.toString() !== req.session.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    let conversation = await Conversation.findOne({ serviceRequestId });
+    
+    if (!conversation) {
+      conversation = new Conversation({
+        serviceRequestId,
+        messages: []
+      });
+    }
+    
+    const newMessage = {
+      senderId: req.session.userId,
+      senderRole: user.role,
+      content: content.trim(),
+      timestamp: new Date(),
+      isRead: false
+    };
+    
+    conversation.messages.push(newMessage);
+    await conversation.save();
+    
+    // Populate the sender info for the response
+    await conversation.populate('messages.senderId', 'fName lName role');
+    
+    res.json({ 
+      success: true, 
+      message: conversation.messages[conversation.messages.length - 1]
+    });
+  } catch (err) {
+    console.error('Error sending message:', err);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+app.post('/api/conversation/:serviceRequestId/mark-read', requireLogin, async (req, res) => {
+  try {
+    const { serviceRequestId } = req.params;
+    const user = await User.findById(req.session.userId);
+    
+    const conversation = await Conversation.findOne({ serviceRequestId });
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    // Mark messages as read (not sent by current user)
+    conversation.messages.forEach(message => {
+      if (message.senderId.toString() !== req.session.userId) {
+        message.isRead = true;
+      }
+    });
+    
+    await conversation.save();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error marking messages as read:', err);
+    res.status(500).json({ error: 'Failed to mark messages as read' });
   }
 });
 
@@ -720,9 +882,6 @@ app.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
   }
 });
 
-
-
-
 // File Upload Handlers
 app.post('/submit-request-approval', upload.single('upload'), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
@@ -732,10 +891,14 @@ app.post('/submit-request-approval', upload.single('upload'), async (req, res) =
     const user = await User.findById(req.session.userId);
     const actualOrganization = user.userType === 'nonstudent' ? user.affiliation : organization;
     
+    // Calculate deadline (3 working days from now)
+    const deadline = addWorkingDays(new Date(), 3);
+    
     const newRequest = new RequestApproval({
       title: projectTitle,
       organization: actualOrganization,
       description,
+      deadline: deadline,
       userId: req.session.userId,
       file: filePath
     });

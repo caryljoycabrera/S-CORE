@@ -110,6 +110,7 @@
                 <th>Status</th>
                 <th>Assigned Units</th>
                 <th>Date Submitted</th>
+                <th>Deadline</th>
               </tr>
             </thead>
             <tbody id="requestsTableBody">
@@ -122,6 +123,7 @@
                   data-organization="<%= request.displayOrganization || request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
                   data-datetime="<%= request.datetime.toLocaleString() %>"
+                  data-deadline="<%= request.deadline ? request.deadline.toLocaleDateString() : 'N/A' %>"
                   data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
                   data-description="<%= request.description %>" 
                   data-file="<%= request.file || '' %>"
@@ -137,6 +139,21 @@
                 </td>
                 <td><%= request.assignedUnits || 'Not yet assigned' %></td>
                 <td><%= request.datetime.toLocaleString() %></td>
+                <td>
+                  <% if (request.deadline) { %>
+                    <% 
+                      const today = new Date();
+                      const deadline = new Date(request.deadline);
+                      const isOverdue = deadline < today && request.status.toLowerCase() === 'pending';
+                      const isNearDeadline = (deadline - today) / (1000 * 60 * 60 * 24) <= 1 && deadline >= today && request.status.toLowerCase() === 'pending';
+                    %>
+                    <span class="deadline-badge <%= isOverdue ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>">
+                      <%= request.deadline.toLocaleDateString() %>
+                    </span>
+                  <% } else { %>
+                    <span class="deadline-badge">N/A</span>
+                  <% } %>
+                </td>
               </tr>
               <% }); %>
             </tbody>
@@ -168,6 +185,7 @@
         <p><strong>Status:</strong> <span id="detailStatus"></span></p>
         <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
         <p><strong>Date Submitted:</strong> <span id="detailDatetime"></span></p>
+        <p><strong>Deadline:</strong> <span id="detailDeadline"></span></p>
         <div id="file-preview" style="margin-top:1rem;"></div>
         <form class="modal-form" action="/admin/approval/update-status" method="POST" style="margin-top: 1rem;">
           <input type="hidden" id="updateRequestId" name="requestId" />
@@ -263,7 +281,7 @@
         noResultsRow = document.createElement('tr');
         noResultsRow.id = 'noResultsRow';
         noResultsRow.innerHTML = `
-          <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
+          <td colspan="8" style="text-align: center; padding: 3rem; color: #6b7280;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
             <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
             <p>Try adjusting your filters to see more results.</p>
@@ -301,6 +319,7 @@
         document.getElementById("detailStatus").innerText = row.dataset.status;
         document.getElementById("detailUnits").innerText = row.dataset.units;
         document.getElementById("detailDatetime").innerText = row.dataset.datetime;
+        document.getElementById("detailDeadline").innerText = row.dataset.deadline;
 
         document.getElementById("updateRequestId").value = row.dataset.id;
         document.getElementById("status").value = row.dataset.status;
