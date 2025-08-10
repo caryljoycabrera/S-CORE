@@ -145,12 +145,11 @@
                       deadline.setHours(0,0,0,0);
                       const timeDiff = deadline - today;
                       const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-                      const isOverdue = daysDiff < 0 && request.status.toLowerCase() === 'pending';
-                      const isToday = daysDiff === 0 && request.status.toLowerCase() === 'pending';
+                      const isOverdueOrToday = daysDiff <= 0 && request.status.toLowerCase() === 'pending';
                       const isNearDeadline = daysDiff === 1 && request.status.toLowerCase() === 'pending';
                       const deadlineISO = new Date(request.deadline).toISOString().slice(0, 16);
                     %>
-                    <span class="deadline-badge <%= isOverdue || isToday ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>" 
+                    <span class="deadline-badge <%= isOverdueOrToday ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>" 
                           onclick="editDeadline('<%= request._id %>', '<%= deadlineISO %>')" 
                           style="cursor: pointer;" 
                           title="Click to edit deadline">
