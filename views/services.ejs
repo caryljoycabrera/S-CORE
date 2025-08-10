@@ -145,23 +145,15 @@
                       deadline.setHours(0,0,0,0);
                       const timeDiff = deadline - today;
                       const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-                      const isOverdueOrToday = daysDiff <= 0 && request.status.toLowerCase() === 'pending';
+                      // Make deadline red if overdue/today OR if status is Approved
+                      const isOverdueOrToday = (daysDiff <= 0) || request.status.toLowerCase() === 'approved';
                       const isNearDeadline = daysDiff === 1 && request.status.toLowerCase() === 'pending';
-                      const deadlineISO = new Date(request.deadline).toISOString().slice(0, 16);
                     %>
-                    <span class="deadline-badge <%= isOverdueOrToday ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>" 
-                          onclick="editDeadline('<%= request._id %>', '<%= deadlineISO %>')" 
-                          style="cursor: pointer;" 
-                          title="Click to edit deadline">
+                    <span class="deadline-badge <%= isOverdueOrToday ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>">
                       <%= new Date(request.deadline).toLocaleDateString() %>
                     </span>
                   <% } else { %>
-                    <span class="deadline-badge" 
-                          onclick="editDeadline('<%= request._id %>', '')" 
-                          style="cursor: pointer;" 
-                          title="Click to add deadline">
-                      N/A
-                    </span>
+                    <span class="deadline-badge">N/A</span>
                   <% } %>
                 </td>
               </tr>
@@ -195,11 +187,7 @@
             <p><strong>Office/Department/Organization:</strong> <span id="serviceOrganization"></span></p>
             <p><strong>Description:</strong> <span id="serviceDescription"></span></p>
             <p><strong>Deadline:</strong> 
-              <span id="serviceDeadline" class="deadline-badge editable-deadline" 
-                    style="cursor: pointer;" 
-                    title="Click to edit deadline"
-                    onclick="editDeadlineFromModal()">
-              </span>
+              <span id="serviceDeadline" class="deadline-badge"></span>
             </p>
 
             <div class="form-group">
@@ -310,21 +298,6 @@
       currentRequestId = requestId;
       deadlineInput.value = currentDeadline || '';
       deadlineModal.style.display = 'flex';
-    }
-
-    function editDeadlineFromModal() {
-      const requestId = document.getElementById("serviceRequestId").value;
-      const currentDeadlineText = document.getElementById("serviceDeadline").innerText;
-      let currentDeadline = '';
-      
-      if (currentDeadlineText && currentDeadlineText !== 'N/A') {
-        const deadlineDate = new Date(currentDeadlineText);
-        if (!isNaN(deadlineDate.getTime())) {
-          currentDeadline = deadlineDate.toISOString().slice(0, 16);
-        }
-      }
-      
-      editDeadline(requestId, currentDeadline);
     }
 
     saveDeadlineBtn.onclick = async function() {
@@ -545,6 +518,7 @@
           
           const deadlineElement = document.getElementById("serviceDeadline");
           const deadline = row.dataset.deadline;
+          const status = row.dataset.status.toLowerCase();
           if (deadline) {
             const deadlineDate = new Date(deadline);
             const today = new Date();
@@ -552,12 +526,14 @@
             deadlineDate.setHours(0,0,0,0);
             const timeDiff = deadlineDate - today;
             const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            // Make deadline red if overdue/today OR if status is Approved
             const isOverdue = daysDiff < 0;
             const isToday = daysDiff === 0;
-            const isNearDeadline = daysDiff === 1;
+            const isNearDeadline = daysDiff === 1 && status === 'pending';
+            const isApproved = status === 'approved';
             
             deadlineElement.innerText = new Date(deadline).toLocaleDateString();
-            deadlineElement.className = `deadline-badge editable-deadline ${isOverdue || isToday ? 'overdue' : isNearDeadline ? 'near-deadline' : ''}`;
+            deadlineElement.className = `deadline-badge editable-deadline ${(isOverdue || isToday || isApproved) ? 'overdue' : isNearDeadline ? 'near-deadline' : ''}`;
           } else {
             deadlineElement.innerText = 'N/A';
             deadlineElement.className = 'deadline-badge editable-deadline';
@@ -594,8 +570,8 @@
     }
     
     .deadline-badge.near-deadline {
-      background-color: #fef3c7;
-      color: #d97706;
+      background-color: #fef3c7; /* yellow background */
+      color: #d97706;            /* yellow text */
     }
     
     .deadline-badge.overdue {
