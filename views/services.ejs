@@ -57,15 +57,28 @@
                   <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
                   <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
                 </div>
-                <div class="filter-item">
-                  <label for="statusFilter" class="filter-sublabel">Status</label>
-                  <select id="statusFilter" class="filter-select">
-                    <option value="all">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                  </select>
+                 <div class="filter-item">
+                <label class="filter-sublabel">Status</label>
+                <div class="custom-select-wrapper">
+                  <div class="custom-select" id="statusFilter">
+                    <div class="select-display">All Status</div>
+                    <div class="select-dropdown" id="statusDropdown">
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="all" checked> All Status
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="pending"> Pending
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="approved"> Approved
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="rejected"> Rejected
+                      </label>
+                    </div>
+                  </div>
                 </div>
+              </div>
                 <div class="filter-item">
                   <label for="studentFilter" class="filter-sublabel">User</label>
                   <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
@@ -263,7 +276,6 @@
   <script>
     const serviceModal = document.getElementById("serviceModal");
     const closeServiceModal = document.getElementById("closeServiceModal");
-    const statusFilter = document.getElementById("statusFilter");
     const clearFiltersBtn = document.getElementById("clearFilters");
     const tableBody = document.getElementById("requestsTableBody");
     const allRows = Array.from(document.querySelectorAll('.service-row'));
@@ -427,7 +439,7 @@
 
     function filterRequests() {
       const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
-      const statusValue = statusFilter.value.toLowerCase();
+  const selectedStatuses = getSelectedStatuses();
       const studentValue = document.getElementById('studentFilter').value.toLowerCase();
       const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
       const dateFromValue = document.getElementById('dateFromFilter').value;
@@ -443,7 +455,7 @@
         const rowDate = row.dataset.date;
 
         const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
-        const statusMatch = statusValue === 'all' || rowStatus === statusValue;
+    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
         const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
         const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
 
@@ -497,11 +509,13 @@
 
     clearFiltersBtn.addEventListener('click', () => {
       document.getElementById('requestIdFilter').value = '';
-      statusFilter.value = 'all';
       document.getElementById('studentFilter').value = '';
       document.getElementById('organizationFilter').value = '';
       document.getElementById('dateFromFilter').value = '';
       document.getElementById('dateToFilter').value = '';
+      statusCheckboxes.forEach(cb => cb.checked = false);
+      allStatusCheckbox.checked = true;
+      updateStatusDisplay()
       filterRequests();
     });
 
@@ -557,6 +571,80 @@
         menu.style.display = "none";
         }
     });
+   // Custom Status Filter Logic
+const statusFilterElement = document.getElementById('statusFilter');
+const statusDropdown = document.getElementById('statusDropdown');
+const statusDisplay = statusFilterElement.querySelector('.select-display');
+const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
+
+// Toggle dropdown
+statusFilterElement.addEventListener('click', function(e) {
+  e.stopPropagation();
+  statusFilterElement.classList.toggle('active');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function() {
+  statusFilterElement.classList.remove('active');
+});
+
+// Handle checkbox changes
+statusCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', function() {
+    if (this.value === 'all') {
+      // If "All Status" is checked, uncheck others
+      if (this.checked) {
+        statusCheckboxes.forEach(cb => {
+          if (cb.value !== 'all') cb.checked = false;
+        });
+      }
+    } else {
+      // If any specific status is checked, uncheck "All Status"
+      if (this.checked) {
+        allStatusCheckbox.checked = false;
+      }
+      
+      // If no specific status is checked, check "All Status"
+      const specificChecked = Array.from(statusCheckboxes).some(cb => 
+        cb.value !== 'all' && cb.checked
+      );
+      if (!specificChecked) {
+        allStatusCheckbox.checked = true;
+      }
+    }
+    
+    updateStatusDisplay();
+    filterRequests();
+  });
+});
+
+function updateStatusDisplay() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    statusDisplay.textContent = 'All Status';
+  } else if (checkedBoxes.length === 1) {
+    statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
+                              checkedBoxes[0].value.slice(1);
+  } else {
+    statusDisplay.textContent = `${checkedBoxes.length} Selected`;
+  }
+}
+
+// Get selected status values for filtering
+function getSelectedStatuses() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
+    cb.checked && cb.value !== 'all'
+  );
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    return [];
+  }
+  
+  return checkedBoxes.map(cb => cb.value.toLowerCase());
+}
+
   </script>
 
   <style>

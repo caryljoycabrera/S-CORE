@@ -317,15 +317,47 @@ app.get('/dashboard', requireLogin, async (req, res) => {
 
 app.get('/request-approvals', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
+
   try {
     const user = await User.findById(req.session.userId);
-    const approvals = await RequestApproval.find({ userId: user._id }).sort({ createdAt: -1 });
-    
+    let approvals = await RequestApproval.find({ userId: user._id }).lean();
+
+    // Status priority for approvals
+    const statusPriority = {
+      "pending": 1,
+      "approved": 2,
+      "rejected": 3
+    };
+
+    // Sort according to rules
+    approvals.sort((a, b) => {
+      const aStatus = a.status?.toLowerCase() || '';
+      const bStatus = b.status?.toLowerCase() || '';
+
+      // Group by status priority
+      const aPriority = statusPriority[aStatus] ?? 999;
+      const bPriority = statusPriority[bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      // Tie-break rules
+      if (aStatus === "pending") {
+        // Oldest first
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      if (["approved", "rejected"].includes(aStatus)) {
+        // Newest first
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
     const allRequests = approvals.map(r => ({ 
-      ...r.toObject(), 
+      ...r, 
       type: "Request Approval" 
     }));
-     const submitted = req.query.submitted === 'true';
+
+    const submitted = req.query.submitted === 'true';
     res.render('Requestapproval', { approvals, user, allRequests });
   } catch (err) {
     console.error('Error loading approvals:', err);
@@ -333,37 +365,173 @@ app.get('/request-approvals', async (req, res) => {
   }
 });
 
+
 app.get('/service-requests', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
+
   try {
     const user = await User.findById(req.session.userId);
-    const serviceRequests = await ServiceRequest.find({ userId: user._id }).sort({ createdAt: -1 });
-    
-    const allRequests = serviceRequests.map(r => ({ 
-      ...r.toObject(), 
-      type: "Service Request" 
+    let serviceRequests = await ServiceRequest.find({ userId: user._id }).lean();
+
+    // Helper to check if deadline is near (within 3 days)
+    const isNearDeadline = (req) => {
+      if (!req.deadline) return false;
+      const now = new Date();
+      const deadline = new Date(req.deadline);
+      const diffDays = (deadline - now) / (1000 * 60 * 60 * 24);
+      return diffDays >= 0 && diffDays <= 3;
+    };
+
+    // Status priority
+    const statusPriority = {
+      nearDeadline: 0, // computed dynamically
+      pending: 1,
+      approved: 2,
+      completed: 3,
+      archived: 4,
+      rejected: 5
+    };
+
+    serviceRequests.sort((a, b) => {
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+
+      const aNear = isNearDeadline(a);
+      const bNear = isNearDeadline(b);
+
+      // 1. Near deadline first
+      if (aNear && !bNear) return -1;
+      if (!aNear && bNear) return 1;
+
+      // 2. Sort by status group priority
+      const aPriority = statusPriority[aNear ? "nearDeadline" : aStatus] ?? 999;
+      const bPriority = statusPriority[bNear ? "nearDeadline" : bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      // 3. Tie-breakers for each group
+      if (aNear && bNear) {
+        // both near deadline → earliest deadline first
+        return new Date(a.deadline) - new Date(b.deadline);
+      }
+
+      if (aStatus === "pending") {
+        // pending → oldest first
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (aStatus === "approved") {
+        const aDeadline = a.deadline ? new Date(a.deadline) : null;
+        const bDeadline = b.deadline ? new Date(b.deadline) : null;
+
+        if (aDeadline && bDeadline) return aDeadline - bDeadline;
+        if (aDeadline && !bDeadline) return -1;
+        if (!aDeadline && bDeadline) return 1;
+
+        // no deadlines → newest first
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      if (["completed", "archived", "rejected"].includes(aStatus)) {
+        // newest first
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    const allRequests = serviceRequests.map(r => ({
+      ...r,
+      type: "Service Request"
     }));
-    
+
     res.render('ServiceRequest', { user, serviceRequests, allRequests });
+
   } catch (err) {
     console.error('Error loading service requests:', err);
     res.status(500).render('error', { message: 'Error loading page' });
   }
 });
 
+
 app.get('/all-requests', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
+
   try {
     const user = await User.findById(req.session.userId);
-    const approvals = await RequestApproval.find({ userId: user._id }).sort({ createdAt: -1 });
-    const serviceRequests = await ServiceRequest.find({ userId: user._id }).sort({ createdAt: -1 });
-    
+    const approvals = await RequestApproval.find({ userId: user._id }).lean();
+    const services = await ServiceRequest.find({ userId: user._id }).lean();
+
     const allRequests = [
-      ...approvals.map(r => ({ ...r.toObject(), type: "Request Approval" })),
-      ...serviceRequests.map(r => ({ ...r.toObject(), type: "Service Request" }))
+      ...approvals.map(r => ({ ...r, type: "Request Approval" })),
+      ...services.map(r => ({ ...r, type: "Service Request" }))
     ];
 
-    res.render('allRequestsUser', { user, approvals, serviceRequests, allRequests });
+    // Priority: near deadline → pending → approved → archived → rejected
+    const statusPriority = {
+      "nearDeadline": 0, // We will compute this dynamically
+      "pending": 1,
+      "approved": 2,
+      "archived": 3,
+      "rejected": 4
+    };
+
+    // Helper to check if request is near deadline (within 3 days, adjust if needed)
+    const isNearDeadline = (req) => {
+      if (!req.deadline) return false;
+      const now = new Date();
+      const deadline = new Date(req.deadline);
+      const diffDays = (deadline - now) / (1000 * 60 * 60 * 24);
+      return diffDays >= 0 && diffDays <= 3;
+    };
+
+    allRequests.sort((a, b) => {
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+
+      const aNear = isNearDeadline(a);
+      const bNear = isNearDeadline(b);
+
+      // First: near deadline group comes first
+      if (aNear && !bNear) return -1;
+      if (!aNear && bNear) return 1;
+
+      // Then: sort by status priority
+      const aPriority = statusPriority[aNear ? "nearDeadline" : aStatus] ?? 999;
+      const bPriority = statusPriority[bNear ? "nearDeadline" : bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      // Tie-break rules based on status
+      if (aNear && bNear) {
+        // Near deadlines: earliest deadline first
+        return new Date(a.deadline) - new Date(b.deadline);
+      }
+
+      if (aStatus === "pending") {
+        // Oldest first
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (aStatus === "approved") {
+        if (a.type === "Service Request" && b.type === "Service Request") {
+          const aDeadline = a.deadline ? new Date(a.deadline) : null;
+          const bDeadline = b.deadline ? new Date(b.deadline) : null;
+          if (aDeadline && bDeadline) return aDeadline - bDeadline;
+          if (aDeadline && !bDeadline) return -1;
+          if (!aDeadline && bDeadline) return 1;
+        }
+        // Fallback: newest first
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      if (["completed", "archived", "rejected"].includes(aStatus)) {
+        // Newest first
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    res.render('allRequestsUser', { user, approvals, serviceRequests: services, allRequests });
   } catch (err) {
     console.error('Error loading all requests:', err);
     res.status(500).render('error', { message: 'Error loading page' });
@@ -425,25 +593,131 @@ app.get('/admin', requireAdmin, async (req, res) => {
 });
 
 app.get('/admin/approvals', requireAdmin, async (req, res) => {
-  const approvals = await RequestApproval.find().populate('userId').lean();
-  
-  // Add displayOrganization logic
-  const approvalsWithDisplay = approvals.map(approval => ({
-    ...approval,
-    displayOrganization: approval.userId?.userType === 'nonstudent' ? approval.userId.affiliation : approval.organization
-  }));
-  
-  res.render('approvals', { approvals: approvalsWithDisplay, user: req.user });
+  try {
+    let approvals = await RequestApproval.find()
+      .populate('userId')
+      .lean();
+
+    // Add displayOrganization logic
+    approvals = approvals.map(approval => ({
+      ...approval,
+      displayOrganization:
+        approval.userId?.userType === 'nonstudent'
+          ? approval.userId.affiliation
+          : approval.organization
+    }));
+
+    // Status priority for approvals
+    const statusPriority = {
+      pending: 1,
+      approved: 2,
+      rejected: 3
+    };
+
+    // Sort according to rules
+    approvals.sort((a, b) => {
+      const aStatus = a.status?.toLowerCase() || '';
+      const bStatus = b.status?.toLowerCase() || '';
+
+      // Group by status priority
+      const aPriority = statusPriority[aStatus] ?? 999;
+      const bPriority = statusPriority[bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      // Tie-break rules
+      if (aStatus === 'pending') {
+        // Oldest first
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      if (['approved', 'rejected'].includes(aStatus)) {
+        // Newest first
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    res.render('approvals', { approvals, user: req.user });
+  } catch (err) {
+    console.error('Error loading admin approvals:', err);
+    res.status(500).send('Error loading approvals page');
+  }
 });
+
 
 app.get('/admin/services', requireAdmin, async (req, res) => {
   const serviceRequests = await ServiceRequest.find().populate('userId').lean();
-  
+
+  // Helper to check if deadline is near (within 3 days)
+  const isNearDeadline = (req) => {
+    if (!req.deadline) return false;
+    const now = new Date();
+    const deadline = new Date(req.deadline);
+    const diffDays = (deadline - now) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 3;
+  };
+
+  // Status priority mapping
+  const statusPriority = {
+    nearDeadline: 0,
+    pending: 1,
+    approved: 2,
+    completed: 3,
+    archived: 4,
+    rejected: 5
+  };
+
+  // Sorting logic
+  serviceRequests.sort((a, b) => {
+    const aStatus = a.status.toLowerCase();
+    const bStatus = b.status.toLowerCase();
+
+    const aNear = isNearDeadline(a);
+    const bNear = isNearDeadline(b);
+
+    // 1. Near deadline first
+    if (aNear && !bNear) return -1;
+    if (!aNear && bNear) return 1;
+
+    // 2. Status group priority
+    const aPriority = statusPriority[aNear ? "nearDeadline" : aStatus] ?? 999;
+    const bPriority = statusPriority[bNear ? "nearDeadline" : bStatus] ?? 999;
+    if (aPriority !== bPriority) return aPriority - bPriority;
+
+    // 3. Tie-breakers for each group
+    if (aNear && bNear) {
+      return new Date(a.deadline) - new Date(b.deadline);
+    }
+
+    if (aStatus === "pending") {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    }
+
+    if (aStatus === "approved") {
+      const aDeadline = a.deadline ? new Date(a.deadline) : null;
+      const bDeadline = b.deadline ? new Date(b.deadline) : null;
+
+      if (aDeadline && bDeadline) return aDeadline - bDeadline;
+      if (aDeadline && !bDeadline) return -1;
+      if (!aDeadline && bDeadline) return 1;
+
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+
+    if (["completed", "archived", "rejected"].includes(aStatus)) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+
+    return 0;
+  });
+
   const serviceRequestsWithDisplay = serviceRequests.map(service => ({
     ...service,
-    displayOrganization: service.userId?.userType === 'nonstudent' ? service.userId.affiliation : service.organization
+    displayOrganization: service.userId?.userType === 'nonstudent'
+      ? service.userId.affiliation
+      : service.organization
   }));
-  
+
   res.render('services', { serviceRequests: serviceRequestsWithDisplay, user: req.user });
 });
 
@@ -547,32 +821,92 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
     const approvals = await RequestApproval.find().populate('userId').lean();
     const serviceRequests = await ServiceRequest.find().populate('userId').lean();
 
-    // Combine all requests with type identifier and organization/affiliation logic
+    // Combine with displayOrganization logic
     const allRequests = [
-      ...approvals.map(r => ({ 
-        ...r, 
+      ...approvals.map(r => ({
+        ...r,
         type: "Request Approval",
         displayOrganization: r.userId?.userType === 'nonstudent' ? r.userId.affiliation : r.organization
       })),
-      ...serviceRequests.map(r => ({ 
-        ...r, 
+      ...serviceRequests.map(r => ({
+        ...r,
         type: "Service Request",
         displayOrganization: r.userId?.userType === 'nonstudent' ? r.userId.affiliation : r.organization
       }))
     ];
 
-    // Sort by creation date (newest first)
-    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Status priority
+    const statusPriority = {
+      "nearDeadline": 0, // computed dynamically
+      "pending": 1,
+      "approved": 2,
+      "completed": 3,
+      "archived": 4,
+      "rejected": 5
+    };
 
-    res.render('allrequestsadmin', { 
-      allRequests, 
-      user: req.user 
+    // Helper: is near deadline within 3 days
+    const isNearDeadline = (req) => {
+      if (!req.deadline) return false;
+      const now = new Date();
+      const deadline = new Date(req.deadline);
+      const diffDays = (deadline - now) / (1000 * 60 * 60 * 24);
+      return diffDays >= 0 && diffDays <= 3;
+    };
+
+    // Sort logic
+    allRequests.sort((a, b) => {
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+      const aNear = isNearDeadline(a);
+      const bNear = isNearDeadline(b);
+
+      // 1. Near deadlines first
+      if (aNear && !bNear) return -1;
+      if (!aNear && bNear) return 1;
+
+      // 2. By status priority
+      const aPriority = statusPriority[aNear ? "nearDeadline" : aStatus] ?? 999;
+      const bPriority = statusPriority[bNear ? "nearDeadline" : bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      // 3. Tie-breakers
+      if (aNear && bNear) {
+        return new Date(a.deadline) - new Date(b.deadline); // earliest first
+      }
+
+      if (aStatus === "pending") {
+        return new Date(a.createdAt) - new Date(b.createdAt); // oldest first
+      }
+
+      if (aStatus === "approved") {
+        if (a.type === "Service Request" && b.type === "Service Request") {
+          const aDeadline = a.deadline ? new Date(a.deadline) : null;
+          const bDeadline = b.deadline ? new Date(b.deadline) : null;
+          if (aDeadline && bDeadline) return aDeadline - bDeadline;
+          if (aDeadline && !bDeadline) return -1;
+          if (!aDeadline && bDeadline) return 1;
+        }
+        return new Date(b.createdAt) - new Date(a.createdAt); // newest first
+      }
+
+      if (["completed", "archived", "rejected"].includes(aStatus)) {
+        return new Date(b.createdAt) - new Date(a.createdAt); // newest first
+      }
+
+      return 0;
+    });
+
+    res.render('allrequestsadmin', {
+      allRequests,
+      user: req.user
     });
   } catch (err) {
     console.error('Error loading all requests:', err);
     res.status(500).render('error', { message: 'Failed to load all requests page.' });
   }
 });
+
 
 // Conversation Routes
 app.get('/api/conversation/:serviceRequestId', requireLogin, async (req, res) => {

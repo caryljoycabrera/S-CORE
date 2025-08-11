@@ -1050,6 +1050,105 @@ body {
   gap: 1rem;
 }
 
+/*STATUS MULTI-SELECT*/
+/* Custom Multi-Select Dropdown Styles */
+.custom-select-wrapper {
+  position: relative;
+}
+
+.custom-select {
+  position: relative;
+  cursor: pointer;
+}
+
+.select-display {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  color: #111827;
+  background: #f9fafb;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+}
+
+.custom-select:hover .select-display {
+  border-color: #d1d5db;
+}
+
+.custom-select.active .select-display {
+  border-color: var(--primary-green);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(44, 93, 49, 0.1);
+}
+
+.select-arrow {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+}
+
+
+.select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid var(--primary-green);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  margin-top: 2px;
+}
+
+.custom-select.active .select-dropdown {
+  display: block;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.dropdown-option:hover {
+  background-color: #f9fafb;
+}
+
+.dropdown-option input[type="checkbox"] {
+  margin-right: 0.75rem;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-green);
+  cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .select-dropdown {
+    max-height: 150px;
+  }
+}
+
+
 .clear-filters-btn {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;

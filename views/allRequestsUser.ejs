@@ -6,6 +6,9 @@
   <title>All Requests</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 </head>
 <body>
   <div class="student-side">
@@ -62,16 +65,30 @@
                     <option value="Service Request">Service Request</option>
                   </select>
                 </div>
-                <div class="filter-item">
-                  <label for="statusFilter" class="filter-sublabel">Status</label>
-                  <select id="statusFilter" class="filter-select">
-                    <option value="all">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="For Revision">For Revision</option>
-                  </select>
+               <div class="filter-item">
+                <label class="filter-sublabel">Status</label>
+                <div class="custom-select-wrapper">
+                  <div class="custom-select" id="statusFilter">
+                    <div class="select-display">All Status</div>
+                    <div class="select-dropdown" id="statusDropdown">
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="all" checked> All Status
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="pending"> Pending
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="approved"> Approved
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="rejected"> Rejected
+                      </label>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              
                 <div class="filter-item">
                   <label for="titleFilter" class="filter-sublabel">Title</label>
                   <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
@@ -194,7 +211,6 @@
     const detailModal = document.getElementById("detailsModal");
     const closeDetailsModal = document.getElementById("closeDetailsModal");
     const typeFilter = document.getElementById("typeFilter");
-    const statusFilter = document.getElementById("statusFilter");
     const clearFiltersBtn = document.getElementById("clearFilters");
     const tableBody = document.getElementById("requestsTableBody");
     const allRows = Array.from(document.querySelectorAll('.request-row'));
@@ -205,48 +221,48 @@
       if (event.target === detailModal) detailModal.style.display = 'none';
     }
 
-    function filterRequests() {
-      const typeValue = typeFilter.value.toLowerCase();
-      const statusValue = statusFilter.value.toLowerCase();
-      const titleValue = document.getElementById('titleFilter').value.toLowerCase();
-      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
-      const dateFromValue = document.getElementById('dateFromFilter').value;
-      const dateToValue = document.getElementById('dateToFilter').value;
+  function filterRequests() {
+    const typeValue = typeFilter.value.toLowerCase();
+const selectedStatuses = getSelectedStatuses();
+    const titleValue = document.getElementById('titleFilter').value.toLowerCase();
+    const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+    const dateFromValue = document.getElementById('dateFromFilter').value ? new Date(document.getElementById('dateFromFilter').value) : null;
+    const dateToValue = document.getElementById('dateToFilter').value ? new Date(document.getElementById('dateToFilter').value) : null;
+    
+    let visibleCount = 0;
+
+    allRows.forEach(row => {
+      const rowType = row.dataset.type.toLowerCase();
+      const rowStatus = row.dataset.status.toLowerCase();
+      const rowTitle = row.dataset.title.toLowerCase();
+      const rowOrganization = row.dataset.organization.toLowerCase();
+      const rowDate = new Date(row.dataset.date); // ensure real Date object
+
+      const typeMatch = typeValue === 'all' || rowType === typeValue;
+      const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
+      const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
+      const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
       
-      let visibleCount = 0;
+      let dateMatch = true;
+      if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
+      if (dateToValue && rowDate > dateToValue) dateMatch = false;
 
-      allRows.forEach(row => {
-        const rowType = row.dataset.type.toLowerCase();
-        const rowStatus = row.dataset.status.toLowerCase();
-        const rowTitle = row.dataset.title.toLowerCase();
-        const rowOrganization = row.dataset.organization.toLowerCase();
-        const rowDate = row.dataset.date;
+      const isVisible = typeMatch && statusMatch && titleMatch && organizationMatch && dateMatch;
+      row.style.display = isVisible ? '' : 'none';
+      
+      if (isVisible) visibleCount++;
+    });
 
-        const typeMatch = typeValue === 'all' || rowType === typeValue;
-        const statusMatch = statusValue === 'all' || rowStatus === statusValue;
-        const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
-        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
-        
-        let dateMatch = true;
-        if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
-        if (dateToValue && rowDate > dateToValue) dateMatch = false;
-
-        const isVisible = typeMatch && statusMatch && titleMatch && organizationMatch && dateMatch;
-        row.style.display = isVisible ? '' : 'none';
-        
-        if (isVisible) visibleCount++;
-      });
-
-      const totalCount = allRows.length;
-      const resultsCount = document.getElementById('resultsCount');
-      if (visibleCount === totalCount) {
-        resultsCount.textContent = `Showing all ${totalCount} requests`;
-      } else {
-        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
-      }
-
-      toggleNoResultsMessage(visibleCount === 0);
+    const totalCount = allRows.length;
+    const resultsCount = document.getElementById('resultsCount');
+    if (visibleCount === totalCount) {
+      resultsCount.textContent = `Showing all ${totalCount} requests`;
+    } else {
+      resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
     }
+
+    toggleNoResultsMessage(visibleCount === 0);
+  }
 
     function toggleNoResultsMessage(show) {
       let noResultsRow = document.getElementById('noResultsRow');
@@ -269,22 +285,25 @@
     }
 
     typeFilter.addEventListener('change', filterRequests);
-    statusFilter.addEventListener('change', filterRequests);
     document.getElementById('titleFilter').addEventListener('input', filterRequests);
     document.getElementById('organizationFilter').addEventListener('input', filterRequests);
     document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
     document.getElementById('dateToFilter').addEventListener('change', filterRequests);
 
-    clearFiltersBtn.addEventListener('click', () => {
-      typeFilter.value = 'all';
-      statusFilter.value = 'all';
-      document.getElementById('titleFilter').value = '';
-      document.getElementById('organizationFilter').value = '';
-      document.getElementById('dateFromFilter').value = '';
-      document.getElementById('dateToFilter').value = '';
-      filterRequests();
-    });
-
+clearFiltersBtn.addEventListener('click', () => {
+  typeFilter.value = 'all';
+  document.getElementById('titleFilter').value = '';
+  document.getElementById('organizationFilter').value = '';
+  document.getElementById('dateFromFilter').value = '';
+  document.getElementById('dateToFilter').value = '';
+  
+  // Clear status filter
+  statusCheckboxes.forEach(cb => cb.checked = false);
+  allStatusCheckbox.checked = true;
+  updateStatusDisplay();
+  
+  filterRequests();
+});
     document.querySelectorAll('.request-row').forEach(row => {
       row.addEventListener('click', () => {
         document.getElementById("detailType").innerText = row.dataset.type;
@@ -329,6 +348,14 @@
       menu.style.display = menu.style.display === "block" ? "none" : "block";
     }
 
+    
+
+      $('#organization').select2({
+        placeholder: "Select organization(s)",
+        closeOnSelect: false
+      });
+
+
     document.addEventListener("click", function (event) {
       const toggle = document.querySelector(".dropdown-toggle");
       const menu = document.getElementById("dropdownMenu");
@@ -336,6 +363,82 @@
         menu.style.display = "none";
       }
     });
+
+    // Custom Status Filter Logic
+const statusFilterElement = document.getElementById('statusFilter');
+const statusDropdown = document.getElementById('statusDropdown');
+const statusDisplay = statusFilterElement.querySelector('.select-display');
+const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
+
+// Toggle dropdown
+statusFilterElement.addEventListener('click', function(e) {
+  e.stopPropagation();
+  statusFilterElement.classList.toggle('active');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function() {
+  statusFilterElement.classList.remove('active');
+});
+
+// Handle checkbox changes
+statusCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', function() {
+    if (this.value === 'all') {
+      // If "All Status" is checked, uncheck others
+      if (this.checked) {
+        statusCheckboxes.forEach(cb => {
+          if (cb.value !== 'all') cb.checked = false;
+        });
+      }
+    } else {
+      // If any specific status is checked, uncheck "All Status"
+      if (this.checked) {
+        allStatusCheckbox.checked = false;
+      }
+      
+      // If no specific status is checked, check "All Status"
+      const specificChecked = Array.from(statusCheckboxes).some(cb => 
+        cb.value !== 'all' && cb.checked
+      );
+      if (!specificChecked) {
+        allStatusCheckbox.checked = true;
+      }
+    }
+    
+    updateStatusDisplay();
+    filterRequests();
+  });
+});
+
+function updateStatusDisplay() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    statusDisplay.textContent = 'All Status';
+  } else if (checkedBoxes.length === 1) {
+    statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
+                              checkedBoxes[0].value.slice(1);
+  } else {
+    statusDisplay.textContent = `${checkedBoxes.length} Selected`;
+  }
+}
+
+// Get selected status values for filtering
+function getSelectedStatuses() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
+    cb.checked && cb.value !== 'all'
+  );
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    return [];
+  }
+  
+  return checkedBoxes.map(cb => cb.value.toLowerCase());
+}
+
+
   </script>
 </body>
 </html>

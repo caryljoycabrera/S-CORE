@@ -140,16 +140,28 @@
             <div class="filter-group">
               <label class="filter-label">Filter by:</label>
               <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="statusFilter" class="filter-sublabel">Status</label>
-                  <select id="statusFilter" class="filter-select">
-                    <option value="all">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="For Revision">For Revision</option>
-                  </select>
+               <div class="filter-item">
+                <label class="filter-sublabel">Status</label>
+                <div class="custom-select-wrapper">
+                  <div class="custom-select" id="statusFilter">
+                    <div class="select-display">All Status</div>
+                    <div class="select-dropdown" id="statusDropdown">
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="all" checked> All Status
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="pending"> Pending
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="approved"> Approved
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="rejected"> Rejected
+                      </label>
+                    </div>
+                  </div>
                 </div>
+              </div>
                 <div class="filter-item">
                   <label for="titleFilter" class="filter-sublabel">Title</label>
                   <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
@@ -368,7 +380,6 @@
     const cancelModalBtn = document.getElementById('cancelModalBtn');
     const detailModal = document.getElementById("detailsModal");
     const closeDetailsModal = document.getElementById("closeDetailsModal");
-    const statusFilter = document.getElementById("statusFilter");
     const clearFiltersBtn = document.getElementById("clearFilters");
     const tableBody = document.getElementById("requestsTableBody");
     const allRows = Array.from(document.querySelectorAll('.request-row'));
@@ -484,45 +495,56 @@
     });
 
     function filterRequests() {
-      const statusValue = statusFilter.value.toLowerCase();
-      const titleValue = document.getElementById('titleFilter').value.toLowerCase();
-      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
-      const dateFromValue = document.getElementById('dateFromFilter').value;
-      const dateToValue = document.getElementById('dateToFilter').value;
-      
-      let visibleCount = 0;
+  const selectedStatuses = getSelectedStatuses();
+  const titleValue = document.getElementById('titleFilter').value.toLowerCase();
+  const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+  const dateFromValue = document.getElementById('dateFromFilter').value;
+  const dateToValue = document.getElementById('dateToFilter').value;
 
-      allRows.forEach(row => {
-        const rowStatus = row.dataset.status.toLowerCase();
-        const rowTitle = row.dataset.title.toLowerCase();
-        const rowOrganization = row.dataset.organization.toLowerCase();
-        const rowDate = row.dataset.date;
+  let visibleCount = 0;
 
-        const statusMatch = statusValue === 'all' || rowStatus === statusValue;
-        const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
-        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
-        
-        let dateMatch = true;
-        if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
-        if (dateToValue && rowDate > dateToValue) dateMatch = false;
+  allRows.forEach(row => {
+    const rowStatus = row.dataset.status.toLowerCase();
+    const rowTitle = row.dataset.title.toLowerCase();
+    const rowOrganization = row.dataset.organization.toLowerCase();
+    const rowDate = row.dataset.date; // YYYY-MM-DD from dataset
 
-        const isVisible = statusMatch && titleMatch && organizationMatch && dateMatch;
-        row.style.display = isVisible ? '' : 'none';
-        
-        if (isVisible) visibleCount++;
-      });
+    // Status filter
+    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
 
-      const totalCount = allRows.length;
-      const resultsCount = document.getElementById('resultsCount');
-      if (visibleCount === totalCount) {
-        resultsCount.textContent = `Showing all ${totalCount} requests`;
-      } else {
-        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
-      }
+    // Title filter
+    const titleMatch = (titleValue === '' || rowTitle.includes(titleValue));
 
-      toggleNoResultsMessage(visibleCount === 0);
-    }
+    // Organization filter
+    const organizationMatch = (organizationValue === '' || rowOrganization.includes(organizationValue));
 
+    // Date range filter (convert to Date objects for reliable comparison)
+    let dateMatch = true;
+    if (dateFromValue) dateMatch = dateMatch && (rowDate >= dateFromValue);
+    if (dateToValue) dateMatch = dateMatch && (rowDate <= dateToValue);
+
+    // Final combined check (all filters must match)
+    const isVisible = statusMatch && titleMatch && organizationMatch && dateMatch;
+    row.style.display = isVisible ? '' : 'none';
+
+    if (isVisible) visibleCount++;
+  });
+
+  // Update result count
+  const totalCount = allRows.length;
+  const resultsCount = document.getElementById('resultsCount');
+  if (visibleCount === totalCount) {
+    resultsCount.textContent = `Showing all ${totalCount} requests`;
+  } else {
+    resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+  }
+
+  // Show or hide "no results" message
+  toggleNoResultsMessage(visibleCount === 0);
+}
+
+
+    
     function toggleNoResultsMessage(show) {
       let noResultsRow = document.getElementById('noResultsRow');
       
@@ -555,6 +577,9 @@
       document.getElementById('organizationFilter').value = '';
       document.getElementById('dateFromFilter').value = '';
       document.getElementById('dateToFilter').value = '';
+        statusCheckboxes.forEach(cb => cb.checked = false);
+      allStatusCheckbox.checked = true;
+      updateStatusDisplay()
       filterRequests();
     });
 
@@ -693,6 +718,81 @@ function countWorkingDays(startDate, endDate) {
   }
   return count;
 }
+
+    // Custom Status Filter Logic
+const statusFilterElement = document.getElementById('statusFilter');
+const statusDropdown = document.getElementById('statusDropdown');
+const statusDisplay = statusFilterElement.querySelector('.select-display');
+const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
+
+// Toggle dropdown
+statusFilterElement.addEventListener('click', function(e) {
+  e.stopPropagation();
+  statusFilterElement.classList.toggle('active');
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function() {
+  statusFilterElement.classList.remove('active');
+});
+
+// Handle checkbox changes
+statusCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', function() {
+    if (this.value === 'all') {
+      // If "All Status" is checked, uncheck others
+      if (this.checked) {
+        statusCheckboxes.forEach(cb => {
+          if (cb.value !== 'all') cb.checked = false;
+        });
+      }
+    } else {
+      // If any specific status is checked, uncheck "All Status"
+      if (this.checked) {
+        allStatusCheckbox.checked = false;
+      }
+      
+      // If no specific status is checked, check "All Status"
+      const specificChecked = Array.from(statusCheckboxes).some(cb => 
+        cb.value !== 'all' && cb.checked
+      );
+      if (!specificChecked) {
+        allStatusCheckbox.checked = true;
+      }
+    }
+    
+    updateStatusDisplay();
+    filterRequests();
+  });
+});
+
+function updateStatusDisplay() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    statusDisplay.textContent = 'All Status';
+  } else if (checkedBoxes.length === 1) {
+    statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
+                              checkedBoxes[0].value.slice(1);
+  } else {
+    statusDisplay.textContent = `${checkedBoxes.length} Selected`;
+  }
+}
+
+// Get selected status values for filtering
+function getSelectedStatuses() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
+    cb.checked && cb.value !== 'all'
+  );
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    return [];
+  }
+  
+  return checkedBoxes.map(cb => cb.value.toLowerCase());
+}
+
   </script>
 </body>
 </html>
