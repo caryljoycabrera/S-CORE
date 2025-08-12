@@ -73,7 +73,16 @@
                         <input type="checkbox" value="approved"> Approved
                       </label>
                       <label class="dropdown-option">
+                        <input type="checkbox" value="for revision"> For Revision
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="completed"> Completed
+                      </label>
+                      <label class="dropdown-option">
                         <input type="checkbox" value="rejected"> Rejected
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="archived"> Archived
                       </label>
                     </div>
                   </div>
@@ -136,14 +145,14 @@
                 data-description="<%= request.description %>"
                 data-deadline="<%= request.deadline ? new Date(request.deadline).toISOString().slice(0, 10) : '' %>"
                 data-date="<%= new Date(request.createdAt).toISOString().split('T')[0] %>"
-                data-status="<%= request.status %>"
+                data-status="<%= request.status.toLowerCase() %>"
                 data-student="<%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %>">
                 <td><%= request._id.toString().slice(-6) %></td>
                 <td><%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %></td>
                 <td><%= request.title %></td>
                 <td><%= request.displayOrganization || request.organization %></td>
                 <td>
-                  <span class="status-badge <%= request.status.toLowerCase() %>">
+                  <span class="status-badge <%= request.status.toLowerCase().replace(' ', '-') %>">
                     <%= request.status %>
                   </span>
                 </td>
@@ -158,9 +167,10 @@
                       deadline.setHours(0,0,0,0);
                       const timeDiff = deadline - today;
                       const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-                      // Make deadline red if overdue/today OR if status is Approved
-                      const isOverdueOrToday = (daysDiff <= 0) || request.status.toLowerCase() === 'approved';
-                      const isNearDeadline = daysDiff === 1 && request.status.toLowerCase() === 'pending';
+                      const status = request.status.toLowerCase();
+                      // Make deadline red if overdue/today OR if status is Approved or For Revision
+                      const isOverdueOrToday = (daysDiff <= 0) || ['approved', 'for revision'].includes(status);
+                      const isNearDeadline = daysDiff === 1 && status === 'pending';
                     %>
                     <span class="deadline-badge <%= isOverdueOrToday ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>">
                       <%= new Date(request.deadline).toLocaleDateString() %>
@@ -208,7 +218,10 @@
             <select name="status" id="serviceStatus">
                 <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
+                <option value="For Revision">For Revision</option>
+                <option value="Completed">Completed</option>
                 <option value="Rejected">Rejected</option>
+                <option value="Archived">Archived</option>
             </select>
             </div>
 
@@ -439,7 +452,7 @@
 
     function filterRequests() {
       const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
-  const selectedStatuses = getSelectedStatuses();
+      const selectedStatuses = getSelectedStatuses();
       const studentValue = document.getElementById('studentFilter').value.toLowerCase();
       const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
       const dateFromValue = document.getElementById('dateFromFilter').value;
@@ -455,7 +468,7 @@
         const rowDate = row.dataset.date;
 
         const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
-    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
+        const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
         const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
         const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
 
@@ -540,14 +553,14 @@
             deadlineDate.setHours(0,0,0,0);
             const timeDiff = deadlineDate - today;
             const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-            // Make deadline red if overdue/today OR if status is Approved
+            
             const isOverdue = daysDiff < 0;
             const isToday = daysDiff === 0;
             const isNearDeadline = daysDiff === 1 && status === 'pending';
-            const isApproved = status === 'approved';
+            const isApprovedOrRevision = ['approved', 'for revision'].includes(status);
             
             deadlineElement.innerText = new Date(deadline).toLocaleDateString();
-            deadlineElement.className = `deadline-badge editable-deadline ${(isOverdue || isToday || isApproved) ? 'overdue' : isNearDeadline ? 'near-deadline' : ''}`;
+            deadlineElement.className = `deadline-badge editable-deadline ${(isOverdue || isToday || isApprovedOrRevision) ? 'overdue' : isNearDeadline ? 'near-deadline' : ''}`;
           } else {
             deadlineElement.innerText = 'N/A';
             deadlineElement.className = 'deadline-badge editable-deadline';
@@ -711,6 +724,37 @@ function getSelectedStatuses() {
 
     .message-text {
       word-wrap: break-word;
+    }
+
+    /* Status badge styles for all service statuses */
+    .status-badge.pending {
+      background-color: #fef3c7;
+      color: #d97706;
+    }
+
+    .status-badge.approved {
+      background-color: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-badge.for-revision {
+      background-color: #fed7d7;
+      color: #e53e3e;
+    }
+
+    .status-badge.completed {
+      background-color: #dbeafe;
+      color: #3b82f6;
+    }
+
+    .status-badge.rejected {
+      background-color: #fee2e2;
+      color: #dc2626;
+    }
+
+    .status-badge.archived {
+      background-color: #f3f4f6;
+      color: #6b7280;
     }
   </style>
 </body>

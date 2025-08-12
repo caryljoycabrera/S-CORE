@@ -38,7 +38,7 @@
         <div class="section-header">
           <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
             <div>
-              <h2 style="margin-bottom: 0.25rem;">All Requests Overview</h2>
+              <h2 style="margin-bottom: 0.25rem;">All Requests</h2>
               <p style="color: #6b7280;">View and manage all user requests in one place</p>
             </div>
           </div>
@@ -86,7 +86,16 @@
                         <input type="checkbox" value="approved"> Approved
                       </label>
                       <label class="dropdown-option">
+                        <input type="checkbox" value="for revision"> For Revision
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="completed"> Completed
+                      </label>
+                      <label class="dropdown-option">
                         <input type="checkbox" value="rejected"> Rejected
+                      </label>
+                      <label class="dropdown-option">
+                        <input type="checkbox" value="archived"> Archived
                       </label>
                     </div>
                   </div>
@@ -171,7 +180,7 @@
                 <td><%= request.title %></td>
                 <td><%= request.displayOrganization || request.organization %></td>
                 <td>
-                  <span class="status-badge <%= request.status.toLowerCase() %>">
+                  <span class="status-badge <%= request.status.toLowerCase().replace(' ', '-') %>">
                     <%= request.status %>
                   </span>
                 </td>
@@ -218,10 +227,7 @@
           <div class="form-group">
             <label for="status">Status:</label>
             <select id="status" name="status">
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-              <option value="For Revision">For Revision</option>
+              <!-- Options will be populated by JavaScript based on request type -->
             </select>
           </div>
           <div class="form-group" id="assignedUnitsGroup">
@@ -283,7 +289,7 @@ function filterRequests() {
 
     const requestIdMatch = !requestIdValue || rowRequestId.includes(requestIdValue);
     const typeMatch = typeValue === 'all' || rowType === typeValue;
-      const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
+    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
     const studentMatch = !studentValue || rowStudent.includes(studentValue);
     const organizationMatch = !organizationValue || rowOrganization.includes(organizationValue);
 
@@ -329,7 +335,6 @@ function filterRequests() {
 
     document.getElementById('requestIdFilter').addEventListener('input', filterRequests);
     typeFilter.addEventListener('change', filterRequests);
-    statusFilter.addEventListener('change', filterRequests);
     document.getElementById('studentFilter').addEventListener('input', filterRequests);
     document.getElementById('organizationFilter').addEventListener('input', filterRequests);
     document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
@@ -338,7 +343,6 @@ function filterRequests() {
     clearFiltersBtn.addEventListener('click', () => {
       document.getElementById('requestIdFilter').value = '';
       typeFilter.value = 'all';
-      statusFilter.value = 'all';
       document.getElementById('studentFilter').value = '';
       document.getElementById('organizationFilter').value = '';
       document.getElementById('dateFromFilter').value = '';
@@ -374,13 +378,50 @@ function filterRequests() {
 
         const updateForm = document.getElementById("updateForm");
         const assignedUnitsGroup = document.getElementById("assignedUnitsGroup");
+        const statusSelect = document.getElementById("status");
+        
+        // Clear previous options
+        statusSelect.innerHTML = '';
         
         if (requestType === 'Request Approval') {
           updateForm.action = '/admin/approval/update-status';
           assignedUnitsGroup.style.display = 'block';
+          
+          // Add approval status options
+          const approvalStatuses = [
+            { value: 'Pending', text: 'Pending' },
+            { value: 'For Revision', text: 'For Revision' },
+            { value: 'Approved', text: 'Approved' },
+            { value: 'Rejected', text: 'Rejected' },
+            { value: 'Archived', text: 'Archived' }
+          ];
+          
+          approvalStatuses.forEach(status => {
+            const option = document.createElement('option');
+            option.value = status.value;
+            option.textContent = status.text;
+            statusSelect.appendChild(option);
+          });
         } else {
           updateForm.action = '/admin/service/update-status';
           assignedUnitsGroup.style.display = 'none';
+          
+          // Add service status options
+          const serviceStatuses = [
+            { value: 'Pending', text: 'Pending' },
+            { value: 'Approved', text: 'Approved' },
+            { value: 'For Revision', text: 'For Revision' },
+            { value: 'Completed', text: 'Completed' },
+            { value: 'Rejected', text: 'Rejected' },
+            { value: 'Archived', text: 'Archived' }
+          ];
+          
+          serviceStatuses.forEach(status => {
+            const option = document.createElement('option');
+            option.value = status.value;
+            option.textContent = status.text;
+            statusSelect.appendChild(option);
+          });
         }
 
         document.getElementById("updateRequestId").value = row.dataset.id;

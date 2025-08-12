@@ -57,28 +57,34 @@
                   <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
                   <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
                 </div>
-  <div class="filter-item">
-                <label class="filter-sublabel">Status</label>
-                <div class="custom-select-wrapper">
-                  <div class="custom-select" id="statusFilter">
-                    <div class="select-display">All Status</div>
-                    <div class="select-dropdown" id="statusDropdown">
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="all" checked> All Status
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="pending"> Pending
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="approved"> Approved
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="rejected"> Rejected
-                      </label>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Status</label>
+                  <div class="custom-select-wrapper">
+                    <div class="custom-select" id="statusFilter">
+                      <div class="select-display">All Status</div>
+                      <div class="select-dropdown" id="statusDropdown">
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="all" checked> All Status
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="pending"> Pending
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="for revision"> For Revision
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="approved"> Approved
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="rejected"> Rejected
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="archived"> Archived
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
                 <div class="filter-item">
                   <label for="studentFilter" class="filter-sublabel">User</label>
                   <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
@@ -145,7 +151,7 @@
                 <td><%= request.title %></td>
                 <td><%= request.displayOrganization || request.organization %></td>
                 <td>
-                  <span class="status-badge <%= request.status.toLowerCase() %>">
+                  <span class="status-badge <%= request.status.toLowerCase().replace(/ /g, '-') %>">
                     <%= request.status %>
                   </span>
                 </td>
@@ -156,8 +162,8 @@
                     <% 
                       const today = new Date();
                       const deadline = new Date(request.deadline);
-                      const isOverdue = deadline < today && request.status.toLowerCase() === 'pending';
-                      const isNearDeadline = (deadline - today) / (1000 * 60 * 60 * 24) <= 1 && deadline >= today && request.status.toLowerCase() === 'pending';
+                      const isOverdue = deadline < today && (request.status.toLowerCase() === 'pending' || request.status.toLowerCase() === 'for revision');
+                      const isNearDeadline = (deadline - today) / (1000 * 60 * 60 * 24) <= 1 && deadline >= today && (request.status.toLowerCase() === 'pending' || request.status.toLowerCase() === 'for revision');
                     %>
                     <span class="deadline-badge <%= isOverdue ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>">
                       <%= request.deadline.toLocaleDateString() %>
@@ -205,9 +211,10 @@
             <label for="status">Status:</label>
             <select id="status" name="status">
               <option value="Pending">Pending</option>
+              <option value="For Revision">For Revision</option>
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
-              <option value="For Revision">For Revision</option>
+              <option value="Archived">Archived</option>
             </select>
           </div>
           <div class="form-group">
@@ -243,7 +250,7 @@
 
     function filterRequests() {
       const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
-  const selectedStatuses = getSelectedStatuses();
+      const selectedStatuses = getSelectedStatuses();
       const studentValue = document.getElementById('studentFilter').value.toLowerCase();
       const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
       const dateFromValue = document.getElementById('dateFromFilter').value;
@@ -259,7 +266,7 @@
         const rowDate = row.dataset.date;
 
         const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
-    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
+        const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
         const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
         const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
 
@@ -305,7 +312,6 @@
     }
 
     document.getElementById('requestIdFilter').addEventListener('input', filterRequests);
-    statusFilter.addEventListener('change', filterRequests);
     document.getElementById('studentFilter').addEventListener('input', filterRequests);
     document.getElementById('organizationFilter').addEventListener('input', filterRequests);
     document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
@@ -315,6 +321,7 @@
       document.getElementById('requestIdFilter').value = '';
       statusCheckboxes.forEach(cb => cb.checked = false);
       allStatusCheckbox.checked = true;
+      updateStatusDisplay();
       document.getElementById('studentFilter').value = '';
       document.getElementById('organizationFilter').value = '';
       document.getElementById('dateFromFilter').value = '';
@@ -371,79 +378,79 @@
       }
     });
 
-       // Custom Status Filter Logic
-const statusFilterElement = document.getElementById('statusFilter');
-const statusDropdown = document.getElementById('statusDropdown');
-const statusDisplay = statusFilterElement.querySelector('.select-display');
-const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
-const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
+    // Custom Status Filter Logic
+    const statusFilterElement = document.getElementById('statusFilter');
+    const statusDropdown = document.getElementById('statusDropdown');
+    const statusDisplay = statusFilterElement.querySelector('.select-display');
+    const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+    const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
 
-// Toggle dropdown
-statusFilterElement.addEventListener('click', function(e) {
-  e.stopPropagation();
-  statusFilterElement.classList.toggle('active');
-});
+    // Toggle dropdown
+    statusFilterElement.addEventListener('click', function(e) {
+      e.stopPropagation();
+      statusFilterElement.classList.toggle('active');
+    });
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function() {
-  statusFilterElement.classList.remove('active');
-});
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function() {
+      statusFilterElement.classList.remove('active');
+    });
 
-// Handle checkbox changes
-statusCheckboxes.forEach(checkbox => {
-  checkbox.addEventListener('change', function() {
-    if (this.value === 'all') {
-      // If "All Status" is checked, uncheck others
-      if (this.checked) {
-        statusCheckboxes.forEach(cb => {
-          if (cb.value !== 'all') cb.checked = false;
-        });
-      }
-    } else {
-      // If any specific status is checked, uncheck "All Status"
-      if (this.checked) {
-        allStatusCheckbox.checked = false;
-      }
+    // Handle checkbox changes
+    statusCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        if (this.value === 'all') {
+          // If "All Status" is checked, uncheck others
+          if (this.checked) {
+            statusCheckboxes.forEach(cb => {
+              if (cb.value !== 'all') cb.checked = false;
+            });
+          }
+        } else {
+          // If any specific status is checked, uncheck "All Status"
+          if (this.checked) {
+            allStatusCheckbox.checked = false;
+          }
+          
+          // If no specific status is checked, check "All Status"
+          const specificChecked = Array.from(statusCheckboxes).some(cb => 
+            cb.value !== 'all' && cb.checked
+          );
+          if (!specificChecked) {
+            allStatusCheckbox.checked = true;
+          }
+        }
+        
+        updateStatusDisplay();
+        filterRequests();
+      });
+    });
+
+    function updateStatusDisplay() {
+      const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
       
-      // If no specific status is checked, check "All Status"
-      const specificChecked = Array.from(statusCheckboxes).some(cb => 
-        cb.value !== 'all' && cb.checked
-      );
-      if (!specificChecked) {
-        allStatusCheckbox.checked = true;
+      if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+        statusDisplay.textContent = 'All Status';
+      } else if (checkedBoxes.length === 1) {
+        statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
+                                  checkedBoxes[0].value.slice(1);
+      } else {
+        statusDisplay.textContent = `${checkedBoxes.length} Selected`;
       }
     }
-    
-    updateStatusDisplay();
-    filterRequests();
-  });
-});
 
-function updateStatusDisplay() {
-  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
-  
-  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-    statusDisplay.textContent = 'All Status';
-  } else if (checkedBoxes.length === 1) {
-    statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
-                              checkedBoxes[0].value.slice(1);
-  } else {
-    statusDisplay.textContent = `${checkedBoxes.length} Selected`;
-  }
-}
-
-// Get selected status values for filtering
-function getSelectedStatuses() {
-  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
-    cb.checked && cb.value !== 'all'
-  );
-  
-  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-    return [];
-  }
-  
-  return checkedBoxes.map(cb => cb.value.toLowerCase());
-}
+    // Get selected status values for filtering
+    function getSelectedStatuses() {
+      const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
+        cb.checked && cb.value !== 'all'
+      );
+      
+      if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+        return ['all'];
+      }
+      
+      return checkedBoxes.map(cb => cb.value.toLowerCase());
+    }
   </script>
 </body>
 </html>
