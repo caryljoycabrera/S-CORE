@@ -32,6 +32,12 @@ app.use(session({
   saveUninitialized: false
 }));
 
+app.use((req, res, next) => {
+  if (req.path === '/api/deadlines') {
+    console.log('Deadlines API called by:', req.session.userId);
+  }
+  next();
+});
 // EJS view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -314,6 +320,189 @@ app.get('/dashboard', requireLogin, async (req, res) => {
     res.status(500).render('error', { message: 'Failed to load dashboard.' });
   }
 });
+// User-specific deadlines API - shows ALL user requests (with and without deadlines)
+app.get('/api/user-deadlines', requireLogin, async (req, res) => {
+  try {
+    console.log('User fetching all requests from database...');
+    
+    // Fetch ALL current user's approval requests and service requests
+    const approvals = await RequestApproval.find({ 
+      userId: req.session.userId
+    }).select('deadline title status createdAt').lean();
+    
+    const services = await ServiceRequest.find({ 
+      userId: req.session.userId
+    }).select('deadline title status createdAt').lean();
+
+    console.log(`Found ${approvals.length} approval requests and ${services.length} service requests for user`);
+
+    // Group requests by date (use deadline if available, otherwise use createdAt)
+    const requestsByDate = {};
+
+    // Process approval requests
+    approvals.forEach(approval => {
+      try {
+        // Use deadline if available, otherwise use createdAt
+        const dateToUse = approval.deadline ? new Date(approval.deadline) : new Date(approval.createdAt);
+        const dateStr = dateToUse.getFullYear() + '-' + 
+                       String(dateToUse.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(dateToUse.getDate()).padStart(2, '0');
+        
+        if (!requestsByDate[dateStr]) {
+          requestsByDate[dateStr] = { approvals: 0, services: 0 };
+        }
+        requestsByDate[dateStr].approvals += 1;
+      } catch (error) {
+        console.error('Error processing approval request:', approval, error);
+      }
+    });
+
+    // Process service requests
+    services.forEach(service => {
+      try {
+        // Use deadline if available, otherwise use createdAt
+        const dateToUse = service.deadline ? new Date(service.deadline) : new Date(service.createdAt);
+        const dateStr = dateToUse.getFullYear() + '-' + 
+                       String(dateToUse.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(dateToUse.getDate()).padStart(2, '0');
+        
+        if (!requestsByDate[dateStr]) {
+          requestsByDate[dateStr] = { approvals: 0, services: 0 };
+        }
+        requestsByDate[dateStr].services += 1;
+      } catch (error) {
+        console.error('Error processing service request:', service, error);
+      }
+    });
+
+    res.setHeader('Content-Type', 'application/json');
+    res.json(requestsByDate);
+  } catch (error) {
+    console.error('Error fetching user requests:', error);
+    res.status(500).json({ error: 'Failed to fetch requests', details: error.message });
+  }
+});
+// User request details for specific date  
+// User request details for specific date
+app.get('/api/user-deadlines/:date/details', requireLogin, async (req, res) => {
+  try {
+    const { date } = req.params;
+    console.log(`Fetching detailed requests for user on date: ${date}`);
+    
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ 
+        error: 'Invalid date format. Use YYYY-MM-DD',
+        date: date,
+        approvals: [],
+        services: [],
+        totalCount: 0
+      });
+    }
+    
+    // Create date range for the entire day
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    // Fetch approval requests for current user (deadline OR createdAt matches the date)
+    const approvals = await RequestApproval.find({
+      userId: req.session.userId,
+      $or: [
+        {
+          deadline: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        },
+        {
+          deadline: { $exists: false },
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        },
+        {
+          deadline: null,
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        }
+      ]
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status')
+    .lean();
+    
+    // Fetch service requests for current user (deadline OR createdAt matches the date)
+    const services = await ServiceRequest.find({
+      userId: req.session.userId,
+      $or: [
+        {
+          deadline: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        },
+        {
+          deadline: { $exists: false },
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        },
+        {
+          deadline: null,
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        }
+      ]
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status')
+    .lean();
+    
+    console.log(`Found ${approvals.length} approvals, ${services.length} services for user on ${date}`);
+    
+    // Process the data
+    const processedApprovals = approvals.map(approval => ({
+      ...approval,
+      displayOrganization: approval.userId?.userType === 'nonstudent' 
+        ? approval.userId.affiliation 
+        : approval.organization || 'N/A',
+      dateType: approval.deadline ? 'deadline' : 'created'
+    }));
+    
+    const processedServices = services.map(service => ({
+      ...service,
+      displayOrganization: service.userId?.userType === 'nonstudent' 
+        ? service.userId.affiliation 
+        : service.organization || 'N/A',
+      dateType: service.deadline ? 'deadline' : 'created'
+    }));
+    
+    const response = {
+      date: date,
+      approvals: processedApprovals,
+      services: processedServices,
+      totalCount: processedApprovals.length + processedServices.length
+    };
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching user detailed requests:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch detailed requests',
+      date: req.params.date || 'unknown',
+      approvals: [],
+      services: [],
+      totalCount: 0
+    });
+  }
+});
 
 app.get('/request-approvals', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
@@ -533,6 +722,182 @@ app.get('/all-requests', async (req, res) => {
   }
 });
 
+// to make deadlines appear in the calendar
+
+// Replace the existing /api/deadlines route with this improved version
+app.get('/api/deadlines', requireLogin, async (req, res) => {
+  try {
+    console.log('Admin fetching deadlines from database...');
+    
+    // Fetch all approval requests and service requests with deadlines
+    const approvals = await RequestApproval.find({ 
+      deadline: { $exists: true, $ne: null } 
+    }).select('deadline title').lean();
+    
+    const services = await ServiceRequest.find({ 
+      deadline: { $exists: true, $ne: null } 
+    }).select('deadline title').lean();
+
+    console.log(`Found ${approvals.length} approval deadlines and ${services.length} service deadlines`);
+
+    // Group deadlines by date
+    const deadlinesByDate = {};
+
+    // Process approval deadlines
+    approvals.forEach(approval => {
+      if (approval.deadline) {
+        try {
+          // Use local date string to avoid timezone issues
+          const date = new Date(approval.deadline);
+          const dateStr = date.getFullYear() + '-' + 
+                         String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(date.getDate()).padStart(2, '0');
+          
+          if (!deadlinesByDate[dateStr]) {
+            deadlinesByDate[dateStr] = { approvals: 0, services: 0 };
+          }
+          deadlinesByDate[dateStr].approvals += 1;
+          console.log(`Added approval deadline for ${dateStr}: ${approval.title}`);
+        } catch (error) {
+          console.error('Error processing approval deadline:', approval.deadline, error);
+        }
+      }
+    });
+
+    // Process service deadlines
+    services.forEach(service => {
+      if (service.deadline) {
+        try {
+          // Use local date string to avoid timezone issues
+          const date = new Date(service.deadline);
+          const dateStr = date.getFullYear() + '-' + 
+                         String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(date.getDate()).padStart(2, '0');
+          
+          if (!deadlinesByDate[dateStr]) {
+            deadlinesByDate[dateStr] = { approvals: 0, services: 0 };
+          }
+          deadlinesByDate[dateStr].services += 1;
+          console.log(`Added service deadline for ${dateStr}: ${service.title}`);
+        } catch (error) {
+          console.error('Error processing service deadline:', service.deadline, error);
+        }
+      }
+    });
+
+    console.log('Final deadlines grouped by date:', deadlinesByDate);
+    console.log('Total unique deadline dates:', Object.keys(deadlinesByDate).length);
+
+    // Set proper headers
+    res.setHeader('Content-Type', 'application/json');
+    res.json(deadlinesByDate);
+  } catch (error) {
+    console.error('Error fetching deadlines:', error);
+    res.status(500).json({ error: 'Failed to fetch deadlines', details: error.message });
+  }
+});
+
+// Debug route to check deadlines in database
+app.get('/debug/deadlines', requireLogin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({}, 'title deadline createdAt').lean();
+    const services = await ServiceRequest.find({}, 'title deadline createdAt').lean();
+    
+    res.json({
+      totalApprovals: approvals.length,
+      approvalsWithDeadlines: approvals.filter(a => a.deadline).length,
+      totalServices: services.length,
+      servicesWithDeadlines: services.filter(s => s.deadline).length,
+      sampleApprovals: approvals.slice(0, 3),
+      sampleServices: services.slice(0, 3)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+// display deadline in calendar
+app.get('/api/deadlines/:date/details', requireLogin, async (req, res) => {
+  try {
+    const { date } = req.params;
+    console.log(`Fetching detailed deadlines for date: ${date}`);
+    
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ 
+        error: 'Invalid date format. Use YYYY-MM-DD',
+        date: date,
+        approvals: [],
+        services: [],
+        totalCount: 0
+      });
+    }
+    
+    // Create date range for the entire day
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    console.log(`Searching between ${startDate.toISOString()} and ${endDate.toISOString()}`);
+    
+    // Fetch detailed requests
+    const approvals = await RequestApproval.find({
+      deadline: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status')
+    .lean();
+    
+    const services = await ServiceRequest.find({
+      deadline: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status')
+    .lean();
+    
+    console.log(`Found ${approvals.length} approvals, ${services.length} services for ${date}`);
+    
+    // Process the data
+    const processedApprovals = approvals.map(approval => ({
+      ...approval,
+      displayOrganization: approval.userId?.userType === 'nonstudent' 
+        ? approval.userId.affiliation 
+        : approval.organization || 'N/A'
+    }));
+    
+    const processedServices = services.map(service => ({
+      ...service,
+      displayOrganization: service.userId?.userType === 'nonstudent' 
+        ? service.userId.affiliation 
+        : service.organization || 'N/A'
+    }));
+    
+    const response = {
+      date: date,
+      approvals: processedApprovals,
+      services: processedServices,
+      totalCount: processedApprovals.length + processedServices.length
+    };
+    
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching detailed deadlines:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch detailed deadlines',
+      date: req.params.date || 'unknown',
+      approvals: [],
+      services: [],
+      totalCount: 0
+    });
+  }
+});
+
+
 app.get('/profile', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
   try {
@@ -655,6 +1020,7 @@ app.get('/admin/approvals', requireAdmin, async (req, res) => {
   }
 });
 
+
 app.get('/admin/services', requireAdmin, async (req, res) => {
   try {
     let serviceRequests = await ServiceRequest.find().populate('userId').lean();
@@ -721,6 +1087,133 @@ app.get('/admin/services', requireAdmin, async (req, res) => {
   }
 });
 
+// Add these routes after your existing admin routes
+
+// Route to handle direct access to specific approval request with modal
+app.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let approvals = await RequestApproval.find()
+      .populate('userId')
+      .lean();
+
+    // Add displayOrganization logic
+    approvals = approvals.map(approval => ({
+      ...approval,
+      displayOrganization:
+        approval.userId?.userType === 'nonstudent'
+          ? approval.userId.affiliation
+          : approval.organization
+    }));
+
+    // Status priority for approvals (matching frontend)
+    const statusPriority = {
+      "pending": 1,
+      "for revision": 2,
+      "approved": 3,
+      "rejected": 4,
+      "archived": 5
+    };
+
+    // Sort according to your specified rules
+    approvals.sort((a, b) => {
+      const aStatus = a.status?.toLowerCase() || '';
+      const bStatus = b.status?.toLowerCase() || '';
+
+      const aPriority = statusPriority[aStatus] ?? 999;
+      const bPriority = statusPriority[bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      if (aStatus === "pending") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      
+      if (aStatus === "for revision") {
+        const aDeadline = a.deadline ? new Date(a.deadline) : null;
+        const bDeadline = b.deadline ? new Date(b.deadline) : null;
+        
+        if (aDeadline && bDeadline) return aDeadline - bDeadline;
+        if (aDeadline && !bDeadline) return -1;
+        if (!aDeadline && bDeadline) return 1;
+        
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+      
+      if (["approved", "rejected", "archived"].includes(aStatus)) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    res.render('approvals', { approvals, user: req.user, openModalId: id });
+  } catch (err) {
+    console.error('Error loading admin approvals:', err);
+    res.status(500).send('Error loading approvals page');
+  }
+});
+
+// Route to handle direct access to specific service request with modal
+app.get('/admin/services/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let serviceRequests = await ServiceRequest.find().populate('userId').lean();
+
+    // Status priority mapping for services
+    const statusPriority = {
+      "pending": 1,
+      "approved": 2,
+      "for revision": 3,
+      "completed": 4,
+      "rejected": 5,
+      "archived": 6
+    };
+
+    // Sorting logic for services
+    serviceRequests.sort((a, b) => {
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+
+      const aPriority = statusPriority[aStatus] ?? 999;
+      const bPriority = statusPriority[bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      if (aStatus === "pending") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (aStatus === "approved" || aStatus === "for revision") {
+        const aDeadline = a.deadline ? new Date(a.deadline) : null;
+        const bDeadline = b.deadline ? new Date(b.deadline) : null;
+
+        if (aDeadline && bDeadline) return aDeadline - bDeadline;
+        if (aDeadline && !bDeadline) return -1;
+        if (!aDeadline && bDeadline) return 1;
+
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (["completed", "rejected", "archived"].includes(aStatus)) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    // Add displayOrganization logic
+    const serviceRequestsWithDisplay = serviceRequests.map(service => ({
+      ...service,
+      displayOrganization: service.userId?.userType === 'nonstudent'
+        ? service.userId.affiliation
+        : service.organization
+    }));
+
+    res.render('services', { serviceRequests: serviceRequestsWithDisplay, user: req.user, openModalId: id });
+  } catch (err) {
+    console.error('Error loading admin services:', err);
+    res.status(500).send('Error loading services page');
+  }
+});
 app.get('/admin/users', requireAdmin, async (req, res) => {
   const users = await User.find().lean();
   

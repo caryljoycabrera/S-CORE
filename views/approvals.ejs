@@ -235,7 +235,7 @@
     </div>
   </div>
 
-  <script>
+<script>
     const detailModal = document.getElementById("detailsModal");
     const closeDetailsModal = document.getElementById("closeDetailsModal");
     const clearFiltersBtn = document.getElementById("clearFilters");
@@ -451,6 +451,55 @@
       
       return checkedBoxes.map(cb => cb.value.toLowerCase());
     }
-  </script>
+
+    // Auto-open modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const openModalId = urlParams.get('openModalId');
+      
+      if (openModalId) {
+        const targetRow = document.querySelector(`[data-id="${openModalId}"]`);
+        if (targetRow) {
+          // Scroll to the row
+          targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Highlight the row briefly
+          targetRow.style.backgroundColor = '#e8f5e9';
+          setTimeout(() => {
+            targetRow.style.backgroundColor = '';
+          }, 2000);
+          
+          // Trigger click to open modal
+          setTimeout(() => {
+            targetRow.click();
+          }, 500);
+        }
+      }
+    });
+    // ADD this auto-open modal functionality:
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const openModalId = urlParams.get('openModalId');
+  
+  if (openModalId) {
+    const targetRow = document.querySelector(`[data-id="${openModalId}"]`);
+    if (targetRow) {
+      // Scroll to the row
+      targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Highlight the row briefly
+      targetRow.style.backgroundColor = '#e8f5e9';
+      setTimeout(() => {
+        targetRow.style.backgroundColor = '';
+      }, 2000);
+      
+      // Trigger click to open modal
+      setTimeout(() => {
+        targetRow.click();
+      }, 500);
+    }
+  }
+});
+</script>
 </body>
 </html>

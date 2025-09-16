@@ -6,113 +6,792 @@
   <title>S-CORE Dashboard</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    /* Calendar Theme Styles */
-    .calendar-standalone {
-      background: #fff;
-      border-radius: 1rem;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      padding: 1.5rem;
-      margin: 2rem 0 0 0;
-      min-width: 280px;
-      max-width: 320px;
-      border: 1px solid rgba(0,0,0,0.05);
-      transition: all 0.3s ease;
-    }
+<style>
+/* User Page Layout Styles - FIXED SPACING */
+.top-row-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem; /* Reduced from 2rem */
+  margin-bottom: 1.5rem; /* Reduced from 2rem */
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
 
-    .calendar-standalone:hover {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      transform: translateY(-2px);
-    }
+.bottom-row-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 1.5rem; /* Reduced from 2rem */
+  margin-bottom: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
 
-    .calendar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid #e5e7eb;
-    }
+/* FIXED: Made all cards the same height */
+.stretch-card {
+  min-height: 340px; /* Now matches all-requests-card */
+  height: 340px;
+}
 
-    .calendar-title {
-      margin: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #1f2937;
-      font-family: 'Inter', sans-serif;
-    }
+.all-requests-card {
+  min-height: 340px;
+  height: 340px;
+}
 
-    .calendar-month-year {
-      font-size: 0.9rem;
-      color: #6b7280;
-      font-weight: 500;
-    }
+/* Calendar and Card Base Styles - FIXED PADDING */
+.action-card,
+.calendar-standalone {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 2.5rem; /* Increased padding for better spacing */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  overflow: visible; /* Changed from hidden to prevent clipping */
+  position: relative;
+}
 
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-      font-size: 0.875rem;
-      font-family: 'Inter', sans-serif;
-    }
+.action-card {
+  justify-content: space-between; /* Changed from center to space-between */
+  align-items: center;
+  text-align: center;
+}
 
-    .calendar-day-header {
-      font-weight: 600;
-      text-align: center;
-      padding: 8px 4px;
-      color: #6b7280;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+.action-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
 
-    .calendar-day {
-      padding: 8px 4px;
-      border-radius: 6px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      color: #374151;
-      font-weight: 500;
-      min-height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+/* ADDED: Specific styles for action card internal elements */
+.card-icon-wrapper {
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-    .calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
-      background-color: #f3f4f6;
-      transform: scale(1.05);
-    }
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1rem 0 0.75rem 0;
+  color: #1f2937;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
 
-    .calendar-today {
-      background: linear-gradient(135deg, #007bff, #0056b3);
-      color: white;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-    }
+.card-subtitle {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.4;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    .calendar-empty {
-      cursor: default;
-    }
+.card-arrow {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #388e3c;
+  flex-shrink: 0;
+  margin-top: auto;
+}
 
-    .calendar-icon {
-      width: 20px;
-      height: 20px;
-      color: #6b7280;
-      margin-right: 0.5rem;
-    }
+/* Calendar Specific Styles */
+.calendar-standalone {
+  min-height: 340px;
+  height: 340px;
+  justify-content: flex-start;
+  padding: 1.5rem;
+}
 
-    /* Enhanced action card hover effects to match calendar */
-    .action-card {
-      transition: all 0.3s ease;
-    }
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  min-height: 40px;
+}
 
-    .action-card:hover {
-      transform: translateY(-4px) scale(1.01);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    }
-  </style>
+.calendar-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.calendar-maximize-btn {
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border: 2px solid #e1e8ed;
+  color: #388e3c;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  min-width: 32px;
+  height: 32px;
+  margin-right: 0.5rem;
+}
+
+.calendar-maximize-btn:hover {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-color: #388e3c;
+  color: #2e7d32;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-month-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.calendar-nav-btn {
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border: 2px solid #e1e8ed;
+  color: #388e3c;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-width: 38px;
+  height: 38px;
+}
+
+.calendar-nav-btn:hover {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-color: #388e3c;
+  color: #2e7d32;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.calendar-month-year {
+  font-size: 1rem;
+  color: #27632a;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  min-width: 140px;
+  text-align: center;
+}
+
+.calendar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot.approval {
+  background: #3b82f6;
+}
+
+.legend-dot.service {
+  background: #f97316;
+}
+
+.legend-text {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  padding-right: 2px;
+}
+
+.calendar-day-header {
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 2px;
+  color: #388e3c;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e8f5e9;
+  margin-bottom: 2px;
+}
+
+.calendar-day {
+  font-size: 0.85rem;
+  padding: 6px 2px;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #374151;
+  font-weight: 600;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
+  background-color: #e8f5e9;
+  transform: scale(1.05);
+  color: #2e7d32;
+}
+
+.calendar-today {
+  background: linear-gradient(135deg, #43a047, #66bb6a);
+  color: #fff !important;
+  font-weight: 700;
+  border: 2px solid #388e3c;
+  box-shadow: 0 2px 6px rgba(67, 160, 71, 0.3);
+  position: relative;
+}
+
+.calendar-today::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid #c8e6c9;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.calendar-day.has-approval-deadline {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 6px 6px 6px 2px;
+}
+
+.calendar-day.has-service-deadline {
+  border-left: 4px solid #f97316;
+  background: linear-gradient(135deg, #fff7ed, #fed7aa);
+  border-radius: 6px 6px 6px 2px;
+}
+
+.calendar-day.has-mixed-deadlines {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-radius: 6px;
+  position: relative;
+}
+
+.calendar-day.has-mixed-deadlines::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #3b82f6;
+  border-radius: 2px 0 0 2px;
+}
+
+.calendar-day.has-mixed-deadlines::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #f97316;
+  border-radius: 0 2px 2px 0;
+}
+
+.deadline-indicators {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  display: flex;
+  gap: 2px;
+  z-index: 10;
+}
+
+.deadline-badge {
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.deadline-badge.approval {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.deadline-badge.service {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.calendar-empty {
+  cursor: default;
+  color: transparent;
+}
+
+.calendar-icon {
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Modal Styles */
+.calendar-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  padding: 2rem;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease;
+}
+
+.calendar-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-modal-content {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  padding: 2.5rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+}
+
+.deadline-details-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1001;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.deadline-details-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deadline-details-content {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  padding: 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.deadline-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.deadline-details-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.deadline-details-date {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.deadline-details-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.deadline-control-btn {
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  border: 2px solid #e1e8ed;
+  color: #388e3c;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.deadline-control-btn:hover {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-color: #388e3c;
+  color: #2e7d32;
+  transform: translateY(-1px);
+}
+
+.deadline-control-btn.close-btn {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.deadline-control-btn.close-btn:hover {
+  color: #b91c1c;
+  border-color: #dc2626;
+}
+
+.deadline-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.deadline-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.deadline-item:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.deadline-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.deadline-item-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  flex: 1;
+}
+
+.deadline-item-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.deadline-item-type.approval {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #1d4ed8;
+  border: 1px solid #3b82f6;
+}
+
+.deadline-item-type.service {
+  background: linear-gradient(135deg, #fff7ed, #fed7aa);
+  color: #c2410c;
+  border: 1px solid #f97316;
+}
+
+.deadline-item-description {
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.deadline-item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.deadline-item-meta strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.deadline-empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.deadline-empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .top-row-container,
+  .bottom-row-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .stretch-card {
+    min-height: 280px;
+    height: 280px;
+  }
+  
+  .all-requests-card {
+    min-height: 300px;
+    height: 300px;
+  }
+  
+  .calendar-modal,
+  .deadline-details-modal {
+    padding: 1rem;
+  }
+  
+  .calendar-modal-content,
+  .deadline-details-content {
+    padding: 1.5rem;
+  }
+}
+
+/* Add these deadline item styles to match admin page */
+.deadline-item-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.deadline-action-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.deadline-action-btn:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.deadline-action-btn.service {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.deadline-action-btn.service:hover {
+  background: linear-gradient(135deg, #ea580c, #dc2626);
+  box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
+}
+
+/* Update deadline-item-meta to handle multiple lines better */
+.deadline-item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.deadline-item-meta span {
+  display: block;
+}
+
+.deadline-item-meta strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .deadline-item-meta {
+    font-size: 0.75rem;
+    gap: 0.2rem;
+  }
+  
+  .deadline-item-actions {
+    flex-direction: column;
+  }
+}
+
+/* Status badge styles for calendar modal */
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.rejected {
+  background-color: #fecaca;
+  color: #dc2626;
+}
+
+.status-badge.forrevision,
+.status-badge.revision {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-badge.completed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.archived {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.status-badge.unknown {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+</style>
 </head>
 <body>
   <div class="student-side">
@@ -123,51 +802,59 @@
         </div>
         <a href="/dashboard" class="text-wrapper">S-CORE</a>
         <span class="text-wrapper-2">Welcome, <%= name %>!</span>
-         <div class="dropdown-wrapper">
-      <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-        <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-        <div class="user">
-      <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
-        </div>
-      </div>
-      <div class="dropdown-menu" id="dropdownMenu">
-        <a href="/profile">My Profile</a>
-        <a href="/logout">Logout</a>
-      </div>
-    </div>
-      </div>
-      <div class="action-cards-container">
-        <div class="action-card" onclick="location.href='/all-requests'">
-          <div class="card-icon-wrapper">
-            <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
-            <div class="icon-glow"></div>
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
           </div>
-          <h3 class="card-title">Track All Requests</h3>
-          <p class="card-subtitle">Manage all your requests</p>
-          <div class="card-arrow">→</div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
         </div>
+      </div>
 
-        <div class="action-card" onclick="location.href='/request-approvals'">
+      <!-- New Layout: 2 rows -->
+      <!-- Row 1: Request Approvals and Request Services (stretch full width) -->
+      <div class="top-row-container">
+        <div class="action-card stretch-card" onclick="location.href='/request-approvals'">
           <div class="card-icon-wrapper">
             <img src="/Picture/File.png" alt="Request Approval" class="card-icon" />
             <div class="icon-glow"></div>
           </div>
-          <h3 class="card-title">Request Approval</h3>
+          <h3 class="card-title">Request Approvals</h3>
           <p class="card-subtitle">Submit materials for approval</p>
           <div class="card-arrow">→</div>
         </div>
 
-        <div class="action-card" onclick="location.href='/service-requests'">
+        <div class="action-card stretch-card" onclick="location.href='/service-requests'">
           <div class="card-icon-wrapper">
             <img src="/Picture/Repair.png" alt="Request Service" class="card-icon" />
             <div class="icon-glow"></div>
           </div>
-          <h3 class="card-title">Request Service</h3>
+          <h3 class="card-title">Request Services</h3>
           <p class="card-subtitle">Request deliverables</p>
           <div class="card-arrow">→</div>
         </div>
+      </div>
 
+      <!-- Row 2: All Requests and Calendar -->
+      <div class="bottom-row-container">
+        <div class="action-card all-requests-card" onclick="location.href='/all-requests'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">All Requests</h3>
+          <p class="card-subtitle">Manage all your requests</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <!-- Enhanced Calendar with deadlines and maximize/minimize functionality -->
         <div class="calendar-standalone">
+          <!-- Fixed Calendar Header -->
           <div class="calendar-header">
             <div style="display: flex; align-items: center;">
               <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -178,11 +865,38 @@
               </svg>
               <h3 class="calendar-title">Calendar</h3>
             </div>
-            <div class="calendar-month-year" id="calendar-month-year"></div>
+            <div class="calendar-controls">
+              <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">
+                ⛶
+              </button>
+              <div class="calendar-month-controls">
+                <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">
+                  ❮
+                </button>
+                <span class="calendar-month-year" id="calendar-month-year"></span>
+                <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">
+                  ❯
+                </button>
+              </div>
+            </div>
           </div>
-          <div id="calendar-standalone" class="calendar-grid"></div>
+        <!-- Updated Calendar Legend -->
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <div class="legend-dot approval"></div>
+            <span class="legend-text">Approval Requests</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot service"></div>
+            <span class="legend-text">Service Requests</span>
+          </div>
         </div>
-
+          
+          <!-- Scrollable Calendar Content -->
+          <div class="calendar-content">
+            <div id="calendar-standalone" class="calendar-grid"></div>
+          </div>
+        </div>
       </div>
 
       <%
@@ -200,67 +914,66 @@
       }
       %>
       
-  <div class="activity-section">
-  <div class="section-header" style="justify-content: space-between; align-items: center;">
-    <h2 class="section-title">Recent Activity</h2>
-    <a href="/all-requests" class="view-all-btn">View All</a>
-  </div>
-
-  <div class="activity-grid">
-    <% if (recentActivity.length === 0) { %>
-      <p>No recent activity yet.</p>
-    <% } else {
-      recentActivity.forEach(activity => {
-        const statusClass = activity.status.toLowerCase();
-
-        let icon;
-        switch (statusClass) {
-          case 'approved':
-            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>`;
-            break;
-          case 'pending':
-            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                      <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>`;
-            break;
-          case 'inreview':
-            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M15 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M12 9v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                    </svg>`;
-            break;
-          case 'rejected':
-            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      <path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>`;
-            break;
-          default:
-            icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                    </svg>`;
-        }
-    %>
-      <div class="activity-card <%= statusClass %>">
-        <div class="activity-icon">
-          <%- icon %>
+      <div class="activity-section">
+        <div class="section-header" style="justify-content: space-between; align-items: center;">
+          <h2 class="section-title">Recent Activity</h2>
+          <a href="/all-requests" class="view-all-btn">View All</a>
         </div>
-        <div class="activity-content">
-          <h4><%= activity.title %></h4>
-          <p><%= activity.description.length > 60 ? activity.description.slice(0, 60) + '...' : activity.description %></p>
-          <span class="activity-time"><%= timeAgo(activity.updatedAt) %></span>
+
+        <div class="activity-grid">
+          <% if (recentActivity.length === 0) { %>
+            <p>No recent activity yet.</p>
+          <% } else {
+            recentActivity.forEach(activity => {
+              const statusClass = activity.status.toLowerCase();
+
+              let icon;
+              switch (statusClass) {
+                case 'approved':
+                  icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>`;
+                  break;
+                case 'pending':
+                  icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>`;
+                  break;
+                case 'inreview':
+                  icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M15 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 9v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                          </svg>`;
+                  break;
+                case 'rejected':
+                  icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>`;
+                  break;
+                default:
+                  icon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                          </svg>`;
+              }
+          %>
+            <div class="activity-card <%= statusClass %>">
+              <div class="activity-icon">
+                <%- icon %>
+              </div>
+              <div class="activity-content">
+                <h4><%= activity.title %></h4>
+                <p><%= activity.description.length > 60 ? activity.description.slice(0, 60) + '...' : activity.description %></p>
+                <span class="activity-time"><%= timeAgo(activity.updatedAt) %></span>
+              </div>
+              <div class="status-badge <%= statusClass %>"><%= activity.status %></div>
+            </div>
+          <% }); } %>
         </div>
-        <div class="status-badge <%= statusClass %>"><%= activity.status %></div>
       </div>
-    <% }); } %>
-  </div>
-</div>
-      
-
+        
       <div class="stats-container">
         <div class="stats-card">
           <div class="stat-number"><%= totalRequests %></div>
@@ -279,70 +992,654 @@
           <div class="stat-label">For Revision</div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <script>
-    function toggleDropdown() {
-      const menu = document.getElementById("dropdownMenu");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
+  <!-- Calendar Modal -->
+  <div class="calendar-modal" id="calendar-modal">
+    <div class="calendar-modal-content">
+      <!-- Modal Calendar Header -->
+      <div class="calendar-header">
+        <div style="display: flex; align-items: center;">
+          <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h3 class="calendar-title">Calendar</h3>
+        </div>
+        <div class="calendar-controls">
+          <button class="calendar-maximize-btn" id="calendar-minimize" aria-label="Minimize Calendar" title="Minimize Calendar">
+            ✕
+          </button>
+          <div class="calendar-month-controls">
+            <button class="calendar-nav-btn" id="calendar-modal-prev-month" aria-label="Previous Month" title="Previous Month">
+              ❮
+            </button>
+            <span class="calendar-month-year" id="calendar-modal-month-year"></span>
+            <button class="calendar-nav-btn" id="calendar-modal-next-month" aria-label="Next Month" title="Next Month">
+              ❯
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal Calendar Legend -->
+      <div class="calendar-legend">
+        <div class="legend-item">
+          <div class="legend-dot approval"></div>
+          <span class="legend-text">Approval Requests</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot service"></div>
+          <span class="legend-text">Service Requests</span>
+        </div>
+      </div>
+      <!-- Modal Calendar Content -->
+      <div class="calendar-content">
+        <div id="calendar-modal-grid" class="calendar-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deadline Details Modal -->
+  <div class="deadline-details-modal" id="deadline-details-modal">
+    <div class="deadline-details-content">
+      <!-- Deadline Details Header -->
+      <div class="deadline-details-header">
+        <div>
+          <h2 class="deadline-details-title">My Deadlines</h2>
+          <p class="deadline-details-date" id="deadline-details-date"></p>
+        </div>
+      </div>
+      
+      <!-- Deadline Details Controls -->
+      <div class="deadline-details-controls">
+        <button class="deadline-control-btn" id="back-to-calendar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15,18 9,12 15,6"></polyline>
+          </svg>
+          Back to Calendar
+        </button>
+        <button class="deadline-control-btn close-btn" id="close-deadline-details">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Close
+        </button>
+      </div>
+      
+      <!-- Deadline List -->
+      <div class="deadline-list" id="deadline-list">
+        <!-- Deadline items will be populated here -->
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+function toggleDropdown() {
+  const menu = document.getElementById("dropdownMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+// Close dropdown if clicking outside
+document.addEventListener("click", function (event) {
+  const toggle = document.querySelector(".dropdown-toggle");
+  const menu = document.getElementById("dropdownMenu");
+  if (!toggle.contains(event.target)) {
+    menu.style.display = "none";
+  }
+});
+
+// Add hover animations for action cards
+document.querySelectorAll('.action-card').forEach(card => {
+  card.addEventListener('mouseenter', function() {
+    this.style.transform = 'translateY(-8px) scale(1.02)';
+  });
+  
+  card.addEventListener('mouseleave', function() {
+    this.style.transform = 'translateY(0) scale(1)';
+  });
+});
+
+// Enhanced calendar with user-specific deadlines - FIXED API CALLS
+(function() {
+  const calendar = document.getElementById('calendar-standalone');
+  const monthYear = document.getElementById('calendar-month-year');
+  const prevBtn = document.getElementById('calendar-prev-month');
+  const nextBtn = document.getElementById('calendar-next-month');
+  const maximizeBtn = document.getElementById('calendar-maximize');
+  
+  // Modal elements
+  const modal = document.getElementById('calendar-modal');
+  const modalCalendar = document.getElementById('calendar-modal-grid');
+  const modalMonthYear = document.getElementById('calendar-modal-month-year');
+  const modalPrevBtn = document.getElementById('calendar-modal-prev-month');
+  const modalNextBtn = document.getElementById('calendar-modal-next-month');
+  const minimizeBtn = document.getElementById('calendar-minimize');
+
+  // Deadline details modal elements
+  const deadlineModal = document.getElementById('deadline-details-modal');
+  const deadlineList = document.getElementById('deadline-list');
+  const deadlineDate = document.getElementById('deadline-details-date');
+  const backToCalendarBtn = document.getElementById('back-to-calendar');
+  const closeDeadlineDetailsBtn = document.getElementById('close-deadline-details');
+
+  if (!calendar || !monthYear || !prevBtn || !nextBtn) {
+    console.error('Calendar elements not found');
+    return;
+  }
+
+  let currentDate = new Date();
+  let deadlinesData = {};
+
+  // FIXED: Fetch user-specific deadlines data from server
+  async function fetchDeadlines() {
+    try {
+      console.log('Fetching user deadlines from /api/user-deadlines...');
+      const response = await fetch('/api/user-deadlines', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (response.ok) {
+        const responseText = await response.text();
+        try {
+          deadlinesData = JSON.parse(responseText);
+          console.log('User deadlines data received:', deadlinesData);
+        } catch (parseError) {
+          console.error('Error parsing JSON:', parseError);
+          deadlinesData = {};
+        }
+      } else {
+        console.error('Failed to fetch user deadlines, status:', response.status);
+        deadlinesData = {};
+      }
+    } catch (error) {
+      console.error('Network error fetching user deadlines:', error);
+      deadlinesData = {};
+    }
+  }
+
+  function getDeadlineClasses(dateStr) {
+    const deadlines = deadlinesData[dateStr];
+    if (!deadlines) {
+      return '';
+    }
+    
+    const hasApprovals = deadlines.approvals > 0;
+    const hasServices = deadlines.services > 0;
+    
+    if (hasApprovals && hasServices) {
+      return 'has-mixed-deadlines';
+    } else if (hasApprovals) {
+      return 'has-approval-deadline';
+    } else if (hasServices) {
+      return 'has-service-deadline';
+    }
+    
+    return '';
+  }
+
+  function createDeadlineIndicators(dateStr) {
+    const deadlines = deadlinesData[dateStr];
+    if (!deadlines) return '';
+    
+    const hasApprovals = deadlines.approvals > 0;
+    const hasServices = deadlines.services > 0;
+    
+    if (hasApprovals && hasServices) {
+      let badges = '';
+      if (deadlines.approvals > 0) {
+        badges += `<span class="deadline-badge approval">${deadlines.approvals}</span>`;
+      }
+      if (deadlines.services > 0) {
+        badges += `<span class="deadline-badge service">${deadlines.services}</span>`;
+      }
+      return `<div class="deadline-indicators">${badges}</div>`;
+    } else if (hasApprovals) {
+      return `<div class="deadline-indicators"><span class="deadline-badge approval">${deadlines.approvals}</span></div>`;
+    } else if (hasServices) {
+      return `<div class="deadline-indicators"><span class="deadline-badge service">${deadlines.services}</span></div>`;
+    }
+    
+    return '';
+  }
+
+  function renderCalendar(date, targetElement, targetMonthYear) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const today = new Date();
+
+    // Set month and year in header
+    targetMonthYear.textContent = `${date.toLocaleString('default', { month: 'long' })} ${year}`;
+
+    // Build days grid
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let html = '';
+    
+    // Day headers
+    const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    dayHeaders.forEach(day => {
+      html += `<div class="calendar-day-header">${day}</div>`;
+    });
+
+    // Empty cells for days before month starts
+    for (let i = 0; i < firstDay; i++) {
+      html += '<div class="calendar-day calendar-empty"></div>';
     }
 
-    // Close dropdown if clicking outside
-    document.addEventListener("click", function (event) {
-      const toggle = document.querySelector(".dropdown-toggle");
-      const menu = document.getElementById("dropdownMenu");
-      if (!toggle.contains(event.target)) {
-        menu.style.display = "none";
+    // Days of the month - MAKE ALL DATES CLICKABLE
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isToday =
+        day === today.getDate() &&
+        month === today.getMonth() &&
+        year === today.getFullYear();
+      
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const deadlineClasses = getDeadlineClasses(dateStr);
+      const deadlineIndicators = createDeadlineIndicators(dateStr);
+      
+      let className = 'calendar-day';
+      if (isToday) className += ' calendar-today';
+      if (deadlineClasses) className += ' ' + deadlineClasses;
+      
+      // Make ALL dates clickable
+      html += `<div class="${className}" data-date="${dateStr}" style="cursor: pointer;">${day}${deadlineIndicators}</div>`;
+    }
+
+    targetElement.innerHTML = html;
+    
+    // Add click event listeners to ALL calendar days (excluding empty cells)
+    targetElement.querySelectorAll('.calendar-day:not(.calendar-empty)').forEach(dayElement => {
+      const dateStr = dayElement.getAttribute('data-date');
+      
+      if (dateStr) {
+        dayElement.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log(`Clicked on date: ${dateStr}`);
+          showDeadlineDetails(dateStr);
+        });
+        
+        // Visual feedback for all clickable days
+        dayElement.addEventListener('mouseenter', function() {
+          if (!this.classList.contains('calendar-today')) {
+            this.style.backgroundColor = '#e8f5e9';
+          }
+        });
+        
+        dayElement.addEventListener('mouseleave', function() {
+          if (!this.classList.contains('calendar-today')) {
+            this.style.backgroundColor = '';
+          }
+        });
       }
     });
+  }
 
-    // Add hover animations for action cards
-    document.querySelectorAll('.action-card').forEach(card => {
-      card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-8px) scale(1.02)';
-      });
-      
-      card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(0) scale(1)';
-      });
+  function updateBothCalendars() {
+    renderCalendar(currentDate, calendar, monthYear);
+    if (modal.classList.contains('active')) {
+      renderCalendar(currentDate, modalCalendar, modalMonthYear);
+    }
+  }
+
+  // FIXED: Show user-specific deadline details modal
+  async function showDeadlineDetails(dateStr) {
+    console.log(`Showing user deadline details for ${dateStr}`);
+    
+    // Hide calendar modal if it's open
+    if (modal && modal.classList.contains('active')) {
+      modal.classList.remove('active');
+    }
+    
+    // Show loading state
+    const date = new Date(dateStr + 'T12:00:00');
+    const formattedDate = date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
-
-    // Enhanced calendar rendering with proper theming
-    (function() {
-      const calendar = document.getElementById('calendar-standalone');
-      const monthYear = document.getElementById('calendar-month-year');
-      if (!calendar || !monthYear) return;
-
-      const now = new Date();
-      const month = now.toLocaleString('default', { month: 'long' });
-      const year = now.getFullYear();
-      const firstDay = new Date(year, now.getMonth(), 1).getDay();
-      const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
-      
-      // Set month and year in header
-      monthYear.textContent = `${month} ${year}`;
-      
-      let html = '';
-      
-      // Day headers
-      const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      dayHeaders.forEach(day => {
-        html += `<div class="calendar-day-header">${day}</div>`;
+    
+    if (deadlineDate) {
+      deadlineDate.textContent = formattedDate;
+    }
+     // Update the modal title
+const modalTitle = document.querySelector('#deadline-details-modal .deadline-details-title');
+if (modalTitle) {
+  modalTitle.textContent = 'My Requests';
+}
+    
+    if (deadlineList) {
+      deadlineList.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6b7280;">Loading deadline details...</div>';
+    }
+    
+    // Show the deadline details modal immediately
+    if (deadlineModal) {
+      deadlineModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    try {
+      console.log(`Fetching user details for date: ${dateStr}`);
+      // FIXED: Use correct API endpoint for user-specific deadlines
+      const response = await fetch(`/api/user-deadlines/${dateStr}/details`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
       
-      // Empty cells for days before month starts
-      for (let i = 0; i < firstDay; i++) {
-        html += '<div class="calendar-day calendar-empty"></div>';
+      if (response.ok) {
+        const deadlineData = await response.json();
+        console.log('Received user deadline data:', deadlineData);
+        
+        if (deadlineData && deadlineData.totalCount > 0) {
+          renderUserDeadlineItems(deadlineData);
+        } else {
+          if (deadlineList) {
+            deadlineList.innerHTML = `
+              <div class="deadline-empty-state">
+                <div class="deadline-empty-state-icon">📅</div>
+                <div class="deadline-empty-state-text">No deadlines for this date</div>
+                <div class="deadline-empty-state-subtext">You have no pending deadlines on this date.</div>
+              </div>
+            `;
+          }
+        }
+      } else {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      
-      // Days of the month
-      for (let day = 1; day <= daysInMonth; day++) {
-        const isToday = day === now.getDate();
-        const className = isToday ? 'calendar-day calendar-today' : 'calendar-day';
-        html += `<div class="${className}">${day}</div>`;
+    } catch (error) {
+      console.error('Error loading deadline details:', error);
+      if (deadlineList) {
+        deadlineList.innerHTML = `
+          <div class="deadline-empty-state">
+            <div class="deadline-empty-state-icon">⚠️</div>
+            <div class="deadline-empty-state-text">Error loading deadlines</div>
+            <div class="deadline-empty-state-subtext">Please try again later.</div>
+          </div>
+        `;
       }
-      
-      calendar.innerHTML = html;
-    })();
-  </script>
+    }
+  }
+
+  // UPDATED: Render user deadline items with navigation to specific pages
+function renderUserDeadlineItems(data) {
+  console.log('Rendering user request items:', data);
+  
+  if (!deadlineList || !data) {
+    console.error('Missing deadline list element or data');
+    return;
+  }
+  
+  let html = '';
+  
+  const hasApprovals = data.approvals && Array.isArray(data.approvals) && data.approvals.length > 0;
+  const hasServices = data.services && Array.isArray(data.services) && data.services.length > 0;
+  
+  if (!hasApprovals && !hasServices) {
+    html = `
+      <div class="deadline-empty-state">
+        <div class="deadline-empty-state-icon">📅</div>
+        <div class="deadline-empty-state-text">No requests for this date</div>
+        <div class="deadline-empty-state-subtext">You have no requests on this date.</div>
+      </div>
+    `;
+  } else {
+    // Render user's approval requests with status
+    if (hasApprovals) {
+      data.approvals.forEach(item => {
+        const truncatedDescription = item.description && item.description.length > 150 
+          ? item.description.substring(0, 150) + '...' 
+          : item.description || 'No description available';
+        
+        const createdDate = new Date(item.createdAt || item.datetime).toLocaleDateString();
+        const deadlineDate = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
+        const organization = item.displayOrganization || item.organization || 'N/A';
+        const dateTypeLabel = item.dateType === 'deadline' ? 'Deadline' : 'Submitted';
+        const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
+        
+        html += `
+          <div class="deadline-item">
+            <div class="deadline-item-header">
+              <h3 class="deadline-item-title">${item.title || 'Untitled Request'}</h3>
+              <span class="deadline-item-type approval">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9,11 12,14 22,4"></polyline>
+                  <path d="m21,12c0,4.97 -4.03,9 -9,9s-9,-4.03 -9,-9 4.03,-9 9,-9c1.86,0 3.58,0.57 5.01,1.53"/>
+                </svg>
+                Approval Request
+              </span>
+            </div>
+            <p class="deadline-item-description">${truncatedDescription}</p>
+            <div class="deadline-item-meta">
+              <span>Organization: <strong>${organization}</strong></span>
+              <span>Submitted: ${createdDate}</span>
+              ${item.deadline ? `<span>Deadline: ${deadlineDate}</span>` : ''}
+              <span>Status: <strong><span class="status-badge ${statusClass}">${item.status}</span></strong></span>
+              <span>Date Type: <strong>${dateTypeLabel}</strong></span>
+            </div>
+            <div class="deadline-item-actions">
+              <a href="/request-approvals#${item._id}" class="deadline-action-btn" onclick="navigateToRequest('${item._id}', 'approval')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                View Details
+              </a>
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    // Render user's service requests with status
+    if (hasServices) {
+      data.services.forEach(item => {
+        const truncatedDescription = item.description && item.description.length > 150 
+          ? item.description.substring(0, 150) + '...' 
+          : item.description || 'No description available';
+        
+        const createdDate = new Date(item.createdAt || item.datetime).toLocaleDateString();
+        const deadlineDate = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
+        const organization = item.displayOrganization || item.organization || 'N/A';
+        const dateTypeLabel = item.dateType === 'deadline' ? 'Deadline' : 'Submitted';
+        const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
+        
+        html += `
+          <div class="deadline-item">
+            <div class="deadline-item-header">
+              <h3 class="deadline-item-title">${item.title || 'Untitled Request'}</h3>
+              <span class="deadline-item-type service">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+                Service Request
+              </span>
+            </div>
+            <p class="deadline-item-description">${truncatedDescription}</p>
+            <div class="deadline-item-meta">
+              <span>Organization: <strong>${organization}</strong></span>
+              <span>Submitted: ${createdDate}</span>
+              ${item.deadline ? `<span>Deadline: ${deadlineDate}</span>` : ''}
+              <span>Status: <strong><span class="status-badge ${statusClass}">${item.status}</span></strong></span>
+              <span>Date Type: <strong>${dateTypeLabel}</strong></span>
+            </div>
+            <div class="deadline-item-actions">
+              <a href="/service-requests#${item._id}" class="deadline-action-btn service" onclick="navigateToRequest('${item._id}', 'service')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                View Details
+              </a>
+            </div>
+          </div>
+        `;
+      });
+    }
+  }
+  
+  deadlineList.innerHTML = html;
+}
+  // Function to navigate to request details
+  window.navigateToRequest = function(requestId, type) {
+    // Close the deadline modal
+    if (deadlineModal) {
+      deadlineModal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    
+    // Navigate to the appropriate page with the request ID to auto-open the modal
+    if (type === 'approval') {
+      window.location.href = `/request-approvals#${requestId}`;
+    } else if (type === 'service') {
+      window.location.href = `/service-requests#${requestId}`;
+    }
+  };
+
+  // Initialize calendar
+  async function initCalendar() {
+    console.log('Initializing user calendar...');
+    await fetchDeadlines();
+    updateBothCalendars();
+    console.log('User calendar initialization complete');
+  }
+
+  // Navigation event listeners for main calendar
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      updateBothCalendars();
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      updateBothCalendars();
+    });
+  }
+
+  // Navigation event listeners for modal calendar
+  if (modalPrevBtn) {
+    modalPrevBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      updateBothCalendars();
+    });
+  }
+
+  if (modalNextBtn) {
+    modalNextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      updateBothCalendars();
+    });
+  }
+
+  // Maximize/Minimize functionality
+  if (maximizeBtn) {
+    maximizeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (modal) {
+        modal.classList.add('active');
+        renderCalendar(currentDate, modalCalendar, modalMonthYear);
+        document.body.style.overflow = 'hidden';
+      }
+    });
+  }
+
+  if (minimizeBtn) {
+    minimizeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // Deadline details modal controls
+  if (backToCalendarBtn) {
+    backToCalendarBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (deadlineModal) {
+        deadlineModal.classList.remove('active');
+      }
+      if (modal) {
+        modal.classList.add('active');
+      }
+    });
+  }
+
+  if (closeDeadlineDetailsBtn) {
+    closeDeadlineDetailsBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (deadlineModal) {
+        deadlineModal.classList.remove('active');
+      }
+      document.body.style.overflow = '';
+    });
+  }
+
+  // Close modals when clicking outside
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  if (deadlineModal) {
+    deadlineModal.addEventListener('click', function(e) {
+      if (e.target === deadlineModal) {
+        deadlineModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (deadlineModal && deadlineModal.classList.contains('active')) {
+        deadlineModal.classList.remove('active');
+        document.body.style.overflow = '';
+      } else if (modal && modal.classList.contains('active')) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    } else if (e.key === 'ArrowLeft' && e.ctrlKey) {
+      e.preventDefault();
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      updateBothCalendars();
+    } else if (e.key === 'ArrowRight' && e.ctrlKey) {
+      e.preventDefault();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      updateBothCalendars();
+    }
+  });
+
+  // Initialize the calendar
+  initCalendar();
+})();
+</script>
 </body>
 </html>
