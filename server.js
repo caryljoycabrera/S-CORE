@@ -1374,7 +1374,7 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
     const approvals = await RequestApproval.find().populate('userId').lean();
     const serviceRequests = await ServiceRequest.find().populate('userId').lean();
 
-    // Combine with displayOrganization logic
+   
     const allRequests = [
       ...approvals.map(r => ({
         ...r,
@@ -1388,12 +1388,12 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
       }))
     ];
 
-    // Combined priority: pending first, then by type-specific priority
+   
     const getStatusPriority = (request) => {
       const status = request.status.toLowerCase();
       const type = request.type;
       
-      // Global pending priority
+    
       if (status === "pending") return 1;
       
       if (type === "Request Approval") {
@@ -1470,8 +1470,7 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
   }
 });
 
-// Generic conversation route - FIXED
-// FIXED Generic conversation route
+
 app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -1534,7 +1533,6 @@ app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
   }
 });
 
-// FIXED Generic message sending route
 app.post('/api/conversation/:requestId/message', requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -1615,7 +1613,7 @@ app.post('/api/conversation/:requestId/message', requireLogin, async (req, res) 
   }
 });
 
-// FIXED Generic mark as read route
+
 app.post('/api/conversation/:requestId/mark-read', requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -1660,7 +1658,7 @@ app.post('/api/conversation/:requestId/mark-read', requireLogin, async (req, res
     res.status(500).json({ error: 'Failed to mark messages as read' });
   }
 });
-// Cleanup route - run this once to fix existing conversations
+
 app.get('/admin/cleanup-conversations', requireAdmin, async (req, res) => {
   try {
     // Delete any conversations that don't have proper requestType
