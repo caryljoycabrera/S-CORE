@@ -120,6 +120,7 @@ const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
 // New Conversation Schema
 const conversationSchema = new mongoose.Schema({
   serviceRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  requestType: { type: String, enum: ['service', 'approval'], required: true },
   messages: [{
     senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     senderRole: { type: String, enum: ['user', 'admin'], required: true },
@@ -1418,27 +1419,35 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
 });
 
 // Conversation Routes
-app.get('/api/conversation/:serviceRequestId', requireLogin, async (req, res) => {
+app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
   try {
-    const { serviceRequestId } = req.params;
+    const { requestId } = req.params;
     const user = await User.findById(req.session.userId);
     
-    // Check if user has access to this conversation
-    const serviceRequest = await ServiceRequest.findById(serviceRequestId);
-    if (!serviceRequest) {
-      return res.status(404).json({ error: 'Service request not found' });
+    // Try to find the request as either a ServiceRequest or RequestApproval
+    let request = await ServiceRequest.findById(requestId);
+    let requestType = 'service';
+    
+    if (!request) {
+      request = await RequestApproval.findById(requestId);
+      requestType = 'approval';
+    }
+    
+    if (!request) {
+      return res.status(404).json({ error: 'Request not found' });
     }
     
     // Only allow admin or the user who created the request
-    if (user.role !== 'admin' && serviceRequest.userId.toString() !== req.session.userId) {
+    if (user.role !== 'admin' && request.userId.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
-    let conversation = await Conversation.findOne({ serviceRequestId }).populate('messages.senderId', 'fName lName role');
+    let conversation = await Conversation.findOne({ serviceRequestId: requestId }).populate('messages.senderId', 'fName lName role');
     
     if (!conversation) {
       conversation = new Conversation({
-        serviceRequestId,
+        serviceRequestId: requestId,
+        requestType: requestType,
         messages: []
       });
       await conversation.save();
@@ -1451,9 +1460,9 @@ app.get('/api/conversation/:serviceRequestId', requireLogin, async (req, res) =>
   }
 });
 
-app.post('/api/conversation/:serviceRequestId/message', requireLogin, async (req, res) => {
+app.post('/api/conversation/:requestId/message', requireLogin, async (req, res) => {
   try {
-    const { serviceRequestId } = req.params;
+    const { requestId } = req.params;
     const { content } = req.body;
     const user = await User.findById(req.session.userId);
     
@@ -1461,21 +1470,29 @@ app.post('/api/conversation/:serviceRequestId/message', requireLogin, async (req
       return res.status(400).json({ error: 'Message content is required' });
     }
     
-    // Check if user has access
-    const serviceRequest = await ServiceRequest.findById(serviceRequestId);
-    if (!serviceRequest) {
-      return res.status(404).json({ error: 'Service request not found' });
+    // Try to find the request as either a ServiceRequest or RequestApproval
+    let request = await ServiceRequest.findById(requestId);
+    let requestType = 'service';
+    
+    if (!request) {
+      request = await RequestApproval.findById(requestId);
+      requestType = 'approval';
     }
     
-    if (user.role !== 'admin' && serviceRequest.userId.toString() !== req.session.userId) {
+    if (!request) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    
+    if (user.role !== 'admin' && request.userId.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
-    let conversation = await Conversation.findOne({ serviceRequestId });
+    let conversation = await Conversation.findOne({ serviceRequestId: requestId });
     
     if (!conversation) {
       conversation = new Conversation({
-        serviceRequestId,
+        serviceRequestId: requestId,
+        requestType: requestType,
         messages: []
       });
     }
@@ -1504,12 +1521,12 @@ app.post('/api/conversation/:serviceRequestId/message', requireLogin, async (req
   }
 });
 
-app.post('/api/conversation/:serviceRequestId/mark-read', requireLogin, async (req, res) => {
+app.post('/api/conversation/:requestId/mark-read', requireLogin, async (req, res) => {
   try {
-    const { serviceRequestId } = req.params;
+    const { requestId } = req.params;
     const user = await User.findById(req.session.userId);
     
-    const conversation = await Conversation.findOne({ serviceRequestId });
+    const conversation = await Conversation.findOne({ serviceRequestId: requestId });
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
