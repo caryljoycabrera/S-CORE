@@ -86,7 +86,7 @@ const userSchema = new mongoose.Schema({
   studentId: String,
   studentOrganization: [{ type: String }],
   cys: String,
-  affiliation: String,
+  affiliation: [{ type: String }], // <- CHANGED TO ARRAY
   profilePicture: String,
   role: { type: String, enum: ['user', 'admin'], default: 'user' }
 });
@@ -109,17 +109,23 @@ const serviceRequestSchema = new mongoose.Schema({
   title: String,
   organization: String,
   description: String,
-  datetime: { type: Date, default: Date.now },
+  datetime: { type: Date, default: Date.now }, // ADD THIS LINE
   deadline: Date,
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, default: 'Pending' },
+  assignedUnits: { type: String, default: 'Not yet assigned' },
   file: String
 }, { timestamps: true });
+
+
 const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
 
 // New Conversation Schema
+// Updated Conversation Schema with FIXED validation
 const conversationSchema = new mongoose.Schema({
-  serviceRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
+  serviceRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest' },
+  approvalRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'RequestApproval' },
+  requestType: { type: String, enum: ['service', 'approval'], required: true },
   messages: [{
     senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     senderRole: { type: String, enum: ['user', 'admin'], required: true },
@@ -128,6 +134,30 @@ const conversationSchema = new mongoose.Schema({
     isRead: { type: Boolean, default: false }
   }]
 }, { timestamps: true });
+
+// FIXED validation - the issue was here
+conversationSchema.pre('validate', function() {
+  const hasServiceRequest = !!this.serviceRequestId;
+  const hasApprovalRequest = !!this.approvalRequestId;
+  
+  if (!hasServiceRequest && !hasApprovalRequest) {
+    this.invalidate('requestType', 'Either serviceRequestId or approvalRequestId must be provided');
+  }
+  
+  if (hasServiceRequest && hasApprovalRequest) {
+    this.invalidate('requestType', 'Cannot have both serviceRequestId and approvalRequestId');
+  }
+  
+  // FIXED: Validate requestType matches the request ID provided
+  if (hasServiceRequest && this.requestType !== 'service') {
+    this.invalidate('requestType', 'requestType must be "service" when serviceRequestId is provided');
+  }
+  
+  if (hasApprovalRequest && this.requestType !== 'approval') {
+    this.invalidate('requestType', 'requestType must be "approval" when approvalRequestId is provided');
+  }
+});
+
 const Conversation = mongoose.model('Conversation', conversationSchema);
 
 // Helper function to add working days (excludes weekends)
@@ -188,15 +218,22 @@ app.post('/register', async (req, res) => {
     const {
       firstName, middleName, lastName,
       email, username, password,
-      phoneNumber, studentId,cys,
-      affiliation, terms, userType
+      phoneNumber, studentId, cys,
+      terms, userType
     } = req.body;
 
-     const studentOrganization = Array.isArray(req.body.studentOrganization)
-    ? req.body.studentOrganization
-    : req.body.studentOrganization
-    ? [req.body.studentOrganization]
-    : [];
+    // Handle both student organizations and office affiliations as arrays
+    const studentOrganization = Array.isArray(req.body.studentOrganization)
+      ? req.body.studentOrganization
+      : req.body.studentOrganization
+      ? [req.body.studentOrganization]
+      : [];
+
+    const affiliation = Array.isArray(req.body.affiliation)
+      ? req.body.affiliation
+      : req.body.affiliation
+      ? [req.body.affiliation]
+      : [];
     // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -210,6 +247,9 @@ app.post('/register', async (req, res) => {
     
     if (userType === 'student' && (!studentId || !studentOrganization?.length || !cys)){
       return res.status(400).render('register', { error: 'Please fill in all student fields.', formData: req.body });
+    }
+    if (userType === 'nonstudent' && (!affiliation?.length)){
+      return res.status(400).render('register', { error: 'Please select at least one office/department.', formData: req.body });
     }
     if (userType === 'student' && !/^\d{9}$/.test(studentId)) {
       return res.status(400).render('register', { error: 'Student ID must be exactly 9 digits.', formData: req.body });
@@ -1020,7 +1060,6 @@ app.get('/admin/approvals', requireAdmin, async (req, res) => {
   }
 });
 
-
 app.get('/admin/services', requireAdmin, async (req, res) => {
   try {
     let serviceRequests = await ServiceRequest.find().populate('userId').lean();
@@ -1040,19 +1079,15 @@ app.get('/admin/services', requireAdmin, async (req, res) => {
       const aStatus = a.status.toLowerCase();
       const bStatus = b.status.toLowerCase();
 
-      // Status group priority
       const aPriority = statusPriority[aStatus] ?? 999;
       const bPriority = statusPriority[bStatus] ?? 999;
       if (aPriority !== bPriority) return aPriority - bPriority;
 
-      // Tie-breakers for each status group
       if (aStatus === "pending") {
-        // Pending: oldest first by createdAt
         return new Date(a.createdAt) - new Date(b.createdAt);
       }
 
       if (aStatus === "approved" || aStatus === "for revision") {
-        // Approved/For Revision: deadline first by deadline, if no deadline then oldest first by createdAt
         const aDeadline = a.deadline ? new Date(a.deadline) : null;
         const bDeadline = b.deadline ? new Date(b.deadline) : null;
 
@@ -1060,24 +1095,23 @@ app.get('/admin/services', requireAdmin, async (req, res) => {
         if (aDeadline && !bDeadline) return -1;
         if (!aDeadline && bDeadline) return 1;
 
-        // No deadlines → oldest first by createdAt
         return new Date(a.createdAt) - new Date(b.createdAt);
       }
 
       if (["completed", "rejected", "archived"].includes(aStatus)) {
-        // Completed, Rejected, Archived: newest first by createdAt
         return new Date(b.createdAt) - new Date(a.createdAt);
       }
 
       return 0;
     });
 
-    // Add displayOrganization logic
+    // Add displayOrganization logic and ensure datetime exists
     const serviceRequestsWithDisplay = serviceRequests.map(service => ({
       ...service,
       displayOrganization: service.userId?.userType === 'nonstudent'
         ? service.userId.affiliation
-        : service.organization
+        : service.organization,
+      datetime: service.datetime || service.createdAt // ENSURE DATETIME EXISTS
     }));
 
     res.render('services', { serviceRequests: serviceRequestsWithDisplay, user: req.user });
@@ -1159,7 +1193,7 @@ app.get('/admin/services/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     let serviceRequests = await ServiceRequest.find().populate('userId').lean();
 
-    // Status priority mapping for services
+    // Same sorting logic as above...
     const statusPriority = {
       "pending": 1,
       "approved": 2,
@@ -1169,7 +1203,6 @@ app.get('/admin/services/:id', requireAdmin, async (req, res) => {
       "archived": 6
     };
 
-    // Sorting logic for services
     serviceRequests.sort((a, b) => {
       const aStatus = a.status.toLowerCase();
       const bStatus = b.status.toLowerCase();
@@ -1200,12 +1233,13 @@ app.get('/admin/services/:id', requireAdmin, async (req, res) => {
       return 0;
     });
 
-    // Add displayOrganization logic
+    // Add displayOrganization logic and ensure datetime exists
     const serviceRequestsWithDisplay = serviceRequests.map(service => ({
       ...service,
       displayOrganization: service.userId?.userType === 'nonstudent'
         ? service.userId.affiliation
-        : service.organization
+        : service.organization,
+      datetime: service.datetime || service.createdAt // ENSURE DATETIME EXISTS
     }));
 
     res.render('services', { serviceRequests: serviceRequestsWithDisplay, user: req.user, openModalId: id });
@@ -1214,12 +1248,16 @@ app.get('/admin/services/:id', requireAdmin, async (req, res) => {
     res.status(500).send('Error loading services page');
   }
 });
+
+
 app.get('/admin/users', requireAdmin, async (req, res) => {
   const users = await User.find().lean();
   
   const usersWithDisplay = users.map(user => ({
     ...user,
-    displayOrganization: user.userType === 'nonstudent' ? user.affiliation : user.studentOrganization
+    displayOrganization: user.userType === 'nonstudent' 
+  ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
+  : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
   }));
   
   res.render('users', { users: usersWithDisplay, user: req.user });
@@ -1249,7 +1287,7 @@ app.post('/admin/service/update-status', requireAdmin, async (req, res) => {
   try {
     const updateData = { status: status || 'Pending' };
     
-    // Only include assignedUnits if it's provided
+    // Include assignedUnits for service requests
     if (assignedUnits !== undefined && assignedUnits !== '') {
       updateData.assignedUnits = assignedUnits;
     }
@@ -1300,12 +1338,27 @@ app.post('/admin/user/update', requireAdmin, async (req, res) => {
       fName, lName, email, phoneNumber, role
     };
 
-    if (user.userType === 'student') {
-      updateData.cys = cys;
-      updateData.studentOrganization = studentOrganization;
-    } else {
-      updateData.affiliation = studentOrganization;
-    }
+   if (user.userType === 'student') {
+  updateData.cys = cys;
+  // Handle studentOrganization properly
+  if (typeof studentOrganization === 'string') {
+    updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
+  } else if (Array.isArray(studentOrganization)) {
+    updateData.studentOrganization = studentOrganization;
+  } else {
+    updateData.studentOrganization = [];
+  }
+} else {
+  // For non-students, the parameter should be called 'affiliation', not 'studentOrganization'
+  const affiliationData = req.body.affiliation || req.body.studentOrganization; // fallback for compatibility
+  if (typeof affiliationData === 'string') {
+    updateData.affiliation = affiliationData.split(',').map(s => s.trim()).filter(Boolean);
+  } else if (Array.isArray(affiliationData)) {
+    updateData.affiliation = affiliationData;
+  } else {
+    updateData.affiliation = [];
+  }
+}
 
     await User.findByIdAndUpdate(userId, updateData);
 
@@ -1417,43 +1470,74 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
   }
 });
 
-// Conversation Routes
-app.get('/api/conversation/:serviceRequestId', requireLogin, async (req, res) => {
+// Generic conversation route - FIXED
+// FIXED Generic conversation route
+app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
   try {
-    const { serviceRequestId } = req.params;
+    const { requestId } = req.params;
     const user = await User.findById(req.session.userId);
     
-    // Check if user has access to this conversation
-    const serviceRequest = await ServiceRequest.findById(serviceRequestId);
-    if (!serviceRequest) {
-      return res.status(404).json({ error: 'Service request not found' });
+    // Check if it's a service request or approval request
+    const serviceRequest = await ServiceRequest.findById(requestId);
+    const approvalRequest = await RequestApproval.findById(requestId);
+    
+    if (!serviceRequest && !approvalRequest) {
+      return res.status(404).json({ error: 'Request not found' });
     }
     
-    // Only allow admin or the user who created the request
-    if (user.role !== 'admin' && serviceRequest.userId.toString() !== req.session.userId) {
+    // Check access permissions
+    const targetRequest = serviceRequest || approvalRequest;
+    if (user.role !== 'admin' && targetRequest.userId.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
-    let conversation = await Conversation.findOne({ serviceRequestId }).populate('messages.senderId', 'fName lName role');
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        serviceRequestId,
-        messages: []
-      });
-      await conversation.save();
+    // Find conversation by the appropriate field
+    let conversation;
+    if (serviceRequest) {
+      conversation = await Conversation.findOne({ 
+        serviceRequestId: requestId,
+        requestType: 'service'
+      }).populate('messages.senderId', 'fName lName role');
+      
+      if (!conversation) {
+        // Create new conversation for service request
+        conversation = new Conversation({
+          serviceRequestId: requestId,
+          requestType: 'service',
+          messages: []
+        });
+        await conversation.save();
+        conversation = await Conversation.findById(conversation._id).populate('messages.senderId', 'fName lName role');
+      }
+    } else {
+      conversation = await Conversation.findOne({ 
+        approvalRequestId: requestId,
+        requestType: 'approval'
+      }).populate('messages.senderId', 'fName lName role');
+      
+      if (!conversation) {
+        // Create new conversation for approval request
+        conversation = new Conversation({
+          approvalRequestId: requestId,
+          requestType: 'approval',
+          messages: []
+        });
+        await conversation.save();
+        conversation = await Conversation.findById(conversation._id).populate('messages.senderId', 'fName lName role');
+      }
     }
     
     res.json(conversation);
   } catch (err) {
     console.error('Error fetching conversation:', err);
-    res.status(500).json({ error: 'Failed to fetch conversation' });
+    res.status(500).json({ error: 'Failed to fetch conversation', details: err.message });
   }
 });
 
-app.post('/api/conversation/:serviceRequestId/message', requireLogin, async (req, res) => {
+// FIXED Generic message sending route
+app.post('/api/conversation/:requestId/message', requireLogin, async (req, res) => {
   try {
-    const { serviceRequestId } = req.params;
+    const { requestId } = req.params;
     const { content } = req.body;
     const user = await User.findById(req.session.userId);
     
@@ -1461,23 +1545,50 @@ app.post('/api/conversation/:serviceRequestId/message', requireLogin, async (req
       return res.status(400).json({ error: 'Message content is required' });
     }
     
-    // Check if user has access
-    const serviceRequest = await ServiceRequest.findById(serviceRequestId);
-    if (!serviceRequest) {
-      return res.status(404).json({ error: 'Service request not found' });
+    // Check if it's a service request or approval request
+    const serviceRequest = await ServiceRequest.findById(requestId);
+    const approvalRequest = await RequestApproval.findById(requestId);
+    
+    if (!serviceRequest && !approvalRequest) {
+      return res.status(404).json({ error: 'Request not found' });
     }
     
-    if (user.role !== 'admin' && serviceRequest.userId.toString() !== req.session.userId) {
+    // Check access permissions
+    const targetRequest = serviceRequest || approvalRequest;
+    if (user.role !== 'admin' && targetRequest.userId.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
-    let conversation = await Conversation.findOne({ serviceRequestId });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        serviceRequestId,
-        messages: []
+    // Find or create conversation
+    let conversation;
+    if (serviceRequest) {
+      conversation = await Conversation.findOne({ 
+        serviceRequestId: requestId,
+        requestType: 'service'
       });
+      
+      if (!conversation) {
+        conversation = new Conversation({
+          serviceRequestId: requestId,
+          requestType: 'service',
+          messages: []
+        });
+        await conversation.save();
+      }
+    } else {
+      conversation = await Conversation.findOne({ 
+        approvalRequestId: requestId,
+        requestType: 'approval'
+      });
+      
+      if (!conversation) {
+        conversation = new Conversation({
+          approvalRequestId: requestId,
+          requestType: 'approval',
+          messages: []
+        });
+        await conversation.save();
+      }
     }
     
     const newMessage = {
@@ -1500,32 +1611,95 @@ app.post('/api/conversation/:serviceRequestId/message', requireLogin, async (req
     });
   } catch (err) {
     console.error('Error sending message:', err);
-    res.status(500).json({ error: 'Failed to send message' });
+    res.status(500).json({ error: 'Failed to send message', details: err.message });
   }
 });
 
-app.post('/api/conversation/:serviceRequestId/mark-read', requireLogin, async (req, res) => {
+// FIXED Generic mark as read route
+app.post('/api/conversation/:requestId/mark-read', requireLogin, async (req, res) => {
   try {
-    const { serviceRequestId } = req.params;
-    const user = await User.findById(req.session.userId);
+    const { requestId } = req.params;
     
-    const conversation = await Conversation.findOne({ serviceRequestId });
+    // Check if it's a service request or approval request
+    const serviceRequest = await ServiceRequest.findById(requestId);
+    const approvalRequest = await RequestApproval.findById(requestId);
+    
+    let conversation;
+    if (serviceRequest) {
+      conversation = await Conversation.findOne({ 
+        serviceRequestId: requestId,
+        requestType: 'service'
+      });
+    } else if (approvalRequest) {
+      conversation = await Conversation.findOne({ 
+        approvalRequestId: requestId,
+        requestType: 'approval'
+      });
+    }
+    
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
     
     // Mark messages as read (not sent by current user)
+    let hasChanges = false;
     conversation.messages.forEach(message => {
-      if (message.senderId.toString() !== req.session.userId) {
+      if (message.senderId.toString() !== req.session.userId && !message.isRead) {
         message.isRead = true;
+        hasChanges = true;
       }
     });
     
-    await conversation.save();
+    if (hasChanges) {
+      await conversation.save();
+    }
+    
     res.json({ success: true });
   } catch (err) {
     console.error('Error marking messages as read:', err);
     res.status(500).json({ error: 'Failed to mark messages as read' });
+  }
+});
+// Cleanup route - run this once to fix existing conversations
+app.get('/admin/cleanup-conversations', requireAdmin, async (req, res) => {
+  try {
+    // Delete any conversations that don't have proper requestType
+    const invalidConversations = await Conversation.find({
+      $or: [
+        { requestType: { $exists: false } },
+        { requestType: null },
+        { requestType: '' }
+      ]
+    });
+
+    console.log(`Found ${invalidConversations.length} invalid conversations`);
+
+    // Fix or delete invalid conversations
+    let fixed = 0;
+    let deleted = 0;
+
+    for (const conv of invalidConversations) {
+      if (conv.serviceRequestId) {
+        conv.requestType = 'service';
+        await conv.save();
+        fixed++;
+      } else if (conv.approvalRequestId) {
+        conv.requestType = 'approval';
+        await conv.save();
+        fixed++;
+      } else {
+        await Conversation.findByIdAndDelete(conv._id);
+        deleted++;
+      }
+    }
+
+    res.json({ 
+      message: `Cleanup complete. Fixed: ${fixed}, Deleted: ${deleted}`,
+      totalProcessed: invalidConversations.length
+    });
+  } catch (err) {
+    console.error('Error cleaning up conversations:', err);
+    res.status(500).json({ error: 'Failed to cleanup conversations' });
   }
 });
 
@@ -1538,12 +1712,26 @@ app.post('/profile/update-popup', async (req, res) => {
     const user = await User.findById(req.session.userId);
     const updateData = { fName, mName, lName, email, username, phoneNumber };
     
-    if (user.userType === 'student') {
-        updateData.studentOrganization = studentOrganization;
-        updateData.cys = cys;
-      } else {
-        updateData.affiliation = affiliation;  // <-- use affiliation, not studentOrganization here
-      }
+        if (user.userType === 'student') {
+          // Handle studentOrganization as array
+          if (typeof studentOrganization === 'string') {
+            updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
+          } else if (Array.isArray(studentOrganization)) {
+            updateData.studentOrganization = studentOrganization;
+          } else {
+            updateData.studentOrganization = [];
+          }
+          updateData.cys = cys;
+        } else {
+          // Handle affiliation as array
+          if (typeof affiliation === 'string') {
+            updateData.affiliation = affiliation.split(',').map(s => s.trim()).filter(Boolean);
+          } else if (Array.isArray(affiliation)) {
+            updateData.affiliation = affiliation;
+          } else {
+            updateData.affiliation = [];
+          }
+        }
 
     
     await User.findByIdAndUpdate(req.session.userId, updateData);
@@ -1633,7 +1821,7 @@ app.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
 
     const updateData = { fName, mName, lName, email, username, phoneNumber };
 
-    if (user.userType === 'student') {
+      if (user.userType === 'student') {
       // studentOrganization from front end may be array or comma string
       if (typeof studentOrganization === 'string') {
         updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
@@ -1644,7 +1832,14 @@ app.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
       }
       updateData.cys = cys;
     } else {
-      updateData.affiliation = affiliation;
+      // Handle affiliation as array too
+      if (typeof affiliation === 'string') {
+        updateData.affiliation = affiliation.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (Array.isArray(affiliation)) {
+        updateData.affiliation = affiliation;
+      } else {
+        updateData.affiliation = [];
+      }
     }
 
     await User.findByIdAndUpdate(userId, updateData);

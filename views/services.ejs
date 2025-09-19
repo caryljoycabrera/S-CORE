@@ -6,6 +6,218 @@
   <title>Manage Services</title>
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    .deadline-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background-color: #f3f4f6;
+      color: #374151;
+    }
+    
+    .deadline-badge.near-deadline {
+      background-color: #fef3c7;
+      color: #d97706;
+    }
+    
+    .deadline-badge.overdue {
+      background-color: #fecaca;
+      color: #dc2626;
+    }
+
+    .deadline-badge.editable-deadline:hover {
+      background-color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      max-width: 80%;
+    }
+
+    .admin-message {
+      margin-left: auto;
+    }
+
+    .user-message {
+      margin-right: auto;
+    }
+
+    .message-content {
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: white;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .admin-message .message-content {
+      background: var(--primary-green);
+      color: white;
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .message-time {
+      opacity: 0.7;
+      font-size: 0.75rem;
+    }
+
+    .message-text {
+      word-wrap: break-word;
+    }
+
+    .status-badge.pending {
+      background-color: #fef3c7;
+      color: #d97706;
+    }
+
+    .status-badge.approved {
+      background-color: #dcfce7;
+      color: #16a34a;
+    }
+
+    .status-badge.for-revision {
+      background-color: #fed7d7;
+      color: #e53e3e;
+    }
+
+    .status-badge.completed {
+      background-color: #dbeafe;
+      color: #3b82f6;
+    }
+
+    .status-badge.rejected {
+      background-color: #fee2e2;
+      color: #dc2626;
+    }
+
+    .status-badge.archived {
+      background-color: #f3f4f6;
+      color: #6b7280;
+    }
+
+    /* Notification Modal Styles */
+    #notificationModal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.15);
+    }
+    #notificationModal.flex {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #notificationModal .modal-content {
+      border-radius: 10px;
+      box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+      padding: 2em 1.5em 1.5em 1.5em;
+      background: #fff;
+      min-width: 260px;
+      max-width: 350px;
+      text-align: center;
+      position: relative;
+      border-left: 6px solid #f3f4f6;
+    }
+    #notificationModal.success .modal-content {
+      border-left: 6px solid #16a34a;
+    }
+    #notificationModal.warning .modal-content {
+      border-left: 6px solid #eab308;
+    }
+    #notificationModal .close {
+      color: #6b7280;
+      position: absolute;
+      right: 10px; top: 8px;
+      font-size: 1.5em;
+      cursor: pointer;
+      font-weight: bold;
+      line-height: 1;
+    }
+    #notificationModal.success #notificationIcon {
+      color: #16a34a;
+    }
+    #notificationModal.warning #notificationIcon {
+      color: #eab308;
+    }
+    /* Confirmation Modal Styles */
+#confirmationModal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0; top: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.15);
+}
+#confirmationModal.flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#confirmationModal .modal-content {
+  border-radius: 10px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.18);
+  padding: 2em 1.5em 1.5em 1.5em;
+  background: #fff;
+  min-width: 320px;
+  max-width: 450px;
+  text-align: center;
+  position: relative;
+  border-left: 6px solid #eab308;
+}
+#confirmationModal .close {
+  color: #6b7280;
+  position: absolute;
+  right: 10px; top: 8px;
+  font-size: 1.5em;
+  cursor: pointer;
+  font-weight: bold;
+  line-height: 1;
+}
+#confirmationModal #confirmIcon {
+  color: #eab308;
+}
+#confirmationModal .modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+#confirmationModal .confirm-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+#confirmationModal .cancel-btn {
+  background-color: #e5e7eb;
+  color: #374151;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+#confirmationModal .confirm-btn:hover {
+  background-color: #2563eb;
+}
+#confirmationModal .cancel-btn:hover {
+  background-color: #d1d5db;
+}
+  </style>
 </head>
 <body>
   <div class="student-side">
@@ -57,37 +269,37 @@
                   <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
                   <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
                 </div>
-                 <div class="filter-item">
-                <label class="filter-sublabel">Status</label>
-                <div class="custom-select-wrapper">
-                  <div class="custom-select" id="statusFilter">
-                    <div class="select-display">All Status</div>
-                    <div class="select-dropdown" id="statusDropdown">
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="all" checked> All Status
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="pending"> Pending
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="approved"> Approved
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="for revision"> For Revision
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="completed"> Completed
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="rejected"> Rejected
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="archived"> Archived
-                      </label>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Status</label>
+                  <div class="custom-select-wrapper">
+                    <div class="custom-select" id="statusFilter">
+                      <div class="select-display">All Status</div>
+                      <div class="select-dropdown" id="statusDropdown">
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="all" checked> All Status
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="pending"> Pending
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="approved"> Approved
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="for revision"> For Revision
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="completed"> Completed
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="rejected"> Rejected
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="archived"> Archived
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
                 <div class="filter-item">
                   <label for="studentFilter" class="filter-sublabel">User</label>
                   <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
@@ -135,7 +347,16 @@
               </tr>
             </thead>
             <tbody id="requestsTableBody">
-              <% serviceRequests.forEach(request => { %>
+              <% serviceRequests.forEach(request => { 
+                // --- Calculate local deadline and formatted deadline string ---
+                let localDeadline = '';
+                let formattedDeadline = 'N/A';
+                if (request.deadline) {
+                  const d = new Date(request.deadline);
+                  localDeadline = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                  formattedDeadline = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                }
+              %>
               <tr class="service-row"
                 data-id="<%= request._id %>"
                 data-request-id="<%= request._id.toString().slice(-6) %>"
@@ -143,7 +364,8 @@
                 data-organization="<%= request.displayOrganization || request.organization %>"
                 data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
                 data-description="<%= request.description %>"
-                data-deadline="<%= request.deadline ? new Date(request.deadline).toISOString().slice(0, 10) : '' %>"
+                data-deadline="<%= localDeadline %>"
+                data-created="<%= new Date(request.createdAt).toISOString().split('T')[0] %>"
                 data-date="<%= new Date(request.createdAt).toISOString().split('T')[0] %>"
                 data-status="<%= request.status.toLowerCase() %>"
                 data-student="<%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %>">
@@ -159,8 +381,7 @@
                 <td><%= request.assignedUnits || 'Not yet assigned' %></td>
                 <td><%= new Date(request.createdAt).toLocaleString() %></td>
                 <td>
-                  <% if (request.deadline) { %>
-                    <% 
+                  <% if (request.deadline) { 
                       const today = new Date();
                       today.setHours(0,0,0,0);
                       const deadline = new Date(request.deadline);
@@ -168,16 +389,21 @@
                       const timeDiff = deadline - today;
                       const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
                       const status = request.status.toLowerCase();
-                      // Make deadline red if overdue/today OR if status is Approved or For Revision
-                      const isOverdueOrToday = (daysDiff <= 0) || ['approved', 'for revision'].includes(status);
+                      const isPastDue = daysDiff < 0;
                       const isNearDeadline = daysDiff === 1 && status === 'pending';
+                      const isToday = daysDiff === 0;
+                      const isApprovedOrRevision = ['approved', 'for revision'].includes(status);
+                      let deadlineClass = '';
+                      if (isPastDue) deadlineClass = 'overdue';
+                      else if (isNearDeadline) deadlineClass = 'near-deadline';
+                      else if (isToday && isApprovedOrRevision) deadlineClass = 'overdue';
                     %>
-                    <span class="deadline-badge <%= isOverdueOrToday ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>">
-                      <%= new Date(request.deadline).toLocaleDateString() %>
-                    </span>
-                  <% } else { %>
-                    <span class="deadline-badge">N/A</span>
-                  <% } %>
+                      <span class="deadline-badge <%= deadlineClass %>">
+                        <%= formattedDeadline %>
+                      </span>
+                    <% } else { %>
+                      <span class="deadline-badge">N/A</span>
+                    <% } %>
                 </td>
               </tr>
               <% }) %>
@@ -196,36 +422,38 @@
     </div>
   </div>
 
+  <!-- Service Details Modal -->
   <div id="serviceModal" class="modal" style="display:none;">
     <div class="modal-content">
-        <header class="modal-header">
+      <header class="modal-header">
         <span class="modal-title">Service Request Details</span>
         <span class="close" id="closeServiceModal">&times;</span>
-        </header>
-        <div class="modal-body">
+      </header>
+      <div class="modal-body">
         <form class="modal-form" action="/admin/service/update-status" method="POST">
-            <input type="hidden" name="requestId" id="serviceRequestId" />
-            <p><strong>User:</strong> <span id="serviceStudent"></span></p>
-            <p><strong>Title:</strong> <span id="serviceTitle"></span></p>
-            <p><strong>Office/Department/Organization:</strong> <span id="serviceOrganization"></span></p>
-            <p><strong>Description:</strong> <span id="serviceDescription"></span></p>
-            <p><strong>Deadline:</strong> 
-              <span id="serviceDeadline" class="deadline-badge"></span>
-            </p>
+          <input type="hidden" name="requestId" id="serviceRequestId" />
+          <p><strong>User:</strong> <span id="serviceStudent"></span></p>
+          <p><strong>Title:</strong> <span id="serviceTitle"></span></p>
+          <p><strong>Office/Department/Organization:</strong> <span id="serviceOrganization"></span></p>
+          <p><strong>Description:</strong> <span id="serviceDescription"></span></p>
+          <p><strong>Deadline:</strong> 
+            <span id="serviceDeadline" class="deadline-badge editable-deadline" style="cursor:pointer;"></span>
+            <span style="font-size:0.9em;color:#6b7280;">(Click to edit)</span>
+          </p>
 
-            <div class="form-group">
+          <div class="form-group">
             <label for="serviceStatus">Status:</label>
             <select name="status" id="serviceStatus">
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="For Revision">For Revision</option>
-                <option value="Completed">Completed</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Archived">Archived</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="For Revision">For Revision</option>
+              <option value="Completed">Completed</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Archived">Archived</option>
             </select>
-            </div>
+          </div>
 
-            <div class="form-group">
+          <div class="form-group">
             <label for="assignedUnits">Assigned Units:</label>
             <select id="assignedUnits" name="assignedUnits">
               <option value="">Not yet assigned</option>
@@ -234,457 +462,615 @@
               <option value="Multimedia Unit">Multimedia Unit</option>
               <option value="Public Relations Unit">Public Relations Unit</option>
             </select>
-            </div>
+          </div>
 
-            <div class="form-actions">
+          <div class="form-actions">
             <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Update</button>
             <button type="button" class="view-all-btn" id="openChatFromModal" style="background: var(--primary-green); color: white;">💬 Chat</button>
-            </div>
+          </div>
         </form>
-        </div>
+      </div>
     </div>
-    </div>
+  </div>
 
-    <div id="deadlineModal" class="modal" style="display:none;">
-      <div class="modal-content">
-        <header class="modal-header">
-          <span class="modal-title">Edit Deadline</span>
-          <span class="close" id="closeDeadlineModal">&times;</span>
-        </header>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="deadlineInput">Deadline:</label>
-            <input type="datetime-local" id="deadlineInput" class="filter-input" required>
-          </div>
-          <div class="form-actions" style="margin-top: 1rem;">
-            <button id="saveDeadlineBtn" class="view-all-btn" style="background: var(--success); color: white;">Save</button>
-            <button id="cancelDeadlineBtn" class="view-all-btn" style="background: #e5e7eb; color: #374151;">Cancel</button>
+  <!-- Deadline Edit Modal -->
+  <div id="deadlineModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <header class="modal-header">
+        <span class="modal-title">Edit Deadline</span>
+        <span class="close" id="closeDeadlineModal">&times;</span>
+      </header>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="deadlineInput">Deadline:</label>
+          <input type="datetime-local" id="deadlineInput" class="filter-input" required>
+        </div>
+        <div class="form-actions" style="margin-top: 1rem;">
+          <button id="saveDeadlineBtn" class="view-all-btn" style="background: var(--success); color: white;">Save</button>
+          <button id="cancelDeadlineBtn" class="view-all-btn" style="background: #e5e7eb; color: #374151;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversation Modal -->
+  <div id="conversationModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 800px; width: 90%; height: 80vh; overflow: hidden;">
+      <header class="modal-header">
+        <span class="modal-title">Conversation</span>
+        <span class="close" id="closeConversationModal">&times;</span>
+      </header>
+      <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 60px); padding: 0; overflow: hidden;">
+        <div id="messagesContainer" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f9f9f9; min-height: 400px;">
+        </div>
+        <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: white; flex-shrink: 0;">
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="messageInput" placeholder="Type your message..." 
+                   style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+            <button id="sendMessageBtn" class="view-all-btn" style="background: var(--primary-green); color: white;">
+              Send
+            </button>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="conversationModal" class="modal" style="display:none;">
-      <div class="modal-content" style="max-width: 800px; width: 90%; height: 80vh; overflow: hidden;">
-        <header class="modal-header">
-          <span class="modal-title">Conversation</span>
-          <span class="close" id="closeConversationModal">&times;</span>
-        </header>
-        <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 60px); padding: 0; overflow: hidden;">
-          <div id="messagesContainer" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f9f9f9; min-height: 400px;">
-          </div>
-          <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: white; flex-shrink: 0;">
-            <div style="display: flex; gap: 0.5rem;">
-              <input type="text" id="messageInput" placeholder="Type your message..." 
-                     style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
-              <button id="sendMessageBtn" class="view-all-btn" style="background: var(--primary-green); color: white;">
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+  <!-- Notification Modal -->
+  <div id="notificationModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeNotificationModal">&times;</span>
+      <div id="notificationIcon" style="font-size: 2.5rem; margin-top: 10px;"></div>
+      <div id="notificationMessage" style="margin: 1.2em 0 1em 0; font-size:1.1em;"></div>
     </div>
+  </div>
 
- <script>
-    const serviceModal = document.getElementById("serviceModal");
-    const closeServiceModal = document.getElementById("closeServiceModal");
-    const clearFiltersBtn = document.getElementById("clearFilters");
-    const tableBody = document.getElementById("requestsTableBody");
-    const allRows = Array.from(document.querySelectorAll('.service-row'));
+  <!-- Confirmation Modal -->
+<div id="confirmationModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeConfirmationModal">&times;</span>
+    <div id="confirmIcon" style="font-size: 2.5rem; margin-top: 10px;">&#9888;</div>
+    <div id="confirmationMessage" style="margin: 1.2em 0 1em 0; font-size:1.1em;"></div>
+    <div class="modal-actions">
+      <button id="confirmYesBtn" class="confirm-btn">OK</button>
+      <button id="confirmNoBtn" class="cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
 
-    const deadlineModal = document.getElementById("deadlineModal");
-    const closeDeadlineModal = document.getElementById("closeDeadlineModal");
-    const deadlineInput = document.getElementById("deadlineInput");
-    const saveDeadlineBtn = document.getElementById("saveDeadlineBtn");
-    const cancelDeadlineBtn = document.getElementById("cancelDeadlineBtn");
-    let currentRequestId = null;
+<script>
+// Global variables
+const serviceModal = document.getElementById("serviceModal");
+const closeServiceModal = document.getElementById("closeServiceModal");
+const clearFiltersBtn = document.getElementById("clearFilters");
+const tableBody = document.getElementById("requestsTableBody");
+const allRows = Array.from(document.querySelectorAll('.service-row'));
 
-    const conversationModal = document.getElementById("conversationModal");
-    const closeConversationModal = document.getElementById("closeConversationModal");
-    const messagesContainer = document.getElementById("messagesContainer");
-    const messageInput = document.getElementById("messageInput");
-    const sendMessageBtn = document.getElementById("sendMessageBtn");
-    const openChatFromModal = document.getElementById("openChatFromModal");
-    let currentConversationId = null;
+const deadlineModal = document.getElementById("deadlineModal");
+const closeDeadlineModal = document.getElementById("closeDeadlineModal");
+const deadlineInput = document.getElementById("deadlineInput");
+const saveDeadlineBtn = document.getElementById("saveDeadlineBtn");
+const cancelDeadlineBtn = document.getElementById("cancelDeadlineBtn");
+let currentRequestId = null;
+let currentRequestCreatedDate = null;
+let currentOriginalDeadline = null;
 
-    closeServiceModal.onclick = () => serviceModal.style.display = 'none';
-    closeDeadlineModal.onclick = () => deadlineModal.style.display = 'none';
-    closeConversationModal.onclick = () => conversationModal.style.display = 'none';
-    cancelDeadlineBtn.onclick = () => deadlineModal.style.display = 'none';
+const conversationModal = document.getElementById("conversationModal");
+const closeConversationModal = document.getElementById("closeConversationModal");
+const messagesContainer = document.getElementById("messagesContainer");
+const messageInput = document.getElementById("messageInput");
+const sendMessageBtn = document.getElementById("sendMessageBtn");
+const openChatFromModal = document.getElementById("openChatFromModal");
+let currentConversationId = null;
 
-    window.onclick = function(event) {
-        if (event.target === serviceModal) serviceModal.style.display = 'none';
-        if (event.target === deadlineModal) deadlineModal.style.display = 'none';
-        if (event.target === conversationModal) conversationModal.style.display = 'none';
+// Modal close handlers
+closeServiceModal.onclick = () => serviceModal.style.display = 'none';
+closeDeadlineModal.onclick = () => deadlineModal.style.display = 'none';
+closeConversationModal.onclick = () => conversationModal.style.display = 'none';
+cancelDeadlineBtn.onclick = () => deadlineModal.style.display = 'none';
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+  if (event.target === serviceModal) serviceModal.style.display = 'none';
+  if (event.target === deadlineModal) deadlineModal.style.display = 'none';
+  if (event.target === conversationModal) conversationModal.style.display = 'none';
+  if (event.target === document.getElementById('notificationModal')) {
+    document.getElementById('notificationModal').style.display = 'none';
+  }
+}
+
+// Notification modal functions
+function showNotificationModal(type, message) {
+  const modal = document.getElementById('notificationModal');
+  const icon = document.getElementById('notificationIcon');
+  const msg = document.getElementById('notificationMessage');
+  
+  modal.className = 'modal ' + type + ' flex';
+  if (type === "success") {
+    icon.innerHTML = "&#10003;"; // checkmark
+  } else if (type === "warning") {
+    icon.innerHTML = "&#9888;"; // warning sign
+  } else {
+    icon.innerHTML = "";
+  }
+  msg.innerText = message;
+  modal.style.display = 'flex';
+
+  // Success: auto-close after 1s
+  if (type === "success") {
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 1000);
+  }
+}
+
+// Close notification modal by X
+document.getElementById("closeNotificationModal").onclick = function() {
+  document.getElementById("notificationModal").style.display = 'none';
+}
+
+// Deadline save handler with validation
+saveDeadlineBtn.onclick = async function() {
+  if (!currentRequestId || !deadlineInput.value) {
+    showNotificationModal("warning", "Please select a deadline.");
+    return;
+  }
+
+  const selectedDate = new Date(deadlineInput.value);
+  const createdDate = new Date(currentRequestCreatedDate);
+  const originalDeadline = currentOriginalDeadline ? new Date(currentOriginalDeadline) : null;
+  
+  // Check if selected date is before request creation date
+  if (selectedDate < createdDate) {
+    showNotificationModal("warning", "Deadline cannot be set before the request submission date.");
+    return;
+  }
+  
+  // Check if new deadline is earlier than original deadline
+  if (originalDeadline && selectedDate < originalDeadline) {
+    const userConfirmed = await showConfirmationModal("Warning: The new deadline is earlier than the original deadline. Are you sure you want to proceed?");
+    if (!userConfirmed) {
+      return;
     }
+  }
 
-    function editDeadline(requestId, currentDeadline) {
-      currentRequestId = requestId;
-      deadlineInput.value = currentDeadline || '';
-      deadlineModal.style.display = 'flex';
-    }
+  try {
+    const response = await fetch('/admin/service/update-deadline', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requestId: currentRequestId,
+        deadline: deadlineInput.value
+      })
+    });
 
-    saveDeadlineBtn.onclick = async function() {
-      if (!currentRequestId || !deadlineInput.value) {
-        alert('Please select a deadline');
-        return;
-      }
+    const result = await response.json();
 
-      try {
-        const response = await fetch('/admin/service/update-deadline', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            requestId: currentRequestId,
-            deadline: deadlineInput.value
-          })
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-          alert('Deadline updated successfully');
-          location.reload();
-        } else {
-          alert(result.message || 'Failed to update deadline');
-        }
-      } catch (error) {
-        console.error('Error updating deadline:', error);
-        alert('Failed to update deadline');
-      }
-
+    if (result.success) {
+      // Close only the deadline modal
       deadlineModal.style.display = 'none';
-    };
-
-    openChatFromModal.onclick = function() {
-      const requestId = document.getElementById("serviceRequestId").value;
-      serviceModal.style.display = 'none';
-      openChat(requestId);
-    };
-
-    function openChat(serviceRequestId) {
-      currentConversationId = serviceRequestId;
-      loadConversation(serviceRequestId);
-      conversationModal.style.display = 'flex';
-    }
-
-    async function loadConversation(serviceRequestId) {
-      try {
-        const response = await fetch(`/api/conversation/${serviceRequestId}`);
-        const conversation = await response.json();
+      
+      // Update the deadline display in the service modal without closing it
+      const deadlineElement = document.getElementById("serviceDeadline");
+      const newDate = new Date(deadlineInput.value);
+      const formattedDate = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
+      deadlineElement.innerText = formattedDate;
+      
+      // Update the deadline classes based on the new date
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      newDate.setHours(0,0,0,0);
+      const timeDiff = newDate - today;
+      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      
+      // Get current status from the modal
+      const currentStatus = document.getElementById("serviceStatus").value.toLowerCase();
+      
+      const isPastDue = daysDiff < 0;
+      const isNearDeadline = daysDiff === 1 && currentStatus === 'pending';
+      const isToday = daysDiff === 0;
+      const isApprovedOrRevision = ['approved', 'for revision'].includes(currentStatus);
+      
+      // Reset classes
+      deadlineElement.className = 'deadline-badge editable-deadline';
+      if (isPastDue) {
+        deadlineElement.classList.add('overdue');
+      } else if (isNearDeadline) {
+        deadlineElement.classList.add('near-deadline');
+      } else if (isToday && isApprovedOrRevision) {
+        deadlineElement.classList.add('overdue');
+      }
+      
+      // Update the table row data as well
+      const currentRow = document.querySelector(`[data-id="${currentRequestId}"]`);
+      if (currentRow) {
+        const localDeadline = newDate.getFullYear() + '-' + String(newDate.getMonth() + 1).padStart(2, '0') + '-' + String(newDate.getDate()).padStart(2, '0');
+        currentRow.dataset.deadline = localDeadline;
         
-        messagesContainer.innerHTML = '';
-        
-        if (conversation.messages && conversation.messages.length > 0) {
-          conversation.messages.forEach(message => {
-            addMessageToUI(message);
-          });
-          
-          await fetch(`/api/conversation/${serviceRequestId}/mark-read`, {
-            method: 'POST'
-          });
-        } else {
-          messagesContainer.innerHTML = '<p style="text-align: center; color: #6b7280;">No messages yet. Start the conversation!</p>';
+        // Update the deadline cell in the table
+        const deadlineCell = currentRow.querySelector('td:nth-child(8) .deadline-badge');
+        if (deadlineCell) {
+          deadlineCell.innerText = formattedDate;
+          deadlineCell.className = 'deadline-badge';
+          if (isPastDue) {
+            deadlineCell.classList.add('overdue');
+          } else if (isNearDeadline) {
+            deadlineCell.classList.add('near-deadline');
+          } else if (isToday && isApprovedOrRevision) {
+            deadlineCell.classList.add('overdue');
+          }
         }
-        
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      } catch (error) {
-        console.error('Error loading conversation:', error);
-        messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
       }
+      
+      showNotificationModal("success", "Deadline updated successfully!");
+      
+      // Keep the service modal open - don't reload the page
+      // The service modal (serviceModal) will remain open
+      
+    } else {
+      showNotificationModal("warning", result.message || "Failed to update deadline. Please choose a valid future date.");
     }
+  } catch (error) {
+    showNotificationModal("warning", "Failed to update deadline. Please try again.");
+  }
+};
 
-    function addMessageToUI(message) {
-      const messageDiv = document.createElement('div');
-      const isAdmin = message.senderRole === 'admin';
-      const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
-      
-      messageDiv.className = `message ${isAdmin ? 'admin-message' : 'user-message'}`;
-      messageDiv.innerHTML = `
-        <div class="message-content">
-          <div class="message-header">
-            <strong>${senderName}</strong>
-            <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
-          </div>
-          <div class="message-text">${message.content}</div>
-        </div>
-      `;
-      
-      messagesContainer.appendChild(messageDiv);
-    }
+// Chat functions
+openChatFromModal.onclick = function() {
+  const requestId = document.getElementById("serviceRequestId").value;
+  serviceModal.style.display = 'none';
+  openChat(requestId);
+};
 
-    sendMessageBtn.onclick = async function() {
-      const content = messageInput.value.trim();
-      if (!content || !currentConversationId) return;
+function openChat(requestId) { 
+  currentConversationId = requestId;
+  loadConversation(requestId);
+  conversationModal.style.display = 'flex';
+}
 
-      try {
-        const response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ content })
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-          addMessageToUI(result.message);
-          messageInput.value = '';
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        } else {
-          alert('Failed to send message');
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Failed to send message');
-      }
-    };
-
-    messageInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        sendMessageBtn.click();
-      }
-    });
-
-    function filterRequests() {
-      const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
-      const selectedStatuses = getSelectedStatuses();
-      const studentValue = document.getElementById('studentFilter').value.toLowerCase();
-      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
-      const dateFromValue = document.getElementById('dateFromFilter').value;
-      const dateToValue = document.getElementById('dateToFilter').value;
-      
-      let visibleCount = 0;
-
-      allRows.forEach(row => {
-        const rowRequestId = row.dataset.requestId.toLowerCase();
-        const rowStatus = row.dataset.status.toLowerCase();
-        const rowStudent = row.dataset.student.toLowerCase();
-        const rowOrganization = row.dataset.organization.toLowerCase();
-        const rowDate = row.dataset.date;
-
-        const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
-        const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
-        const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
-        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
-
-        let dateMatch = true;
-        if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
-        if (dateToValue && rowDate > dateToValue) dateMatch = false;
-
-        const isVisible = requestIdMatch && statusMatch && studentMatch && organizationMatch && dateMatch;
-        row.style.display = isVisible ? '' : 'none';
-        
-        if (isVisible) visibleCount++;
+async function loadConversation(requestId) {
+  try {
+    // USE GENERIC ROUTE, NOT SPECIFIC /service/ ROUTE
+    const response = await fetch(`/api/conversation/${requestId}`);
+    const conversation = await response.json();
+    
+    messagesContainer.innerHTML = '';
+    
+    if (conversation.messages && conversation.messages.length > 0) {
+      conversation.messages.forEach(message => {
+        addMessageToUI(message);
       });
-
-      const totalCount = allRows.length;
-      const resultsCount = document.getElementById('resultsCount');
-      if (visibleCount === totalCount) {
-        resultsCount.textContent = `Showing all ${totalCount} requests`;
-      } else {
-        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
-      }
-
-      toggleNoResultsMessage(visibleCount === 0);
-    }
-
-    function toggleNoResultsMessage(show) {
-      let noResultsRow = document.getElementById('noResultsRow');
       
-      if (show && !noResultsRow) {
-        const tbody = document.getElementById('requestsTableBody');
-        noResultsRow = document.createElement('tr');
-        noResultsRow.id = 'noResultsRow';
-        noResultsRow.innerHTML = `
-          <td colspan="8" style="text-align: center; padding: 3rem; color: #6b7280;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
-            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
-            <p>Try adjusting your filters to see more results.</p>
-          </td>
-        `;
-        tbody.appendChild(noResultsRow);
-      } else if (!show && noResultsRow) {
-        noResultsRow.remove();
-      }
-    }
-
-    document.getElementById('requestIdFilter').addEventListener('input', filterRequests);
-    statusFilter.addEventListener('change', filterRequests);
-    document.getElementById('studentFilter').addEventListener('input', filterRequests);
-    document.getElementById('organizationFilter').addEventListener('input', filterRequests);
-    document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
-    document.getElementById('dateToFilter').addEventListener('change', filterRequests);
-
-    clearFiltersBtn.addEventListener('click', () => {
-      document.getElementById('requestIdFilter').value = '';
-      document.getElementById('studentFilter').value = '';
-      document.getElementById('organizationFilter').value = '';
-      document.getElementById('dateFromFilter').value = '';
-      document.getElementById('dateToFilter').value = '';
-      statusCheckboxes.forEach(cb => cb.checked = false);
-      allStatusCheckbox.checked = true;
-      updateStatusDisplay()
-      filterRequests();
-    });
-
-    document.querySelectorAll('.service-row').forEach(row => {
-        row.addEventListener('click', (e) => {
-          if (e.target.classList.contains('deadline-badge')) {
-            return;
-          }
-          
-          document.getElementById("serviceStudent").innerText = row.dataset.student;
-          document.getElementById("serviceTitle").innerText = row.dataset.title;
-          document.getElementById("serviceOrganization").innerText = row.dataset.organization;
-          document.getElementById("serviceDescription").innerText = row.dataset.description;
-          
-          const deadlineElement = document.getElementById("serviceDeadline");
-          const deadline = row.dataset.deadline;
-          const status = row.dataset.status.toLowerCase();
-          if (deadline) {
-            const deadlineDate = new Date(deadline);
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            deadlineDate.setHours(0,0,0,0);
-            const timeDiff = deadlineDate - today;
-            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-            
-            const isOverdue = daysDiff < 0;
-            const isToday = daysDiff === 0;
-            const isNearDeadline = daysDiff === 1 && status === 'pending';
-            const isApprovedOrRevision = ['approved', 'for revision'].includes(status);
-            
-            deadlineElement.innerText = new Date(deadline).toLocaleDateString();
-            deadlineElement.className = `deadline-badge editable-deadline ${(isOverdue || isToday || isApprovedOrRevision) ? 'overdue' : isNearDeadline ? 'near-deadline' : ''}`;
-          } else {
-            deadlineElement.innerText = 'N/A';
-            deadlineElement.className = 'deadline-badge editable-deadline';
-          }
-          
-          document.getElementById("serviceStatus").value = row.dataset.status;
-          document.getElementById("serviceRequestId").value = row.dataset.id;
-          serviceModal.style.display = 'flex';
-        });
-    });
-
-    function toggleDropdown() {
-        const menu = document.getElementById("dropdownMenu");
-        menu.style.display = menu.style.display === "block" ? "none" : "block";
-    }
-
-    document.addEventListener("click", function (event) {
-        const toggle = document.querySelector(".dropdown-toggle");
-        const menu = document.getElementById("dropdownMenu");
-        if (!toggle.contains(event.target)) {
-        menu.style.display = "none";
-        }
-    });
-
-   // Custom Status Filter Logic
-    const statusFilterElement = document.getElementById('statusFilter');
-    const statusDropdown = document.getElementById('statusDropdown');
-    const statusDisplay = statusFilterElement.querySelector('.select-display');
-    const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
-    const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
-
-    // Toggle dropdown
-    statusFilterElement.addEventListener('click', function(e) {
-      e.stopPropagation();
-      statusFilterElement.classList.toggle('active');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function() {
-      statusFilterElement.classList.remove('active');
-    });
-
-    // Handle checkbox changes
-    statusCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        if (this.value === 'all') {
-          // If "All Status" is checked, uncheck others
-          if (this.checked) {
-            statusCheckboxes.forEach(cb => {
-              if (cb.value !== 'all') cb.checked = false;
-            });
-          }
-        } else {
-          // If any specific status is checked, uncheck "All Status"
-          if (this.checked) {
-            allStatusCheckbox.checked = false;
-          }
-          
-          // If no specific status is checked, check "All Status"
-          const specificChecked = Array.from(statusCheckboxes).some(cb => 
-            cb.value !== 'all' && cb.checked
-          );
-          if (!specificChecked) {
-            allStatusCheckbox.checked = true;
-          }
-        }
-        
-        updateStatusDisplay();
-        filterRequests();
+      // USE GENERIC ROUTE, NOT SPECIFIC /service/ ROUTE
+      await fetch(`/api/conversation/${requestId}/mark-read`, {
+        method: 'POST'
       });
+    } else {
+      messagesContainer.innerHTML = '<p style="text-align: center; color: #6b7280;">No messages yet. Start the conversation!</p>';
+    }
+    
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  } catch (error) {
+    console.error('Error loading conversation:', error);
+    messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
+  }
+}
+
+
+function addMessageToUI(message) {
+  const messageDiv = document.createElement('div');
+  const isAdmin = message.senderRole === 'admin';
+  const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
+  
+  messageDiv.className = `message ${isAdmin ? 'admin-message' : 'user-message'}`;
+  messageDiv.innerHTML = `
+    <div class="message-content">
+      <div class="message-header">
+        <strong>${senderName}</strong>
+        <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+      </div>
+      <div class="message-text">${message.content}</div>
+    </div>
+  `;
+  
+  messagesContainer.appendChild(messageDiv);
+}
+
+sendMessageBtn.onclick = async function() {
+  const content = messageInput.value.trim();
+  if (!content || !currentConversationId) return;
+
+  try {
+    // USE GENERIC ROUTE, NOT SPECIFIC /service/ ROUTE
+    const response = await fetch(`/api/conversation/${currentConversationId}/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content })
     });
 
-    function updateStatusDisplay() {
-      const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
-      
-      if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-        statusDisplay.textContent = 'All Status';
-      } else if (checkedBoxes.length === 1) {
-        statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
-                                  checkedBoxes[0].value.slice(1);
-      } else {
-        statusDisplay.textContent = `${checkedBoxes.length} Selected`;
+    const result = await response.json();
+    
+    if (result.success) {
+      addMessageToUI(result.message);
+      messageInput.value = '';
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } else {
+      showNotificationModal("warning", "Failed to send message");
+    }
+  } catch (error) {
+    console.error('Error sending message:', error);
+    showNotificationModal("warning", "Failed to send message");
+  }
+};
+
+
+
+messageInput.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    sendMessageBtn.click();
+  }
+});
+
+// Filter functions
+function filterRequests() {
+  const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
+  const selectedStatuses = getSelectedStatuses();
+  const studentValue = document.getElementById('studentFilter').value.toLowerCase();
+  const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
+  const dateFromValue = document.getElementById('dateFromFilter').value;
+  const dateToValue = document.getElementById('dateToFilter').value;
+  
+  let visibleCount = 0;
+
+  allRows.forEach(row => {
+    const rowRequestId = row.dataset.requestId.toLowerCase();
+    const rowStatus = row.dataset.status.toLowerCase();
+    const rowStudent = row.dataset.student.toLowerCase();
+    const rowOrganization = row.dataset.organization.toLowerCase();
+    const rowDate = row.dataset.date;
+
+    const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
+    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
+    const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
+    const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
+
+    let dateMatch = true;
+    if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
+    if (dateToValue && rowDate > dateToValue) dateMatch = false;
+
+    const isVisible = requestIdMatch && statusMatch && studentMatch && organizationMatch && dateMatch;
+    row.style.display = isVisible ? '' : 'none';
+    
+    if (isVisible) visibleCount++;
+  });
+
+  const totalCount = allRows.length;
+  const resultsCount = document.getElementById('resultsCount');
+  if (visibleCount === totalCount) {
+    resultsCount.textContent = `Showing all ${totalCount} requests`;
+  } else {
+    resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+  }
+
+  toggleNoResultsMessage(visibleCount === 0);
+}
+
+function toggleNoResultsMessage(show) {
+  let noResultsRow = document.getElementById('noResultsRow');
+  
+  if (show && !noResultsRow) {
+    const tbody = document.getElementById('requestsTableBody');
+    noResultsRow = document.createElement('tr');
+    noResultsRow.id = 'noResultsRow';
+    noResultsRow.innerHTML = `
+      <td colspan="8" style="text-align: center; padding: 3rem; color: #6b7280;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
+        <p>Try adjusting your filters to see more results.</p>
+      </td>
+    `;
+    tbody.appendChild(noResultsRow);
+  } else if (!show && noResultsRow) {
+    noResultsRow.remove();
+  }
+}
+
+// Event listeners for filters
+document.getElementById('requestIdFilter').addEventListener('input', filterRequests);
+document.getElementById('statusFilter').addEventListener('change', filterRequests);
+document.getElementById('studentFilter').addEventListener('input', filterRequests);
+document.getElementById('organizationFilter').addEventListener('input', filterRequests);
+document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
+document.getElementById('dateToFilter').addEventListener('change', filterRequests);
+
+clearFiltersBtn.addEventListener('click', () => {
+  document.getElementById('requestIdFilter').value = '';
+  document.getElementById('studentFilter').value = '';
+  document.getElementById('organizationFilter').value = '';
+  document.getElementById('dateFromFilter').value = '';
+  document.getElementById('dateToFilter').value = '';
+  statusCheckboxes.forEach(cb => cb.checked = false);
+  allStatusCheckbox.checked = true;
+  updateStatusDisplay();
+  filterRequests();
+});
+
+// Service row click handlers
+document.querySelectorAll('.service-row').forEach(row => {
+  row.addEventListener('click', (e) => {
+    if (e.target.classList.contains('deadline-badge')) {
+      return;
+    }
+    
+    document.getElementById("serviceStudent").innerText = row.dataset.student;
+    document.getElementById("serviceTitle").innerText = row.dataset.title;
+    document.getElementById("serviceOrganization").innerText = row.dataset.organization;
+    document.getElementById("serviceDescription").innerText = row.dataset.description;
+    
+    const deadlineElement = document.getElementById("serviceDeadline");
+    const deadline = row.dataset.deadline;
+    const status = row.dataset.status.toLowerCase();
+    
+    if (deadline) {
+      const [year, month, day] = deadline.split('-');
+      const deadlineDate = new Date(Number(year), Number(month) - 1, Number(day));
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      deadlineDate.setHours(0,0,0,0);
+      const timeDiff = deadlineDate - today;
+      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+      const isPastDue = daysDiff < 0;
+      const isNearDeadline = daysDiff === 1 && status === 'pending';
+      const isToday = daysDiff === 0;
+      const isApprovedOrRevision = ['approved', 'for revision'].includes(status);
+
+      const formatted = `${Number(month)}/${Number(day)}/${year}`;
+      deadlineElement.innerText = formatted;
+      deadlineElement.className = 'deadline-badge editable-deadline';
+      if (isPastDue) {
+        deadlineElement.classList.add('overdue');
+      } else if (isNearDeadline) {
+        deadlineElement.classList.add('near-deadline');
+      } else if (isToday && isApprovedOrRevision) {
+        deadlineElement.classList.add('overdue');
+      }
+    } else {
+      deadlineElement.innerText = 'N/A';
+      deadlineElement.className = 'deadline-badge editable-deadline';
+    }
+    
+    document.getElementById("serviceStatus").value = row.dataset.status;
+    document.getElementById("serviceRequestId").value = row.dataset.id;
+    serviceModal.style.display = 'flex';
+  });
+});
+
+// Deadline badge click handler in modal
+document.getElementById("serviceDeadline").onclick = function() {
+  const deadlineText = document.getElementById("serviceDeadline").innerText;
+  const requestId = document.getElementById("serviceRequestId").value;
+  
+  // Find the current row to get creation date
+  const currentRow = document.querySelector(`[data-id="${requestId}"]`);
+  if (currentRow) {
+    currentRequestCreatedDate = currentRow.dataset.created;
+    currentOriginalDeadline = currentRow.dataset.deadline;
+  }
+
+  let currentDateISO = "";
+  if (deadlineText && deadlineText !== "N/A") {
+    let dt = new Date(deadlineText);
+    if (isNaN(dt.getTime())) {
+      const parts = deadlineText.split("/");
+      if (parts.length === 3) {
+        dt = new Date(`${parts[2]}-${parts[0].padStart(2, "0")}-${parts[1].padStart(2, "0")}T00:00`);
       }
     }
+    if (!isNaN(dt.getTime())) {
+      const tzOffset = dt.getTimezoneOffset() * 60000;
+      const localISO = new Date(dt.getTime() - tzOffset).toISOString().slice(0,16);
+      currentDateISO = localISO;
+    }
+  }
+  
+  currentRequestId = requestId;
+  deadlineInput.value = currentDateISO;
+  
+  // Set minimum date to creation date
+  if (currentRequestCreatedDate) {
+    deadlineInput.min = currentRequestCreatedDate + 'T00:00';
+  }
+  
+  deadlineModal.style.display = 'flex';
+};
 
-    // Get selected status values for filtering
-    function getSelectedStatuses() {
-      const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
-        cb.checked && cb.value !== 'all'
+// Dropdown toggle
+function toggleDropdown() {
+  const menu = document.getElementById("dropdownMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+document.addEventListener("click", function (event) {
+  const toggle = document.querySelector(".dropdown-toggle");
+  const menu = document.getElementById("dropdownMenu");
+  if (!toggle.contains(event.target)) {
+    menu.style.display = "none";
+  }
+});
+
+// Custom Status Filter Logic
+const statusFilterElement = document.getElementById('statusFilter');
+const statusDropdown = document.getElementById('statusDropdown');
+const statusDisplay = statusFilterElement.querySelector('.select-display');
+const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
+
+statusFilterElement.addEventListener('click', function(e) {
+  e.stopPropagation();
+  statusFilterElement.classList.toggle('active');
+});
+
+document.addEventListener('click', function() {
+  statusFilterElement.classList.remove('active');
+});
+
+statusCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', function() {
+    if (this.value === 'all') {
+      if (this.checked) {
+        statusCheckboxes.forEach(cb => {
+          if (cb.value !== 'all') cb.checked = false;
+        });
+      }
+    } else {
+      if (this.checked) {
+        allStatusCheckbox.checked = false;
+      }
+      
+      const specificChecked = Array.from(statusCheckboxes).some(cb => 
+        cb.value !== 'all' && cb.checked
       );
-      
-      if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-        return [];
+      if (!specificChecked) {
+        allStatusCheckbox.checked = true;
       }
-      
-      return checkedBoxes.map(cb => cb.value.toLowerCase());
     }
+    
+    updateStatusDisplay();
+    filterRequests();
+  });
+});
 
-    // Auto-open modal functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const openModalId = urlParams.get('openModalId');
-      
-      if (openModalId) {
-        const targetRow = document.querySelector(`[data-id="${openModalId}"]`);
-        if (targetRow) {
-          // Scroll to the row
-          targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
-          // Highlight the row briefly
-          targetRow.style.backgroundColor = '#e8f5e9';
-          setTimeout(() => {
-            targetRow.style.backgroundColor = '';
-          }, 2000);
-          
-          // Trigger click to open modal
-          setTimeout(() => {
-            targetRow.click();
-          }, 500);
-        }
-      }
-    });
+function updateStatusDisplay() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    statusDisplay.textContent = 'All Status';
+  } else if (checkedBoxes.length === 1) {
+    statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
+                              checkedBoxes[0].value.slice(1);
+  } else {
+    statusDisplay.textContent = `${checkedBoxes.length} Selected`;
+  }
+}
 
-    // ADD this auto-open modal functionality:
+function getSelectedStatuses() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
+    cb.checked && cb.value !== 'all'
+  );
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    return [];
+  }
+  
+  return checkedBoxes.map(cb => cb.value.toLowerCase());
+}
+
+// Auto-open modal functionality
 document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
   const openModalId = urlParams.get('openModalId');
@@ -692,120 +1078,64 @@ document.addEventListener('DOMContentLoaded', function() {
   if (openModalId) {
     const targetRow = document.querySelector(`[data-id="${openModalId}"]`);
     if (targetRow) {
-      // Scroll to the row
       targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
       
-      // Highlight the row briefly
       targetRow.style.backgroundColor = '#e8f5e9';
       setTimeout(() => {
         targetRow.style.backgroundColor = '';
       }, 2000);
       
-      // Trigger click to open modal
       setTimeout(() => {
         targetRow.click();
       }, 500);
     }
   }
 });
+
+  // Confirmation modal functions
+function showConfirmationModal(message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmationModal');
+    const msg = document.getElementById('confirmationMessage');
+    const yesBtn = document.getElementById('confirmYesBtn');
+    const noBtn = document.getElementById('confirmNoBtn');
+    const closeBtn = document.getElementById('closeConfirmationModal');
+    
+    msg.innerText = message;
+    modal.className = 'modal flex';
+    modal.style.display = 'flex';
+    
+    // Handle responses
+    const handleYes = () => {
+      modal.style.display = 'none';
+      resolve(true);
+    };
+    
+    const handleNo = () => {
+      modal.style.display = 'none';
+      resolve(false);
+    };
+    
+    // Add event listeners (remove any existing ones first)
+    yesBtn.onclick = handleYes;
+    noBtn.onclick = handleNo;
+    closeBtn.onclick = handleNo;
+  });
+}
+
+// Close confirmation modal when clicking outside
+window.onclick = function(event) {
+  if (event.target === serviceModal) serviceModal.style.display = 'none';
+  if (event.target === deadlineModal) deadlineModal.style.display = 'none';
+  if (event.target === conversationModal) conversationModal.style.display = 'none';
+  if (event.target === document.getElementById('notificationModal')) {
+    document.getElementById('notificationModal').style.display = 'none';
+  }
+  if (event.target === document.getElementById('confirmationModal')) {
+    document.getElementById('confirmationModal').style.display = 'none';
+  }
+}
 </script>
 
-  <style>
-    .deadline-badge {
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      background-color: #f3f4f6;
-      color: #374151;
-    }
-    
-    .deadline-badge.near-deadline {
-      background-color: #fef3c7; /* yellow background */
-      color: #d97706;            /* yellow text */
-    }
-    
-    .deadline-badge.overdue {
-      background-color: #fecaca;
-      color: #dc2626;
-    }
-
-    .deadline-badge.editable-deadline:hover {
-      background-color: #e5e7eb;
-    }
-
-    .message {
-      margin-bottom: 1rem;
-      max-width: 80%;
-    }
-
-    .admin-message {
-      margin-left: auto;
-    }
-
-    .user-message {
-      margin-right: auto;
-    }
-
-    .message-content {
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      background: white;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    .admin-message .message-content {
-      background: var(--primary-green);
-      color: white;
-    }
-
-    .message-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
-      font-size: 0.875rem;
-    }
-
-    .message-time {
-      opacity: 0.7;
-      font-size: 0.75rem;
-    }
-
-    .message-text {
-      word-wrap: break-word;
-    }
-
-    /* Status badge styles for all service statuses */
-    .status-badge.pending {
-      background-color: #fef3c7;
-      color: #d97706;
-    }
-
-    .status-badge.approved {
-      background-color: #dcfce7;
-      color: #16a34a;
-    }
-
-    .status-badge.for-revision {
-      background-color: #fed7d7;
-      color: #e53e3e;
-    }
-
-    .status-badge.completed {
-      background-color: #dbeafe;
-      color: #3b82f6;
-    }
-
-    .status-badge.rejected {
-      background-color: #fee2e2;
-      color: #dc2626;
-    }
-
-    .status-badge.archived {
-      background-color: #f3f4f6;
-      color: #6b7280;
-    }
-  </style>
 </body>
 </html>
