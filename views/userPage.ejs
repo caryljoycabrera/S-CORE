@@ -944,47 +944,6 @@
         </div>
       </div>
 
-         <!-- Guide Lines -->
-    <div class="guidelines-container">
-  <div class="guidelines-header" onclick="toggleGuidelines()" style="cursor: pointer;">
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="16" y1="13" x2="8" y2="13"></line>
-        <line x1="16" y1="17" x2="8" y2="17"></line>
-        <line x1="10" y1="9" x2="8" y2="9"></line>
-      </svg>
-      <h4 class="guidelines-title">Request Guidelines</h4>
-      <span class="guidelines-toggle" id="guidelinesToggle">▼</span>
-    </div>
-  </div>
-
-  <div class="guidelines-content" id="guidelinesContent" style="display: none;">
-    <div class="guidelines-section">
-      <h5 class="section-title">
-        <span class="section-icon">📋</span>
-        Request Approvals
-      </h5>
-      <ul class="guidelines-list">
-        <li>All requests must be submitted at least <strong>three (3) to five (5) working days</strong> prior to the required date.</li>
-        <li>This lead time allows sufficient review, revisions, and endorsement.</li>
-      </ul>
-    </div>
-
-    <div class="guidelines-section">
-      <h5 class="section-title">
-        <span class="section-icon">🔧</span>
-        Service Requests
-      </h5>
-      <ul class="guidelines-list">
-        <li>All service requests must be submitted at least <strong>seven (7) to ten (10) working days</strong> prior to the required date.</li>
-        <li>This gives the team ample time to assess the request, assign resources, and schedule accordingly.</li>
-        <li>Requests involving large-scale projects or specialized requirements may require a longer lead time with a minimum of <strong>fourteen (14) working days</strong>, subject to assessment by the concerned unit/s and is case-to-case basis.</li>
-      </ul>
-    </div>
-  </div>
-</div>
 
       <!-- Row 2: All Requests and Calendar -->
       <div class="bottom-row-container">
@@ -1044,7 +1003,47 @@
           </div>
         </div>
       </div>
+    <!-- Guide Lines -->
+    <div class="guidelines-container">
+  <div class="guidelines-header" onclick="toggleGuidelines()" style="cursor: pointer;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <line x1="10" y1="9" x2="8" y2="9"></line>
+      </svg>
+      <h4 class="guidelines-title">Request Guidelines</h4>
+      <span class="guidelines-toggle" id="guidelinesToggle">▼</span>
+    </div>
+  </div>
 
+  <div class="guidelines-content" id="guidelinesContent" style="display: none;">
+    <div class="guidelines-section">
+      <h5 class="section-title">
+        <span class="section-icon">📋</span>
+        Request Approvals
+      </h5>
+      <ul class="guidelines-list">
+        <li>All requests must be submitted at least <strong>three (3) to five (5) working days</strong> prior to the required date.</li>
+        <li>This lead time allows sufficient review, revisions, and endorsement.</li>
+      </ul>
+    </div>
+
+    <div class="guidelines-section">
+      <h5 class="section-title">
+        <span class="section-icon">🔧</span>
+        Service Requests
+      </h5>
+      <ul class="guidelines-list">
+        <li>All service requests must be submitted at least <strong>seven (7) to ten (10) working days</strong> prior to the required date.</li>
+        <li>This gives the team ample time to assess the request, assign resources, and schedule accordingly.</li>
+        <li>Requests involving large-scale projects or specialized requirements may require a longer lead time with a minimum of <strong>fourteen (14) working days</strong>, subject to assessment by the concerned unit/s and is case-to-case basis.</li>
+      </ul>
+    </div>
+  </div>
+</div>
       <%
       function timeAgo(date) {
         const now = new Date();
@@ -1141,6 +1140,8 @@
     </div>
   </div>
 
+  
+
   <!-- Calendar Modal -->
   <div class="calendar-modal" id="calendar-modal">
     <div class="calendar-modal-content">
@@ -1189,6 +1190,8 @@
     </div>
   </div>
 
+  
+
   <!-- Deadline Details Modal -->
   <div class="deadline-details-modal" id="deadline-details-modal">
     <div class="deadline-details-content">
@@ -1223,6 +1226,10 @@
       </div>
     </div>
   </div>
+
+
+
+  
 </body>
 <script>
 function toggleDropdown() {
