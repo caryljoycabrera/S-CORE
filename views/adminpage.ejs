@@ -953,6 +953,107 @@
         flex-direction: column;
       }
     }
+
+   .guidelines-container {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      padding: 1rem;
+      margin: 1rem auto;
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      position: relative;
+    }
+
+    .guidelines-header {
+      padding: 0.75rem;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .guidelines-header:hover {
+      background-color: #f9fafb;
+    }
+
+    .guidelines-title {
+      color: #2e7d32;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .guidelines-toggle {
+      color: #2e7d32;
+      transition: transform 0.3s ease;
+      margin-left: auto;
+      padding-left: 1rem;
+    }
+
+    .guidelines-content {
+      overflow: hidden;
+      transition: all 0.3s ease;
+      opacity: 0;
+      max-height: 0;
+    }
+
+    .guidelines-content.active {
+      opacity: 1;
+      max-height: 1000px;
+      margin-top: 1rem;
+    }
+
+    .guidelines-section {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid #e5e7eb;
+    }
+
+    .section-title {
+      color: #1b5e20;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-icon {
+      font-size: 1.2rem;
+    }
+
+    .guidelines-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .guidelines-list li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: #374151;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .guidelines-list li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #43a047;
+      font-weight: bold;
+    }
+
+    .guidelines-list li strong {
+      color: #2e7d32;
+      font-weight: 600;
+    }
   </style>
   </style>
 </head>
@@ -1079,6 +1180,7 @@
               <span class="legend-text">Services</span>
             </div>
           </div>
+
           
           <!-- Scrollable Calendar Content -->
           <div class="calendar-content">
@@ -1086,6 +1188,48 @@
           </div>
         </div>
       </div>
+
+         <!-- Guide Lines -->
+    <div class="guidelines-container">
+  <div class="guidelines-header" onclick="toggleGuidelines()" style="cursor: pointer;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <line x1="10" y1="9" x2="8" y2="9"></line>
+      </svg>
+      <h4 class="guidelines-title">Request Guidelines</h4>
+      <span class="guidelines-toggle" id="guidelinesToggle">▼</span>
+    </div>
+  </div>
+
+  <div class="guidelines-content" id="guidelinesContent" style="display: none;">
+    <div class="guidelines-section">
+      <h5 class="section-title">
+        <span class="section-icon">📋</span>
+        Request Approvals
+      </h5>
+      <ul class="guidelines-list">
+        <li>All requests must be submitted at least <strong>three (3) to five (5) working days</strong> prior to the required date.</li>
+        <li>This lead time allows sufficient review, revisions, and endorsement.</li>
+      </ul>
+    </div>
+
+    <div class="guidelines-section">
+      <h5 class="section-title">
+        <span class="section-icon">🔧</span>
+        Service Requests
+      </h5>
+      <ul class="guidelines-list">
+        <li>All service requests must be submitted at least <strong>seven (7) to ten (10) working days</strong> prior to the required date.</li>
+        <li>This gives the team ample time to assess the request, assign resources, and schedule accordingly.</li>
+        <li>Requests involving large-scale projects or specialized requirements may require a longer lead time with a minimum of <strong>fourteen (14) working days</strong>, subject to assessment by the concerned unit/s and is case-to-case basis.</li>
+      </ul>
+    </div>
+  </div>
+</div>
 
       <!-- Recent Activity Section -->
       <div class="activity-section">
@@ -1109,6 +1253,8 @@
             </div>
             <div class="status-badge approved">Online</div>
           </div>
+
+          
 
           <div class="activity-card pending">
             <div class="activity-icon">
@@ -1139,6 +1285,9 @@
           </div>
         </div>
       </div>
+
+
+
 
       <!-- Quick Stats -->
       <div class="stats-section">
@@ -1814,7 +1963,26 @@
       // Initialize the calendar
       initCalendar();
     })();
+
+    // Toggle guidelines visibility
+function toggleGuidelines() {
+  const content = document.getElementById('guidelinesContent');
+  const toggle = document.getElementById('guidelinesToggle');
+  
+  if (content.style.display === 'none' || content.style.display === '') {
+    content.style.display = 'block';
+    toggle.style.transform = 'rotate(180deg)';
+    setTimeout(() => {
+      content.classList.add('active');
+    }, 10);
+  } else {
+    content.classList.remove('active');
+    toggle.style.transform = 'rotate(0deg)';
+    setTimeout(() => {
+      content.style.display = 'none';
+    }, 300);
+  }
+}
 </script>
 </body>
-</html>
 </html>
