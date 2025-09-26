@@ -1580,25 +1580,7 @@ body {font-family: Verdana, sans-serif;}
   renderCalendar(currentMonth, currentYear);
 
 
-      // Toggle guidelines visibility
-function toggleGuidelines() {
-  const content = document.getElementById('guidelinesContent');
-  const toggle = document.getElementById('guidelinesToggle');
   
-  if (content.style.display === 'none' || content.style.display === '') {
-    content.style.display = 'block';
-    toggle.style.transform = 'rotate(180deg)';
-    setTimeout(() => {
-      content.classList.add('active');
-    }, 10);
-  } else {
-    content.classList.remove('active');
-    toggle.style.transform = 'rotate(0deg)';
-    setTimeout(() => {
-      content.style.display = 'none';
-    }, 300);
-  }
-}
 </script>
 </body>
 </html>
