@@ -21,9 +21,12 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+
 // Body parsers
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Add this line
+app.use(bodyParser.json()); // Add this line too for redundancy
 
 // Session handling
 app.use(session({
@@ -62,16 +65,27 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + '-' + uniqueSuffix + ext);
   }
 });
+
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // Increased to 10MB per file
+    files: 20 // Allow up to 20 files
+  },
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    const allowed = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+      'application/pdf', 
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain'
+    ];
     if (allowed.includes(file.mimetype)) cb(null, true);
     else cb(new Error('Invalid file type.'), false);
   }
 });
-
 // ======= Schemas and Models =======
 const userSchema = new mongoose.Schema({
   fName: String,
@@ -101,20 +115,24 @@ const requestApprovalSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, default: 'Pending' },
   assignedUnits: { type: String, default: 'Not yet assigned' },
-  file: String
+  file: String, // Keep for backward compatibility
+  files: [String] // New field for multiple files
 }, { timestamps: true });
+
+
 const RequestApproval = mongoose.model('RequestApproval', requestApprovalSchema);
 
 const serviceRequestSchema = new mongoose.Schema({
   title: String,
   organization: String,
   description: String,
-  datetime: { type: Date, default: Date.now }, // ADD THIS LINE
+  datetime: { type: Date, default: Date.now },
   deadline: Date,
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   status: { type: String, default: 'Pending' },
   assignedUnits: { type: String, default: 'Not yet assigned' },
-  file: String
+  file: String, // Keep for backward compatibility
+  files: [String] // New field for multiple files
 }, { timestamps: true });
 
 
@@ -592,9 +610,12 @@ app.get('/request-approvals', async (req, res) => {
       return 0;
     });
 
+    // Map requests to use the specific organization
     const allRequests = approvals.map(r => ({ 
       ...r, 
-      type: "Request Approval" 
+      type: "Request Approval",
+      // Use the specific organization stored in the request
+      organization: r.organization || 'N/A'
     }));
 
     const submitted = req.query.submitted === 'true';
@@ -626,19 +647,15 @@ app.get('/service-requests', async (req, res) => {
       const aStatus = a.status.toLowerCase();
       const bStatus = b.status.toLowerCase();
 
-      // Sort by status group priority
       const aPriority = statusPriority[aStatus] ?? 999;
       const bPriority = statusPriority[bStatus] ?? 999;
       if (aPriority !== bPriority) return aPriority - bPriority;
 
-      // Tie-breakers for each group
       if (aStatus === "pending") {
-        // Oldest first by createdAt
         return new Date(a.createdAt) - new Date(b.createdAt);
       }
 
       if (aStatus === "approved" || aStatus === "for revision") {
-        // Deadline first by deadline, if no deadline then oldest first by createdAt
         const aDeadline = a.deadline ? new Date(a.deadline) : null;
         const bDeadline = b.deadline ? new Date(b.deadline) : null;
 
@@ -646,21 +663,22 @@ app.get('/service-requests', async (req, res) => {
         if (aDeadline && !bDeadline) return -1;
         if (!aDeadline && bDeadline) return 1;
 
-        // No deadlines → oldest first by createdAt
         return new Date(a.createdAt) - new Date(b.createdAt);
       }
 
       if (["completed", "rejected", "archived"].includes(aStatus)) {
-        // Newest first
         return new Date(b.createdAt) - new Date(a.createdAt);
       }
 
       return 0;
     });
 
+    // Map requests to include the specific organization selected for each request
     const allRequests = serviceRequests.map(r => ({
       ...r,
-      type: "Service Request"
+      type: "Service Request",
+      // Use the specific organization stored in the request, not all user affiliations
+      organization: r.organization || 'N/A'
     }));
 
     res.render('ServiceRequest', { user, serviceRequests, allRequests });
@@ -670,7 +688,6 @@ app.get('/service-requests', async (req, res) => {
     res.status(500).render('error', { message: 'Error loading page' });
   }
 });
-
 app.get('/all-requests', async (req, res) => {
   if (!req.session.userId) return res.redirect('/');
 
@@ -680,8 +697,18 @@ app.get('/all-requests', async (req, res) => {
     const services = await ServiceRequest.find({ userId: user._id }).lean();
 
     const allRequests = [
-      ...approvals.map(r => ({ ...r, type: "Request Approval" })),
-      ...services.map(r => ({ ...r, type: "Service Request" }))
+      ...approvals.map(r => ({ 
+        ...r, 
+        type: "Request Approval",
+        // Use the specific organization stored in the request
+        organization: r.organization || 'N/A'
+      })),
+      ...services.map(r => ({ 
+        ...r, 
+        type: "Service Request",
+        // Use the specific organization stored in the request
+        organization: r.organization || 'N/A'
+      }))
     ];
 
     // Combined priority: pending first, then by type-specific priority
@@ -761,8 +788,6 @@ app.get('/all-requests', async (req, res) => {
     res.status(500).render('error', { message: 'Error loading page' });
   }
 });
-
-// to make deadlines appear in the calendar
 
 // Replace the existing /api/deadlines route with this improved version
 app.get('/api/deadlines', requireLogin, async (req, res) => {
@@ -1274,29 +1299,40 @@ app.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
 
     await RequestApproval.findByIdAndUpdate(requestId, update);
 
-    res.redirect('/admin/approvals');
+    // Return JSON response instead of redirect
+    res.json({ success: true, message: 'Approval request updated successfully' });
   } catch (err) {
     console.error('Error updating approval status:', err);
-    res.status(500).render('error', { message: 'Failed to update approval request.' });
+    res.status(500).json({ success: false, message: 'Failed to update approval request.' });
   }
 });
+
 
 app.post('/admin/service/update-status', requireAdmin, async (req, res) => {
   const { requestId, status, assignedUnits } = req.body;
 
   try {
-    const updateData = { status: status || 'Pending' };
+    console.log('Updating service request:', { requestId, status, assignedUnits });
     
-    // Include assignedUnits for service requests
-    if (assignedUnits !== undefined && assignedUnits !== '') {
-      updateData.assignedUnits = assignedUnits;
+    if (!requestId) {
+      return res.status(400).json({ success: false, message: 'Request ID is required' });
     }
 
-    await ServiceRequest.findByIdAndUpdate(requestId, updateData);
-    res.redirect('/admin/services');
+    const update = {};
+    if (status) update.status = status;
+    if (assignedUnits !== undefined) update.assignedUnits = assignedUnits || 'Not yet assigned';
+
+    const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true });
+    
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    console.log('Service request updated successfully:', result);
+    res.json({ success: true, message: 'Service request updated successfully' });
   } catch (err) {
     console.error('Error updating service request:', err);
-    res.status(500).render('error', { message: 'Failed to update service request.' });
+    res.status(500).json({ success: false, message: 'Failed to update service request: ' + err.message });
   }
 });
 
@@ -1323,77 +1359,169 @@ app.post('/admin/service/update-deadline', requireAdmin, async (req, res) => {
 });
 
 app.post('/admin/user/update', requireAdmin, async (req, res) => {
-  const {
-    userId, fName, lName, email,
-    phoneNumber, cys, studentOrganization, role
-  } = req.body;
-
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).render('error', { message: 'User not found.' });
+    console.log('Raw request body:', req.body); // Debug log
+    console.log('Request headers:', req.headers); // Debug log
+    
+    // Handle case where req.body might be undefined
+    if (!req.body) {
+      console.log('Request body is undefined');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No data received. Please try again.' 
+      });
     }
 
-    const updateData = {
-      fName, lName, email, phoneNumber, role
-    };
+    const { userId, role } = req.body;
 
-   if (user.userType === 'student') {
-  updateData.cys = cys;
-  // Handle studentOrganization properly
-  if (typeof studentOrganization === 'string') {
-    updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
-  } else if (Array.isArray(studentOrganization)) {
-    updateData.studentOrganization = studentOrganization;
-  } else {
-    updateData.studentOrganization = [];
-  }
-} else {
-  // For non-students, the parameter should be called 'affiliation', not 'studentOrganization'
-  const affiliationData = req.body.affiliation || req.body.studentOrganization; // fallback for compatibility
-  if (typeof affiliationData === 'string') {
-    updateData.affiliation = affiliationData.split(',').map(s => s.trim()).filter(Boolean);
-  } else if (Array.isArray(affiliationData)) {
-    updateData.affiliation = affiliationData;
-  } else {
-    updateData.affiliation = [];
-  }
-}
+    // Validate required fields
+    if (!userId || !role) {
+      console.log('Missing required fields:', { userId, role });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User ID and role are required.' 
+      });
+    }
 
-    await User.findByIdAndUpdate(userId, updateData);
+    // Validate role value
+    if (!['user', 'admin'].includes(role)) {
+      console.log('Invalid role value:', role);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid role. Must be either "user" or "admin".' 
+      });
+    }
 
-    res.redirect('/admin/users');
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log('User not found:', userId);
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found.' 
+      });
+    }
+
+    console.log(`Updating user ${user.fName} ${user.lName} (${userId}) role from "${user.role}" to "${role}"`);
+
+    // Update only the role field
+    const result = await User.findByIdAndUpdate(
+      userId, 
+      { role: role },
+      { new: true, runValidators: false }
+    );
+
+    if (!result) {
+      console.log('Failed to update user role');
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to update user role.' 
+      });
+    }
+
+    console.log('User role updated successfully:', {
+      userId: result._id,
+      name: `${result.fName} ${result.lName}`,
+      newRole: result.role
+    });
+
+    // Return success response
+    res.json({ 
+      success: true, 
+      message: 'User role updated successfully',
+      user: {
+        id: result._id,
+        name: `${result.fName} ${result.lName}`,
+        role: result.role
+      }
+    });
+
   } catch (err) {
-    console.error('Error updating user:', err);
-    res.status(500).render('error', { message: 'Failed to update user.' });
+    console.error('Error updating user role:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error: Failed to update user role.' 
+    });
   }
 });
 
 app.get('/admin/all-requests', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find().populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    // Fetch with proper population and error handling
+    const approvals = await RequestApproval.find()
+      .populate({
+        path: 'userId',
+        select: 'fName lName userType affiliation studentOrganization',
+        options: { strictPopulate: false } // Don't fail if user is missing
+      })
+      .lean();
+    
+    const serviceRequests = await ServiceRequest.find()
+      .populate({
+        path: 'userId',
+        select: 'fName lName userType affiliation studentOrganization',
+        options: { strictPopulate: false } // Don't fail if user is missing
+      })
+      .lean();
 
-   
+    console.log('Fetched approvals:', approvals.length);
+    console.log('Fetched services:', serviceRequests.length);
+
+    // Process requests and ensure user data is always available
     const allRequests = [
-      ...approvals.map(r => ({
-        ...r,
-        type: "Request Approval",
-        displayOrganization: r.userId?.userType === 'nonstudent' ? r.userId.affiliation : r.organization
-      })),
-      ...serviceRequests.map(r => ({
-        ...r,
-        type: "Service Request",
-        displayOrganization: r.userId?.userType === 'nonstudent' ? r.userId.affiliation : r.organization
-      }))
+      ...approvals.map(r => {
+        // Ensure user data exists
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent' 
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        } else {
+          console.warn(`Approval request ${r._id} has missing or invalid user data`);
+        }
+
+        return {
+          ...r,
+          type: "Request Approval",
+          displayOrganization,
+          userName, // Add explicit userName field
+          // Ensure datetime exists
+          datetime: r.datetime || r.createdAt
+        };
+      }),
+      ...serviceRequests.map(r => {
+        // Ensure user data exists
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent' 
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        } else {
+          console.warn(`Service request ${r._id} has missing or invalid user data`);
+        }
+
+        return {
+          ...r,
+          type: "Service Request",
+          displayOrganization,
+          userName, // Add explicit userName field
+          // Ensure datetime exists
+          datetime: r.datetime || r.createdAt
+        };
+      })
     ];
 
-   
+    // Sort logic (your existing sorting logic)
     const getStatusPriority = (request) => {
       const status = request.status.toLowerCase();
       const type = request.type;
       
-    
       if (status === "pending") return 1;
       
       if (type === "Request Approval") {
@@ -1416,7 +1544,6 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
       }
     };
 
-    // Sort logic
     allRequests.sort((a, b) => {
       const aPriority = getStatusPriority(a);
       const bPriority = getStatusPriority(b);
@@ -1426,7 +1553,6 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
       const aStatus = a.status.toLowerCase();
       const bStatus = b.status.toLowerCase();
 
-      // Apply type-specific tie-breaking rules
       if (aStatus === "pending") {
         return new Date(a.createdAt) - new Date(b.createdAt);
       }
@@ -1460,6 +1586,8 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
       return 0;
     });
 
+    console.log('Final processed requests:', allRequests.length);
+    
     res.render('allrequestsadmin', {
       allRequests,
       user: req.user
@@ -1469,16 +1597,131 @@ app.get('/admin/all-requests', requireAdmin, async (req, res) => {
     res.status(500).render('error', { message: 'Failed to load all requests page.' });
   }
 });
+// Add this route for debugging and cleanup
+app.get('/admin/debug/orphaned-requests', requireAdmin, async (req, res) => {
+  try {
+    console.log('🔍 Checking for orphaned requests...');
+    
+    // Find all requests
+    const approvals = await RequestApproval.find().lean();
+    const services = await ServiceRequest.find().lean();
+    
+    // Check which ones have invalid userIds
+    const orphanedApprovals = [];
+    const orphanedServices = [];
+    
+    for (const approval of approvals) {
+      if (!approval.userId) {
+        orphanedApprovals.push(approval);
+        continue;
+      }
+      
+      const user = await User.findById(approval.userId);
+      if (!user) {
+        orphanedApprovals.push(approval);
+      }
+    }
+    
+    for (const service of services) {
+      if (!service.userId) {
+        orphanedServices.push(service);
+        continue;
+      }
+      
+      const user = await User.findById(service.userId);
+      if (!user) {
+        orphanedServices.push(service);
+      }
+    }
+    
+    console.log(`Found ${orphanedApprovals.length} orphaned approvals`);
+    console.log(`Found ${orphanedServices.length} orphaned services`);
+    
+    res.json({
+      orphanedApprovals: orphanedApprovals.map(r => ({
+        id: r._id,
+        title: r.title,
+        userId: r.userId,
+        createdAt: r.createdAt
+      })),
+      orphanedServices: orphanedServices.map(r => ({
+        id: r._id,
+        title: r.title,
+        userId: r.userId,
+        createdAt: r.createdAt
+      })),
+      totalApprovals: approvals.length,
+      totalServices: services.length
+    });
+  } catch (err) {
+    console.error('Error checking orphaned requests:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
-
+// Route to fix orphaned requests by assigning them to a default admin user
+app.post('/admin/fix/orphaned-requests', requireAdmin, async (req, res) => {
+  try {
+    const defaultAdminId = req.user._id; // Use current admin as fallback
+    
+    // Fix orphaned approvals
+    const orphanedApprovals = await RequestApproval.find({
+      $or: [
+        { userId: { $exists: false } },
+        { userId: null }
+      ]
+    });
+    
+    // Fix orphaned services
+    const orphanedServices = await ServiceRequest.find({
+      $or: [
+        { userId: { $exists: false } },
+        { userId: null }
+      ]
+    });
+    
+    // Update orphaned requests
+    let fixedApprovals = 0;
+    let fixedServices = 0;
+    
+    for (const approval of orphanedApprovals) {
+      await RequestApproval.findByIdAndUpdate(approval._id, {
+        userId: defaultAdminId
+      });
+      fixedApprovals++;
+    }
+    
+    for (const service of orphanedServices) {
+      await ServiceRequest.findByIdAndUpdate(service._id, {
+        userId: defaultAdminId
+      });
+      fixedServices++;
+    }
+    
+    console.log(`Fixed ${fixedApprovals} approval requests`);
+    console.log(`Fixed ${fixedServices} service requests`);
+    
+    res.json({
+      success: true,
+      fixedApprovals,
+      fixedServices,
+      message: `Successfully fixed ${fixedApprovals + fixedServices} orphaned requests`
+    });
+  } catch (err) {
+    console.error('Error fixing orphaned requests:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
     const user = await User.findById(req.session.userId);
     
     // Check if it's a service request or approval request
-    const serviceRequest = await ServiceRequest.findById(requestId);
-    const approvalRequest = await RequestApproval.findById(requestId);
+    const serviceRequest = await ServiceRequest.findById(requestId)
+      .populate('userId', 'fName lName role');
+    const approvalRequest = await RequestApproval.findById(requestId)
+      .populate('userId', 'fName lName role');
     
     if (!serviceRequest && !approvalRequest) {
       return res.status(404).json({ error: 'Request not found' });
@@ -1486,7 +1729,14 @@ app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
     
     // Check access permissions
     const targetRequest = serviceRequest || approvalRequest;
-    if (user.role !== 'admin' && targetRequest.userId.toString() !== req.session.userId) {
+    
+    // Handle missing user data
+    if (!targetRequest.userId) {
+      console.warn(`Request ${requestId} has no associated user`);
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied - orphaned request' });
+      }
+    } else if (user.role !== 'admin' && targetRequest.userId._id.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
@@ -1499,7 +1749,6 @@ app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
       }).populate('messages.senderId', 'fName lName role');
       
       if (!conversation) {
-        // Create new conversation for service request
         conversation = new Conversation({
           serviceRequestId: requestId,
           requestType: 'service',
@@ -1515,7 +1764,6 @@ app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
       }).populate('messages.senderId', 'fName lName role');
       
       if (!conversation) {
-        // Create new conversation for approval request
         conversation = new Conversation({
           approvalRequestId: requestId,
           requestType: 'approval',
@@ -1532,7 +1780,6 @@ app.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch conversation', details: err.message });
   }
 });
-
 app.post('/api/conversation/:requestId/message', requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -1700,43 +1947,156 @@ app.get('/admin/cleanup-conversations', requireAdmin, async (req, res) => {
     res.status(500).json({ error: 'Failed to cleanup conversations' });
   }
 });
+// User-specific deadlines API endpoint
+app.get('/api/user-deadlines', async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
 
+    const userId = req.session.user._id;
+    const deadlinesData = {};
+
+    // Get user's approval requests
+    const approvals = await Approval.find({ userId }).lean();
+    
+    // Get user's service requests
+    const services = await ServiceRequest.find({ userId }).lean();
+
+    // Process approval requests
+    approvals.forEach(item => {
+      const dateStr = new Date(item.deadline || item.createdAt).toISOString().split('T')[0];
+      if (!deadlinesData[dateStr]) {
+        deadlinesData[dateStr] = { approvals: 0, services: 0 };
+      }
+      deadlinesData[dateStr].approvals++;
+    });
+
+    // Process service requests
+    services.forEach(item => {
+      const dateStr = new Date(item.deadline || item.createdAt).toISOString().split('T')[0];
+      if (!deadlinesData[dateStr]) {
+        deadlinesData[dateStr] = { approvals: 0, services: 0 };
+      }
+      deadlinesData[dateStr].services++;
+    });
+
+    res.json(deadlinesData);
+  } catch (error) {
+    console.error('Error fetching user deadlines:', error);
+    res.status(500).json({ error: 'Failed to fetch deadlines' });
+  }
+});
+
+// User-specific deadline details API endpoint
+app.get('/api/user-deadlines/:date/details', async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const userId = req.session.user._id;
+    const date = req.params.date;
+    const startDate = new Date(date + 'T00:00:00.000Z');
+    const endDate = new Date(date + 'T23:59:59.999Z');
+
+    // Get user's approval requests for this date
+    const approvals = await Approval.find({
+      userId,
+      $or: [
+        { deadline: { $gte: startDate, $lte: endDate } },
+        { createdAt: { $gte: startDate, $lte: endDate } }
+      ]
+    }).populate('userId', 'fName lName').lean();
+
+    // Get user's service requests for this date
+    const services = await ServiceRequest.find({
+      userId,
+      $or: [
+        { deadline: { $gte: startDate, $lte: endDate } },
+        { createdAt: { $gte: startDate, $lte: endDate } }
+      ]
+    }).populate('userId', 'fName lName').lean();
+
+    // Add dateType field to distinguish between deadline and submission dates
+    const processedApprovals = approvals.map(item => ({
+      ...item,
+      dateType: (item.deadline && item.deadline >= startDate && item.deadline <= endDate) ? 'deadline' : 'submitted'
+    }));
+
+    const processedServices = services.map(item => ({
+      ...item,
+      dateType: (item.deadline && item.deadline >= startDate && item.deadline <= endDate) ? 'deadline' : 'submitted'
+    }));
+
+    const result = {
+      approvals: processedApprovals,
+      services: processedServices,
+      totalCount: processedApprovals.length + processedServices.length
+    };
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching user deadline details:', error);
+    res.status(500).json({ error: 'Failed to fetch deadline details' });
+  }
+});
 /*****Profile Actions*****/
 // user update profile details
 app.post('/profile/update-popup', async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
+  
+  console.log('Profile update request body:', req.body); // Debug log
+  
   const { fName, mName, lName, email, username, phoneNumber, studentOrganization, cys, studentId, affiliation } = req.body;
+  
   try {
     const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).send('User not found');
+    
+    console.log('User type:', user.userType); // Debug log
+    
     const updateData = { fName, mName, lName, email, username, phoneNumber };
     
-        if (user.userType === 'student') {
-          // Handle studentOrganization as array
-          if (typeof studentOrganization === 'string') {
-            updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
-          } else if (Array.isArray(studentOrganization)) {
-            updateData.studentOrganization = studentOrganization;
-          } else {
-            updateData.studentOrganization = [];
-          }
-          updateData.cys = cys;
-        } else {
-          // Handle affiliation as array
-          if (typeof affiliation === 'string') {
-            updateData.affiliation = affiliation.split(',').map(s => s.trim()).filter(Boolean);
-          } else if (Array.isArray(affiliation)) {
-            updateData.affiliation = affiliation;
-          } else {
-            updateData.affiliation = [];
-          }
-        }
+    if (user.userType === 'student') {
+      console.log('Updating student data');
+      // Handle studentOrganization as array
+      if (typeof studentOrganization === 'string') {
+        updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (Array.isArray(studentOrganization)) {
+        updateData.studentOrganization = studentOrganization;
+      } else {
+        updateData.studentOrganization = [];
+      }
+      updateData.cys = cys;
+      updateData.studentId = studentId;
+      
+      console.log('Student organization update:', updateData.studentOrganization);
+    } else {
+      console.log('Updating non-student data');
+      console.log('Received affiliation:', affiliation);
+      
+      // Handle affiliation as array
+      if (typeof affiliation === 'string') {
+        updateData.affiliation = affiliation.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (Array.isArray(affiliation)) {
+        updateData.affiliation = affiliation;
+      } else {
+        updateData.affiliation = [];
+      }
+      
+      console.log('Final affiliation update:', updateData.affiliation);
+    }
 
-    
+    console.log('Final update data:', updateData); // Debug log
+
     await User.findByIdAndUpdate(req.session.userId, updateData);
+    
+    console.log('Profile updated successfully');
     res.status(200).send('Profile updated');
   } catch (err) {
-    console.error('Popup profile update error:', err);
-    res.status(500).send('Update failed');
+    console.error('Profile update error:', err);
+    res.status(500).send('Update failed: ' + err.message);
   }
 });
 
@@ -1808,6 +2168,8 @@ app.post('/profile/delete-picture', async (req, res) => {
 app.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
   
+  console.log('Admin profile update request body:', req.body); // Debug log
+  
   const { userId, fName, mName, lName, email, username, phoneNumber, studentOrganization, cys, affiliation } = req.body;
 
   // For security: optionally verify admin or self
@@ -1817,9 +2179,12 @@ app.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).send('User not found');
 
+    console.log('User type:', user.userType); // Debug log
+
     const updateData = { fName, mName, lName, email, username, phoneNumber };
 
-      if (user.userType === 'student') {
+    if (user.userType === 'student') {
+      console.log('Updating admin student data');
       // studentOrganization from front end may be array or comma string
       if (typeof studentOrganization === 'string') {
         updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
@@ -1829,7 +2194,12 @@ app.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
         updateData.studentOrganization = [];
       }
       updateData.cys = cys;
+      
+      console.log('Student organization update:', updateData.studentOrganization);
     } else {
+      console.log('Updating admin non-student data');
+      console.log('Received affiliation:', affiliation);
+      
       // Handle affiliation as array too
       if (typeof affiliation === 'string') {
         updateData.affiliation = affiliation.split(',').map(s => s.trim()).filter(Boolean);
@@ -1838,16 +2208,21 @@ app.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
       } else {
         updateData.affiliation = [];
       }
+      
+      console.log('Final affiliation update:', updateData.affiliation);
     }
 
+    console.log('Final update data:', updateData); // Debug log
+
     await User.findByIdAndUpdate(userId, updateData);
+    
+    console.log('Admin profile updated successfully');
     res.status(200).send('Profile updated');
   } catch (err) {
-    console.error('Popup profile update error:', err);
-    res.status(500).send('Update failed');
+    console.error('Admin profile update error:', err);
+    res.status(500).send('Update failed: ' + err.message);
   }
 });
-
 
 app.post('/admin/profile/change-password-popup', async (req, res) => {
   const { oldPassword, newPassword } = req.body;
@@ -1919,54 +2294,144 @@ app.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
 });
 
 // File Upload Handlers
-app.post('/submit-request-approval', upload.single('upload'), async (req, res) => {
+app.post('/submit-request-approval', upload.array('upload', 20), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
+  
   const { projectTitle, organization, description } = req.body;
-  const filePath = req.file?.filename || null;
+  
+  console.log('Files received:', req.files); // Debug log
+  console.log('Organization received:', organization); // Debug log
+  console.log('Organization type:', typeof organization); // Debug log
+  
+  // Handle multiple files
+  let filePaths = [];
+  if (req.files && req.files.length > 0) {
+    filePaths = req.files.map(file => file.filename);
+    console.log('File paths:', filePaths); // Debug log
+  }
+  
   try {
     const user = await User.findById(req.session.userId);
-    const actualOrganization = user.userType === 'nonstudent' ? user.affiliation : organization;
+    
+    // FIXED: Use the organization selected by the user from the form
+    let actualOrganization = 'N/A';
+    
+    // The organization should come directly from the form submission
+    if (organization && organization.trim()) {
+      actualOrganization = organization.trim();
+    } else {
+      // Only use user's default if no organization was selected in the form
+      if (user.userType === 'nonstudent') {
+        if (Array.isArray(user.affiliation)) {
+          actualOrganization = user.affiliation[0] || 'N/A'; // Use first affiliation as fallback
+        } else {
+          actualOrganization = user.affiliation || 'N/A';
+        }
+      } else {
+        if (Array.isArray(user.studentOrganization)) {
+          actualOrganization = user.studentOrganization[0] || 'N/A'; // Use first organization as fallback
+        } else {
+          actualOrganization = user.studentOrganization || 'N/A';
+        }
+      }
+    }
+    
+    console.log('Final organization (single):', actualOrganization); // Debug log
+    
+    // Validate that actualOrganization is a string
+    if (typeof actualOrganization !== 'string') {
+      throw new Error('Organization must be a single string value');
+    }
     
     // Calculate deadline (3 working days from now)
     const deadline = addWorkingDays(new Date(), 3);
     
     const newRequest = new RequestApproval({
       title: projectTitle,
-      organization: actualOrganization,
+      organization: actualOrganization, // This will now be a single selected organization
       description,
       deadline: deadline,
       userId: req.session.userId,
-      file: filePath
+      files: filePaths, // Store array of file paths
+      file: filePaths[0] || null // Keep backward compatibility
     });
+    
     await newRequest.save();
-    res.redirect('/request-approvals');
+    console.log('Request approval saved with organization:', actualOrganization); // Debug log
+    console.log('Request approval saved with files:', filePaths); // Debug log
+    res.redirect('/request-approvals?submitted=true');
   } catch (err) {
     console.error('Error saving request approval:', err);
-    res.status(500).send('Failed to save approval request');
+    res.status(500).send('Failed to save approval request: ' + err.message);
   }
 });
 
-app.post('/submit-service-request', upload.single('uploadServiceFile'), async (req, res) => {
+app.post('/submit-service-request', upload.array('uploadServiceFile', 20), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
+  
   const { projectTitle, organization, description, deadline } = req.body;
-  const filePath = req.file?.filename || null;
+  
+  console.log('Files received:', req.files); // Debug log
+  console.log('Organization received:', organization); // Debug log
+  console.log('Organization type:', typeof organization); // Debug log
+  
+  // Handle multiple files
+  let filePaths = [];
+  if (req.files && req.files.length > 0) {
+    filePaths = req.files.map(file => file.filename);
+    console.log('File paths:', filePaths); // Debug log
+  }
+  
   try {
     const user = await User.findById(req.session.userId);
-    const actualOrganization = user.userType === 'nonstudent' ? user.affiliation : organization;
+    
+    // FIXED: Use the organization selected by the user from the form
+    let actualOrganization = 'N/A';
+    
+    // The organization should come directly from the form submission
+    if (organization && organization.trim()) {
+      actualOrganization = organization.trim();
+    } else {
+      // Only use user's default if no organization was selected in the form
+      if (user.userType === 'nonstudent') {
+        if (Array.isArray(user.affiliation)) {
+          actualOrganization = user.affiliation[0] || 'N/A'; // Use first affiliation as fallback
+        } else {
+          actualOrganization = user.affiliation || 'N/A';
+        }
+      } else {
+        if (Array.isArray(user.studentOrganization)) {
+          actualOrganization = user.studentOrganization[0] || 'N/A'; // Use first organization as fallback
+        } else {
+          actualOrganization = user.studentOrganization || 'N/A';
+        }
+      }
+    }
+    
+    console.log('Final organization (single):', actualOrganization); // Debug log
+    
+    // Validate that actualOrganization is a string
+    if (typeof actualOrganization !== 'string') {
+      throw new Error('Organization must be a single string value');
+    }
     
     const newRequest = new ServiceRequest({
       title: projectTitle,
-      organization: actualOrganization,
+      organization: actualOrganization, // This will now be a single selected organization
       description,
       deadline,
       userId: req.session.userId,
-      file: filePath
+      files: filePaths, // Store array of file paths
+      file: filePaths[0] || null // Keep backward compatibility
     });
+    
     await newRequest.save();
+    console.log('Service request saved with organization:', actualOrganization); // Debug log
+    console.log('Service request saved with files:', filePaths); // Debug log
     res.redirect('/service-requests');
   } catch (err) {
     console.error('Error saving service request:', err);
-    res.status(500).send('Failed to save service request');
+    res.status(500).send('Failed to save service request: ' + err.message);
   }
 });
 

@@ -7,7 +7,17 @@
   <link rel="stylesheet" href="/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
-  .deadline-badge {
+.status-badge.for-revision {
+  background-color: #fed7d7;
+  color: #e53e3e;
+}
+
+.status-badge.archived {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.deadline-badge {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.875rem;
@@ -24,11 +34,6 @@
 .deadline-badge.overdue {
   background-color: #fecaca;
   color: #dc2626;
-}
-
-.deadline-badge.editable-deadline:hover {
-  background-color: #e5e7eb;
-  cursor: pointer;
 }
 
 .message {
@@ -73,119 +78,1044 @@
   word-wrap: break-word;
 }
 
-/* Notification Modal Styles */
-#notificationModal {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.15);
-}
-#notificationModal.flex {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#notificationModal .modal-content {
-  border-radius: 10px;
-  box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-  padding: 2em 1.5em 1.5em 1.5em;
-  background: #fff;
-  min-width: 260px;
-  max-width: 350px;
-  text-align: center;
-  position: relative;
-  border-left: 6px solid #f3f4f6;
-}
-#notificationModal.success .modal-content {
-  border-left: 6px solid #16a34a;
-}
-#notificationModal.warning .modal-content {
-  border-left: 6px solid #eab308;
-}
-#notificationModal .close {
-  color: #6b7280;
-  position: absolute;
-  right: 10px; top: 8px;
-  font-size: 1.5em;
-  cursor: pointer;
-  font-weight: bold;
-  line-height: 1;
-}
-#notificationModal.success #notificationIcon {
-  color: #16a34a;
-}
-#notificationModal.warning #notificationIcon {
-  color: #eab308;
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #d97706;
 }
 
-/* Confirmation Modal Styles */
-#confirmationModal {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.15);
+.status-badge.approved {
+  background-color: #dcfce7;
+  color: #16a34a;
 }
-#confirmationModal.flex {
+
+.status-badge.for-revision {
+  background-color: #fed7d7;
+  color: #e53e3e;
+}
+
+.status-badge.completed {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.status-badge.rejected {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.status-badge.archived {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Enhanced Request Details Modal Styles */
+.details-modal-body {
+  padding: 0;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.details-content {
+  padding: 2rem;
+}
+
+/* IMPROVED General Information Section - Single Row Layout */
+.general-info-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.general-info-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  text-align: left;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Single Column Layout for General Information */
+.general-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 0;
+  margin-right: 1rem;
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
+  flex: 1;
+}
+
+/* Admin Controls Section - Separate from General Info */
+.admin-controls-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid var(--primary-green);
+}
+
+.admin-controls-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  text-align: left;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+  background: var(--primary-green);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.control-card {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.control-card:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.1);
+  transform: translateY(-1px);
+}
+
+.control-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.control-value {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-icon {
+  margin-left: auto;
+  color: var(--primary-green);
+  font-size: 1rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.control-card:hover .edit-icon {
+  opacity: 1;
+}
+
+.status-badge-large {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.status-badge-large.pending {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.status-badge-large.approved {
+  background: #dcfce7;
+  color: #16a34a;
+  border-color: #10b981;
+}
+
+.status-badge-large.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.status-badge-large.completed {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.status-badge-large.for-revision {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.status-badge-large.archived {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #9ca3af;
+}
+
+.deadline-badge-large {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.deadline-badge-large.overdue {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.deadline-badge-large.near-deadline {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #f59e0b;
+}
+
+/* Description Section */
+.description-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.description-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.description-content {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  line-height: 1.6;
+  color: #374151;
+  font-size: 0.95rem;
+  min-height: 80px;
+}
+
+/* Enhanced file preview styles */
+.enhanced-file-preview {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.5rem;
+}
+
+.enhanced-file-preview h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.enhanced-file-item {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.enhanced-file-item:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 8px 25px rgba(64, 139, 78, 0.15);
+  transform: translateY(-2px);
+}
+
+.file-header-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.file-info-enhanced {
+  flex: 1;
+}
+
+.file-name-enhanced {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+  margin: 0;
+  word-break: break-word;
+  line-height: 1.4;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-type-enhanced {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.file-preview-container {
+  margin: 0.75rem 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-#confirmationModal .modal-content {
-  border-radius: 10px;
-  box-shadow: 0 6px 32px rgba(0,0,0,0.18);
-  padding: 2em 1.5em 1.5em 1.5em;
-  background: #fff;
-  min-width: 320px;
-  max-width: 450px;
-  text-align: center;
-  position: relative;
-  border-left: 6px solid #eab308;
+
+.file-preview-container img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 4px;
 }
-#confirmationModal .close {
-  color: #6b7280;
-  position: absolute;
-  right: 10px; top: 8px;
-  font-size: 1.5em;
+
+.download-btn-enhanced {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
   cursor: pointer;
-  font-weight: bold;
-  line-height: 1;
+  border: 1px solid transparent;
 }
-#confirmationModal #confirmIcon {
-  color: #eab308;
+
+.download-btn-enhanced:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.25);
+  color: white;
+  text-decoration: none;
+  background: #157347;
 }
-#confirmationModal .modal-actions {
+
+.no-files-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+}
+
+.no-files-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+.no-files-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* Quick Actions */
+.quick-action-buttons {
   display: flex;
   gap: 1rem;
   justify-content: center;
   margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f0fdf4;
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
 }
-#confirmationModal .confirm-btn {
-  background-color: #3b82f6;
+
+.quick-action-btn {
+  background: var(--primary-green);
   color: white;
   border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.9rem;
-  font-weight: 500;
 }
-#confirmationModal .cancel-btn {
-  background-color: #e5e7eb;
-  color: #374151;
+
+.quick-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.2);
+  background: #157347;
+}
+
+.quick-action-btn.chat {
+  background: #3b82f6;
+}
+
+.quick-action-btn.chat:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Notification Styles */
+.update-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #10b981;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.update-notification.show {
+  transform: translateX(0);
+}
+
+.update-notification.error {
+  background: #ef4444;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+}
+
+/* FIXED Modal Base Styles - Ensure proper display */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show,
+.modal[style*="flex"] {
+  display: flex !important;
+}
+
+/* Ensure modal content is visible */
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 1200px;
+  width: 95%;
+  max-height: 95vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  background: var(--primary-green);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+}
+
+.close {
+  background: none;
   border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.375rem;
+  color: white;
+  font-size: 1.5rem;
   cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure table rows are clickable */
+.request-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.request-row:hover {
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced Admin Controls Form */
+.admin-form-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid var(--primary-green);
+}
+
+.admin-form-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  text-align: left;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.form-field select,
+.form-field input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+  background: white;
+}
+
+.form-field select:focus,
+.form-field input:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.form-field.readonly {
+  opacity: 0.7;
+}
+
+.form-field.readonly input {
+  background: #f9fafb;
+  cursor: not-allowed;
+}
+
+.current-value {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 4px;
+  border-left: 3px solid var(--primary-green);
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+  margin-top: 2rem;
+}
+
+.admin-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
   font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.admin-btn-primary {
+  background: var(--primary-green);
+  color: white;
+}
+
+.admin-btn-primary:hover {
+  background: #157347;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.admin-btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.admin-btn-secondary:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Confirmation Modal Styles */
+.confirmation-modal {
+  display: none;
+  position: fixed;
+  z-index: 99999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.confirmation-modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirmation-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirmation-header {
+  background: var(--primary-green);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 12px 12px 0 0;
+}
+
+.confirmation-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.confirmation-body {
+  padding: 2rem;
+}
+
+.confirmation-message {
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.changes-summary {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 4px solid var(--primary-green);
+  margin-bottom: 1.5rem;
+}
+
+.changes-summary h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.change-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.change-item:last-child {
+  border-bottom: none;
+}
+
+.change-label {
   font-weight: 500;
+  color: #374151;
 }
-#confirmationModal .confirm-btn:hover {
-  background-color: #2563eb;
+
+.change-values {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
 }
-#confirmationModal .cancel-btn:hover {
-  background-color: #d1d5db;
+
+.old-value {
+  color: #dc2626;
+  text-decoration: line-through;
+}
+
+.new-value {
+  color: var(--primary-green);
+  font-weight: 600;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirmation-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.confirmation-btn-confirm {
+  background: var(--primary-green);
+  color: white;
+}
+
+.confirmation-btn-confirm:hover {
+  background: #157347;
+  transform: translateY(-1px);
+}
+
+.confirmation-btn-cancel {
+  background: #6b7280;
+  color: white;
+}
+
+.confirmation-btn-cancel:hover {
+  background: #4b5563;
+}
+
+/* Loading state */
+.admin-btn.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.admin-btn.loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Custom Status Filter Styles */
+.custom-select-wrapper {
+  position: relative;
+}
+
+.custom-select {
+  position: relative;
+  cursor: pointer;
+}
+
+.select-display {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #374151;
+  position: relative;
+}
+
+.select-display::after {
+  content: '▼';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.select-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.dropdown-option input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .details-content {
+    padding: 1rem;
+  }
+  
+  .general-info-row {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .info-item {
+    min-width: 100%;
+  }
+  
+  .admin-controls-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .file-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .modal-content {
+    width: 98%;
+    max-height: 98vh;
+  }
+  
+  .general-info-section,
+  .admin-controls-section,
+  .description-section,
+  .enhanced-file-preview {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Add these keyframes to the existing style section */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
 }
 </style>
 </head>
@@ -230,6 +1160,7 @@
           <a href="/admin/users" class="view-all-btn">Users</a>
         </nav>
 
+        <!-- Filter Options -->
         <div class="filter-section">
           <div class="filter-container">
             <div class="filter-group">
@@ -299,38 +1230,56 @@
           </div>
         </div>
 
-<!-- Table -->
-        <section class="table-section" style="overflow-x: auto; min-width: 100%;">
-          <table class="requests-table" style="width: 100%; min-width: 1200px; border-collapse: collapse; background: white;">
+        <!-- Table -->
+        <section class="table-section" style="overflow-x: auto;">
+          <table class="requests-table" style="width: 100%; border-collapse: collapse; background: white;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
               <tr>
-                <th style="min-width: 80px;">Request ID</th>
-                <th style="min-width: 120px;">User</th>
-                <th style="min-width: 150px;">Project Title</th>
-                <th style="min-width: 200px;">Office/Department/Organization</th>
-                <th style="min-width: 100px;">Status</th>
-                <th style="min-width: 120px;">Assigned Units</th>
-                <th style="min-width: 140px;">Date Submitted</th>
-                <th style="min-width: 100px;">Deadline</th>
+                <th>Request ID</th>
+                <th>User</th>
+                <th>Project Title</th>
+                <th>Office/Department/Organization</th>
+                <th>Status</th>
+                <th>Assigned Units</th>
+                <th>Date Submitted</th>
+                <th>Deadline</th>
               </tr>
             </thead>
             <tbody id="requestsTableBody">
-              <% approvals.forEach(request => { %>
+              <% approvals.forEach(request => { 
+                // Calculate local deadline and formatted deadline string
+                let localDeadline = '';
+                let formattedDeadline = 'N/A';
+                if (request.deadline) {
+                  const d = new Date(request.deadline);
+                  localDeadline = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                  formattedDeadline = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                }
+                
+                // Ensure userName is always available
+                let displayUserName = 'System User';
+                if (request.userId && request.userId.fName) {
+                  displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
+                }
+              %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
                   data-request-id="<%= request._id.toString().slice(-6) %>"
+                  data-type="Request Approval"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status.toLowerCase() %>"
                   data-organization="<%= request.displayOrganization || request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
                   data-datetime="<%= request.datetime.toLocaleString() %>"
-                  data-deadline="<%= request.deadline ? request.deadline.toLocaleDateString() : 'N/A' %>"
+                  data-deadline="<%= localDeadline %>"
+                  data-formatted-deadline="<%= formattedDeadline %>"
                   data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
                   data-description="<%= request.description %>" 
                   data-file="<%= request.file || '' %>"
-                  data-student="<%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %>">
+                  data-files="<%= request.files ? request.files.join(',') : '' %>"
+                  data-student="<%= displayUserName %>">
                 <td><%= request._id.toString().slice(-6) %></td>
-                <td><%= request.userId ? request.userId.fName + ' ' + request.userId.lName : 'Unknown' %></td>
+                <td><%= displayUserName %></td>
                 <td><%= request.title %></td>
                 <td><%= request.displayOrganization || request.organization %></td>
                 <td>
@@ -349,7 +1298,7 @@
                       const isNearDeadline = (deadline - today) / (1000 * 60 * 60 * 24) <= 1 && deadline >= today && (request.status.toLowerCase() === 'pending' || request.status.toLowerCase() === 'for revision');
                     %>
                     <span class="deadline-badge <%= isOverdue ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>">
-                      <%= request.deadline.toLocaleDateString() %>
+                      <%= formattedDeadline %>
                     </span>
                   <% } else { %>
                     <span class="deadline-badge">N/A</span>
@@ -372,53 +1321,120 @@
     </div>
   </div>
 
-  <div id="detailsModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <header class="modal-header">
-        <span class="modal-title">Request Details</span>
-        <span class="close" id="closeDetailsModal">&times;</span>
-      </header>
-      <div class="modal-body">
-        <p><strong>User:</strong> <span id="detailStudent"></span></p>
-        <p><strong>Title:</strong> <span id="detailTitle"></span></p>
-        <p><strong>Office/Department/Organization:</strong> <span id="detailOrganization"></span></p>
-        <p><strong>Description:</strong> <span id="detailDescription"></span></p>
-        <p><strong>Status:</strong> <span id="detailStatus"></span></p>
-        <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
-        <p><strong>Date Submitted:</strong> <span id="detailDatetime"></span></p>
-        <p><strong>Deadline:</strong> <span id="detailDeadline"></span></p>
-        <div id="file-preview" style="margin-top:1rem;"></div>
-        <form class="modal-form" action="/admin/approval/update-status" method="POST" style="margin-top: 1rem;">
-          <input type="hidden" id="updateRequestId" name="requestId" />
-          <div class="form-group">
-            <label for="status">Status:</label>
-            <select id="status" name="status">
-              <option value="Pending">Pending</option>
-              <option value="For Revision">For Revision</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Archived">Archived</option>
-            </select>
+<!-- Enhanced Request Details Modal -->
+<div id="detailsModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 1000px;">
+    <header class="modal-header">
+      <span class="modal-title">Approval Request Details</span>
+      <span class="close" id="closeDetailsModal">&times;</span>
+    </header>
+    <div class="modal-body details-modal-body">
+      <div class="details-content">
+        
+        <!-- General Information Section -->
+        <div class="general-info-section">
+          <h3>General Information</h3>
+          <div class="general-info-row">
+            <div class="info-item">
+              <span class="info-label">Project Title:</span>
+              <span class="info-value" id="detailTitle"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Requested By:</span>
+              <span class="info-value" id="detailStudent"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Request Type:</span>
+              <span class="info-value" id="detailType">Request Approval</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Organization:</span>
+              <span class="info-value" id="detailOrganization"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Date Submitted:</span>
+              <span class="info-value" id="detailDatetime"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Deadline:</span>
+              <span class="info-value" id="detailDeadlineInfo"></span>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="assignedUnits">Assigned Units:</label>
-            <select id="assignedUnits" name="assignedUnits">
-              <option value="">Not yet assigned</option>
-              <option value="Social Media Unit">Social Media Unit</option>
-              <option value="Graphics Unit">Graphics Unit</option>
-              <option value="Multimedia Unit">Multimedia Unit</option>
-              <option value="Public Relations Unit">Public Relations Unit</option>
-            </select>
-          </div>
-          <div class="form-actions">
-          <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Update</button>
-          <button type="button" class="view-all-btn" id="openChatFromModal" style="background: var(--primary-green); color: white;">💬 Chat</button>
         </div>
-        </form>
+
+        <!-- Admin Controls Form Section -->
+        <div class="admin-form-section">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+            </svg>
+            Administrative Controls
+            <span class="admin-badge">EDIT & UPDATE</span>
+          </h3>
+          
+          <form id="adminUpdateForm" onsubmit="return false;">
+            <div class="admin-form-grid">
+              
+              <!-- Status Field -->
+              <div class="form-field">
+                <label for="adminStatusSelect">Request Status</label>
+                <select id="adminStatusSelect" name="status">
+                  <!-- Options will be populated by JavaScript -->
+                </select>
+                <div class="current-value">
+                  Current: <span id="currentStatusValue">Loading...</span>
+                </div>
+              </div>
+              
+              <!-- Assigned Units Field -->
+              <div class="form-field">
+                <label for="adminUnitsSelect">Assigned Unit</label>
+                <select id="adminUnitsSelect" name="assignedUnits">
+                  <option value="">Not yet assigned</option>
+                  <option value="Social Media Unit">Social Media Unit</option>
+                  <option value="Graphics Unit">Graphics Unit</option>
+                  <option value="Multimedia Unit">Multimedia Unit</option>
+                  <option value="Public Relations Unit">Public Relations Unit</option>
+                </select>
+                <div class="current-value">
+                  Current: <span id="currentUnitsValue">Loading...</span>
+                </div>
+              </div>
+              
+            </div>
+            
+            <div class="admin-form-actions">
+              <button type="button" class="admin-btn admin-btn-secondary" id="adminCancelBtn">
+                ✕ Cancel Changes
+              </button>
+              <button type="button" class="admin-btn admin-btn-primary" id="adminUpdateBtn">
+                💾 Update Request
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Description Section -->
+        <div class="description-section">
+          <h3>Project Description</h3>
+          <div class="description-content" id="detailDescription"></div>
+        </div>
+
+        <!-- Files Section -->
+        <div id="file-preview"></div>
+
+        <!-- Quick Actions -->
+        <div class="quick-action-buttons">
+          <button class="quick-action-btn chat" id="openChatFromModal">
+            💬 Start Conversation
+          </button>
+        </div>
       </div>
     </div>
   </div>
-  <!-- Conversation Modal -->
+</div>
+
+<!-- Conversation Modal -->
 <div id="conversationModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width: 800px; width: 90%; height: 80vh; overflow: hidden;">
     <header class="modal-header">
@@ -441,446 +1457,1360 @@
   </div>
 </div>
 
-<!-- Notification Modal -->
-<div id="notificationModal" class="modal">
-  <div class="modal-content">
-    <span class="close" id="closeNotificationModal">&times;</span>
-    <div id="notificationIcon" style="font-size: 2.5rem; margin-top: 10px;"></div>
-    <div id="notificationMessage" style="margin: 1.2em 0 1em 0; font-size:1.1em;"></div>
-  </div>
-</div>
-
-<!-- Confirmation Modal -->
-<div id="confirmationModal" class="modal">
-  <div class="modal-content">
-    <span class="close" id="closeConfirmationModal">&times;</span>
-    <div id="confirmIcon" style="font-size: 2.5rem; margin-top: 10px;">&#9888;</div>
-    <div id="confirmationMessage" style="margin: 1.2em 0 1em 0; font-size:1.1em;"></div>
-    <div class="modal-actions">
-      <button id="confirmYesBtn" class="confirm-btn">OK</button>
-      <button id="confirmNoBtn" class="cancel-btn">Cancel</button>
+<!-- Update Confirmation Modal -->
+<div id="updateConfirmationModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header">
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Confirm Request Update
+      </h3>
+    </div>
+    <div class="confirmation-body">
+      <div class="confirmation-message">
+        Are you sure you want to update this request with the following changes?
+      </div>
+      
+      <div class="changes-summary" id="changesSummary">
+        <h4>Changes to be applied:</h4>
+        <div id="changesContainer">
+          <!-- Changes will be populated by JavaScript -->
+        </div>
+      </div>
+      
+      <div class="confirmation-actions">
+        <button class="confirmation-btn confirmation-btn-cancel" id="confirmCancelBtn">
+          Cancel
+        </button>
+        <button class="confirmation-btn confirmation-btn-confirm" id="confirmUpdateBtn">
+          Confirm Update
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
+
 <script>
-    const detailModal = document.getElementById("detailsModal");
-    const closeDetailsModal = document.getElementById("closeDetailsModal");
-    const clearFiltersBtn = document.getElementById("clearFilters");
-    const tableBody = document.getElementById("requestsTableBody");
-    const allRows = Array.from(document.querySelectorAll('.request-row'));
-    const conversationModal = document.getElementById("conversationModal");
-    const closeConversationModal = document.getElementById("closeConversationModal");
-    const messagesContainer = document.getElementById("messagesContainer");
-    const messageInput = document.getElementById("messageInput");
-    const sendMessageBtn = document.getElementById("sendMessageBtn");
-    const openChatFromModal = document.getElementById("openChatFromModal");
-    let currentConversationId = null;
+console.log('🚀 Starting Approvals Admin script...');
 
-    // Modal close handlers
-    closeConversationModal.onclick = () => conversationModal.style.display = 'none';
-    closeDetailsModal.onclick = () => detailModal.style.display = 'none';
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📋 DOM Content Loaded - Initializing...');
+  
+  // Global variables
+  let detailModal = document.getElementById("detailsModal");
+  let updateConfirmationModal = document.getElementById("updateConfirmationModal");
+  let currentRequestId = null;
+  let currentRequestType = 'Request Approval';
+  let originalValues = {};
+  let allRequestsData = []; // Store all requests for filtering
+  
+  console.log('🔍 DOM Elements Check:', {
+    detailModal: !!detailModal,
+    updateConfirmationModal: !!updateConfirmationModal,
+    requestRows: document.querySelectorAll('.request-row').length
+  });
 
+  // Initialize filters functionality
+  function initializeFilters() {
+    console.log('🔍 Initializing filters...');
+    
+    // Store all original request data
+    const rows = document.querySelectorAll('.request-row');
+    allRequestsData = Array.from(rows).map(row => ({
+      element: row,
+      requestId: row.dataset.requestId,
+      type: row.dataset.type,
+      title: row.dataset.title.toLowerCase(),
+      status: row.dataset.status.toLowerCase(),
+      organization: row.dataset.organization.toLowerCase(),
+      units: row.dataset.units.toLowerCase(),
+      student: row.dataset.student.toLowerCase(),
+      datetime: row.dataset.datetime,
+      date: row.dataset.date,
+      description: row.dataset.description.toLowerCase()
+    }));
+
+    // Get filter elements
+    const requestIdFilter = document.getElementById('requestIdFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const studentFilter = document.getElementById('studentFilter');
+    const organizationFilter = document.getElementById('organizationFilter');
+    const dateFromFilter = document.getElementById('dateFromFilter');
+    const dateToFilter = document.getElementById('dateToFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const resultsCount = document.getElementById('resultsCount');
+
+    // Initialize status filter (multi-select)
+    initializeStatusFilter();
+
+    // Add event listeners for all filters
+    if (requestIdFilter) {
+      requestIdFilter.addEventListener('input', debounce(applyFilters, 300));
+    }
+
+    if (studentFilter) {
+      studentFilter.addEventListener('input', debounce(applyFilters, 300));
+    }
+
+    if (organizationFilter) {
+      organizationFilter.addEventListener('input', debounce(applyFilters, 300));
+    }
+
+    if (dateFromFilter) {
+      dateFromFilter.addEventListener('change', applyFilters);
+    }
+
+    if (dateToFilter) {
+      dateToFilter.addEventListener('change', applyFilters);
+    }
+
+    if (clearFiltersBtn) {
+      clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+
+    // Apply filters function
+    function applyFilters() {
+      console.log('🔍 Applying filters...');
+      
+      const filters = {
+        requestId: requestIdFilter ? requestIdFilter.value.toLowerCase().trim() : '',
+        status: getSelectedStatuses(),
+        student: studentFilter ? studentFilter.value.toLowerCase().trim() : '',
+        organization: organizationFilter ? organizationFilter.value.toLowerCase().trim() : '',
+        dateFrom: dateFromFilter ? dateFromFilter.value : '',
+        dateTo: dateToFilter ? dateToFilter.value : ''
+      };
+
+      console.log('Applied filters:', filters);
+
+      let visibleCount = 0;
+
+      allRequestsData.forEach(request => {
+        let shouldShow = true;
+
+        // Request ID filter
+        if (filters.requestId && !request.requestId.toLowerCase().includes(filters.requestId)) {
+          shouldShow = false;
+        }
+
+        // Status filter (multi-select)
+        if (filters.status.length > 0 && !filters.status.includes('all')) {
+          if (!filters.status.includes(request.status)) {
+            shouldShow = false;
+          }
+        }
+
+        // Student filter
+        if (filters.student && !request.student.includes(filters.student)) {
+          shouldShow = false;
+        }
+
+        // Organization filter
+        if (filters.organization && !request.organization.includes(filters.organization)) {
+          shouldShow = false;
+        }
+
+        // Date range filter
+        if (filters.dateFrom || filters.dateTo) {
+          const requestDate = request.date;
+          
+          if (filters.dateFrom && requestDate < filters.dateFrom) {
+            shouldShow = false;
+          }
+          
+          if (filters.dateTo && requestDate > filters.dateTo) {
+            shouldShow = false;
+          }
+        }
+
+        // Show/hide row
+        if (shouldShow) {
+          request.element.style.display = '';
+          visibleCount++;
+        } else {
+          request.element.style.display = 'none';
+        }
+      });
+
+      // Update results count
+      updateResultsCount(visibleCount);
+    }
+
+    // Initialize status filter dropdown
+    function initializeStatusFilter() {
+      const statusFilter = document.getElementById('statusFilter');
+      const statusDropdown = document.getElementById('statusDropdown');
+      
+      if (!statusFilter || !statusDropdown) return;
+
+      // Toggle dropdown
+      statusFilter.addEventListener('click', function(e) {
+        e.stopPropagation();
+        statusDropdown.style.display = statusDropdown.style.display === 'block' ? 'none' : 'block';
+      });
+
+      // Handle checkbox changes
+      const checkboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          if (this.value === 'all') {
+            // If "All Status" is checked, uncheck others
+            if (this.checked) {
+              checkboxes.forEach(cb => {
+                if (cb.value !== 'all') cb.checked = false;
+              });
+            }
+          } else {
+            // If any specific status is checked, uncheck "All Status"
+            if (this.checked) {
+              const allCheckbox = statusDropdown.querySelector('input[value="all"]');
+              if (allCheckbox) allCheckbox.checked = false;
+            }
+          }
+
+          updateStatusDisplay();
+          applyFilters();
+        });
+      });
+
+      // Update display text
+      function updateStatusDisplay() {
+        const selectDisplay = statusFilter.querySelector('.select-display');
+        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked && cb.value !== 'all');
+        
+        if (checkedBoxes.length === 0) {
+          // If nothing is selected, check "All Status"
+          const allCheckbox = statusDropdown.querySelector('input[value="all"]');
+          if (allCheckbox) allCheckbox.checked = true;
+          selectDisplay.textContent = 'All Status';
+        } else if (checkedBoxes.length === 1) {
+          selectDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + checkedBoxes[0].value.slice(1);
+        } else {
+          selectDisplay.textContent = `${checkedBoxes.length} selected`;
+        }
+      }
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!statusFilter.contains(e.target)) {
+          statusDropdown.style.display = 'none';
+        }
+      });
+    }
+
+    // Get selected statuses
+    function getSelectedStatuses() {
+      const statusDropdown = document.getElementById('statusDropdown');
+      if (!statusDropdown) return ['all'];
+
+      const checkedBoxes = statusDropdown.querySelectorAll('input[type="checkbox"]:checked');
+      return Array.from(checkedBoxes).map(cb => cb.value);
+    }
+
+    // Clear all filters
+    function clearAllFilters() {
+      console.log('🧹 Clearing all filters...');
+      
+      // Clear text inputs
+      if (requestIdFilter) requestIdFilter.value = '';
+      if (studentFilter) studentFilter.value = '';
+      if (organizationFilter) organizationFilter.value = '';
+      if (dateFromFilter) dateFromFilter.value = '';
+      if (dateToFilter) dateToFilter.value = '';
+      
+      // Reset status filter
+      const statusDropdown = document.getElementById('statusDropdown');
+      if (statusDropdown) {
+        const checkboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = checkbox.value === 'all';
+        });
+        
+        const selectDisplay = statusFilter.querySelector('.select-display');
+        if (selectDisplay) selectDisplay.textContent = 'All Status';
+      }
+
+      // Show all rows
+      allRequestsData.forEach(request => {
+        request.element.style.display = '';
+      });
+
+      // Update results count
+      updateResultsCount(allRequestsData.length);
+      
+      showNotification('All filters cleared', 'info');
+    }
+
+    // Update results count
+    function updateResultsCount(count) {
+      if (resultsCount) {
+        const total = allRequestsData.length;
+        if (count === total) {
+          resultsCount.textContent = `Showing all ${total} requests`;
+        } else {
+          resultsCount.textContent = `Showing ${count} of ${total} requests`;
+        }
+      }
+    }
+
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Initial results count
+    updateResultsCount(allRequestsData.length);
+    
+    console.log('✅ Filters initialized successfully');
+  }
+  
+  // Initialize modal close handlers
+  function initializeModalHandlers() {
+    const closeBtn = document.getElementById("closeDetailsModal");
+    if (closeBtn) {
+      closeBtn.onclick = () => detailModal.style.display = 'none';
+    }
+    
+    // Admin form handlers
+    const adminCancelBtn = document.getElementById('adminCancelBtn');
+    const adminUpdateBtn = document.getElementById('adminUpdateBtn');
+    
+    if (adminCancelBtn) {
+      adminCancelBtn.onclick = () => {
+        resetFormToOriginalValues();
+      };
+    }
+    
+    if (adminUpdateBtn) {
+      adminUpdateBtn.onclick = () => {
+        showUpdateConfirmation();
+      };
+    }
+    
+    // Confirmation modal handlers
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    const confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
+    
+    if (confirmCancelBtn) {
+      confirmCancelBtn.onclick = () => {
+        updateConfirmationModal.classList.remove('show');
+      };
+    }
+    
+    if (confirmUpdateBtn) {
+      confirmUpdateBtn.onclick = () => {
+        performUpdate();
+      };
+    }
+    
+    // Close modals when clicking outside
     window.onclick = function(event) {
       if (event.target === detailModal) detailModal.style.display = 'none';
-      if (event.target === conversationModal) conversationModal.style.display = 'none';
-      if (event.target === document.getElementById('notificationModal')) {
-        document.getElementById('notificationModal').style.display = 'none';
-      }
-      if (event.target === document.getElementById('confirmationModal')) {
-        document.getElementById('confirmationModal').style.display = 'none';
-      }
-    }
-
-    // Notification modal functions
-    function showNotificationModal(type, message) {
-      const modal = document.getElementById('notificationModal');
-      const icon = document.getElementById('notificationIcon');
-      const msg = document.getElementById('notificationMessage');
-      
-      modal.className = 'modal ' + type + ' flex';
-      if (type === "success") {
-        icon.innerHTML = "&#10003;"; // checkmark
-      } else if (type === "warning") {
-        icon.innerHTML = "&#9888;"; // warning sign
-      } else {
-        icon.innerHTML = "";
-      }
-      msg.innerText = message;
-      modal.style.display = 'flex';
-
-      // Success: auto-close after 1s
-      if (type === "success") {
-        setTimeout(() => {
-          modal.style.display = 'none';
-        }, 1000);
-      }
-    }
-
-    // Close notification modal by X
-    document.getElementById("closeNotificationModal").onclick = function() {
-      document.getElementById("notificationModal").style.display = 'none';
-    }
-
-    // Confirmation modal functions
-    function showConfirmationModal(message) {
-      return new Promise((resolve) => {
-        const modal = document.getElementById('confirmationModal');
-        const msg = document.getElementById('confirmationMessage');
-        const yesBtn = document.getElementById('confirmYesBtn');
-        const noBtn = document.getElementById('confirmNoBtn');
-        const closeBtn = document.getElementById('closeConfirmationModal');
-        
-        msg.innerText = message;
-        modal.className = 'modal flex';
-        modal.style.display = 'flex';
-        
-        // Handle responses
-        const handleYes = () => {
-          modal.style.display = 'none';
-          resolve(true);
-        };
-        
-        const handleNo = () => {
-          modal.style.display = 'none';
-          resolve(false);
-        };
-        
-        // Add event listeners (remove any existing ones first)
-        yesBtn.onclick = handleYes;
-        noBtn.onclick = handleNo;
-        closeBtn.onclick = handleNo;
-      });
-    }
-
-    // Chat functions 
-      openChatFromModal.onclick = function() {
-      const requestId = document.getElementById("updateRequestId").value;
-      detailModal.style.display = 'none';
-      openChat(requestId);
+      if (event.target === updateConfirmationModal) updateConfirmationModal.classList.remove('show');
     };
-
-    function openChat(requestId) {  
-      currentConversationId = requestId;
-      loadConversation(requestId);  
-      conversationModal.style.display = 'flex';
-    }
-
-async function loadConversation(requestId) {
-  try {
-    // USE GENERIC ROUTE, NOT SPECIFIC /approval/ ROUTE
-    const response = await fetch(`/api/conversation/${requestId}`);
-    const conversation = await response.json();
-    
-    messagesContainer.innerHTML = '';
-    
-    if (conversation.messages && conversation.messages.length > 0) {
-      conversation.messages.forEach(message => {
-        addMessageToUI(message);
-      });
-      
-      // USE GENERIC ROUTE, NOT SPECIFIC /approval/ ROUTE
-      await fetch(`/api/conversation/${requestId}/mark-read`, {
-        method: 'POST'
-      });
-    } else {
-      messagesContainer.innerHTML = '<p style="text-align: center; color: #6b7280;">No messages yet. Start the conversation!</p>';
-    }
-    
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  } catch (error) {
-    console.error('Error loading conversation:', error);
-    messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
   }
-}
 
+  // Add conversation modal functionality
+  function initializeConversationModal() {
+    const openChatBtn = document.getElementById('openChatFromModal');
+    const conversationModal = document.getElementById('conversationModal');
+    const closeConversationBtn = document.getElementById('closeConversationModal');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    const messageInput = document.getElementById('messageInput');
+    const messagesContainer = document.getElementById('messagesContainer');
+    
+    if (openChatBtn) {
+      openChatBtn.addEventListener('click', function() {
+        if (currentRequestId) {
+          console.log('Opening conversation for request:', currentRequestId);
+          openConversation(currentRequestId);
+        } else {
+          showNotification('Please select a request first', 'error');
+        }
+      });
+    }
+    
+    if (closeConversationBtn) {
+      closeConversationBtn.addEventListener('click', function() {
+        conversationModal.style.display = 'none';
+      });
+    }
+    
+        if (sendMessageBtn) {
+      sendMessageBtn.addEventListener('click', sendMessage);
+    }
+    
+    if (messageInput) {
+      messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+    
+    // Close modal when clicking outside
+    if (conversationModal) {
+      conversationModal.addEventListener('click', function(e) {
+        if (e.target === conversationModal) {
+          conversationModal.style.display = 'none';
+        }
+      });
+    }
+  }
 
-    function addMessageToUI(message) {
-      const messageDiv = document.createElement('div');
-      const isAdmin = message.senderRole === 'admin';
-      const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
-      
-      messageDiv.className = `message ${isAdmin ? 'admin-message' : 'user-message'}`;
-      messageDiv.innerHTML = `
-        <div class="message-content">
-          <div class="message-header">
-            <strong>${senderName}</strong>
-            <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+  // Open conversation function
+  async function openConversation(requestId) {
+    const conversationModal = document.getElementById('conversationModal');
+    const messagesContainer = document.getElementById('messagesContainer');
+    
+    if (!conversationModal || !messagesContainer) {
+      console.error('Conversation modal elements not found');
+      return;
+    }
+    
+    try {
+      // Show loading state
+      messagesContainer.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+          <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+            <p>Loading conversation...</p>
           </div>
-          <div class="message-text">${message.content}</div>
         </div>
       `;
       
-      messagesContainer.appendChild(messageDiv);
-    }
-
-sendMessageBtn.onclick = async function() {
-  const content = messageInput.value.trim();
-  if (!content || !currentConversationId) return;
-
-  try {
-    // USE GENERIC ROUTE, NOT SPECIFIC /approval/ ROUTE
-    const response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ content })
-    });
-
-    const result = await response.json();
-    
-    if (result.success) {
-      addMessageToUI(result.message);
-      messageInput.value = '';
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    } else {
-      showNotificationModal("warning", "Failed to send message");
-    }
-  } catch (error) {
-    console.error('Error sending message:', error);
-    showNotificationModal("warning", "Failed to send message");
-  }
-};
-
-    messageInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        sendMessageBtn.click();
-      }
-    });
-
-    // Filter functions
-    function filterRequests() {
-      const requestIdValue = document.getElementById('requestIdFilter').value.toLowerCase();
-      const selectedStatuses = getSelectedStatuses();
-      const studentValue = document.getElementById('studentFilter').value.toLowerCase();
-      const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
-      const dateFromValue = document.getElementById('dateFromFilter').value;
-      const dateToValue = document.getElementById('dateToFilter').value;
+      conversationModal.style.display = 'flex';
       
-      let visibleCount = 0;
-
-      allRows.forEach(row => {
-        const rowRequestId = row.dataset.requestId.toLowerCase();
-        const rowStatus = row.dataset.status.toLowerCase();
-        const rowStudent = row.dataset.student.toLowerCase();
-        const rowOrganization = row.dataset.organization.toLowerCase();
-        const rowDate = row.dataset.date;
-
-        const requestIdMatch = requestIdValue === '' || rowRequestId.includes(requestIdValue);
-        const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
-        const studentMatch = studentValue === '' || rowStudent.includes(studentValue);
-        const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
-
-        let dateMatch = true;
-        if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
-        if (dateToValue && rowDate > dateToValue) dateMatch = false;
-
-        const isVisible = requestIdMatch && statusMatch && studentMatch && organizationMatch && dateMatch;
-        row.style.display = isVisible ? '' : 'none';
-        
-        if (isVisible) visibleCount++;
-      });
-
-      const totalCount = allRows.length;
-      const resultsCount = document.getElementById('resultsCount');
-      if (visibleCount === totalCount) {
-        resultsCount.textContent = `Showing all ${totalCount} requests`;
+      // Fetch conversation
+      const response = await fetch(`/api/conversation/${requestId}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        displayMessages(data.messages || []);
+        // Mark messages as read
+        await fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' });
       } else {
-        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+        throw new Error(data.error || 'Failed to load conversation');
       }
-
-      toggleNoResultsMessage(visibleCount === 0);
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+      messagesContainer.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #dc2626;">
+          <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+            <p>Failed to load conversation</p>
+            <small>${error.message}</small>
+          </div>
+        </div>
+      `;
+      showNotification('Failed to load conversation: ' + error.message, 'error');
     }
+  }
 
-    function toggleNoResultsMessage(show) {
-      let noResultsRow = document.getElementById('noResultsRow');
+  // Display messages function
+  function displayMessages(messages) {
+    const messagesContainer = document.getElementById('messagesContainer');
+    
+    if (!messages || messages.length === 0) {
+      messagesContainer.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+          <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">💭</div>
+            <p>No messages yet</p>
+            <small>Start the conversation by sending a message below</small>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    messagesContainer.innerHTML = messages.map(message => {
+      const isAdmin = message.senderRole === 'admin';
+      const senderName = message.senderId ? 
+        `${message.senderId.fName} ${message.senderId.lName}` : 
+        'Unknown User';
       
-      if (show && !noResultsRow) {
-        const tbody = document.getElementById('requestsTableBody');
-        noResultsRow = document.createElement('tr');
-        noResultsRow.id = 'noResultsRow';
-        noResultsRow.innerHTML = `
-          <td colspan="8" style="text-align: center; padding: 3rem; color: #6b7280;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
-            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
-            <p>Try adjusting your filters to see more results.</p>
-          </td>
-        `;
-        tbody.appendChild(noResultsRow);
-      } else if (!show && noResultsRow) {
-        noResultsRow.remove();
+      const messageTime = new Date(message.timestamp).toLocaleString();
+      
+      return `
+        <div class="message ${isAdmin ? 'admin-message' : 'user-message'}">
+          <div class="message-content">
+            <div class="message-header">
+              <strong>${senderName} ${isAdmin ? '(Admin)' : ''}</strong>
+              <span class="message-time">${messageTime}</span>
+            </div>
+            <div class="message-text">${message.content}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // Scroll to bottom
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  // Send message function
+  async function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const content = messageInput.value.trim();
+    
+    if (!content) {
+      showNotification('Please enter a message', 'error');
+      return;
+    }
+    
+    if (!currentRequestId) {
+      showNotification('No request selected', 'error');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        messageInput.value = '';
+        // Reload conversation to show new message
+        openConversation(currentRequestId);
+        showNotification('Message sent successfully', 'success');
+      } else {
+        throw new Error(data.error || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      showNotification('Failed to send message: ' + error.message, 'error');
+    }
+  }
+  
+  // Reset form to original values
+  function resetFormToOriginalValues() {
+    const statusSelect = document.getElementById('adminStatusSelect');
+    const unitsSelect = document.getElementById('adminUnitsSelect');
+    
+    if (statusSelect) statusSelect.value = originalValues.status || '';
+    if (unitsSelect) unitsSelect.value = originalValues.units || '';
+    
+    showNotification('Changes cancelled - form reset to original values', 'info');
+  }
+  
+  // Show update confirmation modal
+  function showUpdateConfirmation() {
+    const changes = getFormChanges();
+    
+    if (changes.length === 0) {
+      showNotification('No changes detected', 'info');
+      return;
+    }
+    
+    populateChangesModal(changes);
+    updateConfirmationModal.classList.add('show');
+  }
+  
+  // Get form changes
+  function getFormChanges() {
+    const changes = [];
+    
+    const statusSelect = document.getElementById('adminStatusSelect');
+    const unitsSelect = document.getElementById('adminUnitsSelect');
+    
+    if (statusSelect && statusSelect.value !== originalValues.status) {
+      changes.push({
+        field: 'Status',
+        oldValue: originalValues.status || 'Not set',
+        newValue: statusSelect.value
+      });
+    }
+    
+    if (unitsSelect && unitsSelect.value !== originalValues.units) {
+      changes.push({
+        field: 'Assigned Unit',
+        oldValue: originalValues.units || 'Not yet assigned',
+        newValue: unitsSelect.value || 'Not yet assigned'
+      });
+    }
+    
+    return changes;
+  }
+  
+  // Populate changes in confirmation modal
+  function populateChangesModal(changes) {
+    const changesContainer = document.getElementById('changesContainer');
+    
+    changesContainer.innerHTML = changes.map(change => `
+      <div class="change-item">
+        <span class="change-label">${change.field}:</span>
+        <div class="change-values">
+          <span class="old-value">${change.oldValue}</span>
+          <span>→</span>
+          <span class="new-value">${change.newValue}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  // Perform the actual update
+  async function performUpdate() {
+    const confirmBtn = document.getElementById('confirmUpdateBtn');
+    confirmBtn.classList.add('loading');
+    confirmBtn.textContent = 'Updating...';
+    
+    try {
+      const changes = getFormChanges();
+      let success = true;
+      let updatedData = {}; // Store updated values
+      
+      for (const change of changes) {
+        if (change.field === 'Status') {
+          const statusSelect = document.getElementById('adminStatusSelect');
+          success = await updateRequestStatus(currentRequestId, statusSelect.value, currentRequestType);
+          if (success) updatedData.status = statusSelect.value;
+        } else if (change.field === 'Assigned Unit') {
+          const unitsSelect = document.getElementById('adminUnitsSelect');
+          success = await updateRequestUnits(currentRequestId, unitsSelect.value, currentRequestType);
+          if (success) updatedData.units = unitsSelect.value || 'Not yet assigned';
+        }
+        
+        if (!success) break;
+      }
+      
+      if (success) {
+        updateConfirmationModal.classList.remove('show');
+        showNotification('All changes applied successfully!', 'success');
+        
+        // Update the table row data attributes
+        updateTableRowData(currentRequestId, updatedData);
+        
+        // Update original values
+        updateOriginalValues();
+        
+        // Reopen the modal with updated data after a short delay
+        setTimeout(() => {
+          reopenModalAfterUpdate(currentRequestId);
+        }, 1000);
+      }
+      
+    } catch (error) {
+      console.error('Error during update:', error);
+      showNotification('Update failed: ' + error.message, 'error');
+    } finally {
+      confirmBtn.classList.remove('loading');
+      confirmBtn.textContent = 'Confirm Update';
+    }
+  }
+  
+  // Update original values after successful update
+  function updateOriginalValues() {
+    const statusSelect = document.getElementById('adminStatusSelect');
+    const unitsSelect = document.getElementById('adminUnitsSelect');
+    
+    originalValues.status = statusSelect ? statusSelect.value : '';
+    originalValues.units = unitsSelect ? unitsSelect.value : '';
+  }
+  
+  // Update functions
+  async function updateRequestStatus(requestId, newStatus, requestType) {
+    console.log('🔄 Updating status:', { requestId, newStatus, requestType });
+    
+    try {
+      const endpoint = '/admin/approval/update-status';
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          requestId: requestId,
+          status: newStatus
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // Update display elements in the modal
+        const statusElement = document.getElementById('detailStatus');
+        const currentStatusValue = document.getElementById('currentStatusValue');
+        
+        if (statusElement) statusElement.innerText = newStatus;
+        if (currentStatusValue) currentStatusValue.innerText = newStatus;
+        
+        return true;
+      } else {
+        console.error('Status update failed:', result.message);
+        showNotification('Failed to update status: ' + result.message, 'error');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      showNotification('Failed to update status: ' + error.message, 'error');
+      return false;
+    }
+  }
+
+  async function updateRequestUnits(requestId, newUnit, requestType) {
+    console.log('🔄 Updating units:', { requestId, newUnit, requestType });
+    
+    try {
+      const endpoint = '/admin/approval/update-status';
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          requestId: requestId,
+          assignedUnits: newUnit || ''
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // Update display elements in the modal
+        const unitsElement = document.getElementById('detailUnits');
+        const currentUnitsValue = document.getElementById('currentUnitsValue');
+        
+        const displayValue = newUnit || 'Not yet assigned';
+        if (unitsElement) unitsElement.innerText = displayValue;
+        if (currentUnitsValue) currentUnitsValue.innerText = displayValue;
+        
+        return true;
+      } else {
+        console.error('Units update failed:', result.message);
+        showNotification('Failed to update assigned units: ' + result.message, 'error');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating units:', error);
+      showNotification('Failed to update assigned units: ' + error.message, 'error');
+      return false;
+    }
+  }
+  
+// Replace the existing showNotification function with this:
+function showNotification(message, type = 'success') {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    animation: fadeIn 0.3s ease-out;
+  `;
+  
+  // Create modal content
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+  `;
+  
+  // Determine colors and icons based on type
+  let headerColor, icon, borderColor;
+  switch(type) {
+    case 'success':
+      headerColor = 'var(--primary-green)';
+      icon = '✅';
+      borderColor = '#10b981';
+      break;
+    case 'error':
+      headerColor = '#ef4444';
+      icon = '❌';
+      borderColor = '#ef4444';
+      break;
+    case 'info':
+    default:
+      headerColor = '#3b82f6';
+      icon = 'ℹ️';
+      borderColor = '#3b82f6';
+      break;
+  }
+  
+  modal.innerHTML = `
+    <div style="background: ${headerColor}; color: white; padding: 1.5rem; text-align: center; border-radius: 12px 12px 0 0;">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">${icon}</div>
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">
+        ${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Information'}
+      </h3>
+    </div>
+    <div style="padding: 2rem; text-align: center;">
+      <p style="margin: 0 0 1.5rem 0; font-size: 1rem; color: #374151; line-height: 1.5;">${message}</p>
+      <button id="notificationOkBtn" style="
+        background: ${headerColor};
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      ">OK</button>
+    </div>
+  `;
+  
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  // Add event listeners
+  const okBtn = modal.querySelector('#notificationOkBtn');
+  
+  function closeModal() {
+    overlay.style.animation = 'fadeOut 0.3s ease-out';
+    modal.style.animation = 'slideDown 0.3s ease-out';
+    setTimeout(() => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      document.body.style.overflow = '';
+    }, 300);
+  }
+  
+  okBtn.addEventListener('click', closeModal);
+  
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeModal();
+    }
+  });
+  
+  // Auto close after 5 seconds for success/info messages
+  if (type === 'success' || type === 'info') {
+    setTimeout(closeModal, 5000);
+  }
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
+  // Populate modal with request data
+  function populateModalData(rowData) {
+    console.log('📝 Populating modal with data:', rowData);
+    
+    // Store original values
+    originalValues = {
+      status: rowData.status,
+      units: rowData.units
+    };
+    
+    // Helper function to safely set element text
+    function setElementText(id, value) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value || 'N/A';
       }
     }
-
-    // Event listeners for filters
-    document.getElementById('requestIdFilter').addEventListener('input', filterRequests);
-    document.getElementById('studentFilter').addEventListener('input', filterRequests);
-    document.getElementById('organizationFilter').addEventListener('input', filterRequests);
-    document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
-    document.getElementById('dateToFilter').addEventListener('change', filterRequests);
-
-    clearFiltersBtn.addEventListener('click', () => {
-      document.getElementById('requestIdFilter').value = '';
-      statusCheckboxes.forEach(cb => cb.checked = false);
-      allStatusCheckbox.checked = true;
-      updateStatusDisplay();
-      document.getElementById('studentFilter').value = '';
-      document.getElementById('organizationFilter').value = '';
-      document.getElementById('dateFromFilter').value = '';
-      document.getElementById('dateToFilter').value = '';
-      filterRequests();
-    });
-
-    // Request row click handlers
-    document.querySelectorAll('.request-row').forEach(row => {
-      row.addEventListener('click', () => {
-        document.getElementById("detailStudent").innerText = row.dataset.student;
-        document.getElementById("detailTitle").innerText = row.dataset.title;
-        document.getElementById("detailOrganization").innerText = row.dataset.organization;
-        document.getElementById("detailDescription").innerText = row.dataset.description || 'N/A';
-        document.getElementById("detailStatus").innerText = row.dataset.status;
-        document.getElementById("detailUnits").innerText = row.dataset.units;
-        document.getElementById("detailDatetime").innerText = row.dataset.datetime;
-        document.getElementById("detailDeadline").innerText = row.dataset.deadline;
-
-        document.getElementById("updateRequestId").value = row.dataset.id;
-        // Capitalize first letter for the select dropdown
-        const statusValue = row.dataset.status.charAt(0).toUpperCase() + row.dataset.status.slice(1);
-        document.getElementById("status").value = statusValue;
-        document.getElementById("assignedUnits").value = row.dataset.units === 'Not yet assigned' ? '' : row.dataset.units;
-
-        const file = row.dataset.file;
-        const previewContainer = document.getElementById('file-preview');
-        previewContainer.innerHTML = '';
-        if (file) {
-          const fileUrl = `/uploads/${file}`;
-          const ext = file.split('.').pop().toLowerCase();
-          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-            previewContainer.innerHTML = `<img src="${fileUrl}" style="max-width:100%; border-radius:8px;" /><br><a href="${fileUrl}" target="_blank">Open Image</a>`;
-          } else if (ext === 'pdf') {
-            previewContainer.innerHTML = `<embed src="${fileUrl}" width="100%" height="400px" /><br><a href="${fileUrl}" target="_blank">Open PDF</a>`;
-          } else {
-            previewContainer.innerHTML = `<p>Click to download:</p><a href="${fileUrl}" target="_blank">Download File (${file})</a>`;
-          }
-        } else {
-          previewContainer.innerHTML = `<p>No file uploaded.</p>`;
+    
+    // Populate general information
+    setElementText('detailTitle', rowData.title);
+    setElementText('detailStudent', rowData.student);
+    setElementText('detailType', 'Request Approval');
+    setElementText('detailOrganization', rowData.organization);
+    setElementText('detailDatetime', rowData.datetime);
+    setElementText('detailDeadlineInfo', rowData.formattedDeadline);
+    setElementText('detailDescription', rowData.description || 'No description provided');
+    
+    // Populate admin form
+    populateAdminForm(rowData);
+    
+    // Handle file preview
+    populateFilePreview(rowData);
+  }
+  
+  // Populate admin form
+  function populateAdminForm(rowData) {
+    // Populate status options for approval requests
+    const statusSelect = document.getElementById('adminStatusSelect');
+    const currentStatusValue = document.getElementById('currentStatusValue');
+    
+    if (statusSelect && currentStatusValue) {
+      const statusOptions = [
+        { value: 'Pending', label: 'Pending' },
+        { value: 'For Revision', label: 'For Revision' },
+        { value: 'Approved', label: 'Approved' },
+        { value: 'Rejected', label: 'Rejected' },
+        { value: 'Archived', label: 'Archived' }
+      ];
+      
+      statusSelect.innerHTML = statusOptions.map(option => 
+        `<option value="${option.value}" ${option.value === rowData.status ? 'selected' : ''}>${option.label}</option>`
+      ).join('');
+      
+      currentStatusValue.textContent = rowData.status;
+    }
+    
+    // Populate units
+    const unitsSelect = document.getElementById('adminUnitsSelect');
+    const currentUnitsValue = document.getElementById('currentUnitsValue');
+    
+    if (unitsSelect && currentUnitsValue) {
+      unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
+      currentUnitsValue.textContent = rowData.units || 'Not yet assigned';
+    }
+  }
+  
+  // Improved file preview function with better file type handling
+  function populateFilePreview(rowData) {
+    const previewContainer = document.getElementById('file-preview');
+    if (!previewContainer) return;
+    
+    previewContainer.innerHTML = '';
+    
+    let allFiles = [];
+    
+    // Better file extraction logic
+    if (rowData.files && rowData.files.trim() !== '') {
+      // Handle comma-separated files
+      allFiles = rowData.files.split(',').map(f => f.trim()).filter(Boolean);
+    } else if (rowData.file && rowData.file.trim() !== '') {
+      // Handle single file (backward compatibility)
+      allFiles = [rowData.file.trim()];
+    }
+    
+    console.log('Files to display:', allFiles); // Debug log
+    
+    if (allFiles.length > 0) {
+      const enhancedPreview = document.createElement('div');
+      enhancedPreview.className = 'enhanced-file-preview';
+      
+      let fileGridHTML = `
+        <h3>📎 Attached Files (${allFiles.length})</h3>
+        <div class="file-grid">
+      `;
+      
+      allFiles.forEach((file, index) => {
+        const fileUrl = `/uploads/${file}`;
+        const ext = file.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        const isPDF = ext === 'pdf';
+        const isDoc = ['doc', 'docx'].includes(ext);
+        const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+        const isText = ['txt', 'rtf'].includes(ext);
+        
+        // Determine file icon and preview
+        let fileIcon = '📄';
+        let fileColor = '#64748b';
+        
+        if (isImage) {
+          fileIcon = '🖼️';
+          fileColor = '#059669';
+        } else if (isPDF) {
+          fileIcon = '📕';
+          fileColor = '#dc2626';
+        } else if (isDoc) {
+          fileIcon = '📘';
+          fileColor = '#2563eb';
+        } else if (isSpreadsheet) {
+          fileIcon = '📊';
+          fileColor = '#16a34a';
+        } else if (isText) {
+          fileIcon = '📝';
+          fileColor = '#7c3aed';
         }
+        
+        fileGridHTML += `
+          <div class="enhanced-file-item">
+            <div class="file-header-enhanced">
+              <div style="font-size: 1.5rem; color: ${fileColor};">${fileIcon}</div>
+              <div class="file-info-enhanced">
+                <div class="file-name-enhanced" title="${file}">${file}</div>
+                <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
+              </div>
+            </div>
+            
+            <div class="file-preview-container">
+        `;
+        
+        if (isImage) {
+          fileGridHTML += `
+            <img src="${fileUrl}" 
+                 alt="Preview of ${file}" 
+                 style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; cursor: pointer;"
+                 onclick="openImagePreview('${fileUrl}', '${file}')"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🖼️</div>
+              <p>Image Preview Not Available</p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isPDF) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">📕</div>
+              <p><strong>PDF Document</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isDoc) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">📘</div>
+              <p><strong>Word Document</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isSpreadsheet) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">📊</div>
+              <p><strong>Spreadsheet</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">${fileIcon}</div>
+              <p><strong>Document File</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        }
+        
+        fileGridHTML += `
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+              <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced" style="flex: 1;">
+                💾 Download
+              </a>
+              ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6; flex: 1;">👁️ View</button>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      
+      fileGridHTML += `</div>`;
+      enhancedPreview.innerHTML = fileGridHTML;
+      previewContainer.appendChild(enhancedPreview);
+    } else {
+      // Improved "no files" message
+      previewContainer.innerHTML = `
+        <div class="enhanced-file-preview">
+          <h3>📎 Attached Files</h3>
+          <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
+            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">📭</div>
+            <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
+              No Files Attached
+            </div>
+            <div class="no-files-subtitle" style="font-size: 0.95rem; color: #64748b; line-height: 1.5;">
+              This request was submitted without any file attachments.<br>
+              <small>Files may have been uploaded but are not accessible.</small>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
 
+  // Add image preview modal function
+  window.openImagePreview = function(imageUrl, fileName) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      cursor: pointer;
+    `;
+    
+    // Create image container
+    const container = document.createElement('div');
+    container.style.cssText = `
+      max-width: 90vw;
+      max-height: 90vh;
+      position: relative;
+    `;
+    
+    // Create image
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = fileName;
+    img.style.cssText = `
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+    `;
+    
+    // Create close button
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    `;
+    
+    // Assemble modal
+    container.appendChild(img);
+    container.appendChild(closeBtn);
+    overlay.appendChild(container);
+    document.body.appendChild(overlay);
+    
+    // Close handlers
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+        document.body.style.overflow = '';
+      }
+    });
+    
+    closeBtn.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      document.body.style.overflow = '';
+    });
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+  };
+  
+  // Initialize row click handlers
+  function initializeRowClickHandlers() {
+    const rows = document.querySelectorAll('.request-row');
+    console.log(`🖱️ Setting up click handlers for ${rows.length} rows`);
+    
+    rows.forEach((row, index) => {
+      row.style.cursor = 'pointer';
+      
+      row.addEventListener('click', function(e) {
+        console.log(`🖱️ Row ${index + 1} clicked`);
+        
+        // Prevent click on badges and buttons
+        if (e.target.closest('.status-badge') || 
+            e.target.closest('.type-badge') || 
+            e.target.closest('button') ||
+            e.target.closest('a')) {
+          console.log('🚫 Click on badge/button/link - ignoring');
+          return;
+        }
+        
+        // Extract data from row
+        const rowData = {
+          id: row.dataset.id,
+          requestId: row.dataset.requestId,
+          type: row.dataset.type,
+          title: row.dataset.title,
+          status: row.dataset.status,
+          organization: row.dataset.organization,
+          units: row.dataset.units,
+          datetime: row.dataset.datetime,
+          description: row.dataset.description,
+          file: row.dataset.file,
+          files: row.dataset.files,
+          formattedDeadline: row.dataset.formattedDeadline,
+          student: row.dataset.student
+        };
+        
+        console.log('📋 Row data extracted:', rowData);
+        
+        // Set current request data
+        currentRequestId = rowData.id;
+        currentRequestType = rowData.type;
+        
+        // Populate modal and open
+        populateModalData(rowData);
         detailModal.style.display = 'flex';
+
+        // Reset scroll position to top
+        setTimeout(() => {
+          const modalBody = detailModal.querySelector('.details-modal-body');
+          if (modalBody) {
+            modalBody.scrollTop = 0;
+          }
+        }, 50);
+      });
+      
+      // Add hover effects
+      row.addEventListener('mouseenter', function() {
+        this.style.backgroundColor = '#f8fafc';
+        this.style.transform = 'translateY(-1px)';
+        this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+      });
+      
+      row.addEventListener('mouseleave', function() {
+        this.style.backgroundColor = '';
+        this.style.transform = '';
+        this.style.boxShadow = '';
       });
     });
-
-    function toggleDropdown() {
-      const menu = document.getElementById("dropdownMenu");
+  }
+  
+  // Initialize dropdown
+  window.toggleDropdown = function() {
+    const menu = document.getElementById("dropdownMenu");
+    if (menu) {
       menu.style.display = menu.style.display === "block" ? "none" : "block";
     }
+  };
+  
+  document.addEventListener("click", function(event) {
+    const toggle = document.querySelector(".dropdown-toggle");
+    const menu = document.getElementById("dropdownMenu");
+    if (toggle && menu && !toggle.contains(event.target)) {
+      menu.style.display = "none";
+    }
+  });
 
-    document.addEventListener("click", function (event) {
-      const toggle = document.querySelector(".dropdown-toggle");
-      const menu = document.getElementById("dropdownMenu");
-      if (!toggle.contains(event.target)) {
-        menu.style.display = "none";
-      }
-    });
-
-    // Custom Status Filter Logic
-    const statusFilterElement = document.getElementById('statusFilter');
-    const statusDropdown = document.getElementById('statusDropdown');
-    const statusDisplay = statusFilterElement.querySelector('.select-display');
-    const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
-    const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
-
-    // Toggle dropdown
-    statusFilterElement.addEventListener('click', function(e) {
-      e.stopPropagation();
-      statusFilterElement.classList.toggle('active');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function() {
-      statusFilterElement.classList.remove('active');
-    });
-
-    // Handle checkbox changes
-    statusCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        if (this.value === 'all') {
-          // If "All Status" is checked, uncheck others
-          if (this.checked) {
-            statusCheckboxes.forEach(cb => {
-              if (cb.value !== 'all') cb.checked = false;
-            });
-          }
-        } else {
-          // If any specific status is checked, uncheck "All Status"
-          if (this.checked) {
-            allStatusCheckbox.checked = false;
-          }
-          
-          // If no specific status is checked, check "All Status"
-          const specificChecked = Array.from(statusCheckboxes).some(cb => 
-            cb.value !== 'all' && cb.checked
-          );
-          if (!specificChecked) {
-            allStatusCheckbox.checked = true;
-          }
-        }
-        
-        updateStatusDisplay();
-        filterRequests();
-      });
-    });
-
-    function updateStatusDisplay() {
-      const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
+  // Add new function to reopen the modal after update
+  function reopenModalAfterUpdate(requestId) {
+    // Find the row with the updated request
+    const updatedRow = document.querySelector(`[data-id="${requestId}"]`);
+    if (updatedRow) {
+      // Extract updated data from the row
+      const rowData = {
+        id: updatedRow.dataset.id,
+        requestId: updatedRow.dataset.requestId,
+        type: updatedRow.dataset.type,
+        title: updatedRow.dataset.title,
+        status: updatedRow.dataset.status,
+        organization: updatedRow.dataset.organization,
+        units: updatedRow.dataset.units,
+        datetime: updatedRow.dataset.datetime,
+        description: updatedRow.dataset.description,
+        file: updatedRow.dataset.file,
+        files: updatedRow.dataset.files,
+        formattedDeadline: updatedRow.dataset.formattedDeadline,
+        student: updatedRow.dataset.student
+      };
       
-      if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-        statusDisplay.textContent = 'All Status';
-      } else if (checkedBoxes.length === 1) {
-        statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
-                                  checkedBoxes[0].value.slice(1);
-      } else {
-        statusDisplay.textContent = `${checkedBoxes.length} Selected`;
+      // Set current request data
+      currentRequestId = rowData.id;
+      currentRequestType = rowData.type;
+      
+      // Populate modal and open
+      populateModalData(rowData);
+      detailModal.style.display = 'flex';
+      
+      // Reset scroll position to top
+      setTimeout(() => {
+        const modalBody = detailModal.querySelector('.details-modal-body');
+        if (modalBody) {
+          modalBody.scrollTop = 0;
+        }
+      }, 50);
+    }
+  }
+
+  // Add helper function to update table row data
+  function updateTableRowData(requestId, updatedData) {
+    const row = document.querySelector(`[data-id="${requestId}"]`);
+    if (!row) return;
+    
+    // Update data attributes
+    if (updatedData.status) {
+      row.dataset.status = updatedData.status;
+      
+      // Update the status badge in the table
+      const statusBadge = row.querySelector('.status-badge');
+      if (statusBadge) {
+        statusBadge.className = `status-badge ${updatedData.status.toLowerCase().replace(' ', '-')}`;
+        statusBadge.textContent = updatedData.status;
+      }
+    }
+    
+    if (updatedData.units !== undefined) {
+      row.dataset.units = updatedData.units;
+      
+      // Update the units cell in the table
+      const cells = row.querySelectorAll('td');
+      if (cells[5]) { // Assigned Units column is index 5 for approvals
+        cells[5].textContent = updatedData.units;
       }
     }
 
-    // Get selected status values for filtering
-    function getSelectedStatuses() {
-      const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
-        cb.checked && cb.value !== 'all'
-      );
-      
-      if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-        return ['all'];
+    // Update the allRequestsData array for filtering
+    const requestIndex = allRequestsData.findIndex(req => req.element === row);
+    if (requestIndex !== -1) {
+      if (updatedData.status) {
+        allRequestsData[requestIndex].status = updatedData.status.toLowerCase();
       }
-      
-      return checkedBoxes.map(cb => cb.value.toLowerCase());
+      if (updatedData.units !== undefined) {
+        allRequestsData[requestIndex].units = updatedData.units.toLowerCase();
+      }
     }
+  }
+  
+  // Initialize everything
+  try {
+    initializeModalHandlers();
+    initializeRowClickHandlers();
+    initializeConversationModal();
+    initializeFilters();
+    console.log('🎉 All initialization complete!');
+  } catch (error) {
+    console.error('❌ Error during initialization:', error);
+  }
+});
 
-    // Auto-open modal functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const openModalId = urlParams.get('openModalId');
-      
-      if (openModalId) {
-        const targetRow = document.querySelector(`[data-id="${openModalId}"]`);
-        if (targetRow) {
-          // Scroll to the row
-          targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
-          // Highlight the row briefly
-          targetRow.style.backgroundColor = '#e8f5e9';
-          setTimeout(() => {
-            targetRow.style.backgroundColor = '';
-          }, 2000);
-          
-          // Trigger click to open modal
-          setTimeout(() => {
-            targetRow.click();
-          }, 500);
-        }
-      }
-    });
+console.log('✅ Approvals Admin script loaded successfully');
+
+// Auto-open modal if openModalId is in URL
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const openModalId = urlParams.get('openModalId');
+  
+  if (openModalId) {
+    // Find the row with the matching ID
+    const targetRow = document.querySelector(`[data-id="${openModalId}"]`);
+    if (targetRow) {
+      // Wait a bit for everything to load, then click the row
+      setTimeout(() => {
+        targetRow.click();
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 500);
+    }
+  }
+});
 </script>
 </body>
 </html>

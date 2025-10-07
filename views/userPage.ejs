@@ -1229,9 +1229,6 @@
   </div>
 
 
-
-  
-</body>
 <script>
 function toggleDropdown() {
   const menu = document.getElementById("dropdownMenu");
@@ -1467,11 +1464,12 @@ document.querySelectorAll('.action-card').forEach(card => {
     if (deadlineDate) {
       deadlineDate.textContent = formattedDate;
     }
-     // Update the modal title
-const modalTitle = document.querySelector('#deadline-details-modal .deadline-details-title');
-if (modalTitle) {
-  modalTitle.textContent = 'My Requests';
-}
+     
+    // Update the modal title
+    const modalTitle = document.querySelector('#deadline-details-modal .deadline-details-title');
+    if (modalTitle) {
+      modalTitle.textContent = 'My Requests';
+    }
     
     if (deadlineList) {
       deadlineList.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6b7280;">Loading deadline details...</div>';
@@ -1505,8 +1503,8 @@ if (modalTitle) {
             deadlineList.innerHTML = `
               <div class="deadline-empty-state">
                 <div class="deadline-empty-state-icon">📅</div>
-                <div class="deadline-empty-state-text">No deadlines for this date</div>
-                <div class="deadline-empty-state-subtext">You have no pending deadlines on this date.</div>
+                <div class="deadline-empty-state-text">No requests for this date</div>
+                <div class="deadline-empty-state-subtext">You have no pending requests on this date.</div>
               </div>
             `;
           }
@@ -1521,7 +1519,7 @@ if (modalTitle) {
         deadlineList.innerHTML = `
           <div class="deadline-empty-state">
             <div class="deadline-empty-state-icon">⚠️</div>
-            <div class="deadline-empty-state-text">Error loading deadlines</div>
+            <div class="deadline-empty-state-text">Error loading requests</div>
             <div class="deadline-empty-state-subtext">Please try again later.</div>
           </div>
         `;
@@ -1530,139 +1528,124 @@ if (modalTitle) {
   }
 
   // UPDATED: Render user deadline items with navigation to specific pages
-function renderUserDeadlineItems(data) {
-  console.log('Rendering user request items:', data);
-  
-  if (!deadlineList || !data) {
-    console.error('Missing deadline list element or data');
-    return;
-  }
-  
-  let html = '';
-  
-  const hasApprovals = data.approvals && Array.isArray(data.approvals) && data.approvals.length > 0;
-  const hasServices = data.services && Array.isArray(data.services) && data.services.length > 0;
-  
-  if (!hasApprovals && !hasServices) {
-    html = `
-      <div class="deadline-empty-state">
-        <div class="deadline-empty-state-icon">📅</div>
-        <div class="deadline-empty-state-text">No requests for this date</div>
-        <div class="deadline-empty-state-subtext">You have no requests on this date.</div>
-      </div>
-    `;
-  } else {
-    // Render user's approval requests with status
-    if (hasApprovals) {
-      data.approvals.forEach(item => {
-        const truncatedDescription = item.description && item.description.length > 150 
-          ? item.description.substring(0, 150) + '...' 
-          : item.description || 'No description available';
-        
-        const createdDate = new Date(item.createdAt || item.datetime).toLocaleDateString();
-        const deadlineDate = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
-        const organization = item.displayOrganization || item.organization || 'N/A';
-        const dateTypeLabel = item.dateType === 'deadline' ? 'Deadline' : 'Submitted';
-        const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
-        
-        html += `
-          <div class="deadline-item">
-            <div class="deadline-item-header">
-              <h3 class="deadline-item-title">${item.title || 'Untitled Request'}</h3>
-              <span class="deadline-item-type approval">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="9,11 12,14 22,4"></polyline>
-                  <path d="m21,12c0,4.97 -4.03,9 -9,9s-9,-4.03 -9,-9 4.03,-9 9,-9c1.86,0 3.58,0.57 5.01,1.53"/>
-                </svg>
-                Approval Request
-              </span>
-            </div>
-            <p class="deadline-item-description">${truncatedDescription}</p>
-            <div class="deadline-item-meta">
-              <span>Organization: <strong>${organization}</strong></span>
-              <span>Submitted: ${createdDate}</span>
-              ${item.deadline ? `<span>Deadline: ${deadlineDate}</span>` : ''}
-              <span>Status: <strong><span class="status-badge ${statusClass}">${item.status}</span></strong></span>
-              <span>Date Type: <strong>${dateTypeLabel}</strong></span>
-            </div>
-            <div class="deadline-item-actions">
-              <a href="/request-approvals#${item._id}" class="deadline-action-btn" onclick="navigateToRequest('${item._id}', 'approval')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                View Details
-              </a>
-            </div>
-          </div>
-        `;
-      });
+  function renderUserDeadlineItems(data) {
+    console.log('Rendering user request items:', data);
+    
+    if (!deadlineList || !data) {
+      console.error('Missing deadline list element or data');
+      return;
     }
     
-    // Render user's service requests with status
-    if (hasServices) {
-      data.services.forEach(item => {
-        const truncatedDescription = item.description && item.description.length > 150 
-          ? item.description.substring(0, 150) + '...' 
-          : item.description || 'No description available';
-        
-        const createdDate = new Date(item.createdAt || item.datetime).toLocaleDateString();
-        const deadlineDate = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
-        const organization = item.displayOrganization || item.organization || 'N/A';
-        const dateTypeLabel = item.dateType === 'deadline' ? 'Deadline' : 'Submitted';
-        const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
-        
-        html += `
-          <div class="deadline-item">
-            <div class="deadline-item-header">
-              <h3 class="deadline-item-title">${item.title || 'Untitled Request'}</h3>
-              <span class="deadline-item-type service">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                </svg>
-                Service Request
-              </span>
+    let html = '';
+    
+    const hasApprovals = data.approvals && Array.isArray(data.approvals) && data.approvals.length > 0;
+    const hasServices = data.services && Array.isArray(data.services) && data.services.length > 0;
+    
+    if (!hasApprovals && !hasServices) {
+      html = `
+        <div class="deadline-empty-state">
+          <div class="deadline-empty-state-icon">📅</div>
+          <div class="deadline-empty-state-text">No requests for this date</div>
+          <div class="deadline-empty-state-subtext">You have no requests on this date.</div>
+        </div>
+      `;
+    } else {
+      // Render user's approval requests with status
+      if (hasApprovals) {
+        data.approvals.forEach(item => {
+          const truncatedDescription = item.description && item.description.length > 150 
+            ? item.description.substring(0, 150) + '...' 
+            : item.description || 'No description available';
+          
+          const createdDate = new Date(item.createdAt || item.datetime).toLocaleDateString();
+          const deadlineDate = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
+          const organization = item.displayOrganization || item.organization || 'N/A';
+          const dateTypeLabel = item.dateType === 'deadline' ? 'Deadline' : 'Submitted';
+          const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
+          
+          html += `
+            <div class="deadline-item">
+              <div class="deadline-item-header">
+                <h3 class="deadline-item-title">${item.title || 'Untitled Request'}</h3>
+                <span class="deadline-item-type approval">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9,11 12,14 22,4"></polyline>
+                    <path d="m21,12c0,4.97 -4.03,9 -9,9s-9,-4.03 -9,-9 4.03,-9 9,-9c1.86,0 3.58,0.57 5.01,1.53"/>
+                  </svg>
+                  Approval Request
+                </span>
+              </div>
+              <p class="deadline-item-description">${truncatedDescription}</p>
+              <div class="deadline-item-meta">
+                <span>Organization: <strong>${organization}</strong></span>
+                <span>Submitted: ${createdDate}</span>
+                ${item.deadline ? `<span>Deadline: ${deadlineDate}</span>` : ''}
+                <span>Status: <strong><span class="status-badge ${statusClass}">${item.status}</span></strong></span>
+                <span>Date Type: <strong>${dateTypeLabel}</strong></span>
+              </div>
+              <div class="deadline-item-actions">
+                <button class="deadline-action-btn" onclick="navigateToRequest('${item._id}', 'approval')">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  View Details
+                </button>
+              </div>
             </div>
-            <p class="deadline-item-description">${truncatedDescription}</p>
-            <div class="deadline-item-meta">
-              <span>Organization: <strong>${organization}</strong></span>
-              <span>Submitted: ${createdDate}</span>
-              ${item.deadline ? `<span>Deadline: ${deadlineDate}</span>` : ''}
-              <span>Status: <strong><span class="status-badge ${statusClass}">${item.status}</span></strong></span>
-              <span>Date Type: <strong>${dateTypeLabel}</strong></span>
+          `;
+        });
+      }
+      
+      // Render user's service requests with status
+      if (hasServices) {
+        data.services.forEach(item => {
+          const truncatedDescription = item.description && item.description.length > 150 
+            ? item.description.substring(0, 150) + '...' 
+            : item.description || 'No description available';
+          
+          const createdDate = new Date(item.createdAt || item.datetime).toLocaleDateString();
+          const deadlineDate = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
+          const organization = item.displayOrganization || item.organization || 'N/A';
+          const dateTypeLabel = item.dateType === 'deadline' ? 'Deadline' : 'Submitted';
+          const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
+          
+          html += `
+            <div class="deadline-item">
+              <div class="deadline-item-header">
+                <h3 class="deadline-item-title">${item.title || 'Untitled Request'}</h3>
+                <span class="deadline-item-type service">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                  Service Request
+                </span>
+              </div>
+              <p class="deadline-item-description">${truncatedDescription}</p>
+              <div class="deadline-item-meta">
+                <span>Organization: <strong>${organization}</strong></span>
+                <span>Submitted: ${createdDate}</span>
+                ${item.deadline ? `<span>Deadline: ${deadlineDate}</span>` : ''}
+                <span>Status: <strong><span class="status-badge ${statusClass}">${item.status}</span></strong></span>
+                <span>Date Type: <strong>${dateTypeLabel}</strong></span>
+              </div>
+              <div class="deadline-item-actions">
+                <button class="deadline-action-btn service" onclick="navigateToRequest('${item._id}', 'service')">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  View Details
+                </button>
+              </div>
             </div>
-            <div class="deadline-item-actions">
-              <a href="/service-requests#${item._id}" class="deadline-action-btn service" onclick="navigateToRequest('${item._id}', 'service')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                View Details
-              </a>
-            </div>
-          </div>
-        `;
-      });
-    }
-  }
-  
-  deadlineList.innerHTML = html;
-}
-  // Function to navigate to request details
-  window.navigateToRequest = function(requestId, type) {
-    // Close the deadline modal
-    if (deadlineModal) {
-      deadlineModal.classList.remove('active');
-      document.body.style.overflow = '';
+          `;
+        });
+      }
     }
     
-    // Navigate to the appropriate page with the request ID to auto-open the modal
-    if (type === 'approval') {
-      window.location.href = `/request-approvals#${requestId}`;
-    } else if (type === 'service') {
-      window.location.href = `/service-requests#${requestId}`;
-    }
-  };
+    deadlineList.innerHTML = html;
+  }
 
   // Initialize calendar
   async function initCalendar() {
@@ -1795,6 +1778,24 @@ function renderUserDeadlineItems(data) {
   initCalendar();
 })();
 
+// FIXED: Function to navigate to request details with auto-modal opening
+window.navigateToRequest = function(requestId, type) {
+  console.log(`Navigating to ${type} request: ${requestId}`);
+  
+  // Close the deadline modal
+  if (document.getElementById('deadline-details-modal')) {
+    document.getElementById('deadline-details-modal').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  
+  // Navigate to the appropriate page with the request ID as a URL parameter
+  if (type === 'approval') {
+    window.location.href = `/request-approvals?openModalId=${requestId}`;
+  } else if (type === 'service') {
+    window.location.href = `/service-requests?openModalId=${requestId}`;
+  }
+};
+
 function toggleGuidelines() {
   const content = document.getElementById('guidelinesContent');
   const toggle = document.getElementById('guidelinesToggle');
@@ -1813,6 +1814,35 @@ function toggleGuidelines() {
     }, 300);
   }
 }
+
+// Auto-open modal if openModalId is in URL - ENHANCED FOR BOTH REQUEST TYPES
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const openModalId = urlParams.get('openModalId');
+  
+  if (openModalId) {
+    console.log(`Auto-opening modal for request: ${openModalId}`);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      // Find the row with the matching ID
+      const targetRow = document.querySelector(`[data-id="${openModalId}"]`);
+      if (targetRow) {
+        console.log(`Found target row for ID: ${openModalId}`);
+        // Simulate clicking the row to open the details modal
+        targetRow.click();
+        
+        // Clean up URL after opening modal
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        console.warn(`No row found with ID: ${openModalId}`);
+      }
+    }, 1000); // Increased delay to ensure everything is loaded
+  }
+});
 </script>
+  
+
+
 </body>
 </html>

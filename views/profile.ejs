@@ -9,63 +9,1274 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <style>
- .select2-container--default .select2-selection--single {
+/* Enhanced Modal Styling */
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  max-width: 900px;
+  width: 95%;
+  max-height: 90vh;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 2rem 2.5rem 1rem 2.5rem;
+  border-bottom: 2px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.modal-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.close {
+  font-size: 2rem;
+  font-weight: 300;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  line-height: 1;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Enhanced Form Layout - Only for profile update modal */
+.modal-form {
+  padding: 2rem 2.5rem;
+}
+
+.profile-update-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 2.5rem;
+  align-items: start;
+}
+
+/* Password form stays single column */
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Form Sections */
+.form-section {
+  display: contents;
+}
+
+.section-title {
+  grid-column: 1 / -1;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 2rem 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.section-title:first-child {
+  margin-top: 0;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+}
+
+/* Enhanced Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group label .required {
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #1e293b;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 4px rgba(64, 139, 78, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-group input:disabled {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.form-group input:disabled:focus {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Enhanced Organization Section */
+.organization-section {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #d1fae5;
+  margin: 1rem 0;
+}
+
+.organization-section label {
+  color: #065f46;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Enhanced Custom Organization Section */
+.custom-org-section {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fefefe, #f8fafc);
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.custom-org-section.expanded {
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border-color: var(--primary-green);
+  box-shadow: 0 8px 25px rgba(64, 139, 78, 0.1);
+}
+
+/* Form Actions */
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  border-top: 2px solid #f1f5f9;
+}
+
+.password-form .form-actions {
+  grid-column: auto;
+}
+
+.form-actions button {
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  min-width: 120px;
+}
+
+.form-actions button[type="submit"] {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+.form-actions button[type="submit"]:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 139, 78, 0.4);
+}
+
+.form-actions button[type="button"] {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
+}
+
+/* Student/Staff Specific Styling */
+.student-info-grid {
+  display: contents;
+}
+
+.academic-info {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #a8fcd1;
+  margin-top: 1rem;
+}
+
+.office-section {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #93c5fd;
+  margin: 1rem 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95%;
+    margin: 1rem;
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    padding: 1.5rem;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .profile-update-form {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .academic-info {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+/* =========================== */
+/* SELECT2 BASIC STYLING      */
+/* =========================== */
+.select2-container--default .select2-selection--single {
   border-radius: 4px;
   border: 1px solid #ced4da;
   padding: 0.375rem;
   background-color: #fff;
   min-height: 38px;
 }
- 
+
+.select2-container {
+  z-index: 9999;
+}
+
+.select2-dropdown {
+  z-index: 99999;
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.select2-container--default .select2-results__option {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background-color: #198754;
+}
+
+/* =========================== */
+/* SELECT2 MULTIPLE SELECTION */
+/* =========================== */
+.select2-container--default .select2-selection--multiple {
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  padding: 8px;
+  background-color: #fff;
+  min-height: 45px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.select2-container--default .select2-selection--multiple:focus-within {
+  border-color: #198754;
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+}
+
+/* =========================== */
+/* ORGANIZATION CHOICE TAGS   */
+/* =========================== */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background: linear-gradient(135deg, #198754, #20c997);
+  border: none;
+  color: white;
+  font-weight: 500;
+  padding: 8px 30px 8px 12px;
+  margin: 3px 6px 3px 0;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+  background: linear-gradient(135deg, #157347, #198754);
+}
+
+/* Hide default remove button */
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  display: none !important;
+}
+
+/* Custom minus icon */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:before {
+  content: "−";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:before {
+  opacity: 1;
+}
+
+/* Hover tooltip */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:after {
+  content: "Click to remove";
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* =========================== */
+/* ORGANIZATION COUNTER       */
+/* =========================== */
+.org-counter {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.org-counter.has-selections {
+  color: #198754;
+  font-weight: 500;
+}
+
+/* =========================== */
+/* CUSTOM ORGANIZATION SECTION */
+/* =========================== */
 .toggle-org-button {
   background: none;
   color: #198754;
   font-size: 0.875rem;
-  padding: 0;
-  margin-top: 0.5rem;
-  border: none;
+  padding: 8px 12px;
+  margin: 0;
+  border: 2px solid transparent;
   cursor: pointer;
   text-align: left;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.toggle-org-button:hover {
+  background-color: rgba(25, 135, 84, 0.1);
+  border-color: rgba(25, 135, 84, 0.3);
+  transform: translateY(-1px);
+}
+
+.toggle-org-button:before {
+  content: "➕";
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.toggle-org-button.expanded:before {
+  content: "➖";
+  transform: rotate(180deg);
+}
+
+/* =========================== */
+/* ADD ORGANIZATION INPUT      */
+/* =========================== */
+.custom-org-input-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: stretch;
+}
+
+.custom-org-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.custom-org-input:focus {
+  outline: none;
+  border-color: #198754;
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
 }
 
 .add-org-button {
-  background-color: #198754;
+  background: linear-gradient(135deg, #198754, #20c997);
   border: none;
   color: white;
   font-weight: bold;
-  padding: 0 12px;
+  padding: 10px 16px;
   font-size: 1rem;
   cursor: pointer;
-  border-radius: 4px;
-}
-.select2-container {
-  z-index: 9999; /* keep it above the modal backdrop */
-}
-
-.select2-dropdown {
-  z-index: 99999; /* ensure dropdown itself is above everything */
-}
-.select2-container--default .select2-selection--multiple {
-  border-radius: 4px;
-  border: 1px solid #ced4da;
-  padding: 0.375rem;
-  background-color: #fff;
-  min-height: 38px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.select2-container--default .select2-selection--multiple .select2-selection__choice {
-  background-color: #198754;
-  border: none;
+.add-org-button:hover {
+  background: linear-gradient(135deg, #157347, #198754);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+}
+
+.add-org-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.3);
+}
+
+.add-org-button:before {
+  content: "+";
+  font-size: 16px;
   color: white;
-  font-weight: 500;
-  padding: 0 8px;
+}
+
+/* =========================== */
+/* FEEDBACK MESSAGES          */
+/* =========================== */
+.org-added-feedback {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 0.875rem;
+  border: 1px solid #c3e6cb;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.org-added-feedback.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.org-added-feedback.success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.org-added-feedback.warning {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+.org-added-feedback.error {
+  background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+  color: #721c24;
+  border-color: #f1aeb5;
+}
+
+/* =========================== */
+/* ORGANIZATION TAGS DISPLAY   */
+/* =========================== */
+.org-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 4px;
 }
 
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+.org-tag {
+  background: linear-gradient(135deg, #198754, #20c997);
   color: white;
-  margin-right: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: inline-block;
+  position: relative;
+}
+
+.org-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+  background: linear-gradient(135deg, #157347, #198754);
+}
+
+.org-tag.single {
+  background: linear-gradient(135deg, #198754, #20c997);
+}
+
+.org-tag.single:hover {
+  background: linear-gradient(135deg, #157347, #198754);
+}
+
+.org-tag[title] {
+  cursor: help;
+}
+
+.no-organizations {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* For responsive design */
+@media (max-width: 768px) {
+  .org-tags-container {
+    gap: 6px;
+  }
+  
+  .org-tag {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    white-space: normal; 
+    word-break: break-word; 
+    max-width: calc(100vw - 60px); 
+  }
+}
+
+/* Enhanced password input styling - Seamless layout */
+.password-input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: white;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.password-input-container:focus-within {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1);
+}
+
+.password-input-container input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background-color: transparent;
+  color: #1f2937;
+  transition: all 0.3s ease;
+  box-shadow: none !important;
+}
+
+.password-input-container input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.password-toggle-btn {
+  background: var(--primary-green);
+  border: none;
+  cursor: pointer;
+  padding: 0 1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.password-toggle-btn:hover {
+  background: #2d5a35;
+  transform: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.password-toggle-btn:active {
+  background: #1e3a21;
+  transform: none;
+}
+
+.password-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: white;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.password-toggle-btn:hover svg {
+  stroke: #f0f9ff;
+  transform: scale(1.1);
+}
+
+/* Remove any conflicting input styling */
+.form-group input[type="password"],
+.form-group input[type="text"].password-input {
+  padding-right: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Password strength indicator styles */
+.password-strength {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: left;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.strength-weak { 
+  background: linear-gradient(135deg, #ef4444, #dc2626); 
+  width: 33%; 
+}
+
+.strength-medium { 
+  background: linear-gradient(135deg, #f59e0b, #d97706); 
+  width: 66%; 
+}
+
+.strength-strong { 
+  background: linear-gradient(135deg, #10b981, #059669); 
+  width: 100%; 
+}
+
+/* Password validation messages */
+.password-validation {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.validation-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+.validation-item.valid {
+  color: #059669;
+}
+
+.validation-item.invalid {
+  color: #dc2626;
+}
+
+.validation-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* Password match indicator */
+.password-match-indicator {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.password-match-indicator.match {
+  color: #059669;
+}
+
+.password-match-indicator.no-match {
+  color: #dc2626;
+}
+
+.password-match-indicator.empty {
+  color: #6b7280;
+}
+
+/* Enhanced Picture Upload Modal - New Layout */
+.picture-modal-body {
+  padding: 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Current Picture Section at the top */
+.current-picture-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.current-picture-header img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  margin-bottom: 1rem;
+}
+
+.current-picture-header h4 {
+  margin: 0 0 0.5rem 0;
+  color: #334155;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.current-picture-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Upload Section - Side by side layout */
+.upload-selection-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Drag & Drop Upload Area */
+.file-upload-container {
+  position: relative;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #fefefe, #f8fafc);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.file-upload-container:hover {
+  border-color: var(--primary-green);
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(64, 139, 78, 0.1);
+}
+
+.file-upload-container.dragover {
+  border-color: var(--primary-green);
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  box-shadow: 0 0 0 4px rgba(64, 139, 78, 0.1);
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem auto;
+  color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.file-upload-container:hover .upload-icon,
+.file-upload-container.dragover .upload-icon {
+  color: var(--primary-green);
+}
+
+.upload-text {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.upload-subtext {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.file-input-hidden {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.browse-button {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.browse-button:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+/* Selected Image Preview */
+.selected-image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #fefefe, #f8fafc);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem;
+  min-height: 200px;
+  justify-content: center;
+  text-align: center;
+}
+
+.selected-image-preview.has-image {
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border-color: var(--primary-green);
+}
+
+.selected-image-preview h4 {
+  margin: 0 0 1rem 0;
+  color: #334155;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.no-image-placeholder {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Image Preview */
+.preview-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 1rem;
+}
+
+.preview-info {
+  background: #f1f5f9;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #475569;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* Action Buttons Section */
+.picture-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #f1f5f9;
+}
+
+.action-section {
+  padding: 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.upload-section {
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border: 2px solid #d1fae5;
+}
+
+.delete-section {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 2px solid #fecaca;
+}
+
+.action-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.upload-section h4 {
+  color: #065f46;
+}
+
+.delete-section h4 {
+  color: #991b1b;
+}
+
+.action-section p {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.action-section button {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.upload-action-btn {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+.upload-action-btn:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 139, 78, 0.4);
+}
+
+.upload-action-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.delete-action-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.delete-action-btn:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .upload-selection-section {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .picture-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .current-picture-header img {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* =========================== */
+/* NOTIFICATION MODAL STYLING  */
+/* =========================== */
+.notification-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.notification-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.notification-content {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+}
+
+.notification-modal.show .notification-content {
+  transform: translateY(0);
+}
+
+.notification-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1rem auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
   font-weight: bold;
+}
+
+.notification-icon.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.notification-icon.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.notification-icon.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.notification-icon.info {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.notification-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+
+.notification-message {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.notification-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.notification-btn.primary {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+}
+
+.notification-btn.primary:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+}
+
+.notification-btn.secondary {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.notification-btn.secondary:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.notification-btn.danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.notification-btn.danger:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+}
+
+/* Loading spinner for async actions */
+.notification-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .notification-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .notification-actions {
+    flex-direction: column;
+  }
+  
+  .notification-btn {
+    width: 100%;
+  }
 }
 </style>
 </head>
@@ -81,7 +1292,7 @@
       <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
         <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
         <div class="user">
-<img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+          <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
         </div>
       </div>
       <div class="dropdown-menu" id="dropdownMenu">
@@ -93,200 +1304,611 @@
 
   <main class="student-side">
     <div class="div">
-        <section class="activity-section">
+      <section class="activity-section">
         <div class="section-header">
-            <div class="profile-info">
+          <div class="profile-info">
             <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
-     alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+                 alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
-                <h2><%= user.fName %> <%= user.lName %></h2>
-                <p style="color: #6b7280;"><%= user.userType === 'student' ? 'Student' : 'Staff' %></p>
+              <h2><%= user.fName %> <%= user.lName %></h2>
+              <p style="color: #6b7280;"><%= user.userType === 'student' ? 'Student' : 'Staff' %></p>
             </div>
-            </div>
-            <a href="/dashboard" class="view-all-btn" style="display:inline-block;">
+          </div>
+          <a href="/dashboard" class="view-all-btn" style="display:inline-block;">
             ← Back to Dashboard
-            </a>
+          </a>
         </div>
 
         <div class="profile-table" style="background:white; border-radius:24px; box-shadow:var(--card-shadow); padding:2.5rem;">
-            <table class="requests-table" style="border:none;">
+          <table class="requests-table" style="border:none;">
             <tbody>
-                <tr><td class="label">Full Name:</td><td><%= user.fName %> <%= user.mName %> <%= user.lName %></td></tr>
-                <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
-                <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
-                <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
-                <% if (user.userType === 'student') { %>
-                <tr><td class="label">Organization:</td><td><%= user.studentOrganization || 'None' %></td></tr>
+              <tr><td class="label">Full Name:</td><td><%= user.fName %> <%= user.mName %> <%= user.lName %></td></tr>
+              <tr><td class="label">Email:</td><td><%= user.email %></td></tr>
+              <tr><td class="label">Username:</td><td><%= user.username %></td></tr>
+              <tr><td class="label">Phone Number:</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
+              
+              <% if (user.userType === 'student') { %>
+                <tr>
+                  <td class="label">Organization:</td>
+                  <td>
+                    <% if (user.studentOrganization && user.studentOrganization.length > 0) { %>
+                      <div class="org-tags-container">
+                        <% 
+                        let organizations = Array.isArray(user.studentOrganization) 
+                          ? user.studentOrganization 
+                          : user.studentOrganization.split(',').map(org => org.trim()).filter(Boolean);
+                        
+                        organizations.forEach((org, index) => { %>
+                      <span class="org-tag <%= organizations.length === 1 ? 'single' : '' %>" 
+                            title="<%= org %>">
+                        <%= org %>
+                      </span>
+                        <% }); %>
+                      </div>
+                    <% } else { %>
+                      <span class="no-organizations">No organizations</span>
+                    <% } %>
+                  </td>
+                </tr>
                 <tr><td class="label">Course/Year/Section:</td><td><%= user.cys || 'N/A' %></td></tr>
                 <tr><td class="label">Student ID:</td><td><%= user.studentId || 'N/A' %></td></tr>
-                <% } else { %>
-                <tr><td class="label">Office/Department:</td><td><%= user.affiliation || 'None' %></td></tr>
-                <% } %>
+              <% } else { %>
+                <tr>
+                  <td class="label">Office/Department:</td>
+                  <td>
+                    <% if (user.affiliation && user.affiliation.length > 0) { %>
+                      <div class="org-tags-container">
+                        <% 
+                        let affiliations = Array.isArray(user.affiliation) 
+                          ? user.affiliation 
+                          : user.affiliation.split(',').map(aff => aff.trim()).filter(Boolean);
+                        
+                        affiliations.forEach((aff, index) => { %>
+                      <span class="org-tag <%= affiliations.length === 1 ? 'single' : '' %>" 
+                            title="<%= aff %>">
+                        <%= aff %>
+                      </span>
+                        <% }); %>
+                      </div>
+                    <% } else { %>
+                      <span class="no-organizations">No office/department</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% } %>
             </tbody>
-            </table>
+          </table>
 
-            <div style="margin-top:2rem; display:flex; gap:1rem;">
-<button id="openUpdateProfile" class="view-all-btn">Update Profile</button>
-<button id="openChangePassword" class="view-all-btn">Change Password</button>
-<button id="openPictureModal" class="view-all-btn" type="button">Update Profile Picture</button>
-            </div>
+          <div style="margin-top:2rem; display:flex; gap:1rem;">
+            <button id="openUpdateProfile" class="view-all-btn">Update Profile</button>
+            <button id="openChangePassword" class="view-all-btn">Change Password</button>
+            <button id="openPictureModal" class="view-all-btn" type="button">Update Profile Picture</button>
+          </div>
         </div>
-        </section>
+      </section>
     </div>
-    </main>
+  </main>
 
-    <div id="updateProfileModal" class="modal" style="display: none;">
+  <!-- Enhanced Update Profile Modal -->
+  <div id="updateProfileModal" class="modal" style="display: none;">
     <div class="modal-content">
-        <div class="modal-header">
-        <h2 class="modal-title">Update Profile</h2>
+      <div class="modal-header">
+        <h2 class="modal-title">✏️ Update Profile</h2>
         <span class="close" onclick="closeModal('updateProfileModal')">&times;</span>
-        </div>
-        <form id="updateProfileForm" class="modal-form">
-        <div class="form-group">
-            <label for="fName">First Name</label>
-            <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
-        </div>
-        <div class="form-group">
-            <label for="mName">Middle Name</label>
-            <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
-        </div>
-        <div class="form-group">
-            <label for="lName">Last Name</label>
-            <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
-        </div>
-        <div class="form-group">
-            <label for="email">Email (cannot be changed)</label>
-            <input name="email" id="email" type="email" value="<%= user.email %>" disabled />
-        </div>
-        <div class="form-group">
-            <label for="username">Username (cannot be changed)</label>
-            <input name="username" id="username" type="text" value="<%= user.username %>" disabled />
-        </div>
-        <div class="form-group">
-            <label for="phoneNumber">Phone Number</label>
-            <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" />
-        </div>
+      </div>
+      <div class="modal-body">
+        <form id="updateProfileForm" class="modal-form profile-update-form">
+          
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <h3 class="section-title">👤 Personal Information</h3>
+            
+            <div class="form-group">
+              <label for="fName">First Name <span class="required">*</span></label>
+              <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="mName">Middle Name <span class="required">*</span></label>
+              <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="lName">Last Name <span class="required">*</span></label>
+              <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="phoneNumber">📞 Phone Number</label>
+              <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" placeholder="Enter your phone number" />
+            </div>
+          </div>
 
-        <% if (user.userType === 'student') { %>
-        <div class="form-group">
-          <label for="studentOrganization">Student Organization</label>
-          <select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%"></select>
+          <!-- Account Information Section -->
+          <div class="form-section">
+            <h3 class="section-title">🔐 Account Information</h3>
+            
+            <div class="form-group">
+              <label for="email">📧 Email Address</label>
+              <input name="email" id="email" type="email" value="<%= user.email %>" disabled title="Email cannot be changed" />
+              <small style="color: #64748b; margin-top: 0.5rem; font-style: italic;">Email address cannot be modified</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="username">👤 Username</label>
+              <input name="username" id="username" type="text" value="<%= user.username %>" disabled title="Username cannot be changed" />
+              <small style="color: #64748b; margin-top: 0.5rem; font-style: italic;">Username cannot be modified</small>
+            </div>
+          </div>
 
-          <button type="button" class="toggle-org-button" onclick="toggleCustomOrg()">Click here if Student Organization is not in the list</button>
+          <% if (user.userType === 'student') { %>
+          <!-- Student-Specific Information -->
+          <div class="form-section student-info-grid">
+            <h3 class="section-title">🎓 Student Information</h3>
+            
+            <!-- Organization Section -->
+            <div class="organization-section">
+              <label for="studentOrganization">
+                🏛️ Student Organizations
+                <span class="org-counter" id="orgCounter">No organizations selected</span>
+                <small style="display: block; color: #065f46; font-style: italic; margin-top: 0.5rem;">
+                  💡 Click on any selected organization to remove it
+                </small>
+              </label>
+              <select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%"></select>
 
-          <div id="customOrgContainer" style="display: none; margin-top: 0.5rem;">
-            <label for="otherOrganization">Add Other Student Organization</label>
-            <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-              <input type="text" id="otherOrganization" placeholder="Enter organization name" class="form-control" />
-              <button type="button" id="addOrganizationButton" class="add-org-button">+</button>
+              <div class="custom-org-section" id="customOrgSection">
+                <button type="button" class="toggle-org-button" id="toggleCustomOrg">
+                  Add organization not in the list
+                </button>
+
+                <div id="customOrgContainer" style="display: none;">
+                  <div class="custom-org-input-group">
+                    <input 
+                      type="text" 
+                      id="otherOrganization" 
+                      placeholder="Enter organization name..." 
+                      class="custom-org-input"
+                      maxlength="100"
+                    />
+                    <button type="button" id="addOrganizationButton" class="add-org-button" title="Add Organization"></button>
+                  </div>
+                  <div id="orgAddedFeedback" class="org-added-feedback"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Academic Information -->
+            <div class="academic-info">
+              <div class="form-group">
+                <label for="cys">📚 Course / Year / Section</label>
+                <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" placeholder="e.g., BSCS-4A" />
+              </div>
+              
+              <div class="form-group">
+                <label for="studentId">Student ID </label>
+                <input name="studentId" id="studentId" type="text" value="<%= user.studentId || '' %>" placeholder="Enter your student ID" />
+              </div>
+            </div>
+          </div>
+          
+          <% } else { %>
+          <!-- Staff-Specific Information -->
+          <div class="form-section">
+            <h3 class="section-title">💼 Professional Information</h3>
+            
+            <div class="office-section">
+              <div class="form-group">
+                <label for="officeSelect">🏢 Office/Department</label>
+                <select name="affiliation[]" id="officeSelect" multiple="multiple" style="width: 100%">
+                  <!-- options will be filled dynamically -->
+                </select>
+              </div>
+            </div>
+          </div>
+          <% } %>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" onclick="closeModal('updateProfileModal')">Cancel</button>
+            <button type="submit">💾 Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Change Modal (Single Column) -->
+  <div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Change Password</h2>
+        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="passwordForm" class="modal-form password-form">
+          <div class="form-group">
+            <label for="oldPassword">Current Password</label>
+            <div class="password-input-container">
+              <input name="oldPassword" id="oldPassword" type="password" required />
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('oldPassword', 'oldPasswordIcon')">
+                <svg id="oldPasswordIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <div class="password-input-container">
+              <input name="newPassword" id="newPassword" type="password" required />
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('newPassword', 'newPasswordIcon')">
+                <svg id="newPasswordIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Password Strength Indicator -->
+            <div class="password-strength" id="passwordStrength" style="display: none;">
+              <div class="strength-bar">
+                <div class="strength-fill" id="strengthFill"></div>
+              </div>
+              <span id="strengthText">Password strength</span>
+            </div>
+            
+            <!-- Password Validation Rules -->
+            <div class="password-validation" id="passwordValidation" style="display: none;">
+              <div class="validation-item" id="lengthCheck">
+                <svg class="validation-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <span>At least 8 characters</span>
+              </div>
+              <div class="validation-item" id="numberCheck">
+                <svg class="validation-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <span>At least one number</span>
+              </div>
+              <div class="validation-item" id="specialCheck">
+                <svg class="validation-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <span>At least one special character</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="confirmNewPassword">Confirm New Password</label>
+            <div class="password-input-container">
+              <input name="confirmNewPassword" id="confirmNewPassword" type="password" required />
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('confirmNewPassword', 'confirmPasswordIcon')">
+                <svg id="confirmPasswordIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Password Match Indicator -->
+            <div class="password-match-indicator" id="passwordMatchIndicator">
+              Enter password confirmation
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" onclick="closeModal('passwordModal')" style="background: #6b7280; color: white;">Cancel</button>
+            <button type="submit" id="updatePasswordBtn" disabled>Update Password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Picture Upload Modal (New Layout) -->
+  <div id="pictureModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">📸 Update Profile Picture</h2>
+        <span class="close" onclick="closeModal('pictureModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="picture-modal-body">
+          
+          <!-- Current Picture Section at the top -->
+          <div class="current-picture-header">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+                 alt="Current Profile Picture" id="currentProfileImg" />
+            <h4>Current Picture</h4>
+            <p>This is your current profile picture that others will see.</p>
+          </div>
+
+          <!-- Upload Selection Section -->
+          <div class="upload-selection-section">
+            
+            <!-- Drop Zone -->
+            <div class="file-upload-container" id="fileUploadContainer">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7,10 12,15 17,10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <p class="upload-text">Drop your image here</p>
+              <p class="upload-subtext">or click to browse from your device</p>
+              <input type="file" id="fileInput" name="profilePicture" accept="image/*" class="file-input-hidden" />
+              <button type="button" class="browse-button" onclick="document.getElementById('fileInput').click()">
+                📁 Choose File
+              </button>
+            </div>
+
+            <!-- Selected Image Preview -->
+            <div class="selected-image-preview" id="selectedImagePreview">
+              <h4>Selected Image</h4>
+              <div id="imagePreviewContent">
+                <p class="no-image-placeholder">No image selected</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="picture-actions">
+            <!-- Upload Section -->
+            <div class="action-section upload-section">
+              <p>Replace your current profile picture with a new one.</p>
+              <button type="button" id="uploadBtn" class="upload-action-btn" disabled>
+                📤 Upload Picture
+              </button>
+            </div>
+
+            <!-- Delete Section -->
+            <div class="action-section delete-section">
+              <p>Delete your current profile picture and use the default avatar.</p>
+              <button type="button" id="deleteBtn" class="delete-action-btn">
+                🗑️ Delete Picture
+              </button>
             </div>
           </div>
         </div>
-
-        <div class="form-group">
-            <label for="cys">Course / Year / Section</label>
-            <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" />
-        </div>
-        <div class="form-group">
-            <label for="studentId">Student ID</label>
-            <input name="studentId" id="studentId" type="text" value="<%= user.studentId || '' %>" />
-        </div>
-        <% } else { %>
-        <div class="form-group">
-          <label for="officeSelect">Office/Department</label>
-          <select name="affiliation" id="officeSelect" style="width: 100%">
-            <!-- options will be filled dynamically -->
-          </select>
-        </div>
-        <% } %>
-
-        <div class="form-actions">
-            <button type="submit">Save Changes</button>
-        </div>
-        </form>
-    </div>
-    </div>
-
-    <div id="passwordModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-        <h2 class="modal-title">Change Password</h2>
-        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
-        </div>
-        <form id="passwordForm" class="modal-form">
-        <div class="form-group">
-            <label for="oldPassword">Old Password</label>
-            <input name="oldPassword" id="oldPassword" type="password" required />
-        </div>
-        <div class="form-group">
-            <label for="newPassword">New Password</label>
-            <input name="newPassword" id="newPassword" type="password" required />
-        </div>
-        <div class="form-actions">
-            <button type="submit">Update Password</button>
-        </div>
-        </form>
-    </div>
-    </div>
-
-<div id="pictureModal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title">Update Profile Picture</h2>
-      <span class="close" onclick="closeModal('pictureModal')">&times;</span>
-    </div>
-    <form id="pictureForm" method="POST" action="/profile/upload-picture" enctype="multipart/form-data">
-    <div class="form-group">
-      <label for="formFile">Choose new profile picture</label>
-      <input class="form-control" type="file" id="formFile" name="profilePicture" accept="image/*" required>
-    </div>
-    <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
-      <button type="submit" class="submit-btn" style="background: var(--success); color: white;">Upload</button>
-    </div>
-  </form>
-
-    <form id="deletePictureForm" method="POST" action="/profile/delete-picture">
-      <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
-        <button type="submit" class="delete-btn" style="background: var(--danger); color: white;">Delete Profile Picture</button>
       </div>
-    </form>
+    </div>
+  </div>
+
+  <!-- Notification Modal -->
+<div id="notificationModal" class="notification-modal">
+  <div class="notification-content">
+    <div id="notificationIcon" class="notification-icon">
+      <span id="notificationIconText">✓</span>
+    </div>
+    <h3 id="notificationTitle" class="notification-title">Success</h3>
+    <p id="notificationMessage" class="notification-message">Operation completed successfully!</p>
+    <div id="notificationActions" class="notification-actions">
+      <button id="notificationOkBtn" class="notification-btn primary">OK</button>
+    </div>
   </div>
 </div>
 
-  <script>
-    function toggleDropdown() {
-      const menu = document.getElementById("dropdownMenu");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    }
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="notification-modal">
+  <div class="notification-content">
+    <div class="notification-icon warning">
+      <span>⚠️</span>
+    </div>
+    <h3 id="confirmationTitle" class="notification-title">Confirm Action</h3>
+    <p id="confirmationMessage" class="notification-message">Are you sure you want to proceed?</p>
+    <div class="notification-actions">
+      <button id="confirmationCancelBtn" class="notification-btn secondary">Cancel</button>
+      <button id="confirmationConfirmBtn" class="notification-btn danger">Confirm</button>
+    </div>
+  </div>
+</div>
 
-    document.addEventListener("click", function (event) {
-      const toggle = document.querySelector(".dropdown-toggle");
-      const menu = document.getElementById("dropdownMenu");
-      if (!toggle.contains(event.target)) {
-        menu.style.display = "none";
-      }
-    });
+<script>
+function toggleDropdown() {
+  const menu = document.getElementById("dropdownMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+document.addEventListener("click", function (event) {
+  const toggle = document.querySelector(".dropdown-toggle");
+  const menu = document.getElementById("dropdownMenu");
+  if (!toggle.contains(event.target)) {
+    menu.style.display = "none";
+  }
+});
 
 document.getElementById('openUpdateProfile').onclick = () => openModal('updateProfileModal');
 document.getElementById('openChangePassword').onclick = () => openModal('passwordModal');
 document.getElementById('openPictureModal').onclick = () => openModal('pictureModal');
 
+// Enhanced toggle function
+function toggleCustomOrg() {
+  const container = document.getElementById('customOrgContainer');
+  const button = document.getElementById('toggleCustomOrg');
+  const section = document.getElementById('customOrgSection');
+  const input = document.getElementById('otherOrganization');
+  
+  const isVisible = container.style.display !== 'none';
+  
+  container.style.display = isVisible ? 'none' : 'block';
+  button.classList.toggle('expanded', !isVisible);
+  section.classList.toggle('expanded', !isVisible);
+  
+  if (!isVisible) {
+    setTimeout(() => input.focus(), 100);
+  } else {
+    input.value = '';
+    hideFeedback();
+  }
+}
+
+// Enhanced add organization function
+function addCustomOrganization() {
+  const input = document.getElementById('otherOrganization');
+  const orgName = input.value.trim();
+  const select = $('#studentOrganization');
+  
+  if (!orgName) {
+    showFeedback('Please enter an organization name.', 'error');
+    input.focus();
+    return;
+  }
+  
+  if (orgName.length < 3) {
+    showFeedback('Organization name must be at least 3 characters long.', 'error');
+    input.focus();
+    return;
+  }
+  
+  // Check if organization already exists
+  const existingOptions = Array.from(select[0].options).map(option => option.value.toLowerCase());
+  if (existingOptions.includes(orgName.toLowerCase())) {
+    showFeedback('This organization is already in your list.', 'warning');
+    input.focus();
+    return;
+  }
+  
+  // Add new option
+  const newOption = new Option(orgName, orgName, true, true);
+  select.append(newOption);
+  
+  // Update selection
+  const selected = select.val() || [];
+  if (!selected.includes(orgName)) {
+    selected.push(orgName);
+    select.val(selected).trigger('change');
+  }
+  
+  // Clear input and show success
+  input.value = '';
+  showFeedback(`"${orgName}" has been added successfully!`, 'success');
+  updateOrganizationCounter();
+  
+  // Auto-hide feedback after 3 seconds
+  setTimeout(hideFeedback, 3000);
+}
+
+// Feedback system
+function showFeedback(message, type = 'success') {
+  const feedback = document.getElementById('orgAddedFeedback');
+  feedback.textContent = message;
+  feedback.className = `org-added-feedback ${type}`;
+  feedback.classList.add('show');
+}
+
+function hideFeedback() {
+  const feedback = document.getElementById('orgAddedFeedback');
+  feedback.classList.remove('show');
+}
+
+// Organization counter
+function updateOrganizationCounter() {
+  const select = $('#studentOrganization');
+  const counter = document.getElementById('orgCounter');
+  const selectedCount = select.val()?.length || 0;
+  
+  if (selectedCount === 0) {
+    counter.textContent = 'No organizations selected';
+    counter.classList.remove('has-selections');
+  } else if (selectedCount === 1) {
+    counter.textContent = '1 organization selected';
+    counter.classList.add('has-selections');
+  } else {
+    counter.textContent = `${selectedCount} organizations selected`;
+    counter.classList.add('has-selections');
+  }
+}
+
+// Custom organization removal handler
+function setupOrganizationClickHandlers() {
+  // Remove existing handlers to prevent duplicates
+  $(document).off('click', '.select2-selection__choice');
+  
+  // Add click handler for organization removal
+  $(document).on('click', '.select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#studentOrganization');
+    
+    if (value) {
+      // Get current selections
+      let currentValues = select.val() || [];
+      
+      // Remove the clicked value
+      currentValues = currentValues.filter(v => v !== value);
+      
+      // Update the select
+      select.val(currentValues).trigger('change');
+      
+      // Update counter
+      updateOrganizationCounter();
+      
+      // Show feedback
+      showFeedback(`"${value}" has been removed.`, 'warning');
+      setTimeout(hideFeedback, 2000);
+    }
+  });
+}
+
+// Office selection click handlers (similar to organization handlers)
+function setupOfficeClickHandlers() {
+  // Remove existing handlers to prevent duplicates
+  $(document).off('click', '#officeSelect + .select2-container .select2-selection__choice');
+  
+  // Add click handler for office removal
+  $(document).on('click', '#officeSelect + .select2-container .select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#officeSelect');
+    
+    if (value) {
+      // Get current selections
+      let currentValues = select.val() || [];
+      
+      // Remove the clicked value
+      currentValues = currentValues.filter(v => v !== value);
+      
+      // Update the select
+      select.val(currentValues).trigger('change');
+      
+      console.log('Removed office:', value);
+    }
+  });
+}
+
 function openModal(id) {
   const modal = document.getElementById(id);
   modal.style.display = 'flex';
-  //student logic
+  
+  // Student logic with enhanced functionality
   if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
     const select = $('#studentOrganization');
     if (!select.hasClass('select2-hidden-accessible')) {
       select.select2({
-        placeholder: "Search or select organizations",
+        placeholder: "Search and select organizations...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#updateProfileModal')
+        dropdownParent: $('#updateProfileModal'),
+        closeOnSelect: false,
+        templateResult: function(data) {
+          if (!data.id) return data.text;
+          return $(`<div style="padding: 4px 0;">${data.text}</div>`);
+        }
       });
 
+      // Initialize with organization options - ADD YOUR ORGANIZATION LIST HERE
       const organizationOptions = [
-        "University Student Government (USG)",
+                "University Student Government (USG)",
         "Internal Audit Service (IAS)",
         "University Student Election Commission (USEC)",
         "Office of the Solicitor General (OSG)",
@@ -356,6 +1978,7 @@ function openModal(id) {
         "Green FM of Communications and Journalism Department",
         "International Students' Association (ISA) of International Students Office",
         "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+      
       ];
 
       const currentOrgs = `<%= user.studentOrganization || '' %>`
@@ -363,6 +1986,7 @@ function openModal(id) {
         .map(o => o.trim())
         .filter(Boolean);
 
+      // Add predefined options
       organizationOptions.forEach(org => {
         const exists = currentOrgs.includes(org);
         if (select.find(`option[value="${org}"]`).length === 0) {
@@ -371,6 +1995,7 @@ function openModal(id) {
         }
       });
 
+      // Add custom organizations
       currentOrgs.forEach(org => {
         if (!organizationOptions.includes(org)) {
           if (select.find(`option[value="${org}"]`).length === 0) {
@@ -381,15 +2006,45 @@ function openModal(id) {
       });
 
       select.trigger('change');
+      updateOrganizationCounter();
+
+      // Listen for selection changes
+      select.on('change', function() {
+        updateOrganizationCounter();
+        // Re-setup click handlers after any change
+        setTimeout(setupOrganizationClickHandlers, 100);
+      });
+
+      // Initial setup of click handlers
+      setTimeout(setupOrganizationClickHandlers, 200);
     }
+    
+    // Set up toggle functionality
+    document.getElementById('toggleCustomOrg').onclick = toggleCustomOrg;
+    
+    // Set up add organization button
+    document.getElementById('addOrganizationButton').onclick = addCustomOrganization;
+    
+    // Set up Enter key functionality
+    document.getElementById('otherOrganization').onkeypress = function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomOrganization();
+      }
+    };
   }
 
-  // NON-STUDENT LOGIC
+  // NON-STUDENT LOGIC - Fixed version
   if (id === 'updateProfileModal' && '<%= user.userType %>' !== 'student') {
     const select = $('#officeSelect');
+    
+    // Only initialize if not already initialized
     if (!select.hasClass('select2-hidden-accessible')) {
+      console.log('Initializing office select for non-student user');
+      
+      // Office options array - ADD YOUR OFFICE LIST HERE
       const officeOptions = [
-          "Office of the President",
+        "Office of the President",
           "Office of the Chief Administrative Officer",
           "Office of the Provost",
           "Office of the Chief Lasallian Mission Officer",
@@ -495,90 +2150,271 @@ function openModal(id) {
           "KABALIKAT ng DLSU-D Inc.",
           "Parents Organization La Salle Cavite",
           "Human Resource Management Office"
-      ] ;
+      ];
 
-          const currentOffice = `<%= user.affiliation || '' %>`.trim();
+      const currentAffiliations = `<%= Array.isArray(user.affiliation) ? user.affiliation.join(',') : (user.affiliation || '') %>`
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean);
+      
+      console.log('Current affiliations:', currentAffiliations);
 
-          // Clear old options first
-          select.empty();
+      // Clear existing options
+      select.empty();
 
-          // Add predefined options
-          officeOptions.forEach(office => {
-            const isSelected = office === currentOffice;
-            select.append(new Option(office, office, isSelected, isSelected));
-          });
+      // Add all office options
+      officeOptions.forEach(office => {
+        const isSelected = currentAffiliations.includes(office);
+        const option = new Option(office, office, isSelected, isSelected);
+        select.append(option);
+      });
 
-          // If user has a custom office, add it
-          if (currentOffice && !officeOptions.includes(currentOffice)) {
-            select.append(new Option(currentOffice, currentOffice, true, true));
-          }
+      // Initialize Select2
+      select.select2({
+        placeholder: "Search or select office(s)/department(s)",
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#updateProfileModal'),
+        closeOnSelect: false
+      });
 
-          // Init select2 after options are appended
-          select.select2({
-            placeholder: "Search or select an office/department",
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#updateProfileModal')
-          });
+      // Trigger change to show current selections
+      select.trigger('change');
+      
+      console.log('Office select initialized with values:', select.val());
 
-          select.trigger('change');
-        }
-      }
+      // Set up change handler and click handlers
+      select.on('change', function() {
+        console.log('Office selection changed:', $(this).val());
+        setTimeout(setupOfficeClickHandlers, 100);
+      });
+
+      // Initial setup of click handlers
+      setTimeout(setupOfficeClickHandlers, 200);
     }
+  }
+}
 
-    function closeModal(id) {
-        document.getElementById(id).style.display = 'none';
-    }
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
 
-    window.onclick = function (e) {
-        ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
-        if (e.target.id === id) closeModal(id);
-        });
-    };
+window.onclick = function (e) {
+  ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
+    if (e.target.id === id) closeModal(id);
+  });
+};
 
- document.getElementById('updateProfileForm').onsubmit = async function (e) {
+// FIXED profile form submission
+// FIXED profile form submission
+document.getElementById('updateProfileForm').onsubmit = async function (e) {
   e.preventDefault();
   const form = e.target;
   const formData = new FormData(form);
   const data = {};
 
+  // Handle regular form fields
   formData.forEach((value, key) => {
-    if (key in data) {
-      if (!Array.isArray(data[key])) {
-        data[key] = [data[key]];
-      }
-      data[key].push(value);
-    } else {
-      data[key] = value;
+    if (key === 'studentOrganization[]' || key === 'affiliation[]') {
+      return;
     }
+    data[key] = value;
   });
 
-  // --- Fix: Get selected organizations from Select2 ---
+  // Handle student organizations from Select2
   if (document.getElementById('studentOrganization')) {
     const selectedOrgs = $('#studentOrganization').val() || [];
-    // Send as comma-separated string (adjust if your backend expects array)
     data.studentOrganization = selectedOrgs.join(',');
   }
-  // ---------------------------------------------------
 
-  const res = await fetch('/profile/update-popup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
+  // Handle office/department affiliations from Select2 for non-students
+  if (document.getElementById('officeSelect')) {
+    const selectedOffices = $('#officeSelect').val() || [];
+    data.affiliation = selectedOffices.join(',');
+  }
 
-  if (res.ok) {
-    location.reload();
-  } else {
-    alert('Update failed');
+  try {
+    const res = await fetch('/profile/update-popup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      showSuccess('Profile updated successfully!', () => {
+        location.reload();
+      });
+    } else {
+      const errorText = await res.text();
+      showError('Update failed: ' + errorText);
+    }
+  } catch (error) {
+    console.error('Update error:', error);
+    showError('An error occurred while updating the profile');
   }
 };
 
-  document.getElementById('passwordForm').onsubmit = async function (e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = Object.fromEntries(new FormData(form).entries());
+// Password visibility toggle function
+function togglePasswordVisibility(inputId, iconId) {
+  const passwordInput = document.getElementById(inputId);
+  const eyeIcon = document.getElementById(iconId);
+  
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    passwordInput.classList.add('password-input');
+    eyeIcon.innerHTML = `
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+      <line x1="1" y1="1" x2="23" y2="23"></line>
+    `;
+  } else {
+    passwordInput.type = 'password';
+    passwordInput.classList.remove('password-input');
+    eyeIcon.innerHTML = `
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    `;
+  }
+}
 
+// Enhanced password strength checker (without uppercase requirement)
+function checkPasswordStrength(password) {
+  const strengthIndicator = document.getElementById('passwordStrength');
+  const passwordValidation = document.getElementById('passwordValidation');
+  const strengthFill = document.getElementById('strengthFill');
+  const strengthText = document.getElementById('strengthText');
+  
+  if (password.length === 0) {
+    strengthIndicator.style.display = 'none';
+    passwordValidation.style.display = 'none';
+    return false;
+  }
+  
+  strengthIndicator.style.display = 'block';
+  passwordValidation.style.display = 'block';
+  
+  // Check individual requirements (removed uppercase requirement)
+  const checks = {
+    length: password.length >= 8,
+    number: password.match(/[0-9]/),
+    special: password.match(/[^a-zA-Z0-9]/)
+  };
+  
+  // Update validation items
+  updateValidationItem('lengthCheck', checks.length);
+  updateValidationItem('numberCheck', checks.number);
+  updateValidationItem('specialCheck', checks.special);
+  
+  // Calculate strength (adjusted for 3 requirements instead of 4)
+  let strength = Object.values(checks).filter(Boolean).length;
+  
+  strengthFill.className = 'strength-fill';
+  
+  if (strength <= 1) {
+    strengthFill.classList.add('strength-weak');
+    strengthText.textContent = 'Weak password';
+  } else if (strength === 2) {
+    strengthFill.classList.add('strength-medium');
+    strengthText.textContent = 'Medium strength';
+  } else {
+    strengthFill.classList.add('strength-strong');
+    strengthText.textContent = 'Strong password';
+  }
+  
+  // Return true if all requirements are met
+  return strength >= 3;
+}
+
+// Update validation item styling
+function updateValidationItem(itemId, isValid) {
+  const item = document.getElementById(itemId);
+  if (item) {
+    if (isValid) {
+      item.classList.remove('invalid');
+      item.classList.add('valid');
+    } else {
+      item.classList.remove('valid');
+      item.classList.add('invalid');
+    }
+  }
+}
+
+// Password match checker
+function checkPasswordMatch() {
+  const newPassword = document.getElementById('newPassword').value;
+  const confirmPassword = document.getElementById('confirmNewPassword').value;
+  const matchIndicator = document.getElementById('passwordMatchIndicator');
+  const updateBtn = document.getElementById('updatePasswordBtn');
+  
+  if (confirmPassword.length === 0) {
+    matchIndicator.textContent = 'Enter password confirmation';
+    matchIndicator.className = 'password-match-indicator empty';
+    updateBtn.disabled = true;
+    return false;
+  }
+  
+  if (newPassword === confirmPassword) {
+    matchIndicator.textContent = '✓ Passwords match';
+    matchIndicator.className = 'password-match-indicator match';
+    
+    // Check if password is strong enough (updated requirements)
+    const isStrong = checkPasswordStrength(newPassword);
+    updateBtn.disabled = !isStrong;
+    return true;
+  } else {
+    matchIndicator.textContent = '✗ Passwords do not match';
+    matchIndicator.className = 'password-match-indicator no-match';
+    updateBtn.disabled = true;
+    return false;
+  }
+}
+
+// Enhanced password form event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  const newPasswordInput = document.getElementById('newPassword');
+  const confirmPasswordInput = document.getElementById('confirmNewPassword');
+  
+  if (newPasswordInput) {
+    newPasswordInput.addEventListener('input', function() {
+      checkPasswordStrength(this.value);
+      checkPasswordMatch();
+    });
+  }
+  
+  if (confirmPasswordInput) {
+    confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+  }
+});
+
+document.getElementById('passwordForm').onsubmit = async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form).entries());
+  
+  // Final validation
+  const newPassword = data.newPassword;
+  const confirmPassword = data.confirmNewPassword;
+  
+  if (newPassword !== confirmPassword) {
+    showError('Passwords do not match');
+    return;
+  }
+  
+  if (newPassword.length < 8) {
+    showError('Password must be at least 8 characters long');
+    return;
+  }
+  
+  if (!newPassword.match(/[0-9]/)) {
+    showError('Password must contain at least one number');
+    return;
+  }
+  
+  if (!newPassword.match(/[^a-zA-Z0-9]/)) {
+    showError('Password must contain at least one special character');
+    return;
+  }
+
+  try {
     const res = await fetch('/profile/change-password-popup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -586,89 +2422,319 @@ function openModal(id) {
     });
 
     if (res.ok) {
-      alert('Password updated');
-      closeModal('passwordModal');
+      showSuccess('Password updated successfully!', () => {
+        closeModal('passwordModal');
+        form.reset();
+        document.getElementById('passwordStrength').style.display = 'none';
+        document.getElementById('passwordValidation').style.display = 'none';
+        document.getElementById('passwordMatchIndicator').textContent = 'Enter password confirmation';
+        document.getElementById('passwordMatchIndicator').className = 'password-match-indicator empty';
+        document.getElementById('updatePasswordBtn').disabled = true;
+      });
     } else {
       const err = await res.text();
-      alert(err);
+      showError(err);
     }
-  };
-
- document.getElementById('pictureForm').onsubmit = async function (e) {
-  e.preventDefault();
-  const form = e.target;
-  const formData = new FormData(form);
-
-  try {
-    const res = await fetch('/profile/upload-picture', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err);
-    }
-
-    alert('Profile picture updated!');
-    location.reload();
   } catch (error) {
-    alert('Error uploading picture: ' + error.message);
+    showError('An error occurred while updating the password');
   }
 };
+// Enhanced picture modal functionality - Updated for new layout
+let selectedFile = null;
 
-document.getElementById('deletePictureForm').onsubmit = async function (e) {
-  e.preventDefault();
+// File upload handling
+document.addEventListener('DOMContentLoaded', function() {
+  const fileInput = document.getElementById('fileInput');
+  const uploadContainer = document.getElementById('fileUploadContainer');
+  const selectedImagePreview = document.getElementById('selectedImagePreview');
+  const imagePreviewContent = document.getElementById('imagePreviewContent');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
 
-  if (!confirm('Are you sure you want to delete your profile picture?')) return;
+  if (!fileInput || !uploadContainer) return; // Guard clause
 
-  const res = await fetch('/profile/delete-picture', {
-    method: 'POST'
+  // Drag and drop functionality
+  uploadContainer.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadContainer.classList.add('dragover');
   });
 
-  if (res.ok) {
-    alert('Profile picture deleted.');
-    location.reload();
-  } else {
-    const err = await res.text();
-    alert('Error: ' + err);
-  }
-};
+  uploadContainer.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    uploadContainer.classList.remove('dragover');
+  });
 
-function toggleCustomOrg() {
-  const container = document.getElementById('customOrgContainer');
-  container.style.display = container.style.display === 'none' ? 'block' : 'none';
+  uploadContainer.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadContainer.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileSelection(files[0]);
+    }
+  });
+
+  // File input change
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFileSelection(e.target.files[0]);
+    }
+  });
+
+  // Handle file selection
+// Handle file selection
+function handleFileSelection(file) {
+  // Validate file type
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+  if (!validTypes.includes(file.type)) {
+    showError('Please select a valid image file (JPG, JPEG, PNG, or GIF)');
+    return;
+  }
+
+  // Validate file size (5MB limit)
+  const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+  if (file.size > maxSize) {
+    showError('File size must be less than 5MB');
+    return;
+  }
+
+  selectedFile = file;
+
+  // Show preview in the selected image section
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    selectedImagePreview.classList.add('has-image');
+    
+    // Update file info
+    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+    imagePreviewContent.innerHTML = `
+      <img src="${e.target.result}" class="preview-image" alt="Preview" />
+      <div class="preview-info">
+        <strong>📋 Selected File:</strong><br>
+        <strong>${file.name}</strong><br>
+        Size: ${sizeInMB} MB<br>
+        Type: ${file.type}
+      </div>
+    `;
+    
+    // Enable upload button
+    if (uploadBtn) uploadBtn.disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+  // Upload button click
+// Upload button click
+if (uploadBtn) {
+  uploadBtn.addEventListener('click', async () => {
+    if (!selectedFile) {
+      showError('Please select a file first');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('profilePicture', selectedFile);
+
+    try {
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<span class="notification-spinner"></span>Uploading...';
+
+      const res = await fetch('/profile/upload-picture', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
+
+      showSuccess('Profile picture updated successfully!', () => {
+        location.reload();
+      });
+    } catch (error) {
+      showError('Error uploading picture: ' + error.message);
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = '📤 Upload Picture';
+    }
+  });
 }
 
-document.getElementById('addOrganizationButton')?.addEventListener('click', function () {
-  const input = document.getElementById('otherOrganization');
-  const orgName = input.value.trim();
-  const select = $('#studentOrganization');
+ // Delete button click
+if (deleteBtn) {
+  deleteBtn.addEventListener('click', async () => {
+    showConfirmation(
+      'Delete Profile Picture',
+      'Are you sure you want to delete your profile picture? This action cannot be undone.',
+      async () => {
+        try {
+          deleteBtn.disabled = true;
+          deleteBtn.innerHTML = '<span class="notification-spinner"></span>Deleting...';
 
-  if (orgName) {
-    if (select.find(`option[value="${orgName}"]`).length === 0) {
-      const newOption = new Option(orgName, orgName, true, true);
-      select.append(newOption).trigger('change');
+          const res = await fetch('/profile/delete-picture', {
+            method: 'POST'
+          });
+
+          if (res.ok) {
+            showSuccess('Profile picture deleted successfully!', () => {
+              location.reload();
+            });
+          } else {
+            const err = await res.text();
+            showError('Error: ' + err);
+            deleteBtn.disabled = false;
+            deleteBtn.textContent = '🗑️ Delete Picture';
+          }
+        } catch (error) {
+          showError('An error occurred while deleting the picture');
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = '🗑️ Delete Picture';
+        }
+      }
+    );
+  });
+}
+
+  // Reset modal when closed
+  window.resetPictureModal = function() {
+    selectedFile = null;
+    if (selectedImagePreview) selectedImagePreview.classList.remove('has-image');
+    if (imagePreviewContent) imagePreviewContent.innerHTML = '<p class="no-image-placeholder">No image selected</p>';
+    if (uploadBtn) {
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = '📤 Upload Picture';
     }
-
-    const selected = select.val() || [];
-    if (!selected.includes(orgName)) {
-      selected.push(orgName);
-      select.val(selected).trigger('change');
+    if (deleteBtn) {
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = '🗑️ Delete Picture';
     }
+    if (fileInput) fileInput.value = '';
+  };
+});
 
-    input.value = '';
-  } else {
-    alert('Please enter an organization name.');
+// Update the closeModal function to reset picture modal
+const originalCloseModal = window.closeModal;
+window.closeModal = function(id) {
+  if (id === 'pictureModal' && window.resetPictureModal) {
+    window.resetPictureModal();
+  }
+  originalCloseModal(id);
+};
+
+// =========================== //
+// NOTIFICATION SYSTEM         //
+// =========================== //
+
+// Show notification modal
+function showNotification(type, title, message, callback = null) {
+  const modal = document.getElementById('notificationModal');
+  const icon = document.getElementById('notificationIcon');
+  const iconText = document.getElementById('notificationIconText');
+  const titleEl = document.getElementById('notificationTitle');
+  const messageEl = document.getElementById('notificationMessage');
+  const okBtn = document.getElementById('notificationOkBtn');
+
+  // Set icon and styling based on type
+  icon.className = `notification-icon ${type}`;
+  switch(type) {
+    case 'success':
+      iconText.textContent = '✓';
+      break;
+    case 'error':
+      iconText.textContent = '✗';
+      break;
+    case 'warning':
+      iconText.textContent = '⚠️';
+      break;
+    case 'info':
+      iconText.textContent = 'ℹ️';
+      break;
+  }
+
+  titleEl.textContent = title;
+  messageEl.textContent = message;
+
+  // Handle OK button click
+  okBtn.onclick = () => {
+    hideNotification();
+    if (callback) callback();
+  };
+
+  // Show modal
+  modal.classList.add('show');
+}
+
+// Hide notification modal
+function hideNotification() {
+  const modal = document.getElementById('notificationModal');
+  modal.classList.remove('show');
+}
+
+// Show confirmation dialog
+function showConfirmation(title, message, onConfirm, onCancel = null) {
+  const modal = document.getElementById('confirmationModal');
+  const titleEl = document.getElementById('confirmationTitle');
+  const messageEl = document.getElementById('confirmationMessage');
+  const cancelBtn = document.getElementById('confirmationCancelBtn');
+  const confirmBtn = document.getElementById('confirmationConfirmBtn');
+
+  titleEl.textContent = title;
+  messageEl.textContent = message;
+
+  // Handle button clicks
+  cancelBtn.onclick = () => {
+    hideConfirmation();
+    if (onCancel) onCancel();
+  };
+
+  confirmBtn.onclick = () => {
+    hideConfirmation();
+    if (onConfirm) onConfirm();
+  };
+
+  // Show modal
+  modal.classList.add('show');
+}
+
+// Hide confirmation modal
+function hideConfirmation() {
+  const modal = document.getElementById('confirmationModal');
+  modal.classList.remove('show');
+}
+
+// Enhanced notification functions
+function showSuccess(message, callback = null) {
+  showNotification('success', 'Success!', message, callback);
+}
+
+function showError(message, callback = null) {
+  showNotification('error', 'Error!', message, callback);
+}
+
+function showWarning(message, callback = null) {
+  showNotification('warning', 'Warning!', message, callback);
+}
+
+function showInfo(message, callback = null) {
+  showNotification('info', 'Information', message, callback);
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('notification-modal')) {
+    hideNotification();
+    hideConfirmation();
   }
 });
 
-//update office/department based on user type
-//nonstudent
-//OFFICE/DEPARTMENT SELECTION
+// Close modals with Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    hideNotification();
+    hideConfirmation();
+  }
+});
+</script>
 
-
-  </script>
 
 </body>
 </html>

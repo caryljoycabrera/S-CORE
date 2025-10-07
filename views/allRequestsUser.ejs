@@ -57,6 +57,399 @@
 .message-text {
   word-wrap: break-word;
 }
+/* Enhanced Request Details Modal Styles */
+.details-modal-body {
+  padding: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.details-content {
+  padding: 2rem;
+}
+
+.details-section {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.details-section:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.details-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.details-section h3::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: var(--primary-green);
+  border-radius: 1px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.details-field {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.details-field:hover {
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.details-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.details-value {
+  font-size: 1rem;
+  color: #1e293b;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.status-badge-large {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1.25rem;
+  border-radius: 25px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.status-badge-large.pending {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.status-badge-large.approved {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.status-badge-large.rejected {
+  background: linear-gradient(135deg, #fecaca, #fca5a5);
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+.status-badge-large.completed {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+.deadline-badge-large {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.625rem 1.25rem;
+  border-radius: 25px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  color: #475569;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.deadline-badge-large.overdue {
+  background: linear-gradient(135deg, #fecaca, #fca5a5);
+  color: #dc2626;
+  border-color: #ef4444;
+}
+
+.deadline-badge-large.near-deadline {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #d97706;
+  border-color: #f59e0b;
+}
+
+.description-section {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.description-section h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.description-section h3::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: var(--primary-green);
+  border-radius: 1px;
+}
+
+.description-content {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #f1f5f9;
+  line-height: 1.7;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.chat-section {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border-radius: 16px;
+  border: 1px solid #bbf7d0;
+}
+
+.chat-btn-enhanced {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  box-shadow: 0 4px 20px rgba(64, 139, 78, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chat-btn-enhanced:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(64, 139, 78, 0.3);
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+}
+
+/* Enhanced file preview styles */
+.enhanced-file-preview {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.enhanced-file-preview h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.enhanced-file-preview h3::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: var(--primary-green);
+  border-radius: 1px;
+}
+
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.enhanced-file-item {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid #f1f5f9;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.enhanced-file-item:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 8px 30px rgba(64, 139, 78, 0.1);
+  transform: translateY(-2px);
+}
+
+.file-header-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.file-icon-enhanced {
+  width: 28px;
+  height: 28px;
+  color: var(--primary-green);
+  flex-shrink: 0;
+}
+
+.file-info-enhanced {
+  flex: 1;
+}
+
+.file-name-enhanced {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1rem;
+  margin: 0;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.file-type-enhanced {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-preview-container {
+  margin: 1rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.download-btn-enhanced {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
+}
+
+.download-btn-enhanced:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
+  color: white;
+  text-decoration: none;
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .details-content {
+    padding: 1rem;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .file-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .details-section {
+    padding: 1.5rem;
+  }
+  
+  .enhanced-file-preview {
+    padding: 1.5rem;
+  }
+}
+
+/* No files message styling */
+.no-files-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+}
+
+.no-files-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  color: #94a3b8;
+}
+
+.no-files-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+.no-files-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+}
 </style>
 </head>
 <body>
@@ -183,44 +576,46 @@
                 <th>Date Submitted</th>
               </tr>
             </thead>
-            <tbody id="requestsTableBody">
-              <% allRequests.forEach(request => { %>
-              <tr class="request-row"
-                  data-id="<%= request._id %>"
-                  data-type="<%= request.type %>"
-                  data-title="<%= request.title %>"
-                  data-status="<%= request.status %>"
-                  data-organization="<%= user.userType === 'nonstudent' ? user.affiliation : request.organization %>"
-                  data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
-                  data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
-                  data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
-                  data-deadline="<%= request.deadline ? request.deadline.toLocaleString() : 'N/A' %>"
-                  data-description="<%= request.description %>" 
-                  data-file="<%= request.file ? request.file : '' %>">
-                <td><%= request._id.toString().slice(-6) %></td>
-                <td>
-                  <% if (request.type === 'Request Approval') { %>
-                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #dbeafe; color: #1e40af;">
-                      Approval
-                    </span>
-                  <% } else { %>
-                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #fef3c7; color: #92400e;">
-                      Service
-                    </span>
-                  <% } %>
-                </td>
-                <td><%= request.title %></td>
-                <td><%= user.userType === 'nonstudent' ? user.affiliation : request.organization %></td>
-                <td>
-                  <span class="status-badge <%= request.status.toLowerCase() %>">
-                    <%= request.status %>
-                  </span>
-                </td>
-                <td><%= request.assignedUnits || 'Not yet assigned' %></td>
-                <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
-              </tr>
-              <% }); %>
-            </tbody>
+<!-- Replace the existing tbody section with this corrected version -->
+<tbody id="requestsTableBody">
+  <% allRequests.forEach(request => { %>
+<tr class="request-row"
+    data-id="<%= request._id %>"
+    data-type="<%= request.type %>"
+    data-title="<%= request.title %>"
+    data-status="<%= request.status %>"
+    data-organization="<%= request.organization %>"
+    data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
+    data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
+    data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
+    data-deadline="<%= request.deadline ? request.deadline.toLocaleString() : 'N/A' %>"
+    data-description="<%= request.description %>" 
+    data-file="<%= request.file ? request.file : '' %>"
+    data-files="<%= request.files ? request.files.join(',') : '' %>">
+    <td><%= request._id.toString().slice(-6) %></td>
+    <td>
+      <% if (request.type === 'Request Approval') { %>
+        <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #dbeafe; color: #1e40af;">
+          Approval
+        </span>
+      <% } else { %>
+        <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #fef3c7; color: #92400e;">
+          Service
+        </span>
+      <% } %>
+    </td>
+    <td><%= request.title %></td>
+    <td><%= request.organization %></td>
+    <td>
+      <span class="status-badge <%= request.status.toLowerCase() %>">
+        <%= request.status %>
+      </span>
+    </td>
+    <td><%= request.assignedUnits || 'Not yet assigned' %></td>
+    <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
+  </tr>
+  <% }); %>
+</tbody>
           </table>
 
           <% if (!allRequests || allRequests.length === 0) { %>
@@ -234,30 +629,91 @@
     </div>
   </div>
 
-  <div id="detailsModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <header class="modal-header">
-        <span class="modal-title">Request Details</span>
-        <span class="close" id="closeDetailsModal">&times;</span>
-      </header>
-      <div class="modal-body">
-        <p><strong>Type:</strong> <span id="detailType"></span></p>
-        <p><strong>Title:</strong> <span id="detailTitle"></span></p>
-        <p><strong>Office/Department/Organization:</strong> <span id="detailOrganization"></span></p>
-        <p><strong>Description:</strong> <span id="detailDescription"></span></p>
-        <p><strong>Status:</strong> <span id="detailStatus"></span></p>
-        <p><strong>Assigned Units:</strong> <span id="detailUnits"></span></p>
-        <p><strong>Date Submitted:</strong> <span id="detailDatetime"></span></p>
-        <div id="deadlineSection" style="display: none;">
-          <p><strong>Requested Deadline:</strong> <span id="detailDeadline"></span></p>
+<div id="detailsModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 1000px;">
+    <header class="modal-header">
+      <span class="modal-title">Request Details</span>
+      <span class="close" id="closeDetailsModal">&times;</span>
+    </header>
+    <div class="modal-body details-modal-body">
+      <div class="details-content">
+        <!-- General Information Section -->
+<!-- General Information Section - ROW LAYOUT -->
+<div class="details-section">
+  <h3>General Information</h3>
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    <div class="details-field">
+      <div class="details-label">Request Type</div>
+      <div class="details-value" id="detailType"></div>
+    </div>
+    
+    <div class="details-field">
+      <div class="details-label">Project Title</div>
+      <div class="details-value" id="detailTitle"></div>
+    </div>
+    
+    <div class="details-field">
+      <div class="details-label">Organization</div>
+      <div class="details-value" id="detailOrganization"></div>
+    </div>
+    
+    <div class="details-field">
+      <div class="details-label">Date Submitted</div>
+      <div class="details-value" id="detailDatetime"></div>
+    </div>
+  </div>
+</div>
+
+        <!-- Status & Assignment Section -->
+        <div class="details-section">
+          <h3>Status & Assignment</h3>
+          <div class="details-grid">
+            <div class="details-field">
+              <div class="details-label">Current Status</div>
+              <div class="details-value">
+                <span class="status-badge-large" id="detailStatusBadge">
+                  <span id="detailStatus"></span>
+                </span>
+              </div>
+            </div>
+            
+            <div class="details-field">
+              <div class="details-label">Assigned Units</div>
+              <div class="details-value" id="detailUnits"></div>
+            </div>
+            
+            <div class="details-field" id="deadlineSection" style="display: none;">
+              <div class="details-label">Requested Deadline</div>
+              <div class="details-value">
+                <span class="deadline-badge-large" id="detailDeadlineBadge">
+                  <span id="detailDeadline"></span>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="file-preview" style="margin-top:1rem;"></div>
-         <div id="chatButtonSection" style="margin-top: 1rem; text-align: center; display: none;">
-        <button id="openChatFromDetailsModal" class="view-all-btn" style="background: var(--primary-green); color: white;">💬 Chat with Admin</button>
-      </div>
+
+        <!-- Description Section -->
+        <div class="description-section">
+          <h3>Description</h3>
+          <div class="description-content" id="detailDescription"></div>
+        </div>
+
+        <!-- Files Section -->
+        <div id="file-preview"></div>
+
+        <!-- Chat Section -->
+        <div class="chat-section" id="chatButtonSection" style="display: none;">
+          <h4 style="margin: 0 0 1rem 0; color: var(--primary-green); font-weight: 600;">Need to discuss this request?</h4>
+          <button id="openChatFromDetailsModal" class="chat-btn-enhanced">
+            Start Conversation with Admin
+          </button>
+        </div>
       </div>
     </div>
   </div>
+</div>
+
       <!-- Conversation Modal - ADD THIS ENTIRE BLOCK -->
   <div id="conversationModal" class="modal" style="display:none;">
     <div class="modal-content" style="max-width: 800px; width: 90%; height: 80vh; overflow: hidden;">
@@ -394,54 +850,93 @@ clearFiltersBtn.addEventListener('click', () => {
   
   filterRequests();
 });
-    document.querySelectorAll('.request-row').forEach(row => {
-      row.addEventListener('click', () => {
-        document.getElementById("detailType").innerText = row.dataset.type;
-        document.getElementById("detailTitle").innerText = row.dataset.title;
-        document.getElementById("detailOrganization").innerText = row.dataset.organization;
-        document.getElementById("detailDescription").innerText = row.dataset.description || 'N/A';
-        document.getElementById("detailStatus").innerText = row.dataset.status;
-        document.getElementById("detailUnits").innerText = row.dataset.units;
-        document.getElementById("detailDatetime").innerText = row.dataset.datetime;
 
-        const deadlineSection = document.getElementById("deadlineSection");
-        const deadline = row.dataset.deadline;
-        if (deadline && deadline !== 'N/A') {
-          document.getElementById("detailDeadline").innerText = deadline;
-          deadlineSection.style.display = 'block';
-        } else {
-          deadlineSection.style.display = 'none';
-        }
 
-        const file = row.dataset.file;
-        const previewContainer = document.getElementById('file-preview');
-        previewContainer.innerHTML = '';
-        if (file) {
-          const fileUrl = `/uploads/${file}`;
-          const ext = file.split('.').pop().toLowerCase();
-          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-            previewContainer.innerHTML = `<img src="${fileUrl}" alt="Uploaded Image" style="max-width:100%; border-radius: 8px;" /><br><a href="${fileUrl}" target="_blank">Open Image</a>`;
-          } else if (ext === 'pdf') {
-            previewContainer.innerHTML = `<embed src="${fileUrl}" width="100%" height="400px" /><br><a href="${fileUrl}" target="_blank">Open PDF</a>`;
-          } else {
-            previewContainer.innerHTML = `<p>Click to download:</p><a href="${fileUrl}" target="_blank">Download File (${file})</a>`;
-          }
-        } else {
-          previewContainer.innerHTML = `<p>No file uploaded.</p>`;
-        }
-        currentConversationId = row.dataset.id;
+// Enhanced row click handler with improved modal population
+document.querySelectorAll('.request-row').forEach(row => {
+  row.addEventListener('click', (e) => {
+    // Populate basic fields
+    const detailType = document.getElementById("detailType");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailOrganization = document.getElementById("detailOrganization");
+    const detailDescription = document.getElementById("detailDescription");
+    const detailStatus = document.getElementById("detailStatus");
+    const detailStatusBadge = document.getElementById("detailStatusBadge");
+    const detailUnits = document.getElementById("detailUnits");
+    const detailDatetime = document.getElementById("detailDatetime");
+    
+    if (detailType) detailType.innerText = row.dataset.type || '';
+    if (detailTitle) detailTitle.innerText = row.dataset.title || '';
+    if (detailOrganization) detailOrganization.innerText = row.dataset.organization || '';
+    if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
+    if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';
+    if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
 
-        const chatButtonSection = document.getElementById("chatButtonSection");
-        const requestType = row.dataset.type;
-        if (requestType === "Service Request" || requestType === "Request Approval") {
-          chatButtonSection.style.display = 'block';
-        } else {
-          chatButtonSection.style.display = 'none';
-        }
-        detailModal.style.display = 'flex';
-      });
-    });
+    // Enhanced status badge
+    if (detailStatus && detailStatusBadge) {
+      const status = row.dataset.status || '';
+      detailStatus.innerText = status;
+      detailStatusBadge.className = `status-badge-large ${status.toLowerCase()}`;
+    }
 
+    // Enhanced deadline handling
+    const deadlineSection = document.getElementById("deadlineSection");
+    const deadline = row.dataset.deadline;
+    if (deadlineSection && deadline) {
+      const deadlineDate = new Date(deadline);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      deadlineDate.setHours(0,0,0,0);
+      const timeDiff = deadlineDate - today;
+      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      const isOverdue = daysDiff < 0;
+      const isToday = daysDiff === 0;
+      const isNearDeadline = daysDiff === 1;
+      
+      const deadlineElement = document.getElementById("detailDeadline");
+      const deadlineBadge = document.getElementById("detailDeadlineBadge");
+      if (deadlineElement && deadlineBadge) {
+        deadlineElement.innerText = deadlineDate.toLocaleDateString();
+        deadlineBadge.className = `deadline-badge-large ${isOverdue || isToday ? 'overdue' : isNearDeadline ? 'near-deadline' : ''}`;
+      }
+      deadlineSection.style.display = 'block';
+    } else if (deadlineSection) {
+      deadlineSection.style.display = 'none';
+    }
+
+    // Enhanced file preview
+    const file = row.dataset.file;
+    const filesData = row.dataset.files;
+    const previewContainer = document.getElementById('file-preview');
+    
+    if (previewContainer) {
+      previewContainer.innerHTML = '';
+      
+      let allFiles = [];
+      if (filesData && filesData.trim() !== '') {
+        allFiles = filesData.split(',').map(f => f.trim()).filter(Boolean);
+      } else if (file && file.trim() !== '') {
+        allFiles = [file.trim()];
+      }
+      
+      createEnhancedFilePreview(allFiles, previewContainer);
+    }
+    
+    // Chat functionality
+    currentConversationId = row.dataset.id;
+    const chatButtonSection = document.getElementById("chatButtonSection");
+    if (chatButtonSection) {
+      const requestType = row.dataset.type;
+      if (requestType === "Service Request" || requestType === "Request Approval") {
+        chatButtonSection.style.display = 'block';
+      } else {
+        chatButtonSection.style.display = 'none';
+      }
+    }
+    
+    if (detailModal) detailModal.style.display = 'flex';
+  });
+});
     function toggleDropdown() {
       const menu = document.getElementById("dropdownMenu");
       menu.style.display = menu.style.display === "block" ? "none" : "block";
@@ -462,6 +957,8 @@ clearFiltersBtn.addEventListener('click', () => {
         menu.style.display = "none";
       }
     });
+
+
 
     // Custom Status Filter Logic
 const statusFilterElement = document.getElementById('statusFilter');
@@ -623,8 +1120,135 @@ function getSelectedStatuses() {
       }
     });
 
- 
-
-  </script>
+    
+// Enhanced file preview function (replace existing file preview code)
+function createEnhancedFilePreview(allFiles, previewContainer) {
+  if (!previewContainer) return;
+  
+  if (allFiles.length > 0) {
+    const enhancedPreview = document.createElement('div');
+    enhancedPreview.className = 'enhanced-file-preview';
+    
+    const header = document.createElement('h3');
+    header.textContent = `Attached Files (${allFiles.length})`;
+    enhancedPreview.appendChild(header);
+    
+    const fileGrid = document.createElement('div');
+    fileGrid.className = 'file-grid';
+    
+    allFiles.forEach((currentFile, index) => {
+      if (currentFile && currentFile.trim()) {
+        const fileUrl = `/uploads/${currentFile.trim()}`;
+        const ext = currentFile.split('.').pop().toLowerCase();
+        
+        const fileItem = document.createElement('div');
+        fileItem.className = 'enhanced-file-item';
+        
+        // File header
+        const fileHeader = document.createElement('div');
+        fileHeader.className = 'file-header-enhanced';
+        
+        // File icon SVG
+        const fileIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        fileIcon.setAttribute('class', 'file-icon-enhanced');
+        fileIcon.setAttribute('viewBox', '0 0 24 24');
+        fileIcon.setAttribute('fill', 'none');
+        fileIcon.setAttribute('stroke', 'currentColor');
+        fileIcon.setAttribute('stroke-width', '2');
+        fileIcon.innerHTML = `
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14,2 14,8 20,8"></polyline>
+        `;
+        
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'file-info-enhanced';
+        
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name-enhanced';
+        fileName.textContent = currentFile;
+        
+        const fileType = document.createElement('div');
+        fileType.className = 'file-type-enhanced';
+        fileType.textContent = ext.toUpperCase() + ' File';
+        
+        fileInfo.appendChild(fileName);
+        fileInfo.appendChild(fileType);
+        fileHeader.appendChild(fileIcon);
+        fileHeader.appendChild(fileInfo);
+        fileItem.appendChild(fileHeader);
+        
+        // File preview container
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'file-preview-container';
+        
+        // File content based on type
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+          previewDiv.innerHTML = `
+            <img src="${fileUrl}" alt="Uploaded Image" 
+                 style="width:100%; max-height:250px; object-fit: cover; display: block;" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+            <div style="display:none; padding: 2rem; text-align: center; color: #ef4444;">
+              <p style="margin: 0; font-weight: 600;">Image could not be loaded</p>
+              <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">File: ${currentFile}</p>
+            </div>
+          `;
+        } else if (ext === 'pdf') {
+          previewDiv.innerHTML = `
+            <embed src="${fileUrl}" width="100%" height="300px" style="display: block;" 
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+            <div style="display:none; padding: 2rem; text-align: center; color: #64748b;">
+              <p style="margin: 0; font-weight: 600;">PDF Preview not available</p>
+              <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">Use the download button to view this file</p>
+            </div>
+          `;
+        } else {
+          previewDiv.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #64748b;">
+              <div style="font-size: 3rem; margin-bottom: 1rem; color: #94a3b8;">📄</div>
+              <p style="font-weight: 600; margin: 0;">Document File</p>
+              <p style="font-size: 0.875rem; margin: 0.5rem 0 0 0;">Use the download button to view this file</p>
+            </div>
+          `;
+        }
+        
+        fileItem.appendChild(previewDiv);
+        
+        // Download link
+        const downloadLink = document.createElement('a');
+        downloadLink.href = fileUrl;
+        downloadLink.target = '_blank';
+        downloadLink.download = currentFile;
+        downloadLink.className = 'download-btn-enhanced';
+        downloadLink.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7,10 12,15 17,10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download File
+        `;
+        fileItem.appendChild(downloadLink);
+        
+        fileGrid.appendChild(fileItem);
+      }
+    });
+    
+    enhancedPreview.appendChild(fileGrid);
+    previewContainer.appendChild(enhancedPreview);
+  } else {
+    previewContainer.innerHTML = `
+      <div class="enhanced-file-preview">
+        <h3>Files</h3>
+        <div class="no-files-message">
+          <svg class="no-files-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <div class="no-files-title">No files uploaded</div>
+          <div class="no-files-subtitle">This request does not contain any file attachments</div>
+        </div>
+      </div>
+    `;
+  }
+} </script>
 </body>
 </html>

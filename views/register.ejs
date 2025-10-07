@@ -56,11 +56,10 @@ body::before {
   z-index: 1;
   margin: 20px 0;
   transform: translateY(0);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease;
 }
 
 .register-container:hover {
-  transform: translateY(-2px);
   box-shadow: 
     0 25px 50px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.5),
@@ -186,9 +185,166 @@ body::before {
   color: #6b7280;
 }
 
-/* Enhanced Select2 Styling */
+/* =========================== */
+/* CUSTOM USER TYPE DROPDOWN   */
+/* =========================== */
+.user-type-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.user-type-dropdown select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 4px 40px 4px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-type-dropdown select:focus {
+  outline: none;
+}
+
+/* Remove browser default styling completely */
+.user-type-dropdown select::-ms-expand {
+  display: none;
+}
+
+.user-type-dropdown::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #408b4e, #275730);
+  transition: width 0.3s ease;
+}
+
+.input-group:focus-within .user-type-dropdown::before {
+  width: 100%;
+}
+
+/* Single custom arrow */
+.user-type-dropdown::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #6b7280;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.input-group:focus-within .user-type-dropdown::after {
+  border-top-color: #408b4e;
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.input-group:hover .user-type-dropdown::after {
+  border-top-color: #408b4e;
+}
+
+/* Enhanced option styling */
+.user-type-dropdown select option {
+  background: #ffffff;
+  color: #1f2937;
+  padding: 12px 16px;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.user-type-dropdown select option:hover {
+  background: #f3f4f6;
+}
+
+.user-type-dropdown select option:checked {
+  background: #408b4e;
+  color: white;
+}
+
+/* Custom styling for select when option is selected */
+.user-type-dropdown select:valid {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+/* Placeholder styling */
+.user-type-dropdown select:invalid {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Enhanced focus state */
+.input-group:focus-within .user-type-dropdown select {
+  color: #1f2937;
+}
+
+/* User type icon styling */
+.user-type-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.input-group:focus-within .user-type-icon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.input-group:hover .user-type-icon {
+  opacity: 0.9;
+}
+
+/* Dynamic icon color based on selection */
+.input-group.has-icon .user-type-dropdown select:valid + .user-type-icon {
+  color: #408b4e;
+  opacity: 1;
+}
+
+/* For input groups with icons */
+.input-group.has-icon select {
+  padding-left: 44px;
+}
+
+/* =========================== */
+/* ENHANCED SELECT2 STYLING   */
+/* =========================== */
 .select2-container {
   width: 100% !important;
+  z-index: 9999;
+}
+
+.select2-dropdown {
+  z-index: 99999 !important;
+  border: 2px solid #408b4e !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
 }
 
 .select2-container--default .select2-selection--single,
@@ -202,8 +358,9 @@ body::before {
 }
 
 .select2-container--default .select2-selection--multiple {
-  min-height: 40px !important;
+  min-height: 45px !important;
   padding: 8px 0 !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
@@ -219,21 +376,67 @@ body::before {
   font-weight: 400 !important;
 }
 
+/* Enhanced Organization Choice Tags */
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
-  background-color: #408b4e !important;
+  background: linear-gradient(135deg, #408b4e, #275730) !important;
   color: white !important;
   border: none !important;
-  border-radius: 8px !important;
-  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  padding: 6px 30px 6px 12px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
-  margin: 2px 4px 2px 0 !important;
+  margin: 3px 4px 3px 0 !important;
+  box-shadow: 0 2px 4px rgba(64, 139, 78, 0.2) !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  cursor: pointer !important;
+  user-select: none !important;
 }
 
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(64, 139, 78, 0.3) !important;
+  background: linear-gradient(135deg, #2f6e3b, #1e4a23) !important;
+}
+
+/* Hide default remove button */
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  display: none !important;
+}
+
+/* Custom minus icon */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:before {
+  content: "−" !important;
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
   color: white !important;
   font-weight: bold !important;
-  margin-right: 5px !important;
+  font-size: 16px !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:before {
+  opacity: 1 !important;
+}
+
+/* Hover tooltip */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:after {
+  content: "Click to remove" !important;
+  position: absolute !important;
+  bottom: -25px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+  white-space: nowrap !important;
+  z-index: 1000 !important;
+  pointer-events: none !important;
 }
 
 .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
@@ -243,21 +446,71 @@ body::before {
   padding: 0 !important;
 }
 
-.select2-dropdown {
-  border: 2px solid #408b4e !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
-}
-
 .select2-container--default .select2-results__option {
   padding: 12px 16px !important;
   font-family: 'Inter', sans-serif !important;
   font-size: 14px !important;
+  transition: background-color 0.2s ease;
 }
 
 .select2-container--default .select2-results__option--highlighted[aria-selected] {
   background-color: #408b4e !important;
   color: white !important;
+}
+
+/* =========================== */
+/* ORGANIZATION COUNTER        */
+/* =========================== */
+.org-counter {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 4px;
+  font-style: italic;
+  display: block;
+}
+
+.org-counter.has-selections {
+  color: #408b4e;
+  font-weight: 500;
+}
+
+/* =========================== */
+/* FEEDBACK MESSAGES           */
+/* =========================== */
+.org-added-feedback {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 0.875rem;
+  border: 1px solid #c3e6cb;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.org-added-feedback.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.org-added-feedback.success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.org-added-feedback.warning {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+.org-added-feedback.error {
+  background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+  color: #721c24;
+  border-color: #f1aeb5;
 }
 
 /* Toggle Button Styling */
@@ -638,6 +891,68 @@ body::before {
     width: 100%;
   }
 }
+/* Office/Department Multiple Selection Styling */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background: linear-gradient(135deg, #198754, #20c997) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 500 !important;
+  padding: 8px 30px 8px 12px !important;
+  margin: 3px 6px 3px 0 !important;
+  border-radius: 20px !important;
+  font-size: 0.875rem !important;
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2) !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3) !important;
+  background: linear-gradient(135deg, #157347, #198754) !important;
+}
+
+/* Hide default remove button */
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  display: none !important;
+}
+
+/* Custom minus icon for office selections */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:before {
+  content: "−" !important;
+  position: absolute !important;
+  right: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:before {
+  opacity: 1 !important;
+}
+
+/* Hover tooltip for office selections */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:after {
+  content: "Click to remove" !important;
+  position: absolute !important;
+  bottom: -25px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+  white-space: nowrap !important;
+  z-index: 1000 !important;
+  pointer-events: none !important;
+}
 </style>
 </head>
 <body>
@@ -645,37 +960,55 @@ body::before {
     <img class="logo" src="/Picture/logo.jpg" alt="Logo" />
     
     <h1 class="welcome-text">Welcome!</h1>
-    <p class="subtitle">Create your student account to get started</p>
+    <p class="subtitle">Create your account to get started</p>
 
     <form action="/register" method="POST" id="registerForm">
-      <div class="input-group">
-        <select name="userType" id="userType" required onchange="toggleUserTypeFields()">
-          <option value="" disabled selected>Select User Type</option>
-          <option value="student">Student</option>
-          <option value="nonstudent">Non-Student</option>
-        </select>
+      <!-- User Type Selection -->
+      <div class="input-group has-icon">
+        <svg class="user-type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <div class="user-type-dropdown">
+          <select name="userType" id="userType" required onchange="toggleUserTypeFields()">
+            <option value="" disabled <%= typeof formData === 'undefined' || !formData.userType ? 'selected' : '' %>>Select User Type</option>
+            <option value="student" <%= typeof formData !== 'undefined' && formData.userType === 'student' ? 'selected' : '' %>>🎓 Student</option>
+            <option value="nonstudent" <%= typeof formData !== 'undefined' && formData.userType === 'nonstudent' ? 'selected' : '' %>>💼 Staff/Faculty</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Student Fields -->
-      <div id="studentFields">
+      <!-- Student-Specific Fields -->
+      <div id="studentFields" class="student-fields">
         <div class="name-row">
           <div class="input-group">
-            <input type="text" name="firstName" placeholder="First Name" required />
+            <input type="text" name="firstName" placeholder="First Name" 
+                  value="<%= typeof formData !== 'undefined' ? formData.firstName || '' : '' %>" required />
           </div>
           <div class="input-group">
-            <input type="text" name="middleName" placeholder="Middle Name" />
+            <input type="text" name="middleName" placeholder="Middle Name" 
+                  value="<%= typeof formData !== 'undefined' ? formData.middleName || '' : '' %>" />
           </div>
         </div>
         <div class="input-group">
-          <input type="text" name="lastName" placeholder="Last Name" required />
+          <input type="text" name="lastName" placeholder="Last Name" 
+                value="<%= typeof formData !== 'undefined' ? formData.lastName || '' : '' %>" required />
         </div>
         <div class="input-group">
-          <input type="text" name="studentId" id="studentId" placeholder="Student ID" required title="Student ID must be exactly 9 digits"/>
+          <input type="text" name="studentId" id="studentId" placeholder="Student ID" 
+                value="<%= typeof formData !== 'undefined' ? formData.studentId || '' : '' %>" 
+                required title="Student ID must be exactly 9 digits"/>
         </div>
 
         <!-- Student Organization Selection -->
         <div class="input-group has-label">
-          <label for="studentOrganization" class="input-label">Student Organization(s)</label>
+          <label for="studentOrganization" class="input-label">
+            Student Organization(s)
+            <span class="org-counter" id="orgCounter">No organizations selected</span>
+            <small style="display: block; color: #6c757d; font-style: italic; margin-top: 4px;">
+              💡 Click on any selected organization to remove it
+            </small>
+          </label>
           <select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%"></select>
         </div>
 
@@ -688,106 +1021,102 @@ body::before {
         <div class="input-group has-label" id="customOrgContainer" style="display: none;">
           <label for="otherOrganization" class="input-label">Add Custom Organization</label>
           <div class="custom-org-input-wrapper">
-            <input type="text" id="otherOrganization" name="otherOrganization" placeholder="Enter organization name" />
+            <input type="text" id="otherOrganization" name="otherOrganization" placeholder="Enter organization name" maxlength="100" />
             <button type="button" id="addOrganizationButton" class="add-org-button">+</button>
           </div>
+          <div id="orgAddedFeedback" class="org-added-feedback"></div>
         </div>
 
         <div class="input-group">
-           <input type="text" name="cys" placeholder="Course / Year / Section" required />
+          <input type="text" name="cys" placeholder="Course / Year / Section" 
+                value="<%= typeof formData !== 'undefined' ? formData.cys || '' : '' %>" required />
         </div>
       </div>
 
-      <!-- Non-Student Fields -->
-      <div id="nonStudentFields" style="display:none;">
+      <!-- Non-Student-Specific Fields -->
+      <div id="nonStudentFields" class="nonstudent-fields" style="display:none;">
         <div class="name-row">
           <div class="input-group">
-            <input type="text" name="firstName" placeholder="First Name" required />
+            <input type="text" name="firstName" placeholder="First Name" 
+                  value="<%= typeof formData !== 'undefined' ? formData.firstName || '' : '' %>" required />
           </div>
           <div class="input-group">
-            <input type="text" name="middleName" placeholder="Middle Name" />
+            <input type="text" name="middleName" placeholder="Middle Name" 
+                  value="<%= typeof formData !== 'undefined' ? formData.middleName || '' : '' %>" />
           </div>
         </div>
         <div class="input-group">
-          <input type="text" name="lastName" placeholder="Last Name" required />
+          <input type="text" name="lastName" placeholder="Last Name" 
+                value="<%= typeof formData !== 'undefined' ? formData.lastName || '' : '' %>" required />
         </div>
 
         <!-- Office/Department Selection -->
-        <div class="input-group has-label">
+        <div class="input-group has-label office-selections">
           <label for="nonStudentOffice" class="input-label">Office/Department</label>
           <select name="affiliation[]" id="nonStudentOffice" multiple="multiple" style="width: 100%" required></select>
         </div>
-
-        <!-- Toggle Button for Office -->
-        <button type="button" class="toggle-org-button" onclick="toggleCustomOffice()">
-          Can't find your office/department? Add it here
-        </button>
-
-        <!-- Hidden Custom Office Input -->
-        <div class="input-group has-label" id="customOfficeContainer" style="display: none;">
-          <label for="otherOffice" class="input-label">Add Custom Office/Department</label>
-          <div class="custom-org-input-wrapper">
-            <input type="text" id="otherOffice" name="otherOffice" placeholder="Enter office/department name" />
-            <button type="button" id="addOfficeButton" class="add-org-button">+</button>
-          </div>
-        </div>
       </div>
 
-      <!-- Common fields -->
-      <div class="input-group">
-        <input type="tel" name="phoneNumber" placeholder="Phone Number" required />
-      </div>
-      <div class="input-group">
-        <input type="email" name="email" placeholder="Email Address" required />
-      </div>
-      <div class="input-group">
-        <img src="/Picture/usericon.png" alt="User Icon" />
-        <input type="text" name="username" placeholder="Username" required />
-      </div>
-
-      <div class="password-row">
+      <!-- Common Fields (visible for both user types) -->
+      <div id="commonFields">
         <div class="input-group">
-          <img src="/Picture/key.png" alt="Lock Icon" />
-          <input type="password" name="password" id="password" placeholder="Password" required />
-          <div class="password-toggle" onclick="togglePassword('password', 'eyeIcon1')">
-            <svg class="eye-icon" id="eyeIcon1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          </div>
+          <input type="tel" name="phoneNumber" placeholder="Phone Number" 
+                value="<%= typeof formData !== 'undefined' ? formData.phoneNumber || '' : '' %>" required />
         </div>
         <div class="input-group">
-          <input type="password" name="confirmPassword" id="confirmPassword" placeholder="Confirm Password" required />
-          <div class="password-toggle" onclick="togglePassword('confirmPassword', 'eyeIcon2')">
-            <svg class="eye-icon" id="eyeIcon2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
+          <input type="email" name="email" placeholder="Email Address" 
+                value="<%= typeof formData !== 'undefined' ? formData.email || '' : '' %>" required />
+        </div>
+        <div class="input-group">
+          <img src="/Picture/usericon.png" alt="User Icon" />
+          <input type="text" name="username" placeholder="Username" 
+                value="<%= typeof formData !== 'undefined' ? formData.username || '' : '' %>" required />
+        </div>
+
+        <div class="password-row">
+          <div class="input-group">
+            <img src="/Picture/key.png" alt="Lock Icon" />
+            <input type="password" name="password" id="password" placeholder="Password" required />
+            <div class="password-toggle" onclick="togglePassword('password', 'eyeIcon1')">
+              <svg class="eye-icon" id="eyeIcon1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="input-group">
+            <input type="password" name="confirmPassword" id="confirmPassword" placeholder="Confirm Password" required />
+            <div class="password-toggle" onclick="togglePassword('confirmPassword', 'eyeIcon2')">
+              <svg class="eye-icon" id="eyeIcon2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div class="password-strength" id="passwordStrength" style="display: none;">
-        <div class="strength-bar">
-          <div class="strength-fill" id="strengthFill"></div>
+        
+        <div class="password-strength" id="passwordStrength" style="display: none;">
+          <div class="strength-bar">
+            <div class="strength-fill" id="strengthFill"></div>
+          </div>
+          <span id="strengthText">Password strength</span>
         </div>
-        <span id="strengthText">Password strength</span>
-      </div>
-      
-      <div class="terms-section">
-        <input type="checkbox" name="terms" class="terms-checkbox" id="terms" required />
-        <label for="terms" class="terms-text">
-          I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>
-        </label>
-      </div>
+        
+        <div class="terms-section">
+          <input type="checkbox" name="terms" class="terms-checkbox" id="terms" required />
+          <label for="terms" class="terms-text">
+            I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>
+          </label>
+        </div>
 
-      <!-- Error/Success Messages -->
-      <div id="messageContainer"></div>
-      <% if (typeof error !== 'undefined' && error) { %>
-        <div class="error-message"><%= error %></div>
-      <% } %>
+        <!-- Error/Success Messages -->
+        <div id="messageContainer"></div>
+        <% if (typeof error !== 'undefined' && error) { %>
+        <div class="error-message"><%- error %></div>
+        <% } %>
 
-      <button type="submit" class="register-button">Create Account</button>
+        <button type="submit" class="register-button">Create Account</button>
+      </div>
     </form>
     
     <p class="login-text">
@@ -798,28 +1127,83 @@ body::before {
 </body>
 
 <script>
-function validateForm(event) {
+// User type icon update function
+function updateUserTypeIcon() {
+  const select = document.getElementById('userType');
+  const icon = document.querySelector('.user-type-icon');
+  
+  if (select.value === 'student') {
+    icon.innerHTML = `
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+      <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+    `;
+  } else if (select.value === 'nonstudent') {
+    icon.innerHTML = `
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="8.5" cy="7" r="4"></circle>
+      <path d="M20 8v6M23 11h-6"></path>
+    `;
+  } else {
+    icon.innerHTML = `
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    `;
+  }
+}
+
+function toggleUserTypeFields() {
   const userType = document.getElementById('userType').value;
-  const studentIdInput = document.getElementById('studentID');
-  const studentIdError = document.getElementById('studentIdError');
-  const studentFields = document.querySelector('.student-fields');
-  let isValid = true;
+  const studentFields = document.getElementById('studentFields');
+  const nonStudentFields = document.getElementById('nonStudentFields');
+  const commonFields = document.getElementById('commonFields');
+
+  // Update icon based on selection
+  updateUserTypeIcon();
 
   if (userType === 'student') {
-    const studentID = studentIdInput.value.trim();
-    const studentIdRegex = /^\d{4}-\d{5}$/;
+    studentFields.style.display = 'block';
+    nonStudentFields.style.display = 'none';
+    commonFields.style.display = 'block';
 
-    if (!studentIdRegex.test(studentID)) {
-      studentIdError.style.display = 'block';
-      studentFields.style.display = 'block'; 
-      isValid = false;
-    } else {
-      studentIdError.style.display = 'none';
-    }
-  }
+    // Enable student fields
+    studentFields.querySelectorAll('input, select').forEach(input => {
+      input.disabled = false;
+      if (input.dataset.name) input.name = input.dataset.name;
+    });
 
-  if (!isValid) {
-    event.preventDefault();
+    // Disable non-student fields
+    nonStudentFields.querySelectorAll('input, select').forEach(input => {
+      input.disabled = true;
+      if (input.name) {
+        input.dataset.name = input.name;
+        input.removeAttribute('name');
+      }
+    });
+
+  } else if (userType === 'nonstudent') {
+    studentFields.style.display = 'none';
+    nonStudentFields.style.display = 'block';
+    commonFields.style.display = 'block';
+
+    // Enable non-student fields
+    nonStudentFields.querySelectorAll('input, select').forEach(input => {
+      input.disabled = false;
+      if (input.dataset.name) input.name = input.dataset.name;
+    });
+
+    // Disable student fields
+    studentFields.querySelectorAll('input, select').forEach(input => {
+      input.disabled = true;
+      if (input.name) {
+        input.dataset.name = input.name;
+        input.removeAttribute('name');
+      }
+    });
+  } else {
+    // No user type selected
+    studentFields.style.display = 'none';
+    nonStudentFields.style.display = 'none';
+    commonFields.style.display = 'none';
   }
 }
 
@@ -881,6 +1265,136 @@ function showMessage(message, type = 'error') {
   setTimeout(() => {
     container.innerHTML = '';
   }, 5000);
+}
+
+// Enhanced feedback system
+function showFeedback(message, type = 'success') {
+  const feedback = document.getElementById('orgAddedFeedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.className = `org-added-feedback ${type}`;
+    feedback.classList.add('show');
+  }
+}
+
+function hideFeedback() {
+  const feedback = document.getElementById('orgAddedFeedback');
+  if (feedback) {
+    feedback.classList.remove('show');
+  }
+}
+
+// Organization counter
+function updateOrganizationCounter() {
+  const select = $('#studentOrganization');
+  const counter = document.getElementById('orgCounter');
+  if (!counter) return;
+  
+  const selectedCount = select.val()?.length || 0;
+  
+  if (selectedCount === 0) {
+    counter.textContent = 'No organizations selected';
+    counter.classList.remove('has-selections');
+  } else if (selectedCount === 1) {
+    counter.textContent = '1 organization selected';
+    counter.classList.add('has-selections');
+  } else {
+    counter.textContent = `${selectedCount} organizations selected`;
+    counter.classList.add('has-selections');
+  }
+}
+
+// Custom organization removal handler
+function setupOrganizationClickHandlers() {
+  // Remove existing handlers to prevent duplicates
+  $(document).off('click', '.select2-selection__choice');
+  
+  // Add click handler for organization removal
+  $(document).on('click', '.select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#studentOrganization');
+    
+    if (value) {
+      // Get current selections
+      let currentValues = select.val() || [];
+      
+      // Remove the clicked value
+      currentValues = currentValues.filter(v => v !== value);
+      
+      // Update the select
+      select.val(currentValues).trigger('change');
+      
+      // Update counter
+      updateOrganizationCounter();
+      
+      // Show feedback
+      showFeedback(`"${value}" has been removed.`, 'warning');
+      setTimeout(hideFeedback, 2000);
+    }
+  });
+}
+
+// Enhanced add organization functionality
+function addCustomOrganization() {
+  const input = document.getElementById('otherOrganization');
+  const orgName = input.value.trim();
+  const select = $('#studentOrganization');
+
+  if (!orgName) {
+    showFeedback('Please enter an organization name.', 'error');
+    input.focus();
+    return;
+  }
+  
+  if (orgName.length < 3) {
+    showFeedback('Organization name must be at least 3 characters long.', 'error');
+    input.focus();
+    return;
+  }
+
+  // Check if organization already exists
+  const existingOptions = Array.from(select[0].options).map(option => option.value.toLowerCase());
+  if (existingOptions.includes(orgName.toLowerCase())) {
+    showFeedback('This organization is already in your list.', 'warning');
+    input.focus();
+    return;
+  }
+
+  // Add new option
+  if (select.find(`option[value="${orgName}"]`).length === 0) {
+    const newOption = new Option(orgName, orgName, true, true);
+    select.append(newOption);
+  }
+
+  const current = select.val() || [];
+  if (!current.includes(orgName)) {
+    current.push(orgName);
+    select.val(current).trigger('change');
+  }
+
+  input.value = '';
+  showFeedback(`"${orgName}" has been added successfully!`, 'success');
+  updateOrganizationCounter();
+  
+  // Auto-hide feedback after 3 seconds
+  setTimeout(hideFeedback, 3000);
+}
+
+function toggleCustomOrg() {
+  const customOrgContainer = document.getElementById('customOrgContainer');
+  const isVisible = customOrgContainer.style.display !== 'none';
+  customOrgContainer.style.display = isVisible ? 'none' : 'block';
+  
+  if (!isVisible) {
+    document.getElementById('otherOrganization').focus();
+  } else {
+    document.getElementById('otherOrganization').value = '';
+    hideFeedback();
+  }
 }
 
 // Form validation
@@ -946,233 +1460,188 @@ document.querySelector('input[name="phoneNumber"]').addEventListener('input', fu
   e.target.value = value;
 });
 
-function toggleUserTypeFields() {
-  const userType = document.getElementById('userType').value;
-  const studentFields = document.getElementById('studentFields');
-  const nonStudentFields = document.getElementById('nonStudentFields');
-
-  if (userType === 'student') {
-    studentFields.style.display = 'block';
-    nonStudentFields.style.display = 'none';
-
-    studentFields.querySelectorAll('input, select').forEach(input => {
-      input.disabled = false;
-      if (input.dataset.name) input.name = input.dataset.name;
-    });
-
-    nonStudentFields.querySelectorAll('input, select').forEach(input => {
-      input.disabled = true;
-      input.dataset.name = input.name;
-      input.removeAttribute('name');
-    });
-
-  } else if (userType === 'nonstudent') {
-    studentFields.style.display = 'none';
-    nonStudentFields.style.display = 'block';
-
-    nonStudentFields.querySelectorAll('input, select').forEach(input => {
-      input.disabled = false;
-      if (input.dataset.name) input.name = input.dataset.name;
-    });
-
-    studentFields.querySelectorAll('input, select').forEach(input => {
-      input.disabled = true;
-      input.dataset.name = input.name;
-      input.removeAttribute('name');
-    });
-  }
-}
-
-// Organization functions
-function toggleCustomOrg() {
-  const customOrgContainer = document.getElementById('customOrgContainer');
-  customOrgContainer.style.display = customOrgContainer.style.display === 'none' ? 'block' : 'none';
-}
-
-function toggleCustomOffice() {
-  const customOfficeContainer = document.getElementById('customOfficeContainer');
-  customOfficeContainer.style.display = customOfficeContainer.style.display === 'none' ? 'block' : 'none';
-}
-
+// Organization and office options (shortened for example)
 const organizationOptions = [
-  "University Student Government (USG)",
-  "Internal Audit Service (IAS)",
-  "University Student Election Commission (USEC)",
-  "Office of the Solicitor General (OSG)",
-  "College of Business Administration and Accountancy Student Government (CBAASG)",
-  "Business Management Program Council (BMPC)",
-  "Junior Philippine Institute of Accountants (JPIA)",
-  "Marketing Management Program Council (MMPC)",
-  "College of Education Student Government (COEdSG)",
-  "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-  "Architecture Program Council (ArchPC)",
-  "Civil Engineering Program Council (CEEPC)",
-  "Computer Engineering Program Council (CpEPC)",
-  "Electrical Engineering Program Council (EEEPC)",
-  "Electronics Engineering Program Council (ECEPC)",
-  "Industrial Engineering Program Council (IEEPC)",
-  "Mechanical Engineering Program Council (MEEPC)",
-  "Multimedia Arts Program Council (MMAPC)",
-  "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-  "College of Criminal Justice Education Student Government (CCJESG)",
-  "Criminology Program Council (CrimPC)",
-  "Forensic Science Program Council (FScPC)",
-  "College of Liberal Arts and Communication Student Government (CLACSG)",
-  "Communication Program Council (CPC)",
-  "International Development Program Council (IDPC)",
-  "Political Science Program Council (PSPC)",
-  "Psychology Program Council (PPC)",
-  "College of Science Student Government (COSSG)",
-  "Applied Mathematics Program Council (AMPC)",
-  "Biology Program Council (BioPC)",
-  "College of Information and Computer Studies Student Government (CICSSG)",
-  "Computer Science Program Council (CSPC)",
-  "Information Technology Program Council (ITPC)",
-  "DLSU-D Chorale (CHORALE)",
-  "Lasallian Symphony Orchestra (LSO)",
-  "La Salle Filipiniana Dance Company (LSFDC)",
-  "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-  "Lasallian Pop Band (LPB)",
-  "Teatro Lasalliana (TEATRO)",
-  "Visual and Performing Arts Production Unit (VPAPU)",
-  "Heraldo Filipino",
-  "Vicissitude",
-  "Council of Student Organizations (CSO)",
-  "Business Operations Management Society (BOMS)",
-  "Junior Marketing Association (JMA)",
-  "DLSU-D Psychological Society (DPS)",
-  "DLSU-D Pre-Medical Society (DPMS)",
-  "Hotel and Restaurant Management Society (HRMS)",
-  "Turismo Lasalleño Society (TLS)",
-  "Lasallian Educators Society (LES)",
-  "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-  "DLSU-D Pre-Law Society (DPLS)",
-  "Astraeus Literary and Arts Guild",
-  "Accounting Enrichment Society (ACES)",
-  "Circle of Student Assistants (COSA)",
-  "DLSU-D Lifters",
-  "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-  "DLSU-D United Patriots Football Club",
-  "Junior Financial Executives Institute of the Philippines (JFINEX)",
-  "Marché Société (MS)",
-  "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-  "SINAG Society of Leaders (SISOL)",
-  "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-  "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-  "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-  "LS Verde of Campus Sustainability Office",
-  "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-  "Green FM of Communications and Journalism Department",
-  "International Students' Association (ISA) of International Students Office",
-  "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+          "University Student Government (USG)",
+        "Internal Audit Service (IAS)",
+        "University Student Election Commission (USEC)",
+        "Office of the Solicitor General (OSG)",
+        "College of Business Administration and Accountancy Student Government (CBAASG)",
+        "Business Management Program Council (BMPC)",
+        "Junior Philippine Institute of Accountants (JPIA)",
+        "Marketing Management Program Council (MMPC)",
+        "College of Education Student Government (COEdSG)",
+        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
+        "Architecture Program Council (ArchPC)",
+        "Civil Engineering Program Council (CEEPC)",
+        "Computer Engineering Program Council (CpEPC)",
+        "Electrical Engineering Program Council (EEEPC)",
+        "Electronics Engineering Program Council (ECEPC)",
+        "Industrial Engineering Program Council (IEEPC)",
+        "Mechanical Engineering Program Council (MEEPC)",
+        "Multimedia Arts Program Council (MMAPC)",
+        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
+        "College of Criminal Justice Education Student Government (CCJESG)",
+        "Criminology Program Council (CrimPC)",
+        "Forensic Science Program Council (FScPC)",
+        "College of Liberal Arts and Communication Student Government (CLACSG)",
+        "Communication Program Council (CPC)",
+        "International Development Program Council (IDPC)",
+        "Political Science Program Council (PSPC)",
+        "Psychology Program Council (PPC)",
+        "College of Science Student Government (COSSG)",
+        "Applied Mathematics Program Council (AMPC)",
+        "Biology Program Council (BioPC)",
+        "College of Information and Computer Studies Student Government (CICSSG)",
+        "Computer Science Program Council (CSPC)",
+        "Information Technology Program Council (ITPC)",
+        "DLSU-D Chorale (CHORALE)",
+        "Lasallian Symphony Orchestra (LSO)",
+        "La Salle Filipiniana Dance Company (LSFDC)",
+        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
+        "Lasallian Pop Band (LPB)",
+        "Teatro Lasalliana (TEATRO)",
+        "Visual and Performing Arts Production Unit (VPAPU)",
+        "Heraldo Filipino",
+        "Vicissitude",
+        "Council of Student Organizations (CSO)",
+        "Business Operations Management Society (BOMS)",
+        "Junior Marketing Association (JMA)",
+        "DLSU-D Psychological Society (DPS)",
+        "DLSU-D Pre-Medical Society (DPMS)",
+        "Hotel and Restaurant Management Society (HRMS)",
+        "Turismo Lasalleño Society (TLS)",
+        "Lasallian Educators Society (LES)",
+        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
+        "DLSU-D Pre-Law Society (DPLS)",
+        "Astraeus Literary and Arts Guild",
+        "Accounting Enrichment Society (ACES)",
+        "Circle of Student Assistants (COSA)",
+        "DLSU-D Lifters",
+        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
+        "DLSU-D United Patriots Football Club",
+        "Junior Financial Executives Institute of the Philippines (JFINEX)",
+        "Marché Société (MS)",
+        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
+        "SINAG Society of Leaders (SISOL)",
+        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
+        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
+        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
+        "LS Verde of Campus Sustainability Office",
+        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
+        "Green FM of Communications and Journalism Department",
+        "International Students' Association (ISA) of International Students Office",
+        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+      
 ];
 
 const officeOptions = [
   "Office of the President",
-  "Office of the Chief Administrative Officer",
-  "Office of the Provost",
-  "Office of the Chief Lasallian Mission Officer",
-  "Office of the Principal",
-  "Corporate and Executive Management Office",
-  "Center for Heritage Conservation",
-  "Museo De La Salle",
-  "Risk, Compliance and Audit Office",
-  "University Chaplain",
-  "Office of the Vice President for Administrative Services",
-  "Office of the Vice President for Finance",
-  "Office of the Vice President for Global Engagement and External Relations",
-  "Human Resource Management Office",
-  "Strategic Communications Office",
-  "Ancillary and Asset Management Office",
-  "Legal Counsel",
-  "Data Protection Office",
-  "Campus Development Office",
-  "Buildings and Facilities Maintenance Office",
-  "Campus Sustainability Office",
-  "General Services Office",
-  "Green Architecture and Campus Planning Office",
-  "Information and Communications Technology Center",
-  "Accounting Office",
-  "Treasury Office",
-  "Advancement and Alumni Relations Office",
-  "Lasallian Community Development Center",
-  "Linkages and Scholarship Office",
-  "Office of the Vice Provost for Academics",
-  "Office of the Deputy Provost for Research",
-  "Academic Planning and Quality Management",
-  "College of Law",
-  "College of Professional and Graduate Studies",
-  "School of Innovative and Flexible Learning",
-  "School of Governance, Public Service, and Corporate Leadership",
-  "Aklatang Emilio Aguinaldo-Information Resource Center",
-  "Center for Student Admissions",
-  "University Registrar",
-  "Cavite Studies Center",
-  "University Research Office",
-  "Herminia D. Torres Quality Assurance Office",
-  "Center for Innovative Learning Program",
-  "Center for Curriculum Development and Instruction",
-  "Language Learning Center",
-  "Center for Artificial Intelligence",
-  "Center for Creative Program",
-  "Academy of Continuing Education",
-  "College of Business Administration and Accountancy",
-  "Accountancy Department",
-  "Allied Business Department",
-  "Business Management Department",
-  "Marketing Department",
-  "College of Criminal Justice Education",
-  "College of Education",
-  "Physical Education Department",
-  "Professional Education Department",
-  "Religious Education Department",
-  "College of Engineering, Architecture and Technology",
-  "Architecture Department",
-  "Engineering Department",
-  "Graphics Design and Multimedia Department",
-  "Center of Technology",
-  "College of Information and Computer Studies",
-  "Computer Studies Department",
-  "Information Technology Department",
-  "College of Liberal Arts and Communication",
-  "Communication and Journalism Department",
-  "Languages and Literature Department",
-  "Social Sciences Department",
-  "Philosophy and Psychology Department",
-  "College of Tourism and Hospitality Management",
-  "Hospitality Management Department",
-  "Tourism Management Department",
-  "College of Science",
-  "Biological Sciences Department",
-  "Mathematics & Statistics Department",
-  "Physical Sciences Department",
-  "Office of Student Services",
-  "Student Development and Activities Office",
-  "Student Welfare and Formation Office",
-  "Student Wellness Center",
-  "NSTP-CWTS",
-  "Campus Ministry Office",
-  "DLS Bahay Pag-asa Dasmariñas",
-  "Night College",
-  "Sports Development Office",
-  "University Lasallian Family Office",
-  "Basic Education",
-  "Office of the Associate Principal for Academics and Research",
-  "Office of the Associate Principal for Administrative Services and Student Affairs",
-  "Dormitory",
-  "Materials Reproduction Office / Food Services Office",
-  "Retreat and Conference Center / Sports & Recreation Complex",
-  "Warehouse Office",
-  "Safety & Health Office",
-  "Purchasing Office",
-  "Transportation Office",
-  "Facilities Maintenance Office",
-  "Housekeeping & Grounds",
-  "De La Salle Dasmariñas Alumni Association",
-  "DLSU-D Development Cooperative",
-  "Faculty Organization",
-  "KABALIKAT ng DLSU-D Inc.",
-  "Parents Organization La Salle Cavite"
+          "Office of the Chief Administrative Officer",
+          "Office of the Provost",
+          "Office of the Chief Lasallian Mission Officer",
+          "Office of the Principal",
+          "Corporate and Executive Management Office",
+          "Center for Heritage Conservation",
+          "Museo De La Salle",
+          "Risk, Compliance and Audit Office",
+          "University Chaplain",
+          "Office of the Vice President for Administrative Services",
+          "Office of the Vice President for Finance",
+          "Office of the Vice President for Global Engagement and External Relations",
+          "Human Resource Management Office",
+          "Strategic Communications Office",
+          "Ancillary and Asset Management Office",
+          "Legal Counsel",
+          "Data Protection Office",
+          "Campus Development Office",
+          "Buildings and Facilities Maintenance Office",
+          "Campus Sustainability Office",
+          "General Services Office",
+          "Green Architecture and Campus Planning Office",
+          "Information and Communications Technology Center",
+          "Accounting Office",
+          "Treasury Office",
+          "Advancement and Alumni Relations Office",
+          "Lasallian Community Development Center",
+          "Linkages and Scholarship Office",
+          "Office of the Vice Provost for Academics",
+          "Office of the Deputy Provost for Research",
+          "Academic Planning and Quality Management",
+          "College of Law",
+          "College of Professional and Graduate Studies",
+          "School of Innovative and Flexible Learning",
+          "School of Governance, Public Service, and Corporate Leadership",
+          "Aklatang Emilio Aguinaldo-Information Resource Center",
+          "Center for Student Admissions",
+          "University Registrar",
+          "Cavite Studies Center",
+          "University Research Office",
+          "Herminia D. Torres Quality Assurance Office",
+          "Center for Innovative Learning Program",
+          "Center for Curriculum Development and Instruction",
+          "Language Learning Center",
+          "Center for Artificial Intelligence",
+          "Center for Creative Program",
+          "Academy of Continuing Education",
+          "College of Business Administration and Accountancy",
+          "Accountancy Department",
+          "Allied Business Department",
+          "Business Management Department",
+          "Marketing Department",
+          "College of Criminal Justice Education",
+          "College of Education",
+          "Physical Education Department",
+          "Professional Education Department",
+          "Religious Education Department",
+          "College of Engineering, Architecture and Technology",
+          "Architecture Department",
+          "Engineering Department",
+          "Graphics Design and Multimedia Department",
+          "Center of Technology",
+          "College of Information and Computer Studies",
+          "Computer Studies Department",
+          "Information Technology Department",
+          "College of Liberal Arts and Communication",
+          "Communication and Journalism Department",
+          "Languages and Literature Department",
+          "Social Sciences Department",
+          "Philosophy and Psychology Department",
+          "College of Tourism and Hospitality Management",
+          "Hospitality Management Department",
+          "Tourism Management Department",
+          "College of Science",
+          "Biological Sciences Department",
+          "Mathematics & Statistics Department",
+          "Physical Sciences Department",
+          "Office of Student Services",
+          "Student Development and Activities Office",
+          "Student Welfare and Formation Office",
+          "Student Wellness Center",
+          "NSTP-CWTS",
+          "Campus Ministry Office",
+          "DLS Bahay Pag-asa Dasmariñas",
+          "Night College",
+          "Sports Development Office",
+          "University Lasallian Family Office",
+          "Basic Education",
+          "Office of the Associate Principal for Academics and Research",
+          "Office of the Associate Principal for Administrative Services and Student Affairs",
+          "Dormitory",
+          "Materials Reproduction Office / Food Services Office",
+          "Retreat and Conference Center / Sports & Recreation Complex",
+          "Warehouse Office",
+          "Safety & Health Office",
+          "Purchasing Office",
+          "Transportation Office",
+          "Facilities Maintenance Office",
+          "Housekeeping & Grounds",
+          "De La Salle Dasmariñas Alumni Association",
+          "DLSU-D Development Cooperative",
+          "Faculty Organization",
+          "KABALIKAT ng DLSU-D Inc.",
+          "Parents Organization La Salle Cavite",
+          "Human Resource Management Office"
 ];
 
 $(document).ready(function () {
@@ -1186,69 +1655,51 @@ $(document).ready(function () {
   studentOrgSelect.select2({
     placeholder: "Search or select organizations",
     allowClear: true,
-    width: '100%'
+    width: '100%',
+    closeOnSelect: false,
+    templateResult: function(data) {
+      if (!data.id) return data.text;
+      return $(`<div style="padding: 4px 0;">${data.text}</div>`);
+    }
   });
+
+  // Set up organization counter and click handlers
+  studentOrgSelect.on('change', function() {
+    updateOrganizationCounter();
+    setTimeout(setupOrganizationClickHandlers, 100);
+  });
+
+  // Initial counter update
+  updateOrganizationCounter();
+  
+  // Setup click handlers
+  setTimeout(setupOrganizationClickHandlers, 200);
 
   // Initialize Office/Department Select2
   const nonStudentOfficeSelect = $("#nonStudentOffice");
-  officeOptions.forEach(function(office) {
-    nonStudentOfficeSelect.append(new Option(office, office));
+  
+  // Add options to office select
+  officeOptions.forEach(office => {
+    const option = new Option(office, office, false, false);
+    nonStudentOfficeSelect.append(option);
   });
 
   nonStudentOfficeSelect.select2({
     placeholder: "Select office(s)/department(s)",
     allowClear: true,
-    width: "100%"
+    width: "100%",
+    closeOnSelect: false
   });
 });
 
-// Add organization functionality
-document.getElementById('addOrganizationButton').addEventListener('click', function () {
-  const input = document.getElementById('otherOrganization');
-  const orgName = input.value.trim();
+// Enhanced add organization functionality
+document.getElementById('addOrganizationButton').addEventListener('click', addCustomOrganization);
 
-  if (orgName) {
-    const select = $('#studentOrganization');
-
-    if (select.find(`option[value="${orgName}"]`).length === 0) {
-      const newOption = new Option(orgName, orgName, true, true);
-      select.append(newOption);
-    }
-
-    const current = select.val() || [];
-    if (!current.includes(orgName)) {
-      current.push(orgName);
-      select.val(current).trigger('change');
-    }
-
-    input.value = '';
-  } else {
-    alert('Please enter an organization name.');
-  }
-});
-
-// Add office functionality
-document.getElementById('addOfficeButton').addEventListener('click', function () {
-  const input = document.getElementById('otherOffice');
-  const officeName = input.value.trim();
-
-  if (officeName) {
-    const select = $('#nonStudentOffice');
-
-    if (select.find(`option[value="${officeName}"]`).length === 0) {
-      const newOption = new Option(officeName, officeName, true, true);
-      select.append(newOption);
-    }
-
-    const current = select.val() || [];
-    if (!current.includes(officeName)) {
-      current.push(officeName);
-      select.val(current).trigger('change');
-    }
-
-    input.value = '';
-  } else {
-    alert('Please enter an office/department name.');
+// Allow Enter key to add organization
+document.getElementById('otherOrganization').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addCustomOrganization();
   }
 });
 
