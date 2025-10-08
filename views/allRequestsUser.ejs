@@ -381,13 +381,19 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   font-size: 0.875rem;
   transition: all 0.3s ease;
-  margin-top: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
+  cursor: pointer;
+  min-width: 0;
+  flex: 1;
+  text-align: center;
+  height: 44px; /* Fixed height for consistency */
+  box-sizing: border-box;
 }
 
 .download-btn-enhanced:hover {
@@ -450,6 +456,355 @@
   font-size: 0.875rem;
   color: #64748b;
 }
+/* Enhanced Filter Styles - Add these to your existing styles */
+.enhanced-multi-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.enhanced-multi-select {
+  position: relative;
+  width: 100%;
+}
+
+.select-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.select-display:hover {
+  border-color: #9ca3af;
+}
+
+.select-display.active {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.selected-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.select-display.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.select-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.select-dropdown.show {
+  display: block;
+}
+
+.search-container {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
+}
+
+.options-container {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: background-color 0.15s ease;
+  margin: 0;
+  position: relative;
+}
+
+.dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.dropdown-option.selected {
+  background: #f0fdf4;
+  color: var(--primary-green);
+}
+
+.dropdown-option input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkbox-custom {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  margin-right: 0.75rem;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dropdown-option:hover .checkbox-custom {
+  border-color: var(--primary-green);
+}
+
+.dropdown-option input[type="checkbox"]:checked + .checkbox-custom {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+.dropdown-option input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.options-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.options-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.options-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.options-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.no-results {
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* Filter row spacing */
+.filter-controls + .filter-controls {
+  margin-top: 0.75rem;
+}
+
+/* Ensure consistent filter item sizing */
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Make sure all dropdowns have consistent minimum widths */
+.enhanced-multi-select-wrapper {
+  width: 100%;
+  min-width: 200px;
+}
+
+/* Ensure the date inputs match other elements in height */
+.filter-input {
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+/* Custom Select Wrapper for Type and Status filters */
+.custom-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select .select-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.custom-select .select-display:hover {
+  border-color: #9ca3af;
+}
+
+.custom-select .select-display.active {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.custom-select .select-display::after {
+  content: '▼';
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.custom-select .select-display.active::after {
+  transform: rotate(180deg);
+}
+
+.custom-select .select-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+.custom-select .select-dropdown.show {
+  display: block;
+}
+
+.custom-select .dropdown-option {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: background-color 0.15s ease;
+  margin: 0;
+  position: relative;
+}
+
+.custom-select .dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.custom-select .dropdown-option.selected {
+  background: #f0fdf4;
+  color: var(--primary-green);
+}
+
+.custom-select .dropdown-option input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.custom-select .checkbox-custom {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  margin-right: 0.75rem;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.custom-select .dropdown-option:hover .checkbox-custom {
+  border-color: var(--primary-green);
+}
+
+.custom-select .dropdown-option input[type="checkbox"]:checked + .checkbox-custom {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+.custom-select .dropdown-option input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -494,74 +849,147 @@
           <a href="/service-requests" class="view-all-btn">Service Requests</a>
         </nav>
 
-        <div class="filter-section">
-          <div class="filter-container">
-            <div class="filter-group">
-              <label class="filter-label">Filter by:</label>
-              <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="typeFilter" class="filter-sublabel">Type</label>
-                  <select id="typeFilter" class="filter-select">
-                    <option value="all">All Types</option>
-                    <option value="Request Approval">Request Approval</option>
-                    <option value="Service Request">Service Request</option>
-                  </select>
-                </div>
-               <div class="filter-item">
-                <label class="filter-sublabel">Status</label>
-                <div class="custom-select-wrapper">
-                  <div class="custom-select" id="statusFilter">
-                    <div class="select-display">All Status</div>
-                    <div class="select-dropdown" id="statusDropdown">
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="all" checked> All Status
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="pending"> Pending
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="approved"> Approved
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="rejected"> Rejected
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              
-                <div class="filter-item">
-                  <label for="titleFilter" class="filter-sublabel">Title</label>
-                  <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
-                </div>
-                <div class="filter-item">
-                  <label for="organizationFilter" class="filter-sublabel">Office/Department/Organization</label>
-                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search organization...">
-                </div>
-              </div>
-              <br>
-              <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
-                  <input type="date" id="dateFromFilter" class="filter-input">
-                </div>
-                <div class="filter-item">
-                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
-                  <input type="date" id="dateToFilter" class="filter-input">
+<div class="filter-section">
+  <div class="filter-container">
+    <div class="filter-group">
+      <label class="filter-label">Filter by:</label>
+      
+      <!-- First Row -->
+            <div class="filter-controls">
+          <div class="filter-item">
+            <label class="filter-sublabel">Type</label>
+            <div class="custom-select-wrapper">
+              <div class="custom-select" id="typeFilter">
+                <div class="select-display">All Types</div>
+                <div class="select-dropdown" id="typeDropdown">
+                  <label class="dropdown-option">
+                    <input type="checkbox" value="all" checked>
+                    <span class="checkbox-custom"></span>
+                    All Types
+                  </label>
+                  <label class="dropdown-option">
+                    <input type="checkbox" value="request approval">
+                    <span class="checkbox-custom"></span>
+                    Request Approval
+                  </label>
+                  <label class="dropdown-option">
+                    <input type="checkbox" value="service request">
+                    <span class="checkbox-custom"></span>
+                    Service Request
+                  </label>
                 </div>
               </div>
             </div>
-            <div class="filter-actions">
-              <button id="clearFilters" class="clear-filters-btn">
-                <span>🗑️</span> Clear All
-              </button>
-              <div class="results-count">
-                <span id="resultsCount">Showing all requests</span>
+          </div>
+      <div class="filter-item">
+        <label class="filter-sublabel">Status</label>
+        <div class="custom-select-wrapper">
+          <div class="custom-select" id="statusFilter">
+            <div class="select-display">All Status</div>
+            <div class="select-dropdown" id="statusDropdown">
+              <label class="dropdown-option">
+                <input type="checkbox" value="all" checked>
+                <span class="checkbox-custom"></span>
+                All Status
+              </label>
+              <label class="dropdown-option">
+                <input type="checkbox" value="pending">
+                <span class="checkbox-custom"></span>
+                Pending
+              </label>
+              <label class="dropdown-option">
+                <input type="checkbox" value="approved">
+                <span class="checkbox-custom"></span>
+                Approved
+              </label>
+              <label class="dropdown-option">
+                <input type="checkbox" value="rejected">
+                <span class="checkbox-custom"></span>
+                Rejected
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+        <div class="filter-item">
+          <label for="titleFilter" class="filter-sublabel">Title</label>
+          <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
+        </div>
+      </div>
+      
+      <!-- Second Row - Dynamic Organization Filter -->
+      <div class="filter-controls">
+        <% if (user.userType === 'student') { %>
+        <div class="filter-item">
+          <label for="organizationFilter" class="filter-sublabel">My Student Organizations</label>
+          <div class="enhanced-multi-select-wrapper">
+            <div class="enhanced-multi-select" id="organizationFilter">
+              <div class="select-display" data-placeholder="Select My Organizations">
+                <span class="selected-text">All My Organizations</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              <div class="select-dropdown" id="organizationDropdown">
+                <div class="search-container">
+                  <input type="text" class="search-input" placeholder="Search my organizations...">
+                </div>
+                <div class="options-container">
+                  <!-- Options populated by JavaScript -->
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <% } else { %>
+        <div class="filter-item">
+          <label for="organizationFilter" class="filter-sublabel">My Office/Department</label>
+          <div class="enhanced-multi-select-wrapper">
+            <div class="enhanced-multi-select" id="organizationFilter">
+              <div class="select-display" data-placeholder="Select My Departments">
+                <span class="selected-text">All My Departments</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              <div class="select-dropdown" id="organizationDropdown">
+                <div class="search-container">
+                  <input type="text" class="search-input" placeholder="Search my departments...">
+                </div>
+                <div class="options-container">
+                  <!-- Options populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% } %>
+        
+        <!-- Date From and Date To -->
+        <div class="filter-item">
+          <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+          <input type="date" id="dateFromFilter" class="filter-input">
+        </div>
+        <div class="filter-item">
+          <label for="dateToFilter" class="filter-sublabel">Date To</label>
+          <input type="date" id="dateToFilter" class="filter-input">
+        </div>
+      </div>
+    </div>
+    
+    <div class="filter-actions">
+      <button id="clearFilters" class="clear-filters-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="6" width="18" height="14" rx="2"/>
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="1" y1="6" x2="23" y2="6"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+        Clear All
+      </button>
+      <div class="results-count">
+        <span id="resultsCount">Showing all requests</span>
+      </div>
+    </div>
+  </div>
+</div>
 
         <section class="table-section" style="overflow-x: auto;">
           <table class="requests-table" style="width: 100%; border-collapse: collapse; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
@@ -737,120 +1165,395 @@
     </div>
   </div>
 
+<!-- Move user organization data to a separate script tag to avoid EJS syntax issues -->
+<script type="application/json" id="userOrgData">
+{
+  "userType": "<%= user.userType %>",
+  "organizations": <%- JSON.stringify(user.userType === 'student' ? (user.studentOrganization || []) : (user.affiliation || [])) %>
+}
+</script>
 
-  <script>
-    const detailModal = document.getElementById("detailsModal");
-    const closeDetailsModal = document.getElementById("closeDetailsModal");
-    const typeFilter = document.getElementById("typeFilter");
-    const clearFiltersBtn = document.getElementById("clearFilters");
-    const tableBody = document.getElementById("requestsTableBody");
-    const allRows = Array.from(document.querySelectorAll('.request-row'));
-     const conversationModal = document.getElementById("conversationModal");
-    const closeConversationModal = document.getElementById("closeConversationModal");
-    const messagesContainer = document.getElementById("messagesContainer");
-    const messageInput = document.getElementById("messageInput");
-    const sendMessageBtn = document.getElementById("sendMessageBtn");
-    const openChatFromDetailsModal = document.getElementById("openChatFromDetailsModal");
-    let currentConversationId = null;
-
-    closeDetailsModal.onclick = () => detailModal.style.display = 'none';
-
-    closeConversationModal.onclick = () => conversationModal.style.display = 'none';
-
-    openChatFromDetailsModal.onclick = function() {
-      detailModal.style.display = 'none';
-      openChat(currentConversationId);
-    };
-        window.onclick = function(event) {
-      if (event.target === detailModal) detailModal.style.display = 'none';
-      // ADD THIS LINE
-      if (event.target === conversationModal) conversationModal.style.display = 'none';
-    }
-
-  function filterRequests() {
-    const typeValue = typeFilter.value.toLowerCase();
-    const selectedStatuses = getSelectedStatuses();
-    const titleValue = document.getElementById('titleFilter').value.toLowerCase();
-    const organizationValue = document.getElementById('organizationFilter').value.toLowerCase();
-    const dateFromValue = document.getElementById('dateFromFilter').value ? new Date(document.getElementById('dateFromFilter').value) : null;
-    const dateToValue = document.getElementById('dateToFilter').value ? new Date(document.getElementById('dateToFilter').value) : null;
+<script>
+// Enhanced Multi-Select Class for Organizations
+class EnhancedMultiSelect {
+  constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
+    this.container = document.getElementById(containerId);
+    this.options = options;
+    this.placeholder = placeholder;
+    this.selectedValues = new Set(['all']);
+    this.isOpen = false;
+    this.filteredOptions = [...options];
+    this.hasSearch = hasSearch;
     
-    let visibleCount = 0;
-
-    allRows.forEach(row => {
-      const rowType = row.dataset.type.toLowerCase();
-      const rowStatus = row.dataset.status.toLowerCase();
-      const rowTitle = row.dataset.title.toLowerCase();
-      const rowOrganization = row.dataset.organization.toLowerCase();
-      const rowDate = new Date(row.dataset.date); // ensure real Date object
-
-      const typeMatch = typeValue === 'all' || rowType === typeValue;
-      const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
-      const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
-      const organizationMatch = organizationValue === '' || rowOrganization.includes(organizationValue);
-      
-      let dateMatch = true;
-      if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
-      if (dateToValue && rowDate > dateToValue) dateMatch = false;
-
-      const isVisible = typeMatch && statusMatch && titleMatch && organizationMatch && dateMatch;
-      row.style.display = isVisible ? '' : 'none';
-      
-      if (isVisible) visibleCount++;
+    this.init();
+  }
+  
+  init() {
+    this.setupElements();
+    this.populateOptions();
+    this.attachEventListeners();
+    this.updateDisplay();
+  }
+  
+  setupElements() {
+    this.display = this.container.querySelector('.select-display');
+    this.dropdown = this.container.querySelector('.select-dropdown');
+    this.searchInput = this.dropdown.querySelector('.search-input');
+    this.optionsContainer = this.dropdown.querySelector('.options-container');
+    this.selectedText = this.display.querySelector('.selected-text');
+  }
+  
+  populateOptions() {
+    // Add "All" option
+    const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
+    this.optionsContainer.appendChild(allOption);
+    
+    // Add other options
+    this.options.forEach(option => {
+      const optionElement = this.createOption(option, option);
+      this.optionsContainer.appendChild(optionElement);
     });
-
-    const totalCount = allRows.length;
-    const resultsCount = document.getElementById('resultsCount');
-    if (visibleCount === totalCount) {
-      resultsCount.textContent = `Showing all ${totalCount} requests`;
+  }
+  
+  createOption(value, text) {
+    const label = document.createElement('label');
+    label.className = 'dropdown-option';
+    label.innerHTML = `
+      <input type="checkbox" value="${value}" ${this.selectedValues.has(value) ? 'checked' : ''}>
+      <span class="checkbox-custom"></span>
+      ${text}
+    `;
+    return label;
+  }
+  
+  attachEventListeners() {
+    // Toggle dropdown
+    this.display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+    
+    // Search functionality
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.addEventListener('input', (e) => {
+        this.filterOptions(e.target.value);
+      });
+    }
+    
+    // Option selection
+    this.optionsContainer.addEventListener('change', (e) => {
+      if (e.target.type === 'checkbox') {
+        this.handleOptionChange(e.target);
+      }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!this.container.contains(e.target)) {
+        this.close();
+      }
+    });
+    
+    // Prevent dropdown close when clicking inside
+    this.dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+  
+  filterOptions(searchTerm) {
+    if (!this.hasSearch) return;
+    
+    const options = this.optionsContainer.querySelectorAll('.dropdown-option');
+    let visibleCount = 0;
+    
+    options.forEach(option => {
+      const text = option.textContent.toLowerCase();
+      const matches = text.includes(searchTerm.toLowerCase());
+      option.style.display = matches ? 'flex' : 'none';
+      if (matches) visibleCount++;
+    });
+    
+    this.toggleNoResults(visibleCount === 0 && searchTerm.length > 0);
+  }
+  
+  toggleNoResults(show) {
+    if (!this.hasSearch) return;
+    
+    let noResultsEl = this.optionsContainer.querySelector('.no-results');
+    
+    if (show && !noResultsEl) {
+      noResultsEl = document.createElement('div');
+      noResultsEl.className = 'no-results';
+      noResultsEl.textContent = 'No results found';
+      this.optionsContainer.appendChild(noResultsEl);
+    } else if (!show && noResultsEl) {
+      noResultsEl.remove();
+    }
+  }
+  
+  handleOptionChange(checkbox) {
+    const value = checkbox.value;
+    
+    if (value === 'all') {
+      if (checkbox.checked) {
+        this.selectedValues.clear();
+        this.selectedValues.add('all');
+        this.updateCheckboxes();
+      } else if (this.selectedValues.size === 1 && this.selectedValues.has('all')) {
+        checkbox.checked = true;
+        return;
+      }
     } else {
-      resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+      if (checkbox.checked) {
+        this.selectedValues.delete('all');
+        this.selectedValues.add(value);
+      } else {
+        this.selectedValues.delete(value);
+        if (this.selectedValues.size === 0) {
+          this.selectedValues.add('all');
+        }
+      }
+      this.updateCheckboxes();
+    }
+    
+    this.updateDisplay();
+    this.triggerChange();
+  }
+  
+  updateCheckboxes() {
+    const checkboxes = this.optionsContainer.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+      cb.checked = this.selectedValues.has(cb.value);
+    });
+  }
+  
+  updateDisplay() {
+    const selectedArray = Array.from(this.selectedValues);
+    
+    if (selectedArray.includes('all') || selectedArray.length === 0) {
+      this.selectedText.textContent = `All ${this.placeholder.replace('Select ', '')}`;
+    } else if (selectedArray.length === 1) {
+      this.selectedText.textContent = selectedArray[0];
+    } else {
+      this.selectedText.textContent = `${selectedArray.length} selected`;
+    }
+  }
+  
+  getSelectedValues() {
+    return Array.from(this.selectedValues);
+  }
+  
+  reset() {
+    this.selectedValues.clear();
+    this.selectedValues.add('all');
+    this.updateCheckboxes();
+    this.updateDisplay();
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+    this.triggerChange();
+  }
+  
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+  
+  open() {
+    this.isOpen = true;
+    this.display.classList.add('active');
+    this.dropdown.classList.add('show');
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.focus();
+    }
+  }
+  
+  close() {
+    this.isOpen = false;
+    this.display.classList.remove('active');
+    this.dropdown.classList.remove('show');
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+  }
+  
+  triggerChange() {
+    const event = new CustomEvent('selectionChange', {
+      detail: { values: this.getSelectedValues() }
+    });
+    this.container.dispatchEvent(event);
+  }
+}
+
+// Get user organizations data from the JSON script tag
+const userOrgData = JSON.parse(document.getElementById('userOrgData').textContent);
+const userType = userOrgData.userType;
+const userOrganizations = userOrgData.organizations || [];
+
+// DOM Elements
+const detailModal = document.getElementById("detailsModal");
+const closeDetailsModal = document.getElementById("closeDetailsModal");
+const clearFiltersBtn = document.getElementById("clearFilters");
+const tableBody = document.getElementById("requestsTableBody");
+const allRows = Array.from(document.querySelectorAll('.request-row'));
+const conversationModal = document.getElementById("conversationModal");
+const closeConversationModal = document.getElementById("closeConversationModal");
+const messagesContainer = document.getElementById("messagesContainer");
+const messageInput = document.getElementById("messageInput");
+const sendMessageBtn = document.getElementById("sendMessageBtn");
+const openChatFromDetailsModal = document.getElementById("openChatFromDetailsModal");
+let currentConversationId = null;
+
+// Filter variables
+let organizationFilter;
+
+// Initialize when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize organization filter based on user's organizations
+  if (userOrganizations.length > 0) {
+    const placeholderText = userType === 'student' ? 'My Organizations' : 'My Departments';
+    organizationFilter = new EnhancedMultiSelect('organizationFilter', 
+      userOrganizations, 
+      placeholderText, 
+      true);
+    
+    // Add event listener for organization filter changes
+    document.getElementById('organizationFilter').addEventListener('selectionChange', filterRequests);
+  } else {
+    // Hide the organization filter if user has no organizations
+    const orgFilterItem = document.querySelector('.filter-item:has(#organizationFilter)');
+    if (orgFilterItem) {
+      orgFilterItem.style.display = 'none';
+    }
+  }
+});
+
+// Modal close handlers
+closeDetailsModal.onclick = () => detailModal.style.display = 'none';
+closeConversationModal.onclick = () => conversationModal.style.display = 'none';
+
+openChatFromDetailsModal.onclick = function() {
+  detailModal.style.display = 'none';
+  openChat(currentConversationId);
+};
+
+window.onclick = function(event) {
+  if (event.target === detailModal) detailModal.style.display = 'none';
+  if (event.target === conversationModal) conversationModal.style.display = 'none';
+}
+
+function filterRequests() {
+  const selectedTypes = getSelectedTypes();
+  const selectedStatuses = getSelectedStatuses();
+  const titleValue = document.getElementById('titleFilter').value.toLowerCase();
+  const organizationValue = organizationFilter ? organizationFilter.getSelectedValues() : ['all'];
+  const dateFromValue = document.getElementById('dateFromFilter').value ? new Date(document.getElementById('dateFromFilter').value) : null;
+  const dateToValue = document.getElementById('dateToFilter').value ? new Date(document.getElementById('dateToFilter').value) : null;
+  
+  let visibleCount = 0;
+
+  allRows.forEach(row => {
+    const rowType = row.dataset.type.toLowerCase();
+    const rowStatus = row.dataset.status.toLowerCase();
+    const rowTitle = row.dataset.title.toLowerCase();
+    const rowOrganization = row.dataset.organization.toLowerCase();
+    const rowDate = new Date(row.dataset.date);
+
+    // Type filter logic
+    let typeMatch = true;
+    if (selectedTypes.length > 0 && !selectedTypes.includes('all')) {
+      typeMatch = selectedTypes.some(type => rowType.includes(type.toLowerCase()));
     }
 
-    toggleNoResultsMessage(visibleCount === 0);
+    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
+    const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
+    
+    // Organization filter logic
+    let organizationMatch = true;
+    if (organizationFilter && organizationValue.length > 0 && !organizationValue.includes('all')) {
+      organizationMatch = organizationValue.some(org => 
+        rowOrganization.includes(org.toLowerCase())
+      );
+    }
+    
+    let dateMatch = true;
+    if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
+    if (dateToValue && rowDate > dateToValue) dateMatch = false;
+
+    const isVisible = typeMatch && statusMatch && titleMatch && organizationMatch && dateMatch;
+    row.style.display = isVisible ? '' : 'none';
+    
+    if (isVisible) visibleCount++;
+  });
+
+  const totalCount = allRows.length;
+  const resultsCount = document.getElementById('resultsCount');
+  if (visibleCount === totalCount) {
+    resultsCount.textContent = `Showing all ${totalCount} requests`;
+  } else {
+    resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
   }
 
-    function toggleNoResultsMessage(show) {
-      let noResultsRow = document.getElementById('noResultsRow');
-      
-      if (show && !noResultsRow) {
-        const tbody = document.getElementById('requestsTableBody');
-        noResultsRow = document.createElement('tr');
-        noResultsRow.id = 'noResultsRow';
-        noResultsRow.innerHTML = `
-          <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
-            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
-            <p>Try adjusting your filters to see more results.</p>
-          </td>
-        `;
-        tbody.appendChild(noResultsRow);
-      } else if (!show && noResultsRow) {
-        noResultsRow.remove();
-      }
-    }
+  toggleNoResultsMessage(visibleCount === 0);
+}
 
-    typeFilter.addEventListener('change', filterRequests);
-    document.getElementById('titleFilter').addEventListener('input', filterRequests);
-    document.getElementById('organizationFilter').addEventListener('input', filterRequests);
-    document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
-    document.getElementById('dateToFilter').addEventListener('change', filterRequests);
-    statusFilter.addEventListener('change', filterRequests);
+function toggleNoResultsMessage(show) {
+  let noResultsRow = document.getElementById('noResultsRow');
+  
+  if (show && !noResultsRow) {
+    const tbody = document.getElementById('requestsTableBody');
+    noResultsRow = document.createElement('tr');
+    noResultsRow.id = 'noResultsRow';
+    noResultsRow.innerHTML = `
+      <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">
+          <svg width="48" height="48" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </div>
+        <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
+        <p>Try adjusting your filters to see more results.</p>
+      </td>
+    `;
+    tbody.appendChild(noResultsRow);
+  } else if (!show && noResultsRow) {
+    noResultsRow.remove();
+  }
+}
+
+// Event listeners for filters
+document.getElementById('titleFilter').addEventListener('input', filterRequests);
+document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
+document.getElementById('dateToFilter').addEventListener('change', filterRequests);
+
 clearFiltersBtn.addEventListener('click', () => {
-  typeFilter.value = 'all';
   document.getElementById('titleFilter').value = '';
-  document.getElementById('organizationFilter').value = '';
   document.getElementById('dateFromFilter').value = '';
   document.getElementById('dateToFilter').value = '';
+  
+  // Clear type filter
+  typeCheckboxes.forEach(cb => cb.checked = false);
+  allTypeCheckbox.checked = true;
+  updateTypeDisplay();
   
   // Clear status filter
   statusCheckboxes.forEach(cb => cb.checked = false);
   allStatusCheckbox.checked = true;
   updateStatusDisplay();
   
+  // Clear organization filter
+  if (organizationFilter) {
+    organizationFilter.reset();
+  }
+  
   filterRequests();
 });
-
 
 // Enhanced row click handler with improved modal population
 document.querySelectorAll('.request-row').forEach(row => {
@@ -937,30 +1640,111 @@ document.querySelectorAll('.request-row').forEach(row => {
     if (detailModal) detailModal.style.display = 'flex';
   });
 });
-    function toggleDropdown() {
-      const menu = document.getElementById("dropdownMenu");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    }
 
-    
+function toggleDropdown() {
+  const menu = document.getElementById("dropdownMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
 
-      $('#organization').select2({
-        placeholder: "Select organization(s)",
-        closeOnSelect: false
-      });
+document.addEventListener("click", function (event) {
+  const toggle = document.querySelector(".dropdown-toggle");
+  const menu = document.getElementById("dropdownMenu");
+  if (!toggle.contains(event.target)) {
+    menu.style.display = "none";
+  }
+});
 
+// Custom Type Filter Logic
+// Custom Type Filter Logic - UPDATED to stay open
+const typeFilterElement = document.getElementById('typeFilter');
+const typeDropdown = document.getElementById('typeDropdown');
+const typeDisplay = typeFilterElement.querySelector('.select-display');
+const typeCheckboxes = typeDropdown.querySelectorAll('input[type="checkbox"]');
+const allTypeCheckbox = typeDropdown.querySelector('input[value="all"]');
 
-    document.addEventListener("click", function (event) {
-      const toggle = document.querySelector(".dropdown-toggle");
-      const menu = document.getElementById("dropdownMenu");
-      if (!toggle.contains(event.target)) {
-        menu.style.display = "none";
+// Toggle dropdown
+typeFilterElement.addEventListener('click', function(e) {
+  e.stopPropagation();
+  typeFilterElement.classList.toggle('active');
+  typeDropdown.classList.toggle('show');
+});
+
+// Prevent dropdown from closing when clicking inside
+typeDropdown.addEventListener('click', function(e) {
+  e.stopPropagation();
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  if (!typeFilterElement.contains(e.target)) {
+    typeFilterElement.classList.remove('active');
+    typeDropdown.classList.remove('show');
+  }
+});
+
+// Handle checkbox changes for type filter
+typeCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', function() {
+    if (this.value === 'all') {
+      // If "All Types" is checked, uncheck others
+      if (this.checked) {
+        typeCheckboxes.forEach(cb => {
+          if (cb.value !== 'all') cb.checked = false;
+        });
       }
-    });
+    } else {
+      // If any specific type is checked, uncheck "All Types"
+      if (this.checked) {
+        allTypeCheckbox.checked = false;
+      }
+      
+      // If no specific type is checked, check "All Types"
+      const specificChecked = Array.from(typeCheckboxes).some(cb => 
+        cb.value !== 'all' && cb.checked
+      );
+      if (!specificChecked) {
+        allTypeCheckbox.checked = true;
+      }
+    }
+    
+    updateTypeDisplay();
+    filterRequests();
+  });
+});
 
+function updateTypeDisplay() {
+  const checkedBoxes = Array.from(typeCheckboxes).filter(cb => cb.checked);
+  
+  if (allTypeCheckbox.checked || checkedBoxes.length === 0) {
+    typeDisplay.textContent = 'All Types';
+  } else if (checkedBoxes.length === 1) {
+    const value = checkedBoxes[0].value;
+    if (value === 'request approval') {
+      typeDisplay.textContent = 'Request Approval';
+    } else if (value === 'service request') {
+      typeDisplay.textContent = 'Service Request';
+    } else {
+      typeDisplay.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+    }
+  } else {
+    typeDisplay.textContent = `${checkedBoxes.length} Selected`;
+  }
+}
 
+// Get selected type values for filtering
+function getSelectedTypes() {
+  const checkedBoxes = Array.from(typeCheckboxes).filter(cb => 
+    cb.checked && cb.value !== 'all'
+  );
+  
+  if (allTypeCheckbox.checked || checkedBoxes.length === 0) {
+    return [];
+  }
+  
+  return checkedBoxes.map(cb => cb.value.toLowerCase());
+}
 
-    // Custom Status Filter Logic
+// Custom Status Filter Logic - UPDATED to stay open
 const statusFilterElement = document.getElementById('statusFilter');
 const statusDropdown = document.getElementById('statusDropdown');
 const statusDisplay = statusFilterElement.querySelector('.select-display');
@@ -971,11 +1755,20 @@ const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
 statusFilterElement.addEventListener('click', function(e) {
   e.stopPropagation();
   statusFilterElement.classList.toggle('active');
+  statusDropdown.classList.toggle('show');
+});
+
+// Prevent dropdown from closing when clicking inside
+statusDropdown.addEventListener('click', function(e) {
+  e.stopPropagation();
 });
 
 // Close dropdown when clicking outside
-document.addEventListener('click', function() {
-  statusFilterElement.classList.remove('active');
+document.addEventListener('click', function(e) {
+  if (!statusFilterElement.contains(e.target)) {
+    statusFilterElement.classList.remove('active');
+    statusDropdown.classList.remove('show');
+  }
 });
 
 // Handle checkbox changes
@@ -1033,95 +1826,106 @@ function getSelectedStatuses() {
   
   return checkedBoxes.map(cb => cb.value.toLowerCase());
 }
+// Get selected status values for filtering
+function getSelectedStatuses() {
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
+    cb.checked && cb.value !== 'all'
+  );
+  
+  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
+    return [];
+  }
+  
+  return checkedBoxes.map(cb => cb.value.toLowerCase());
+}
 
-    // ADD ALL THESE FUNCTIONS HERE
-    function openChat(requestId) {
-      currentConversationId = requestId;
-      loadConversation(requestId);
-      conversationModal.style.display = 'flex';
-    }
+// Chat functions
+function openChat(requestId) {
+  currentConversationId = requestId;
+  loadConversation(requestId);
+  conversationModal.style.display = 'flex';
+}
 
-    async function loadConversation(requestId) {
-      try {
-        const response = await fetch(`/api/conversation/${requestId}`);
-        const conversation = await response.json();
-        
-        messagesContainer.innerHTML = '';
-        
-        if (conversation.messages && conversation.messages.length > 0) {
-          conversation.messages.forEach(message => {
-            addMessageToUI(message);
-          });
-          
-          await fetch(`/api/conversation/${requestId}/mark-read`, {
-            method: 'POST'
-          });
-        } else {
-          messagesContainer.innerHTML = '<p style="text-align: center; color: #6b7280;">No messages yet. Start the conversation!</p>';
-        }
-        
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      } catch (error) {
-        console.error('Error loading conversation:', error);
-        messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
-      }
-    }
-
-    function addMessageToUI(message) {
-      const messageDiv = document.createElement('div');
-      const isUser = message.senderRole === 'user';
-      const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
+async function loadConversation(requestId) {
+  try {
+    const response = await fetch(`/api/conversation/${requestId}`);
+    const conversation = await response.json();
+    
+    messagesContainer.innerHTML = '';
+    
+    if (conversation.messages && conversation.messages.length > 0) {
+      conversation.messages.forEach(message => {
+        addMessageToUI(message);
+      });
       
-      messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
-      messageDiv.innerHTML = `
-        <div class="message-content">
-          <div class="message-header">
-            <strong>${senderName}</strong>
-            <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
-          </div>
-          <div class="message-text">${message.content}</div>
-        </div>
-      `;
-      
-      messagesContainer.appendChild(messageDiv);
+      await fetch(`/api/conversation/${requestId}/mark-read`, {
+        method: 'POST'
+      });
+    } else {
+      messagesContainer.innerHTML = '<p style="text-align: center; color: #6b7280;">No messages yet. Start the conversation!</p>';
     }
+    
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  } catch (error) {
+    console.error('Error loading conversation:', error);
+    messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
+  }
+}
 
-    sendMessageBtn.onclick = async function() {
-      const content = messageInput.value.trim();
-      if (!content || !currentConversationId) return;
+function addMessageToUI(message) {
+  const messageDiv = document.createElement('div');
+  const isUser = message.senderRole === 'user';
+  const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
+  
+  messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
+  messageDiv.innerHTML = `
+    <div class="message-content">
+      <div class="message-header">
+        <strong>${senderName}</strong>
+        <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+      </div>
+      <div class="message-text">${message.content}</div>
+    </div>
+  `;
+  
+  messagesContainer.appendChild(messageDiv);
+}
 
-      try {
-        const response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ content })
-        });
+sendMessageBtn.onclick = async function() {
+  const content = messageInput.value.trim();
+  if (!content || !currentConversationId) return;
 
-        const result = await response.json();
-        
-        if (result.success) {
-          addMessageToUI(result.message);
-          messageInput.value = '';
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        } else {
-          alert('Failed to send message');
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Failed to send message');
-      }
-    };
-
-    messageInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        sendMessageBtn.click();
-      }
+  try {
+    const response = await fetch(`/api/conversation/${currentConversationId}/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content })
     });
 
+    const result = await response.json();
     
-// Enhanced file preview function (replace existing file preview code)
+    if (result.success) {
+      addMessageToUI(result.message);
+      messageInput.value = '';
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } else {
+      alert('Failed to send message');
+    }
+  } catch (error) {
+    console.error('Error sending message:', error);
+    alert('Failed to send message');
+  }
+};
+
+messageInput.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    sendMessageBtn.click();
+  }
+});
+
+// Enhanced file preview function
 function createEnhancedFilePreview(allFiles, previewContainer) {
   if (!previewContainer) return;
   
@@ -1129,126 +1933,291 @@ function createEnhancedFilePreview(allFiles, previewContainer) {
     const enhancedPreview = document.createElement('div');
     enhancedPreview.className = 'enhanced-file-preview';
     
-    const header = document.createElement('h3');
-    header.textContent = `Attached Files (${allFiles.length})`;
-    enhancedPreview.appendChild(header);
+    let fileGridHTML = `
+      <h3>
+        <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+        </svg>
+        Attached Files (${allFiles.length})
+      </h3>
+      <div class="file-grid">
+    `;
     
-    const fileGrid = document.createElement('div');
-    fileGrid.className = 'file-grid';
-    
-    allFiles.forEach((currentFile, index) => {
-      if (currentFile && currentFile.trim()) {
-        const fileUrl = `/uploads/${currentFile.trim()}`;
-        const ext = currentFile.split('.').pop().toLowerCase();
+    allFiles.forEach((file, index) => {
+      if (file && file.trim()) {
+        const fileUrl = `/uploads/${file.trim()}`;
+        const ext = file.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        const isPDF = ext === 'pdf';
+        const isDoc = ['doc', 'docx'].includes(ext);
+        const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+        const isText = ['txt', 'rtf'].includes(ext);
         
-        const fileItem = document.createElement('div');
-        fileItem.className = 'enhanced-file-item';
+        // Determine file icon and preview
+        let fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+        `;
+
+        if (isImage) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8" cy="8" r="2"/>
+              <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+            </svg>
+          `;
+        } else if (isPDF) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <path d="M8 6h8M8 10h8M8 14h4"/>
+            </svg>
+          `;
+        } else if (isDoc) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+            </svg>
+          `;
+        } else if (isSpreadsheet) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <rect x="7" y="10" width="2" height="7"/>
+              <rect x="11" y="7" width="2" height="10"/>
+              <rect x="15" y="13" width="2" height="4"/>
+            </svg>
+          `;
+        } else if (isText) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <line x1="8" y1="8" x2="16" y2="8"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          `;
+        }
         
-        // File header
-        const fileHeader = document.createElement('div');
-        fileHeader.className = 'file-header-enhanced';
-        
-        // File icon SVG
-        const fileIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        fileIcon.setAttribute('class', 'file-icon-enhanced');
-        fileIcon.setAttribute('viewBox', '0 0 24 24');
-        fileIcon.setAttribute('fill', 'none');
-        fileIcon.setAttribute('stroke', 'currentColor');
-        fileIcon.setAttribute('stroke-width', '2');
-        fileIcon.innerHTML = `
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14,2 14,8 20,8"></polyline>
+        fileGridHTML += `
+          <div class="enhanced-file-item">
+            <div class="file-header-enhanced">
+              <div style="color: #059669;">${fileIcon}</div>
+              <div class="file-info-enhanced">
+                <div class="file-name-enhanced" title="${file}">${file}</div>
+                <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
+              </div>
+            </div>
+            
+            <div class="file-preview-container">
         `;
         
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'file-info-enhanced';
-        
-        const fileName = document.createElement('div');
-        fileName.className = 'file-name-enhanced';
-        fileName.textContent = currentFile;
-        
-        const fileType = document.createElement('div');
-        fileType.className = 'file-type-enhanced';
-        fileType.textContent = ext.toUpperCase() + ' File';
-        
-        fileInfo.appendChild(fileName);
-        fileInfo.appendChild(fileType);
-        fileHeader.appendChild(fileIcon);
-        fileHeader.appendChild(fileInfo);
-        fileItem.appendChild(fileHeader);
-        
-        // File preview container
-        const previewDiv = document.createElement('div');
-        previewDiv.className = 'file-preview-container';
-        
-        // File content based on type
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-          previewDiv.innerHTML = `
-            <img src="${fileUrl}" alt="Uploaded Image" 
-                 style="width:100%; max-height:250px; object-fit: cover; display: block;" 
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-            <div style="display:none; padding: 2rem; text-align: center; color: #ef4444;">
-              <p style="margin: 0; font-weight: 600;">Image could not be loaded</p>
-              <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">File: ${currentFile}</p>
+        if (isImage) {
+          fileGridHTML += `
+            <img src="${fileUrl}" 
+                 alt="Preview of ${file}" 
+                 style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; cursor: pointer;"
+                 onclick="openImagePreview('${fileUrl}', '${file}')"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8" cy="8" r="2"/>
+                  <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+                </svg>
+              </div>
+              <p>Image Preview Not Available</p>
+              <small>Click download to view</small>
             </div>
           `;
-        } else if (ext === 'pdf') {
-          previewDiv.innerHTML = `
-            <embed src="${fileUrl}" width="100%" height="300px" style="display: block;" 
-                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-            <div style="display:none; padding: 2rem; text-align: center; color: #64748b;">
-              <p style="margin: 0; font-weight: 600;">PDF Preview not available</p>
-              <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">Use the download button to view this file</p>
+        } else if (isPDF) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <path d="M8 6h8M8 10h8M8 14h4"/>
+                </svg>
+              </div>
+              <p><strong>PDF Document</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isDoc) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+                </svg>
+              </div>
+              <p><strong>Word Document</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isSpreadsheet) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <rect x="7" y="10" width="2" height="7"/>
+                  <rect x="11" y="7" width="2" height="10"/>
+                  <rect x="15" y="13" width="2" height="4"/>
+                </svg>
+              </div>
+              <p><strong>Spreadsheet</strong></p>
+              <small>Click download to view</small>
             </div>
           `;
         } else {
-          previewDiv.innerHTML = `
-            <div style="text-align: center; padding: 2rem; color: #64748b;">
-              <div style="font-size: 3rem; margin-bottom: 1rem; color: #94a3b8;">📄</div>
-              <p style="font-weight: 600; margin: 0;">Document File</p>
-              <p style="font-size: 0.875rem; margin: 0.5rem 0 0 0;">Use the download button to view this file</p>
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">${fileIcon}</div>
+              <p><strong>Document File</strong></p>
+              <small>Click download to view</small>
             </div>
           `;
         }
         
-        fileItem.appendChild(previewDiv);
-        
-        // Download link
-        const downloadLink = document.createElement('a');
-        downloadLink.href = fileUrl;
-        downloadLink.target = '_blank';
-        downloadLink.download = currentFile;
-        downloadLink.className = 'download-btn-enhanced';
-        downloadLink.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7,10 12,15 17,10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Download File
+        fileGridHTML += `
+          </div>
+          
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
+            <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced">
+              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              Download
+            </a>
+            ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6;">
+              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                <ellipse cx="12" cy="12" rx="9" ry="6"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+              View
+            </button>` : ''}
+          </div>
+        </div>
         `;
-        fileItem.appendChild(downloadLink);
-        
-        fileGrid.appendChild(fileItem);
       }
     });
     
-    enhancedPreview.appendChild(fileGrid);
+    fileGridHTML += `</div>`;
+    enhancedPreview.innerHTML = fileGridHTML;
     previewContainer.appendChild(enhancedPreview);
   } else {
     previewContainer.innerHTML = `
       <div class="enhanced-file-preview">
-        <h3>Files</h3>
-        <div class="no-files-message">
-          <svg class="no-files-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        <h3>
+          <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
           </svg>
-          <div class="no-files-title">No files uploaded</div>
-          <div class="no-files-subtitle">This request does not contain any file attachments</div>
+          Attached Files
+        </h3>
+        <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
+          <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">
+            <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="7" width="18" height="11" rx="2"/>
+              <path d="M3 7l9 6 9-6"/>
+            </svg>
+          </div>
+          <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
+            No Files Attached
+          </div>
+          <div class="no-files-subtitle" style="font-size: 0.95rem; color: #64748b; line-height: 1.5;">
+            This request was submitted without any file attachments.<br>
+            <small>Files may have been uploaded but are not accessible.</small>
+          </div>
         </div>
       </div>
     `;
   }
-} </script>
+}
+
+// Add image preview modal function
+window.openImagePreview = function(imageUrl, fileName) {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    cursor: pointer;
+  `;
+  
+  // Create image container
+  const container = document.createElement('div');
+  container.style.cssText = `
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+  `;
+  
+  // Create image
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = fileName;
+  img.style.cssText = `
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+  `;
+  
+  // Create close button
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '✕';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+  `;
+  
+  // Assemble modal
+  container.appendChild(img);
+  container.appendChild(closeBtn);
+  overlay.appendChild(container);
+  document.body.appendChild(overlay);
+  
+  // Close handlers
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+      document.body.style.overflow = '';
+    }
+  });
+  
+  closeBtn.addEventListener('click', () => {
+    document.body.removeChild(overlay);
+    document.body.style.overflow = '';
+  });
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+};
+</script>
 </body>
 </html>

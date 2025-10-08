@@ -629,26 +629,33 @@
   background: var(--primary-green);
   color: white;
   border: none;
-  padding: 0.625rem 1rem;
-  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
   font-weight: 600;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
   cursor: pointer;
-  border: 1px solid transparent;
+  min-width: 0;
+  flex: 1;
+  text-align: center;
+  height: 44px; /* Fixed height for consistency */
+  box-sizing: border-box;
 }
 
 .download-btn-enhanced:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
   color: white;
   text-decoration: none;
-  background: #157347;
+  background: linear-gradient(135deg, #157347, var(--primary-green));
 }
 
 .no-files-message {
@@ -707,11 +714,11 @@
 }
 
 .quick-action-btn.chat {
-  background: #3b82f6;
+  background: #157347;
 }
 
 .quick-action-btn.chat:hover {
-  background: #1d4ed8;
+  background: #0c4128;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
@@ -1288,6 +1295,466 @@
     transform: translateY(20px) scale(0.9);
   }
 }
+/* Enhanced Dropdown Styles */
+.enhanced-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.enhanced-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.enhanced-select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* Enhanced Multi-Select Styles */
+.enhanced-multi-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.enhanced-multi-select {
+  position: relative;
+  width: 100%;
+}
+
+.select-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.select-display:hover {
+  border-color: #9ca3af;
+}
+
+.select-display.active {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.selected-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.select-display.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.select-display::after {
+  display: none !important;
+}
+.select-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.select-dropdown.show {
+  display: block;
+}
+
+.search-container {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.1);
+}
+
+.options-container {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: background-color 0.15s ease;
+  margin: 0;
+  position: relative;
+}
+
+.dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.dropdown-option.selected {
+  background: #f0fdf4;
+  color: var(--primary-green);
+}
+
+.dropdown-option input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkbox-custom {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  margin-right: 0.75rem;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dropdown-option:hover .checkbox-custom {
+  border-color: var(--primary-green);
+}
+
+.dropdown-option input[type="checkbox"]:checked + .checkbox-custom {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+.dropdown-option input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* Selection Tags */
+.selection-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.selection-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--primary-green);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.tag-remove {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.tag-remove:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Scrollbar Styling */
+.options-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.options-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.options-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.options-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* No results message */
+.no-results {
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* Consistent filter input styling */
+.filter-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  transition: all 0.2s ease;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* Remove old custom select styles */
+.custom-select-wrapper,
+.custom-select {
+  display: none !important;
+}
+/* Enhanced Single Select Styles (for Type filter) */
+.enhanced-single-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.enhanced-single-select {
+  position: relative;
+  width: 100%;
+}
+
+.single-select-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.single-select-display:hover {
+  border-color: #9ca3af;
+}
+
+.single-select-display.active {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.single-selected-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.single-dropdown-arrow {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.single-select-display.active .single-dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.single-select-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+.single-select-dropdown.show {
+  display: block;
+}
+
+.single-options-container {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+
+.single-dropdown-option {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: background-color 0.15s ease;
+  margin: 0;
+  position: relative;
+}
+
+.single-dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.single-dropdown-option.selected {
+  background: #f0fdf4;
+  color: var(--primary-green);
+  font-weight: 500;
+}
+/* Filter row spacing to match approvals page */
+.filter-controls + .filter-controls {
+  margin-top: 0.75rem; /* Increase spacing between rows */
+}
+
+/* Second row dropdown styling - maximize width */
+.filter-controls.dropdown-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-start;
+}
+
+.filter-controls.dropdown-row .filter-item {
+  flex: 1;
+  min-width: 350px;
+  max-width: none; /* Remove width restrictions */
+}
+
+.filter-controls.dropdown-row .enhanced-multi-select-wrapper {
+  width: 100%;
+}
+
+.filter-controls.dropdown-row .select-display {
+  min-width: 320px;
+  padding: 0.75rem;
+}
+
+/* Hide any placeholder items in the dropdown row */
+.filter-controls.dropdown-row .filter-item:nth-child(n+3) {
+  display: none;
+}
+
+/* Ensure proper alignment */
+.filter-label {
+  margin-bottom: 0.75rem;
+  display: block;
+}
+/* Ensure consistent filter item sizing */
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Make sure all dropdowns have consistent minimum widths */
+.enhanced-multi-select-wrapper,
+.enhanced-single-select-wrapper {
+  width: 100%;
+  min-width: 200px;
+}
+
+/* Ensure the date inputs match other elements in height */
+.filter-input {
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+/* Remove any extra spacing from invisible placeholder items */
+.filter-item[style*="visibility: hidden"] {
+  flex: 0 0 auto;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
 </style>
 </head>
 <body>
@@ -1335,86 +1802,139 @@
           <a href="/admin/users" class="view-all-btn">Users</a>
         </nav>
 
-        <!-- Filter Options -->
-        <div class="filter-section">
-          <div class="filter-container">
-            <div class="filter-group">
-              <label class="filter-label">Filter by:</label>
-              <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
-                  <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
-                </div>
-                <div class="filter-item">
-                  <label for="typeFilter" class="filter-sublabel">Type</label>
-                  <select id="typeFilter" class="filter-select">
-                    <option value="all">All Types</option>
-                    <option value="Request Approval">Request Approval</option>
-                    <option value="Service Request">Service Request</option>
-                  </select>
-                </div>
-               <div class="filter-item">
-                <label class="filter-sublabel">Status</label>
-                <div class="custom-select-wrapper">
-                  <div class="custom-select" id="statusFilter">
-                    <div class="select-display">All Status</div>
-                    <div class="select-dropdown" id="statusDropdown">
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="all" checked> All Status
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="pending"> Pending
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="approved"> Approved
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="for revision"> For Revision
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="completed"> Completed
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="rejected"> Rejected
-                      </label>
-                      <label class="dropdown-option">
-                        <input type="checkbox" value="archived"> Archived
-                      </label>
-                    </div>
+       <!-- Filter Options -->
+<!-- Filter Options -->
+<div class="filter-section">
+  <div class="filter-container">
+    <div class="filter-group">
+      <label class="filter-label">Filter by:</label>
+      
+      <!-- First Row: Request ID, Type, Status, User -->
+      <div class="filter-controls">
+        <div class="filter-item">
+          <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
+          <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
+        </div>
+        <div class="filter-item">
+          <label class="filter-sublabel">Type</label>
+          <div class="enhanced-single-select-wrapper">
+            <div class="enhanced-single-select" id="typeFilter">
+              <div class="single-select-display" data-placeholder="Select Type">
+                <span class="single-selected-text">All Types</span>
+                <span class="single-dropdown-arrow">▼</span>
+              </div>
+              <div class="single-select-dropdown" id="typeDropdown">
+                <div class="single-options-container">
+                  <div class="single-dropdown-option selected" data-value="all">
+                    All Types
+                  </div>
+                  <div class="single-dropdown-option" data-value="Request Approval">
+                    Request Approval
+                  </div>
+                  <div class="single-dropdown-option" data-value="Service Request">
+                    Service Request
                   </div>
                 </div>
-              </div>
-                <div class="filter-item">
-                  <label for="studentFilter" class="filter-sublabel">User</label>
-                  <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
-                </div>
-                <div class="filter-item">
-                  <label for="organizationFilter" class="filter-sublabel">Office/Department/Organization</label>
-                  <input type="text" id="organizationFilter" class="filter-input" placeholder="Search office/department/organization...">
-                </div>
-              </div>
-              <br>
-              <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
-                  <input type="date" id="dateFromFilter" class="filter-input">
-                </div>
-                <div class="filter-item">
-                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
-                  <input type="date" id="dateToFilter" class="filter-input">
-                </div>
-              </div>
-            </div>
-            <div class="filter-actions">
-              <button id="clearFilters" class="clear-filters-btn">
-                <span>🗑️</span> Clear All
-              </button>
-              <div class="results-count">
-                <span id="resultsCount">Showing all requests</span>
               </div>
             </div>
           </div>
         </div>
+        <div class="filter-item">
+          <label class="filter-sublabel">Status</label>
+          <div class="enhanced-multi-select-wrapper">
+            <div class="enhanced-multi-select" id="statusFilter">
+              <div class="select-display" data-placeholder="Select Status">
+                <span class="selected-text">All Status</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              <div class="select-dropdown" id="statusDropdown">
+                <div class="options-container">
+                  <!-- Options populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-item">
+          <label for="studentFilter" class="filter-sublabel">User</label>
+          <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
+        </div>
+      </div>
+      
+      <!-- Second Row: Student Organization and Office/Department (Maximized) -->
+      <div class="filter-controls dropdown-row">
+        <div class="filter-item">
+          <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
+          <div class="enhanced-multi-select-wrapper">
+            <div class="enhanced-multi-select" id="studentOrgFilter">
+              <div class="select-display" data-placeholder="Select Student Organizations">
+                <span class="selected-text">All Student Organizations</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              <div class="select-dropdown" id="studentOrgDropdown">
+                <div class="search-container">
+                  <input type="text" class="search-input" placeholder="Search organizations...">
+                </div>
+                <div class="options-container">
+                  <!-- Options populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-item">
+          <label for="officeDeptFilter" class="filter-sublabel">Office/Department</label>
+          <div class="enhanced-multi-select-wrapper">
+            <div class="enhanced-multi-select" id="officeDeptFilter">
+              <div class="select-display" data-placeholder="Select Offices/Departments">
+                <span class="selected-text">All Offices/Departments</span>
+                <span class="dropdown-arrow">▼</span>
+              </div>
+              <div class="select-dropdown" id="officeDeptDropdown">
+                <div class="search-container">
+                  <input type="text" class="search-input" placeholder="Search offices/departments...">
+                </div>
+                <div class="options-container">
+                  <!-- Options populated by JavaScript -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Third Row: Date From and Date To -->
+      <div class="filter-controls">
+        <div class="filter-item">
+          <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+          <input type="date" id="dateFromFilter" class="filter-input">
+        </div>
+        <div class="filter-item">
+          <label for="dateToFilter" class="filter-sublabel">Date To</label>
+          <input type="date" id="dateToFilter" class="filter-input">
+        </div>
+        <div class="filter-item" style="visibility: hidden;"></div>
+        <div class="filter-item" style="visibility: hidden;"></div>
+      </div>
+      
+    </div>
+    <div class="filter-actions">
+      <button id="clearFilters" class="clear-filters-btn">
+        <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="6" width="18" height="14" rx="2"/>
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="1" y1="6" x2="23" y2="6"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+        Clear All
+      </button>
+      <div class="results-count">
+        <span id="resultsCount">Showing all requests</span>
+      </div>
+    </div>
+  </div>
+</div>
 
         <!-- Table -->
         <section class="table-section" style="overflow-x: auto;">
@@ -1600,11 +2120,20 @@
             
             <div class="admin-form-actions">
               <button type="button" class="admin-btn admin-btn-secondary" id="adminCancelBtn">
-                ✕ Cancel Changes
-              </button>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Cancel Changes
+          </button>
               <button type="button" class="admin-btn admin-btn-primary" id="adminUpdateBtn">
-                💾 Update Request
-              </button>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17,21 17,13 7,13 7,21"/>
+                <polyline points="7,3 7,8 15,8"/>
+              </svg>
+              Update Request
+            </button>
             </div>
           </form>
         </div>
@@ -1621,7 +2150,9 @@
         <!-- Quick Actions -->
         <div class="quick-action-buttons">
           <button class="quick-action-btn chat" id="openChatFromModal">
-            💬 Start Conversation
+                    <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>Start Conversation
           </button>
         </div>
       </div>
@@ -1687,13 +2218,439 @@
   </div>
 </div>
 
-
 <script>
-console.log('🚀 Starting AllRequestsAdmin script...');
+console.log('🚀 Starting All RequestsAdmin script...');
 
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('📋 DOM Content Loaded - Initializing...');
+// Organization and Office data arrays (simplified for brevity)
+const studentOrganizations = [
+ "University Student Government (USG)",
+        "Internal Audit Service (IAS)",
+        "University Student Election Commission (USEC)",
+        "Office of the Solicitor General (OSG)",
+        "College of Business Administration and Accountancy Student Government (CBAASG)",
+        "Business Management Program Council (BMPC)",
+        "Junior Philippine Institute of Accountants (JPIA)",
+        "Marketing Management Program Council (MMPC)",
+        "College of Education Student Government (COEdSG)",
+        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
+        "Architecture Program Council (ArchPC)",
+        "Civil Engineering Program Council (CEEPC)",
+        "Computer Engineering Program Council (CpEPC)",
+        "Electrical Engineering Program Council (EEEPC)",
+        "Electronics Engineering Program Council (ECEPC)",
+        "Industrial Engineering Program Council (IEEPC)",
+        "Mechanical Engineering Program Council (MEEPC)",
+        "Multimedia Arts Program Council (MMAPC)",
+        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
+        "College of Criminal Justice Education Student Government (CCJESG)",
+        "Criminology Program Council (CrimPC)",
+        "Forensic Science Program Council (FScPC)",
+        "College of Liberal Arts and Communication Student Government (CLACSG)",
+        "Communication Program Council (CPC)",
+        "International Development Program Council (IDPC)",
+        "Political Science Program Council (PSPC)",
+        "Psychology Program Council (PPC)",
+        "College of Science Student Government (COSSG)",
+        "Applied Mathematics Program Council (AMPC)",
+        "Biology Program Council (BioPC)",
+        "College of Information and Computer Studies Student Government (CICSSG)",
+        "Computer Science Program Council (CSPC)",
+        "Information Technology Program Council (ITPC)",
+        "DLSU-D Chorale (CHORALE)",
+        "Lasallian Symphony Orchestra (LSO)",
+        "La Salle Filipiniana Dance Company (LSFDC)",
+        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
+        "Lasallian Pop Band (LPB)",
+        "Teatro Lasalliana (TEATRO)",
+        "Visual and Performing Arts Production Unit (VPAPU)",
+        "Heraldo Filipino",
+        "Vicissitude",
+        "Council of Student Organizations (CSO)",
+        "Business Operations Management Society (BOMS)",
+        "Junior Marketing Association (JMA)",
+        "DLSU-D Psychological Society (DPS)",
+        "DLSU-D Pre-Medical Society (DPMS)",
+        "Hotel and Restaurant Management Society (HRMS)",
+        "Turismo Lasalleño Society (TLS)",
+        "Lasallian Educators Society (LES)",
+        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
+        "DLSU-D Pre-Law Society (DPLS)",
+        "Astraeus Literary and Arts Guild",
+        "Accounting Enrichment Society (ACES)",
+        "Circle of Student Assistants (COSA)",
+        "DLSU-D Lifters",
+        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
+        "DLSU-D United Patriots Football Club",
+        "Junior Financial Executives Institute of the Philippines (JFINEX)",
+        "Marché Société (MS)",
+        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
+        "SINAG Society of Leaders (SISOL)",
+        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
+        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
+        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
+        "LS Verde of Campus Sustainability Office",
+        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
+        "Green FM of Communications and Journalism Department",
+        "International Students' Association (ISA) of International Students Office",
+        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+];
+
+const officesDepartments = [
+  "Office of the President",
+          "Office of the Chief Administrative Officer",
+          "Office of the Provost",
+          "Office of the Chief Lasallian Mission Officer",
+          "Office of the Principal",
+          "Corporate and Executive Management Office",
+          "Center for Heritage Conservation",
+          "Museo De La Salle",
+          "Risk, Compliance and Audit Office",
+          "University Chaplain",
+          "Office of the Vice President for Administrative Services",
+          "Office of the Vice President for Finance",
+          "Office of the Vice President for Global Engagement and External Relations",
+          "Human Resource Management Office",
+          "Strategic Communications Office",
+          "Ancillary and Asset Management Office",
+          "Legal Counsel",
+          "Data Protection Office",
+          "Campus Development Office",
+          "Buildings and Facilities Maintenance Office",
+          "Campus Sustainability Office",
+          "General Services Office",
+          "Green Architecture and Campus Planning Office",
+          "Information and Communications Technology Center",
+          "Accounting Office",
+          "Treasury Office",
+          "Advancement and Alumni Relations Office",
+          "Lasallian Community Development Center",
+          "Linkages and Scholarship Office",
+          "Office of the Vice Provost for Academics",
+          "Office of the Deputy Provost for Research",
+          "Academic Planning and Quality Management",
+          "College of Law",
+          "College of Professional and Graduate Studies",
+          "School of Innovative and Flexible Learning",
+          "School of Governance, Public Service, and Corporate Leadership",
+          "Aklatang Emilio Aguinaldo-Information Resource Center",
+          "Center for Student Admissions",
+          "University Registrar",
+          "Cavite Studies Center",
+          "University Research Office",
+          "Herminia D. Torres Quality Assurance Office",
+          "Center for Innovative Learning Program",
+          "Center for Curriculum Development and Instruction",
+          "Language Learning Center",
+          "Center for Artificial Intelligence",
+          "Center for Creative Program",
+          "Academy of Continuing Education",
+          "College of Business Administration and Accountancy",
+          "Accountancy Department",
+          "Allied Business Department",
+          "Business Management Department",
+          "Marketing Department",
+          "College of Criminal Justice Education",
+          "College of Education",
+          "Physical Education Department",
+          "Professional Education Department",
+          "Religious Education Department",
+          "College of Engineering, Architecture and Technology",
+          "Architecture Department",
+          "Engineering Department",
+          "Graphics Design and Multimedia Department",
+          "Center of Technology",
+          "College of Information and Computer Studies",
+          "Computer Studies Department",
+          "Information Technology Department",
+          "College of Liberal Arts and Communication",
+          "Communication and Journalism Department",
+          "Languages and Literature Department",
+          "Social Sciences Department",
+          "Philosophy and Psychology Department",
+          "College of Tourism and Hospitality Management",
+          "Hospitality Management Department",
+          "Tourism Management Department",
+          "College of Science",
+          "Biological Sciences Department",
+          "Mathematics & Statistics Department",
+          "Physical Sciences Department",
+          "Office of Student Services",
+          "Student Development and Activities Office",
+          "Student Welfare and Formation Office",
+          "Student Wellness Center",
+          "NSTP-CWTS",
+          "Campus Ministry Office",
+          "DLS Bahay Pag-asa Dasmariñas",
+          "Night College",
+          "Sports Development Office",
+          "University Lasallian Family Office",
+          "Basic Education",
+          "Office of the Associate Principal for Academics and Research",
+          "Office of the Associate Principal for Administrative Services and Student Affairs",
+          "Dormitory",
+          "Materials Reproduction Office / Food Services Office",
+          "Retreat and Conference Center / Sports & Recreation Complex",
+          "Warehouse Office",
+          "Safety & Health Office",
+          "Purchasing Office",
+          "Transportation Office",
+          "Facilities Maintenance Office",
+          "Housekeeping & Grounds",
+          "De La Salle Dasmariñas Alumni Association",
+          "DLSU-D Development Cooperative",
+          "Faculty Organization",
+          "KABALIKAT ng DLSU-D Inc.",
+          "Parents Organization La Salle Cavite",
+          "Human Resource Management Office"
+];
+
+// Enhanced Multi-Select Class
+class EnhancedMultiSelect {
+  constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
+    this.container = document.getElementById(containerId);
+    this.options = options;
+    this.placeholder = placeholder;
+    this.selectedValues = new Set(['all']);
+    this.isOpen = false;
+    this.filteredOptions = [...options];
+    this.hasSearch = hasSearch; // New property
+    
+    this.init();
+  }
   
+  init() {
+    this.setupElements();
+    this.populateOptions();
+    this.attachEventListeners();
+    this.updateDisplay();
+  }
+  
+  setupElements() {
+    this.display = this.container.querySelector('.select-display');
+    this.dropdown = this.container.querySelector('.select-dropdown');
+    this.searchInput = this.dropdown.querySelector('.search-input');
+    this.optionsContainer = this.dropdown.querySelector('.options-container');
+    this.selectedText = this.display.querySelector('.selected-text');
+  }
+  
+  populateOptions() {
+    // Add "All" option
+    const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
+    this.optionsContainer.appendChild(allOption);
+    
+    // Add other options
+    this.options.forEach(option => {
+      const optionElement = this.createOption(option, option);
+      this.optionsContainer.appendChild(optionElement);
+    });
+  }
+  
+  createOption(value, text) {
+    const label = document.createElement('label');
+    label.className = 'dropdown-option';
+    label.innerHTML = `
+      <input type="checkbox" value="${value}" ${this.selectedValues.has(value) ? 'checked' : ''}>
+      <span class="checkbox-custom"></span>
+      ${text}
+    `;
+    return label;
+  }
+  
+  attachEventListeners() {
+    // Toggle dropdown
+    this.display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+    
+    // Search functionality (only if hasSearch is true)
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.addEventListener('input', (e) => {
+        this.filterOptions(e.target.value);
+      });
+    }
+    
+    // Option selection
+    this.optionsContainer.addEventListener('change', (e) => {
+      if (e.target.type === 'checkbox') {
+        this.handleOptionChange(e.target);
+      }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!this.container.contains(e.target)) {
+        this.close();
+      }
+    });
+    
+    // Prevent dropdown close when clicking inside
+    this.dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+  
+  filterOptions(searchTerm) {
+    if (!this.hasSearch) return; // Skip filtering if no search
+    
+    const options = this.optionsContainer.querySelectorAll('.dropdown-option');
+    let visibleCount = 0;
+    
+    options.forEach(option => {
+      const text = option.textContent.toLowerCase();
+      const matches = text.includes(searchTerm.toLowerCase());
+      option.style.display = matches ? 'flex' : 'none';
+      if (matches) visibleCount++;
+    });
+    
+    // Show "no results" message if needed
+    this.toggleNoResults(visibleCount === 0 && searchTerm.length > 0);
+  }
+  
+  toggleNoResults(show) {
+    if (!this.hasSearch) return; // Skip if no search
+    
+    let noResultsEl = this.optionsContainer.querySelector('.no-results');
+    
+    if (show && !noResultsEl) {
+      noResultsEl = document.createElement('div');
+      noResultsEl.className = 'no-results';
+      noResultsEl.textContent = 'No results found';
+      this.optionsContainer.appendChild(noResultsEl);
+    } else if (!show && noResultsEl) {
+      noResultsEl.remove();
+    }
+  }
+  
+  handleOptionChange(checkbox) {
+    const value = checkbox.value;
+    
+    if (value === 'all') {
+      if (checkbox.checked) {
+        // Select "All" and uncheck others
+        this.selectedValues.clear();
+        this.selectedValues.add('all');
+        this.updateCheckboxes();
+      } else if (this.selectedValues.size === 1 && this.selectedValues.has('all')) {
+        // Prevent unchecking "All" if it's the only selection
+        checkbox.checked = true;
+        return;
+      }
+    } else {
+      if (checkbox.checked) {
+        // Remove "All" when specific option is selected
+        this.selectedValues.delete('all');
+        this.selectedValues.add(value);
+      } else {
+        this.selectedValues.delete(value);
+        // If no selections, default to "All"
+        if (this.selectedValues.size === 0) {
+          this.selectedValues.add('all');
+        }
+      }
+      this.updateCheckboxes();
+    }
+    
+    this.updateDisplay();
+    this.triggerChange();
+  }
+  
+  updateCheckboxes() {
+    const checkboxes = this.optionsContainer.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+      cb.checked = this.selectedValues.has(cb.value);
+    });
+  }
+  
+  updateDisplay() {
+    const selectedArray = Array.from(this.selectedValues);
+    
+    if (selectedArray.includes('all') || selectedArray.length === 0) {
+      this.selectedText.textContent = `All ${this.placeholder.replace('Select ', '')}`;
+    } else if (selectedArray.length === 1) {
+      this.selectedText.textContent = selectedArray[0];
+    } else {
+      this.selectedText.textContent = `${selectedArray.length} selected`;
+    }
+  }
+  
+  getSelectedValues() {
+    return Array.from(this.selectedValues);
+  }
+  
+  reset() {
+    this.selectedValues.clear();
+    this.selectedValues.add('all');
+    this.updateCheckboxes();
+    this.updateDisplay();
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+    this.triggerChange();
+  }
+  
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+  
+  open() {
+    this.isOpen = true;
+    this.display.classList.add('active');
+    this.dropdown.classList.add('show');
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.focus();
+    }
+  }
+  
+  close() {
+    this.isOpen = false;
+    this.display.classList.remove('active');
+    this.dropdown.classList.remove('show');
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+  }
+  
+  triggerChange() {
+    // Trigger custom event for filter updates
+    const event = new CustomEvent('selectionChange', {
+      detail: { values: this.getSelectedValues() }
+    });
+    this.container.dispatchEvent(event);
+  }
+}
+// Initialize enhanced dropdowns when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+   console.log('📋 DOM Content Loaded - Initializing...');
+  
+  // Initialize enhanced single-select for type filter
+  const typeFilter = new EnhancedSingleSelect('typeFilter', 
+    [
+      { value: 'all', text: 'All Types' },
+      { value: 'Request Approval', text: 'Request Approval' },
+      { value: 'Service Request', text: 'Service Request' }
+    ], 
+    'Select Type');
+  
+  // Initialize enhanced multi-select dropdowns
+  const statusFilter = new EnhancedMultiSelect('statusFilter', 
+    ['pending', 'approved', 'for revision', 'completed', 'rejected', 'archived'], 
+    'Select Status', false);
+    
+  const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
+    studentOrganizations, 
+    'Select Student Organizations', true);
+    
+  const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
+    officesDepartments, 
+    'Select Offices/Departments', true);
+
   // Global variables
   let detailModal = document.getElementById("detailsModal");
   let updateConfirmationModal = document.getElementById("updateConfirmationModal");
@@ -1730,34 +2687,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Get filter elements
     const requestIdFilter = document.getElementById('requestIdFilter');
-    const typeFilter = document.getElementById('typeFilter');
-    const statusFilter = document.getElementById('statusFilter');
     const studentFilter = document.getElementById('studentFilter');
-    const organizationFilter = document.getElementById('organizationFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     const clearFiltersBtn = document.getElementById('clearFilters');
     const resultsCount = document.getElementById('resultsCount');
 
-    // Initialize status filter (multi-select)
-    initializeStatusFilter();
-
     // Add event listeners for all filters
     if (requestIdFilter) {
       requestIdFilter.addEventListener('input', debounce(applyFilters, 300));
-    }
-
-    if (typeFilter) {
-      typeFilter.addEventListener('change', applyFilters);
-    }
+    }  
+document.getElementById('typeFilter').addEventListener('selectionChange', applyFilters);
+  
 
     if (studentFilter) {
       studentFilter.addEventListener('input', debounce(applyFilters, 300));
     }
 
-    if (organizationFilter) {
-      organizationFilter.addEventListener('input', debounce(applyFilters, 300));
-    }
+    // Enhanced dropdown change listeners
+    document.getElementById('statusFilter').addEventListener('selectionChange', applyFilters);
+    document.getElementById('studentOrgFilter').addEventListener('selectionChange', applyFilters);
+    document.getElementById('officeDeptFilter').addEventListener('selectionChange', applyFilters);
 
     if (dateFromFilter) {
       dateFromFilter.addEventListener('change', applyFilters);
@@ -1777,10 +2727,11 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const filters = {
         requestId: requestIdFilter ? requestIdFilter.value.toLowerCase().trim() : '',
-        type: typeFilter ? typeFilter.value : 'all',
-        status: getSelectedStatuses(),
+        type: typeFilter.getSelectedValue(),
+        status: statusFilter.getSelectedValues(),
         student: studentFilter ? studentFilter.value.toLowerCase().trim() : '',
-        organization: organizationFilter ? organizationFilter.value.toLowerCase().trim() : '',
+        studentOrg: studentOrgFilter.getSelectedValues(),
+        officeDept: officeDeptFilter.getSelectedValues(),
         dateFrom: dateFromFilter ? dateFromFilter.value : '',
         dateTo: dateToFilter ? dateToFilter.value : ''
       };
@@ -1814,8 +2765,30 @@ document.addEventListener('DOMContentLoaded', function() {
           shouldShow = false;
         }
 
-        // Organization filter
-        if (filters.organization && !request.organization.includes(filters.organization)) {
+        // Organization filter (multi-select)
+        let organizationMatch = true;
+        const hasStudentOrgSelection = filters.studentOrg.length > 0 && !filters.studentOrg.includes('all');
+        const hasOfficeDeptSelection = filters.officeDept.length > 0 && !filters.officeDept.includes('all');
+        
+        if (hasStudentOrgSelection || hasOfficeDeptSelection) {
+          organizationMatch = false;
+          
+          // Check student organizations
+          if (hasStudentOrgSelection) {
+            organizationMatch = filters.studentOrg.some(org => 
+              request.organization.includes(org.toLowerCase())
+            );
+          }
+          
+          // Check office/departments (OR logic with student orgs)
+          if (!organizationMatch && hasOfficeDeptSelection) {
+            organizationMatch = filters.officeDept.some(dept => 
+              request.organization.includes(dept.toLowerCase())
+            );
+          }
+        }
+
+        if (!organizationMatch) {
           shouldShow = false;
         }
 
@@ -1845,77 +2818,6 @@ document.addEventListener('DOMContentLoaded', function() {
       updateResultsCount(visibleCount);
     }
 
-    // Initialize status filter dropdown
-    function initializeStatusFilter() {
-      const statusFilter = document.getElementById('statusFilter');
-      const statusDropdown = document.getElementById('statusDropdown');
-      
-      if (!statusFilter || !statusDropdown) return;
-
-      // Toggle dropdown
-      statusFilter.addEventListener('click', function(e) {
-        e.stopPropagation();
-        statusDropdown.style.display = statusDropdown.style.display === 'block' ? 'none' : 'block';
-      });
-
-      // Handle checkbox changes
-      const checkboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-          if (this.value === 'all') {
-            // If "All Status" is checked, uncheck others
-            if (this.checked) {
-              checkboxes.forEach(cb => {
-                if (cb.value !== 'all') cb.checked = false;
-              });
-            }
-          } else {
-            // If any specific status is checked, uncheck "All Status"
-            if (this.checked) {
-              const allCheckbox = statusDropdown.querySelector('input[value="all"]');
-              if (allCheckbox) allCheckbox.checked = false;
-            }
-          }
-
-          updateStatusDisplay();
-          applyFilters();
-        });
-      });
-
-      // Update display text
-      function updateStatusDisplay() {
-        const selectDisplay = statusFilter.querySelector('.select-display');
-        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked && cb.value !== 'all');
-        
-        if (checkedBoxes.length === 0) {
-          // If nothing is selected, check "All Status"
-          const allCheckbox = statusDropdown.querySelector('input[value="all"]');
-          if (allCheckbox) allCheckbox.checked = true;
-          selectDisplay.textContent = 'All Status';
-        } else if (checkedBoxes.length === 1) {
-          selectDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + checkedBoxes[0].value.slice(1);
-        } else {
-          selectDisplay.textContent = `${checkedBoxes.length} selected`;
-        }
-      }
-
-      // Close dropdown when clicking outside
-      document.addEventListener('click', function(e) {
-        if (!statusFilter.contains(e.target)) {
-          statusDropdown.style.display = 'none';
-        }
-      });
-    }
-
-    // Get selected statuses
-    function getSelectedStatuses() {
-      const statusDropdown = document.getElementById('statusDropdown');
-      if (!statusDropdown) return ['all'];
-
-      const checkedBoxes = statusDropdown.querySelectorAll('input[type="checkbox"]:checked');
-      return Array.from(checkedBoxes).map(cb => cb.value);
-    }
-
     // Clear all filters
     function clearAllFilters() {
       console.log('🧹 Clearing all filters...');
@@ -1923,24 +2825,16 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear text inputs
       if (requestIdFilter) requestIdFilter.value = '';
       if (studentFilter) studentFilter.value = '';
-      if (organizationFilter) organizationFilter.value = '';
       if (dateFromFilter) dateFromFilter.value = '';
       if (dateToFilter) dateToFilter.value = '';
       
       // Reset type filter
-      if (typeFilter) typeFilter.value = 'all';
+      typeFilter.reset();
       
-      // Reset status filter
-      const statusDropdown = document.getElementById('statusDropdown');
-      if (statusDropdown) {
-        const checkboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = checkbox.value === 'all';
-        });
-        
-        const selectDisplay = statusFilter.querySelector('.select-display');
-        if (selectDisplay) selectDisplay.textContent = 'All Status';
-      }
+      // Reset enhanced dropdowns
+      statusFilter.reset();
+      studentOrgFilter.reset();
+      officeDeptFilter.reset();
 
       // Show all rows
       allRequestsData.forEach(request => {
@@ -1949,8 +2843,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Update results count
       updateResultsCount(allRequestsData.length);
-      
-      showNotification('All filters cleared', 'info');
+      console.log('✅ All filters cleared');
     }
 
     // Update results count
@@ -2094,7 +2987,11 @@ document.addEventListener('DOMContentLoaded', function() {
       messagesContainer.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
           <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+            <div style="font-size: 2rem; margin-bottom: 1rem;">
+              <svg width="48" height="48" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
             <p>Loading conversation...</p>
           </div>
         </div>
@@ -2116,14 +3013,20 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error('Error loading conversation:', error);
       messagesContainer.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #dc2626;">
-          <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
-            <p>Failed to load conversation</p>
-            <small>${error.message}</small>
+          <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #dc2626;">
+            <div style="text-align: center;">
+              <div style="font-size: 2rem; margin-bottom: 1rem;">
+                <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </div>
+              <p>Failed to load conversation</p>
+              <small>${error.message}</small>
+            </div>
           </div>
-        </div>
-      `;
+        `;
       showNotification('Failed to load conversation: ' + error.message, 'error');
     }
   }
@@ -2136,7 +3039,13 @@ document.addEventListener('DOMContentLoaded', function() {
       messagesContainer.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
           <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">💭</div>
+            <div style="font-size: 2rem; margin-bottom: 1rem;">
+              <svg width="24" height="24" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+                <ellipse cx="12" cy="12" rx="10" ry="8"/>
+                <circle cx="16" cy="16" r="1"/>
+                <circle cx="8" cy="16" r="1"/>
+              </svg>
+            </div>
             <p>No messages yet</p>
             <small>Start the conversation by sending a message below</small>
           </div>
@@ -2497,113 +3406,122 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-// Replace the existing showNotification function with the same code as above
-function showNotification(message, type = 'success') {
-  // Create modal overlay
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    animation: fadeIn 0.3s ease-out;
-  `;
-  
-  // Create modal content
-  const modal = document.createElement('div');
-  modal.style.cssText = `
-    background: white;
-    border-radius: 12px;
-    padding: 0;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.3s ease-out;
-  `;
-  
-  // Determine colors and icons based on type
-  let headerColor, icon, borderColor;
-  switch(type) {
-    case 'success':
-      headerColor = 'var(--primary-green)';
-      icon = '✅';
-      borderColor = '#10b981';
-      break;
-    case 'error':
-      headerColor = '#ef4444';
-      icon = '❌';
-      borderColor = '#ef4444';
-      break;
-    case 'info':
-    default:
-      headerColor = '#3b82f6';
-      icon = 'ℹ️';
-      borderColor = '#3b82f6';
-      break;
-  }
-  
-  modal.innerHTML = `
-    <div style="background: ${headerColor}; color: white; padding: 1.5rem; text-align: center; border-radius: 12px 12px 0 0;">
-      <div style="font-size: 2rem; margin-bottom: 0.5rem;">${icon}</div>
-      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">
-        ${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Information'}
-      </h3>
-    </div>
-    <div style="padding: 2rem; text-align: center;">
-      <p style="margin: 0 0 1.5rem 0; font-size: 1rem; color: #374151; line-height: 1.5;">${message}</p>
-      <button id="notificationOkBtn" style="
-        background: ${headerColor};
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      ">OK</button>
-    </div>
-  `;
-  
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-  
-  // Add event listeners
-  const okBtn = modal.querySelector('#notificationOkBtn');
-  
-  function closeModal() {
-    overlay.style.animation = 'fadeOut 0.3s ease-out';
-    modal.style.animation = 'slideDown 0.3s ease-out';
-    setTimeout(() => {
-      if (document.body.contains(overlay)) {
-        document.body.removeChild(overlay);
-      }
-      document.body.style.overflow = '';
-    }, 300);
-  }
-  
-  okBtn.addEventListener('click', closeModal);
-  
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      closeModal();
+  // Show notification function
+  function showNotification(message, type = 'success') {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      animation: fadeIn 0.3s ease-out;
+    `;
+    
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: white;
+      border-radius: 12px;
+      padding: 0;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease-out;
+    `;
+    
+    // Determine colors and icons based on type
+    let headerColor, icon, borderColor;
+    switch(type) {
+      case 'success':
+        headerColor = 'var(--primary-green)';
+        icon = `<svg width="24" height="24" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="#10b981" fill="#dcfce7"/>
+          <path d="M8 12l2 2l4-4" stroke="#10b981" stroke-width="2.5" fill="none"/>
+        </svg>`;
+        borderColor = '#10b981';
+        break;
+      case 'error':
+        headerColor = '#ef4444';
+        icon = `<svg width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="#ef4444" fill="#fee2e2"/>
+          <path d="M15 9l-6 6M9 9l6 6" stroke="#ef4444" stroke-width="2.5" fill="none"/>
+        </svg>`;
+        borderColor = '#ef4444';
+        break;
+      case 'info':
+      default:
+        headerColor = '#3b82f6';
+        icon = `<svg width="24" height="24" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="#3b82f6" fill="#dbeafe"/>
+          <line x1="12" y1="8" x2="12" y2="8" stroke="#3b82f6" stroke-width="2.5"/>
+          <line x1="12" y1="12" x2="12" y2="16" stroke="#3b82f6" stroke-width="2"/>
+        </svg>`;
+        borderColor = '#3b82f6';
+        break;
     }
-  });
-  
-  // Auto close after 5 seconds for success/info messages
-  if (type === 'success' || type === 'info') {
-    setTimeout(closeModal, 5000);
+    
+      modal.innerHTML = `
+        <div style="background: ${headerColor}; color: white; padding: 1.5rem; text-align: center; border-radius: 12px 12px 0 0;">
+          <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">
+            ${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Information'}
+          </h3>
+        </div>
+        <div style="padding: 2rem; text-align: center;">
+          <p style="margin: 0 0 1.5rem 0; font-size: 1rem; color: #374151; line-height: 1.5;">${message}</p>
+          <button id="notificationOkBtn" style="
+            background: ${headerColor};
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">OK</button>
+        </div>
+      `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Add event listeners
+    const okBtn = modal.querySelector('#notificationOkBtn');
+    
+    function closeModal() {
+      overlay.style.animation = 'fadeOut 0.3s ease-out';
+      modal.style.animation = 'slideDown 0.3s ease-out';
+      setTimeout(() => {
+        if (document.body.contains(overlay)) {
+          document.body.removeChild(overlay);
+        }
+        document.body.style.overflow = '';
+      }, 300);
+    }
+    
+    okBtn.addEventListener('click', closeModal);
+    
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeModal();
+      }
+    });
+    
+    // Auto close after 5 seconds for success/info messages
+    if (type === 'success' || type === 'info') {
+      setTimeout(closeModal, 5000);
+    }
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
   }
-  
-  // Prevent body scroll
-  document.body.style.overflow = 'hidden';
-}
+
   // Populate modal with request data
   function populateModalData(rowData) {
     console.log('📝 Populating modal with data:', rowData);
@@ -2750,7 +3668,12 @@ function showNotification(message, type = 'success') {
       enhancedPreview.className = 'enhanced-file-preview';
       
       let fileGridHTML = `
-        <h3>📎 Attached Files (${allFiles.length})</h3>
+        <h3>
+          <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+          </svg>
+          Attached Files (${allFiles.length})
+        </h3>
         <div class="file-grid">
       `;
       
@@ -2764,30 +3687,60 @@ function showNotification(message, type = 'success') {
         const isText = ['txt', 'rtf'].includes(ext);
         
         // Determine file icon and preview
-        let fileIcon = '📄';
-        let fileColor = '#64748b';
-        
+        let fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+        `;
+
         if (isImage) {
-          fileIcon = '🖼️';
-          fileColor = '#059669';
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8" cy="8" r="2"/>
+              <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+            </svg>
+          `;
         } else if (isPDF) {
-          fileIcon = '📕';
-          fileColor = '#dc2626';
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <path d="M8 6h8M8 10h8M8 14h4"/>
+            </svg>
+          `;
         } else if (isDoc) {
-          fileIcon = '📘';
-          fileColor = '#2563eb';
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+            </svg>
+          `;
         } else if (isSpreadsheet) {
-          fileIcon = '📊';
-          fileColor = '#16a34a';
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <rect x="7" y="10" width="2" height="7"/>
+              <rect x="11" y="7" width="2" height="10"/>
+              <rect x="15" y="13" width="2" height="4"/>
+            </svg>
+          `;
         } else if (isText) {
-          fileIcon = '📝';
-          fileColor = '#7c3aed';
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <line x1="8" y1="8" x2="16" y2="8"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          `;
         }
         
         fileGridHTML += `
           <div class="enhanced-file-item">
             <div class="file-header-enhanced">
-              <div style="font-size: 1.5rem; color: ${fileColor};">${fileIcon}</div>
+              <div style="color: #059669;">${fileIcon}</div>
               <div class="file-info-enhanced">
                 <div class="file-name-enhanced" title="${file}">${file}</div>
                 <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
@@ -2805,7 +3758,13 @@ function showNotification(message, type = 'success') {
                  onclick="openImagePreview('${fileUrl}', '${file}')"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🖼️</div>
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8" cy="8" r="2"/>
+                  <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+                </svg>
+              </div>
               <p>Image Preview Not Available</p>
               <small>Click download to view</small>
             </div>
@@ -2813,7 +3772,12 @@ function showNotification(message, type = 'success') {
         } else if (isPDF) {
           fileGridHTML += `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
-              <div style="font-size: 3rem; margin-bottom: 0.5rem;">📕</div>
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <path d="M8 6h8M8 10h8M8 14h4"/>
+                </svg>
+              </div>
               <p><strong>PDF Document</strong></p>
               <small>Click download to view</small>
             </div>
@@ -2821,7 +3785,12 @@ function showNotification(message, type = 'success') {
         } else if (isDoc) {
           fileGridHTML += `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
-              <div style="font-size: 3rem; margin-bottom: 0.5rem;">📘</div>
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+                </svg>
+              </div>
               <p><strong>Word Document</strong></p>
               <small>Click download to view</small>
             </div>
@@ -2829,7 +3798,14 @@ function showNotification(message, type = 'success') {
         } else if (isSpreadsheet) {
           fileGridHTML += `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
-              <div style="font-size: 3rem; margin-bottom: 0.5rem;">📊</div>
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <rect x="7" y="10" width="2" height="7"/>
+                  <rect x="11" y="7" width="2" height="10"/>
+                  <rect x="15" y="13" width="2" height="4"/>
+                </svg>
+              </div>
               <p><strong>Spreadsheet</strong></p>
               <small>Click download to view</small>
             </div>
@@ -2844,17 +3820,26 @@ function showNotification(message, type = 'success') {
           `;
         }
         
-        fileGridHTML += `
-            </div>
-            
-            <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-              <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced" style="flex: 1;">
-                💾 Download
-              </a>
-              ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6; flex: 1;">👁️ View</button>` : ''}
-            </div>
-          </div>
-        `;
+       fileGridHTML += `
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
+          <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            Download
+          </a>
+          ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6;">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+              <ellipse cx="12" cy="12" rx="9" ry="6"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
+            View
+          </button>` : ''}
+        </div>
+      </div>
+      `;
       });
       
       fileGridHTML += `</div>`;
@@ -2864,9 +3849,19 @@ function showNotification(message, type = 'success') {
       // Improved "no files" message
       previewContainer.innerHTML = `
         <div class="enhanced-file-preview">
-          <h3>📎 Attached Files</h3>
+          <h3>
+            <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+            </svg>
+            Attached Files
+          </h3>
           <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
-            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">📭</div>
+            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">
+              <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="7" width="18" height="11" rx="2"/>
+                <path d="M3 7l9 6 9-6"/>
+              </svg>
+            </div>
             <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
               No Files Attached
             </div>
@@ -2880,7 +3875,7 @@ function showNotification(message, type = 'success') {
     }
   }
 
-  // Add image preview modal function
+    // Add image preview modal function
   window.openImagePreview = function(imageUrl, fileName) {
     // Create modal overlay
     const overlay = document.createElement('div');
@@ -3065,8 +4060,7 @@ function showNotification(message, type = 'success') {
         formattedDeadline: updatedRow.dataset.formattedDeadline,
         student: updatedRow.dataset.student
       };
-      
-      // Set current request data
+            // Set current request data
       currentRequestId = rowData.id;
       currentRequestType = rowData.type;
       
@@ -3132,17 +4126,138 @@ function showNotification(message, type = 'success') {
     initializeModalHandlers();
     initializeRowClickHandlers();
     initializeConversationModal();
-    initializeFilters(); // Add this line
+    initializeFilters();
     console.log('🎉 All initialization complete!');
   } catch (error) {
     console.error('❌ Error during initialization:', error);
   }
 });
 
+
+// Enhanced Single-Select Class (for Type filter)
+class EnhancedSingleSelect {
+  constructor(containerId, options, placeholder = 'Select option') {
+    this.container = document.getElementById(containerId);
+    this.options = options;
+    this.placeholder = placeholder;
+    this.selectedValue = 'all'; // Default to 'all'
+    this.isOpen = false;
+    
+    this.init();
+  }
+  
+  init() {
+    this.setupElements();
+    this.attachEventListeners();
+    this.updateDisplay();
+  }
+  
+  setupElements() {
+    this.display = this.container.querySelector('.single-select-display');
+    this.dropdown = this.container.querySelector('.single-select-dropdown');
+    this.optionsContainer = this.container.querySelector('.single-options-container');
+    this.selectedText = this.display.querySelector('.single-selected-text');
+  }
+  
+  attachEventListeners() {
+    // Toggle dropdown
+    this.display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+    
+    // Option selection
+    this.optionsContainer.addEventListener('click', (e) => {
+      const option = e.target.closest('.single-dropdown-option');
+      if (option) {
+        this.selectOption(option.dataset.value, option.textContent.trim());
+      }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!this.container.contains(e.target)) {
+        this.close();
+      }
+    });
+    
+    // Prevent dropdown close when clicking inside
+    this.dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+  
+  selectOption(value, text) {
+    this.selectedValue = value;
+    this.updateDisplay();
+    this.updateOptionStates();
+    this.close();
+    this.triggerChange();
+  }
+  
+  updateOptionStates() {
+    const options = this.optionsContainer.querySelectorAll('.single-dropdown-option');
+    options.forEach(option => {
+      if (option.dataset.value === this.selectedValue) {
+        option.classList.add('selected');
+      } else {
+        option.classList.remove('selected');
+      }
+    });
+  }
+  
+  updateDisplay() {
+    const selectedOption = this.optionsContainer.querySelector(`[data-value="${this.selectedValue}"]`);
+    this.selectedText.textContent = selectedOption ? selectedOption.textContent.trim() : this.placeholder;
+  }
+  
+  getSelectedValue() {
+    return this.selectedValue;
+  }
+  
+  setValue(value) {
+    this.selectedValue = value;
+    this.updateDisplay();
+    this.updateOptionStates();
+    this.triggerChange();
+  }
+  
+  reset() {
+    this.selectedValue = 'all';
+    this.updateDisplay();
+    this.updateOptionStates();
+    this.triggerChange();
+  }
+  
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+  
+  open() {
+    this.isOpen = true;
+    this.display.classList.add('active');
+    this.dropdown.classList.add('show');
+  }
+  
+  close() {
+    this.isOpen = false;
+    this.display.classList.remove('active');
+    this.dropdown.classList.remove('show');
+  }
+  
+  triggerChange() {
+    // Trigger custom event for filter updates
+    const event = new CustomEvent('selectionChange', {
+      detail: { value: this.selectedValue }
+    });
+    this.container.dispatchEvent(event);
+  }
+}
 console.log('✅ AllRequestsAdmin script loaded successfully');
 </script>
-
-
-
 </body>
 </html>
