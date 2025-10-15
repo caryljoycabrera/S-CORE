@@ -1232,6 +1232,37 @@
 .selected-files-container::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background-color: white;
+  color: #1f2937;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1);
+}
+
+optgroup {
+  font-weight: 600;
+  color: var(--primary-green);
+}
+
+option {
+  padding: 0.5rem;
+  color: #1f2937;
+}
+
+option:hover {
+  background-color: var(--light-green);
+}
 </style>
 </head>
 <body>
@@ -1558,6 +1589,22 @@
           <div class="form-group full-width">
             <label for="description">Description:</label>
             <textarea id="description" name="description" rows="5" required placeholder="Provide detailed information about your project or event..."></textarea>
+          </div>
+
+          <!-- Row 4: Assigned Unit (Full Width) -->
+          <div class="form-group full-width">
+            <label for="assignedRequest">Select Specific Request:</label>
+            <select id="assignedUnit" name="assignedUnit" class="form-control" required>
+              <option value="" disabled selected>Select unit to handle request...</option>
+              <optgroup label="Content Management">
+                <option value="social-media">Social Media Unit (Content posting, monitoring & caption approval)</option>
+              </optgroup>
+              <optgroup label="Creative Services">
+                <option value="public-relations">Public Relations Unit (Publications, proofreading & communications)</option>
+                <option value="graphics">Graphics Unit (Design, branding & layout compliance)</option>
+                <option value="multimedia">Multimedia Unit (Photo/video editing & media coverage)</option>
+              </optgroup>
+            </select>
           </div>
 
           <!-- Form Actions -->
@@ -3080,5 +3127,4 @@
   console.log('Page loaded at:', new Date().toISOString());
 </script>
 </body>
-</html>
 </html>
