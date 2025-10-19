@@ -2753,40 +2753,30 @@ document.addEventListener('DOMContentLoaded', function() {
     confirmBtn.textContent = 'Updating...';
     
     try {
-      const changes = getFormChanges();
-      let success = true;
-      let updatedData = {};
-      
-      for (const change of changes) {
-        if (change.field === 'Status') {
-          const statusSelect = document.getElementById('adminStatusSelect');
-          success = await updateRequestStatus(currentRequestId, statusSelect.value, currentRequestType);
-          if (success) updatedData.status = statusSelect.value;
-        } else if (change.field === 'Assigned Unit') {
-          const unitsSelect = document.getElementById('adminUnitsSelect');
-          success = await updateRequestUnits(currentRequestId, unitsSelect.value, currentRequestType);
-          if (success) updatedData.units = unitsSelect.value || 'Not yet assigned';
+        const statusSelect = document.getElementById('adminStatusSelect');
+        const unitsSelect = document.getElementById('adminUnitsSelect');
+        const newStatus = statusSelect ? statusSelect.value : '';
+        const newUnits = unitsSelect ? unitsSelect.value : '';
+        
+        // Single update call with both status and units
+        const success = await updateRequestStatus(currentRequestId, newStatus, currentRequestType);
+        
+        if (success) {
+            updateConfirmationModal.classList.remove('show');
+            showNotification('All changes applied successfully!', 'success');
+            
+            // Update original values
+            originalValues = {
+                status: newStatus,
+                units: newUnits
+            };
+            
+            // Reopen modal with updated data
+            setTimeout(() => {
+                reopenModalAfterUpdate(currentRequestId);
+            }, 1000);
         }
         
-        if (!success) break;
-      }
-      
-      if (success) {
-        updateConfirmationModal.classList.remove('show');
-        showNotification('All changes applied successfully!', 'success');
-        
-        // Update the table row data attributes
-        updateTableRowData(currentRequestId, updatedData);
-        
-        // Update original values
-        updateOriginalValues();
-        
-        // Reopen the modal with updated data after a short delay
-        setTimeout(() => {
-          reopenModalAfterUpdate(currentRequestId);
-        }, 1000);
-      }
-      
     } catch (error) {
       console.error('Error during update:', error);
       showNotification('Update failed: ' + error.message, 'error');
@@ -2796,53 +2786,57 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Update original values after successful update
-  function updateOriginalValues() {
-    const statusSelect = document.getElementById('adminStatusSelect');
-    const unitsSelect = document.getElementById('adminUnitsSelect');
-    
-    originalValues.status = statusSelect ? statusSelect.value : '';
-    originalValues.units = unitsSelect ? unitsSelect.value : '';
-  }
-  
-  // Update functions
+  // Perform the actual update
   async function updateRequestStatus(requestId, newStatus, requestType) {
     console.log('🔄 Updating status:', { requestId, newStatus, requestType });
     
     try {
-      const endpoint = '/admin/approval/update-status';
-      
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          requestId: requestId,
-          status: newStatus
-        })
-      });
+        // Get current assigned units
+        const unitsSelect = document.getElementById('adminUnitsSelect');
+        const currentUnits = unitsSelect ? unitsSelect.value : '';
 
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        // Update display elements in the modal
-        const statusElement = document.getElementById('detailStatus');
-        const currentStatusValue = document.getElementById('currentStatusValue');
+        const endpoint = '/admin/approval/update-status';
         
-        if (statusElement) statusElement.innerText = newStatus;
-        if (currentStatusValue) currentStatusValue.innerText = newStatus;
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                requestId: requestId,
+                status: newStatus,
+                assignedUnits: currentUnits // Include units with status update
+            })
+        });
+
+        const result = await response.json();
         
-        return true;
-      } else {
-        console.error('Status update failed:', result.message);
-        showNotification('Failed to update status: ' + result.message, 'error');
-        return false;
-      }
+        if (response.ok && result.success) {
+            // Update both status and units in display
+            const statusElement = document.getElementById('detailStatus');
+            const currentStatusValue = document.getElementById('currentStatusValue');
+            const currentUnitsValue = document.getElementById('currentUnitsValue');
+            
+            if (statusElement) statusElement.innerText = newStatus;
+            if (currentStatusValue) currentStatusValue.innerText = newStatus;
+            if (currentUnitsValue) currentUnitsValue.innerText = currentUnits || 'Not yet assigned';
+            
+            // Update table row with both status and units
+            updateTableRowData(requestId, {
+                status: newStatus,
+                units: currentUnits || 'Not yet assigned'
+            });
+            
+            return true;
+        } else {
+            console.error('Update failed:', result.message);
+            showNotification('Failed to update: ' + result.message, 'error');
+            return false;
+        }
     } catch (error) {
-      console.error('Error updating status:', error);
-      showNotification('Failed to update status: ' + error.message, 'error');
-      return false;
+        console.error('Error updating:', error);
+        showNotification('Failed to update: ' + error.message, 'error');
+        return false;
     }
   }
 
