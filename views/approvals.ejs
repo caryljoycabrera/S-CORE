@@ -1664,7 +1664,7 @@
     </div>
     <div class="info-item">
       <span class="info-label">Specific Request Type:</span>
-      <span class="info-value" id="detailUnitInfo"></span>
+      <span class="info-value" data-field="specificRequestType"></span>
     </div>
     <div class="info-item">
       <span class="info-label">Date Submitted:</span>
@@ -3013,6 +3013,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setElementText('detailDeadlineInfo', rowData.formattedDeadline);
     setElementText('detailDescription', rowData.description || 'No description provided');
     
+    // Update specific request type with fallback
+    const specificRequestType = document.querySelector('[data-field="specificRequestType"]');
+    if (specificRequestType) {
+        const requestTypeValue = rowData.specificRequestType;
+        specificRequestType.textContent = requestTypeValue && requestTypeValue !== '' 
+            ? requestTypeValue 
+            : 'Not yet assigned';
+    }
+    
     // Populate admin form
     populateAdminForm(rowData);
     
@@ -3047,8 +3056,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentUnitsValue = document.getElementById('currentUnitsValue');
     
     if (unitsSelect && currentUnitsValue) {
-      unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
-      currentUnitsValue.textContent = rowData.units || 'Not yet assigned';
+      const unitMapping = {
+        'social-media': 'Social Media Unit',
+        'public-relations': 'Public Relations Unit',
+        'graphics': 'Graphics Unit',
+        'multimedia': 'Multimedia Unit'
+      };
+
+      if (unitsSelect) {
+        // Clear existing options
+        unitsSelect.innerHTML = `
+          <option value="">Not yet assigned</option>
+          <option value="Social Media Unit">Social Media Unit</option>
+          <option value="Graphics Unit">Graphics Unit</option>
+          <option value="Multimedia Unit">Multimedia Unit</option>
+          <option value="Public Relations Unit">Public Relations Unit</option>
+        `;
+
+        // Set the current value
+        unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
+      }
+
+      if (currentUnitsValue) {
+        currentUnitsValue.textContent = rowData.units || 'Not yet assigned';
+      }
+
+      // Update detail units display
+      const detailUnits = document.getElementById('detailUnits');
+      if (detailUnits) {
+        detailUnits.textContent = rowData.units || 'Not yet assigned';
+      }
     }
   }
   

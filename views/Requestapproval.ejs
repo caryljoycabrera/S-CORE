@@ -1481,7 +1481,7 @@ option:hover {
         <span class="close" id="closeModalBtn">&times;</span>
       </header>
       <div class="modal-body">
-        <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data">
+        <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" id="requestForm">
           <!-- Row 1: Title and Organization -->
           <div class="form-group">
             <label for="projectTitle">Project/Event Title:</label>
@@ -1591,21 +1591,20 @@ option:hover {
             <textarea id="description" name="description" rows="5" required placeholder="Provide detailed information about your project or event..."></textarea>
           </div>
 
-          <!-- Row 4: Assigned Unit (Full Width) -->
+          <!-- Row 4: Request Type -->
           <div class="form-group full-width">
-            <label for="assignedRequest">Select Specific Request:</label>
-            <select id="assignedUnit" name="assignedUnit" class="form-control" required>
-              <option value="" disabled selected>Select unit to handle request...</option>
-              <optgroup label="Content Management">
-                <option value="social-media">Social Media Unit (Content posting, monitoring & caption approval)</option>
-              </optgroup>
-              <optgroup label="Creative Services">
-                <option value="public-relations">Public Relations Unit (Publications, proofreading & communications)</option>
-                <option value="graphics">Graphics Unit (Design, branding & layout compliance)</option>
-                <option value="multimedia">Multimedia Unit (Photo/video editing & media coverage)</option>
-              </optgroup>
-            </select>
-          </div>
+  <label for="specificRequestType">Select Request Type:</label>
+  <select id="specificRequestType" name="specificRequestType" class="form-control" required>
+    <option value="" disabled selected>Select request type...</option>
+    <option value="Content Posting">Content Posting</option>
+    <option value="Social Media Monitoring">Social Media Monitoring</option>
+    <option value="Caption Approval">Caption Approval</option>
+    <option value="Publication Design">Publication Design</option>
+    <option value="Proofreading">Proofreading</option>
+    <option value="Graphics Design">Graphics Design</option>
+    <option value="Media Coverage">Media Coverage</option>
+  </select>
+</div>
 
           <!-- Form Actions -->
           <div class="form-actions">
@@ -1677,7 +1676,7 @@ option:hover {
       <div class="modal-actions" style="padding: 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb;">
         <button id="cancelSubmissionBtn" class="view-all-btn" style="background: #e5e7eb; color: #374151;">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8z"/>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
           Review & Edit
@@ -2099,6 +2098,42 @@ option:hover {
         orgFilterItem.style.display = 'none';
       }
     }
+
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        
+        // Add all form fields
+        const fields = form.elements;
+        for (let field of fields) {
+            if (field.name) {
+                formData.append(field.name, field.value);
+            }
+        }
+
+        // Explicitly add specific request type
+        const specificRequestSelect = document.getElementById('specificRequestType');
+        const specificRequestValue = specificRequestSelect.value;
+        formData.append('specificRequestType', specificRequestValue);
+
+        try {
+            const response = await fetch('/submit-request', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                alert('Submission failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
   });
 
   // Enhanced submission modal controls
