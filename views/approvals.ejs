@@ -1574,21 +1574,22 @@
                 }
               %>
               <tr class="request-row"
-                  data-id="<%= request._id %>"
-                  data-request-id="<%= request._id.toString().slice(-6) %>"
-                  data-type="Request Approval"
-                  data-title="<%= request.title %>"
-                  data-status="<%= request.status.toLowerCase() %>"
-                  data-organization="<%= request.displayOrganization || request.organization %>"
-                  data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
-                  data-datetime="<%= request.datetime.toLocaleString() %>"
-                  data-deadline="<%= localDeadline %>"
-                  data-formatted-deadline="<%= formattedDeadline %>"
-                  data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
-                  data-description="<%= request.description %>" 
-                  data-file="<%= request.file || '' %>"
-                  data-files="<%= request.files ? request.files.join(',') : '' %>"
-                  data-student="<%= displayUserName %>">
+    data-id="<%= request._id %>"
+    data-request-id="<%= request._id.toString().slice(-6) %>"
+    data-type="Request Approval"
+    data-title="<%= request.title %>"
+    data-status="<%= request.status.toLowerCase() %>"
+    data-organization="<%= request.displayOrganization || request.organization %>"
+    data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
+    data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
+    data-datetime="<%= request.datetime.toLocaleString() %>"
+    data-deadline="<%= localDeadline %>"
+    data-formatted-deadline="<%= formattedDeadline %>"
+    data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
+    data-description="<%= request.description %>" 
+    data-file="<%= request.file || '' %>"
+    data-files="<%= request.files ? request.files.join(',') : '' %>"
+    data-student="<%= displayUserName %>">
                 <td><%= request._id.toString().slice(-6) %></td>
                 <td><%= displayUserName %></td>
                 <td><%= request.title %></td>
@@ -1663,9 +1664,9 @@
       <span class="info-value" id="detailOrganization"></span>
     </div>
     <div class="info-item">
-      <span class="info-label">Specific Request Type:</span>
-      <span class="info-value" data-field="specificRequestType"></span>
-    </div>
+  <span class="info-label">Specific Request Type:</span>
+  <span class="info-value" data-field="specificRequestType">Not specified</span>
+</div>
     <div class="info-item">
       <span class="info-label">Date Submitted:</span>
       <span class="info-value" id="detailDatetime"></span>
@@ -3014,20 +3015,27 @@ document.addEventListener('DOMContentLoaded', function() {
     setElementText('detailDescription', rowData.description || 'No description provided');
     
     // Update specific request type with fallback
-    const specificRequestType = document.querySelector('[data-field="specificRequestType"]');
-    if (specificRequestType) {
-        const requestTypeValue = rowData.specificRequestType;
-        specificRequestType.textContent = requestTypeValue && requestTypeValue !== '' 
-            ? requestTypeValue 
-            : 'Not yet assigned';
-    }
-    
+  const specificRequestType = document.querySelector('[data-field="specificRequestType"]');
+console.log(' Specific Request Type Element:', specificRequestType);
+console.log(' Available values:', {
+  specifictype: rowData.specifictype,
+  specificRequestType: rowData.specificRequestType,
+  raw: rowData
+});
+
+if (specificRequestType) {
+  const requestTypeValue = rowData.specifictype || rowData.specificRequestType || 'Not specified';
+  specificRequestType.textContent = requestTypeValue;
+  console.log(' Setting specific request type to:', requestTypeValue);
+} else {
+  console.error(' Specific request type element not found!');
+}
     // Populate admin form
     populateAdminForm(rowData);
     
     // Handle file preview
     populateFilePreview(rowData);
-  }
+}
   
   // Populate admin form
   function populateAdminForm(rowData) {
@@ -3168,6 +3176,8 @@ document.addEventListener('DOMContentLoaded', function() {
           title: row.dataset.title,
           status: row.dataset.status,
           organization: row.dataset.organization,
+          specifictype: row.dataset.specifictype, // ADD THIS LINE
+          specificRequestType: row.dataset.specifictype, // ADD THIS LINE TOO FOR COMPATIBILITY
           units: row.dataset.units,
           datetime: row.dataset.datetime,
           description: row.dataset.description,
@@ -3176,6 +3186,8 @@ document.addEventListener('DOMContentLoaded', function() {
           formattedDeadline: row.dataset.formattedDeadline,
           student: row.dataset.student
         };
+
+         console.log('Row clicked with data:', rowData);
         
         // Set current request data
         currentRequestId = rowData.id;

@@ -110,6 +110,7 @@ const requestApprovalSchema = new mongoose.Schema({
   title: String,
   organization: String,
   description: String,
+  specificRequestType: String, // ADD THIS LINE
   datetime: { type: Date, default: Date.now },
   deadline: { type: Date },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -1021,67 +1022,41 @@ app.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
     let approvals = await RequestApproval.find()
       .populate('userId')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
       .lean();
-
-    // Add displayOrganization logic
-    approvals = approvals.map(approval => ({
-      ...approval,
-      displayOrganization:
-        approval.userId?.userType === 'nonstudent'
-          ? approval.userId.affiliation
-          : approval.organization
-    }));
-
-    // Status priority for approvals (matching frontend)
-    const statusPriority = {
-      "pending": 1,
-      "for revision": 2,
-      "approved": 3,
-      "rejected": 4,
-      "archived": 5
-    };
-
-    // Sort according to your specified rules
-    approvals.sort((a, b) => {
-      const aStatus = a.status?.toLowerCase() || '';
-      const bStatus = b.status?.toLowerCase() || '';
-
-      // Group by status priority first
-      const aPriority = statusPriority[aStatus] ?? 999;
-      const bPriority = statusPriority[bStatus] ?? 999;
-      if (aPriority !== bPriority) return aPriority - bPriority;
-
-      // Apply tie-break rules within each status group
-      if (aStatus === "pending") {
-        // Pending: oldest first by createdAt
-        return new Date(a.createdAt) - new Date(b.createdAt);
+    
+    // Add console log to debug
+    console.log('📋 Sample approval with specificRequestType:', approvals[0]);
+    
+    approvals = approvals.map(approval => {
+      let displayOrganization = approval.organization;
+      
+      if (approval.userId) {
+        if (approval.userId.userType === 'student') {
+          displayOrganization = Array.isArray(approval.userId.studentOrganization)
+            ? approval.userId.studentOrganization.join(', ')
+            : approval.userId.studentOrganization;
+        } else if (approval.userId.userType === 'nonstudent') {
+          displayOrganization = Array.isArray(approval.userId.affiliation)
+            ? approval.userId.affiliation.join(', ')
+            : approval.userId.affiliation;
+        }
       }
       
-      if (aStatus === "for revision") {
-        // For revision: oldest first by deadline, if no deadline then by createdAt
-        const aDeadline = a.deadline ? new Date(a.deadline) : null;
-        const bDeadline = b.deadline ? new Date(b.deadline) : null;
-        
-        if (aDeadline && bDeadline) return aDeadline - bDeadline;
-        if (aDeadline && !bDeadline) return -1;
-        if (!aDeadline && bDeadline) return 1;
-        
-        // No deadlines → oldest first by createdAt
-        return new Date(a.createdAt) - new Date(b.createdAt);
-      }
-      
-      if (["approved", "rejected", "archived"].includes(aStatus)) {
-        // Approved, Rejected, Archived: newest first by createdAt
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      }
-
-      return 0;
+      return {
+        ...approval,
+        displayOrganization: displayOrganization || approval.organization,
+        // EXPLICITLY include specificRequestType
+        specificRequestType: approval.specificRequestType || 'Not specified'
+      };
     });
 
-    res.render('approvals', { approvals, user: req.user });
+    console.log('📋 Mapped approval with specificRequestType:', approvals[0]);
+
+    res.render('approvals', { approvals: approvals, user: req.user });
   } catch (err) {
-    console.error('Error loading admin approvals:', err);
-    res.status(500).send('Error loading approvals page');
+    console.error('Error fetching approvals:', err);
+    res.status(500).render('error', { message: 'Server error' });
   }
 });
 
@@ -2297,17 +2272,17 @@ app.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
 app.post('/submit-request-approval', upload.array('upload', 20), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
   
-  const { projectTitle, organization, description } = req.body;
+  const { projectTitle, organization, description, specificRequestType } = req.body; // ADD specificRequestType
   
-  console.log('Files received:', req.files); // Debug log
-  console.log('Organization received:', organization); // Debug log
-  console.log('Organization type:', typeof organization); // Debug log
+  console.log('Files received:', req.files);
+  console.log('Organization received:', organization);
+  console.log('Specific Request Type received:', specificRequestType); // ADD DEBUG LOG
   
   // Handle multiple files
   let filePaths = [];
   if (req.files && req.files.length > 0) {
     filePaths = req.files.map(file => file.filename);
-    console.log('File paths:', filePaths); // Debug log
+    console.log('File paths:', filePaths);
   }
   
   try {
@@ -2323,20 +2298,20 @@ app.post('/submit-request-approval', upload.array('upload', 20), async (req, res
       // Only use user's default if no organization was selected in the form
       if (user.userType === 'nonstudent') {
         if (Array.isArray(user.affiliation)) {
-          actualOrganization = user.affiliation[0] || 'N/A'; // Use first affiliation as fallback
+          actualOrganization = user.affiliation[0] || 'N/A';
         } else {
           actualOrganization = user.affiliation || 'N/A';
         }
       } else {
         if (Array.isArray(user.studentOrganization)) {
-          actualOrganization = user.studentOrganization[0] || 'N/A'; // Use first organization as fallback
+          actualOrganization = user.studentOrganization[0] || 'N/A';
         } else {
           actualOrganization = user.studentOrganization || 'N/A';
         }
       }
     }
     
-    console.log('Final organization (single):', actualOrganization); // Debug log
+    console.log('Final organization (single):', actualOrganization);
     
     // Validate that actualOrganization is a string
     if (typeof actualOrganization !== 'string') {
@@ -2348,17 +2323,19 @@ app.post('/submit-request-approval', upload.array('upload', 20), async (req, res
     
     const newRequest = new RequestApproval({
       title: projectTitle,
-      organization: actualOrganization, // This will now be a single selected organization
+      organization: actualOrganization,
       description,
+      specificRequestType: specificRequestType, // ADD THIS LINE
       deadline: deadline,
       userId: req.session.userId,
-      files: filePaths, // Store array of file paths
-      file: filePaths[0] || null // Keep backward compatibility
+      files: filePaths,
+      file: filePaths[0] || null
     });
     
     await newRequest.save();
-    console.log('Request approval saved with organization:', actualOrganization); // Debug log
-    console.log('Request approval saved with files:', filePaths); // Debug log
+    console.log('Request approval saved with organization:', actualOrganization);
+    console.log('Request approval saved with specific type:', specificRequestType); // ADD DEBUG LOG
+    console.log('Request approval saved with files:', filePaths);
     res.redirect('/request-approvals?submitted=true');
   } catch (err) {
     console.error('Error saving request approval:', err);

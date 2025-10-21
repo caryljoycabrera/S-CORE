@@ -1435,18 +1435,19 @@ option:hover {
             </thead>
             <tbody id="requestsTableBody">
               <% allRequests.forEach(request => { %>
-              <tr class="request-row"
-                  data-id="<%= request._id %>"
-                  data-type="<%= request.type %>"
-                  data-title="<%= request.title %>"
-                  data-status="<%= request.status %>"
-                  data-organization="<%= request.organization %>"
-                  data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
-                  data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
-                  data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
-                  data-description="<%= request.description %>" 
-                  data-file="<%= request.file ? request.file : '' %>"
-                  data-files="<%= request.files ? request.files.join(',') : '' %>">
+             <tr class="request-row"
+    data-id="<%= request._id %>"
+    data-type="<%= request.type %>"
+    data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
+    data-title="<%= request.title %>"
+    data-status="<%= request.status %>"
+    data-organization="<%= request.organization %>"
+    data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
+    data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
+    data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
+    data-description="<%= request.description %>" 
+    data-file="<%= request.file ? request.file : '' %>"
+    data-files="<%= request.files ? request.files.join(',') : '' %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
                   <td><%= request.organization %></td>
@@ -1701,18 +1702,24 @@ option:hover {
       <div class="modal-body details-modal-body">
         <div class="details-content">
           <!-- General Information Section -->
-          <div class="details-section">
-            <h3>General Information</h3>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-              <div class="details-field">
-                <div class="details-label">Request Type</div>
-                <div class="details-value" id="detailType"></div>
-              </div>
-              
-              <div class="details-field">
-                <div class="details-label">Project Title</div>
-                <div class="details-value" id="detailTitle"></div>
-              </div>
+         <div class="details-section">
+  <h3>General Information</h3>
+  <div class="details-grid">
+    <div class="details-field">
+      <div class="details-label">Request Type</div>
+      <div class="details-value">Request Approval</div>
+    </div>
+    
+    <!-- ADD THIS NEW FIELD -->
+    <div class="details-field">
+      <div class="details-label">Specific Request Type</div>
+      <div class="details-value" id="detailSpecificType" style="color: var(--primary-green); font-weight: 600;">Not specified</div>
+    </div>
+    
+    <div class="details-field">
+      <div class="details-label">Project Title</div>
+      <div class="details-value" id="detailTitle"></div>
+    </div>
               
               <div class="details-field">
                 <div class="details-label">Organization</div>
@@ -2474,24 +2481,27 @@ option:hover {
   }
 
   // Enhanced row click handler with improved modal population
-  document.querySelectorAll('.request-row').forEach(row => {
-    row.addEventListener('click', (e) => {
-      // Populate basic fields
-      const detailType = document.getElementById("detailType");
-      const detailTitle = document.getElementById("detailTitle");
-      const detailOrganization = document.getElementById("detailOrganization");
-      const detailDescription = document.getElementById("detailDescription");
-      const detailStatus = document.getElementById("detailStatus");
-      const detailStatusBadge = document.getElementById("detailStatusBadge");
-      const detailUnits = document.getElementById("detailUnits");
-      const detailDatetime = document.getElementById("detailDatetime");
-      
-      if (detailType) detailType.innerText = row.dataset.type || '';
-      if (detailTitle) detailTitle.innerText = row.dataset.title || '';
-      if (detailOrganization) detailOrganization.innerText = row.dataset.organization || '';
-      if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
-      if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';
-      if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
+document.querySelectorAll('.request-row').forEach(row => {
+  row.addEventListener('click', (e) => {
+    // ...existing code...
+    
+    // Get all detail elements
+    const detailTitle = document.getElementById("detailTitle");
+    const detailOrganization = document.getElementById("detailOrganization");
+    const detailDescription = document.getElementById("detailDescription");
+    const detailStatus = document.getElementById("detailStatus");
+    const detailStatusBadge = document.getElementById("detailStatusBadge");
+    const detailUnits = document.getElementById("detailUnits");
+    const detailDatetime = document.getElementById("detailDatetime");
+    const detailSpecificType = document.getElementById("detailSpecificType"); // ADD THIS LINE
+    
+    // Populate fields
+    if (detailTitle) detailTitle.innerText = row.dataset.title || '';
+    if (detailOrganization) detailOrganization.innerText = row.dataset.organization || '';
+    if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
+    if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';
+    if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
+    if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified'; // ADD THIS LINE;
 
       // Enhanced status badge
       if (detailStatus && detailStatusBadge) {
@@ -2557,6 +2567,7 @@ option:hover {
       e.preventDefault(); // Always prevent default submission
       
       const fileInput = document.getElementById('upload');
+      const specificRequestType = document.getElementById('specificRequestType');
       
       // Validate required files
       if (!fileInput || fileInput.files.length === 0) {
@@ -2564,13 +2575,21 @@ option:hover {
         return;
       }
 
-      // Show submission confirmation modal
-      console.log('Showing submission confirmation modal'); // Debug log
-      if (submissionModal) {
-        submissionModal.style.display = 'flex';
-      }
-    });
-  }
+      // Validate specific request type
+    if (!specificRequestType || !specificRequestType.value) {
+      alert('Please select a specific request type.');
+      specificRequestType.focus();
+      return;
+    }
+
+    console.log('Specific Request Type:', specificRequestType.value); // Debug log
+    
+    // Show submission confirmation modal
+    if (submissionModal) {
+      submissionModal.style.display = 'flex';
+    }
+  });
+}
 
   // ===== APPROVAL FILE UPLOAD FUNCTIONS =====
   
