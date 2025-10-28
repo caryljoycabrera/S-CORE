@@ -127,6 +127,7 @@ const serviceRequestSchema = new mongoose.Schema({
   title: String,
   organization: String,
   description: String,
+  specificRequestType: String,
   datetime: { type: Date, default: Date.now },
   deadline: Date,
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -632,7 +633,11 @@ app.get('/service-requests', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    let serviceRequests = await ServiceRequest.find({ userId: user._id }).lean();
+    let serviceRequests = await ServiceRequest.find({ userId: user._id })
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .lean();
+
+    console.log('📋 Sample service request with organization:', serviceRequests[0]); // Debug log
 
     // Status priority for services
     const statusPriority = {
@@ -674,13 +679,17 @@ app.get('/service-requests', async (req, res) => {
       return 0;
     });
 
-    // Map requests to include the specific organization selected for each request
+    // FIXED: Ensure organization is preserved from database
     const allRequests = serviceRequests.map(r => ({
       ...r,
       type: "Service Request",
-      // Use the specific organization stored in the request, not all user affiliations
-      organization: r.organization || 'N/A'
+      // CRITICAL: Use the exact organization stored in the request document
+      organization: r.organization || 'N/A',
+      // Ensure specificRequestType is included
+      specificRequestType: r.specificRequestType || 'Not specified'
     }));
+
+    console.log('📋 Mapped request with organization:', allRequests[0]); // Debug log
 
     res.render('ServiceRequest', { user, serviceRequests, allRequests });
 
@@ -862,7 +871,22 @@ app.get('/api/deadlines', requireLogin, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch deadlines', details: error.message });
   }
 });
-
+// Add this route AFTER your other routes (around line 800)
+app.get('/debug/service-requests', requireLogin, async (req, res) => {
+  try {
+    const services = await ServiceRequest.find({ userId: req.session.userId })
+      .select('title organization specificRequestType')
+      .lean();
+    
+    res.json({
+      totalServices: services.length,
+      sampleServices: services.slice(0, 5),
+      allOrganizations: services.map(s => s.organization)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // Debug route to check deadlines in database
 app.get('/debug/deadlines', requireLogin, async (req, res) => {
   try {
@@ -1062,7 +1086,10 @@ app.get('/admin/approvals', requireAdmin, async (req, res) => {
 
 app.get('/admin/services', requireAdmin, async (req, res) => {
   try {
-    let serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    let serviceRequests = await ServiceRequest.find()
+      .populate('userId')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt') // ADDED specificRequestType
+      .lean();
 
     // Status priority mapping for services
     const statusPriority = {
@@ -1111,8 +1138,11 @@ app.get('/admin/services', requireAdmin, async (req, res) => {
       displayOrganization: service.userId?.userType === 'nonstudent'
         ? service.userId.affiliation
         : service.organization,
-      datetime: service.datetime || service.createdAt // ENSURE DATETIME EXISTS
+      datetime: service.datetime || service.createdAt,
+      specificRequestType: service.specificRequestType || 'Not specified' // ADD THIS LINE
     }));
+
+    console.log('📋 Sample service with specificRequestType:', serviceRequestsWithDisplay[0]); // ADD DEBUG LOG
 
     res.render('services', { serviceRequests: serviceRequestsWithDisplay, user: req.user });
   } catch (err) {
@@ -1120,7 +1150,6 @@ app.get('/admin/services', requireAdmin, async (req, res) => {
     res.status(500).send('Error loading services page');
   }
 });
-
 // Add these routes after your existing admin routes
 
 // Route to handle direct access to specific approval request with modal
@@ -1191,9 +1220,12 @@ app.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
 app.get('/admin/services/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    let serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    let serviceRequests = await ServiceRequest.find()
+      .populate('userId')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt') // ADDED specificRequestType
+      .lean();
 
-    // Same sorting logic as above...
+    // Status priority mapping for services
     const statusPriority = {
       "pending": 1,
       "approved": 2,
@@ -1239,7 +1271,8 @@ app.get('/admin/services/:id', requireAdmin, async (req, res) => {
       displayOrganization: service.userId?.userType === 'nonstudent'
         ? service.userId.affiliation
         : service.organization,
-      datetime: service.datetime || service.createdAt // ENSURE DATETIME EXISTS
+      datetime: service.datetime || service.createdAt,
+      specificRequestType: service.specificRequestType || 'Not specified' // ADD THIS LINE
     }));
 
     res.render('services', { serviceRequests: serviceRequestsWithDisplay, user: req.user, openModalId: id });
@@ -1248,7 +1281,6 @@ app.get('/admin/services/:id', requireAdmin, async (req, res) => {
     res.status(500).send('Error loading services page');
   }
 });
-
 
 app.get('/admin/users', requireAdmin, async (req, res) => {
   const users = await User.find().lean();
@@ -2270,9 +2302,102 @@ app.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
 
 // File Upload Handlers
 app.post('/submit-request-approval', upload.array('upload', 20), async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+  
+  const { projectTitle, organization, description, specificRequestType } = req.body;
+  
+  console.log('Files received:', req.files);
+  console.log('Organization received:', organization);
+  console.log('Specific Request Type received:', specificRequestType);
+  
+  // Validate required fields
+  if (!projectTitle || !description || !specificRequestType) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Please fill in all required fields' 
+    });
+  }
+  
+  // Handle multiple files
+  let filePaths = [];
+  if (req.files && req.files.length > 0) {
+    filePaths = req.files.map(file => file.filename);
+    console.log('File paths:', filePaths);
+  } else {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Please upload at least one file' 
+    });
+  }
+  
+  try {
+    const user = await User.findById(req.session.userId);
+    
+    let actualOrganization = 'N/A';
+    
+    if (organization && organization.trim()) {
+      actualOrganization = organization.trim();
+    } else {
+      if (user.userType === 'nonstudent') {
+        if (Array.isArray(user.affiliation)) {
+          actualOrganization = user.affiliation[0] || 'N/A';
+        } else {
+          actualOrganization = user.affiliation || 'N/A';
+        }
+      } else {
+        if (Array.isArray(user.studentOrganization)) {
+          actualOrganization = user.studentOrganization[0] || 'N/A';
+        } else {
+          actualOrganization = user.studentOrganization || 'N/A';
+        }
+      }
+    }
+    
+    console.log('Final organization (single):', actualOrganization);
+    
+    if (typeof actualOrganization !== 'string') {
+      throw new Error('Organization must be a single string value');
+    }
+    
+    const deadline = addWorkingDays(new Date(), 3);
+    
+    const newRequest = new RequestApproval({
+      title: projectTitle,
+      organization: actualOrganization,
+      description,
+      specificRequestType: specificRequestType,
+      deadline: deadline,
+      userId: req.session.userId,
+      files: filePaths,
+      file: filePaths[0] || null
+    });
+    
+    await newRequest.save();
+    console.log('Request approval saved with organization:', actualOrganization);
+    console.log('Request approval saved with specific type:', specificRequestType);
+    console.log('Request approval saved with files:', filePaths);
+    
+    // Return JSON response instead of redirect
+    res.json({ 
+      success: true, 
+      message: 'Request submitted successfully',
+      redirectUrl: '/request-approvals?submitted=true'
+    });
+  } catch (err) {
+    console.error('Error saving request approval:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to save approval request: ' + err.message 
+    });
+  }
+});
+
+app.post('/submit-service-request', upload.array('uploadServiceFile', 20), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
   
-  const { projectTitle, organization, description, specificRequestType } = req.body; // ADD specificRequestType
+  const { projectTitle, organization, description, deadline, specificRequestType } = req.body; // ADD specificRequestType
   
   console.log('Files received:', req.files);
   console.log('Organization received:', organization);
@@ -2291,7 +2416,6 @@ app.post('/submit-request-approval', upload.array('upload', 20), async (req, res
     // FIXED: Use the organization selected by the user from the form
     let actualOrganization = 'N/A';
     
-    // The organization should come directly from the form submission
     if (organization && organization.trim()) {
       actualOrganization = organization.trim();
     } else {
@@ -2318,93 +2442,21 @@ app.post('/submit-request-approval', upload.array('upload', 20), async (req, res
       throw new Error('Organization must be a single string value');
     }
     
-    // Calculate deadline (3 working days from now)
-    const deadline = addWorkingDays(new Date(), 3);
-    
-    const newRequest = new RequestApproval({
+    const newRequest = new ServiceRequest({
       title: projectTitle,
       organization: actualOrganization,
       description,
+      deadline,
       specificRequestType: specificRequestType, // ADD THIS LINE
-      deadline: deadline,
       userId: req.session.userId,
       files: filePaths,
       file: filePaths[0] || null
     });
     
     await newRequest.save();
-    console.log('Request approval saved with organization:', actualOrganization);
-    console.log('Request approval saved with specific type:', specificRequestType); // ADD DEBUG LOG
-    console.log('Request approval saved with files:', filePaths);
-    res.redirect('/request-approvals?submitted=true');
-  } catch (err) {
-    console.error('Error saving request approval:', err);
-    res.status(500).send('Failed to save approval request: ' + err.message);
-  }
-});
-
-app.post('/submit-service-request', upload.array('uploadServiceFile', 20), async (req, res) => {
-  if (!req.session.userId) return res.status(401).send('Unauthorized');
-  
-  const { projectTitle, organization, description, deadline } = req.body;
-  
-  console.log('Files received:', req.files); // Debug log
-  console.log('Organization received:', organization); // Debug log
-  console.log('Organization type:', typeof organization); // Debug log
-  
-  // Handle multiple files
-  let filePaths = [];
-  if (req.files && req.files.length > 0) {
-    filePaths = req.files.map(file => file.filename);
-    console.log('File paths:', filePaths); // Debug log
-  }
-  
-  try {
-    const user = await User.findById(req.session.userId);
-    
-    // FIXED: Use the organization selected by the user from the form
-    let actualOrganization = 'N/A';
-    
-    // The organization should come directly from the form submission
-    if (organization && organization.trim()) {
-      actualOrganization = organization.trim();
-    } else {
-      // Only use user's default if no organization was selected in the form
-      if (user.userType === 'nonstudent') {
-        if (Array.isArray(user.affiliation)) {
-          actualOrganization = user.affiliation[0] || 'N/A'; // Use first affiliation as fallback
-        } else {
-          actualOrganization = user.affiliation || 'N/A';
-        }
-      } else {
-        if (Array.isArray(user.studentOrganization)) {
-          actualOrganization = user.studentOrganization[0] || 'N/A'; // Use first organization as fallback
-        } else {
-          actualOrganization = user.studentOrganization || 'N/A';
-        }
-      }
-    }
-    
-    console.log('Final organization (single):', actualOrganization); // Debug log
-    
-    // Validate that actualOrganization is a string
-    if (typeof actualOrganization !== 'string') {
-      throw new Error('Organization must be a single string value');
-    }
-    
-    const newRequest = new ServiceRequest({
-      title: projectTitle,
-      organization: actualOrganization, // This will now be a single selected organization
-      description,
-      deadline,
-      userId: req.session.userId,
-      files: filePaths, // Store array of file paths
-      file: filePaths[0] || null // Keep backward compatibility
-    });
-    
-    await newRequest.save();
-    console.log('Service request saved with organization:', actualOrganization); // Debug log
-    console.log('Service request saved with files:', filePaths); // Debug log
+    console.log('Service request saved with organization:', actualOrganization);
+    console.log('Service request saved with specific type:', specificRequestType); // ADD DEBUG LOG
+    console.log('Service request saved with files:', filePaths);
     res.redirect('/service-requests');
   } catch (err) {
     console.error('Error saving service request:', err);

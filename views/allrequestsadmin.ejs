@@ -905,6 +905,14 @@
   cursor: not-allowed;
 }
 
+/* Recommended Unit Highlighting Styles */
+.recommended-unit {
+  color: var(--primary-green) !important;
+  font-weight: 600 !important;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  position: relative;
+}
+
 .current-value {
   font-size: 0.875rem;
   color: #6b7280;
@@ -1974,6 +1982,7 @@
     data-id="<%= request._id %>"
     data-request-id="<%= request._id.toString().slice(-6) %>"
     data-type="<%= request.type %>"
+    data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
     data-title="<%= request.title %>"
     data-status="<%= request.status %>"
     data-organization="<%= request.displayOrganization || request.organization %>"
@@ -2054,10 +2063,9 @@
       <span class="info-value" id="detailType"></span>
     </div>
     
-    <!-- Add Specific Request Type field -->
     <div class="info-item">
       <span class="info-label">Specific Request Type:</span>
-      <span class="info-value" id="detailSpecificRequest"></span>
+      <span class="info-value" id="detailSpecificRequest" style="color: var(--primary-green); font-weight: 600;">Not specified</span>
     </div>
     
     <div class="info-item">
@@ -2105,10 +2113,18 @@
                 <label for="adminUnitsSelect">Assigned Unit</label>
                 <select id="adminUnitsSelect" name="assignedUnits">
                   <option value="">Not yet assigned</option>
-                  <option value="Social Media Unit">Social Media Unit</option>
-                  <option value="Graphics Unit">Graphics Unit</option>
-                  <option value="Multimedia Unit">Multimedia Unit</option>
-                  <option value="Public Relations Unit">Public Relations Unit</option>
+                  <optgroup label="Recommended Units (based on request type)">
+                    <option value="Social Media Unit" class="recommended-unit" id="social-media-option">⭐ Social Media Unit</option>
+                    <option value="Graphics Unit" class="recommended-unit" id="graphics-option">⭐ Graphics Unit</option>
+                    <option value="Multimedia Unit" class="recommended-unit" id="multimedia-option">⭐ Multimedia Unit</option>
+                    <option value="Public Relations Unit" class="recommended-unit" id="pr-option">⭐ Public Relations Unit</option>
+                  </optgroup>
+                  <optgroup label="All Available Units">
+                    <option value="Social Media Unit">Social Media Unit</option>
+                    <option value="Graphics Unit">Graphics Unit</option>
+                    <option value="Multimedia Unit">Multimedia Unit</option>
+                    <option value="Public Relations Unit">Public Relations Unit</option>
+                  </optgroup>
                 </select>
                 <div class="current-value">
                   Current: <span id="currentUnitsValue">Loading...</span>
@@ -3532,7 +3548,7 @@ document.getElementById('typeFilter').addEventListener('selectionChange', applyF
 
   // Populate modal with request data
   function populateModalData(rowData) {
-    console.log('📝 Populating modal with data:', rowData);
+    console.log('Populating modal with data:', rowData);
     
     // Store original values
     originalValues = {
@@ -3554,6 +3570,7 @@ document.getElementById('typeFilter').addEventListener('selectionChange', applyF
     setElementText('detailTitle', rowData.title);
     setElementText('detailStudent', rowData.student);
     setElementText('detailType', rowData.type);
+    setElementText('detailSpecificRequest', rowData.specifictype || rowData.specificRequestType || 'Not specified');
     setElementText('detailOrganization', rowData.organization);
     setElementText('detailDatetime', rowData.datetime);
     setElementText('detailDeadlineInfo', rowData.formattedDeadline);
@@ -3616,8 +3633,44 @@ document.getElementById('typeFilter').addEventListener('selectionChange', applyF
     // Populate units
     const unitsSelect = document.getElementById('adminUnitsSelect');
     const currentUnitsValue = document.getElementById('currentUnitsValue');
-    
+
     if (unitsSelect && currentUnitsValue) {
+      // Define recommendation mapping
+      const serviceRecommendations = {
+        'Creation of New Graphics/Pubmat': ['Graphics Unit'],
+        'Creation of New Logo/Branding Element': ['Graphics Unit'],
+        'Event Photo & Video Coverage': ['Multimedia Unit'],
+        'Photo/Video Editing Service': ['Multimedia Unit'],
+        'Magazine Content Creation': ['Public Relations Unit'],
+        'Social Media Content Sharing/Posting': ['Social Media Unit']
+      };
+
+      const approvalRecommendations = {
+        'Social Media Post Content/Caption': ['Social Media Unit', 'Public Relations Unit'],
+        'Draft Official Letter/Advisory': ['Public Relations Unit'],
+        'Publication Material/Pubmat Design Vetting': ['Graphics Unit'],
+        'Publication Wording/Content Check': ['Public Relations Unit', 'Social Media Unit'],
+        'Logo/Merchandise Design Vetting': ['Graphics Unit']
+      };
+
+      // Get recommendations for this request type
+      let recommendations = [];
+      if (rowData.type === 'Service Request') {
+        recommendations = serviceRecommendations[rowData.specifictype || rowData.specificRequestType || ''] || [];
+      } else if (rowData.type === 'Request Approval') {
+        recommendations = approvalRecommendations[rowData.specifictype || rowData.specificRequestType || ''] || [];
+      }
+
+      console.log('Request type:', rowData.specifictype, 'Recommendations:', recommendations);
+
+      // Clear and rebuild options with recommendations
+      unitsSelect.innerHTML = `<option value="">Not yet assigned</option>
+        <option value="Social Media Unit" ${recommendations.includes('Social Media Unit') ? 'class="recommended-unit"' : ''}>${recommendations.includes('Social Media Unit') ? '★ ' : ''}Social Media Unit</option>
+        <option value="Graphics Unit" ${recommendations.includes('Graphics Unit') ? 'class="recommended-unit"' : ''}>${recommendations.includes('Graphics Unit') ? '★ ' : ''}Graphics Unit</option>
+        <option value="Multimedia Unit" ${recommendations.includes('Multimedia Unit') ? 'class="recommended-unit"' : ''}>${recommendations.includes('Multimedia Unit') ? '★ ' : ''}Multimedia Unit</option>
+        <option value="Public Relations Unit" ${recommendations.includes('Public Relations Unit') ? 'class="recommended-unit"' : ''}>${recommendations.includes('Public Relations Unit') ? '★ ' : ''}Public Relations Unit</option>`;
+
+      // Set current value
       unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
       currentUnitsValue.textContent = rowData.units || 'Not yet assigned';
     }
@@ -3963,20 +4016,20 @@ document.getElementById('typeFilter').addEventListener('selectionChange', applyF
   // Initialize row click handlers
   function initializeRowClickHandlers() {
     const rows = document.querySelectorAll('.request-row');
-    console.log(`🖱️ Setting up click handlers for ${rows.length} rows`);
+    console.log(` Setting up click handlers for ${rows.length} rows`);
     
     rows.forEach((row, index) => {
       row.style.cursor = 'pointer';
       
       row.addEventListener('click', function(e) {
-        console.log(`🖱️ Row ${index + 1} clicked`);
+        console.log(`Row ${index + 1} clicked`);
         
         // Prevent click on badges and buttons
         if (e.target.closest('.status-badge') || 
             e.target.closest('.type-badge') || 
             e.target.closest('button') ||
             e.target.closest('a')) {
-          console.log('🚫 Click on badge/button/link - ignoring');
+          console.log('Click on badge/button/link - ignoring');
           return;
         }
         
@@ -3991,6 +4044,8 @@ document.getElementById('typeFilter').addEventListener('selectionChange', applyF
           units: row.dataset.units,
           datetime: row.dataset.datetime,
           description: row.dataset.description,
+          specifictype: row.dataset.specifictype,        
+          specificRequestType: row.dataset.specifictype,
           file: row.dataset.file,
           files: row.dataset.files,
           formattedDeadline: row.dataset.formattedDeadline,

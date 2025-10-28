@@ -1431,6 +1431,7 @@
               <tr class="request-row"
                   data-id="<%= request._id %>"
                   data-type="<%= request.type %>"
+                  data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status %>"
                   data-organization="<%= request.organization %>"
@@ -1614,16 +1615,20 @@
           </div>
 
              <div class="form-group full-width">
-  <label for="assignedUnit">Select Specific Request:</label>
-  <select id="assignedUnit" name="assignedUnit" class="form-control" required>
-    <option value="" disabled selected>Select unit to handle request...</option>
-    <optgroup label="Content Management">
-      <option value="social-media">Social Media Unit (Content posting, monitoring & caption approval)</option>
+  <label for="specificRequestType">Select Specific Request Type:</label>
+  <select id="specificRequestType" name="specificRequestType" class="form-control" required>
+    <option value="" disabled selected>Select request type...</option>
+    <optgroup label="Graphics & Design Services">
+      <option value="Creation of New Graphics/Pubmat">Creation of New Graphics/Pubmat</option>
+      <option value="Creation of New Logo/Branding Element">Creation of New Logo/Branding Element</option>
     </optgroup>
-    <optgroup label="Creative Services">
-      <option value="public-relations">Public Relations Unit (Publications, proofreading & communications)</option>
-      <option value="graphics">Graphics Unit (Design, branding & layout compliance)</option>
-      <option value="multimedia">Multimedia Unit (Photo/video editing & media coverage)</option>
+    <optgroup label="Multimedia Services">
+      <option value="Event Photo & Video Coverage">Event Photo & Video Coverage</option>
+      <option value="Photo/Video Editing Service">Photo/Video Editing Service</option>
+    </optgroup>
+    <optgroup label="Content & Communications">
+      <option value="Magazine Content Creation">Magazine Content Creation</option>
+      <option value="Social Media Content Sharing/Posting">Social Media Content Sharing/Posting</option>
     </optgroup>
   </select>
 </div>
@@ -1684,30 +1689,37 @@
       <div class="modal-body details-modal-body">
         <div class="details-content">
           <!-- General Information Section -->
-          <div class="details-section">
-            <h3>General Information</h3>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-              <div class="details-field">
-                <div class="details-label">Request Type</div>
-                <div class="details-value" id="detailType"></div>
-              </div>
-              
-              <div class="details-field">
-                <div class="details-label">Project Title</div>
-                <div class="details-value" id="detailTitle"></div>
-              </div>
-              
-              <div class="details-field">
-                <div class="details-label">Organization</div
-                <div class="details-value" id="detailOrganization"></div>
-              </div>
-              
-              <div class="details-field">
-                <div class="details-label">Date Submitted</div>
-                <div class="details-value" id="detailDatetime"></div>
-              </div>
-            </div>
-          </div>
+          <!-- General Information Section -->
+<div class="details-section">
+  <h3>General Information</h3>
+  <div class="details-grid">
+    <div class="details-field">
+      <div class="details-label">Request Type</div>
+      <div class="details-value">Service Request</div>
+    </div>
+    
+    <!-- ADD THIS NEW FIELD -->
+    <div class="details-field">
+      <div class="details-label">Specific Request Type</div>
+      <div class="details-value" id="detailSpecificType" style="color: var(--primary-green); font-weight: 600;">Not specified</div>
+    </div>
+    
+    <div class="details-field">
+      <div class="details-label">Project Title</div>
+      <div class="details-value" id="detailTitle"></div>
+    </div>
+    
+    <div class="details-field">
+      <div class="details-label">Organization</div>
+      <div class="details-value" id="detailOrganization"></div>
+    </div>
+    
+    <div class="details-field">
+      <div class="details-label">Date Submitted</div>
+      <div class="details-value" id="detailDatetime"></div>
+    </div>
+  </div>
+</div>
 
           <!-- Status & Assignment Section -->
           <div class="details-section">
@@ -2385,21 +2397,32 @@
     }
 
     // Enhanced row click handler with improved modal population
-    document.querySelectorAll('.request-row').forEach(row => {
-      row.addEventListener('click', (e) => {
-        // Populate basic fields
-        const detailType = document.getElementById("detailType");
-        const detailTitle = document.getElementById("detailTitle");
-        const detailOrganization = document.getElementById("detailOrganization");
-        const detailDescription = document.getElementById("detailDescription");
-        const detailStatus = document.getElementById("detailStatus");
-        const detailStatusBadge = document.getElementById("detailStatusBadge");
-        const detailUnits = document.getElementById("detailUnits");
-        const detailDatetime = document.getElementById("detailDatetime");
-        
-        if (detailType) detailType.innerText = row.dataset.type || '';
-        if (detailTitle) detailTitle.innerText = row.dataset.title || '';
-        if (detailOrganization) detailOrganization.innerText = row.dataset.organization || '';
+ 
+document.querySelectorAll('.request-row').forEach(row => {
+  row.addEventListener('click', (e) => {
+    // Get all detail elements
+    const detailTitle = document.getElementById("detailTitle");
+    const detailOrganization = document.getElementById("detailOrganization");
+    const detailDescription = document.getElementById("detailDescription");
+    const detailStatus = document.getElementById("detailStatus");
+    const detailStatusBadge = document.getElementById("detailStatusBadge");
+    const detailUnits = document.getElementById("detailUnits");
+    const detailDatetime = document.getElementById("detailDatetime");
+    const detailSpecificType = document.getElementById("detailSpecificType");
+    
+    // Populate fields
+    if (detailTitle) detailTitle.innerText = row.dataset.title || '';
+    if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified';
+    
+    // CRITICAL FIX: Display the exact organization from the request
+    const requestOrganization = row.dataset.organization || 'N/A';
+    console.log('Displaying organization:', requestOrganization); // Debug log
+    if (detailOrganization) {
+      detailOrganization.innerText = requestOrganization;
+      console.log(' Organization field updated to:', detailOrganization.innerText);
+    } else {
+      console.error('detailOrganization element not found!');
+    }
         if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
         if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';
         if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
@@ -2486,94 +2509,145 @@
       }
     });
 
-    // Enhanced deadline warning functionality with modal prompts
-    if (serviceRequestForm) {
-      serviceRequestForm.addEventListener('submit', function(e) {
+if (serviceRequestForm) {
+  serviceRequestForm.addEventListener('submit', function(e) {
+    const deadlineInput = document.getElementById('deadline');
+    const deadlineValue = deadlineInput ? deadlineInput.value : '';
+    
+    if (!deadlineValue) {
+      e.preventDefault();
+      alert('Please select a deadline date.');
+      return;
+    }
+
+    const now = new Date();
+    const deadlineDate = new Date(deadlineValue);
+    
+    // Set both dates to start of day for accurate comparison
+    now.setHours(0, 0, 0, 0);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    if (deadlineDate <= now) {
+      e.preventDefault();
+      alert('Deadline must be in the future. Please select a valid date.');
+      deadlineInput.focus();
+      return;
+    }
+
+    const workingDaysDiff = countWorkingDays(now, deadlineDate);
+    console.log('Working days difference:', workingDaysDiff);
+
+    // STRICT VALIDATION - PREVENT SUBMISSION
+    if (workingDaysDiff < 5) {
+      e.preventDefault();
+      showDeadlineErrorModal(workingDaysDiff); // CALL THE FUNCTION HERE
+      return;
+    }
+    
+    // If deadline meets requirements (5+ working days), allow submission
+    // Form will submit normally
+  });
+}
+
+// MOVE THIS FUNCTION OUTSIDE THE EVENT LISTENER
+// Function to show deadline ERROR modal (not warning - prevents submission)
+function showDeadlineErrorModal(workingDays) {
+  const modal = document.getElementById('deadlineWarningModal');
+  if (modal) {
+    // Change modal header color to red for error
+    const modalHeader = modal.querySelector('.modal-header');
+    if (modalHeader) {
+      modalHeader.style.background = 'linear-gradient(135deg, #fee2e2, #fecaca)';
+      modalHeader.style.borderBottom = '2px solid #ef4444';
+    }
+    
+    const modalTitle = modal.querySelector('.modal-title');
+    if (modalTitle) {
+      modalTitle.innerHTML = `
+        <svg width="24" height="24" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Deadline Too Short
+      `;
+      modalTitle.style.color = '#dc2626';
+    }
+    
+    modal.style.display = 'flex';
+    
+    // Update modal content for ERROR (not warning)
+    const modalBody = modal.querySelector('.modal-body');
+    if (modalBody) {
+      modalBody.innerHTML = `
+        <div style="padding: 1.5rem; font-size: 1rem; color: #374151; text-align: left;">
+          <div style="background: #fee2e2; padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin-bottom: 1.5rem;">
+            <p style="margin: 0; color: #991b1b; font-weight: 600; font-size: 1.1rem;">
+              ⚠️ Your selected deadline is only <strong>${workingDays} working day${workingDays === 1 ? '' : 's'}</strong> away.
+            </p>
+          </div>
+          
+          <p style="margin-bottom: 1rem;"><strong style="color: #dc2626;">Minimum Required:</strong> Five (5) working days from today</p>
+          
+          <p style="margin-bottom: 1rem;">Service requests require adequate time for:</p>
+          
+          <ul style="margin-left: 1.5rem; margin-bottom: 1rem; line-height: 1.8;">
+            <li>Review and approval by S-CORE team</li>
+            <li>Resource allocation and assignment</li>
+            <li>Quality assurance and revisions</li>
+            <li>Proper project planning and execution</li>
+          </ul>
+          
+          <div style="background: #dbeafe; padding: 1rem; border-radius: 8px; border-left: 4px solid #3b82f6; margin-top: 1.5rem;">
+            <p style="margin: 0; color: #1e40af; font-weight: 600;">
+              💡 <strong>What to do:</strong> Please select a deadline that is at least 5 working days from today.
+            </p>
+          </div>
+          
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: #6b7280; font-style: italic;">
+            For urgent requests with shorter timelines, please contact the S-CORE office directly for assistance.
+          </p>
+        </div>
+      `;
+    }
+    
+    // Update modal buttons - ONLY SHOW ONE BUTTON (Close/Edit)
+    const modalActions = modal.querySelector('.modal-actions');
+    if (modalActions) {
+      modalActions.innerHTML = `
+        <button id="deadlineCloseBtn" class="view-all-btn" style="background: #3b82f6; color: white; width: 100%; max-width: 300px;">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8z"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          OK, Let Me Change the Deadline
+        </button>
+      `;
+      modalActions.style.justifyContent = 'center';
+    }
+    
+    // Add event listener for close button
+    const closeBtn = document.getElementById('deadlineCloseBtn');
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        modal.style.display = 'none';
+        
+        // Reset modal header styling
+        if (modalHeader) {
+          modalHeader.style.background = '';
+          modalHeader.style.borderBottom = '';
+        }
+        
+        // Focus on deadline input
         const deadlineInput = document.getElementById('deadline');
-        const deadlineValue = deadlineInput ? deadlineInput.value : '';
-        
-        if (!deadlineValue) {
-          e.preventDefault();
-          alert('Please select a deadline date.');
-          return;
-        }
-
-        const now = new Date();
-        const deadlineDate = new Date(deadlineValue);
-        
-        // Set both dates to start of day for accurate comparison
-        now.setHours(0, 0, 0, 0);
-        deadlineDate.setHours(0, 0, 0, 0);
-
-        if (deadlineDate <= now) {
-          e.preventDefault();
-          alert('Deadline must be in the future. Please select a valid date.');
+        if (deadlineInput) {
           deadlineInput.focus();
-          return;
+          deadlineInput.select();
         }
-
-        const workingDaysDiff = countWorkingDays(now, deadlineDate);
-        console.log('Working days difference:', workingDaysDiff); // Debug log
-
-        if (workingDaysDiff < 5) {
-          e.preventDefault();
-          showDeadlineWarningModal(workingDaysDiff);
-          return;
-        }
-        
-        // If deadline meets requirements, allow submission
-        // Form will submit normally
-      });
+      };
     }
-
-    // Function to show deadline warning modal
-    function showDeadlineWarningModal(workingDays) {
-      const modal = document.getElementById('deadlineWarningModal');
-      if (modal) {
-        modal.style.display = 'flex';
-        
-        // Update modal content based on working days
-        const modalBody = modal.querySelector('.modal-body');
-        if (modalBody) {
-          modalBody.innerHTML = `
-            <div style="padding: 1rem; font-size: 1rem; color: #374151; text-align: justify;">
-              <p><strong>Short Timeline Notice</strong></p>
-              <br>
-              <p>Your selected deadline is only <strong>${workingDays} working day${workingDays === 1 ? '' : 's'}</strong> away.</p>
-              <br>
-              <p>You have requested a deadline of less than five (5) working days. Please be advised that such requests are subject to approval by the S-CORE team based on current workload and resource availability.</p>
-              <br>
-              <p>The requested deadline may be adjusted if our team is handling other priority projects. We will communicate any changes through the conversation feature once your request is reviewed.</p>
-              <br>
-              <p>For urgent requests, we recommend contacting the S-CORE office directly.</p>
-            </div>
-          `;
-        }
-        
-        // Add event listeners for modal buttons
-        const proceedBtn = document.getElementById('deadlineProceedBtn');
-        const cancelBtn = document.getElementById('deadlineCancelBtn');
-        
-        if (proceedBtn) {
-          proceedBtn.onclick = () => {
-            modal.style.display = 'none';
-            // Actually submit the form
-            const newForm = serviceRequestForm.cloneNode(true);
-            serviceRequestForm.parentNode.replaceChild(newForm, serviceRequestForm);
-            newForm.submit();
-          };
-        }
-        
-        if (cancelBtn) {
-          cancelBtn.onclick = () => {
-            modal.style.display = 'none';
-            const deadlineInput = document.getElementById('deadline');
-            if (deadlineInput) deadlineInput.focus();
-          };
-        }
-      }
-    }
-
+  }
+}
     // Update the count working days function
     function countWorkingDays(startDate, endDate) {
       let count = 0;
@@ -2596,83 +2670,84 @@
     }
 
     // Add real-time validation feedback
-    document.addEventListener('DOMContentLoaded', function() {
-      const deadlineInput = document.getElementById('deadline');
+ document.addEventListener('DOMContentLoaded', function() {
+  const deadlineInput = document.getElementById('deadline');
+  
+  if (deadlineInput) {
+    // Set minimum date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    deadlineInput.min = tomorrow.toISOString().slice(0, 10);
+    
+    // Add real-time validation
+    deadlineInput.addEventListener('change', function() {
+      const selectedDate = new Date(this.value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
       
-      if (deadlineInput) {
-        // Set minimum date to tomorrow
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        deadlineInput.min = tomorrow.toISOString().slice(0, 10);
-        
-        // Add real-time validation
-        deadlineInput.addEventListener('change', function() {
-          const selectedDate = new Date(this.value);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          selectedDate.setHours(0, 0, 0, 0);
-          
-          // Remove any existing warning messages
-          const existingWarning = document.getElementById('deadline-warning');
-          if (existingWarning) {
-            existingWarning.remove();
-          }
-          
-          if (selectedDate <= today) {
-            this.style.borderColor = '#ef4444';
-            this.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
-            return;
-          }
-          
-          const workingDays = countWorkingDays(today, selectedDate);
-          
-          if (workingDays < 5) {
-            this.style.borderColor = '#f59e0b';
-            this.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.1)';
-            
-            // Show inline warning message
-            const warningMsg = document.createElement('small');
-            warningMsg.id = 'deadline-warning';
-            warningMsg.style.color = '#f59e0b';
-            warningMsg.style.fontWeight = '600';
-            warningMsg.style.marginTop = '0.25rem';
-            warningMsg.style.display = 'block';
-            warningMsg.innerHTML = `
-              <svg width="12" height="12" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              Only ${workingDays} working day${workingDays === 1 ? '' : 's'} - needs 5+ days
-            `;
-            this.parentNode.appendChild(warningMsg);
-          } else {
-            this.style.borderColor = '#10b981';
-            this.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
-            
-            // Show success message
-            const successMsg = document.createElement('small');
-            successMsg.id = 'deadline-warning';
-            successMsg.style.color = '#10b981';
-            successMsg.style.fontWeight = '600';
-            successMsg.style.marginTop = '0.25rem';
-            successMsg.style.display = 'block';
-            successMsg.innerHTML = `
-              <svg width="12" height="12" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Good! ${workingDays} working days
-            `;
-            this.parentNode.appendChild(successMsg);
-          }
-        });
-        
-        // Reset styling when input is focused
-        deadlineInput.addEventListener('focus', function() {
-          this.style.borderColor = 'var(--primary-green)';
-          this.style.boxShadow = '0 0 0 3px rgba(64, 139, 78, 0.1)';
-        });
+      // Remove any existing warning messages
+      const existingWarning = document.getElementById('deadline-warning');
+      if (existingWarning) {
+        existingWarning.remove();
       }
+      
+      if (selectedDate <= today) {
+        this.style.borderColor = '#ef4444';
+        this.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+        return;
+      }
+      
+      const workingDays = countWorkingDays(today, selectedDate);
+      
+      if (workingDays < 5) {
+        this.style.borderColor = '#ef4444'; // Changed from orange to red
+        this.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+        
+        // Show ERROR message (not warning)
+        const errorMsg = document.createElement('small');
+        errorMsg.id = 'deadline-warning';
+        errorMsg.style.color = '#dc2626'; // Red color
+        errorMsg.style.fontWeight = '700';
+        errorMsg.style.marginTop = '0.25rem';
+        errorMsg.style.display = 'block';
+        errorMsg.innerHTML = `
+          <svg width="14" height="14" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          Only ${workingDays} working day${workingDays === 1 ? '' : 's'} - MUST be 5+ days
+        `;
+        this.parentNode.appendChild(errorMsg);
+      } else {
+        this.style.borderColor = '#10b981';
+        this.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
+        
+        // Show success message
+        const successMsg = document.createElement('small');
+        successMsg.id = 'deadline-warning';
+        successMsg.style.color = '#10b981';
+        successMsg.style.fontWeight = '600';
+        successMsg.style.marginTop = '0.25rem';
+        successMsg.style.display = 'block';
+        successMsg.innerHTML = `
+          <svg width="12" height="12" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Good! ${workingDays} working days
+        `;
+        this.parentNode.appendChild(successMsg);
+      }
+    });
+    
+    // Reset styling when input is focused
+    deadlineInput.addEventListener('focus', function() {
+      this.style.borderColor = 'var(--primary-green)';
+      this.style.boxShadow = '0 0 0 3px rgba(64, 139, 78, 0.1)';
+    });
+  }
+  
 
       // File upload setup
       const fileInput = document.getElementById('uploadServiceFile');

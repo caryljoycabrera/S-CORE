@@ -2153,18 +2153,64 @@ option:hover {
   // Update the Proceed button to actually submit
   const proceedSubmissionBtn = document.getElementById('proceedSubmissionBtn');
   if (proceedSubmissionBtn) {
-    proceedSubmissionBtn.onclick = () => {
-      if (submissionModal) submissionModal.style.display = 'none';
-      // Actually submit the form
-      const approvalForm = document.querySelector('#requestModal form');
-      if (approvalForm) {
-        // Create a new form element to avoid event listener conflicts
-        const newForm = approvalForm.cloneNode(true);
-        approvalForm.parentNode.replaceChild(newForm, approvalForm);
-        newForm.submit();
-      }
-    };
+  proceedSubmissionBtn.onclick = () => {
+    if (submissionModal) submissionModal.style.display = 'none';
+    console.log('User confirmed submission. Proceeding with fetch...');
+    submitFormData();
+  };
+}
+// Function to handle form submission via Fetch
+async function submitFormData() {
+  if (!approvalForm) {
+    console.error("Cannot submit, form not found.");
+    alert("An error occurred. Could not find the form.");
+    return;
   }
+
+  // Add a loading indicator
+  const submitButton = approvalForm.querySelector('button[type="submit"]');
+  const originalButtonText = submitButton ? submitButton.innerHTML : 'Submit Request';
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.innerHTML = '⏳ Submitting...';
+  }
+
+  try {
+    const formData = new FormData(approvalForm);
+    
+    const response = await fetch('/submit-request-approval', {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log('Submission successful:', result.message);
+      
+      // Redirect immediately without notification
+      window.location.href = result.redirectUrl || '/request-approvals?submitted=true';
+    } else {
+      console.error('Submission failed on server:', result.message);
+      alert(result.message || 'Submission failed. Please check your input and try again.');
+      
+      // Re-enable submit button
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
+    }
+  } catch (error) {
+    console.error('Submission error (fetch failed):', error);
+    alert('Submission failed due to a network error. Please try again.');
+    
+    // Re-enable submit button
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalButtonText;
+    }
+  }
+}
 
   // Enhanced cancel submission button
   const cancelSubmissionBtn = document.getElementById('cancelSubmissionBtn');
@@ -2561,36 +2607,59 @@ document.querySelectorAll('.request-row').forEach(row => {
   });
 
   // Enhanced form submission with confirmation modal
-  const approvalForm = document.querySelector('#requestModal form');
-  if (approvalForm) {
-    approvalForm.addEventListener('submit', function(e) {
-      e.preventDefault(); // Always prevent default submission
-      
-      const fileInput = document.getElementById('upload');
-      const specificRequestType = document.getElementById('specificRequestType');
-      
-      // Validate required files
-      if (!fileInput || fileInput.files.length === 0) {
-        alert('Please upload at least one file. Files are required for approval requests.');
-        return;
-      }
+// Enhanced form submission with confirmation modal
+const approvalForm = document.querySelector('#requestModal form');
 
-      // Validate specific request type
+if (approvalForm) {
+  approvalForm.addEventListener('submit', function(e) {
+    e.preventDefault(); // Prevent default form submission
+    console.log('Form submit intercepted for validation and confirmation.');
+
+    // Validation
+    const fileInput = document.getElementById('upload');
+    const specificRequestType = document.getElementById('specificRequestType');
+    const projectTitle = document.getElementById('projectTitle');
+    const description = document.getElementById('description');
+
+    // Validate required fields
+    if (!projectTitle || !projectTitle.value.trim()) {
+      showNotification('Please enter a project title.', 'error');
+      projectTitle.focus();
+      return;
+    }
+
+    if (!description || !description.value.trim()) {
+      showNotification('Please enter a description.', 'error');
+      description.focus();
+      return;
+    }
+
+    // Validate required files
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+      showNotification('Please upload at least one file. Files are required for approval requests.', 'error');
+      return;
+    }
+
+    // Validate specific request type
     if (!specificRequestType || !specificRequestType.value) {
-      alert('Please select a specific request type.');
+      showNotification('Please select a specific request type.', 'error');
       specificRequestType.focus();
       return;
     }
 
-    console.log('Specific Request Type:', specificRequestType.value); // Debug log
+    console.log('Validation passed. Showing confirmation modal.');
     
-    // Show submission confirmation modal
+    // Show confirmation modal
     if (submissionModal) {
       submissionModal.style.display = 'flex';
+    } else {
+      console.error('Submission confirmation modal not found!');
+      showNotification('Modal error. Please refresh and try again.', 'error');
     }
   });
+} else {
+  console.error('Request form (#requestForm) not found!');
 }
-
   // ===== APPROVAL FILE UPLOAD FUNCTIONS =====
   
   // Handle file selection

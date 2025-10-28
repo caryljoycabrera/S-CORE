@@ -1348,6 +1348,24 @@
   font-size: 0.875rem;
   font-style: italic;
 }
+.recommended-unit {
+  color: var(--primary-green) !important;
+  font-weight: 600 !important;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  position: relative;
+}
+
+/* Updated form field styling for units */
+.form-field select option {
+  background: white;
+  color: #374151;
+}
+
+.form-field select option.recommended-unit::before {
+  content: '★ ';
+  color: var(--primary-green);
+}
+
 .filter-controls {
   display: flex;
   gap: 1rem;
@@ -1707,10 +1725,18 @@
                 <label for="adminUnitsSelect">Assigned Unit</label>
                 <select id="adminUnitsSelect" name="assignedUnits">
                   <option value="">Not yet assigned</option>
-                  <option value="Social Media Unit">Social Media Unit</option>
-                  <option value="Graphics Unit">Graphics Unit</option>
-                  <option value="Multimedia Unit">Multimedia Unit</option>
-                  <option value="Public Relations Unit">Public Relations Unit</option>
+                  <optgroup label="Recommended Units (based on request type)">
+                    <option value="Social Media Unit" class="recommended-unit" id="social-media-option">⭐ Social Media Unit</option>
+                    <option value="Graphics Unit" class="recommended-unit" id="graphics-option">⭐ Graphics Unit</option>
+                    <option value="Multimedia Unit" class="recommended-unit" id="multimedia-option">⭐ Multimedia Unit</option>
+                    <option value="Public Relations Unit" class="recommended-unit" id="pr-option">⭐ Public Relations Unit</option>
+                  </optgroup>
+                  <optgroup label="All Available Units">
+                    <option value="Social Media Unit">Social Media Unit</option>
+                    <option value="Graphics Unit">Graphics Unit</option>
+                    <option value="Multimedia Unit">Multimedia Unit</option>
+                    <option value="Public Relations Unit">Public Relations Unit</option>
+                  </optgroup>
                 </select>
                 <div class="current-value">
                   Current: <span id="currentUnitsValue">Loading...</span>
@@ -3059,26 +3085,34 @@ if (specificRequestType) {
       currentStatusValue.textContent = rowData.status;
     }
     
-    // Populate units
+  // Populate units
     const unitsSelect = document.getElementById('adminUnitsSelect');
     const currentUnitsValue = document.getElementById('currentUnitsValue');
-    
+
     if (unitsSelect && currentUnitsValue) {
-      const unitMapping = {
-        'social-media': 'Social Media Unit',
-        'public-relations': 'Public Relations Unit',
-        'graphics': 'Graphics Unit',
-        'multimedia': 'Multimedia Unit'
+      // Define recommendation mapping for approval requests
+      const recommendationMapping = {
+        'Social Media Post Content/Caption': ['Social Media Unit', 'Public Relations Unit'],
+        'Draft Official Letter/Advisory': ['Public Relations Unit'],
+        'Publication Material/Pubmat Design Vetting': ['Graphics Unit'],
+        'Publication Wording/Content Check': ['Public Relations Unit', 'Social Media Unit'],
+        'Logo/Merchandise Design Vetting': ['Graphics Unit']
       };
+
+      // Get recommended units for this request type
+      const specificType = rowData.specifictype || rowData.specificRequestType || '';
+      const recommendedUnits = recommendationMapping[specificType.trim()] || [];
+
+      console.log('Request type:', specificType, 'Recommended units:', recommendedUnits);
 
       if (unitsSelect) {
         // Clear existing options
         unitsSelect.innerHTML = `
           <option value="">Not yet assigned</option>
-          <option value="Social Media Unit">Social Media Unit</option>
-          <option value="Graphics Unit">Graphics Unit</option>
-          <option value="Multimedia Unit">Multimedia Unit</option>
-          <option value="Public Relations Unit">Public Relations Unit</option>
+          <option value="Social Media Unit" ${recommendedUnits.includes('Social Media Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Social Media Unit') ? '★ ' : ''}Social Media Unit</option>
+          <option value="Graphics Unit" ${recommendedUnits.includes('Graphics Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Graphics Unit') ? '★ ' : ''}Graphics Unit</option>
+          <option value="Multimedia Unit" ${recommendedUnits.includes('Multimedia Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Multimedia Unit') ? '★ ' : ''}Multimedia Unit</option>
+          <option value="Public Relations Unit" ${recommendedUnits.includes('Public Relations Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Public Relations Unit') ? '★ ' : ''}Public Relations Unit</option>
         `;
 
         // Set the current value
@@ -3098,59 +3132,302 @@ if (specificRequestType) {
   }
   
   // File preview function (simplified)
-  function populateFilePreview(rowData) {
-    const previewContainer = document.getElementById('file-preview');
-    if (!previewContainer) return;
-    
-    previewContainer.innerHTML = '';
-    
-    let allFiles = [];
-    
-    if (rowData.files && rowData.files.trim() !== '') {
-      allFiles = rowData.files.split(',').map(f => f.trim()).filter(Boolean);
-    } else if (rowData.file && rowData.file.trim() !== '') {
-      allFiles = [rowData.file.trim()];
-    }
-    
-    if (allFiles.length > 0) {
-      const enhancedPreview = document.createElement('div');
-      enhancedPreview.className = 'enhanced-file-preview';
-      enhancedPreview.innerHTML = `
-        <h3>📎 Attached Files (${allFiles.length})</h3>
-        <div class="file-grid">
-          ${allFiles.map(file => `
-            <div class="enhanced-file-item">
-              <div class="file-header-enhanced">
-                <div style="color: #059669;">📄</div>
-                <div class="file-info-enhanced">
-                  <div class="file-name-enhanced" title="${file}">${file}</div>
-                  <div class="file-type-enhanced">${file.split('.').pop().toUpperCase()} File</div>
-                </div>
-              </div>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                <a href="/uploads/${file}" target="_blank" download="${file}" class="download-btn-enhanced">
-                  ⬇️ Download
-                </a>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-      previewContainer.appendChild(enhancedPreview);
-    } else {
-      previewContainer.innerHTML = `
-        <div class="enhanced-file-preview">
-          <h3>📎 Attached Files</h3>
-          <div class="no-files-message">
-            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">📭</div>
-            <div class="no-files-title">No Files Attached</div>
-            <div class="no-files-subtitle">This request was submitted without any file attachments.</div>
-          </div>
-        </div>
-      `;
-    }
+// Enhanced file preview function with proper image viewing
+function populateFilePreview(rowData) {
+  const previewContainer = document.getElementById('file-preview');
+  if (!previewContainer) return;
+  
+  previewContainer.innerHTML = '';
+  
+  let allFiles = [];
+  
+  if (rowData.files && rowData.files.trim() !== '') {
+    allFiles = rowData.files.split(',').map(f => f.trim()).filter(Boolean);
+  } else if (rowData.file && rowData.file.trim() !== '') {
+    allFiles = [rowData.file.trim()];
   }
   
+  if (allFiles.length > 0) {
+    const enhancedPreview = document.createElement('div');
+    enhancedPreview.className = 'enhanced-file-preview';
+    
+    let fileGridHTML = `
+      <h3>
+        <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+        </svg>
+        Attached Files (${allFiles.length})
+      </h3>
+      <div class="file-grid">
+    `;
+    
+    allFiles.forEach((file, index) => {
+      if (file && file.trim()) {
+        const fileUrl = `/uploads/${file.trim()}`;
+        const ext = file.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+        const isPDF = ext === 'pdf';
+        const isDoc = ['doc', 'docx'].includes(ext);
+        const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+        const isText = ['txt', 'rtf'].includes(ext);
+        
+        let fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+        `;
+
+        if (isImage) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8" cy="8" r="2"/>
+              <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+            </svg>
+          `;
+        } else if (isPDF) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <path d="M8 6h8M8 10h8M8 14h4"/>
+            </svg>
+          `;
+        } else if (isDoc) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+            </svg>
+          `;
+        } else if (isSpreadsheet) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <rect x="7" y="10" width="2" height="7"/>
+              <rect x="11" y="7" width="2" height="10"/>
+              <rect x="15" y="13" width="2" height="4"/>
+            </svg>
+          `;
+        } else if (isText) {
+          fileIcon = `
+            <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="4" y="2" width="16" height="20" rx="2"/>
+              <line x1="8" y1="8" x2="16" y2="8"/>
+              <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          `;
+        }
+        
+        fileGridHTML += `
+          <div class="enhanced-file-item">
+            <div class="file-header-enhanced">
+              <div style="color: #059669;">${fileIcon}</div>
+              <div class="file-info-enhanced">
+                <div class="file-name-enhanced" title="${file}">${file}</div>
+                <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
+              </div>
+            </div>
+            
+            <div class="file-preview-container">
+        `;
+        
+        if (isImage) {
+          fileGridHTML += `
+            <img src="${fileUrl}" 
+                 alt="Preview of ${file}" 
+                 style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; cursor: pointer;"
+                 onclick="openImagePreview('${fileUrl}', '${file}')"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8" cy="8" r="2"/>
+                  <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+                </svg>
+              </div>
+              <p>Image Preview Not Available</p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isPDF) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <path d="M8 6h8M8 10h8M8 14h4"/>
+                </svg>
+              </div>
+              <p><strong>PDF Document</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isDoc) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+                </svg>
+              </div>
+              <p><strong>Word Document</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else if (isSpreadsheet) {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                <svg width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <rect x="7" y="10" width="2" height="7"/>
+                  <rect x="11" y="7" width="2" height="10"/>
+                  <rect x="15" y="13" width="2" height="4"/>
+                </svg>
+              </div>
+              <p><strong>Spreadsheet</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        } else {
+          fileGridHTML += `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+              <div style="font-size: 3rem; margin-bottom: 0.5rem;">${fileIcon}</div>
+              <p><strong>Document File</strong></p>
+              <small>Click download to view</small>
+            </div>
+          `;
+        }
+        
+        fileGridHTML += `
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
+              <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced">
+                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+                Download
+              </a>
+              ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6;">
+                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <ellipse cx="12" cy="12" rx="9" ry="6"/>
+                  <circle cx="12" cy="12" r="2"/>
+                </svg>
+                View
+              </button>` : ''}
+            </div>
+          </div>
+        `;
+      }
+    });
+    
+    fileGridHTML += `</div>`;
+    enhancedPreview.innerHTML = fileGridHTML;
+    previewContainer.appendChild(enhancedPreview);
+  } else {
+    previewContainer.innerHTML = `
+      <div class="enhanced-file-preview">
+        <h3>
+          <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+          </svg>
+          Attached Files
+        </h3>
+        <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
+          <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">
+            <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="7" width="18" height="11" rx="2"/>
+              <path d="M3 7l9 6 9-6"/>
+            </svg>
+          </div>
+          <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
+            No Files Attached
+          </div>
+          <div class="no-files-subtitle" style="font-size: 0.95rem; color: #64748b; line-height: 1.5;">
+            This request was submitted without any file attachments.<br>
+            <small>Files may have been uploaded but are not accessible.</small>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// Add image preview modal function (add this right after the populateFilePreview function)
+window.openImagePreview = function(imageUrl, fileName) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    cursor: pointer;
+  `;
+  
+  const container = document.createElement('div');
+  container.style.cssText = `
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+  `;
+  
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = fileName;
+  img.style.cssText = `
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+  `;
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '✕';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+  `;
+  
+  container.appendChild(img);
+  container.appendChild(closeBtn);
+  overlay.appendChild(container);
+  document.body.appendChild(overlay);
+  
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+      document.body.style.overflow = '';
+    }
+  });
+  
+  closeBtn.addEventListener('click', () => {
+    document.body.removeChild(overlay);
+    document.body.style.overflow = '';
+  });
+  
+  document.body.style.overflow = 'hidden';
+};
   // Initialize row click handlers
   function initializeRowClickHandlers() {
     const rows = document.querySelectorAll('.request-row');
