@@ -1,0 +1,1016 @@
+// ===== Admin Routes =====
+// This module handles all administrator-facing routes and functionality
+// Includes admin dashboard, user management, request management, and admin APIs
+
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const RequestApproval = require('../models/RequestApproval');
+const ServiceRequest = require('../models/ServiceRequest');
+const { requireAdmin } = require('../middleware/auth');
+const { upload, UPLOADS_DIR } = require('../config/upload');
+const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcrypt');
+
+/**
+ * GET /admin
+ * Admin dashboard with statistics and overview
+ */
+router.get('/admin', requireAdmin, async (req, res) => {
+  try {
+    const users = await User.find().lean();
+    const approvals = await RequestApproval.find().populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+
+    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending');
+    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending');
+
+    const stats = {
+      totalUsers: users.length,
+      totalApprovals: approvals.length,
+      totalServices: serviceRequests.length,
+      pendingApprovals: pendingApprovals.length,
+      pendingServices: pendingServices.length
+    };
+
+    res.render('Admin/adminpage', {
+      user: req.user,
+      name: `${req.user.fName}`,
+      users,
+      approvals,
+      serviceRequests,
+      stats
+    });
+  } catch (err) {
+    console.error('Error loading admin dashboard:', err);
+    res.status(500).render('error', { message: 'Failed to load admin page.' });
+  }
+});
+
+/**
+ * GET /admin/profile
+ * Admin profile display page
+ */
+router.get('/admin/profile', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/');
+  try {
+    const user = await User.findById(req.session.userId);
+    res.render('Admin/profileadmin', { user });
+  } catch (err) {
+    console.error('Error loading admin profile:', err);
+    res.status(500).render('error', { message: 'Failed to load profile page.' });
+  }
+});
+
+/**
+ * GET /admin/approvals
+ * Admin view of all approval requests with display organization logic
+ */
+router.get('/admin/approvals', requireAdmin, async (req, res) => {
+  try {
+    let approvals = await RequestApproval.find()
+      .populate('userId')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .lean();
+
+    // Add display organization logic
+    approvals = approvals.map(approval => {
+      let displayOrganization = approval.organization;
+
+      if (approval.userId) {
+        if (approval.userId.userType === 'student') {
+          displayOrganization = Array.isArray(approval.userId.studentOrganization)
+            ? approval.userId.studentOrganization.join(', ')
+            : approval.userId.studentOrganization;
+        } else if (approval.userId.userType === 'nonstudent') {
+          displayOrganization = Array.isArray(approval.userId.affiliation)
+            ? approval.userId.affiliation.join(', ')
+            : approval.userId.affiliation;
+        }
+      }
+
+      return {
+        ...approval,
+        displayOrganization: displayOrganization || approval.organization,
+        specificRequestType: approval.specificRequestType || 'Not specified'
+      };
+    });
+
+    res.render('Admin/approvals', { approvals: approvals, user: req.user });
+  } catch (err) {
+    console.error('Error fetching admin approvals:', err);
+    res.status(500).render('error', { message: 'Server error' });
+  }
+});
+
+/**
+ * GET /admin/approvals/:id
+ * Direct access to specific approval request with modal open
+ */
+router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let approvals = await RequestApproval.find()
+      .populate('userId')
+      .lean();
+
+    // Add display organization logic
+    approvals = approvals.map(approval => ({
+      ...approval,
+      displayOrganization:
+        approval.userId?.userType === 'nonstudent'
+          ? approval.userId.affiliation
+          : approval.organization
+    }));
+
+    // Status priority for sorting
+    const statusPriority = {
+      "pending": 1,
+      "for revision": 2,
+      "approved": 3,
+      "rejected": 4,
+      "archived": 5
+    };
+
+    // Sort according to status rules
+    approvals.sort((a, b) => {
+      const aStatus = a.status?.toLowerCase() || '';
+      const bStatus = b.status?.toLowerCase() || '';
+
+      const aPriority = statusPriority[aStatus] ?? 999;
+      const bPriority = statusPriority[bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      if (aStatus === "pending") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (aStatus === "for revision") {
+        const aDeadline = a.deadline ? new Date(a.deadline) : null;
+        const bDeadline = b.deadline ? new Date(b.deadline) : null;
+
+        if (aDeadline && bDeadline) return aDeadline - bDeadline;
+        if (aDeadline && !bDeadline) return -1;
+        if (!aDeadline && bDeadline) return 1;
+
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (["approved", "rejected", "archived"].includes(aStatus)) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    res.render('Admin/approvals', { approvals, user: req.user, openModalId: id });
+  } catch (err) {
+    console.error('Error loading admin approvals:', err);
+    res.status(500).send('Error loading approvals page');
+  }
+});
+
+/**
+ * GET /admin/services
+ * Admin view of all service requests
+ */
+router.get('/admin/services', requireAdmin, async (req, res) => {
+  try {
+    let serviceRequests = await ServiceRequest.find()
+      .populate('userId')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .lean();
+
+    // Status priority for sorting
+    const statusPriority = {
+      "pending": 1,
+      "approved": 2,
+      "for revision": 3,
+      "completed": 4,
+      "rejected": 5,
+      "archived": 6
+    };
+
+    // Sort service requests according to rules
+    serviceRequests.sort((a, b) => {
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+
+      const aPriority = statusPriority[aStatus] ?? 999;
+      const bPriority = statusPriority[bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      if (aStatus === "pending") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (aStatus === "approved" || aStatus === "for revision") {
+        const aDeadline = a.deadline ? new Date(a.deadline) : null;
+        const bDeadline = b.deadline ? new Date(b.deadline) : null;
+
+        if (aDeadline && bDeadline) return aDeadline - bDeadline;
+        if (aDeadline && !bDeadline) return -1;
+        if (!aDeadline && bDeadline) return 1;
+
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (["completed", "rejected", "archived"].includes(aStatus)) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    // Add display organization and datetime logic
+    const serviceRequestsWithDisplay = serviceRequests.map(service => ({
+      ...service,
+      displayOrganization: service.userId?.userType === 'nonstudent'
+        ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
+        : service.organization,
+      datetime: service.datetime || service.createdAt,
+      specificRequestType: service.specificRequestType || 'Not specified'
+    }));
+
+    res.render('Admin/services', { serviceRequests: serviceRequestsWithDisplay, user: req.user });
+  } catch (err) {
+    console.error('Error loading admin services:', err);
+    res.status(500).send('Error loading services page');
+  }
+});
+
+/**
+ * GET /admin/services/:id
+ * Direct access to specific service request with modal open
+ */
+router.get('/admin/services/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let serviceRequests = await ServiceRequest.find()
+      .populate('userId')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .lean();
+
+    // Status priority for sorting
+    const statusPriority = {
+      "pending": 1,
+      "approved": 2,
+      "for revision": 3,
+      "completed": 4,
+      "rejected": 5,
+      "archived": 6
+    };
+
+    serviceRequests.sort((a, b) => {
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+
+      const aPriority = statusPriority[aStatus] ?? 999;
+      const bPriority = statusPriority[bStatus] ?? 999;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      if (aStatus === "pending") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (aStatus === "approved" || aStatus === "for revision") {
+        const aDeadline = a.deadline ? new Date(a.deadline) : null;
+        const bDeadline = b.deadline ? new Date(b.deadline) : null;
+
+        if (aDeadline && bDeadline) return aDeadline - bDeadline;
+        if (aDeadline && !bDeadline) return -1;
+        if (!aDeadline && bDeadline) return 1;
+
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (["completed", "rejected", "archived"].includes(aStatus)) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+
+      return 0;
+    });
+
+    // Add display organization logic
+    const serviceRequestsWithDisplay = serviceRequests.map(service => ({
+      ...service,
+      displayOrganization: service.userId?.userType === 'nonstudent'
+        ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
+        : service.organization,
+      datetime: service.datetime || service.createdAt,
+      specificRequestType: service.specificRequestType || 'Not specified'
+    }));
+
+    res.render('Admin/services', { serviceRequests: serviceRequestsWithDisplay, user: req.user, openModalId: id });
+  } catch (err) {
+    console.error('Error loading admin services:', err);
+    res.status(500).send('Error loading services page');
+  }
+});
+
+/**
+ * GET /admin/users
+ * Admin view of all users for management
+ */
+router.get('/admin/users', requireAdmin, async (req, res) => {
+  const users = await User.find().lean();
+
+  const usersWithDisplay = users.map(user => ({
+    ...user,
+    displayOrganization: user.userType === 'nonstudent'
+  ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
+  : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
+  }));
+
+  res.render('Admin/users', { users: usersWithDisplay, user: req.user });
+});
+
+/**
+ * GET /admin/all-requests
+ * Combined admin view of all requests from all users
+ */
+router.get('/admin/all-requests', requireAdmin, async (req, res) => {
+  try {
+    // Fetch with proper population and error handling
+    const approvals = await RequestApproval.find()
+      .populate({
+        path: 'userId',
+        select: 'fName lName userType affiliation studentOrganization',
+        options: { strictPopulate: false } // Don't fail if user is missing
+      })
+      .lean();
+
+    const serviceRequests = await ServiceRequest.find()
+      .populate({
+        path: 'userId',
+        select: 'fName lName userType affiliation studentOrganization',
+        options: { strictPopulate: false }
+      })
+      .lean();
+
+    // Process requests and ensure user data is always available
+    const allRequests = [
+      ...approvals.map(r => {
+        // Ensure user data exists
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        } else {
+          userName = 'Unknown User';
+        }
+
+        return {
+          ...r,
+          type: "Request Approval",
+          displayOrganization,
+          userName,
+          datetime: r.datetime || r.createdAt
+        };
+      }),
+      ...serviceRequests.map(r => {
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        } else {
+          userName = 'Unknown User';
+        }
+
+        return {
+          ...r,
+          type: "Service Request",
+          displayOrganization,
+          userName,
+          datetime: r.datetime || r.createdAt
+        };
+      })
+    ];
+
+    // Combined sorting priority
+    const getStatusPriority = (request) => {
+      const status = request.status.toLowerCase();
+      const type = request.type;
+
+      if (status === "pending") return 1;
+
+      if (type === "Request Approval") {
+        const approvalPriority = {
+          "for revision": 2,
+          "approved": 3,
+          "rejected": 4,
+          "archived": 5
+        };
+        return approvalPriority[status] ?? 999;
+      } else {
+        const servicePriority = {
+          "approved": 2,
+          "for revision": 3,
+          "completed": 4,
+          "rejected": 5,
+          "archived": 6
+        };
+        return servicePriority[status] ?? 999;
+      }
+    };
+
+    // Sort combined requests
+    allRequests.sort((a, b) => {
+      const aPriority = getStatusPriority(a);
+      const bPriority = getStatusPriority(b);
+
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+
+      if (aStatus === "pending") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+
+      if (a.type === "Request Approval") {
+        if (aStatus === "for revision") {
+          const aDeadline = a.deadline ? new Date(a.deadline) : null;
+          const bDeadline = b.deadline ? new Date(b.deadline) : null;
+          if (aDeadline && bDeadline) return aDeadline - bDeadline;
+          if (aDeadline && !bDeadline) return -1;
+          if (!aDeadline && bDeadline) return 1;
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        }
+        if (["approved", "rejected", "archived"].includes(aStatus)) {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+      } else {
+        if (aStatus === "approved" || aStatus === "for revision") {
+          const aDeadline = a.deadline ? new Date(a.deadline) : null;
+          const bDeadline = b.deadline ? new Date(b.deadline) : null;
+          if (aDeadline && bDeadline) return aDeadline - bDeadline;
+          if (aDeadline && !bDeadline) return -1;
+          if (!aDeadline && bDeadline) return 1;
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        }
+        if (["completed", "rejected", "archived"].includes(aStatus)) {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+      }
+
+      return 0;
+    });
+
+    res.render('Admin/allrequestsadmin', {
+      allRequests,
+      user: req.user
+    });
+  } catch (err) {
+    console.error('Error loading all admin requests:', err);
+    res.status(500).render('error', { message: 'Failed to load all requests page.' });
+  }
+});
+
+/**
+ * POST /admin/all-requests/update-status
+ * Universal update endpoint for both approval and service requests from all-requests page
+ */
+router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) => {
+  const { requestId, status, assignedUnits, deadline, requestType } = req.body;
+
+  try {
+    if (!requestId || !requestType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request ID and request type are required'
+      });
+    }
+
+    let updateData = {
+      status: status || 'Pending'
+    };
+
+    // Handle assignedUnits - convert empty string to "Not yet assigned"
+    if (assignedUnits !== undefined) {
+      updateData.assignedUnits = assignedUnits || 'Not yet assigned';
+    }
+
+    // Handle deadline for service requests
+    if (requestType === 'Service Request' && deadline) {
+      const deadlineDate = new Date(deadline);
+      if (deadlineDate <= new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Deadline must be in the future'
+        });
+      }
+      updateData.deadline = deadlineDate;
+    }
+
+    let result;
+    let updateTimestamp = new Date();
+
+    if (requestType === 'Request Approval') {
+      result = await RequestApproval.findByIdAndUpdate(requestId, updateData, { new: true });
+    } else if (requestType === 'Service Request') {
+      if (assignedUnits !== undefined && status) {
+        updateData.status = status;
+      }
+      result = await ServiceRequest.findByIdAndUpdate(requestId, updateData, { new: true });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request type'
+      });
+    }
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `${requestType} updated successfully`,
+      updatedRequest: {
+        id: result._id,
+        status: result.status,
+        assignedUnits: result.assignedUnits,
+        deadline: requestType === 'Service Request' && result.deadline
+          ? result.deadline.toLocaleDateString()
+          : null,
+        updatedAt: updateTimestamp
+      }
+    });
+
+  } catch (err) {
+    console.error('Error updating all-requests status:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update request: ' + err.message
+    });
+  }
+});
+
+/**
+ * POST /admin/approval/update-status
+ * Updates approval request status and assigned units
+ */
+router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
+  const { requestId, status, assignedUnits } = req.body;
+
+  try {
+    const update = {
+      status: status || 'Pending',
+      assignedUnits: assignedUnits || 'Not yet assigned'
+    };
+
+    await RequestApproval.findByIdAndUpdate(requestId, update);
+
+    res.json({ success: true, message: 'Approval request updated successfully' });
+  } catch (err) {
+    console.error('Error updating approval status:', err);
+    res.status(500).json({ success: false, message: 'Failed to update approval request.' });
+  }
+});
+
+/**
+ * POST /api/admin/approval/mark-viewed
+ * Marks approval request as viewed by admin
+ */
+router.post('/api/admin/approval/mark-viewed', requireAdmin, async (req, res) => {
+  const { requestId } = req.body;
+
+  try {
+    if (!requestId) {
+      return res.status(400).json({ success: false, message: 'Request ID is required' });
+    }
+
+    const now = new Date();
+    const updatedRequest = await RequestApproval.findByIdAndUpdate(
+      requestId,
+      {
+        viewed: true,
+        viewedAt: now,
+        viewedBy: req.user._id
+      },
+      { new: true }
+    );
+
+    if (!updatedRequest) {
+      return res.status(404).json({ success: false, message: 'Approval request not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Request marked as viewed',
+      viewedAt: now,
+      viewedBy: req.user.fName + ' ' + req.user.lName
+    });
+  } catch (err) {
+    console.error('Error marking approval as viewed:', err);
+    res.status(500).json({ success: false, message: 'Failed to mark request as viewed.' });
+  }
+});
+
+/**
+ * POST /api/admin/service/mark-viewed
+ * Marks service request as viewed by admin
+ */
+router.post('/api/admin/service/mark-viewed', requireAdmin, async (req, res) => {
+  const { requestId } = req.body;
+
+  try {
+    if (!requestId) {
+      return res.status(400).json({ success: false, message: 'Request ID is required' });
+    }
+
+    const now = new Date();
+    const updatedRequest = await ServiceRequest.findByIdAndUpdate(
+      requestId,
+      {
+        viewed: true,
+        viewedAt: now,
+        viewedBy: req.user._id
+      },
+      { new: true }
+    );
+
+    if (!updatedRequest) {
+      return res.status(404).json({ success: false, message: 'Service request not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Request marked as viewed',
+      viewedAt: now,
+      viewedBy: req.user.fName + ' ' + req.user.lName
+    });
+  } catch (err) {
+    console.error('Error marking service as viewed:', err);
+    res.status(500).json({ success: false, message: 'Failed to mark request as viewed.' });
+  }
+});
+
+/**
+ * POST /admin/service/update-status
+ * Updates service request status and assigned units
+ */
+router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
+  const { requestId, status, assignedUnits } = req.body;
+
+  try {
+    if (!requestId) {
+      return res.status(400).json({ success: false, message: 'Request ID is required' });
+    }
+
+    const update = {};
+    if (status) update.status = status;
+    if (assignedUnits !== undefined) update.assignedUnits = assignedUnits || 'Not yet assigned';
+
+    const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true });
+
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    res.json({ success: true, message: 'Service request updated successfully' });
+  } catch (err) {
+    console.error('Error updating service request:', err);
+    res.status(500).json({ success: false, message: 'Failed to update service request: ' + err.message });
+  }
+});
+
+/**
+ * POST /admin/service/update-deadline
+ * Updates service request deadline
+ */
+router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => {
+  const { requestId, deadline } = req.body;
+
+  try {
+    if (!deadline) {
+      return res.status(400).json({ success: false, message: 'Deadline is required' });
+    }
+
+    const deadlineDate = new Date(deadline);
+    if (deadlineDate <= new Date()) {
+      return res.status(400).json({ success: false, message: 'Deadline must be in the future' });
+    }
+
+    await ServiceRequest.findByIdAndUpdate(requestId, { deadline: deadlineDate });
+    res.json({ success: true, message: 'Deadline updated successfully' });
+  } catch (err) {
+    console.error('Error updating deadline:', err);
+    res.status(500).json({ success: false, message: 'Failed to update deadline' });
+  }
+});
+
+/**
+ * POST /admin/user/update
+ * Updates user role (admin/non-admin)
+ */
+router.post('/admin/user/update', requireAdmin, async (req, res) => {
+  try {
+    const { userId, role } = req.body;
+
+    if (!userId || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID and role are required.'
+      });
+    }
+
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role. Must be either "user" or "admin".'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.'
+      });
+    }
+
+    const result = await User.findByIdAndUpdate(
+      userId,
+      { role: role },
+      { new: true, runValidators: false }
+    );
+
+    if (!result) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update user role.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User role updated successfully',
+      user: {
+        id: result._id,
+        name: `${result.fName} ${result.lName}`,
+        role: result.role
+      }
+    });
+
+  } catch (err) {
+    console.error('Error updating user role:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error: Failed to update user role.'
+    });
+  }
+});
+
+/**
+ * GET /admin/debug/orphaned-requests
+ * Debug route to check for orphaned requests
+ */
+router.get('/admin/debug/orphaned-requests', requireAdmin, async (req, res) => {
+  try {
+    console.log('🔍 Checking for orphaned requests...');
+
+    const approvals = await RequestApproval.find().lean();
+    const services = await ServiceRequest.find().lean();
+
+    const orphanedApprovals = [];
+    const orphanedServices = [];
+
+    for (const approval of approvals) {
+      if (!approval.userId) {
+        orphanedApprovals.push(approval);
+        continue;
+      }
+
+      const user = await User.findById(approval.userId);
+      if (!user) {
+        orphanedApprovals.push(approval);
+      }
+    }
+
+    for (const service of services) {
+      if (!service.userId) {
+        orphanedServices.push(service);
+        continue;
+      }
+
+      const user = await User.findById(service.userId);
+      if (!user) {
+        orphanedServices.push(service);
+      }
+    }
+
+    console.log(`Found ${orphanedApprovals.length} orphaned approvals`);
+    console.log(`Found ${orphanedServices.length} orphaned services`);
+
+    res.json({
+      orphanedApprovals: orphanedApprovals.map(r => ({
+        id: r._id,
+        title: r.title,
+        userId: r.userId,
+        createdAt: r.createdAt
+      })),
+      orphanedServices: orphanedServices.map(r => ({
+        id: r._id,
+        title: r.title,
+        userId: r.userId,
+        createdAt: r.createdAt
+      })),
+      totalApprovals: approvals.length,
+      totalServices: services.length
+    });
+  } catch (err) {
+    console.error('Error checking orphaned requests:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/fix/orphaned-requests
+ * Fixes orphaned requests by assigning them to admin user
+ */
+router.post('/admin/fix/orphaned-requests', requireAdmin, async (req, res) => {
+  try {
+    const defaultAdminId = req.user._id;
+
+    const orphanedApprovals = await RequestApproval.find({
+      $or: [
+        { userId: { $exists: false } },
+        { userId: null }
+      ]
+    });
+
+    const orphanedServices = await ServiceRequest.find({
+      $or: [
+        { userId: { $exists: false } },
+        { userId: null }
+      ]
+    });
+
+    let fixedApprovals = 0;
+    let fixedServices = 0;
+
+    for (const approval of orphanedApprovals) {
+      await RequestApproval.findByIdAndUpdate(approval._id, {
+        userId: defaultAdminId
+      });
+      fixedApprovals++;
+    }
+
+    for (const service of orphanedServices) {
+      await ServiceRequest.findByIdAndUpdate(service._id, {
+        userId: defaultAdminId
+      });
+      fixedServices++;
+    }
+
+    console.log(`Fixed ${fixedApprovals} approval requests`);
+    console.log(`Fixed ${fixedServices} service requests`);
+
+    res.json({
+      success: true,
+      fixedApprovals,
+      fixedServices,
+      message: `Successfully fixed ${fixedApprovals + fixedServices} orphaned requests`
+    });
+  } catch (err) {
+    console.error('Error fixing orphaned requests:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /admin/profile/update-popup
+ * Updates admin profile information
+ */
+router.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
+  if (!req.session.userId) return res.status(401).send('Unauthorized');
+
+  const { userId, fName, mName, lName, email, username, phoneNumber, studentOrganization, cys, affiliation } = req.body;
+
+  if (!userId) return res.status(400).send('Missing user ID');
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send('User not found');
+
+    const updateData = { fName, mName, lName, email, username, phoneNumber };
+
+    if (user.userType === 'student') {
+      if (typeof studentOrganization === 'string') {
+        updateData.studentOrganization = studentOrganization.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (Array.isArray(studentOrganization)) {
+        updateData.studentOrganization = studentOrganization;
+      } else {
+        updateData.studentOrganization = [];
+      }
+      updateData.cys = cys;
+    } else {
+      if (typeof affiliation === 'string') {
+        updateData.affiliation = affiliation.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (Array.isArray(affiliation)) {
+        updateData.affiliation = affiliation;
+      } else {
+        updateData.affiliation = [];
+      }
+    }
+
+    await User.findByIdAndUpdate(userId, updateData);
+
+    res.status(200).send('Profile updated');
+  } catch (err) {
+    console.error('Admin profile update error:', err);
+    res.status(500).send('Update failed: ' + err.message);
+  }
+});
+
+/**
+ * POST /admin/profile/change-password-popup
+ * Updates admin password
+ */
+router.post('/admin/profile/change-password-popup', async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!req.session.userId) return res.status(401).send('Unauthorized');
+  try {
+    const user = await User.findById(req.session.userId);
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).send('Incorrect old password');
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.status(200).send('Password updated');
+  } catch (err) {
+    console.error('Popup password update error:', err);
+    res.status(500).send('Password change failed');
+  }
+});
+
+/**
+ * POST /profileadmin/upload-picture
+ * Uploads admin profile picture
+ */
+router.post('/profileadmin/upload-picture', requireAdmin, upload.single('profilePicture'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).send('No file uploaded.');
+
+    const user = await User.findById(req.session.userId).lean();
+    if (!user) return res.status(404).send('User not found.');
+
+    if (user.profilePicture) {
+      const oldPath = path.join(UPLOADS_DIR, user.profilePicture);
+      if (fs.existsSync(oldPath)) {
+        try { fs.unlinkSync(oldPath); } catch (e) { console.warn('Could not delete old file', e); }
+      }
+    }
+
+    await User.findByIdAndUpdate(req.session.userId,
+      { $set: { profilePicture: req.file.filename } },
+      { runValidators: false }
+    );
+
+    res.status(200).send('Profile picture updated.');
+  } catch (err) {
+    console.error('Error uploading admin picture:', err);
+    res.status(500).send('Error uploading picture');
+  }
+});
+
+/**
+ * POST /profileadmin/delete-picture
+ * Deletes admin profile picture
+ */
+router.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId).lean();
+    if (!user) return res.status(404).send('User not found.');
+
+    if (user.profilePicture) {
+      const oldPath = path.join(UPLOADS_DIR, user.profilePicture);
+      if (fs.existsSync(oldPath)) {
+        try { fs.unlinkSync(oldPath); } catch (e) { console.warn('Could not delete file', e); }
+      }
+
+      await User.findByIdAndUpdate(req.session.userId, { $unset: { profilePicture: "" } }, { runValidators: false });
+    }
+
+    res.status(200).send('Profile picture deleted.');
+  } catch (err) {
+    console.error('Error deleting admin picture:', err);
+    res.status(500).send('Error deleting picture');
+  }
+});
+
+module.exports = router;

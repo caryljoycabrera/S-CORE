@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S-CORE Admin Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- External Stylesheet & JavaScript Link -->
+  <!-- ==========================================
+       /** EXTERNAL STYLESHEET & JAVASCRIPT LINKS
+        ** ==========================================
+        ** Admin dashboard styles are now managed in an external CSS file
+        ** JavaScript functionality is also handled by an
+</head>
+<body>
+  <!-- ==========================================
+       HEADER SECTION
+       ========================================== -->
+  <div class="student-side">
+    <div class="overlap">
+      <div class="group">
+        <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+      </div>
+      <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+      <span class="text-wrapper-2">Welcome, Admin <%= name %>!</span>
+
+      <div class="dropdown-wrapper">
+        <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+          <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+          <div class="user">
+            <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+          </div>
+        </div>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a href="/admin/profile">My Profile</a>
+          <a href="/logout">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         MAIN CONTENT AREA
+         ========================================== -->
+    <div class="div">
+      <!-- Admin Action Cards -->
+      <div class="action-cards-container">
+        <div class="action-card" onclick="location.href='/admin/all-requests'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Track All Requests</h3>
+          <p class="card-subtitle">Manage all requests</p>
+          <% if (stats.pendingServices > 0) { %>
+            <div style="position: absolute; top: 1rem; right: 4rem; background: var(--danger); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">
+              <%= stats.pendingServices %>
+            </div>
+          <% } %>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/approvals'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/File.png" alt="Manage Approvals" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Manage Approvals</h3>
+          <p class="card-subtitle">Review and process approval requests</p>
+          <% if (stats.pendingApprovals > 0) { %>
+            <div style="position: absolute; top: 1rem; right: 4rem; background: var(--danger); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">
+              <%= stats.pendingApprovals %>
+            </div>
+          <% } %>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/services'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Repair.png" alt="Manage Services" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Manage Services</h3>
+          <p class="card-subtitle">Handle service requests</p>
+          <% if (stats.pendingServices > 0) { %>
+            <div style="position: absolute; top: 1rem; right: 4rem; background: var(--danger); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600;">
+              <%= stats.pendingServices %>
+            </div>
+          <% } %>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/users'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/user.png" alt="User Accounts" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">User Accounts</h3>
+          <p class="card-subtitle">Manage user accounts</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <!-- Enhanced Calendar with deadlines and maximize/minimize functionality -->
+        <div class="calendar-standalone">
+          <!-- Fixed Calendar Header -->
+          <div class="calendar-header">
+            <div style="display: flex; align-items: center;">
+              <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <h3 class="calendar-title">Calendar</h3>
+            </div>
+            <div class="calendar-controls">
+              <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">
+                ⛶
+              </button>
+              <div class="calendar-month-controls">
+                <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">
+                  ❮
+                </button>
+                <span class="calendar-month-year" id="calendar-month-year"></span>
+                <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">
+                  ❯
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compact Calendar Legend -->
+          <div class="calendar-legend">
+            <div class="legend-item">
+              <div class="legend-dot approval"></div>
+              <span class="legend-text">Approvals</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot service"></div>
+              <span class="legend-text">Services</span>
+            </div>
+          </div>
+
+          <!-- Scrollable Calendar Content -->
+          <div class="calendar-content">
+            <div id="calendar-standalone" class="calendar-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Request Guidelines -->
+      <div class="guidelines-container">
+        <div class="guidelines-header" onclick="toggleGuidelines()" style="cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h4 class="guidelines-title">Request Guidelines</h4>
+            <span class="guidelines-toggle" id="guidelinesToggle">▼</span>
+          </div>
+        </div>
+
+        <div class="guidelines-content" id="guidelinesContent" style="display: none;">
+          <div class="guidelines-section">
+            <h5 class="section-title">
+              <span class="section-icon">
+                <svg width="20" height="20" fill="none" stroke="#2e7d32" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <line x1="10" y1="9" x2="8" y2="9"></line>
+                </svg>
+              </span>
+              Request Approvals
+            </h5>
+            <ul class="guidelines-list">
+              <li>All requests must be submitted at least <strong>three (3) to five (5) working days</strong> prior to the required date.</li>
+              <li>This lead time allows sufficient review, revisions, and endorsement.</li>
+            </ul>
+          </div>
+
+          <div class="guidelines-section">
+            <h5 class="section-title">
+              <span class="section-icon">
+                <svg width="20" height="20" fill="none" stroke="#2e7d32" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M22.7 19.3l-6-6a7 7 0 1 1 2.1-2.1l6 6a1.5 1.5 0 1 1-2.1 2.1zM8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+                </svg>
+              </span>
+              Service Requests
+            </h5>
+            <ul class="guidelines-list">
+              <li>All service requests must be submitted at least <strong>seven (7) to ten (10) working days</strong> prior to the required date.</li>
+              <li>This gives the team ample time to assess the request, assign resources, and schedule accordingly.</li>
+              <li>Requests involving large-scale projects or specialized requirements may require a longer lead time with a minimum of <strong>fourteen (14) working days</strong>, subject to assessment by the concerned unit/s and is case-to-case basis.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Status Section -->
+      <div class="activity-section">
+        <div class="section-header">
+          <h2 class="section-title">System Status</h2>
+        </div>
+
+        <div class="activity-grid">
+          <div class="activity-card approved">
+            <div class="activity-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h4>System Online</h4>
+              <p>All services running normally</p>
+              <span class="activity-time">Active</span>
+            </div>
+            <div class="status-badge approved">Online</div>
+          </div>
+
+          <div class="activity-card pending">
+            <div class="activity-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h4>Pending Reviews</h4>
+              <p><%= stats.pendingApprovals + stats.pendingServices %> items need attention</p>
+              <span class="activity-time">Requires action</span>
+            </div>
+            <div class="status-badge pending">Pending</div>
+          </div>
+
+          <div class="activity-card approved">
+            <div class="activity-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M16 21V5A2 2 0 0 0 14 3H10A2 2 0 0 0 8 5V21L12 19L16 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h4>Database</h4>
+              <p>MongoDB connection stable</p>
+              <span class="activity-time">Connected</span>
+            </div>
+            <div class="status-badge approved">Healthy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="stats-section">
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.totalUsers || 0 %></div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.totalApprovals || 0 %></div>
+          <div class="stat-label">Total Approvals</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.totalServices || 0 %></div>
+          <div class="stat-label">Service Requests</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.pendingApprovals || 0 %></div>
+          <div class="stat-label">Pending Approvals</div>
+        </div>
+        <div class="stats-card">
+          <div class="stat-number"><%= stats.pendingServices || 0%></div>
+          <div class="stat-label">Pending Services</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Modal -->
+  <div class="calendar-modal" id="calendar-modal">
+    <div class="calendar-modal-content">
+      <!-- Modal Calendar Header -->
+      <div class="calendar-header">
+        <div style="display: flex; align-items: center;">
+          <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h3 class="calendar-title">Calendar</h3>
+        </div>
+        <div class="calendar-controls">
+          <button class="calendar-maximize-btn" id="calendar-minimize" aria-label="Minimize Calendar" title="Minimize Calendar">
+            ✕
+          </button>
+          <div class="calendar-month-controls">
+            <button class="calendar-nav-btn" id="calendar-modal-prev-month" aria-label="Previous Month" title="Previous Month">
+              ❮
+            </button>
+            <span class="calendar-month-year" id="calendar-modal-month-year"></span>
+            <button class="calendar-nav-btn" id="calendar-modal-next-month" aria-label="Next Month" title="Next Month">
+              ❯
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Calendar Legend -->
+      <div class="calendar-legend">
+        <div class="legend-item">
+          <div class="legend-dot approval"></div>
+          <span class="legend-text">Approval Request Deadlines</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot service"></div>
+          <span class="legend-text">Service Request Deadlines</span>
+        </div>
+      </div>
+
+      <!-- Modal Calendar Content -->
+      <div class="calendar-content">
+        <div id="calendar-modal-grid" class="calendar-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deadline Details Modal -->
+  <div class="deadline-details-modal" id="deadline-details-modal">
+    <div class="deadline-details-content">
+      <!-- Deadline Details Header -->
+      <div class="deadline-details-header">
+        <div>
+          <h2 class="deadline-details-title">Deadlines</h2>
+          <p class="deadline-details-date" id="deadline-details-date"></p>
+        </div>
+      </div>
+
+      <!-- Deadline Details Controls -->
+      <div class="deadline-details-controls">
+        <button class="deadline-control-btn" id="back-to-calendar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15,18 9,12 15,6"></polyline>
+          </svg>
+          Back to Calendar
+        </button>
+        <button class="deadline-control-btn close-btn" id="close-deadline-details">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Close
+        </button>
+      </div>
+
+      <!-- Deadline List -->
+      <div class="deadline-list" id="deadline-list">
+        <!-- Deadline items will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       /** EXTERNAL STYLESHEET & JAVASCRIPT LINKS
+        ** ==========================================
+        ** Admin dashboard styles are now managed in an external CSS file
+        ** JavaScript functionality is also handled by an external JS file
+        ** This improves code organization and maintainability
+        * ========================================== */
+  -->
+  <!-- Admin Page Specific Stylesheet -->
+  <link rel="stylesheet" href="/stylesheets/ejs/adminpage.css" />
+
+  <!-- Admin Page Specific JavaScript -->
+  <script src="/javascripts/ejs/adminpage.js"></script>
+</body>
+</html>

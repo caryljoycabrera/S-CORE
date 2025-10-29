@@ -664,12 +664,40 @@
 .request-row {
   cursor: pointer;
   transition: all 0.2s ease;
+  background-color: #ffffff;
 }
 
 .request-row:hover {
   background-color: #f8fafc;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Unread request indicator */
+.request-row.unread {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(90deg, #eff6ff 0%, #ffffff 20px);
+  position: relative;
+}
+
+/* Visual indicator dot for unread requests */
+.request-row.unread::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  animation: unreadPulse 2s ease-in-out infinite;
+}
+
+@keyframes unreadPulse {
+  0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+  50% { opacity: 0.7; transform: translateY(-50%) scale(1.2); }
 }
 
 /* Enhanced Admin Controls Form */
@@ -3436,15 +3464,15 @@ window.openImagePreview = function(imageUrl, fileName) {
     rows.forEach((row, index) => {
       row.style.cursor = 'pointer';
       
-      row.addEventListener('click', function(e) {
+      row.addEventListener('click', async function(e) {
         // Prevent click on badges and buttons
-        if (e.target.closest('.status-badge') || 
-            e.target.closest('.type-badge') || 
+        if (e.target.closest('.status-badge') ||
+            e.target.closest('.type-badge') ||
             e.target.closest('button') ||
             e.target.closest('a')) {
           return;
         }
-        
+
         // Extract data from row
         const rowData = {
           id: row.dataset.id,
@@ -3465,11 +3493,13 @@ window.openImagePreview = function(imageUrl, fileName) {
         };
 
          console.log('Row clicked with data:', rowData);
-        
+
         // Set current request data
         currentRequestId = rowData.id;
         currentRequestType = rowData.type;
-        
+
+
+
         // Populate modal and open
         populateModalData(rowData);
         detailModal.style.display = 'flex';
@@ -3585,6 +3615,34 @@ window.openImagePreview = function(imageUrl, fileName) {
     }
   }
   
+  // Function to mark request as viewed
+  async function markRequestAsViewed(requestId, requestType) {
+    try {
+      const endpoint = '/api/admin/approval/mark-viewed';
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requestId: requestId })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        console.log(`Request ${requestId} marked as viewed by admin`);
+        return true;
+      } else {
+        console.error('Failed to mark request as viewed:', result.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error marking request as viewed:', error);
+      return false;
+    }
+  }
+
   // Initialize everything
   try {
     initializeModalHandlers();

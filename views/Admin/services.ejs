@@ -3542,13 +3542,13 @@ window.openImagePreview = function(imageUrl, fileName) {
       
       row.addEventListener('click', function(e) {
         // Prevent click on badges and buttons
-        if (e.target.closest('.status-badge') || 
-            e.target.closest('.type-badge') || 
+        if (e.target.closest('.status-badge') ||
+            e.target.closest('.type-badge') ||
             e.target.closest('button') ||
             e.target.closest('a')) {
           return;
         }
-        
+
         // Extract data from row
         const rowData = {
           id: row.dataset.id,
@@ -3566,11 +3566,11 @@ window.openImagePreview = function(imageUrl, fileName) {
           formattedDeadline: row.dataset.formattedDeadline,
           student: row.dataset.student
         };
-        
+
         // Set current request data
         currentRequestId = rowData.id;
         currentRequestType = rowData.type;
-        
+
         // Populate modal and open
         populateModalData(rowData);
         detailModal.style.display = 'flex';
@@ -3698,6 +3698,34 @@ window.openImagePreview = function(imageUrl, fileName) {
     }
   }
   
+  // Function to mark request as viewed
+  async function markRequestAsViewed(requestId, requestType) {
+    try {
+      const endpoint = '/api/admin/service/mark-viewed';
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requestId: requestId })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        console.log(`Service request ${requestId} marked as viewed by admin`);
+        return true;
+      } else {
+        console.error('Failed to mark service request as viewed:', result.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error marking service request as viewed:', error);
+      return false;
+    }
+  }
+
   // Initialize everything
   try {
     initializeModalHandlers();
