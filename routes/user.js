@@ -777,6 +777,85 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
 });
 
 /**
+ * POST /add-files/:requestId
+ * Adds additional files to existing approval requests (for revision requests)
+ */
+router.post('/add-files/:requestId', upload.array('additionalFiles', 20), async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const { requestId } = req.params;
+  console.log('Adding files to request ID:', requestId);
+
+  try {
+    // Find the request and ensure it belongs to the user
+    const request = await RequestApproval.findOne({
+      _id: requestId,
+      userId: req.session.userId
+    });
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found or you do not have permission to modify it'
+      });
+    }
+
+    // Ensure the request is in "for revision" status
+    if (request.status?.toLowerCase() !== 'for revision') {
+      return res.status(400).json({
+        success: false,
+        message: 'Files can only be added to requests that are marked for revision'
+      });
+    }
+
+    // Check if files were uploaded
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload at least one additional file'
+      });
+    }
+
+    const newFilePaths = req.files.map(file => file.filename);
+    console.log('Additional file paths:', newFilePaths);
+
+    // Append new files to existing files array
+    const updatedFiles = [...(request.files || []), ...newFilePaths];
+    request.files = updatedFiles;
+
+    // Also update the primary 'file' field to the first file if it's null
+    if (!request.file && newFilePaths.length > 0) {
+      request.file = newFilePaths[0];
+    }
+
+    // Update the request's updatedAt timestamp and mark additional file upload as allowed
+    request.updatedAt = new Date();
+    request.allowAdditionalFileUpload = false; // No more additional files allowed after upload
+
+    await request.save();
+
+    console.log('Successfully added files to request:', requestId);
+    console.log('Updated files array:', updatedFiles);
+
+    res.json({
+      success: true,
+      message: `Successfully added ${newFilePaths.length} additional file(s) to your request`,
+      newFiles: newFilePaths,
+      totalFiles: updatedFiles.length
+    });
+
+  } catch (error) {
+    console.error('Error adding files to request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add files: ' + error.message
+    });
+  }
+});
+
+/**
  * POST /submit-service-request
  * Handles submission of service requests with file uploads
  */

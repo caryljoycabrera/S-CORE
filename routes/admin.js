@@ -71,7 +71,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
     let approvals = await RequestApproval.find()
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
 
     // Add display organization logic
@@ -179,7 +179,7 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
   try {
     let serviceRequests = await ServiceRequest.find()
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
 
     // Status priority for sorting
@@ -249,7 +249,7 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     let serviceRequests = await ServiceRequest.find()
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
 
     // Status priority for sorting
@@ -516,6 +516,10 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
     let updateTimestamp = new Date();
 
     if (requestType === 'Request Approval') {
+      // Set allowAdditionalFileUpload to true when status is set to "For revision"
+      if (status?.toLowerCase() === 'for revision') {
+        updateData.allowAdditionalFileUpload = true;
+      }
       result = await RequestApproval.findByIdAndUpdate(requestId, updateData, { new: true });
     } else if (requestType === 'Service Request') {
       if (assignedUnits !== undefined && status) {
@@ -571,6 +575,11 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
       status: status || 'Pending',
       assignedUnits: assignedUnits || 'Not yet assigned'
     };
+
+    // Set allowAdditionalFileUpload to true when status is set to "For revision"
+    if (status?.toLowerCase() === 'for revision') {
+      update.allowAdditionalFileUpload = true;
+    }
 
     await RequestApproval.findByIdAndUpdate(requestId, update);
 
@@ -1010,6 +1019,73 @@ router.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error deleting admin picture:', err);
     res.status(500).send('Error deleting picture');
+  }
+});
+
+/**
+ * POST /admin/toggle-additional-file-upload
+ * Toggles the allowAdditionalFileUpload field for a request
+ */
+router.post('/admin/toggle-additional-file-upload', requireAdmin, async (req, res) => {
+  const { requestId, requestType, allowAdditionalFileUpload } = req.body;
+
+  try {
+    if (!requestId || !requestType || allowAdditionalFileUpload === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request ID, request type, and allowAdditionalFileUpload value are required'
+      });
+    }
+
+    let Model;
+
+    if (requestType === 'Request Approval') {
+      Model = RequestApproval;
+    } else if (requestType === 'Service Request') {
+      Model = ServiceRequest;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request type'
+      });
+    }
+
+    // Get current request (for validation)
+    const currentRequest = await Model.findById(requestId);
+    if (!currentRequest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    // Set to the provided value (true or false based on checkbox state)
+    const result = await Model.findByIdAndUpdate(
+      requestId,
+      { allowAdditionalFileUpload: allowAdditionalFileUpload === 'true' || allowAdditionalFileUpload === true },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    const actionText = result.allowAdditionalFileUpload ? 'granted' : 'revoked';
+    res.json({
+      success: true,
+      message: `Additional file upload permission ${actionText} successfully`,
+      allowAdditionalFileUpload: result.allowAdditionalFileUpload
+    });
+
+  } catch (err) {
+    console.error('Error toggling additional file upload:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle additional file upload permission'
+    });
   }
 });
 

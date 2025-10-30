@@ -1356,9 +1356,10 @@ option:hover {
     data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
     data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
     data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
-    data-description="<%= request.description %>" 
+    data-description="<%= request.description %>"
     data-file="<%= request.file ? request.file : '' %>"
-    data-files="<%= request.files ? request.files.join(',') : '' %>">
+    data-files="<%= request.files ? request.files.join(',') : '' %>"
+    data-allowadditionalfileupload="<%= request.allowAdditionalFileUpload ? 'true' : 'false' %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
                   <td><%= request.organization %></td>
@@ -1393,7 +1394,7 @@ option:hover {
         <span class="close" id="closeModalBtn">&times;</span>
       </header>
       <div class="modal-body">
-        <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" id="requestForm">
+        <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" id="requestForm" onsubmit="return handleFormSubmit(event)">
           <!-- Row 1: Title and Organization -->
           <div class="form-group">
             <label for="projectTitle">Project/Event Title:</label>
@@ -1672,6 +1673,79 @@ option:hover {
 
           <!-- Files Section -->
           <div id="file-preview"></div>
+
+          <!-- Additional Files Upload Section (For Revision requests only) -->
+          <div id="additional-files-section" style="display: none;">
+            <div class="details-section">
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Add Additional Files for Revision
+              </h3>
+              <div style="background: #fef3c7; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #f59e0b; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #92400e; font-size: 0.95rem; font-weight: 600;">Important Notice:</h4>
+                <p style="margin: 0; color: #92400e; font-size: 0.875rem; line-height: 1.5;">
+                  Your request has been marked for revision. You can upload additional files to support your revisions. These files will be added to your existing attachments and will not replace your original files.
+                </p>
+              </div>
+
+              <div id="additional-file-upload-group" style="margin-bottom: 1.5rem;">
+                <div class="file-upload-group">
+                  <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <p class="upload-text">Upload Additional Files for Revision</p>
+                  <p class="upload-subtext">or click to browse from your device</p>
+                  <input type="file" id="additional-files-upload" name="additionalFiles" class="file-input-hidden" multiple required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" />
+                  <button type="button" class="browse-file-btn" onclick="event.stopPropagation(); document.getElementById('additional-files-upload').click()">
+                    <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                    </svg>
+                    Choose Additional Files
+                  </button>
+                </div>
+
+                <!-- Additional File Management Section -->
+                <div class="file-management" id="additional-file-management" style="display: none;">
+                  <div class="file-actions">
+                    <span id="additional-files-count">0 additional files selected</span>
+                    <button type="button" class="clear-all-btn" id="additional-clear-all-btn" onclick="clearAllAdditionalFiles()">
+                      <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="6" width="18" height="14" rx="2"/>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <line x1="1" y1="6" x2="23" y2="6"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                      </svg>
+                      Clear All Additional Files
+                    </button>
+                  </div>
+
+                  <!-- Selected Additional Files Container -->
+                  <div class="selected-files-container" id="additional-selected-files">
+                    <!-- Additional files will be added here dynamically -->
+                  </div>
+
+                  <div class="files-summary" id="additional-files-summary">
+                    Total additional size: 0 MB
+                  </div>
+                </div>
+              </div>
+
+              <div style="text-align: center;">
+                <button type="button" class="download-btn-enhanced" style="background: #10b981; color: white;" onclick="submitAdditionalFiles()">
+                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                  </svg>
+                  Upload Additional Files
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- Chat Section -->
           <div class="chat-section" id="chatButtonSection" style="display: none;">
@@ -1991,6 +2065,7 @@ option:hover {
 
   // Multiple file upload variables
   let selectedApprovalFiles = [];
+  let selectedAdditionalFiles = []; // Additional files for revision requests
   const maxFileSize = 10 * 1024 * 1024; // 10MB per file
   let currentConversationId = null;
 
@@ -2017,41 +2092,7 @@ option:hover {
       }
     }
 
-    const form = document.querySelector('form');
-    
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData();
-        
-        // Add all form fields
-        const fields = form.elements;
-        for (let field of fields) {
-            if (field.name) {
-                formData.append(field.name, field.value);
-            }
-        }
-
-        // Explicitly add specific request type
-        const specificRequestSelect = document.getElementById('specificRequestType');
-        const specificRequestValue = specificRequestSelect.value;
-        formData.append('specificRequestType', specificRequestValue);
-
-        try {
-            const response = await fetch('/submit-request', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                window.location.href = '/dashboard';
-            } else {
-                alert('Submission failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    });
+    // Removed old modal form submit handler to avoid conflicts with direct submission
   });
 
   // Enhanced submission modal controls
@@ -2064,12 +2105,12 @@ option:hover {
   // Update the Proceed button to actually submit
   const proceedSubmissionBtn = document.getElementById('proceedSubmissionBtn');
   if (proceedSubmissionBtn) {
-  proceedSubmissionBtn.onclick = () => {
-    if (submissionModal) submissionModal.style.display = 'none';
-    console.log('User confirmed submission. Proceeding with fetch...');
-    submitFormData();
-  };
-}
+    proceedSubmissionBtn.onclick = () => {
+      if (submissionModal) submissionModal.style.display = 'none';
+      console.log('User confirmed submission. Proceeding with fetch...');
+      submitFormDataDirect(); // Use the new direct submission function
+    };
+  }
 // Function to handle form submission via Fetch
 async function submitFormData() {
   if (!approvalForm) {
@@ -2087,8 +2128,32 @@ async function submitFormData() {
   }
 
   try {
-    const formData = new FormData(approvalForm);
-    
+    const formData = new FormData();
+
+    // Add all form fields
+    const fields = approvalForm.elements;
+    for (let field of fields) {
+      if (field.name && field.name !== 'upload') { // Skip file input, we'll handle it separately
+        formData.append(field.name, field.value);
+      }
+    }
+
+    // Explicitly add selected files (don't rely on the input field being updated)
+    if (selectedApprovalFiles && selectedApprovalFiles.length > 0) {
+      console.log('selectedApprovalFiles before FormData:', selectedApprovalFiles);
+      selectedApprovalFiles.forEach((file, index) => {
+        console.log('File details:', file, typeof file, file instanceof File, file.name, file.size, file.type);
+      });
+      console.log('Adding', selectedApprovalFiles.length, 'files to FormData:');
+      selectedApprovalFiles.forEach((file, index) => {
+        console.log(`File ${index}: ${file.name} (${file.size} bytes, ${file.type})`);
+        formData.append('upload', file);
+      });
+      console.log('FormData after adding files:', formData);
+    } else {
+      console.log('No files in selectedApprovalFiles array');
+    }
+
     const response = await fetch('/submit-request-approval', {
       method: 'POST',
       body: formData
@@ -2407,13 +2472,129 @@ async function submitFormData() {
     }
   }
 
+  // Form submission handler with confirmation modal
+  function handleFormSubmit(event) {
+    event.preventDefault(); // Always prevent default
+    console.log('Form submit intercepted for validation and confirmation.');
+
+    // Validate files
+    if (selectedApprovalFiles.length === 0) {
+      alert('Please upload at least one file. Files are required for approval requests.');
+      return false;
+    }
+
+    console.log('Validation passed. Showing confirmation modal.');
+
+    // Show confirmation modal
+    const modal = document.getElementById('submissionConfirmationModal');
+    if (modal) {
+      modal.style.display = 'flex';
+    } else {
+      console.error('Submission confirmation modal not found!');
+      alert('Modal error. Please refresh and try again.');
+    }
+
+    return false;
+  }
+
+  // Direct submission function without modal
+  function submitFormDataDirect() {
+    const form = document.getElementById('requestForm');
+    if (!form) {
+      console.error("Cannot submit, form not found.");
+      alert("An error occurred. Could not find the form.");
+      return;
+    }
+
+    // Add a loading indicator
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton ? submitButton.innerHTML : 'Submit Request';
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '⏳ Submitting...';
+    }
+
+    try {
+      const formData = new FormData();
+
+      // Add all form fields
+      const fields = form.elements;
+      for (let field of fields) {
+        if (field.name && field.type !== 'file') { // Skip file inputs, we'll handle them separately
+          formData.append(field.name, field.value);
+        }
+      }
+
+      console.log('selectedApprovalFiles before FormData:', selectedApprovalFiles);
+      selectedApprovalFiles.forEach((file, index) => {
+        console.log('File details:', file, typeof file, file instanceof File, file.name, file.size, file.type);
+      });
+
+      // Explicitly add selected files (don't rely on file input being updated)
+      if (selectedApprovalFiles && selectedApprovalFiles.length > 0) {
+        console.log('Adding', selectedApprovalFiles.length, 'files to FormData:');
+        selectedApprovalFiles.forEach((file, index) => {
+          console.log(`File ${index}: ${file.name} (${file.size} bytes, ${file.type})`);
+          formData.append('upload', file);
+        });
+        console.log('FormData after adding files:', formData);
+      }
+
+      console.log('Submitting to server...');
+
+      fetch('/submit-request-approval', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+      })
+      .then(result => {
+        console.log('Server response:', result);
+
+        if (result.success) {
+          console.log('Submission successful:', result.message);
+          window.location.href = result.redirectUrl || '/request-approvals?submitted=true';
+        } else {
+          console.error('Submission failed on server:', result.message);
+          alert(result.message || 'Submission failed. Please try again.');
+
+          // Re-enable submit button
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Submission error (fetch failed):', error);
+        alert('Submission failed due to a network error. Please try again.');
+
+        // Re-enable submit button
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalButtonText;
+        }
+      });
+    } catch (error) {
+      console.error('Error preparing FormData:', error);
+      alert('Error preparing submission data. Please try again.');
+
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
+    }
+  }
+
   // Filter event listeners
   const titleFilter = document.getElementById('titleFilter');
   if (titleFilter) titleFilter.addEventListener('input', filterRequests);
-  
+
   const dateFromFilter = document.getElementById('dateFromFilter');
   if (dateFromFilter) dateFromFilter.addEventListener('change', filterRequests);
-  
+
   const dateToFilter = document.getElementById('dateToFilter');
   if (dateToFilter) dateToFilter.addEventListener('change', filterRequests);
 
@@ -2440,8 +2621,10 @@ async function submitFormData() {
   // Enhanced row click handler with improved modal population
 document.querySelectorAll('.request-row').forEach(row => {
   row.addEventListener('click', (e) => {
-    // ...existing code...
-    
+    // Reset additional files when opening a new request
+    selectedAdditionalFiles = [];
+    updateAdditionalFileDisplay();
+
     // Get all detail elements
     const detailTitle = document.getElementById("detailTitle");
     const detailOrganization = document.getElementById("detailOrganization");
@@ -2450,41 +2633,53 @@ document.querySelectorAll('.request-row').forEach(row => {
     const detailStatusBadge = document.getElementById("detailStatusBadge");
     const detailUnits = document.getElementById("detailUnits");
     const detailDatetime = document.getElementById("detailDatetime");
-    const detailSpecificType = document.getElementById("detailSpecificType"); // ADD THIS LINE
-    
+    const detailSpecificType = document.getElementById("detailSpecificType");
+
     // Populate fields
     if (detailTitle) detailTitle.innerText = row.dataset.title || '';
     if (detailOrganization) detailOrganization.innerText = row.dataset.organization || '';
     if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
     if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';
     if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
-    if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified'; // ADD THIS LINE;
+    if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified';
 
       // Enhanced status badge
       if (detailStatus && detailStatusBadge) {
         const status = row.dataset.status || '';
         detailStatus.innerText = status;
         detailStatusBadge.className = `status-badge-large ${status.toLowerCase()}`;
+
+        // Show additional files section only for "for revision" status where additional file upload is allowed
+        const additionalFilesSection = document.getElementById('additional-files-section');
+        const allowAdditionalFileUpload = row.dataset.allowadditionalfileupload === 'true';
+
+        if (additionalFilesSection) {
+          if (status.toLowerCase() === 'for revision' && allowAdditionalFileUpload) {
+            additionalFilesSection.style.display = 'block';
+          } else {
+            additionalFilesSection.style.display = 'none';
+          }
+        }
       }
 
       // Enhanced file preview
       const file = row.dataset.file;
       const filesData = row.dataset.files;
       const previewContainer = document.getElementById('file-preview');
-      
+
       if (previewContainer) {
         previewContainer.innerHTML = '';
-        
+
         let allFiles = [];
         if (filesData && filesData.trim() !== '') {
           allFiles = filesData.split(',').map(f => f.trim()).filter(Boolean);
         } else if (file && file.trim() !== '') {
           allFiles = [file.trim()];
         }
-        
+
         createEnhancedFilePreview(allFiles, previewContainer);
       }
-      
+
       // Chat functionality
       currentConversationId = row.dataset.id;
       const chatButtonSection = document.getElementById("chatButtonSection");
@@ -2496,7 +2691,7 @@ document.querySelectorAll('.request-row').forEach(row => {
           chatButtonSection.style.display = 'none';
         }
       }
-      
+
       if (detailModal) detailModal.style.display = 'flex';
     });
   });
@@ -2534,38 +2729,39 @@ if (approvalForm) {
 
     // Validate required fields
     if (!projectTitle || !projectTitle.value.trim()) {
-      showNotification('Please enter a project title.', 'error');
+      alert('Please enter a project title.');
       projectTitle.focus();
       return;
     }
 
     if (!description || !description.value.trim()) {
-      showNotification('Please enter a description.', 'error');
+      alert('Please enter a description.');
       description.focus();
       return;
     }
 
     // Validate required files
-    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-      showNotification('Please upload at least one file. Files are required for approval requests.', 'error');
+    if (selectedApprovalFiles.length === 0) {
+      alert('Please upload at least one file. Files are required for approval requests.');
+      console.log('Validation failed: No files selected');
       return;
     }
 
     // Validate specific request type
     if (!specificRequestType || !specificRequestType.value) {
-      showNotification('Please select a specific request type.', 'error');
+      alert('Please select a specific request type.');
       specificRequestType.focus();
       return;
     }
 
     console.log('Validation passed. Showing confirmation modal.');
-    
+
     // Show confirmation modal
     if (submissionModal) {
       submissionModal.style.display = 'flex';
     } else {
       console.error('Submission confirmation modal not found!');
-      showNotification('Modal error. Please refresh and try again.', 'error');
+      alert('Modal error. Please refresh and try again.');
     }
   });
 } else {
@@ -2575,6 +2771,7 @@ if (approvalForm) {
   
   // Handle file selection
   function handleApprovalFileSelection(files) {
+    console.log('handleApprovalFileSelection called with:', files.length, 'files');
     let validFiles = [];
     let errors = [];
 
@@ -3054,6 +3251,35 @@ if (approvalForm) {
         handleApprovalFileSelection(files);
       });
     }
+
+    // Additional file upload setup (for revision requests)
+    const additionalFileInput = document.getElementById('additional-files-upload');
+    const additionalUploadGroup = document.getElementById('additional-file-upload-group');
+
+    if (additionalFileInput && additionalUploadGroup) {
+      additionalUploadGroup.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        additionalUploadGroup.classList.add('dragover');
+      });
+
+      additionalUploadGroup.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        additionalUploadGroup.classList.remove('dragover');
+      });
+
+      additionalUploadGroup.addEventListener('drop', (e) => {
+        e.preventDefault();
+        additionalUploadGroup.classList.remove('dragover');
+
+        const files = Array.from(e.dataTransfer.files);
+        handleAdditionalFileSelection(files);
+      });
+
+      additionalFileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        handleAdditionalFileSelection(files);
+      });
+    }
   });
 
   // Add image preview modal function
@@ -3133,10 +3359,312 @@ if (approvalForm) {
     document.body.style.overflow = 'hidden';
   };
 
-  // Make functions global for onclick handlers
+  // ===== ADDITIONAL FILES FOR REVISION FUNCTIONS =====
+
+  // Handle additional file selection for revisions
+  function handleAdditionalFileSelection(files) {
+    console.log('handleAdditionalFileSelection called with:', files.length, 'files');
+    let validFiles = [];
+    let errors = [];
+
+    Array.from(files).forEach(file => {
+      // Check file size
+      if (file.size > maxFileSize) {
+        errors.push(`${file.name}: File too large (max 10MB)`);
+        return;
+      }
+
+      // Check for duplicates
+      if (selectedAdditionalFiles.some(f => f.name === file.name && f.size === file.size)) {
+        errors.push(`${file.name}: File already selected`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    // Show errors if any
+    if (errors.length > 0) {
+      alert('Some files could not be added:\n' + errors.join('\n'));
+    }
+
+    // Add valid files with progress simulation
+    if (validFiles.length > 0) {
+      simulateAdditionalUploadProgress(validFiles);
+    }
+  }
+
+  // Simulate upload progress for additional files
+  function simulateAdditionalUploadProgress(files) {
+    const progressContainer = document.getElementById('additional-uploadProgress');
+    const progressFill = document.getElementById('additional-progressFill');
+
+    // Create progress elements if they don't exist
+    if (!progressContainer) {
+      const uploadGroup = document.getElementById('additional-file-upload-group');
+      if (uploadGroup) {
+        const progressDiv = document.createElement('div');
+        progressDiv.id = 'additional-uploadProgress';
+        progressDiv.style.cssText = 'margin-top: 0.5rem; display: block;';
+        progressDiv.innerHTML = `
+          <div id='additional-progressFill' style='width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;'>
+            <div style='height: 100%; background: var(--primary-green); transition: width 0.3s ease; width: 0%;'></div>
+          </div>
+        `;
+        uploadGroup.appendChild(progressDiv);
+      }
+    }
+
+    const fillEl = document.getElementById('additional-progressFill');
+    if (fillEl) {
+      document.getElementById('additional-uploadProgress').style.display = 'block';
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(interval);
+
+          // Add files after progress complete
+          selectedAdditionalFiles = selectedAdditionalFiles.concat(files);
+          updateAdditionalFileDisplay();
+
+          // Hide progress after delay
+          setTimeout(() => {
+            const container = document.getElementById('additional-uploadProgress');
+            if (container) container.style.display = 'none';
+            const fill = document.getElementById('additional-progressFill');
+            if (fill) fill.style.width = '0%';
+          }, 500);
+        }
+        const fill = document.getElementById('additional-progressFill');
+        if (fill) fill.style.width = progress + '%';
+      }, 100);
+    } else {
+      // Fallback if no progress bar
+      selectedAdditionalFiles = selectedAdditionalFiles.concat(files);
+      updateAdditionalFileDisplay();
+    }
+  }
+
+  // Update additional file display
+  function updateAdditionalFileDisplay() {
+    const fileManagement = document.getElementById('additional-file-management');
+    const filesContainer = document.getElementById('additional-selected-files');
+    const filesCount = document.getElementById('additional-files-count');
+    const filesSummary = document.getElementById('additional-files-summary');
+    const uploadGroup = document.getElementById('additional-file-upload-group');
+    const clearAllBtn = document.getElementById('additional-clear-all-btn');
+
+    if (selectedAdditionalFiles.length === 0) {
+      if (fileManagement) fileManagement.style.display = 'none';
+      if (uploadGroup) uploadGroup.classList.remove('has-file');
+      return;
+    }
+
+    if (fileManagement) fileManagement.style.display = 'block';
+    if (uploadGroup) uploadGroup.classList.add('has-file');
+
+    // Update files count
+    if (filesCount) filesCount.textContent = `${selectedAdditionalFiles.length} additional file(s) selected`;
+
+    // Clear container
+    if (filesContainer) filesContainer.innerHTML = '';
+
+    // Add each file
+    selectedAdditionalFiles.forEach((file, index) => {
+      const fileItem = createAdditionalFileItem(file, index);
+      if (filesContainer) filesContainer.appendChild(fileItem);
+    });
+
+    // Update summary
+    if (filesSummary) {
+      const totalSize = selectedAdditionalFiles.reduce((sum, file) => sum + file.size, 0);
+      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+      filesSummary.textContent = `Total additional size: ${totalSizeMB} MB`;
+    }
+
+    // Enable/disable clear all button
+    if (clearAllBtn) clearAllBtn.disabled = selectedAdditionalFiles.length === 0;
+  }
+
+  // Create additional file item element
+  function createAdditionalFileItem(file, index) {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    fileItem.setAttribute('data-index', index);
+
+    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+
+    fileItem.innerHTML = `
+      <div class="file-item-info">
+        <svg class="file-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14,2 14,8 20,8"></polyline>
+        </svg>
+        <div class="file-item-details">
+          <div class="file-item-name">${file.name}</div>
+          <div class="file-item-size">${sizeInMB} MB • ${file.type || 'Unknown type'}</div>
+        </div>
+      </div>
+      <button type="button" class="file-delete-btn" onclick="removeAdditionalFile(${index})" title="Remove additional file">
+        ✕
+      </button>
+    `;
+
+    return fileItem;
+  }
+
+  // Remove individual additional file
+  function removeAdditionalFile(index) {
+    if (index >= 0 && index < selectedAdditionalFiles.length) {
+      const fileName = selectedAdditionalFiles[index].name;
+      if (confirm(`Remove "${fileName}" from additional files?`)) {
+        selectedAdditionalFiles.splice(index, 1);
+        updateAdditionalFileDisplay();
+      }
+    }
+  }
+
+  // Clear all additional files
+  function clearAllAdditionalFiles() {
+    if (selectedAdditionalFiles.length === 0) return;
+
+    if (confirm(`Are you sure you want to remove all ${selectedAdditionalFiles.length} additional files?`)) {
+      selectedAdditionalFiles = [];
+      updateAdditionalFileDisplay();
+    }
+  }
+
+  // Submit additional files function
+  function submitAdditionalFiles() {
+    if (!currentConversationId) {
+      alert('Unable to determine which request to update. Please try again.');
+      return;
+    }
+
+    if (selectedAdditionalFiles.length === 0) {
+      alert('Please select at least one additional file to upload.');
+      return;
+    }
+
+    // Add loading indicator to button
+    const submitBtn = document.querySelector('#additional-files-section button[onclick="submitAdditionalFiles()"]');
+    const originalText = submitBtn ? submitBtn.innerHTML : 'Upload Additional Files';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Uploading...';
+    }
+
+    try {
+      const formData = new FormData();
+
+      // Add selected additional files
+      selectedAdditionalFiles.forEach((file, index) => {
+        console.log('Adding additional file:', file.name, '(' + (file.size / 1024).toFixed(1) + ' KB)');
+        formData.append('additionalFiles', file);
+      });
+
+      console.log('Submitting additional files to:', `/add-files/${currentConversationId}`);
+
+      fetch(`/add-files/${currentConversationId}`, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log('Additional files submission result:', result);
+
+        if (result.success) {
+          console.log('Additional files uploaded successfully:', result.message);
+
+          // Show success feedback overlay
+          const successOverlay = document.createElement('div');
+          successOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            @keyframes successFadeIn {
+              from { opacity: 0; transform: scale(0.9) translateY(20px); }
+              to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+          `;
+
+          successOverlay.innerHTML = `
+            <div style="
+              background: white;
+              padding: 2rem 3rem;
+              border-radius: 16px;
+              box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+              text-align: center;
+              animation: successFadeIn 0.5s ease-out;
+            ">
+              <div style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;">
+                ✓
+              </div>
+              <h3 style="color: #059669; margin: 0 0 0.5rem 0; font-size: 1.5rem;">Upload Successful!</h3>
+              <p style="color: #64748b; margin: 0; font-size: 1rem;">
+                ${result.newFiles ? result.newFiles.length : 'Additional'} file(s) uploaded successfully.
+              </p>
+              <div style="margin-top: 1.5rem; color: #9ca3af; font-size: 0.9rem;">
+                Refreshing page...
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(successOverlay);
+
+          // Redirect after 3 seconds
+          setTimeout(() => {
+            window.location.href = `/request-approvals?openModalId=${currentConversationId}`;
+          }, 3000);
+
+        } else {
+          console.error('Additional files submission failed:', result.message);
+          alert(result.message || 'Failed to upload additional files. Please try again.');
+        }
+
+        // Re-enable submit button
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      })
+      .catch(error => {
+        console.error('Additional files submission error:', error);
+        alert('Network error while uploading files. Please try again.');
+
+        // Re-enable submit button
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      });
+    } catch (error) {
+      console.error('Error preparing additional files FormData:', error);
+      alert('Error preparing files for upload. Please try again.');
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    }
+  }
+
+  // Make additional functions global for onclick handlers
   window.toggleDropdown = toggleDropdown;
   window.removeApprovalFile = removeApprovalFile;
   window.clearAllApprovalFiles = clearAllApprovalFiles;
+  window.removeAdditionalFile = removeAdditionalFile;
+  window.clearAllAdditionalFiles = clearAllAdditionalFiles;
 
   // Initialize status display on page load
   updateStatusDisplay();
