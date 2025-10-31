@@ -9,6 +9,7 @@ const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const { requireLogin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
+const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -761,6 +762,15 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
     console.log('Request approval saved with specific type:', specificRequestType);
     console.log('Request approval saved with files:', filePaths);
 
+    // Send notifications to admins
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const adminIds = admins.map(admin => admin._id);
+      await notificationService.notifyApprovalCreated(newRequest._id, req.session.userId, adminIds);
+    } catch (notifError) {
+      console.error('Error sending approval creation notifications:', notifError);
+    }
+
     // Return JSON response instead of redirect
     res.json({
       success: true,
@@ -835,6 +845,15 @@ router.post('/add-files/:requestId', upload.array('additionalFiles', 20), async 
     request.allowAdditionalFileUpload = false; // No more additional files allowed after upload
 
     await request.save();
+
+    // Send notification to admins about the file update
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const adminIds = admins.map(admin => admin._id);
+      await notificationService.notifyApprovalUpdated(requestId, req.session.userId, adminIds);
+    } catch (notifError) {
+      console.error('Error sending approval update notifications:', notifError);
+    }
 
     console.log('Successfully added files to request:', requestId);
     console.log('Updated files array:', updatedFiles);
@@ -921,6 +940,16 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
     console.log('Service request saved with organization:', actualOrganization);
     console.log('Service request saved with specific type:', specificRequestType);
     console.log('Service request saved with files:', filePaths);
+
+    // Send notifications to admins
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const adminIds = admins.map(admin => admin._id);
+      await notificationService.notifyServiceCreated(newRequest._id, req.session.userId, adminIds);
+    } catch (notifError) {
+      console.error('Error sending service creation notifications:', notifError);
+    }
+
     res.redirect('/service-requests');
   } catch (err) {
     console.error('Error saving service request:', err);

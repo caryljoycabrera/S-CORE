@@ -9,6 +9,7 @@ const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const { requireAdmin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
+const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -540,6 +541,42 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
       });
     }
 
+    // Send appropriate notifications based on status and request type
+    try {
+      const statusLower = status?.toLowerCase();
+      
+      if (requestType === 'Request Approval') {
+        // Populate userId if it's not already populated
+        const approval = await RequestApproval.findById(requestId).populate('userId');
+        
+        if (approval && approval.userId) {
+          if (statusLower === 'approved') {
+            await notificationService.notifyApprovalApproved(requestId, approval.userId._id, req.user._id);
+          } else if (statusLower === 'rejected') {
+            await notificationService.notifyApprovalRejected(requestId, approval.userId._id, req.user._id);
+          } else if (statusLower === 'for revision') {
+            await notificationService.notifyApprovalRevision(requestId, approval.userId._id, req.user._id);
+          }
+        }
+      } else if (requestType === 'Service Request') {
+        // Populate userId if it's not already populated
+        const service = await ServiceRequest.findById(requestId).populate('userId');
+        
+        if (service && service.userId) {
+          if (statusLower === 'approved') {
+            await notificationService.notifyServiceApproved(requestId, service.userId._id, req.user._id, assignedUnits);
+          } else if (statusLower === 'rejected') {
+            await notificationService.notifyServiceRejected(requestId, service.userId._id, req.user._id);
+          } else if (statusLower === 'completed') {
+            await notificationService.notifyServiceCompleted(requestId, service.userId._id, req.user._id);
+          }
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending status update notifications:', notifError);
+      // Don't fail the request update if notification fails
+    }
+
     res.json({
       success: true,
       message: `${requestType} updated successfully`,
@@ -581,7 +618,24 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
       update.allowAdditionalFileUpload = true;
     }
 
-    await RequestApproval.findByIdAndUpdate(requestId, update);
+    const result = await RequestApproval.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
+
+    // Send notification to user
+    try {
+      if (result && result.userId) {
+        const statusLower = status?.toLowerCase();
+        
+        if (statusLower === 'approved') {
+          await notificationService.notifyApprovalApproved(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'rejected') {
+          await notificationService.notifyApprovalRejected(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'for revision') {
+          await notificationService.notifyApprovalRevision(requestId, result.userId._id, req.user._id);
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending approval update notifications:', notifError);
+    }
 
     res.json({ success: true, message: 'Approval request updated successfully' });
   } catch (err) {
@@ -684,10 +738,27 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
     if (status) update.status = status;
     if (assignedUnits !== undefined) update.assignedUnits = assignedUnits || 'Not yet assigned';
 
-    const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true });
+    const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
 
     if (!result) {
       return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Send notification to user
+    try {
+      if (result && result.userId) {
+        const statusLower = status?.toLowerCase();
+        
+        if (statusLower === 'approved') {
+          await notificationService.notifyServiceApproved(requestId, result.userId._id, req.user._id, assignedUnits);
+        } else if (statusLower === 'rejected') {
+          await notificationService.notifyServiceRejected(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'completed') {
+          await notificationService.notifyServiceCompleted(requestId, result.userId._id, req.user._id);
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending service update notifications:', notifError);
     }
 
     res.json({ success: true, message: 'Service request updated successfully' });

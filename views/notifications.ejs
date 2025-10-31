@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - S-CORE</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/stylesheets/notifications.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    .notifications-page {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    
+    .notifications-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .notifications-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+    }
+    
+    .notifications-actions {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #374151;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .btn:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+    
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .btn-primary:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    
+    .notifications-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #6b7280;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+    
+    .filter-btn.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .notifications-list-page {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    
+    .notification-item-page {
+      padding: 1.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      transition: background-color 0.2s ease;
+    }
+    
+    .notification-item-page:hover {
+      background-color: #f9fafb;
+    }
+    
+    .notification-item-page:last-child {
+      border-bottom: none;
+    }
+    
+    .notification-item-page.unread {
+      background-color: #eff6ff;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .notification-content-page {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    
+    .notification-details {
+      flex: 1;
+    }
+    
+    .notification-title-page {
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 0.5rem 0;
+      font-size: 16px;
+    }
+    
+    .notification-message-page {
+      color: #6b7280;
+      margin: 0 0 1rem 0;
+      line-height: 1.5;
+    }
+    
+    .notification-meta-page {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+    
+    .notification-actions-page {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+    
+    .pagination button {
+      padding: 0.5rem 1rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #374151;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .pagination button:hover:not(:disabled) {
+      background: #f9fafb;
+    }
+    
+    .pagination button.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #6b7280;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #6b7280;
+    }
+    
+    .empty-state h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+      color: #374151;
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #3b82f6;
+      text-decoration: none;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    
+    .back-link:hover {
+      color: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+  <div class="notifications-page">
+    <a href="javascript:history.back()" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15,18 9,12 15,6"></polyline>
+      </svg>
+      Back
+    </a>
+    
+    <div class="notifications-header">
+      <h1 class="notifications-title">Notifications</h1>
+      <div class="notifications-actions">
+        <button class="btn" onclick="markAllAsRead()" id="mark-all-btn">
+          Mark All as Read
+        </button>
+        <button class="btn" onclick="refreshNotifications()">
+          Refresh
+        </button>
+      </div>
+    </div>
+    
+    <div class="notifications-filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="unread">Unread</button>
+      <button class="filter-btn" data-filter="service">Services</button>
+      <button class="filter-btn" data-filter="approval">Approvals</button>
+      <button class="filter-btn" data-filter="message">Messages</button>
+      <button class="filter-btn" data-filter="system">System</button>
+    </div>
+    
+    <div class="notifications-list-page" id="notifications-container">
+      <div class="loading">Loading notifications...</div>
+    </div>
+    
+    <div class="pagination" id="pagination" style="display: none;">
+      <button id="prev-btn" onclick="previousPage()">Previous</button>
+      <span id="page-info">Page 1 of 1</span>
+      <button id="next-btn" onclick="nextPage()">Next</button>
+    </div>
+  </div>
+
+  <!-- User Data for JavaScript -->
+  <script id="user-data" type="application/json"><%- JSON.stringify({ id: user._id, role: user.role, name: user.fName + ' ' + user.lName }) %></script>
+
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+    let currentFilter = 'all';
+    let notifications = [];
+
+    // Load notifications on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadNotifications();
+      setupFilters();
+    });
+
+    function setupFilters() {
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentFilter = btn.dataset.filter;
+          currentPage = 1;
+          loadNotifications();
+        });
+      });
+    }
+
+    async function loadNotifications() {
+      try {
+        const container = document.getElementById('notifications-container');
+        container.innerHTML = '<div class="loading">Loading notifications...</div>';
+
+        let url = `/api/notifications?page=${currentPage}&limit=20`;
+        if (currentFilter === 'unread') {
+          url += '&unreadOnly=true';
+        }
+
+        const response = await fetch(url, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load notifications');
+        }
+
+        const result = await response.json();
+        notifications = result.data.notifications;
+        totalPages = result.data.totalPages;
+
+        // Filter by type if needed
+        let filteredNotifications = notifications;
+        if (currentFilter !== 'all' && currentFilter !== 'unread') {
+          filteredNotifications = notifications.filter(n => {
+            if (currentFilter === 'service') {
+              return n.type.includes('service');
+            } else if (currentFilter === 'approval') {
+              return n.type.includes('approval');
+            } else if (currentFilter === 'message') {
+              return n.type === 'new_message';
+            } else if (currentFilter === 'system') {
+              return n.type === 'system';
+            }
+            return true;
+          });
+        }
+
+        renderNotifications(filteredNotifications);
+        updatePagination();
+        
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+        document.getElementById('notifications-container').innerHTML = 
+          '<div class="empty-state"><h3>Error</h3><p>Failed to load notifications. Please try again.</p></div>';
+      }
+    }
+
+    function renderNotifications(notifications) {
+      const container = document.getElementById('notifications-container');
+
+      if (notifications.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No notifications</h3>
+            <p>You don't have any notifications yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const notificationsHTML = notifications.map(notification => {
+        const isUnread = !notification.isRead;
+        const timeAgo = formatTimeAgo(new Date(notification.createdAt));
+        const icon = getNotificationIcon(notification.type);
+        
+        return `
+          <div class="notification-item-page ${isUnread ? 'unread' : ''}" data-id="${notification._id}">
+            <div class="notification-content-page">
+              <div class="notification-icon ${notification.type}">
+                ${icon}
+              </div>
+              <div class="notification-details">
+                <h3 class="notification-title-page">${escapeHtml(notification.title)}</h3>
+                <p class="notification-message-page">${escapeHtml(notification.message)}</p>
+                <div class="notification-meta-page">
+                  <span>${timeAgo}</span>
+                  ${notification.sender ? `<span>from ${escapeHtml(notification.sender.fName)} ${escapeHtml(notification.sender.lName)}</span>` : ''}
+                </div>
+              </div>
+              <div class="notification-actions-page">
+                ${isUnread ? `<button class="btn" onclick="markAsRead('${notification._id}')">Mark as Read</button>` : ''}
+                <button class="btn" onclick="deleteNotification('${notification._id}')" style="color: #dc2626;">Delete</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = notificationsHTML;
+    }
+
+    function updatePagination() {
+      const pagination = document.getElementById('pagination');
+      const pageInfo = document.getElementById('page-info');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+
+      if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+      } else {
+        pagination.style.display = 'none';
+      }
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadNotifications();
+      }
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadNotifications();
+      }
+    }
+
+    async function markAsRead(notificationId) {
+      try {
+        const response = await fetch(`/api/notifications/${notificationId}/read`, {
+          method: 'PATCH',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          // Update UI
+          const item = document.querySelector(`[data-id="${notificationId}"]`);
+          if (item) {
+            item.classList.remove('unread');
+            const button = item.querySelector('button');
+            if (button && button.textContent === 'Mark as Read') {
+              button.remove();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+
+    async function markAllAsRead() {
+      try {
+        const response = await fetch('/api/notifications/read-all', {
+          method: 'PATCH',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          loadNotifications();
+        }
+      } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+      }
+    }
+
+    async function deleteNotification(notificationId) {
+      if (!confirm('Are you sure you want to delete this notification?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/notifications/${notificationId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          loadNotifications();
+        }
+      } catch (error) {
+        console.error('Error deleting notification:', error);
+      }
+    }
+
+    function refreshNotifications() {
+      loadNotifications();
+    }
+
+    function getNotificationIcon(type) {
+      const icons = {
+        'service_created': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10,9 9,9 8,9"></polyline></svg>',
+        'service_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
+        'service_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+        'service_completed': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
+        'approval_created': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>',
+        'approval_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
+        'approval_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+        'approval_revision': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+        'new_message': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+        'system': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'
+      };
+      
+      return icons[type] || icons['system'];
+    }
+
+    function formatTimeAgo(date) {
+      const now = new Date();
+      const diffInSeconds = Math.floor((now - date) / 1000);
+
+      if (diffInSeconds < 60) {
+        return 'just now';
+      } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+      } else if (diffInSeconds < 604800) {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} day${days !== 1 ? 's' : ''} ago`;
+      } else {
+        return date.toLocaleDateString();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

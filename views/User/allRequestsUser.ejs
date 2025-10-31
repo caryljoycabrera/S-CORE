@@ -2622,6 +2622,90 @@ function openImageModal(imageSrc) {
   // Prevent body scroll
   document.body.style.overflow = 'hidden';
 }
+
+// Global function to open request modal by ID (for notification clicks)
+window.openRequestModal = function(requestId, requestType) {
+  console.log('Opening request modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID and type
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"][data-type="${requestType === 'approval' ? 'Request Approval' : 'Service Request'}"]`);
+  
+  if (targetRow) {
+    // Trigger the existing click handler
+    targetRow.click();
+  } else {
+    console.warn('Request not found on current page:', requestId, requestType);
+    // Navigate to the appropriate specific page
+    const targetPage = requestType === 'approval' ? '/request-approvals' : '/service-requests';
+    window.location.href = `${targetPage}?highlight=${requestId}`;
+  }
+};
+
+// Global function alternative names for backward compatibility
+window.showApprovalDetails = function(requestId) {
+  window.openRequestModal(requestId, 'approval');
+};
+
+window.showServiceDetails = function(requestId) {
+  window.openRequestModal(requestId, 'service');
+};
+
+// Global function to open conversation modal by ID (for message notifications)
+window.openConversationModal = function(requestId, requestType) {
+  console.log('Opening user conversation modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // Simulate row click to open the details modal
+    console.log('Found target row, simulating click...');
+    targetRow.click();
+    
+    // Then trigger the conversation modal after a short delay
+    setTimeout(() => {
+      const chatButton = document.getElementById('openChatFromDetailsModal');
+      if (chatButton) {
+        console.log('Found chat button, clicking it');
+        chatButton.click();
+      } else {
+        console.warn('Chat button #openChatFromDetailsModal not found in modal');
+      }
+    }, 300);
+  } else {
+    console.warn('Request not found for conversation:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Auto-open modal if URL contains modal parameters
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Handle regular modal opening
+  if (urlParams.has('modal') && urlParams.has('requestId')) {
+    const requestId = urlParams.get('requestId');
+    const requestType = urlParams.get('type');
+    console.log('Auto-opening modal for request:', requestId, requestType);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      window.openRequestModal(requestId, requestType);
+    }, 500);
+  }
+  
+  // Handle conversation modal opening (for message notifications)
+  if (urlParams.has('conversation') && urlParams.has('requestId')) {
+    const requestId = urlParams.get('requestId');
+    const requestType = urlParams.get('type');
+    console.log('Auto-opening conversation modal for request:', requestId, requestType);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      window.openConversationModal(requestId, requestType);
+    }, 500);
+  }
+});
 </script>
 </body>
 </html>

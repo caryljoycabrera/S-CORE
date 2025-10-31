@@ -1721,4 +1721,48 @@ async function handleAdditionalFileToggle() {
   }
 }
 
+// Global function to open request modal by ID (for notification clicks)
+window.openRequestModal = function(requestId, requestType) {
+  console.log('Opening admin request modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // Trigger the existing modal opening
+    openModalFromRow(targetRow);
+  } else {
+    console.warn('Request not found on current admin page:', requestId);
+    // If not found, try to reload the page and search
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Global function to open conversation modal by ID (for message notifications)
+window.openConversationModal = function(requestId, requestType) {
+  console.log('Opening admin conversation modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // First open the details modal
+    openModalFromRow(targetRow);
+    
+    // Then trigger the conversation modal after a short delay
+    setTimeout(() => {
+      const chatButton = document.getElementById('openChatFromModal');
+      if (chatButton) {
+        console.log('Found chat button, clicking it');
+        chatButton.click();
+      } else {
+        console.warn('Chat button #openChatFromModal not found in modal');
+      }
+    }, 300);
+  } else {
+    console.warn('Request not found for conversation:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
 console.log('✅ AllRequestsAdmin script loaded and initialized successfully');

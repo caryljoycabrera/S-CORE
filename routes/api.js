@@ -10,6 +10,7 @@ const ServiceRequest = require('../models/ServiceRequest');
 const Conversation = require('../models/Conversation');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
 const { upload } = require('../config/upload');
+const notificationService = require('../services/notificationService');
 
 /**
  * GET /api/deadlines
@@ -328,6 +329,50 @@ router.post('/api/conversation/:requestId/message', requireLogin, upload.single(
 
     // Populate the sender info for the response
     await conversation.populate('messages.senderId', 'fName lName role');
+    
+    // Send notification to the other party (not the sender)
+    try {
+      const targetRequest = serviceRequest || approvalRequest;
+      let recipientId;
+      
+      // Determine who should receive the notification
+      if (user.role === 'admin') {
+        // Admin sent message, notify the user who created the request
+        if (targetRequest.userId) {
+          recipientId = targetRequest.userId.toString();
+        }
+      } else {
+        // User sent message, notify admins
+        const admins = await User.find({ role: 'admin' });
+        const adminIds = admins.map(admin => admin._id);
+        
+        // Send notifications to all admins
+        for (const adminId of adminIds) {
+          await notificationService.notifyNewMessage(
+            conversation._id,
+            user._id,
+            adminId,
+            content || 'Sent a file',
+            requestId,
+            serviceRequest ? 'service' : 'approval'
+          );
+        }
+      }
+      
+      // Send notification to user if admin sent the message
+      if (recipientId) {
+        await notificationService.notifyNewMessage(
+          conversation._id,
+          user._id,
+          recipientId,
+          content || 'Sent a file',
+          requestId,
+          serviceRequest ? 'service' : 'approval'
+        );
+      }
+    } catch (notifError) {
+      console.error('Error sending message notification:', notifError);
+    }
 
     res.json({
       success: true,

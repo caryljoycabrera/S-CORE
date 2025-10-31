@@ -6,17 +6,25 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const http = require('http');
 
 // Import configuration modules
 const { connectDB } = require('./config/database');
 const { upload, ensureUploadsDirectory, UPLOADS_DIR } = require('./config/upload');
 
-// Create Express application
+// Import services
+const socketService = require('./services/socketService');
+
+// Create Express application and HTTP server
 const app = express();
+const server = http.createServer(app);
 const port = 8080;
 
 // ======= Database Connection =======
 connectDB();
+
+// ======= Socket.IO Initialization =======
+socketService.initialize(server);
 
 // ======= Uploads Directory Setup =======
 ensureUploadsDirectory();
@@ -58,19 +66,22 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
 const apiRoutes = require('./routes/api');
+const notificationRoutes = require('./routes/notifications');
 
 // Use route modules
 app.use('/', authRoutes);
 app.use('/', userRoutes);
 app.use('/', adminRoutes);
 app.use('/', apiRoutes);
+app.use('/', notificationRoutes);
 
 // ======= Server Startup ========
 
 // Start the server
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  console.log('Socket.IO enabled for real-time notifications');
 });
 
 // ======= Modules for Route Use ========
-module.exports = app;
+module.exports = { app, server };

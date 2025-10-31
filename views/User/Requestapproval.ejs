@@ -1332,6 +1332,16 @@ option:hover {
           </div>
         </div>
 
+        <!-- DEBUG: Test Conversation Modal Button -->
+        <div style="margin: 10px 0; padding: 10px; background: #f0f8ff; border: 1px solid #ccc; border-radius: 5px;">
+          <button id="testConversationModal" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+            🧪 Test Conversation Modal (Debug)
+          </button>
+          <small style="display: block; margin-top: 5px; color: #666;">
+            Click to test opening conversation modal functionality
+          </small>
+        </div>
+
         <section class="table-section" style="overflow-x: auto;">
           <table class="requests-table" style="width: 100%; border-collapse: collapse; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
@@ -4085,9 +4095,110 @@ if (approvalForm) {
       document.body.style.overflow = '';
     });
     
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
-  };
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+};
+
+// Global function to open request modal by ID (for notification clicks)
+window.openRequestModal = function(requestId, requestType) {
+  console.log('Opening request modal for:', requestId, requestType);
+  
+  // Ensure we're dealing with approval requests on this page
+  if (requestType !== 'approval') {
+    console.warn('Request type mismatch on approval page:', requestType);
+    return;
+  }
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // Trigger the existing click handler
+    targetRow.click();
+  } else {
+    console.warn('Request not found on current page:', requestId);
+    // Optionally navigate to the page with that request
+    window.location.href = `/request-approvals?highlight=${requestId}`;
+  }
+};
+
+// Global function alternative name for backward compatibility
+window.showApprovalDetails = function(requestId) {
+  window.openRequestModal(requestId, 'approval');
+};
+
+// Global function to open conversation modal by ID (for message notifications)
+window.openConversationModal = function(requestId, requestType) {
+  console.log('Opening user conversation modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // Simulate row click to open the details modal
+    console.log('Found target row, simulating click...');
+    targetRow.click();
+    
+    // Then trigger the conversation modal after a short delay
+    setTimeout(() => {
+      const chatButton = document.getElementById('openChatFromDetailsModal');
+      if (chatButton) {
+        console.log('Found chat button, clicking it');
+        chatButton.click();
+      } else {
+        console.warn('Chat button #openChatFromDetailsModal not found in modal');
+      }
+    }, 300);
+  } else {
+    console.warn('Request not found for conversation:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Auto-open modal if URL contains modal parameters
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Handle regular modal opening
+  if (urlParams.has('modal') && urlParams.has('requestId') && urlParams.get('type') === 'approval') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening modal for request:', requestId);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      window.openRequestModal(requestId, 'approval');
+    }, 500);
+  }
+  
+  // Handle conversation modal opening (for message notifications)
+  if (urlParams.has('conversation') && urlParams.has('requestId') && urlParams.get('type') === 'approval') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening conversation modal for request:', requestId);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      window.openConversationModal(requestId, 'approval');
+    }, 500);
+  }
+  
+  // DEBUG: Test conversation modal button
+  const testButton = document.getElementById('testConversationModal');
+  if (testButton) {
+    testButton.addEventListener('click', function() {
+      console.log('🧪 Testing conversation modal...');
+      console.log('Available global functions:', Object.keys(window).filter(key => key.includes('open') || key.includes('modal')));
+      
+      // Test with a sample request ID
+      if (typeof window.openConversationModal === 'function') {
+        console.log('✅ Global openConversationModal function found');
+        window.openConversationModal('test123', 'approval');
+      } else {
+        console.error('❌ Global openConversationModal function not found');
+        console.log('Available window functions:', Object.getOwnPropertyNames(window).filter(name => typeof window[name] === 'function').slice(0, 20));
+      }
+    });
+  }
+});
 </script>
 </body>
 </html>

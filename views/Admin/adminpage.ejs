@@ -26,6 +26,9 @@
       <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
       <span class="text-wrapper-2">Welcome, Admin <%= name %>!</span>
 
+      <!-- Notification Bell -->
+      <%- include('../partials/notifications') %>
+
       <div class="dropdown-wrapper">
         <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
           <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>

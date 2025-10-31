@@ -4256,6 +4256,74 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
+
+// Global function to open request modal by ID (for notification clicks)
+window.openRequestModal = function(requestId, requestType) {
+  console.log('Opening admin approval modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // Trigger the existing modal opening
+    targetRow.click();
+  } else {
+    console.warn('Approval request not found on current admin page:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Global function to open conversation modal by ID (for message notifications)
+window.openConversationModal = function(requestId, requestType) {
+  console.log('Opening admin approval conversation modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // First open the details modal
+    targetRow.click();
+    
+    // Then trigger the conversation modal after a short delay
+    setTimeout(() => {
+      const chatButton = document.getElementById('openChatFromModal');
+      if (chatButton) {
+        console.log('Found approval chat button, clicking it');
+        chatButton.click();
+      } else {
+        console.warn('Chat button #openChatFromModal not found in approval modal');
+      }
+    }, 300);
+  } else {
+    console.warn('Approval request not found for conversation:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Enhanced auto-opening logic for modal and conversation parameters
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Handle modal opening from notifications
+  if (urlParams.has('modal') && urlParams.has('requestId') && urlParams.get('type') === 'approval') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening approval modal for notification:', requestId);
+    
+    setTimeout(() => {
+      window.openRequestModal(requestId, 'approval');
+    }, 500);
+  }
+  
+  // Handle conversation opening from message notifications
+  if (urlParams.has('conversation') && urlParams.has('requestId') && urlParams.get('type') === 'approval') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening approval conversation for message notification:', requestId);
+    
+    setTimeout(() => {
+      window.openConversationModal(requestId, 'approval');
+    }, 500);
+  }
+});
 </script>
 </body>
 </html>
