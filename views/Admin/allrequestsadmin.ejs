@@ -1329,40 +1329,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.style.overflow = 'hidden';
   };
 });
-
-// Auto-open modal or chat if URL contains parameters
-document.addEventListener('DOMContentLoaded', function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  // Handle modal opening for request details
-  if (urlParams.has('modal') && urlParams.has('requestId')) {
-    const requestId = urlParams.get('requestId');
-    const requestType = urlParams.get('type');
-    console.log('Auto-opening admin modal for request:', requestId, requestType);
-    
-    // Wait for page to fully load, then find and click the row
-    setTimeout(() => {
-      const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
-      if (targetRow) {
-        targetRow.click();
-      } else {
-        console.warn('Request not found on admin page:', requestId);
-      }
-    }, 1000);
-  }
-  
-  // Handle chat opening for messages
-  if (urlParams.has('openChat')) {
-    const requestId = urlParams.get('openChat');
-    console.log('Auto-opening chat for request:', requestId);
-    
-    // Wait for page to fully load, then open chat
-    setTimeout(() => {
-      currentRequestId = requestId;
-      openConversation(requestId);
-    }, 1000);
-  }
-});
 </script>
 
 </body>
