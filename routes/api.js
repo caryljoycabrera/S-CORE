@@ -9,6 +9,7 @@ const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const Conversation = require('../models/Conversation');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
+const { upload } = require('../config/upload');
 
 /**
  * GET /api/deadlines
@@ -248,14 +249,16 @@ router.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
  * POST /api/conversation/:requestId/message
  * API endpoint to send a new message to a conversation
  */
-router.post('/api/conversation/:requestId/message', requireLogin, async (req, res) => {
+router.post('/api/conversation/:requestId/message', requireLogin, upload.single('file'), async (req, res) => {
   try {
     const { requestId } = req.params;
     const { content } = req.body;
     const user = await User.findById(req.session.userId);
+    const uploadedFile = req.file;
 
-    if (!content || content.trim() === '') {
-      return res.status(400).json({ error: 'Message content is required' });
+    // Allow empty content if there's a file attachment
+    if ((!content || content.trim() === '') && !uploadedFile) {
+      return res.status(400).json({ error: 'Message content or file attachment is required' });
     }
 
     // Check if it's a service request or approval request
@@ -307,10 +310,18 @@ router.post('/api/conversation/:requestId/message', requireLogin, async (req, re
     const newMessage = {
       senderId: req.session.userId,
       senderRole: user.role,
-      content: content.trim(),
+      content: content ? content.trim() : '',
       timestamp: new Date(),
       isRead: false
     };
+
+    // Add file attachment information if file was uploaded
+    if (uploadedFile) {
+      newMessage.file_path = `/uploads/${uploadedFile.filename}`;
+      newMessage.file_type = uploadedFile.mimetype;
+      newMessage.original_filename = uploadedFile.originalname;
+      newMessage.file_size = uploadedFile.size;
+    }
 
     conversation.messages.push(newMessage);
     await conversation.save();

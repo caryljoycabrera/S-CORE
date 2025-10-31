@@ -17,16 +17,16 @@
 }
 
 .message {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   max-width: 80%;
 }
 
 .admin-message {
-  margin-right: auto;
+  margin-left: auto;
 }
 
 .user-message {
-  margin-left: auto;
+  margin-right: auto;
 }
 
 .message-content {
@@ -1149,7 +1149,7 @@
 
       <!-- Conversation Modal - ADD THIS ENTIRE BLOCK -->
   <div id="conversationModal" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 800px; width: 90%; height: 80vh; overflow: hidden;">
+    <div class="modal-content" style="max-width: 800px; width: 90%; height: 100vh; overflow: hidden;">
       <header class="modal-header">
         <span class="modal-title">Conversation</span>
         <span class="close" id="closeConversationModal">&times;</span>
@@ -1158,9 +1158,51 @@
         <div id="messagesContainer" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f9f9f9; min-height: 400px;">
         </div>
         <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: white; flex-shrink: 0;">
+          <!-- Message Formatting Toolbar -->
+          <div id="formattingToolbar" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+            <button type="button" id="boldBtn" class="format-btn" title="Bold" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-weight: bold; font-size: 0.875rem; transition: all 0.2s;">
+              <strong>B</strong>
+            </button>
+            <button type="button" id="italicBtn" class="format-btn" title="Italic" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-style: italic; font-size: 0.875rem; transition: all 0.2s;">
+              <em>I</em>
+            </button>
+            <button type="button" id="underlineBtn" class="format-btn" title="Underline" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; text-decoration: underline; font-size: 0.875rem; transition: all 0.2s;">
+              U
+            </button>
+            <div style="width: 1px; height: 1.5rem; background: #d1d5db; align-self: center; margin: 0 0.25rem;"></div>
+            <button type="button" id="imageBtn" class="format-btn" title="Upload Image" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+              📷
+            </button>
+            <button type="button" id="fileBtn" class="format-btn" title="Upload File" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+              📎
+            </button>
+            <div style="flex: 1;"></div>
+            <span style="font-size: 0.75rem; color: #6b7280; align-self: center;">Format your text</span>
+          </div>
+          
+          <!-- Hidden file inputs -->
+          <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+          <input type="file" id="fileUpload" style="display: none;">
+          
+          <!-- Attachment preview area -->
+          <div id="attachmentPreview" style="display: none; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; max-height: 80px; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
+              <div id="attachmentInfo" style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+                <span id="attachmentIcon" style="flex-shrink: 0;">📷</span>
+                <span id="attachmentName" style="font-size: 0.875rem; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+              </div>
+              <button type="button" id="removeAttachment" style="padding: 0.25rem; border: none; background: none; cursor: pointer; color: #ef4444; font-size: 1rem; flex-shrink: 0;" title="Remove attachment">
+                ✕
+              </button>
+            </div>
+            <div id="imagePreviewContainer" style="margin-top: 0.25rem; display: none; max-height: 40px; overflow: hidden;">
+              <img id="imagePreview" style="max-width: 80px; max-height: 40px; border-radius: 0.25rem; cursor: pointer; object-fit: cover;" onclick="openImageModal(this.src)">
+            </div>
+          </div>
+          
           <div style="display: flex; gap: 0.5rem;">
             <input type="text" id="messageInput" placeholder="Type your message..." 
-                   style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                   style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-family: 'Inter', sans-serif;">
             <button id="sendMessageBtn" class="view-all-btn" style="background: var(--primary-green); color: white;">
               Send
             </button>
@@ -1869,7 +1911,15 @@ async function loadConversation(requestId) {
         method: 'POST'
       });
     } else {
-      messagesContainer.innerHTML = '<p style="text-align: center; color: #6b7280;">No messages yet. Start the conversation!</p>';
+      messagesContainer.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+          <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">💭</div>
+            <p>No messages yet</p>
+            <small>Start the conversation by sending a message below</small>
+          </div>
+        </div>
+      `;
     }
     
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1880,49 +1930,150 @@ async function loadConversation(requestId) {
 }
 
 function addMessageToUI(message) {
+  // Clear empty state message if it exists
+  const emptyStateMessage = messagesContainer.querySelector('p');
+  if (emptyStateMessage && (emptyStateMessage.textContent.includes('No messages yet') || emptyStateMessage.textContent.includes('No messages yet. Start the conversation!'))) {
+    messagesContainer.innerHTML = '';
+  }
+  
   const messageDiv = document.createElement('div');
   const isUser = message.senderRole === 'user';
   const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
   
+  // Create user avatar (profile picture or default icon)
+  const userAvatar = `
+    <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? 'var(--primary-green)' : '#d1d5db'};">
+      ${message.senderId && message.senderId.profilePicture ? 
+        `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+         <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+           <circle cx="12" cy="7" r="4"/>
+         </svg>` :
+        `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
+           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+           <circle cx="12" cy="7" r="4"/>
+         </svg>`
+      }
+    </div>
+  `;
+  
   messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
   messageDiv.innerHTML = `
     <div class="message-content">
-      <div class="message-header">
-        <strong>${senderName}</strong>
-        <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+      <div style="display: flex; align-items: flex-start;">
+        ${userAvatar}
+        <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
+          <div class="message-header">
+            <strong>${senderName}</strong>
+            <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+          </div>
+          <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;"></div>
+          <div class="message-attachment" style="margin-top: 0.5rem;"></div>
+        </div>
       </div>
-      <div class="message-text">${message.content}</div>
     </div>
   `;
+  
+  // Set the message content as HTML to support formatting
+  const messageTextDiv = messageDiv.querySelector('.message-text');
+  if (messageTextDiv && message.content) {
+    // Convert markdown-style formatting to HTML
+    let formattedContent = message.content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
+      .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');           // <u>underline</u> stays the same
+    
+    messageTextDiv.innerHTML = formattedContent;
+  }
+  
+  // Handle attachments
+  const attachmentDiv = messageDiv.querySelector('.message-attachment');
+  if (attachmentDiv && message.file_path) {
+    const isImage = message.file_type && message.file_type.startsWith('image/');
+    
+    if (isImage) {
+      attachmentDiv.innerHTML = `
+        <div style="margin-top: 0.5rem;">
+          <img src="${message.file_path}" 
+               style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
+               onclick="openImageModal('${message.file_path}')"
+               alt="${message.original_filename || 'Attached image'}">
+        </div>
+      `;
+    } else {
+      const fileName = message.original_filename || 'File';
+      attachmentDiv.innerHTML = `
+        <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.2rem;">📎</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
+              <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
+            </div>
+            <a href="${message.file_path}" download="${fileName}" 
+               style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
+              Download
+            </a>
+          </div>
+        </div>
+      `;
+    }
+  }
   
   messagesContainer.appendChild(messageDiv);
 }
 
 sendMessageBtn.onclick = async function() {
   const content = messageInput.value.trim();
-  if (!content || !currentConversationId) return;
+  if (!content && !currentAttachment) return;
+  if (!currentConversationId) return;
 
   try {
-    const response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ content })
-    });
+    let response;
+    
+    if (currentAttachment) {
+      // Send with file attachment using FormData
+      const formData = new FormData();
+      formData.append('content', content || ''); // Always include content field
+      formData.append('file', currentAttachment.file);
+      
+      response = await fetch(`/api/conversation/${currentConversationId}/message`, {
+        method: 'POST',
+        body: formData
+      });
+    } else {
+      // Send text only using JSON
+      response = await fetch(`/api/conversation/${currentConversationId}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content })
+      });
+    }
 
     const result = await response.json();
     
     if (result.success) {
       addMessageToUI(result.message);
       messageInput.value = '';
+      
+      // Clear attachment
+      if (currentAttachment) {
+        currentAttachment = null;
+        if (attachmentPreview) attachmentPreview.style.display = 'none';
+        if (imageUpload) imageUpload.value = '';
+        if (fileUpload) fileUpload.value = '';
+        if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+      }
+      
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     } else {
-      alert('Failed to send message');
+      throw new Error(result.error || 'Failed to send message');
     }
   } catch (error) {
     console.error('Error sending message:', error);
-    alert('Failed to send message');
+    alert('Failed to send message: ' + error.message);
   }
 };
 
@@ -2225,6 +2376,252 @@ window.openImagePreview = function(imageUrl, fileName) {
   // Prevent body scroll
   document.body.style.overflow = 'hidden';
 };
+
+// Formatting toolbar functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const messageInput = document.getElementById('messageInput');
+  const boldBtn = document.getElementById('boldBtn');
+  const italicBtn = document.getElementById('italicBtn');
+  const underlineBtn = document.getElementById('underlineBtn');
+  
+  // Style format buttons on hover
+  const formatBtns = document.querySelectorAll('.format-btn');
+  formatBtns.forEach(btn => {
+    btn.addEventListener('mouseenter', function() {
+      this.style.background = '#f3f4f6';
+      this.style.borderColor = 'var(--primary-green)';
+    });
+    
+    btn.addEventListener('mouseleave', function() {
+      this.style.background = 'white';
+      this.style.borderColor = '#d1d5db';
+    });
+  });
+  
+  // Format text function
+  function formatText(startTag, endTag) {
+    if (!messageInput) return;
+    
+    const start = messageInput.selectionStart;
+    const end = messageInput.selectionEnd;
+    const selectedText = messageInput.value.substring(start, end);
+    
+    if (selectedText) {
+      const formattedText = `${startTag}${selectedText}${endTag}`;
+      const beforeText = messageInput.value.substring(0, start);
+      const afterText = messageInput.value.substring(end);
+      
+      messageInput.value = beforeText + formattedText + afterText;
+      
+      // Set cursor position after formatted text
+      const newPosition = start + formattedText.length;
+      messageInput.setSelectionRange(newPosition, newPosition);
+    } else {
+      // If no text selected, insert tags where cursor is
+      const cursorPos = messageInput.selectionStart;
+      const beforeText = messageInput.value.substring(0, cursorPos);
+      const afterText = messageInput.value.substring(cursorPos);
+      
+      messageInput.value = beforeText + startTag + endTag + afterText;
+      
+      // Position cursor between tags
+      const newPosition = cursorPos + startTag.length;
+      messageInput.setSelectionRange(newPosition, newPosition);
+    }
+    
+    messageInput.focus();
+  }
+  
+  // Format button event listeners
+  if (boldBtn) {
+    boldBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      formatText('**', '**');
+    });
+  }
+  
+  if (italicBtn) {
+    italicBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      formatText('*', '*');
+    });
+  }
+  
+  if (underlineBtn) {
+    underlineBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      formatText('<u>', '</u>');
+    });
+  }
+  
+  // Upload functionality
+  const imageBtn = document.getElementById('imageBtn');
+  const fileBtn = document.getElementById('fileBtn');
+  const imageUpload = document.getElementById('imageUpload');
+  const fileUpload = document.getElementById('fileUpload');
+  const attachmentPreview = document.getElementById('attachmentPreview');
+  const attachmentInfo = document.getElementById('attachmentInfo');
+  const attachmentIcon = document.getElementById('attachmentIcon');
+  const attachmentName = document.getElementById('attachmentName');
+  const removeAttachment = document.getElementById('removeAttachment');
+  const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+  const imagePreview = document.getElementById('imagePreview');
+  
+  let currentAttachment = null;
+  
+  // Image upload button click
+  if (imageBtn && imageUpload) {
+    imageBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      imageUpload.click();
+    });
+  }
+  
+  // File upload button click
+  if (fileBtn && fileUpload) {
+    fileBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      fileUpload.click();
+    });
+  }
+  
+  // Handle image upload
+  if (imageUpload) {
+    imageUpload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        currentAttachment = { type: 'image', file: file };
+        showAttachmentPreview(file, 'image');
+      }
+    });
+  }
+  
+  // Handle file upload
+  if (fileUpload) {
+    fileUpload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        currentAttachment = { type: 'file', file: file };
+        showAttachmentPreview(file, 'file');
+      }
+    });
+  }
+  
+  // Show attachment preview
+  function showAttachmentPreview(file, type) {
+    if (attachmentPreview && attachmentIcon && attachmentName) {
+      attachmentPreview.style.display = 'block';
+      attachmentIcon.textContent = type === 'image' ? '📷' : '📎';
+      attachmentName.textContent = file.name;
+      
+      if (type === 'image' && imagePreviewContainer && imagePreview) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreviewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else if (imagePreviewContainer) {
+        imagePreviewContainer.style.display = 'none';
+      }
+    }
+  }
+  
+  // Remove attachment
+  if (removeAttachment) {
+    removeAttachment.addEventListener('click', function(e) {
+      e.preventDefault();
+      currentAttachment = null;
+      if (attachmentPreview) {
+        attachmentPreview.style.display = 'none';
+      }
+      if (imageUpload) imageUpload.value = '';
+      if (fileUpload) fileUpload.value = '';
+      if (imagePreviewContainer) {
+        imagePreviewContainer.style.display = 'none';
+      }
+    });
+  }
+});
+
+// Image modal function for message previews
+function openImageModal(imageSrc) {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  `;
+  
+  // Create modal container
+  const container = document.createElement('div');
+  container.style.cssText = `
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+  `;
+  
+  // Create image
+  const img = document.createElement('img');
+  img.src = imageSrc;
+  img.style.cssText = `
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+  `;
+  
+  // Create close button
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '✕';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+  `;
+  
+  // Assemble modal
+  container.appendChild(img);
+  container.appendChild(closeBtn);
+  overlay.appendChild(container);
+  document.body.appendChild(overlay);
+  
+  // Close handlers
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      document.body.removeChild(overlay);
+      document.body.style.overflow = '';
+    }
+  });
+  
+  closeBtn.addEventListener('click', () => {
+    document.body.removeChild(overlay);
+    document.body.style.overflow = '';
+  });
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
 </script>
 </body>
 </html>

@@ -44,7 +44,24 @@ const conversationSchema = new mongoose.Schema({
     // Message content
     content: {
       type: String,
-      required: true
+      required: false // Allow empty content if there's a file attachment
+    },
+    // File attachment information
+    file_path: {
+      type: String,
+      required: false
+    },
+    file_type: {
+      type: String,
+      required: false
+    },
+    original_filename: {
+      type: String,
+      required: false
+    },
+    file_size: {
+      type: Number,
+      required: false
     },
     // Timestamp of when message was sent
     timestamp: {
