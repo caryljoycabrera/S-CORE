@@ -70,6 +70,12 @@ const requestApprovalSchema = new mongoose.Schema({
     type: String
   }],
 
+  // Track if additional file upload is allowed for revision requests
+  allowAdditionalFileUpload: {
+    type: Boolean,
+    default: true
+  },
+
   // Admin viewing tracking
   viewed: {
     type: Boolean,

@@ -9,6 +9,7 @@ const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const { requireLogin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
+const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -761,6 +762,15 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
     console.log('Request approval saved with specific type:', specificRequestType);
     console.log('Request approval saved with files:', filePaths);
 
+    // Send notifications to admins
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const adminIds = admins.map(admin => admin._id);
+      await notificationService.notifyApprovalCreated(newRequest._id, req.session.userId, adminIds);
+    } catch (notifError) {
+      console.error('Error sending approval creation notifications:', notifError);
+    }
+
     // Return JSON response instead of redirect
     res.json({
       success: true,
@@ -772,6 +782,94 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
     res.status(500).json({
       success: false,
       message: 'Failed to save approval request: ' + err.message
+    });
+  }
+});
+
+/**
+ * POST /add-files/:requestId
+ * Adds additional files to existing approval requests (for revision requests)
+ */
+router.post('/add-files/:requestId', upload.array('additionalFiles', 20), async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const { requestId } = req.params;
+  console.log('Adding files to request ID:', requestId);
+
+  try {
+    // Find the request and ensure it belongs to the user
+    const request = await RequestApproval.findOne({
+      _id: requestId,
+      userId: req.session.userId
+    });
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found or you do not have permission to modify it'
+      });
+    }
+
+    // Ensure the request is in "for revision" status
+    if (request.status?.toLowerCase() !== 'for revision') {
+      return res.status(400).json({
+        success: false,
+        message: 'Files can only be added to requests that are marked for revision'
+      });
+    }
+
+    // Check if files were uploaded
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload at least one additional file'
+      });
+    }
+
+    const newFilePaths = req.files.map(file => file.filename);
+    console.log('Additional file paths:', newFilePaths);
+
+    // Append new files to existing files array
+    const updatedFiles = [...(request.files || []), ...newFilePaths];
+    request.files = updatedFiles;
+
+    // Also update the primary 'file' field to the first file if it's null
+    if (!request.file && newFilePaths.length > 0) {
+      request.file = newFilePaths[0];
+    }
+
+    // Update the request's updatedAt timestamp and mark additional file upload as allowed
+    request.updatedAt = new Date();
+    request.allowAdditionalFileUpload = false; // No more additional files allowed after upload
+
+    await request.save();
+
+    // Send notification to admins about the file update
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const adminIds = admins.map(admin => admin._id);
+      await notificationService.notifyApprovalUpdated(requestId, req.session.userId, adminIds);
+    } catch (notifError) {
+      console.error('Error sending approval update notifications:', notifError);
+    }
+
+    console.log('Successfully added files to request:', requestId);
+    console.log('Updated files array:', updatedFiles);
+
+    res.json({
+      success: true,
+      message: `Successfully added ${newFilePaths.length} additional file(s) to your request`,
+      newFiles: newFilePaths,
+      totalFiles: updatedFiles.length
+    });
+
+  } catch (error) {
+    console.error('Error adding files to request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add files: ' + error.message
     });
   }
 });
@@ -842,6 +940,16 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
     console.log('Service request saved with organization:', actualOrganization);
     console.log('Service request saved with specific type:', specificRequestType);
     console.log('Service request saved with files:', filePaths);
+
+    // Send notifications to admins
+    try {
+      const admins = await User.find({ role: 'admin' });
+      const adminIds = admins.map(admin => admin._id);
+      await notificationService.notifyServiceCreated(newRequest._id, req.session.userId, adminIds);
+    } catch (notifError) {
+      console.error('Error sending service creation notifications:', notifError);
+    }
+
     res.redirect('/service-requests');
   } catch (err) {
     console.error('Error saving service request:', err);

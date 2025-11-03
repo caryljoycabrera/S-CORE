@@ -18,6 +18,36 @@ function requireLogin(req, res, next) {
 }
 
 /**
+ * requireAuth Middleware
+ * Ensures user is authenticated and populates req.user
+ * Similar to requireLogin but also fetches user data
+ */
+async function requireAuth(req, res, next) {
+  try {
+    // Check if user has a valid session
+    if (!req.session?.userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    // Fetch user from database
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'User not found' });
+    }
+
+    // Make user available to route handlers
+    req.user = user;
+    next();
+
+  } catch (err) {
+    console.error('Authentication error:', err);
+    res.status(500).json({ success: false, message: 'Authentication error' });
+  }
+}
+
+/**
  * requireAdmin Middleware
  * Ensures user is both authenticated AND has admin privileges
  * Used for admin-only routes and operations
@@ -54,5 +84,6 @@ async function requireAdmin(req, res, next) {
 
 module.exports = {
   requireLogin,
+  requireAuth,
   requireAdmin
 };

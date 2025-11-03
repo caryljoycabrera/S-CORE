@@ -593,6 +593,19 @@ function closeModal() {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
 
+  // Debug: Check all rows for allowAdditionalUpload data
+  console.log('🚀 Page loaded - checking all data attributes...');
+  const allRows = document.querySelectorAll('.request-row');
+  allRows.forEach((row, index) => {
+    const debugInfo = row.getAttribute('data-debug-allow');
+    const allowUpload = row.getAttribute('data-allow-additional-upload');
+    console.log(`Row ${index + 1}:`, {
+      requestId: row.dataset.requestId,
+      allowAdditionalUpload: allowUpload,
+      debugInfo: debugInfo ? JSON.parse(debugInfo) : 'No debug info'
+    });
+  });
+
   // Initialize enhanced single-select for type filter
   typeFilter = new EnhancedSingleSelect('typeFilter',
     [
@@ -630,6 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeModalHandlers();
   initializeRichModalHandlers();
   initializeConversationModal();
+  initializeAdditionalFileToggle();
 
   // Initialize row click handlers (this must come after all other initializations)
   initializeRowClickHandlers();
@@ -947,6 +961,46 @@ function populateAdminForm(rowData) {
     deadlineDisplay: rowData.formattedDeadline
   };
 
+  // Show/hide additional file upload toggle based on status
+  const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
+  if (additionalFileToggleSection) {
+    if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
+      additionalFileToggleSection.style.display = 'block';
+      
+      // Initialize checkbox state based on allowAdditionalUpload data
+      // Check for both possible checkbox IDs
+      const checkbox = document.getElementById('allowAdditionalFileUpload') || 
+                      document.getElementById('toggleAdditionalFileUploadBtn');
+      if (checkbox) {
+        // Try multiple methods to get the allowAdditionalUpload value
+        let allowAdditionalUpload = 'false';
+        
+        // Method 1: From rowData (converted from dataset)
+        if (rowData.allowAdditionalUpload !== undefined) {
+          allowAdditionalUpload = rowData.allowAdditionalUpload;
+        }
+        // Method 2: From HTML attribute directly
+        else {
+          const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
+          if (currentRow) {
+            allowAdditionalUpload = currentRow.getAttribute('data-allow-additional-upload') || 'false';
+          }
+        }
+        
+        console.log('🔍 Checkbox initialization:', {
+          currentRequestId,
+          'rowData.allowAdditionalUpload': rowData.allowAdditionalUpload,
+          'final allowAdditionalUpload': allowAdditionalUpload,
+          'will check': allowAdditionalUpload === 'true'
+        });
+        
+        checkbox.checked = allowAdditionalUpload === 'true';
+      }
+    } else {
+      additionalFileToggleSection.style.display = 'none';
+    }
+  }
+
   // Status dropdown
   const statusSelect = document.getElementById('adminStatusSelect');
   if (statusSelect) {
@@ -1051,6 +1105,13 @@ function populateFilePreview(rowData) {
     allFiles = rowData.files.split(',').map(f => f.trim()).filter(Boolean);
   } else if (rowData.file && rowData.file.trim() !== '') {
     allFiles = [rowData.file.trim()];
+  }
+
+  // Show toggle section only when there are files and the request allows additional uploads
+  const toggleSection = document.getElementById('additionalFileToggleSection');
+  if (toggleSection) {
+    // For now, show it when there are files (can be refined later based on request status)
+    toggleSection.style.display = allFiles.length > 0 ? 'block' : 'none';
   }
 
   if (allFiles.length > 0) {
@@ -1531,5 +1592,177 @@ function sendMessage() {
     input.value = '';
   }
 }
+
+// Additional file upload toggle functionality
+function initializeAdditionalFileToggle() {
+  // Handle checkbox-based toggle (check for both possible IDs)
+  const toggleCheckbox = document.getElementById('allowAdditionalFileUpload') || 
+                        document.getElementById('toggleAdditionalFileUploadBtn');
+  if (toggleCheckbox && toggleCheckbox.type === 'checkbox') {
+    // Remove any existing listeners first to prevent duplicates
+    toggleCheckbox.removeEventListener('change', handleAdditionalFileToggle);
+    // Add the new listener
+    toggleCheckbox.addEventListener('change', async () => {
+      await handleAdditionalFileToggle();
+    });
+  }
+}
+
+async function toggleAdditionalFileUpload() {
+  if (!currentRequestId || !currentRequestType) {
+    alert('No request selected');
+    return;
+  }
+
+  const toggleButton = document.getElementById('toggleAdditionalFileUploadBtn');
+  if (toggleButton) {
+    toggleButton.disabled = true;
+    toggleButton.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 0.5rem; animation: spin 1s linear infinite;">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+        <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4" fill="currentColor"/>
+      </svg>
+      Processing...
+    `;
+  }
+
+  try {
+    const response = await fetch('/admin/toggle-additional-file-upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        requestId: currentRequestId,
+        requestType: currentRequestType
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Close modal to reflect changes
+      if (detailModal) {
+        detailModal.style.display = 'none';
+      }
+
+      alert('✅ Additional file upload permission granted successfully!\n\nUsers can now upload additional files for revision.');
+
+      // The toggle section will be hidden when modal reopens since files exist
+    } else {
+      alert('❌ Failed to grant additional file upload permission: ' + result.message);
+    }
+  } catch (error) {
+    console.error('Error toggling additional file upload:', error);
+    alert('❌ Error granting additional file upload permission: ' + error.message);
+  } finally {
+    // Reset button state
+    if (toggleButton) {
+      toggleButton.disabled = false;
+      toggleButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 0.5rem;">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Allow additional file upload
+      `;
+    }
+  }
+}
+
+// Handle checkbox-based additional file toggle
+async function handleAdditionalFileToggle() {
+  if (!currentRequestId || !currentRequestType) {
+    alert('No request selected');
+    return;
+  }
+
+  // Check for both possible checkbox IDs
+  const checkbox = document.getElementById('allowAdditionalFileUpload') || 
+                  document.getElementById('toggleAdditionalFileUploadBtn');
+  if (!checkbox) return;
+
+  try {
+    const response = await fetch('/admin/toggle-additional-file-upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      credentials: 'same-origin',
+      body: new URLSearchParams({
+        requestId: currentRequestId,
+        requestType: currentRequestType,
+        allowAdditionalFileUpload: checkbox.checked.toString()
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Update the data attribute in the current row based on actual checkbox state
+      // Use the full ID (data-id) instead of the short request ID (data-request-id)
+      const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
+      if (currentRow) {
+        currentRow.setAttribute('data-allow-additional-upload', checkbox.checked.toString());
+        console.log('🔄 Updated HTML attribute to:', checkbox.checked.toString());
+      }
+
+      alert('Additional file upload permission updated successfully!');
+    } else {
+      // Revert checkbox state on failure
+      checkbox.checked = !checkbox.checked;
+      alert('Failed to update additional file upload permission: ' + result.message);
+    }
+  } catch (error) {
+    console.error('Error toggling additional file upload:', error);
+    // Revert checkbox state on error
+    checkbox.checked = !checkbox.checked;
+    alert('Error updating additional file upload permission: ' + error.message);
+  }
+}
+
+// Global function to open request modal by ID (for notification clicks)
+window.openRequestModal = function(requestId, requestType) {
+  console.log('Opening admin request modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // Trigger the existing modal opening
+    openModalFromRow(targetRow);
+  } else {
+    console.warn('Request not found on current admin page:', requestId);
+    // If not found, try to reload the page and search
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Global function to open conversation modal by ID (for message notifications)
+window.openConversationModal = function(requestId, requestType) {
+  console.log('Opening admin conversation modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // First open the details modal
+    openModalFromRow(targetRow);
+    
+    // Then trigger the conversation modal after a short delay
+    setTimeout(() => {
+      const chatButton = document.getElementById('openChatFromModal');
+      if (chatButton) {
+        console.log('Found chat button, clicking it');
+        chatButton.click();
+      } else {
+        console.warn('Chat button #openChatFromModal not found in modal');
+      }
+    }, 300);
+  } else {
+    console.warn('Request not found for conversation:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
 
 console.log('✅ AllRequestsAdmin script loaded and initialized successfully');

@@ -9,6 +9,7 @@ const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const { requireAdmin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
+const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -71,7 +72,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
     let approvals = await RequestApproval.find()
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
 
     // Add display organization logic
@@ -179,7 +180,7 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
   try {
     let serviceRequests = await ServiceRequest.find()
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
 
     // Status priority for sorting
@@ -249,7 +250,7 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     let serviceRequests = await ServiceRequest.find()
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
 
     // Status priority for sorting
@@ -516,6 +517,10 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
     let updateTimestamp = new Date();
 
     if (requestType === 'Request Approval') {
+      // Set allowAdditionalFileUpload to true when status is set to "For revision"
+      if (status?.toLowerCase() === 'for revision') {
+        updateData.allowAdditionalFileUpload = true;
+      }
       result = await RequestApproval.findByIdAndUpdate(requestId, updateData, { new: true });
     } else if (requestType === 'Service Request') {
       if (assignedUnits !== undefined && status) {
@@ -534,6 +539,42 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
         success: false,
         message: 'Request not found'
       });
+    }
+
+    // Send appropriate notifications based on status and request type
+    try {
+      const statusLower = status?.toLowerCase();
+      
+      if (requestType === 'Request Approval') {
+        // Populate userId if it's not already populated
+        const approval = await RequestApproval.findById(requestId).populate('userId');
+        
+        if (approval && approval.userId) {
+          if (statusLower === 'approved') {
+            await notificationService.notifyApprovalApproved(requestId, approval.userId._id, req.user._id);
+          } else if (statusLower === 'rejected') {
+            await notificationService.notifyApprovalRejected(requestId, approval.userId._id, req.user._id);
+          } else if (statusLower === 'for revision') {
+            await notificationService.notifyApprovalRevision(requestId, approval.userId._id, req.user._id);
+          }
+        }
+      } else if (requestType === 'Service Request') {
+        // Populate userId if it's not already populated
+        const service = await ServiceRequest.findById(requestId).populate('userId');
+        
+        if (service && service.userId) {
+          if (statusLower === 'approved') {
+            await notificationService.notifyServiceApproved(requestId, service.userId._id, req.user._id, assignedUnits);
+          } else if (statusLower === 'rejected') {
+            await notificationService.notifyServiceRejected(requestId, service.userId._id, req.user._id);
+          } else if (statusLower === 'completed') {
+            await notificationService.notifyServiceCompleted(requestId, service.userId._id, req.user._id);
+          }
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending status update notifications:', notifError);
+      // Don't fail the request update if notification fails
     }
 
     res.json({
@@ -572,7 +613,29 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
       assignedUnits: assignedUnits || 'Not yet assigned'
     };
 
-    await RequestApproval.findByIdAndUpdate(requestId, update);
+    // Set allowAdditionalFileUpload to true when status is set to "For revision"
+    if (status?.toLowerCase() === 'for revision') {
+      update.allowAdditionalFileUpload = true;
+    }
+
+    const result = await RequestApproval.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
+
+    // Send notification to user
+    try {
+      if (result && result.userId) {
+        const statusLower = status?.toLowerCase();
+        
+        if (statusLower === 'approved') {
+          await notificationService.notifyApprovalApproved(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'rejected') {
+          await notificationService.notifyApprovalRejected(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'for revision') {
+          await notificationService.notifyApprovalRevision(requestId, result.userId._id, req.user._id);
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending approval update notifications:', notifError);
+    }
 
     res.json({ success: true, message: 'Approval request updated successfully' });
   } catch (err) {
@@ -675,10 +738,27 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
     if (status) update.status = status;
     if (assignedUnits !== undefined) update.assignedUnits = assignedUnits || 'Not yet assigned';
 
-    const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true });
+    const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
 
     if (!result) {
       return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Send notification to user
+    try {
+      if (result && result.userId) {
+        const statusLower = status?.toLowerCase();
+        
+        if (statusLower === 'approved') {
+          await notificationService.notifyServiceApproved(requestId, result.userId._id, req.user._id, assignedUnits);
+        } else if (statusLower === 'rejected') {
+          await notificationService.notifyServiceRejected(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'completed') {
+          await notificationService.notifyServiceCompleted(requestId, result.userId._id, req.user._id);
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending service update notifications:', notifError);
     }
 
     res.json({ success: true, message: 'Service request updated successfully' });
@@ -1010,6 +1090,73 @@ router.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error deleting admin picture:', err);
     res.status(500).send('Error deleting picture');
+  }
+});
+
+/**
+ * POST /admin/toggle-additional-file-upload
+ * Toggles the allowAdditionalFileUpload field for a request
+ */
+router.post('/admin/toggle-additional-file-upload', requireAdmin, async (req, res) => {
+  const { requestId, requestType, allowAdditionalFileUpload } = req.body;
+
+  try {
+    if (!requestId || !requestType || allowAdditionalFileUpload === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request ID, request type, and allowAdditionalFileUpload value are required'
+      });
+    }
+
+    let Model;
+
+    if (requestType === 'Request Approval') {
+      Model = RequestApproval;
+    } else if (requestType === 'Service Request') {
+      Model = ServiceRequest;
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request type'
+      });
+    }
+
+    // Get current request (for validation)
+    const currentRequest = await Model.findById(requestId);
+    if (!currentRequest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    // Set to the provided value (true or false based on checkbox state)
+    const result = await Model.findByIdAndUpdate(
+      requestId,
+      { allowAdditionalFileUpload: allowAdditionalFileUpload === 'true' || allowAdditionalFileUpload === true },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    const actionText = result.allowAdditionalFileUpload ? 'granted' : 'revoked';
+    res.json({
+      success: true,
+      message: `Additional file upload permission ${actionText} successfully`,
+      allowAdditionalFileUpload: result.allowAdditionalFileUpload
+    });
+
+  } catch (err) {
+    console.error('Error toggling additional file upload:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle additional file upload permission'
+    });
   }
 });
 

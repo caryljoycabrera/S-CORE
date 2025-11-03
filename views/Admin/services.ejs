@@ -47,11 +47,13 @@
 }
 
 .admin-message {
-  margin-left: auto;
+  margin-right: auto;
+  margin-left: 0;
 }
 
 .user-message {
-  margin-right: auto;
+  margin-left: auto;
+  margin-right: 0;
 }
 
 .message-content {
@@ -1608,6 +1610,12 @@
                   data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
                   data-file="<%= request.file || '' %>"
                   data-files="<%= request.files ? request.files.join(',') : '' %>"
+                  data-allow-additional-upload="<%= request.allowAdditionalFileUpload ? 'true' : 'false' %>"
+                  data-debug-allow="<%= JSON.stringify({
+                    raw: request.allowAdditionalFileUpload,
+                    type: typeof request.allowAdditionalFileUpload,
+                    final: request.allowAdditionalFileUpload ? 'true' : 'false'
+                  }) %>"
                   data-student="<%= displayUserName %>">
                 <td><%= request._id.toString().slice(-6) %></td>
                 <td><%= displayUserName %></td>
@@ -1795,6 +1803,145 @@
         <!-- Files Section -->
         <div id="file-preview"></div>
 
+        <!-- Additional File Upload Toggle -->
+        <div id="additionalFileToggleSection" style="display: none;">
+          <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label class="toggle-switch" style="margin: 0;">
+                <input type="checkbox" id="toggleAdditionalFileUploadBtn">
+                <span class="toggle-slider"></span>
+              </label>
+              <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
+            </div>
+            <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
+              This will permit users to add more files when revising their requests
+            </div>
+          </div>
+
+          <style>
+            /* Toggle Switch Styles */
+            .toggle-switch {
+              position: relative;
+              display: inline-block;
+              width: 50px;
+              height: 24px;
+              margin: 0;
+            }
+
+            .toggle-slider {
+              position: absolute;
+              cursor: pointer;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background-color: #cbd5e1;
+              transition: 0.4s;
+              border-radius: 24px;
+            }
+
+            .toggle-slider:before {
+              position: absolute;
+              content: "";
+              height: 18px;
+              width: 18px;
+              left: 3px;
+              bottom: 3px;
+              background-color: white;
+              transition: 0.4s;
+              border-radius: 50%;
+            }
+
+            input:checked + .toggle-slider {
+              background-color: var(--primary-green);
+            }
+
+            input:checked + .toggle-slider:before {
+              transform: translateX(26px);
+            }
+
+            /* Hide the checkbox input */
+            .toggle-switch input[type="checkbox"] {
+              opacity: 0;
+              width: 0;
+              height: 0;
+            }
+
+            /* Enhanced Conversation Message Styles */
+            .message {
+              margin-bottom: 1.5rem;
+              max-width: 70%;
+              display: flex;
+              flex-direction: column;
+            }
+
+            .admin-message {
+              align-self: flex-end;
+              margin-left: auto;
+              margin-right: 0;
+            }
+
+            .user-message {
+              align-self: flex-start;
+              margin-left: 0;
+              margin-right: auto;
+            }
+
+            .message-content {
+              padding: 0.75rem;
+              border-radius: 1rem;
+              background: #f3f4f6;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+              position: relative;
+            }
+
+            .admin-message .message-content {
+              background: var(--primary-green);
+              color: white;
+              border-bottom-right-radius: 0.25rem;
+            }
+
+            .user-message .message-content {
+              background: white;
+              color: #374151;
+              border: 1px solid #e5e7eb;
+              border-bottom-left-radius: 0.25rem;
+            }
+
+            .message-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 0.5rem;
+              font-size: 0.875rem;
+            }
+
+            .admin-message .message-header {
+              color: rgba(255, 255, 255, 0.9);
+            }
+
+            .user-message .message-header {
+              color: #6b7280;
+            }
+
+            .message-time {
+              opacity: 0.8;
+              font-size: 0.75rem;
+            }
+
+            .message-text {
+              word-wrap: break-word;
+              line-height: 1.5;
+            }
+
+            /* Format Button Hover Effects */
+            .format-btn:hover {
+              background: #f3f4f6;
+              border-color: var(--primary-green);
+            }
+          </style>
+        </div>
+
         <!-- Quick Actions -->
         <div class="quick-action-buttons">
           <button class="quick-action-btn chat" id="openChatFromModal">
@@ -1811,7 +1958,7 @@
 
 <!-- Conversation Modal -->
 <div id="conversationModal" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width: 800px; width: 90%; height: 80vh; overflow: hidden;">
+  <div class="modal-content" style="max-width: 800px; width: 90%; height: 100vh; overflow: hidden;">
     <header class="modal-header">
       <span class="modal-title">Conversation</span>
       <span class="close" id="closeConversationModal">&times;</span>
@@ -1820,9 +1967,51 @@
       <div id="messagesContainer" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f9f9f9; min-height: 400px;">
       </div>
       <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: white; flex-shrink: 0;">
+        <!-- Message Formatting Toolbar -->
+        <div id="formattingToolbar" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+          <button type="button" id="boldBtn" class="format-btn" title="Bold" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-weight: bold; font-size: 0.875rem; transition: all 0.2s;">
+            <strong>B</strong>
+          </button>
+          <button type="button" id="italicBtn" class="format-btn" title="Italic" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-style: italic; font-size: 0.875rem; transition: all 0.2s;">
+            <em>I</em>
+          </button>
+          <button type="button" id="underlineBtn" class="format-btn" title="Underline" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; text-decoration: underline; font-size: 0.875rem; transition: all 0.2s;">
+            U
+          </button>
+          <div style="width: 1px; height: 1.5rem; background: #d1d5db; align-self: center; margin: 0 0.25rem;"></div>
+          <button type="button" id="imageBtn" class="format-btn" title="Upload Image" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+            📷
+          </button>
+          <button type="button" id="fileBtn" class="format-btn" title="Upload File" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+            📎
+          </button>
+          <div style="flex: 1;"></div>
+          <span style="font-size: 0.75rem; color: #6b7280; align-self: center;">Format your text</span>
+        </div>
+        
+        <!-- Hidden file inputs -->
+        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+        <input type="file" id="fileUpload" style="display: none;">
+        
+        <!-- Attachment preview area -->
+        <div id="attachmentPreview" style="display: none; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; max-height: 80px; overflow: hidden;">
+          <div style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
+            <div id="attachmentInfo" style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+              <span id="attachmentIcon" style="flex-shrink: 0;">📷</span>
+              <span id="attachmentName" style="font-size: 0.875rem; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+            </div>
+            <button type="button" id="removeAttachment" style="padding: 0.25rem; border: none; background: none; cursor: pointer; color: #ef4444; font-size: 1rem; flex-shrink: 0;" title="Remove attachment">
+              ✕
+            </button>
+          </div>
+          <div id="imagePreviewContainer" style="margin-top: 0.25rem; display: none; max-height: 40px; overflow: hidden;">
+            <img id="imagePreview" style="max-width: 80px; max-height: 40px; border-radius: 0.25rem; cursor: pointer; object-fit: cover;" onclick="openImageModal(this.src)">
+          </div>
+        </div>
+        
         <div style="display: flex; gap: 0.5rem;">
           <input type="text" id="messageInput" placeholder="Type your message..." 
-                 style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                 style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-family: 'Inter', sans-serif;">
           <button id="sendMessageBtn" class="view-all-btn" style="background: var(--primary-green); color: white;">
             Send
           </button>
@@ -2272,6 +2461,19 @@ class EnhancedMultiSelect {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
   
+  // Debug: Check all rows for allowAdditionalUpload data
+  console.log('🚀 Page loaded - checking all data attributes...');
+  const allRows = document.querySelectorAll('.request-row');
+  allRows.forEach((row, index) => {
+    const debugInfo = row.getAttribute('data-debug-allow');
+    const allowUpload = row.getAttribute('data-allow-additional-upload');
+    console.log(`Row ${index + 1}:`, {
+      requestId: row.dataset.requestId,
+      allowAdditionalUpload: allowUpload,
+      debugInfo: debugInfo ? JSON.parse(debugInfo) : 'No debug info'
+    });
+  });
+  
   // Initialize enhanced multi-select dropdowns
   const statusFilter = new EnhancedMultiSelect('statusFilter', 
     ['pending', 'approved', 'for revision', 'completed', 'rejected', 'archived'], 
@@ -2292,6 +2494,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentRequestType = 'Service Request';
   let originalValues = {};
   let allRequestsData = [];
+  let uploadedFile = null;
   
   console.log('🔍 DOM Elements Check:', {
     detailModal: !!detailModal,
@@ -2556,6 +2759,131 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('messageInput');
     const messagesContainer = document.getElementById('messagesContainer');
     
+    // Formatting buttons
+    const boldBtn = document.getElementById('boldBtn');
+    const italicBtn = document.getElementById('italicBtn');
+    const underlineBtn = document.getElementById('underlineBtn');
+    
+    // Formatting button handlers
+    if (boldBtn) {
+      boldBtn.addEventListener('click', function() {
+        insertFormatting('**', '**');
+      });
+    }
+
+    if (italicBtn) {
+      italicBtn.addEventListener('click', function() {
+        insertFormatting('*', '*');
+      });
+    }
+
+    if (underlineBtn) {
+      underlineBtn.addEventListener('click', function() {
+        insertFormatting('<u>', '</u>');
+      });
+    }
+
+    // Upload functionality
+    const imageBtn = document.getElementById('imageBtn');
+    const fileBtn = document.getElementById('fileBtn');
+    const imageUpload = document.getElementById('imageUpload');
+    const fileUpload = document.getElementById('fileUpload');
+    const attachmentPreview = document.getElementById('attachmentPreview');
+    const removeAttachment = document.getElementById('removeAttachment');
+    
+    // Image upload button click
+    if (imageBtn && imageUpload) {
+      imageBtn.addEventListener('click', function() {
+        imageUpload.click();
+      });
+    }
+    
+    // File upload button click
+    if (fileBtn && fileUpload) {
+      fileBtn.addEventListener('click', function() {
+        fileUpload.click();
+      });
+    }
+    
+    // Handle image file selection
+    if (imageUpload) {
+      imageUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          handleFileSelection(file);
+        }
+      });
+    }
+    
+    // Handle regular file selection
+    if (fileUpload) {
+      fileUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          handleFileSelection(file);
+        }
+      });
+    }
+    
+    // Remove attachment
+    if (removeAttachment) {
+      removeAttachment.addEventListener('click', function() {
+        clearAttachment();
+      });
+    }
+    
+    function handleFileSelection(file) {
+      uploadedFile = file;
+      const attachmentInfo = document.getElementById('attachmentInfo');
+      const attachmentIcon = document.getElementById('attachmentIcon');
+      const attachmentName = document.getElementById('attachmentName');
+      const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+      const imagePreview = document.getElementById('imagePreview');
+      
+      if (attachmentPreview && attachmentIcon && attachmentName) {
+        // Set icon based on file type
+        if (file.type.startsWith('image/')) {
+          attachmentIcon.textContent = '📷';
+          // Show image preview
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            if (imagePreview && imagePreviewContainer) {
+              imagePreview.src = e.target.result;
+              imagePreviewContainer.style.display = 'block';
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          attachmentIcon.textContent = '📎';
+          if (imagePreviewContainer) {
+            imagePreviewContainer.style.display = 'none';
+          }
+        }
+        
+        attachmentName.textContent = file.name;
+        attachmentPreview.style.display = 'block';
+      }
+    }
+
+    function insertFormatting(startTag, endTag) {
+      const input = messageInput;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+      const before = text.substring(0, start);
+      const selected = text.substring(start, end);
+      const after = text.substring(end);
+      
+      if (selected) {
+        input.value = before + startTag + selected + endTag + after;
+        input.setSelectionRange(start, end + startTag.length + endTag.length);
+      } else {
+        input.value = before + startTag + endTag + after;
+        input.setSelectionRange(start + startTag.length, start + startTag.length);
+      }
+      input.focus();
+    }
+    
     if (openChatBtn) {
       openChatBtn.addEventListener('click', function() {
         if (currentRequestId) {
@@ -2623,12 +2951,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const response = await fetch(`/api/conversation/${requestId}`);
       const data = await response.json();
       
-      if (response.ok) {
+      if (response.ok && data) {
+        // API returns the conversation document directly (with .messages array)
         displayMessages(data.messages || []);
         // Mark messages as read
         await fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' });
       } else {
-        throw new Error(data.error || 'Failed to load conversation');
+        throw new Error(data && data.error ? data.error : 'Failed to load conversation');
       }
     } catch (error) {
       console.error('Error loading conversation:', error);
@@ -2645,46 +2974,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Display messages function
-  function displayMessages(messages) {
-    const messagesContainer = document.getElementById('messagesContainer');
+  // Clear attachment function
+  function clearAttachment() {
+    uploadedFile = null;
+    const attachmentPreview = document.getElementById('attachmentPreview');
+    const imageUpload = document.getElementById('imageUpload');
+    const fileUpload = document.getElementById('fileUpload');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     
-    if (!messages || messages.length === 0) {
-      messagesContainer.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
-          <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">💭</div>
-            <p>No messages yet</p>
-            <small>Start the conversation by sending a message below</small>
-          </div>
-        </div>
-      `;
-      return;
+    if (attachmentPreview) {
+      attachmentPreview.style.display = 'none';
     }
-    
-    messagesContainer.innerHTML = messages.map(message => {
-      const isAdmin = message.senderRole === 'admin';
-      const senderName = message.senderId ? 
-        `${message.senderId.fName} ${message.senderId.lName}` : 
-        'Unknown User';
-      
-      const messageTime = new Date(message.timestamp).toLocaleString();
-      
-      return `
-        <div class="message ${isAdmin ? 'admin-message' : 'user-message'}">
-          <div class="message-content">
-            <div class="message-header">
-              <strong>${senderName} ${isAdmin ? '(Admin)' : ''}</strong>
-              <span class="message-time">${messageTime}</span>
-            </div>
-            <div class="message-text">${message.content}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    
-    // Scroll to bottom
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    if (imageUpload) imageUpload.value = '';
+    if (fileUpload) fileUpload.value = '';
+    if (imagePreviewContainer) {
+      imagePreviewContainer.style.display = 'none';
+    }
   }
 
   // Send message function
@@ -2692,8 +2997,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('messageInput');
     const content = messageInput.value.trim();
     
-    if (!content) {
-      showNotification('Please enter a message', 'error');
+    if (!content && !uploadedFile) {
+      showNotification('Please enter a message or select a file', 'error');
       return;
     }
     
@@ -2703,21 +3008,36 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     try {
-      const response = await fetch(`/api/conversation/${currentRequestId}/message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content })
-      });
+      let response;
+      
+      if (uploadedFile) {
+        // Send with file attachment using FormData
+        const formData = new FormData();
+        formData.append('content', content || ''); // Always include content field
+        formData.append('file', uploadedFile);
+        
+        response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+          method: 'POST',
+          body: formData
+        });
+      } else {
+        // Send text only using JSON
+        response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content })
+        });
+      }
       
       const data = await response.json();
       
       if (response.ok) {
         messageInput.value = '';
+        clearAttachment();
         // Reload conversation to show new message
         openConversation(currentRequestId);
-        showNotification('Message sent successfully', 'success');
       } else {
         throw new Error(data.error || 'Failed to send message');
       }
@@ -3145,6 +3465,54 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle file preview
     populateFilePreview(rowData);
+
+    // Show/hide additional file upload toggle based on status
+    const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
+    if (additionalFileToggleSection) {
+      if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
+        additionalFileToggleSection.style.display = 'block';
+        // Add event listener for the toggle
+        const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
+        if (toggleCheckbox) {
+          // Try multiple methods to get the allowAdditionalUpload value
+          let allowAdditionalUpload = 'false';
+          
+          // Method 1: From rowData (converted from dataset)
+          if (rowData.allowAdditionalUpload !== undefined) {
+            allowAdditionalUpload = rowData.allowAdditionalUpload;
+          }
+          // Method 2: From HTML attribute directly
+          else {
+            const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
+            if (currentRow) {
+              allowAdditionalUpload = currentRow.getAttribute('data-allow-additional-upload') || 'false';
+            }
+          }
+          
+          console.log('🔍 Checkbox initialization:', {
+            currentRequestId,
+            'rowData.allowAdditionalUpload': rowData.allowAdditionalUpload,
+            'final allowAdditionalUpload': allowAdditionalUpload,
+            'will check': allowAdditionalUpload === 'true'
+          });
+          
+          // Set checkbox state based on current allowAdditionalUpload value
+          toggleCheckbox.checked = allowAdditionalUpload === 'true';
+          
+          // Remove existing listener to prevent duplicates
+          toggleCheckbox.removeEventListener('change', handleAdditionalFileToggle);
+          // Add new listener
+          toggleCheckbox.addEventListener('change', handleAdditionalFileToggle);
+        }
+      } else {
+        additionalFileToggleSection.style.display = 'none';
+        // Remove event listener when hidden
+        const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
+        if (toggleCheckbox) {
+          toggleCheckbox.removeEventListener('change', handleAdditionalFileToggle);
+        }
+      }
+    }
   }
   
   // Populate admin form
@@ -3564,8 +3932,14 @@ window.openImagePreview = function(imageUrl, fileName) {
           file: row.dataset.file,
           files: row.dataset.files,
           formattedDeadline: row.dataset.formattedDeadline,
+          allowAdditionalUpload: row.dataset.allowAdditionalUpload,
           student: row.dataset.student
         };
+
+        console.log('Row clicked with data:', rowData);
+        console.log('🔍 Debug - row.dataset.allowAdditionalUpload:', row.dataset.allowAdditionalUpload);
+        console.log('🔍 Debug - HTML attribute:', row.getAttribute('data-allow-additional-upload'));
+        console.log('🔍 Debug - Server debug info:', row.getAttribute('data-debug-allow'));
 
         // Set current request data
         currentRequestId = rowData.id;
@@ -3632,6 +4006,7 @@ window.openImagePreview = function(imageUrl, fileName) {
         file: updatedRow.dataset.file,
         files: updatedRow.dataset.files,
         formattedDeadline: updatedRow.dataset.formattedDeadline,
+        allowAdditionalUpload: updatedRow.dataset.allowAdditionalUpload,
         student: updatedRow.dataset.student
       };
       
@@ -3726,6 +4101,68 @@ window.openImagePreview = function(imageUrl, fileName) {
     }
   }
 
+  // Function to show additional file toggle for "For Revision" requests
+  function showAdditionalFileToggleForRevision(status) {
+    const toggleSection = document.getElementById('additionalFileToggleSection');
+    const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
+
+    if (!toggleSection || !toggleCheckbox) return;
+
+    if (status && status.toLowerCase() === 'for revision') {
+      toggleSection.style.display = 'block';
+      toggleCheckbox.addEventListener('change', handleAdditionalFileToggle);
+    } else {
+      toggleSection.style.display = 'none';
+      toggleCheckbox.removeEventListener('change', handleAdditionalFileToggle);
+    }
+  }
+
+  // Handle additional file toggle
+  async function handleAdditionalFileToggle() {
+    const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
+
+    if (!currentRequestId) {
+      showNotification('No request selected', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch('/admin/toggle-additional-file-upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          requestId: currentRequestId,
+          requestType: currentRequestType,
+          allowAdditionalFileUpload: toggleCheckbox.checked.toString()
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Update the HTML data attribute to persist the change
+        const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
+        if (currentRow) {
+          currentRow.setAttribute('data-allow-additional-upload', toggleCheckbox.checked.toString());
+          console.log('🔄 Updated HTML attribute to:', toggleCheckbox.checked.toString());
+        }
+        
+        showNotification('Additional file upload permission updated successfully', 'success');
+      } else {
+        showNotification('Failed to update additional file upload permission: ' + (result.message || 'Unknown error'), 'error');
+        // Revert the checkbox state
+        toggleCheckbox.checked = !toggleCheckbox.checked;
+      }
+    } catch (error) {
+      console.error('Error toggling additional file upload:', error);
+      showNotification('Failed to update additional file upload permission: ' + error.message, 'error');
+      // Revert the checkbox state
+      toggleCheckbox.checked = !toggleCheckbox.checked;
+    }
+  }
+
   // Initialize everything
   try {
     initializeModalHandlers();
@@ -3740,6 +4177,170 @@ window.openImagePreview = function(imageUrl, fileName) {
 
 console.log('✅ Services Admin script loaded successfully');
 
+  // Image modal functionality
+  function openImageModal(imageSrc) {
+    let imageModal = document.getElementById('imageModal');
+    
+    if (!imageModal) {
+      // Create image modal if it doesn't exist
+      imageModal = document.createElement('div');
+      imageModal.id = 'imageModal';
+      imageModal.style.cssText = `
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.9);
+        cursor: pointer;
+      `;
+      
+      const modalImg = document.createElement('img');
+      modalImg.id = 'modalImage';
+      modalImg.style.cssText = `
+        margin: auto;
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 90%;
+        max-height: 90%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      `;
+      
+      const closeBtn = document.createElement('span');
+      closeBtn.innerHTML = '&times;';
+      closeBtn.style.cssText = `
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10001;
+      `;
+      
+      closeBtn.onclick = function() {
+        imageModal.style.display = 'none';
+      };
+      
+      imageModal.onclick = function(e) {
+        if (e.target === imageModal) {
+          imageModal.style.display = 'none';
+        }
+      };
+      
+      imageModal.appendChild(modalImg);
+      imageModal.appendChild(closeBtn);
+      document.body.appendChild(imageModal);
+    }
+    
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imageSrc;
+    imageModal.style.display = 'block';
+  }
+
+  // Update displayMessages function to handle attachments
+  function displayMessages(messages) {
+    const messagesContainer = document.getElementById('messagesContainer');
+    if (!messagesContainer) return;
+    
+    if (!messages || messages.length === 0) {
+      messagesContainer.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+          <div style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+            <p>No messages yet. Start the conversation!</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
+    
+    messagesContainer.innerHTML = messages.map(message => {
+      const isUser = message.senderRole === 'user';
+      const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
+      
+      // Create user avatar (profile picture or default icon)
+      const userAvatar = `
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? '#d1d5db' : 'var(--primary-green)'};">
+          ${message.senderId && message.senderId.profilePicture ? 
+            `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+             <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+               <circle cx="12" cy="7" r="4"/>
+             </svg>` :
+            `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
+               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+               <circle cx="12" cy="7" r="4"/>
+             </svg>`
+          }
+        </div>
+      `;
+      
+      let attachmentHtml = '';
+      if (message.file_path) {
+        const fileName = message.original_filename || 'File';
+        const isImage = message.file_type && message.file_type.startsWith('image/');
+        
+        if (isImage) {
+          attachmentHtml = `
+            <div style="margin-top: 0.5rem;">
+              <img src="${message.file_path}" 
+                   style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
+                   onclick="openImageModal('${message.file_path}')"
+                   alt="${fileName}">
+            </div>
+          `;
+        } else {
+          attachmentHtml = `
+            <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.2rem;">📎</span>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
+                  <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
+                </div>
+                <a href="${message.file_path}" download="${fileName}" 
+                   style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
+                  Download
+                </a>
+              </div>
+            </div>
+          `;
+        }
+      }
+      
+      return `
+        <div class="message ${isUser ? 'user-message' : 'admin-message'}">
+          <div class="message-content">
+            <div style="display: flex; align-items: flex-start;">
+              ${userAvatar}
+              <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
+                <div class="message-header">
+                  <strong>${senderName}</strong>
+                  <span class="message-time">${new Date(message.timestamp || message.created_at).toLocaleString()}</span>
+                </div>
+                <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;">${message.content}</div>
+                <div class="message-attachment">${attachmentHtml}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // Scroll to bottom
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
 // Auto-open modal if openModalId is in URL
 document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -3753,6 +4354,74 @@ document.addEventListener('DOMContentLoaded', function() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }, 500);
     }
+  }
+});
+
+// Global function to open request modal by ID (for notification clicks)
+window.openRequestModal = function(requestId, requestType) {
+  console.log('Opening admin service modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // Trigger the existing modal opening
+    targetRow.click();
+  } else {
+    console.warn('Service request not found on current admin page:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Global function to open conversation modal by ID (for message notifications)
+window.openConversationModal = function(requestId, requestType) {
+  console.log('Opening admin service conversation modal for:', requestId, requestType);
+  
+  // Find the row with the matching request ID
+  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
+  
+  if (targetRow) {
+    // First open the details modal
+    targetRow.click();
+    
+    // Then trigger the conversation modal after a short delay
+    setTimeout(() => {
+      const chatButton = document.getElementById('openChatFromModal');
+      if (chatButton) {
+        console.log('Found service chat button, clicking it');
+        chatButton.click();
+      } else {
+        console.warn('Chat button #openChatFromModal not found in service modal');
+      }
+    }, 300);
+  } else {
+    console.warn('Service request not found for conversation:', requestId);
+    window.location.href = window.location.pathname + `?highlight=${requestId}`;
+  }
+};
+
+// Enhanced auto-opening logic for modal and conversation parameters
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Handle modal opening from notifications
+  if (urlParams.has('modal') && urlParams.has('requestId') && urlParams.get('type') === 'service') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening service modal for notification:', requestId);
+    
+    setTimeout(() => {
+      window.openRequestModal(requestId, 'service');
+    }, 500);
+  }
+  
+  // Handle conversation opening from message notifications
+  if (urlParams.has('conversation') && urlParams.has('requestId') && urlParams.get('type') === 'service') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening service conversation for message notification:', requestId);
+    
+    setTimeout(() => {
+      window.openConversationModal(requestId, 'service');
+    }, 500);
   }
 });
 </script>
