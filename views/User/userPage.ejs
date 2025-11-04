@@ -302,7 +302,7 @@
 }
 
 .calendar-today {
-  background: linear-gradient(135deg, #43a047, #66bb6a);
+  background: linear-gradient(135deg, #43a047, #66bb6a) !important;
   color: #fff !important;
   font-weight: 700;
   border: 2px solid #388e3c;
@@ -320,6 +320,14 @@
   border: 2px solid #c8e6c9;
   border-radius: 8px;
   pointer-events: none;
+}
+
+/* Ensure today always shows green background even with deadline classes */
+.calendar-today.has-approval-deadline,
+.calendar-today.has-service-deadline,
+.calendar-today.has-mixed-deadlines {
+  background: linear-gradient(135deg, #43a047, #66bb6a) !important;
+  color: #fff !important;
 }
 
 .calendar-day.has-approval-deadline {

@@ -294,7 +294,7 @@
 
 /* Calendar Today Style */
 .calendar-today {
-  background: linear-gradient(135deg, #43a047, #66bb6a);
+  background: linear-gradient(135deg, #43a047, #66bb6a) !important;
   color: #fff !important;
   font-weight: 700;
   border: 2px solid #388e3c;
@@ -312,6 +312,14 @@
   border: 2px solid #c8e6c9;
   border-radius: 8px;
   pointer-events: none;
+}
+
+/* Ensure today always shows green background even with deadline classes */
+.calendar-today.has-approval-deadline,
+.calendar-today.has-service-deadline,
+.calendar-today.has-mixed-deadlines {
+  background: linear-gradient(135deg, #43a047, #66bb6a) !important;
+  color: #fff !important;
 }
 
 /* ==========================================
@@ -1084,6 +1092,44 @@
 /* ==========================================
    RESPONSIVE DESIGN
    ========================================== */
+
+/* Tablet and smaller desktop screens */
+@media (max-width: 1024px) {
+  .action-cards-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .calendar-standalone {
+    grid-column: 1 / -1;
+    margin-top: 1.5rem;
+  }
+
+  .action-card,
+  .calendar-standalone {
+    min-height: 300px;
+    height: 300px;
+  }
+}
+
+/* Mobile screens */
+@media (max-width: 768px) {
+  .action-cards-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .action-card,
+  .calendar-standalone {
+    min-height: 280px;
+    height: 280px;
+    padding: 1rem;
+  }
+
+  .calendar-standalone {
+    margin-top: 1rem;
+  }
+}
 
 @media (max-width: 1200px) {
   .calendar-grid {
