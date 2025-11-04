@@ -86,7 +86,7 @@
           </div>
         </div>
         <div class="filter-item">
-          <label for="studentFilter" class="filter-sublabel">User</label>
+          <label class="filter-sublabel">User</label>
           <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
         </div>
       </div>
@@ -268,46 +268,45 @@
 <div id="detailsModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width: 1000px;">
     <header class="modal-header">
-      <span class="modal-title">Approval Request Details</span>
+      <span class="modal-title">Request Details</span>
       <span class="close" id="closeDetailsModal">&times;</span>
     </header>
     <div class="modal-body details-modal-body">
       <div class="details-content">
-        
-        <!-- Update the general-info-section div in the HTML -->
-<div class="general-info-section">
-  <h3>General Information</h3>
-  <div class="general-info-row">
-    <div class="info-item">
-      <span class="info-label">Project Title:</span>
-      <span class="info-value" id="detailTitle"></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">Requested By:</span>
-      <span class="info-value" id="detailStudent"></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">Request Type:</span>
-      <span class="info-value" id="detailType">Request Approval</span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">Organization:</span>
-      <span class="info-value" id="detailOrganization"></span>
-    </div>
-    <div class="info-item">
-  <span class="info-label">Specific Request Type:</span>
-  <span class="info-value" data-field="specificRequestType">Not specified</span>
-</div>
-    <div class="info-item">
-      <span class="info-label">Date Submitted:</span>
-      <span class="info-value" id="detailDatetime"></span>
-    </div>
-    <div class="info-item">
-      <span class="info-label">Deadline:</span>
-      <span class="info-value" id="detailDeadlineInfo"></span>
-    </div>
-  </div>
-</div>
+        <!-- General Information Section -->
+        <div class="general-info-section">
+          <h3>General Information</h3>
+          <div class="general-info-row">
+            <div class="info-item">
+              <span class="info-label">Project Title:</span>
+              <span class="info-value" id="detailTitle"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Requested By:</span>
+              <span class="info-value" id="detailStudent"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Request Type:</span>
+              <span class="info-value" id="detailType"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Specific Request Type:</span>
+              <span class="info-value" id="detailSpecificRequest" style="color: var(--primary-green); font-weight: 600;">Not specified</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Organization:</span>
+              <span class="info-value" id="detailOrganization"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Date Submitted:</span>
+              <span class="info-value" id="detailDatetime"></span>
+            </div>
+            <div class="info-item" id="deadlineInfo" style="display: none;">
+              <span class="info-label">Deadline:</span>
+              <span class="info-value" id="detailDeadlineInfo"></span>
+            </div>
+          </div>
+        </div>
 
         <!-- Admin Controls Form Section -->
         <div class="admin-form-section">
@@ -318,21 +317,18 @@
             Administrative Controls
             <span class="admin-badge">EDIT & UPDATE</span>
           </h3>
-          
+
           <form id="adminUpdateForm" onsubmit="return false;">
             <div class="admin-form-grid">
-              
               <!-- Status Field -->
               <div class="form-field">
                 <label for="adminStatusSelect">Request Status</label>
-                <select id="adminStatusSelect" name="status">
-                  <!-- Options will be populated by JavaScript -->
-                </select>
+                <select id="adminStatusSelect" name="status"></select>
                 <div class="current-value">
                   Current: <span id="currentStatusValue">Loading...</span>
                 </div>
               </div>
-              
+
               <!-- Assigned Units Field -->
               <div class="form-field">
                 <label for="adminUnitsSelect">Assigned Unit</label>
@@ -355,9 +351,17 @@
                   Current: <span id="currentUnitsValue">Loading...</span>
                 </div>
               </div>
-              
+
+              <!-- Deadline Field -->
+              <div class="form-field" id="adminDeadlineField" style="display: none;">
+                <label for="adminDeadlineInput">Request Deadline</label>
+                <input type="datetime-local" id="adminDeadlineInput" name="deadline">
+                <div class="current-value">
+                  Current: <span id="currentDeadlineValue">Loading...</span>
+                </div>
+              </div>
             </div>
-            
+
             <div class="admin-form-actions">
               <button type="button" class="admin-btn admin-btn-secondary" id="adminCancelBtn">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -387,140 +391,14 @@
         <!-- Files Section -->
         <div id="file-preview"></div>
 
-        <!-- Additional File Upload Toggle -->
-        <div id="additionalFileToggleSection" style="display: none;">
-          <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <label class="toggle-switch" style="margin: 0;">
-                <input type="checkbox" id="toggleAdditionalFileUploadBtn">
-                <span class="toggle-slider"></span>
-              </label>
-              <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
-            </div>
-            <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
-              This will permit users to add more files when revising their requests
-            </div>
-          </div>
-
-          <style>
-            /* Toggle Switch Styles */
-            .toggle-switch {
-              position: relative;
-              display: inline-block;
-              width: 50px;
-              height: 24px;
-              margin: 0;
-            }
-
-            .toggle-slider {
-              position: absolute;
-              cursor: pointer;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background-color: #cbd5e1;
-              transition: 0.4s;
-              border-radius: 24px;
-            }
-
-            .toggle-slider:before {
-              position: absolute;
-              content: "";
-              height: 18px;
-              width: 18px;
-              left: 3px;
-              bottom: 3px;
-              background-color: white;
-              transition: 0.4s;
-              border-radius: 50%;
-            }
-
-            input:checked + .toggle-slider {
-              background-color: var(--primary-green);
-            }
-
-            input:checked + .toggle-slider:before {
-              transform: translateX(26px);
-            }
-
-            /* Hide the checkbox input */
-            .toggle-switch input[type="checkbox"] {
-              opacity: 0;
-              width: 0;
-              height: 0;
-            }
-
-            /* Enhanced Conversation Message Styles */
-            .message {
-              margin-bottom: 1.5rem;
-              max-width: 80%;
-              display: flex;
-              flex-direction: column;
-            }
-
-            .admin-message {
-              align-self: flex-start;
-            }
-
-            .user-message {
-              align-self: flex-end;
-            }
-
-            .message-content {
-              padding: 0.75rem;
-              border-radius: 1rem;
-              background: #f3f4f6;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-              position: relative;
-            }
-
-            .admin-message .message-content {
-              background: var(--primary-green);
-              color: white;
-              border-bottom-right-radius: 0.25rem;
-            }
-
-            .user-message .message-content {
-              background: white;
-              color: #374151;
-              border: 1px solid #e5e7eb;
-              border-bottom-left-radius: 0.25rem;
-            }
-
-            .message-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 0.5rem;
-              font-size: 0.875rem;
-            }
-
-            .message-time {
-              opacity: 0.7;
-              font-size: 0.75rem;
-            }
-
-            .message-text {
-              word-wrap: break-word;
-            }
-
-            /* Format Button Hover Effects */
-            .format-btn:hover {
-              background: #f3f4f6;
-              border-color: var(--primary-green);
-            }
-          </style>
-        </div>
-
         <!-- Quick Actions -->
         <div class="quick-action-buttons">
           <button class="quick-action-btn chat" id="openChatFromModal">
-          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          Start Conversation
-        </button>
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Start Conversation
+          </button>
         </div>
       </div>
     </div>
@@ -629,10 +507,90 @@
 </body>
 <!-- ===========================================
    APPROVALS PAGE JAVASCRIPT CONNECTION
-   File: public/javascripts/approvals.js
+   File: public/javascripts/ejs/approvals.js
    Purpose: Provides client-side functionality for the admin approvals management page
    Dependencies: Requires jQuery (if used), connects to various API endpoints
    Connection: This script enables interactive features like filtering, modals, and form handling
    =========================================== -->
-<script src="/javascripts/approvals.js"></script>
+<script src="/javascripts/ejs/approvals.js"></script>
+<script>
+  // Date filter functionality
+function initializeDateFilters() {
+  const dateFromFilter = document.getElementById('dateFromFilter');
+  const dateToFilter = document.getElementById('dateToFilter');
+  
+  // Add event listeners for date changes
+  dateFromFilter.addEventListener('change', filterRequests);
+  dateToFilter.addEventListener('change', filterRequests);
+}
+
+// Update your existing filterRequests function to include date filtering
+function filterRequests() {
+  const dateFrom = document.getElementById('dateFromFilter').value;
+  const dateTo = document.getElementById('dateToFilter').value;
+  
+  const rows = document.querySelectorAll('.request-row');
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const requestDate = row.getAttribute('data-date');
+    let showRow = true;
+    
+    // Date range filtering
+    if (dateFrom && dateTo) {
+      showRow = requestDate >= dateFrom && requestDate <= dateTo;
+    } else if (dateFrom) {
+      showRow = requestDate >= dateFrom;
+    } else if (dateTo) {
+      showRow = requestDate <= dateTo;
+    }
+    
+    // Combine with existing filters
+    if (showRow) {
+      // Apply other existing filters here
+      // ... (keep your existing filter logic)
+      
+      if (showRow) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Update results count
+  updateResultsCount(visibleCount);
+}
+
+// Add this to your initialization code
+document.addEventListener('DOMContentLoaded', function() {
+  // ... your existing initialization code ...
+  initializeDateFilters();
+});
+
+// Helper function to update results count
+function updateResultsCount(count) {
+  const resultsCount = document.getElementById('resultsCount');
+  if (count === document.querySelectorAll('.request-row').length) {
+    resultsCount.textContent = 'Showing all requests';
+  } else {
+    resultsCount.textContent = `Showing ${count} request${count !== 1 ? 's' : ''}`;
+  }
+}
+
+// Update clear filters functionality to include date inputs
+document.getElementById('clearFilters').addEventListener('click', function() {
+  // ... your existing clear filter code ...
+  
+  // Clear date filters
+  document.getElementById('dateFromFilter').value = '';
+  document.getElementById('dateToFilter').value = '';
+  
+  // Trigger filter update
+  filterRequests();
+});
+</script>
 </html>

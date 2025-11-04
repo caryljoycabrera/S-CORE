@@ -28,6 +28,7 @@ router.get('/login', (req, res) => {
  */
 router.post('/register', async (req, res) => {
   try {
+    console.log('Registration attempt:', req.body);
     const {
       firstName, middleName, lastName,
       email, username, password,
@@ -110,11 +111,27 @@ router.post('/register', async (req, res) => {
     }
 
     // Create and save user
+    console.log('Attempting to create user with data:', {
+      ...userData,
+      password: '[HIDDEN]' // Don't log the actual password
+    });
+    
     const newUser = new User(userData);
-    await newUser.save();
-
-    // Redirect to login on successful registration
-    res.redirect('/login');
+    
+    try {
+      await newUser.save();
+      console.log('User successfully created with username:', userData.username);
+      
+      // Verify the user was actually saved
+      const savedUser = await User.findOne({ username: userData.username });
+      console.log('Verification - Found user in database:', savedUser ? 'Yes' : 'No');
+      
+      // Redirect to login on successful registration
+      res.redirect('/login');
+    } catch (saveError) {
+      console.error('Error saving user:', saveError);
+      throw saveError;
+    }
 
   } catch (err) {
     console.error('Registration error:', err);
@@ -133,11 +150,21 @@ router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    console.log('Login attempt for username:', username);
+    
     // Find user by username
     const user = await User.findOne({ username });
+    
+    if (!user) {
+      console.log('User not found:', username);
+      return res.status(401).render('index', { message: 'Invalid credentials.' });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match result:', passwordMatch);
 
     // Validate username and password
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!passwordMatch) {
       return res.status(401).render('index', { message: 'Invalid credentials.' });
     }
 
