@@ -1276,39 +1276,11 @@
 }
 
 /* Notification Bell */
-.notification-bell {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
-  border: 2px solid #9ca3af;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
+/* Notification bell styles removed - now using shared notifications.css */
+/* The notification bell styling is centrally managed in public/stylesheets/notifications.css */
+/* This ensures consistent notification appearance across all pages */
 
-.notification-bell:hover {
-  background: linear-gradient(135deg, #d1d5db, #9ca3af);
-  border-color: #6b7280;
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.notification-bell svg {
-  width: 20px;
-  height: 20px;
-  color: #374151;
-  transition: all 0.3s ease;
-}
-
-.notification-bell:hover svg {
-  color: #1f2937;
-}
-
-/* Bell Ringing Animation */
+/* Bell Ringing Animation - keep this for special effects */
 .notification-bell.ring {
   animation: bellRing 0.6s ease-in-out;
 }
@@ -1329,7 +1301,7 @@
   75% { transform: rotate(5deg); }
 }
 
-/* Notification Badge */
+/* Notification Badge - removed, using shared styles */
 .notification-badge {
   position: absolute;
   top: -8px;

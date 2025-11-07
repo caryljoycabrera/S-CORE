@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Request for Approval</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
 /* Modal Styles */
@@ -1185,6 +1186,9 @@ option:hover {
         </div>
         <a href="/dashboard" class="text-wrapper">S-CORE</a>
         <span class="text-wrapper-2">Request for Approval</span>
+
+        <!-- Notification Bell -->
+        <%- include('../partials/notifications') %>
 
         <div class="dropdown-wrapper">
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
@@ -2789,6 +2793,13 @@ async function submitFormData() {
   // Enhanced row click handler with improved modal population
 document.querySelectorAll('.request-row').forEach(row => {
   row.addEventListener('click', (e) => {
+    // Mark related notifications as read when opening request
+    const requestId = row.dataset.id;
+    const requestType = 'Request Approval';
+    if (requestId && window.markNotificationReadForRequest) {
+      window.markNotificationReadForRequest(requestId, requestType);
+    }
+    
     // Reset additional files when opening a new request
     selectedAdditionalFiles = [];
     updateAdditionalFileDisplay();

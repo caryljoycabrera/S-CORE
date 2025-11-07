@@ -574,6 +574,11 @@ function openModalFromRow(row) {
 }
 
 function openModal(rowData) {
+  // Mark notification as read when opening request
+  if (typeof window.markNotificationReadForRequest === 'function') {
+    window.markNotificationReadForRequest(rowData.id, rowData.type);
+  }
+
   currentRequestId = rowData.id;
   currentRequestType = rowData.type;
 

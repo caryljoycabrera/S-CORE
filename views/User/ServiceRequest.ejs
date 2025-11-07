@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Request for Service</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 
 <style>
@@ -1266,6 +1267,9 @@
         </div>
         <a href="/dashboard" class="text-wrapper">S-CORE</a>
         <span class="text-wrapper-2">Request for Service</span>
+
+        <!-- Notification Bell -->
+        <%- include('../partials/notifications') %>
 
         <div class="dropdown-wrapper">
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
@@ -2558,6 +2562,13 @@
  
 document.querySelectorAll('.request-row').forEach(row => {
   row.addEventListener('click', (e) => {
+    // Mark related notifications as read when opening request
+    const requestId = row.dataset.id;
+    const requestType = 'Service Request';
+    if (requestId && window.markNotificationReadForRequest) {
+      window.markNotificationReadForRequest(requestId, requestType);
+    }
+    
     // Get all detail elements
     const detailTitle = document.getElementById("detailTitle");
     const detailOrganization = document.getElementById("detailOrganization");

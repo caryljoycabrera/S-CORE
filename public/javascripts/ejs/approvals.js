@@ -1812,6 +1812,11 @@ window.openImagePreview = function(imageUrl, fileName) {
          console.log('🔍 Debug - HTML attribute:', row.getAttribute('data-allow-additional-upload'));
          console.log('🔍 Debug - Server debug info:', row.getAttribute('data-debug-allow'));
 
+        // Mark notification as read when opening request
+        if (typeof window.markNotificationReadForRequest === 'function') {
+          window.markNotificationReadForRequest(rowData.id, rowData.type);
+        }
+
         // Set current request data
         currentRequestId = rowData.id;
         currentRequestType = rowData.type;

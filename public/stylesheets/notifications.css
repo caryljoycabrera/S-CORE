@@ -13,18 +13,53 @@
 /* Notification Bell Button */
 .notification-bell {
   position: relative;
-  background: none;
+  background: transparent; /* Explicitly transparent by default */
   border: none;
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
   transition: all 0.3s ease;
-  color: #6b7280;
+  color: #374151; /* Darker default color */
 }
 
+/* Default state - darker bell with fill, NO background */
+.notification-bell .notification-bell-icon {
+  fill: #0e3a21 !important; /* Fill color for visibility */
+  stroke: #0e3a21 !important;
+}
+
+/* Default hover - subtle background only */
 .notification-bell:hover {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #1f2937;
+}
+
+.notification-bell:hover .notification-bell-icon {
+  fill: #08311a !important;
+  stroke: #08311a !important;
+}
+
+/* When there are new notifications - white background circle */
+.notification-bell.has-notifications {
+  background-color: white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  color: #08311a;
+}
+
+.notification-bell.has-notifications .notification-bell-icon {
+  fill: none !important; /* Remove fill when notifications present */
+  stroke: #374151 !important;
+}
+
+/* Hover state with notifications */
+.notification-bell.has-notifications:hover {
+  background-color: #f9fafb !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.notification-bell.has-notifications:hover .notification-bell-icon {
+  fill: none !important;
+  stroke: #374151 !important;
 }
 
 .notification-bell:focus {
@@ -36,28 +71,28 @@
 .notification-bell-icon {
   width: 24px;
   height: 24px;
-  stroke: currentColor;
-  fill: none;
   stroke-width: 2;
+  transition: all 0.3s ease;
 }
 
 /* Notification Badge */
 .notification-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: -4px;
+  right: -4px;
   background-color: #ef4444;
   color: white;
   border-radius: 50%;
-  min-width: 20px;
-  height: 20px;
+  min-width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1;
   border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .notification-badge.empty {

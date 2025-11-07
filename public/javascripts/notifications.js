@@ -31,8 +31,29 @@ class NotificationSystem {
       this.loadNotifications();
       this.setupEventListeners();
       
+      // Ensure bell starts in correct state (no white background initially)
+      this.ensureCorrectBellState();
+      
       // Set up periodic refresh for offline notifications
       setInterval(() => this.refreshNotifications(), 30000); // Every 30 seconds
+    }
+  }
+  
+  /**
+   * Ensure the bell starts in the correct visual state
+   */
+  ensureCorrectBellState() {
+    const bell = document.getElementById('notification-bell');
+    const bellIcon = bell ? bell.querySelector('.notification-bell-icon') : null;
+    
+    if (bell && bellIcon) {
+      // Force default state on page load - no white background
+      bell.classList.remove('has-notifications');
+      bell.style.backgroundColor = 'transparent';
+      bell.style.boxShadow = 'none';
+      bellIcon.style.fill = '#374151';
+      bellIcon.style.stroke = '#374151';
+      console.log('🔔 Initialized bell in default state (filled dark icon, no white background)');
     }
   }
 
@@ -338,11 +359,21 @@ class NotificationSystem {
    * Handle notification marked as read
    */
   handleNotificationRead(notificationId) {
-    const notification = this.notifications.find(n => n.id === notificationId);
+    // Handle both _id (from MongoDB) and id fields
+    const notification = this.notifications.find(n => {
+      const nId = (n._id || n.id).toString();
+      return nId === notificationId.toString();
+    });
+    
     if (notification && !notification.isRead) {
       notification.isRead = true;
       this.unreadCount = Math.max(0, this.unreadCount - 1);
+      console.log('📉 Decreased unread count to:', this.unreadCount);
       this.updateUI();
+    } else if (!notification) {
+      console.warn('⚠️ Notification not found:', notificationId);
+    } else {
+      console.log('ℹ️ Notification was already read:', notificationId);
     }
   }
 
@@ -350,8 +381,10 @@ class NotificationSystem {
    * Handle all notifications marked as read
    */
   handleAllNotificationsRead() {
+    console.log('📖 Marking all notifications as read');
     this.notifications.forEach(n => n.isRead = true);
     this.unreadCount = 0;
+    console.log('✅ All notifications marked as read, count now:', this.unreadCount);
     this.updateUI();
   }
 
@@ -359,7 +392,12 @@ class NotificationSystem {
    * Handle notification deleted
    */
   handleNotificationDeleted(notificationId) {
-    const index = this.notifications.findIndex(n => n.id === notificationId);
+    // Handle both _id (from MongoDB) and id fields
+    const index = this.notifications.findIndex(n => {
+      const nId = (n._id || n.id).toString();
+      return nId === notificationId.toString();
+    });
+    
     if (index !== -1) {
       const notification = this.notifications[index];
       if (!notification.isRead) {
@@ -383,14 +421,53 @@ class NotificationSystem {
    */
   updateBadge() {
     const badge = document.getElementById('notification-badge');
-    if (badge) {
+    const bell = document.getElementById('notification-bell');
+    const bellIcon = bell ? bell.querySelector('.notification-bell-icon') : null;
+    
+    console.log('🔄 Updating badge with unread count:', this.unreadCount);
+    
+    if (badge && bell && bellIcon) {
       if (this.unreadCount > 0) {
+        // Show badge with count
         badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount.toString();
         badge.classList.remove('empty');
+        badge.style.display = 'flex';
+        
+        // Add white background circle to bell when there are notifications
+        bell.classList.add('has-notifications');
+        // Remove inline styles to let CSS take over
+        bell.style.removeProperty('background-color');
+        bell.style.removeProperty('box-shadow');
+        
+        // Let CSS handle icon style (no fill)
+        bellIcon.style.removeProperty('fill');
+        bellIcon.style.removeProperty('stroke');
+        
+        console.log('✅ Added white background to bell (has-notifications class)');
       } else {
+        // Hide badge
         badge.textContent = '0';
         badge.classList.add('empty');
+        badge.style.display = 'none';
+        
+        // FORCE remove white background from bell - back to transparent filled icon
+        bell.classList.remove('has-notifications');
+        bell.style.backgroundColor = 'transparent';
+        bell.style.boxShadow = 'none';
+        
+        // Force the icon to be filled
+        bellIcon.style.fill = '#374151';
+        bellIcon.style.stroke = '#374151';
+        
+        console.log('✅ FORCED removal of white background from bell (back to filled dark icon)');
+        console.log('   - Class removed:', !bell.classList.contains('has-notifications'));
+        console.log('   - Background:', bell.style.backgroundColor);
+        console.log('   - Icon fill:', bellIcon.style.fill);
       }
+    } else {
+      if (!badge) console.warn('⚠️ Badge element not found');
+      if (!bell) console.warn('⚠️ Bell element not found');
+      if (!bellIcon) console.warn('⚠️ Bell icon element not found');
     }
   }
 
@@ -433,10 +510,12 @@ class NotificationSystem {
     const timeAgo = this.formatTimeAgo(new Date(notification.createdAt));
     const icon = this.getNotificationIcon(notification.type);
     const priorityClass = `priority-${notification.priority}`;
+    // Handle both _id (from MongoDB) and id fields
+    const notifId = notification._id || notification.id;
     
     return `
       <div class="notification-item ${isUnread ? 'unread' : ''} ${priorityClass}" 
-           data-id="${notification.id}" 
+           data-id="${notifId}" 
            data-type="${notification.type}"
            data-url="${notification.actionUrl || ''}">
         <div class="notification-icon ${notification.type}">
@@ -451,7 +530,7 @@ class NotificationSystem {
           </div>
         </div>
         ${isUnread ? '<div class="unread-indicator"></div>' : ''}
-        <button class="notification-delete-btn" data-id="${notification.id}" title="Delete notification">
+        <button class="notification-delete-btn" data-id="${notifId}" title="Delete notification">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -488,7 +567,7 @@ class NotificationSystem {
     const items = document.querySelectorAll('.notification-item');
     items.forEach(item => {
       // Click to mark as read and navigate
-      item.addEventListener('click', (e) => {
+      item.addEventListener('click', async (e) => {
         if (e.target.closest('.notification-delete-btn')) return;
         
         const id = item.dataset.id;
@@ -497,18 +576,27 @@ class NotificationSystem {
         
         console.log('🔔 Notification clicked:', { id, url, type });
         
-        // Mark as read if unread
+        // Mark as read if unread - ALWAYS mark as read when clicking
         if (item.classList.contains('unread')) {
-          this.markAsRead(id);
+          console.log('📖 Marking notification as read:', id);
+          await this.markAsRead(id);
+          // Update UI immediately for better UX
+          item.classList.remove('unread');
+          const unreadIndicator = item.querySelector('.unread-indicator');
+          if (unreadIndicator) {
+            unreadIndicator.remove();
+          }
         }
         
         // Handle navigation based on URL type
-        if (url && url !== 'undefined') {
+        if (url && url !== 'undefined' && url !== '') {
           console.log('🔗 Handling notification navigation with URL:', url);
           this.closeDropdown();
           this.handleNotificationNavigation(url, type);
         } else {
           console.warn('⚠️ No valid URL found for notification:', { id, url, type });
+          // Still close dropdown even without URL
+          this.closeDropdown();
         }
       });
     });
@@ -677,6 +765,8 @@ class NotificationSystem {
    */
   async markAsRead(notificationId) {
     try {
+      console.log('📨 Sending mark as read request for notification:', notificationId);
+      
       const response = await fetch(`/api/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
@@ -686,13 +776,17 @@ class NotificationSystem {
       });
 
       if (response.ok) {
+        console.log('✅ Successfully marked notification as read:', notificationId);
         // Update will be handled by socket event or local state
         this.handleNotificationRead(notificationId);
+        return true;
       } else {
-        console.error('Failed to mark notification as read');
+        console.error('❌ Failed to mark notification as read:', response.status, response.statusText);
+        return false;
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('❌ Error marking notification as read:', error);
+      return false;
     }
   }
 
@@ -816,6 +910,44 @@ class NotificationSystem {
   }
 
   /**
+   * Mark notification as read by related request ID
+   */
+  async markNotificationReadByRequestId(requestId, requestType) {
+    console.log('🔍 Looking for notification to mark as read:', { requestId, requestType });
+    
+    // Find notifications related to this request
+    const relatedNotifications = this.notifications.filter(n => {
+      // Handle both _id (from MongoDB) and id fields
+      const notifRelatedId = n.relatedId ? n.relatedId.toString() : null;
+      const isRelated = notifRelatedId === requestId.toString();
+      const isUnread = !n.isRead;
+      
+      console.log('Checking notification:', { 
+        notifId: n._id || n.id, 
+        relatedId: n.relatedId, 
+        isRelated, 
+        isUnread,
+        type: n.type 
+      });
+      return isRelated && isUnread;
+    });
+    
+    console.log(`Found ${relatedNotifications.length} unread related notifications`);
+    
+    // Mark all related unread notifications as read
+    for (const notification of relatedNotifications) {
+      // Use _id if available (from MongoDB), otherwise use id
+      const notificationId = notification._id || notification.id;
+      console.log('📖 Marking notification as read:', notificationId);
+      await this.markAsRead(notificationId);
+    }
+    
+    if (relatedNotifications.length > 0) {
+      console.log('✅ Successfully marked notifications as read');
+    }
+  }
+
+  /**
    * Destroy the notification system
    */
   destroy() {
@@ -839,6 +971,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', () => {
     window.notificationSystem.requestNotificationPermission();
   }, { once: true });
+  
+  // Global function to mark notifications as read when opening a request
+  window.markNotificationReadForRequest = async function(requestId, requestType) {
+    console.log('🌐 Global function called to mark notification as read:', { requestId, requestType });
+    if (window.notificationSystem) {
+      await window.notificationSystem.markNotificationReadByRequestId(requestId, requestType);
+    } else {
+      console.warn('⚠️ Notification system not initialized');
+    }
+  };
 });
 
 // Export for module usage

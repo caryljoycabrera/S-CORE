@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>All Requests</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -817,6 +818,9 @@
         <a href="/dashboard" class="text-wrapper">S-CORE</a>
         <span class="text-wrapper-2">All Requests</span>
 
+        <!-- Notification Bell -->
+        <%- include('../partials/notifications') %>
+
         <div class="dropdown-wrapper">
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
@@ -1605,6 +1609,13 @@ clearFiltersBtn.addEventListener('click', () => {
 // Enhanced row click handler with improved modal population
 document.querySelectorAll('.request-row').forEach(row => {
   row.addEventListener('click', (e) => {
+    // Mark related notifications as read when opening request
+    const requestId = row.dataset.id;
+    const requestType = row.dataset.type;
+    if (requestId && window.markNotificationReadForRequest) {
+      window.markNotificationReadForRequest(requestId, requestType);
+    }
+    
     // Populate basic fields
     const detailType = document.getElementById("detailType");
     const detailSpecificType = document.getElementById("detailSpecificType");
