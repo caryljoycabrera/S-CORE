@@ -949,9 +949,6 @@
                       <tr>
                         <td>
                           <%= request.userId ? (request.userId.fName + ' ' + request.userId.lName) : 'Unknown' %>
-                          <% if (request.userId && request.userId.organization) { %>
-                            <br><small style="color: #6b7280;"><%= request.userId.organization %></small>
-                          <% } %>
                         </td>
                         <td><strong><%= request.title || request.description ? (request.title || request.description).substring(0, 30) + ((request.title || request.description).length > 30 ? '...' : '') : 'No title' %></strong></td>
                         <td>
@@ -1093,7 +1090,7 @@
                   <% pendingRequests.forEach(request => { %>
                     <tr>
                       <td><strong><%= request.userId ? (request.userId.fName + ' ' + request.userId.lName) : 'Unknown' %></strong></td>
-                      <td><%= request.userId?.organization || 'N/A' %></td>
+                      <td><%= request.displayOrganization || request.organization || 'N/A' %></td>
                       <td><strong><%= request.title || request.description || 'No title' %></strong></td>
                       <td>
                         <span class="type-badge <%= request.requestType %>">
@@ -1161,7 +1158,7 @@
                   %>
                     <tr style="background-color: <%= bgColor %>;">
                       <td style="padding: 1rem 1.25rem;"><strong><%= task.userId?.fName || 'Unknown' %> <%= task.userId?.lName || '' %></strong></td>
-                      <td style="padding: 1rem 1.25rem;"><%= task.userId?.organization || 'N/A' %></td>
+                      <td style="padding: 1rem 1.25rem;"><%= task.displayOrganization || task.organization || 'N/A' %></td>
                       <td style="padding: 1rem 1.25rem;"><strong><%= task.title || task.description || 'No title' %></strong></td>
                       <td style="text-align: center; padding: 1rem 0.75rem;">
                         <span class="type-badge <%= task.requestType %>" style="padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem;">
@@ -1281,7 +1278,7 @@
                 </div>
                 <div>
                   <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Organization</label>
-                  <div style="font-size: 0.95rem; color: #111827;">${task.userId?.organization || 'N/A'}</div>
+                  <div style="font-size: 0.95rem; color: #111827;">${task.displayOrganization || task.organization || 'N/A'}</div>
                 </div>
               </div>
 
@@ -1411,14 +1408,14 @@
 
       <!-- ACTIONABLE LISTS & TABLES -->
       <div class="tables-grid">
-        <!-- Incoming Requests Table -->
+        <!-- Very Recent Requests Table -->
         <div class="table-card">
           <div class="table-header">
             <div>
-              <h3 class="table-title">Incoming Requests</h3>
-              <p class="table-subtitle">Awaiting assignment</p>
+              <h3 class="table-title">Very Recent Requests</h3>
+              <p class="table-subtitle">Requests from the last 7 days</p>
             </div>
-            <a href="/admin/all-requests" class="view-all-link">View All →</a>
+            <a href="/admin/approvals" class="view-all-link">View All →</a>
           </div>
           <div class="table-content">
             <table class="data-table">
@@ -1432,9 +1429,28 @@
                 </tr>
               </thead>
               <tbody id="incoming-requests-tbody">
-                <tr>
-                  <td colspan="5" class="table-empty">No incoming requests</td>
-                </tr>
+                <% if (recentRequests && recentRequests.length > 0) { %>
+                  <% recentRequests.forEach(request => { %>
+                    <tr>
+                      <td><strong><%= request.title || request.description ? (request.title || request.description).substring(0, 30) + ((request.title || request.description).length > 30 ? '...' : '') : 'No title' %></strong></td>
+                      <td>
+                        <span class="type-badge <%= request.requestType %>">
+                          <%= request.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                        </span>
+                      </td>
+                      <td><%= request.userId?.fName || 'Unknown' %> <%= request.userId?.lName || '' %></td>
+                      <td><%= request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'N/A' %></td>
+                      <td>
+                        <a href="/admin/<%= request.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= request._id %>" 
+                           class="btn-view" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="table-empty">No recent requests</td>
+                  </tr>
+                <% } %>
               </tbody>
             </table>
           </div>
@@ -1447,7 +1463,7 @@
               <h3 class="table-title">Urgent & Overdue Tasks</h3>
               <p class="table-subtitle">High-priority items</p>
             </div>
-            <a href="/admin/all-requests" class="view-all-link">View All →</a>
+            <a href="/admin/approvals" class="view-all-link">View All →</a>
           </div>
           <div class="table-content">
             <table class="data-table">
@@ -1461,9 +1477,32 @@
                 </tr>
               </thead>
               <tbody id="urgent-tasks-tbody">
-                <tr>
-                  <td colspan="5" class="table-empty">No urgent tasks</td>
-                </tr>
+                <% if (urgentTasks && urgentTasks.length > 0) { %>
+                  <% urgentTasks.forEach(task => { %>
+                    <tr style="<%= task.isOverdue ? 'background-color: #fee2e2;' : (task.priority === 'critical' ? 'background-color: #fef3c7;' : '') %>">
+                      <td><strong><%= task.title || task.description ? (task.title || task.description).substring(0, 25) + ((task.title || task.description).length > 25 ? '...' : '') : 'No title' %></strong></td>
+                      <td>
+                        <span class="status-badge <%= task.status?.toLowerCase().replace(/\s+/g, '') %>">
+                          <%= task.status || 'Pending' %>
+                        </span>
+                      </td>
+                      <td><%= task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A' %></td>
+                      <td>
+                        <span style="color: <%= task.priorityColor %>; font-weight: 700; font-size: 0.875rem;">
+                          <%= task.isOverdue ? 'OVERDUE' : task.priority.toUpperCase() %>
+                        </span>
+                      </td>
+                      <td>
+                        <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
+                           class="btn-view" style="padding: 0.4rem 0.8rem; font-size: 0.875rem; background: <%= task.priorityColor %>;">View</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="table-empty">No urgent tasks</td>
+                  </tr>
+                <% } %>
               </tbody>
             </table>
           </div>
@@ -1476,7 +1515,7 @@
               <h3 class="table-title">Top Requests by Revision Count</h3>
               <p class="table-subtitle">Requests consuming the most time</p>
             </div>
-            <a href="/admin/all-requests" class="view-all-link">View All →</a>
+            <a href="/admin/approvals" class="view-all-link">View All →</a>
           </div>
           <div class="table-content">
             <table class="data-table">
@@ -1492,9 +1531,38 @@
                 </tr>
               </thead>
               <tbody id="revision-count-tbody">
-                <tr>
-                  <td colspan="7" class="table-empty">No revision data available</td>
-                </tr>
+                <% if (revisionRequests && revisionRequests.length > 0) { %>
+                  <% revisionRequests.forEach(request => { %>
+                    <tr>
+                      <td><strong><%= request.title || request.description ? (request.title || request.description).substring(0, 40) + ((request.title || request.description).length > 40 ? '...' : '') : 'No title' %></strong></td>
+                      <td>
+                        <span class="type-badge <%= request.requestType %>">
+                          <%= request.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                        </span>
+                      </td>
+                      <td><%= request.userId?.fName || 'Unknown' %> <%= request.userId?.lName || '' %></td>
+                      <td><%= request.assignedUnits || 'Not assigned' %></td>
+                      <td style="text-align: center;">
+                        <span style="background: #fef3c7; color: #d97706; padding: 0.25rem 0.75rem; border-radius: 6px; font-weight: 700; font-size: 0.875rem;">
+                          <%= request.revisionCount %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="status-badge <%= request.status?.toLowerCase().replace(/\s+/g, '') %>">
+                          <%= request.status || 'Pending' %>
+                        </span>
+                      </td>
+                      <td>
+                        <a href="/admin/<%= request.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= request._id %>" 
+                           class="btn-view" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" class="table-empty">No revision data available</td>
+                  </tr>
+                <% } %>
               </tbody>
             </table>
           </div>

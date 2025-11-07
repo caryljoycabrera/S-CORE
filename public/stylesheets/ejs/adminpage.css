@@ -203,7 +203,7 @@
    ========================================== */
 
 .analytics-section {
-  margin-bottom: 2.5rem;
+  margin-bottom: 3.5rem;
 }
 
 .section-header-title {
@@ -837,6 +837,7 @@
 .calendar-standalone {
   grid-column: 2 / 4;
   justify-content: flex-start;
+  margin-bottom: 3rem;
 }
 
 /* Calendar Header */

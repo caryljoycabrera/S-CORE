@@ -26,9 +26,39 @@ router.get('/admin', requireAdmin, async (req, res) => {
 
     // Filter by status
     const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending')
-      .map(a => ({ ...a, requestType: 'approval' }));
+      .map(a => {
+        // Determine display organization
+        let displayOrganization = a.organization || 'N/A';
+        if (a.userId) {
+          if (a.userId.userType === 'nonstudent') {
+            displayOrganization = Array.isArray(a.userId.affiliation)
+              ? a.userId.affiliation.join(', ')
+              : (a.userId.affiliation || a.organization || 'N/A');
+          } else {
+            displayOrganization = Array.isArray(a.userId.studentOrganization)
+              ? a.userId.studentOrganization.join(', ')
+              : (a.userId.studentOrganization || a.organization || 'N/A');
+          }
+        }
+        return { ...a, requestType: 'approval', displayOrganization };
+      });
     const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending')
-      .map(s => ({ ...s, requestType: 'service' }));
+      .map(s => {
+        // Determine display organization
+        let displayOrganization = s.organization || 'N/A';
+        if (s.userId) {
+          if (s.userId.userType === 'nonstudent') {
+            displayOrganization = Array.isArray(s.userId.affiliation)
+              ? s.userId.affiliation.join(', ')
+              : (s.userId.affiliation || s.organization || 'N/A');
+          } else {
+            displayOrganization = Array.isArray(s.userId.studentOrganization)
+              ? s.userId.studentOrganization.join(', ')
+              : (s.userId.studentOrganization || s.organization || 'N/A');
+          }
+        }
+        return { ...s, requestType: 'service', displayOrganization };
+      });
     const awaitingApprovalReqs = [...approvals, ...serviceRequests].filter(r => 
       r.status?.toLowerCase() === 'awaiting approval' || r.status?.toLowerCase() === 'awaiting-approval'
     );
@@ -96,12 +126,27 @@ router.get('/admin', requireAdmin, async (req, res) => {
         }
       }
       
+      // Determine display organization
+      let displayOrganization = req.organization || 'N/A';
+      if (req.userId) {
+        if (req.userId.userType === 'nonstudent') {
+          displayOrganization = Array.isArray(req.userId.affiliation)
+            ? req.userId.affiliation.join(', ')
+            : (req.userId.affiliation || req.organization || 'N/A');
+        } else {
+          displayOrganization = Array.isArray(req.userId.studentOrganization)
+            ? req.userId.studentOrganization.join(', ')
+            : (req.userId.studentOrganization || req.organization || 'N/A');
+        }
+      }
+      
       return {
         ...req,
         requestType: isService ? 'service' : 'approval',
         priority,
         priorityLabel,
-        priorityColor
+        priorityColor,
+        displayOrganization
       };
     }).sort((a, b) => {
       // Sort by priority first, then by deadline
@@ -119,6 +164,99 @@ router.get('/admin', requireAdmin, async (req, res) => {
     });
     
     const urgentCount = unassignedTasks.filter(t => t.priority === 'critical' || t.priority === 'urgent').length;
+
+    // Get very recent requests (last 7 days)
+    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    const recentRequests = allRequests
+      .filter(req => {
+        const createdDate = req.createdAt ? new Date(req.createdAt) : null;
+        return createdDate && createdDate >= sevenDaysAgo;
+      })
+      .map(req => {
+        const isService = serviceRequests.some(s => s._id.toString() === req._id.toString());
+        let displayOrganization = req.organization || 'N/A';
+        if (req.userId) {
+          if (req.userId.userType === 'nonstudent') {
+            displayOrganization = Array.isArray(req.userId.affiliation)
+              ? req.userId.affiliation.join(', ')
+              : (req.userId.affiliation || req.organization || 'N/A');
+          } else {
+            displayOrganization = Array.isArray(req.userId.studentOrganization)
+              ? req.userId.studentOrganization.join(', ')
+              : (req.userId.studentOrganization || req.organization || 'N/A');
+          }
+        }
+        return {
+          ...req,
+          requestType: isService ? 'service' : 'approval',
+          displayOrganization
+        };
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+
+    // Get urgent and overdue tasks
+    const urgentAndOverdueTasks = allRequests
+      .filter(req => {
+        const deadline = req.deadline ? new Date(req.deadline) : null;
+        const isUrgent = deadline && deadline <= threeDaysFromNow;
+        const isOverdue = deadline && deadline < now;
+        const notCompleted = req.status?.toLowerCase() !== 'completed' && req.status?.toLowerCase() !== 'done';
+        return (isUrgent || isOverdue) && notCompleted;
+      })
+      .map(req => {
+        const isService = serviceRequests.some(s => s._id.toString() === req._id.toString());
+        const deadline = req.deadline ? new Date(req.deadline) : null;
+        const isOverdue = deadline && deadline < now;
+        const daysLeft = deadline ? Math.ceil((deadline - now) / (1000 * 60 * 60 * 24)) : null;
+        
+        let priority = 'low';
+        let priorityColor = '#10b981';
+        if (isOverdue) {
+          priority = 'overdue';
+          priorityColor = '#dc2626';
+        } else if (deadline && deadline <= oneDayFromNow) {
+          priority = 'critical';
+          priorityColor = '#dc2626';
+        } else if (deadline && deadline <= threeDaysFromNow) {
+          priority = 'urgent';
+          priorityColor = '#f59e0b';
+        }
+
+        return {
+          ...req,
+          requestType: isService ? 'service' : 'approval',
+          priority,
+          priorityColor,
+          daysLeft,
+          isOverdue
+        };
+      })
+      .sort((a, b) => {
+        if (a.isOverdue && !b.isOverdue) return -1;
+        if (!a.isOverdue && b.isOverdue) return 1;
+        if (a.deadline && b.deadline) {
+          return new Date(a.deadline) - new Date(b.deadline);
+        }
+        return 0;
+      })
+      .slice(0, 5);
+
+    // Get top requests by revision count
+    const requestsWithRevisions = allRequests
+      .filter(req => req.revisionHistory && Array.isArray(req.revisionHistory) && req.revisionHistory.length > 0)
+      .map(req => {
+        const isService = serviceRequests.some(s => s._id.toString() === req._id.toString());
+        const revisionCount = req.revisionHistory.length;
+        
+        return {
+          ...req,
+          requestType: isService ? 'service' : 'approval',
+          revisionCount
+        };
+      })
+      .sort((a, b) => b.revisionCount - a.revisionCount)
+      .slice(0, 5);
 
     const stats = {
       totalUsers: users.length,
@@ -142,6 +280,9 @@ router.get('/admin', requireAdmin, async (req, res) => {
       serviceRequests,
       pendingRequests: allPendingRequests,
       unassignedTasks: unassignedTasks,
+      recentRequests: recentRequests,
+      urgentTasks: urgentAndOverdueTasks,
+      revisionRequests: requestsWithRevisions,
       stats
     });
   } catch (err) {
@@ -201,12 +342,27 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
         }
       }
       
+      // Determine display organization
+      let displayOrganization = req.organization || 'N/A';
+      if (req.userId) {
+        if (req.userId.userType === 'nonstudent') {
+          displayOrganization = Array.isArray(req.userId.affiliation)
+            ? req.userId.affiliation.join(', ')
+            : (req.userId.affiliation || req.organization || 'N/A');
+        } else {
+          displayOrganization = Array.isArray(req.userId.studentOrganization)
+            ? req.userId.studentOrganization.join(', ')
+            : (req.userId.studentOrganization || req.organization || 'N/A');
+        }
+      }
+      
       return {
         ...req,
         requestType: isService ? 'service' : 'approval',
         priority,
         priorityLabel,
-        priorityColor
+        priorityColor,
+        displayOrganization
       };
     }).sort((a, b) => {
       const priorityOrder = { critical: 0, urgent: 1, moderate: 2, low: 3 };
