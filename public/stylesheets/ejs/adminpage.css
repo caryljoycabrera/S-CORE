@@ -232,7 +232,7 @@
 }
 
 .legend-dot.approval {
-  background: #3b82f6; /* Blue for approvals */
+  background: #43a047; /* Green for approvals */
 }
 
 .legend-dot.service {
@@ -328,8 +328,8 @@
 
 /* Deadline Styles */
 .calendar-day.has-approval-deadline {
-  border-left: 4px solid #3b82f6;
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-left: 4px solid #43a047;
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
   border-radius: 6px 6px 6px 2px;
 }
 
@@ -352,7 +352,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #3b82f6;
+  background: #43a047;
   border-radius: 2px 0 0 2px;
 }
 
@@ -394,7 +394,7 @@
 }
 
 .deadline-badge.approval {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #43a047, #388e3c);
 }
 
 .deadline-badge.service {
@@ -620,9 +620,9 @@
 }
 
 .deadline-item-type.approval {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  color: #1d4ed8;
-  border: 1px solid #3b82f6;
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  color: #2c5d31;
+  border: 1px solid #43a047;
 }
 
 .deadline-item-type.service {
@@ -666,7 +666,7 @@
 }
 
 .deadline-action-btn {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #43a047, #388e3c);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -682,9 +682,9 @@
 }
 
 .deadline-action-btn:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, #388e3c, #2c5d31);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 8px rgba(67, 160, 71, 0.3);
 }
 
 .deadline-action-btn.service {
@@ -1458,9 +1458,9 @@
 }
 
 .notification-item-type.approval {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  color: #1d4ed8;
-  border: 1px solid #3b82f6;
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  color: #2c5d31;
+  border: 1px solid #43a047;
 }
 
 .notification-item-type.service {

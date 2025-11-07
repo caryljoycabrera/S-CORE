@@ -94,8 +94,8 @@
 }
 
 .status-badge.completed {
-  background-color: #dbeafe;
-  color: #3b82f6;
+  background-color: #e8f5e9;
+  color: #43a047;
 }
 
 .status-badge.rejected {
@@ -298,9 +298,9 @@
 }
 
 .status-badge-large.completed {
-  background: #dbeafe;
-  color: #1e40af;
-  border-color: #3b82f6;
+  background: #e8f5e9;
+  color: #1b5e20;
+  border-color: #43a047;
 }
 
 .status-badge-large.for-revision {

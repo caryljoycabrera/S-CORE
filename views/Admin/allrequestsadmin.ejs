@@ -220,19 +220,21 @@
         <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
         <span class="text-wrapper-2">All Requests</span>
 
-        <!-- Notification Bell -->
-        <%- include('../partials/notifications') %>
+        <div class="header-right-section">
+          <!-- Notification Bell -->
+          <%- include('../partials/notifications') %>
 
-        <div class="dropdown-wrapper">
-          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-            <div class="user">
-              <img class="user-icon" src="/Picture/user.png" alt="Admin Icon" />
+          <div class="dropdown-wrapper">
+            <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+              <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+              <div class="user">
+                <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              </div>
             </div>
-          </div>
-          <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/admin/profile">My Profile</a>
-            <a href="/logout">Logout</a>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="/admin/profile">My Profile</a>
+              <a href="/logout">Logout</a>
+            </div>
           </div>
         </div>
       </div>

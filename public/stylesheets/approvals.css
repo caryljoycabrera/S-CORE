@@ -110,8 +110,8 @@
 }
 
 .status-badge.completed {
-  background-color: #dbeafe;
-  color: #3b82f6;
+  background-color: #e8f5e9;
+  color: #43a047;
 }
 
 .status-badge.rejected {
@@ -314,9 +314,9 @@
 }
 
 .status-badge-large.completed {
-  background: #dbeafe;
-  color: #1e40af;
-  border-color: #3b82f6;
+  background: #e8f5e9;
+  color: #1b5e20;
+  border-color: #43a047;
 }
 
 .status-badge-large.for-revision {
@@ -568,12 +568,12 @@
 }
 
 .quick-action-btn.chat {
-  background: #3b82f6;
+  background: #43a047;
 }
 
 .quick-action-btn.chat:hover {
-  background: #1d4ed8;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  background: #2c5d31;
+  box-shadow: 0 4px 12px rgba(67, 160, 71, 0.2);
 }
 
 /* Notification Styles */
@@ -691,8 +691,8 @@
 
 /* Unread request indicator */
 .request-row.unread {
-  border-left: 4px solid #3b82f6;
-  background: linear-gradient(90deg, #eff6ff 0%, #ffffff 20px);
+  border-left: 4px solid #43a047;
+  background: linear-gradient(90deg, #e8f5e9 0%, #ffffff 20px);
   position: relative;
 }
 
@@ -704,10 +704,10 @@
   right: 10px;
   width: 8px;
   height: 8px;
-  background: #3b82f6;
+  background: #43a047;
   border-radius: 50%;
   transform: translateY(-50%);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 2px rgba(67, 160, 71, 0.2);
   animation: unreadPulse 2s ease-in-out infinite;
 }
 

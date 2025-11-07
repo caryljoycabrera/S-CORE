@@ -4,9 +4,8 @@
 /* Notification Bell Container */
 .notification-container {
   position: relative;
-  display: inline-block;
-  margin-right: 20px;
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
   z-index: 1001;
 }
 
@@ -64,7 +63,7 @@
 
 .notification-bell:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #3b82f6;
+  box-shadow: 0 0 0 2px #43a047;
 }
 
 /* Bell Icon */
@@ -151,7 +150,7 @@
 .mark-all-read-btn {
   background: none;
   border: none;
-  color: #3b82f6;
+  color: #43a047;
   cursor: pointer;
   font-size: 14px;
   text-decoration: none;
@@ -164,8 +163,8 @@
 }
 
 .mark-all-read-btn:hover {
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background-color: #e8f5e9;
+  color: #2c5d31;
 }
 
 .close-dropdown-btn {
@@ -244,13 +243,13 @@
 }
 
 .notification-item.unread {
-  background-color: #eff6ff;
-  border-left: 4px solid #3b82f6;
+  background-color: #e8f5e9;
+  border-left: 4px solid #43a047;
   padding-left: 12px;
 }
 
 .notification-item.unread:hover {
-  background-color: #dbeafe;
+  background-color: #c8e6c9;
 }
 
 /* Priority Indicators */
@@ -263,7 +262,7 @@
 }
 
 .notification-item.priority-medium {
-  border-left-color: #3b82f6;
+  border-left-color: #43a047;
 }
 
 .notification-item.priority-low {
@@ -306,7 +305,7 @@
 }
 
 .notification-icon.new-message {
-  color: #3b82f6;
+  color: #43a047;
 }
 
 .notification-icon.system {
@@ -328,7 +327,7 @@
 }
 
 .notification-item.unread .notification-item-title {
-  color: #1e40af;
+  color: #1b5e20;
 }
 
 .notification-item-message {
@@ -390,7 +389,7 @@
 .unread-indicator {
   width: 8px;
   height: 8px;
-  background-color: #3b82f6;
+  background-color: #43a047;
   border-radius: 50%;
   flex-shrink: 0;
   margin-top: 6px;
@@ -405,7 +404,7 @@
 }
 
 .view-all-btn {
-  color: #3b82f6;
+  color: #43a047;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -413,7 +412,7 @@
 }
 
 .view-all-btn:hover {
-  color: #1d4ed8;
+  color: #2c5d31;
 }
 
 /* Mobile Responsiveness */
@@ -503,7 +502,7 @@
 }
 
 .notification-item[data-type="new_message"] {
-  border-left-color: #3b82f6;
+  border-left-color: #43a047;
 }
 
 .notification-item[data-type="system"] {

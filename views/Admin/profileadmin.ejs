@@ -21,9 +21,6 @@
 
 </head>
 <body>
-  <!-- Include notification partial -->
-  <%- include('../partials/notifications') %>
-  
   <header class="overlap">
     <div class="group">
       <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
@@ -31,16 +28,21 @@
     <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
     <span class="text-wrapper-2">My Profile</span>
 
-    <div class="dropdown-wrapper">
-      <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-        <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-        <div class="user">
-          <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+    <div class="header-right-section">
+      <!-- Include notification partial -->
+      <%- include('../partials/notifications') %>
+      
+      <div class="dropdown-wrapper">
+        <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+          <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+          <div class="user">
+            <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+          </div>
         </div>
-      </div>
-      <div class="dropdown-menu" id="dropdownMenu">
-        <a href="/admin/profile">My Profile</a>
-        <a href="/logout">Logout</a>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a href="/admin/profile">My Profile</a>
+          <a href="/logout">Logout</a>
+        </div>
       </div>
     </div>
   </header>

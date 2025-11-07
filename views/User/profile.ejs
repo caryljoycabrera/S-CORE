@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Profile</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -1288,16 +1289,21 @@
     <a href="/dashboard" class="text-wrapper">S-CORE</a>
     <span class="text-wrapper-2">My Profile</span>
 
-    <div class="dropdown-wrapper">
-      <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-        <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-        <div class="user">
-          <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+    <div class="header-right-section">
+      <!-- Notification Bell -->
+      <%- include('../partials/notifications') %>
+
+      <div class="dropdown-wrapper">
+        <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+          <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+          <div class="user">
+            <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+          </div>
         </div>
-      </div>
-      <div class="dropdown-menu" id="dropdownMenu">
-        <a href="/profile">My Profile</a>
-        <a href="/logout">Logout</a>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <a href="/profile">My Profile</a>
+          <a href="/logout">Logout</a>
+        </div>
       </div>
     </div>
   </header>
