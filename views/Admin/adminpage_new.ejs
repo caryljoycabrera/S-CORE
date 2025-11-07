@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S-CORE Admin Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/adminpage.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item active" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+      
+      <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"></path>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+        </svg>
+        <span class="sidebar-label">Track All Requests</span>
+      </a>
+      
+      <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Manage Approvals</span>
+      </a>
+      
+      <a href="/admin/services" class="sidebar-item" title="Manage Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Manage Services</span>
+      </a>
+      
+      <a href="/admin/users" class="sidebar-item" title="User Accounts">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 010 7.75"></path>
+        </svg>
+        <span class="sidebar-label">User Accounts</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT WITH HEADER -->
+  <div class="admin-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <div class="group">
+        <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+      </div>
+      <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+      <span class="text-wrapper-2">Welcome, Admin <%= name %>!</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD CONTENT -->
+    <div class="dashboard-container">
+      <h1 class="dashboard-main-title">Admin Dashboard</h1>
+      
+      <!-- KPI CARDS -->
+      <div class="kpi-container">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">Total Pending</div>
+            <div class="kpi-value"><%= stats.pendingApprovals + stats.pendingServices %></div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">Awaiting Approval</div>
+            <div class="kpi-value"><%= stats.pendingApprovals %></div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">In Revision</div>
+            <div class="kpi-value" id="kpi-revision">0</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">Urgent Tasks</div>
+            <div class="kpi-value" id="kpi-urgent">0</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+              <polyline points="9 11 12 14 22 4"></polyline>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+            </svg>
+          </div>
+          <div class="kpi-content">
+            <div class="kpi-label">Completed This Month</div>
+            <div class="kpi-value" id="kpi-completed">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS SECTION -->
+      <div class="charts-grid">
+        <!-- Request Status Overview Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title">Request Status Overview</h3>
+            <p class="chart-subtitle">Current workflow pipeline breakdown</p>
+          </div>
+          <div class="chart-content">
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Active Tasks by Unit Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title">Active Tasks by Unit</h3>
+            <p class="chart-subtitle">Current workload distribution</p>
+          </div>
+          <div class="chart-content">
+            <canvas id="unitChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Request Volume Over Time Chart -->
+        <div class="chart-card chart-card-wide">
+          <div class="chart-header">
+            <div>
+              <h3 class="chart-title">Request Volume Over Time</h3>
+              <p class="chart-subtitle">Track request submission trends</p>
+            </div>
+            <select id="timeRangeFilter" class="chart-filter">
+              <option value="7">Last 7 Days</option>
+              <option value="30" selected>Last 30 Days</option>
+              <option value="90">Last 3 Months</option>
+              <option value="365">Last Year</option>
+            </select>
+          </div>
+          <div class="chart-content">
+            <canvas id="volumeChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONABLE LISTS & TABLES -->
+      <div class="tables-grid">
+        <!-- Incoming Requests Table -->
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h3 class="table-title">Incoming Requests</h3>
+              <p class="table-subtitle">Awaiting assignment</p>
+            </div>
+            <a href="/admin/all-requests" class="view-all-link">View All →</a>
+          </div>
+          <div class="table-content">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request</th>
+                  <th>Type</th>
+                  <th>Requester</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="incoming-requests-tbody">
+                <tr>
+                  <td colspan="5" class="table-empty">No incoming requests</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Urgent & Overdue Tasks Table -->
+        <div class="table-card">
+          <div class="table-header">
+            <div>
+              <h3 class="table-title">Urgent & Overdue Tasks</h3>
+              <p class="table-subtitle">High-priority items</p>
+            </div>
+            <a href="/admin/all-requests" class="view-all-link">View All →</a>
+          </div>
+          <div class="table-content">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request</th>
+                  <th>Status</th>
+                  <th>Deadline</th>
+                  <th>Priority</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="urgent-tasks-tbody">
+                <tr>
+                  <td colspan="5" class="table-empty">No urgent tasks</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Top Requests by Revision Count -->
+        <div class="table-card table-card-wide">
+          <div class="table-header">
+            <div>
+              <h3 class="table-title">Top Requests by Revision Count</h3>
+              <p class="table-subtitle">Requests consuming the most time</p>
+            </div>
+            <a href="/admin/all-requests" class="view-all-link">View All →</a>
+          </div>
+          <div class="table-content">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request Title</th>
+                  <th>Type</th>
+                  <th>Requester</th>
+                  <th>Unit</th>
+                  <th>Total Revisions</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="revision-count-tbody">
+                <tr>
+                  <td colspan="7" class="table-empty">No revision data available</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALENDAR SECTION (Keep existing calendar) -->
+      <div class="calendar-standalone">
+        <div class="calendar-header">
+          <div style="display: flex; align-items: center;">
+            <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <h3 class="calendar-title">Calendar</h3>
+          </div>
+          <div class="calendar-controls">
+            <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">⛶</button>
+            <div class="calendar-month-controls">
+              <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">❮</button>
+              <span class="calendar-month-year" id="calendar-month-year"></span>
+              <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">❯</button>
+            </div>
+          </div>
+        </div>
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <div class="legend-dot approval"></div>
+            <span class="legend-text">Approvals</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot service"></div>
+            <span class="legend-text">Services</span>
+          </div>
+        </div>
+        <div class="calendar-content">
+          <div id="calendar-standalone" class="calendar-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/javascripts/notifications.js"></script>
+  <script>
+    // Sidebar hover effect
+    const sidebar = document.getElementById('adminSidebar');
+    sidebar.addEventListener('mouseenter', function() {
+      this.classList.add('expanded');
+    });
+    sidebar.addEventListener('mouseleave', function() {
+      this.classList.remove('expanded');
+    });
+
+    // Header Dropdown Manager
+    const headerDropdown = {
+      menu: null,
+      isOpen: false,
+      
+      init() {
+        this.menu = document.getElementById("dropdownMenu");
+      },
+      
+      toggle() {
+        if (this.isOpen) {
+          this.close();
+        } else {
+          this.open();
+        }
+      },
+      
+      open() {
+        if (this.menu) {
+          this.menu.style.display = "block";
+          this.isOpen = true;
+        }
+      },
+      
+      close() {
+        if (this.menu) {
+          this.menu.style.display = "none";
+          this.isOpen = false;
+        }
+      }
+    };
+
+    // Dropdown toggle
+    function toggleDropdown() {
+      if (!headerDropdown.menu) {
+        headerDropdown.init();
+      }
+      headerDropdown.toggle();
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      headerDropdown.init();
+    });
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', function(e) {
+      if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-toggle')) {
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        if (dropdownMenu && dropdownMenu.style.display === 'block') {
+          headerDropdown.close();
+        }
+      }
+    });
+
+    // Chart.js configurations
+    const statusChartCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusChartCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Pending', 'In Progress', 'Awaiting Approval', 'In Revision', 'Completed'],
+        datasets: [{
+          data: [<%= stats.pendingApprovals || 0 %>, 5, <%= stats.pendingServices || 0 %>, 3, 15],
+          backgroundColor: [
+            '#f59e0b',
+            '#3b82f6',
+            '#10b981',
+            '#ef4444',
+            '#6b7280'
+          ],
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12,
+                family: 'Inter'
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const unitChartCtx = document.getElementById('unitChart').getContext('2d');
+    const unitChart = new Chart(unitChartCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+        datasets: [{
+          label: 'Active Tasks',
+          data: [12, 19, 8, 15],
+          backgroundColor: [
+            'rgba(67, 160, 71, 0.8)',
+            'rgba(67, 160, 71, 0.6)',
+            'rgba(67, 160, 71, 0.4)',
+            'rgba(67, 160, 71, 0.2)'
+          ],
+          borderColor: '#43a047',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 5
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+
+    const volumeChartCtx = document.getElementById('volumeChart').getContext('2d');
+    const volumeChart = new Chart(volumeChartCtx, {
+      type: 'line',
+      data: {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        datasets: [{
+          label: 'Approval Requests',
+          data: [8, 12, 15, 10],
+          borderColor: '#43a047',
+          backgroundColor: 'rgba(67, 160, 71, 0.1)',
+          tension: 0.4,
+          fill: true
+        }, {
+          label: 'Service Requests',
+          data: [5, 8, 10, 12],
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249, 115, 22, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12,
+                family: 'Inter'
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    // Time range filter for volume chart
+    document.getElementById('timeRangeFilter').addEventListener('change', function(e) {
+      // Update chart based on selected range
+      console.log('Time range changed to:', e.target.value);
+      // TODO: Fetch new data and update chart
+    });
+
+    // Fetch and populate dashboard data
+    async function loadDashboardData() {
+      try {
+        // TODO: Add API endpoints to fetch actual data
+        // For now using placeholder data
+        
+        // Update KPIs
+        document.getElementById('kpi-revision').textContent = '3';
+        document.getElementById('kpi-urgent').textContent = '2';
+        document.getElementById('kpi-completed').textContent = '28';
+        
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    }
+
+    // Load data on page load
+    loadDashboardData();
+
+    // Calendar initialization (keep existing calendar script)
+    // TODO: Include existing calendar script here
+  </script>
+</body>
+</html>

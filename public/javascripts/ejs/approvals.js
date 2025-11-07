@@ -14,6 +14,25 @@
 
 console.log('🚀 Starting Approvals Admin script...');
 
+// Global dropdown manager to ensure only one dropdown is open at a time
+const DropdownManager = {
+  activeDropdown: null,
+  
+  registerOpen(dropdown) {
+    // Close the currently active dropdown if it exists and is different
+    if (this.activeDropdown && this.activeDropdown !== dropdown) {
+      this.activeDropdown.close();
+    }
+    this.activeDropdown = dropdown;
+  },
+  
+  clearActive(dropdown) {
+    if (this.activeDropdown === dropdown) {
+      this.activeDropdown = null;
+    }
+  }
+};
+
 // Organization and Office data arrays (shortened for brevity)
 const studentOrganizations = [
  "University Student Government (USG)",
@@ -387,6 +406,9 @@ class EnhancedMultiSelect {
   }
   
   open() {
+    // Register this dropdown with the manager (will close others)
+    DropdownManager.registerOpen(this);
+    
     this.isOpen = true;
     this.display.classList.add('active');
     this.dropdown.classList.add('show');
@@ -399,6 +421,10 @@ class EnhancedMultiSelect {
     this.isOpen = false;
     this.display.classList.remove('active');
     this.dropdown.classList.remove('show');
+    
+    // Clear this dropdown from the manager
+    DropdownManager.clearActive(this);
+    
     if (this.hasSearch && this.searchInput) {
       this.searchInput.value = '';
       this.filterOptions('');
@@ -2278,5 +2304,65 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
       window.openConversationModal(requestId, 'approval');
     }, 500);
+  }
+});
+
+// Header Dropdown Manager - Integrates with DropdownManager
+const headerDropdown = {
+  menu: null,
+  isOpen: false,
+  
+  init() {
+    this.menu = document.getElementById("dropdownMenu");
+  },
+  
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  },
+  
+  open() {
+    // Register with DropdownManager to close other dropdowns
+    DropdownManager.registerOpen(this);
+    
+    if (this.menu) {
+      this.menu.style.display = "block";
+      this.isOpen = true;
+    }
+  },
+  
+  close() {
+    if (this.menu) {
+      this.menu.style.display = "none";
+      this.isOpen = false;
+    }
+    
+    // Clear from DropdownManager
+    DropdownManager.clearActive(this);
+  }
+};
+
+// Toggle dropdown function
+window.toggleDropdown = function() {
+  if (!headerDropdown.menu) {
+    headerDropdown.init();
+  }
+  headerDropdown.toggle();
+};
+
+// Initialize header dropdown on load
+document.addEventListener('DOMContentLoaded', () => {
+  headerDropdown.init();
+});
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function(event) {
+  const toggle = document.querySelector(".dropdown-toggle");
+  const menu = document.getElementById("dropdownMenu");
+  if (toggle && menu && !toggle.contains(event.target)) {
+    headerDropdown.close();
   }
 });

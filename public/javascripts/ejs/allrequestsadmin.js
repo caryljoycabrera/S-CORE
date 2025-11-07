@@ -9,6 +9,25 @@
 
 console.log('🚀 Starting All RequestsAdmin script...');
 
+// Global dropdown manager to ensure only one dropdown is open at a time
+const DropdownManager = {
+  activeDropdown: null,
+  
+  registerOpen(dropdown) {
+    // Close the currently active dropdown if it exists and is different
+    if (this.activeDropdown && this.activeDropdown !== dropdown) {
+      this.activeDropdown.close();
+    }
+    this.activeDropdown = dropdown;
+  },
+  
+  clearActive(dropdown) {
+    if (this.activeDropdown === dropdown) {
+      this.activeDropdown = null;
+    }
+  }
+};
+
 // Organization and Office data arrays (simplified for brevity)
 const studentOrganizations = [
  "University Student Government (USG)",
@@ -377,6 +396,9 @@ class EnhancedMultiSelect {
   }
 
   open() {
+    // Register this dropdown with the manager (will close others)
+    DropdownManager.registerOpen(this);
+    
     this.isOpen = true;
     this.display.classList.add('active');
     this.dropdown.classList.add('show');
@@ -389,6 +411,10 @@ class EnhancedMultiSelect {
     this.isOpen = false;
     this.display.classList.remove('active');
     this.dropdown.classList.remove('show');
+    
+    // Clear this dropdown from the manager
+    DropdownManager.clearActive(this);
+    
     if (this.hasSearch && this.searchInput) {
       this.searchInput.value = '';
       this.filterOptions('');
@@ -521,6 +547,9 @@ class EnhancedSingleSelect {
   }
 
   open() {
+    // Register this dropdown with the manager (will close others)
+    DropdownManager.registerOpen(this);
+    
     this.isOpen = true;
     this.display.classList.add('active');
     this.dropdown.classList.add('show');
@@ -530,6 +559,9 @@ class EnhancedSingleSelect {
     this.isOpen = false;
     this.display.classList.remove('active');
     this.dropdown.classList.remove('show');
+    
+    // Clear this dropdown from the manager
+    DropdownManager.clearActive(this);
   }
 
   triggerChange() {
@@ -611,27 +643,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Initialize enhanced single-select for type filter
-  typeFilter = new EnhancedSingleSelect('typeFilter',
-    [
-      { value: 'all', text: 'All Types' },
-      { value: 'Request Approval', text: 'Request Approval' },
-      { value: 'Service Request', text: 'Service Request' }
-    ],
-    'Select Type');
+  // Initialize enhanced multi-select for type filter (with checkboxes like Status)
+  typeFilter = new EnhancedMultiSelect('typeFilter',
+    ['Request Approval', 'Service Request'],
+    'Select Type', false);
+  
+  // Store instance reference on container
+  const typeFilterContainer = document.getElementById('typeFilter');
+  if (typeFilterContainer) {
+    typeFilterContainer.__instance = typeFilter;
+  }
 
   // Initialize enhanced multi-select dropdowns
   statusFilter = new EnhancedMultiSelect('statusFilter',
     ['pending', 'approved', 'for revision', 'completed', 'rejected', 'archived'],
     'Select Status', false);
+  
+  const statusFilterContainer = document.getElementById('statusFilter');
+  if (statusFilterContainer) {
+    statusFilterContainer.__instance = statusFilter;
+  }
 
   studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter',
     studentOrganizations,
     'Select Student Organizations', true);
+  
+  const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+  if (studentOrgFilterContainer) {
+    studentOrgFilterContainer.__instance = studentOrgFilter;
+  }
 
   officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter',
     officesDepartments,
     'Select Offices/Departments', true);
+  
+  const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+  if (officeDeptFilterContainer) {
+    officeDeptFilterContainer.__instance = officeDeptFilter;
+  }
 
   // Initialize global modal variables
   detailModal = document.getElementById("detailsModal");
@@ -739,7 +788,7 @@ function initializeFilters() {
   function getFilterValues() {
     return {
       requestId: requestIdFilter?.value?.toLowerCase().trim() || '',
-      type: typeFilterContainer?.__instance?.getSelectedValue() || 'all',
+      type: typeFilterContainer?.__instance?.getSelectedValues() || ['all'],
       status: statusFilterContainer?.__instance?.getSelectedValues() || ['all'],
       student: studentFilter?.value?.toLowerCase().trim() || '',
       studentOrg: studentOrgFilterContainer?.__instance?.getSelectedValues() || ['all'],
@@ -755,8 +804,8 @@ function initializeFilters() {
       return false;
     }
 
-    // Type filter
-    if (filters.type !== 'all' && request.type !== filters.type) {
+    // Type filter (multi-select with array)
+    if (filters.type.length > 0 && !filters.type.includes('all') && !filters.type.includes(request.type)) {
       return false;
     }
 
@@ -1769,5 +1818,65 @@ window.openConversationModal = function(requestId, requestType) {
     window.location.href = window.location.pathname + `?highlight=${requestId}`;
   }
 };
+
+// Header Dropdown Manager - Integrates with DropdownManager
+const headerDropdown = {
+  menu: null,
+  isOpen: false,
+  
+  init() {
+    this.menu = document.getElementById("dropdownMenu");
+  },
+  
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  },
+  
+  open() {
+    // Register with DropdownManager to close other dropdowns
+    DropdownManager.registerOpen(this);
+    
+    if (this.menu) {
+      this.menu.style.display = "block";
+      this.isOpen = true;
+    }
+  },
+  
+  close() {
+    if (this.menu) {
+      this.menu.style.display = "none";
+      this.isOpen = false;
+    }
+    
+    // Clear from DropdownManager
+    DropdownManager.clearActive(this);
+  }
+};
+
+// Toggle dropdown function
+window.toggleDropdown = function() {
+  if (!headerDropdown.menu) {
+    headerDropdown.init();
+  }
+  headerDropdown.toggle();
+};
+
+// Initialize header dropdown on load
+document.addEventListener('DOMContentLoaded', () => {
+  headerDropdown.init();
+});
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function(event) {
+  const toggle = document.querySelector(".dropdown-toggle");
+  const menu = document.getElementById("dropdownMenu");
+  if (toggle && menu && !toggle.contains(event.target)) {
+    headerDropdown.close();
+  }
+});
 
 console.log('✅ AllRequestsAdmin script loaded and initialized successfully');

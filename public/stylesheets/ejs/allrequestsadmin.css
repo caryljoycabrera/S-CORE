@@ -7,6 +7,73 @@
    Features: Request management, filtering, modals, file previews
    ============================================================================= */
 
+/* ============================================================================
+   FILTER SECTION OVERFLOW FIX
+   Fix dropdown filters from overflowing outside container on scale
+   ============================================================================ */
+
+/* Allow the main activity section to properly contain overflowing dropdowns */
+.activity-section {
+  overflow: visible !important; /* Allow dropdowns to overflow this container */
+  position: relative;
+  z-index: 1;
+}
+
+.filter-section {
+  overflow: visible !important; /* Allow dropdowns to be visible outside container */
+  position: relative;
+  z-index: 1;
+  padding: 1.5rem !important;
+}
+
+.filter-container {
+  overflow: visible !important; /* Allow dropdowns to overflow */
+  position: relative;
+  display: block !important;
+  padding-bottom: 3.5rem !important;
+}
+
+.filter-group {
+  overflow: visible !important; /* Allow dropdowns to overflow */
+  position: relative;
+  width: 100% !important;
+}
+
+/* Fix for filter label spacing */
+.filter-label {
+  margin-bottom: 0.75rem; /* Reduced gap */
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+/* Filter actions positioning fix */
+.filter-actions {
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+  border-top: none !important;
+  padding-top: 0 !important;
+}
+
+/* Clear button styling - ensure proper spacing */
+.clear-filters-btn {
+  white-space: nowrap; /* Prevent text wrapping */
+  min-width: 120px; /* Minimum width for clear button */
+}
+
+/* Results count styling */
+.results-count {
+  text-align: right;
+  white-space: nowrap;
+}
+
 .status-badge.for-revision {
   background-color: #fed7d7;
   color: #e53e3e;
@@ -1209,6 +1276,94 @@
   .enhanced-file-preview {
     margin-bottom: 1.5rem;
   }
+
+  /* Mobile filter adjustments */
+  .filter-container {
+    padding-bottom: 0 !important;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .filter-controls.dropdown-row {
+    flex-direction: column;
+  }
+
+  .filter-controls.dropdown-row .filter-item {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .filter-controls.dropdown-row .select-display {
+    min-width: 100%;
+  }
+
+  .filter-item {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  /* Ensure dropdowns don't overflow on mobile */
+  .select-dropdown,
+  .single-select-dropdown {
+    max-width: 100%;
+    left: 0;
+    right: 0;
+  }
+
+  .filter-actions {
+    position: relative !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    margin-top: 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    padding-top: 1rem !important;
+  }
+
+  .clear-filters-btn {
+    width: 100%;
+  }
+  
+  .results-count {
+    text-align: center !important;
+  }
+}
+
+/* Tablet and medium screens */
+@media (max-width: 1024px) {
+  .filter-controls {
+    flex-wrap: wrap;
+  }
+
+  .filter-controls.dropdown-row .filter-item {
+    min-width: 240px;
+    flex: 1 1 calc(50% - 0.5rem); /* Two columns on tablet */
+  }
+
+  /* Ensure dropdowns fit within viewport */
+  .select-dropdown,
+  .single-select-dropdown {
+    max-height: 200px;
+  }
+
+  .filter-container {
+    gap: 1.5rem;
+  }
+}
+
+/* Large screens - ensure proper spacing */
+@media (min-width: 1440px) {
+  .filter-controls.dropdown-row .filter-item {
+    min-width: 320px;
+  }
+
+  .select-dropdown,
+  .single-select-dropdown {
+    max-height: 350px;
+  }
 }
 
 /* Custom Status Filter Styles */
@@ -1244,16 +1399,55 @@
 .select-dropdown {
   display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px); /* Small gap below the select */
   left: 0;
   right: 0;
+  width: 100%; /* Match parent width exactly */
   background: white;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  max-height: 200px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 99999 !important; /* Very high z-index to be above everything */
+  max-height: 300px;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  margin: 0;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+.select-dropdown.show {
+  display: block;
+}
+
+/* Search container styles for multi-select dropdowns */
+.search-container {
+  padding: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.options-container {
+  max-height: 250px; /* Reasonable max height */
+  overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+  padding: 0.25rem 0;
+  width: 100%; /* Ensure it matches parent width */
+  box-sizing: border-box;
 }
 
 .dropdown-option {
@@ -1263,6 +1457,8 @@
   cursor: pointer;
   font-size: 0.875rem;
   color: #374151;
+  word-break: break-word; /* Allow text to wrap */
+  overflow-wrap: break-word;
 }
 
 .dropdown-option:hover {
@@ -1270,7 +1466,37 @@
 }
 
 .dropdown-option input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  width: 0;
+  height: 0;
+}
+
+.checkbox-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d1d5db;
+  border-radius: 0.25rem;
   margin-right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dropdown-option input[type="checkbox"]:checked + .checkbox-custom {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+.dropdown-option input[type="checkbox"]:checked + .checkbox-custom::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 /* Enhanced Dropdown Styles */
@@ -1301,11 +1527,13 @@
 .enhanced-multi-select-wrapper {
   position: relative;
   width: 100%;
+  z-index: 1 !important; /* Base z-index for stacking context */
 }
 
 .enhanced-multi-select {
   position: relative;
   width: 100%;
+  overflow: visible; /* Allow dropdown to be visible */
 }
 
 .select-display {
@@ -1332,6 +1560,8 @@
 .select-display.active {
   border-color: var(--primary-green);
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  position: relative;
+  z-index: 3; /* Raise above other elements */
 }
 
 .selected-text {
@@ -1357,21 +1587,51 @@
   display: none !important; /* Override any existing ::after */
 }
 
-/* Filter row styling to match other pages */
+/* When dropdown is open, raise parent z-index */
+.enhanced-multi-select-wrapper:has(.select-dropdown.show) {
+  z-index: 99999 !important; /* Raise above everything else when open */
+}
+
+/* Filter row styling to match approvals page */
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  position: relative; /* Create positioning context for dropdowns */
+  z-index: 1; /* Base z-index */
+  overflow: visible; /* Allow dropdowns to overflow this container */
+}
+
+/* CRITICAL: Raise entire filter-controls container when any dropdown is active */
+.filter-controls:has(.select-dropdown.show),
+.filter-controls:has(.single-select-dropdown.show),
+.filter-controls:has(.custom-select.active) {
+  z-index: 99999 !important; /* Raise above all other filter rows */
+}
+
+/* Add spacing between filter rows */
 .filter-controls + .filter-controls {
   margin-top: 0.75rem;
 }
 
+/* Ensure first filter row doesn't have extra top margin */
+.filter-controls:first-of-type {
+  margin-top: 0;
+}
+
 .filter-controls.dropdown-row {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
+  flex-wrap: wrap;
   justify-content: flex-start;
+  overflow: visible; /* Allow dropdowns to overflow this container */
 }
 
 .filter-controls.dropdown-row .filter-item {
   flex: 1;
-  min-width: 350px;
+  min-width: 280px; /* More reasonable min-width */
   max-width: none;
+  position: relative; /* Create positioning context */
 }
 
 .filter-controls.dropdown-row .enhanced-multi-select-wrapper {
@@ -1379,17 +1639,12 @@
 }
 
 .filter-controls.dropdown-row .select-display {
-  min-width: 320px;
-  padding: 0.75rem;
+  min-width: auto; /* Remove fixed min-width */
+  padding: 0.5rem 0.75rem;
 }
 
 .filter-controls.dropdown-row .filter-item:nth-child(n+3) {
-  display: none;
-}
-
-.filter-label {
-  margin-bottom: 0.75rem;
-  display: block;
+  display: flex; /* Changed from none - show all items */
 }
 
 /* Consistent filter item sizing */
@@ -1397,6 +1652,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative; /* Create positioning context for dropdowns */
+  overflow: visible; /* Allow dropdowns to overflow */
+  flex: 1;
+  min-width: 200px;
+  z-index: 1;
+}
+
+/* Raise z-index when dropdown is active */
+.filter-item:has(.enhanced-multi-select-wrapper .select-dropdown.show),
+.filter-item:has(.custom-select.active) {
+  z-index: 99999 !important;
 }
 
 .enhanced-multi-select-wrapper,
@@ -1405,10 +1671,77 @@
   min-width: 200px;
 }
 
+/* Enhanced single select container */
+.enhanced-single-select {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+/* Enhanced single select wrapper */
+.enhanced-single-select-wrapper {
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+/* When single select dropdown is open, raise z-index */
+.enhanced-single-select-wrapper:has(.single-select-dropdown.show) {
+  z-index: 99999 !important; /* CRITICAL: Raise above all other elements */
+}
+
+/* Single select display */
+.single-select-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.single-select-display:hover {
+  border-color: #9ca3af;
+}
+
+.single-select-display.active {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.single-selected-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.single-dropdown-arrow {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.single-select-display.active .single-dropdown-arrow {
+  transform: rotate(180deg);
+}
+
 /* Ensure date inputs match other filter elements */
 .filter-input {
   min-height: 2.5rem;
   box-sizing: border-box;
+  position: relative; /* Create positioning context */
+  z-index: 0; /* Keep below dropdowns */
 }
 
 .filter-input:focus {
@@ -1450,16 +1783,19 @@
 .single-select-dropdown {
   display: none;
   position: absolute;
-  top: calc(100% + 2px);
+  top: calc(100% + 4px); /* Small gap below the select */
   left: 0;
   right: 0;
+  width: 100%; /* Match parent width exactly */
   background: white;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 99999 !important; /* CRITICAL: Must be above all other elements including date inputs */
   max-height: 300px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  margin: 0;
   animation: dropdownSlideIn 0.2s ease-out;
 }
 
@@ -1468,9 +1804,12 @@
 }
 
 .single-options-container {
-  max-height: 200px;
+  max-height: 250px; /* Reasonable max height */
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal overflow */
   padding: 0.25rem 0;
+  width: 100%; /* Ensure it matches parent width */
+  box-sizing: border-box;
 }
 
 .single-dropdown-option {
@@ -1483,6 +1822,8 @@
   transition: background-color 0.15s ease;
   margin: 0;
   position: relative;
+  word-break: break-word; /* Allow text to wrap */
+  overflow-wrap: break-word;
 }
 
 .single-dropdown-option:hover {

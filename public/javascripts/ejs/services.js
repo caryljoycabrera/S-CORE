@@ -1,6 +1,25 @@
 
 console.log('🚀 Starting Services Admin script...');
 
+// Global dropdown manager to ensure only one dropdown is open at a time
+const DropdownManager = {
+  activeDropdown: null,
+  
+  registerOpen(dropdown) {
+    // Close the currently active dropdown if it exists and is different
+    if (this.activeDropdown && this.activeDropdown !== dropdown) {
+      this.activeDropdown.close();
+    }
+    this.activeDropdown = dropdown;
+  },
+  
+  clearActive(dropdown) {
+    if (this.activeDropdown === dropdown) {
+      this.activeDropdown = null;
+    }
+  }
+};
+
 // Organization and Office data arrays (shortened for brevity)
 const studentOrganizations = [
  "University Student Government (USG)",
@@ -374,6 +393,9 @@ class EnhancedMultiSelect {
   }
   
   open() {
+    // Register this dropdown with the manager (will close others)
+    DropdownManager.registerOpen(this);
+    
     this.isOpen = true;
     this.display.classList.add('active');
     this.dropdown.classList.add('show');
@@ -386,6 +408,10 @@ class EnhancedMultiSelect {
     this.isOpen = false;
     this.display.classList.remove('active');
     this.dropdown.classList.remove('show');
+    
+    // Clear this dropdown from the manager
+    DropdownManager.clearActive(this);
+    
     if (this.hasSearch && this.searchInput) {
       this.searchInput.value = '';
       this.filterOptions('');

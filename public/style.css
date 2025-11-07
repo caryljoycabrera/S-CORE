@@ -55,8 +55,8 @@ a:visited {
   height: 80px;
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 32px rgba(44, 93, 49, 0.15);
+  border-bottom: none; /* Remove border to connect with sidebar */
+  box-shadow: none; /* Remove shadow for seamless connection */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1099,41 +1099,74 @@ a:visited {
 .filter-section {
   background: white;
   border-radius: var(--border-radius);
-  padding: 1.5rem;
+  padding: 1.5rem; /* Simplified padding */
   margin-bottom: 2rem;
   box-shadow: var(--card-shadow);
   border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: visible !important; /* CRITICAL: Allow dropdowns to overflow */
+  position: relative;
+  z-index: 1;
 }
 
 .filter-container {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: visible !important; /* CRITICAL: Allow dropdowns to overflow */
+  position: relative;
 }
 
 .filter-group {
-  flex: 1;
+  width: 100%;
+  overflow: visible !important; /* CRITICAL: Allow dropdowns to overflow */
+  position: relative;
 }
 
 .filter-label {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--primary-green);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem; /* Reduced from 1rem */
   display: block;
 }
 
 .filter-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex; /* Changed from grid to flex */
   gap: 1rem;
+  flex-wrap: wrap;
+  position: relative; /* Create positioning context */
+  z-index: 1;
+  overflow: visible !important; /* CRITICAL: Allow dropdowns to overflow */
+}
+
+/* CRITICAL: Raise entire filter-controls container when any dropdown is active */
+.filter-controls:has(.select-dropdown.show),
+.filter-controls:has(.single-select-dropdown.show),
+.filter-controls:has(.custom-select.active) {
+  z-index: 99999 !important; /* Raise above all other filter rows and elements */
+}
+
+/* Add spacing between filter rows */
+.filter-controls + .filter-controls {
+  margin-top: 0.75rem;
 }
 
 .filter-item {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative; /* Create positioning context for dropdowns */
+  overflow: visible !important; /* CRITICAL: Allow dropdowns to overflow */
+  flex: 1;
+  min-width: 200px;
+  z-index: 1;
+}
+
+/* Increase z-index when dropdown is active */
+.filter-item:has(.custom-select.active),
+.filter-item:has(.enhanced-multi-select-wrapper .select-display.active),
+.filter-item:has(.select-dropdown.show) {
+  z-index: 9999 !important;
 }
 
 .filter-sublabel {
@@ -1185,20 +1218,40 @@ a:visited {
 
 .filter-actions {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1rem;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Clear button styling */
+.clear-filters-btn {
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+/* Results count styling */
+.results-count {
+  text-align: right;
+  white-space: nowrap;
 }
 
 /*STATUS MULTI-SELECT*/
 /* Custom Multi-Select Dropdown Styles */
 .custom-select-wrapper {
   position: relative;
+  z-index: 1;
 }
 
 .custom-select {
   position: relative;
   cursor: pointer;
+}
+
+.custom-select.active {
+  z-index: 9999 !important;
 }
 
 .select-display {
@@ -1243,7 +1296,7 @@ a:visited {
   border: 2px solid var(--primary-green);
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 99999 !important;
   max-height: 200px;
   overflow-y: auto;
   display: none;
@@ -1302,6 +1355,8 @@ a:visited {
   align-items: center;
   gap: 0.5rem;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  white-space: nowrap; /* Prevent text wrapping */
+  min-width: 120px; /* Minimum width for clear button */
 }
 
 .clear-filters-btn:hover {
@@ -1322,22 +1377,52 @@ a:visited {
   background: #f3f4f6;
   border-radius: 50px;
   border: 1px solid #e5e7eb;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Responsive design for filters */
 @media (max-width: 768px) {
   .filter-container {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: column !important;
     gap: 1.5rem;
   }
   
   .filter-controls {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .filter-item {
+    min-width: 100%;
+    width: 100%;
   }
   
   .filter-actions {
-    align-items: stretch;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding-top: 1rem !important;
+    border-top: 1px solid #e5e7eb !important;
+  }
+  
+  .clear-filters-btn {
+    width: 100%;
+  }
+  
+  .results-count {
+    text-align: center !important;
+  }
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) {
+  .filter-controls {
+    flex-wrap: wrap;
+  }
+  
+  .filter-item {
+    min-width: 240px;
+    flex: 1 1 calc(50% - 0.5rem); /* Two columns on tablet */
   }
   
   .clear-filters-btn {

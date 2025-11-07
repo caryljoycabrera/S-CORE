@@ -10,10 +10,44 @@
    UI INTERACTION FUNCTIONS
    ========================================== */
 
+/* Header Dropdown Manager */
+const headerDropdown = {
+  menu: null,
+  isOpen: false,
+  
+  init() {
+    this.menu = document.getElementById("dropdownMenu");
+  },
+  
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  },
+  
+  open() {
+    if (this.menu) {
+      this.menu.style.display = "block";
+      this.isOpen = true;
+    }
+  },
+  
+  close() {
+    if (this.menu) {
+      this.menu.style.display = "none";
+      this.isOpen = false;
+    }
+  }
+};
+
 /* Dropdown toggle for user menu */
 function toggleDropdown() {
-  const menu = document.getElementById("dropdownMenu");
-  menu.style.display = menu.style.display === "block" ? "none" : "block";
+  if (!headerDropdown.menu) {
+    headerDropdown.init();
+  }
+  headerDropdown.toggle();
 }
 
 /* Close dropdown when clicking outside */
@@ -21,7 +55,7 @@ document.addEventListener("click", function (event) {
   const toggle = document.querySelector(".dropdown-toggle");
   const menu = document.getElementById("dropdownMenu");
   if (!toggle.contains(event.target)) {
-    menu.style.display = "none";
+    headerDropdown.close();
   }
 });
 

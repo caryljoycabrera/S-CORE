@@ -6,6 +6,8 @@
   <title>Manage Users</title>
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/users.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
 /* ========================================
@@ -668,43 +670,104 @@
 </style>
 </head>
 <body>
-  <div class="student-side">
-    <div class="div">
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+      
+      <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"></path>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+        </svg>
+        <span class="sidebar-label">Track All Requests</span>
+      </a>
+      
+      <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Manage Approvals</span>
+      </a>
+      
+      <a href="/admin/services" class="sidebar-item" title="Manage Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Manage Services</span>
+      </a>
+      
+      <a href="/admin/users" class="sidebar-item active" title="User Accounts">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 010 7.75"></path>
+        </svg>
+        <span class="sidebar-label">User Accounts</span>
+      </a>
+    </div>
+    
+    <!-- Logout Button at Bottom -->
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Logout</span>
+      </a>
+    </div>
+  </div>
 
-      <div class="overlap">
-        <div class="group">
-          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
-        </div>
-        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
-        <span class="text-wrapper-2">Manage Users</span>
+  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <div class="admin-main-content">
+    <div class="overlap">
+      <div class="group">
+        <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+      </div>
+      <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+      <span class="text-wrapper-2">Manage Users</span>
 
-        <div class="header-right-section">
-          <!-- Notification Bell -->
-          <%- include('../partials/notifications') %>
-
-          <div class="dropdown-wrapper">
-            <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-              <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-              <div class="user">
-                <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
-              </div>
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
             </div>
-            <div class="dropdown-menu" id="dropdownMenu">
-              <a href="/admin/profile">My Profile</a>
-              <a href="/logout">Logout</a>
-            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
           </div>
         </div>
       </div>
+    </div>
 
-      <section class="activity-section">
-        <div class="section-header">
-          <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
-            <div>
-              <h2 style="margin-bottom: 0.25rem;">Registered Users</h2>
-              <p style="color: #6b7280;">View and manage user accounts</p>
-            </div>
+    <section class="activity-section">
+      <div class="section-header">
+        <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
+          <div>
+            <h2 style="margin-bottom: 0.25rem;">Registered Users</h2>
+            <p style="color: #6b7280;">View and manage user accounts</p>
           </div>
+        </div>
         </div>
 
         <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
@@ -718,6 +781,8 @@
           <div class="filter-container">
             <div class="filter-group">
               <label class="filter-label">Filter by:</label>
+              
+              <!-- First Row: User ID, Name, Username, Email -->
               <div class="filter-controls">
                 <div class="filter-item">
                   <label for="userIdFilter" class="filter-sublabel">User ID</label>
@@ -735,6 +800,10 @@
                   <label for="emailFilter" class="filter-sublabel">Email</label>
                   <input type="text" id="emailFilter" class="filter-input" placeholder="Search email...">
                 </div>
+              </div>
+              
+              <!-- Second Row: Course/Yr/Sec and Office/Department/Organization -->
+              <div class="filter-controls">
                 <div class="filter-item">
                   <label for="cysFilter" class="filter-sublabel">Course/Yr/Sec</label>
                   <input type="text" id="cysFilter" class="filter-input" placeholder="Search CYS...">
@@ -743,6 +812,8 @@
                   <label for="organizationFilter" class="filter-sublabel">Office/Department/Organization</label>
                   <input type="text" id="organizationFilter" class="filter-input" placeholder="Search organization...">
                 </div>
+                <div class="filter-item" style="visibility: hidden;"></div>
+                <div class="filter-item" style="visibility: hidden;"></div>
               </div>
             </div>
             <div class="filter-actions">
@@ -1367,16 +1438,55 @@ document.getElementById('userUpdateForm').addEventListener('submit', function(e)
 // ========================================
 // EVENT LISTENERS
 // ========================================
+// Header Dropdown Manager
+const headerDropdown = {
+  menu: null,
+  isOpen: false,
+  
+  init() {
+    this.menu = document.getElementById("dropdownMenu");
+  },
+  
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  },
+  
+  open() {
+    if (this.menu) {
+      this.menu.style.display = "block";
+      this.isOpen = true;
+    }
+  },
+  
+  close() {
+    if (this.menu) {
+      this.menu.style.display = "none";
+      this.isOpen = false;
+    }
+  }
+};
+
 function toggleDropdown() {
-  const menu = document.getElementById("dropdownMenu");
-  menu.style.display = menu.style.display === "block" ? "none" : "block";
+  if (!headerDropdown.menu) {
+    headerDropdown.init();
+  }
+  headerDropdown.toggle();
 }
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  headerDropdown.init();
+});
 
 document.addEventListener("click", function (event) {
   const toggle = document.querySelector(".dropdown-toggle");
   const menu = document.getElementById("dropdownMenu");
   if (!toggle.contains(event.target)) {
-    menu.style.display = "none";
+    headerDropdown.close();
   }
   
   // Close custom dropdown when clicking outside
@@ -1421,6 +1531,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Sidebar hover effect
+const sidebar = document.getElementById('adminSidebar');
+if (sidebar) {
+  sidebar.addEventListener('mouseenter', function() {
+    this.classList.add('expanded');
+  });
+  sidebar.addEventListener('mouseleave', function() {
+    this.classList.remove('expanded');
+  });
+}
 </script>
 </body>
 </html>

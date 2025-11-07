@@ -1857,6 +1857,25 @@
 
   <!-- Main JavaScript -->
   <script>
+    // Global registry for all dropdown instances
+    const DropdownManager = {
+      activeDropdown: null,
+      
+      registerOpen(dropdown) {
+        // Close the currently active dropdown if it exists and is different
+        if (this.activeDropdown && this.activeDropdown !== dropdown) {
+          this.activeDropdown.close();
+        }
+        this.activeDropdown = dropdown;
+      },
+      
+      clearActive(dropdown) {
+        if (this.activeDropdown === dropdown) {
+          this.activeDropdown = null;
+        }
+      }
+    };
+
     // Enhanced Multi-Select Class for Organizations
     class EnhancedMultiSelect {
       constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
@@ -2047,6 +2066,9 @@
       }
       
       open() {
+        // Register this dropdown with the manager (will close others)
+        DropdownManager.registerOpen(this);
+        
         this.isOpen = true;
         this.display.classList.add('active');
         this.dropdown.classList.add('show');
@@ -2059,6 +2081,10 @@
         this.isOpen = false;
         this.display.classList.remove('active');
         this.dropdown.classList.remove('show');
+        
+        // Clear this dropdown from the manager
+        DropdownManager.clearActive(this);
+        
         if (this.hasSearch && this.searchInput) {
           this.searchInput.value = '';
           this.filterOptions('');
@@ -2369,12 +2395,41 @@
       });
     }
 
-    // Custom Status Filter Logic - UPDATED to stay open
+    // Custom Status Filter Logic with DropdownManager integration
+    const statusFilterDropdown = {
+      isOpen: false,
+      
+      open() {
+        // Register with DropdownManager to close other dropdowns
+        DropdownManager.registerOpen(this);
+        
+        this.isOpen = true;
+        if (statusFilterElement) statusFilterElement.classList.add('active');
+        if (statusDropdown) statusDropdown.classList.add('show');
+      },
+      
+      close() {
+        this.isOpen = false;
+        if (statusFilterElement) statusFilterElement.classList.remove('active');
+        if (statusDropdown) statusDropdown.classList.remove('show');
+        
+        // Clear from DropdownManager
+        DropdownManager.clearActive(this);
+      },
+      
+      toggle() {
+        if (this.isOpen) {
+          this.close();
+        } else {
+          this.open();
+        }
+      }
+    };
+
     if (statusFilterElement) {
       statusFilterElement.addEventListener('click', function(e) {
         e.stopPropagation();
-        statusFilterElement.classList.toggle('active');
-        statusDropdown.classList.toggle('show');
+        statusFilterDropdown.toggle();
       });
     }
 
@@ -2388,8 +2443,7 @@
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
       if (statusFilterElement && !statusFilterElement.contains(e.target)) {
-        statusFilterElement.classList.remove('active');
-        statusDropdown.classList.remove('show');
+        statusFilterDropdown.close();
       }
     });
 
@@ -2664,19 +2718,62 @@ document.querySelectorAll('.request-row').forEach(row => {
       });
     });
 
+    // Header Dropdown Manager - Integrates with DropdownManager
+    const headerDropdown = {
+      menu: null,
+      isOpen: false,
+      
+      init() {
+        this.menu = document.getElementById("dropdownMenu");
+      },
+      
+      toggle() {
+        if (this.isOpen) {
+          this.close();
+        } else {
+          this.open();
+        }
+      },
+      
+      open() {
+        // Register with DropdownManager to close other dropdowns
+        DropdownManager.registerOpen(this);
+        
+        if (this.menu) {
+          this.menu.style.display = "block";
+          this.isOpen = true;
+        }
+      },
+      
+      close() {
+        if (this.menu) {
+          this.menu.style.display = "none";
+          this.isOpen = false;
+        }
+        
+        // Clear from DropdownManager
+        DropdownManager.clearActive(this);
+      }
+    };
+
     // Dropdown functionality
     function toggleDropdown() {
-      const menu = document.getElementById("dropdownMenu");
-      if (menu) {
-        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      if (!headerDropdown.menu) {
+        headerDropdown.init();
       }
+      headerDropdown.toggle();
     }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      headerDropdown.init();
+    });
 
     document.addEventListener("click", function (event) {
       const toggle = document.querySelector(".dropdown-toggle");
       const menu = document.getElementById("dropdownMenu");
       if (toggle && menu && !toggle.contains(event.target)) {
-        menu.style.display = "none";
+        headerDropdown.close();
       }
     });
 

@@ -1,0 +1,142 @@
+/* ===========================================
+   USERS PAGE STYLES
+   File: public/stylesheets/ejs/users.css
+   Purpose: Styles for the admin users management page
+   =========================================== */
+
+/* Filter section spacing override */
+.filter-section {
+  padding: 1.5rem !important;
+  overflow: visible !important;
+  position: relative;
+  z-index: 1;
+}
+
+.filter-container {
+  overflow: visible !important;
+  position: relative;
+  display: block !important;
+  padding-bottom: 3.5rem !important;
+}
+
+.filter-group {
+  overflow: visible !important;
+  position: relative;
+  width: 100% !important;
+}
+
+.filter-label {
+  margin-bottom: 0.75rem;
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+/* CRITICAL: Raise entire filter-controls container when any dropdown is active */
+.filter-controls:has(.select-dropdown.show),
+.filter-controls:has(.single-select-dropdown.show),
+.filter-controls:has(.custom-select.active) {
+  z-index: 99999 !important; /* Raise above all other filter rows and elements */
+}
+
+.filter-controls + .filter-controls {
+  margin-top: 0.75rem;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  overflow: visible;
+  flex: 1;
+  min-width: 180px; /* Smaller min-width for users page with more filters */
+  z-index: 1;
+}
+
+/* Raise z-index when dropdown is active */
+.filter-item:has(.enhanced-multi-select-wrapper .select-dropdown.show),
+.filter-item:has(.custom-select.active) {
+  z-index: 99999 !important;
+}
+
+.filter-actions {
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+  border-top: none !important;
+  padding-top: 0 !important;
+}
+
+/* Clear button styling */
+.clear-filters-btn {
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+/* Results count styling */
+.results-count {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments for users page */
+@media (max-width: 1200px) {
+  .filter-item {
+    min-width: 150px;
+    flex: 1 1 calc(50% - 0.5rem); /* Two columns on medium screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-container {
+    padding-bottom: 0 !important;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .filter-item {
+    min-width: 100%;
+    width: 100%;
+  }
+  
+  .filter-item[style*="visibility: hidden"] {
+    display: none;
+  }
+  
+  .filter-actions {
+    position: relative !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    margin-top: 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    padding-top: 1rem !important;
+  }
+  
+  .clear-filters-btn {
+    width: 100%;
+  }
+  
+  .results-count {
+    text-align: center !important;
+  }
+}

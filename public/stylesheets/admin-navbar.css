@@ -1,0 +1,270 @@
+/* =============================================================================
+   ADMIN-NAVBAR.CSS - SHARED SIDEBAR NAVIGATION STYLES FOR ALL ADMIN PAGES
+   =============================================================================
+   Purpose: Consistent sidebar navigation across all admin pages
+   Used by: All admin pages (adminpage.ejs, approvals.ejs, allrequestsadmin.ejs, etc.)
+   ============================================================================= */
+
+/* ==========================================
+   SIDEBAR NAVIGATION STYLES
+   ========================================== */
+
+.admin-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0; /* Start from top to align with header */
+  bottom: 0;
+  width: 64px;
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+  box-shadow: none; /* Remove shadow for seamless blend */
+  z-index: 999; /* Below header (header is 1000) */
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-top: none; /* Remove border to blend with header */
+  padding-top: 80px; /* Add padding to account for header height */
+}
+
+.admin-sidebar.expanded {
+  width: 240px;
+}
+
+.sidebar-items {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+  flex: 1;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  white-space: nowrap;
+  background: transparent;
+  margin: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: translateX(4px);
+}
+
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid white;
+  padding-left: calc(1.25rem - 4px);
+}
+
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background: white;
+  border-radius: 0 4px 4px 0;
+}
+
+.sidebar-icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  flex-shrink: 0;
+  stroke-width: 2.5;
+  transition: all 0.3s ease;
+}
+
+.sidebar-item:hover .sidebar-icon {
+  stroke-width: 3;
+  transform: scale(1.1);
+}
+
+.sidebar-item.active .sidebar-icon {
+  stroke-width: 3;
+}
+
+.sidebar-label {
+  margin-left: 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+.admin-sidebar.expanded .sidebar-label {
+  opacity: 1;
+}
+
+.sidebar-item.active .sidebar-label {
+  font-weight: 600;
+}
+
+/* Logout Button at Bottom */
+.sidebar-bottom {
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: auto;
+}
+
+.sidebar-logout {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  margin: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 87, 87, 0.2) !important;
+  color: #ffcccb !important;
+  transform: translateX(4px);
+  border-left: 4px solid #ffcccb;
+  padding-left: calc(1.25rem - 4px);
+}
+
+.sidebar-logout:hover .sidebar-icon {
+  stroke: #ffcccb;
+  stroke-width: 3;
+  transform: scale(1.1);
+}
+
+/* ==========================================
+   MAIN CONTENT AREA WITH SIDEBAR
+   ========================================== */
+
+.admin-main-content {
+  margin-left: 64px;
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-top: 100px; /* Add padding to prevent header overlap */
+  padding-left: 1.5rem; /* Add left padding */
+  padding-right: 1.5rem; /* Add right padding */
+}
+
+/* Adjust existing overlap/header to work with sidebar */
+.admin-main-content .overlap {
+  padding-left: 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+  z-index: 1000;
+  box-shadow: none; /* Remove shadow for seamless blend */
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+/* Ensure header text is white */
+.admin-main-content .overlap .text-wrapper,
+.admin-main-content .overlap .text-wrapper-2 {
+  color: white !important;
+}
+
+/* Adjust student-side class if it's being used */
+.student-side.with-sidebar {
+  margin-left: 64px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add padding to activity sections to prevent content from touching edges */
+.admin-main-content .activity-section {
+  padding: 1.5rem;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+/* Add responsive padding for table sections */
+.admin-main-content .table-section,
+.admin-main-content .filter-section {
+  padding: 0 0.5rem;
+}
+
+/* Ensure proper spacing for section headers */
+.admin-main-content .section-header {
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+@media (max-width: 768px) {
+  .admin-sidebar {
+    width: 0;
+  }
+  
+  .admin-sidebar.expanded {
+    width: 240px;
+  }
+  
+  .admin-main-content,
+  .student-side.with-sidebar {
+    margin-left: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .admin-main-content .overlap {
+    left: 0;
+  }
+  
+  .admin-main-content .activity-section {
+    padding: 1rem;
+  }
+  
+  /* Mobile menu toggle button */
+  .mobile-menu-toggle {
+    display: block;
+    position: fixed;
+    left: 1rem;
+    top: 1rem;
+    z-index: 1001;
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-toggle {
+    display: none;
+  }
+}
+
+/* ==========================================
+   SIDEBAR TOGGLE SCRIPT (Include this in your pages)
+   ========================================== */
+/*
+  Add this JavaScript to enable sidebar expand/collapse:
+  
+  <script>
+    const sidebar = document.getElementById('adminSidebar');
+    if (sidebar) {
+      sidebar.addEventListener('mouseenter', function() {
+        this.classList.add('expanded');
+      });
+      sidebar.addEventListener('mouseleave', function() {
+        this.classList.remove('expanded');
+      });
+    }
+  </script>
+*/

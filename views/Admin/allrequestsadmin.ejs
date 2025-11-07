@@ -15,6 +15,8 @@
 
   <!-- Base Stylesheet and Google Fonts -->
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Admin All Requests Page Specific Stylesheet -->
@@ -210,32 +212,93 @@
   </script>
 </head>
 <body>
-  <div class="student-side">
-    <div class="div">
-      <!-- Header -->
-      <div class="overlap">
-        <div class="group">
-          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
-        </div>
-        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
-        <span class="text-wrapper-2">All Requests</span>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+      
+      <a href="/admin/all-requests" class="sidebar-item active" title="Track All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"></path>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+        </svg>
+        <span class="sidebar-label">Track All Requests</span>
+      </a>
+      
+      <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Manage Approvals</span>
+      </a>
+      
+      <a href="/admin/services" class="sidebar-item" title="Manage Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Manage Services</span>
+      </a>
+      
+      <a href="/admin/users" class="sidebar-item" title="User Accounts">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 010 7.75"></path>
+        </svg>
+        <span class="sidebar-label">User Accounts</span>
+      </a>
+    </div>
+    
+    <!-- Logout Button at Bottom -->
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Logout</span>
+      </a>
+    </div>
+  </div>
 
-        <div class="header-right-section">
-          <!-- Notification Bell -->
-          <%- include('../partials/notifications') %>
+  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <div class="admin-main-content">
+    <div class="overlap">
+      <div class="group">
+        <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+      </div>
+      <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+      <span class="text-wrapper-2">All Requests</span>
 
-          <div class="dropdown-wrapper">
-            <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-              <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-              <div class="user">
-                <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
-              </div>
-            </div>
-            <div class="dropdown-menu" id="dropdownMenu">
-              <a href="/admin/profile">My Profile</a>
-              <a href="/logout">Logout</a>
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
             </div>
           </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -272,17 +335,15 @@
                 </div>
                 <div class="filter-item">
                   <label class="filter-sublabel">Type</label>
-                  <div class="enhanced-single-select-wrapper">
-                    <div class="enhanced-single-select" id="typeFilter">
-                      <div class="single-select-display" data-placeholder="Select Type">
-                        <span class="single-selected-text">All Types</span>
-                        <span class="single-dropdown-arrow">▼</span>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="typeFilter">
+                      <div class="select-display" data-placeholder="Select Type">
+                        <span class="selected-text">All Types</span>
+                        <span class="dropdown-arrow">▼</span>
                       </div>
-                      <div class="single-select-dropdown" id="typeDropdown">
-                        <div class="single-options-container">
-                          <div class="single-dropdown-option selected" data-value="all">All Types</div>
-                          <div class="single-dropdown-option" data-value="Request Approval">Request Approval</div>
-                          <div class="single-dropdown-option" data-value="Service Request">Service Request</div>
+                      <div class="select-dropdown" id="typeDropdown">
+                        <div class="options-container">
+                          <!-- JavaScript will populate this -->
                         </div>
                       </div>
                     </div>
@@ -1331,6 +1392,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.style.overflow = 'hidden';
   };
 });
+
+// Sidebar hover effect
+const sidebar = document.getElementById('adminSidebar');
+if (sidebar) {
+  sidebar.addEventListener('mouseenter', function() {
+    this.classList.add('expanded');
+  });
+  sidebar.addEventListener('mouseleave', function() {
+    this.classList.remove('expanded');
+  });
+}
 </script>
 
 </body>
