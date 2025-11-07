@@ -26,8 +26,8 @@
       transition: all 0.3s ease;
       overflow: visible;
       position: relative;
-      min-height: 340px;
-      height: 340px;
+      min-height: auto;
+      height: auto;
       justify-content: flex-start;
     }
 
@@ -131,8 +131,7 @@
 
     .calendar-content {
       flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: visible;
       min-height: 0;
     }
 
@@ -183,6 +182,7 @@
       font-family: 'Inter', sans-serif;
       width: 100%;
       padding-right: 2px;
+      grid-auto-rows: minmax(40px, auto);
     }
 
     .calendar-day-header {
@@ -199,14 +199,14 @@
 
     .calendar-day {
       font-size: 0.85rem;
-      padding: 6px 2px;
+      padding: 8px 2px;
       border-radius: 6px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
       color: #374151;
       font-weight: 600;
-      min-height: 24px;
+      min-height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -674,6 +674,15 @@
         <span class="sidebar-label">Dashboard</span>
       </a>
       
+      <a href="/admin/analytics" class="sidebar-item" title="Analytics">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="20" x2="12" y2="10"></line>
+          <line x1="18" y1="20" x2="18" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="16"></line>
+        </svg>
+        <span class="sidebar-label">Analytics</span>
+      </a>
+      
       <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 11l3 3L22 4"></path>
@@ -754,37 +763,105 @@
 
     <!-- DASHBOARD CONTENT -->
     <div class="dashboard-container">
-      <h1 class="dashboard-main-title">Admin Dashboard</h1>
+      <!-- DASHBOARD HEADER WITH TITLE AND REPORTS BUTTON -->
+      <div class="dashboard-header-section">
+        <h1 class="dashboard-main-title">Admin Dashboard - Analytics & Performance Insights</h1>
+        <a href="/admin/reports" class="generate-reports-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Generate Reports
+        </a>
+      </div>
+
+      <!-- CALENDAR SECTION -->
+      <div class="calendar-standalone">
+        <div class="calendar-header">
+          <div style="display: flex; align-items: center;">
+            <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <h3 class="calendar-title">Calendar</h3>
+          </div>
+          <div class="calendar-controls">
+            <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">⛶</button>
+            <div class="calendar-month-controls">
+              <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">❮</button>
+              <span class="calendar-month-year" id="calendar-month-year"></span>
+              <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">❯</button>
+            </div>
+          </div>
+        </div>
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <div class="legend-dot approval"></div>
+            <span class="legend-text">Approval Requests</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot service"></div>
+            <span class="legend-text">Service Requests</span>
+          </div>
+        </div>
+        <div class="calendar-content">
+          <div id="calendar-standalone" class="calendar-grid"></div>
+        </div>
+      </div>
+
+      <!-- ESSENTIAL KPIs FOR ADMIN DASHBOARD -->
+      <div class="analytics-section">
+        <h2 class="section-header-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          Critical Metrics
+        </h2>
+        <p class="section-subtitle">Real-time system overview - requires immediate admin attention</p>
       
       <!-- KPI CARDS -->
       <div class="kpi-container">
-        <div class="kpi-card">
+        <!-- Pending Assignment -->
+        <div class="kpi-card" data-kpi="pending-assignment">
           <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
           </div>
           <div class="kpi-content">
-            <div class="kpi-label">Total Pending</div>
-            <div class="kpi-value"><%= stats.pendingApprovals + stats.pendingServices %></div>
+            <div class="kpi-label">Pending Assignment</div>
+            <div class="kpi-value" id="kpi-pending-assignment"><%= stats.pendingApprovals + stats.pendingServices %></div>
+            <div class="kpi-subtext">New requests awaiting unit assignment</div>
           </div>
         </div>
 
-        <div class="kpi-card">
+        <!-- Awaiting Approval -->
+        <div class="kpi-card" data-kpi="awaiting-approval">
           <div class="kpi-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              <polyline points="9 11 12 14 22 4"></polyline>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
             </svg>
           </div>
           <div class="kpi-content">
             <div class="kpi-label">Awaiting Approval</div>
-            <div class="kpi-value"><%= stats.pendingApprovals %></div>
+            <div class="kpi-value" id="kpi-awaiting-approval"><%= stats.awaitingApproval || 0 %></div>
+            <div class="kpi-subtext">Completed work awaiting final approval</div>
           </div>
         </div>
 
-        <div class="kpi-card">
+        <!-- In Revision -->
+        <div class="kpi-card" data-kpi="in-revision">
           <div class="kpi-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
@@ -794,12 +871,14 @@
           </div>
           <div class="kpi-content">
             <div class="kpi-label">In Revision</div>
-            <div class="kpi-value" id="kpi-revision">0</div>
+            <div class="kpi-value" id="kpi-in-revision"><%= stats.inRevision || 0 %></div>
+            <div class="kpi-subtext">Sent back for changes</div>
           </div>
         </div>
 
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+        <!-- Total Pending Requests -->
+        <div class="kpi-card" data-kpi="urgent-unassigned">
+          <div class="kpi-icon" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -807,32 +886,492 @@
             </svg>
           </div>
           <div class="kpi-content">
-            <div class="kpi-label">Urgent Tasks</div>
-            <div class="kpi-value" id="kpi-urgent">0</div>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-              <polyline points="9 11 12 14 22 4"></polyline>
-              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-            </svg>
-          </div>
-          <div class="kpi-content">
-            <div class="kpi-label">Completed This Month</div>
-            <div class="kpi-value" id="kpi-completed">0</div>
+            <div class="kpi-label">Unassigned Tasks</div>
+            <div class="kpi-value" id="kpi-urgent-unassigned">
+              <span style="color: #dc2626; font-size: 1.5rem;"><%= stats.urgentUnassigned || 0 %></span>
+              <span style="color: #6b7280; font-size: 1rem;"> / <%= stats.totalUnassigned || 0 %></span>
+            </div>
+            <div class="kpi-subtext"><span style="color: #dc2626; font-weight: 600;"><%= stats.urgentUnassigned || 0 %></span> urgent, <%= stats.totalUnassigned || 0 %> total need assignment</div>
           </div>
         </div>
       </div>
+    </div>
+
+      <!-- ADMIN ACTION LIST - NEW COMPONENT -->
+      <div class="analytics-section">
+        <h2 class="section-header-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+          Admin Action Required
+        </h2>
+        <p class="section-subtitle">Critical tasks requiring immediate attention</p>
+
+        <!-- TWO COLUMN LAYOUT -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+          
+          <!-- PENDING TASKS TABLE -->
+          <div class="table-card">
+            <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #e5e7eb;">
+              <div>
+                <h3 class="table-title" style="margin: 0; font-size: 1rem;">Pending Tasks</h3>
+                <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">Recent requests</p>
+                <% if (pendingRequests && pendingRequests.length > 0) { %>
+                <p style="font-size: 0.75rem; margin: 0.25rem 0 0 0; color: #6b7280;">
+                  Showing <%= Math.min(5, pendingRequests.length) %> of <%= pendingRequests.length %> tasks
+                </p>
+                <% } %>
+              </div>
+              <button onclick="maximizePendingTasks()" style="padding: 0.5rem 1rem; background: #43a047; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                View All
+              </button>
+            </div>
+            <div class="table-content">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 35%;">Requestor</th>
+                    <th style="width: 30%;">Title</th>
+                    <th style="width: 15%;">Type</th>
+                    <th style="width: 20%;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-action-list-tbody">
+                  <% if (pendingRequests && pendingRequests.length > 0) { %>
+                    <% pendingRequests.slice(0, 5).forEach(request => { %>
+                      <tr>
+                        <td>
+                          <%= request.userId ? (request.userId.fName + ' ' + request.userId.lName) : 'Unknown' %>
+                          <% if (request.userId && request.userId.organization) { %>
+                            <br><small style="color: #6b7280;"><%= request.userId.organization %></small>
+                          <% } %>
+                        </td>
+                        <td><strong><%= request.title || request.description ? (request.title || request.description).substring(0, 30) + ((request.title || request.description).length > 30 ? '...' : '') : 'No title' %></strong></td>
+                        <td>
+                          <span class="type-badge <%= request.requestType %>">
+                            <%= request.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                          </span>
+                        </td>
+                        <td>
+                          <a href="/admin/<%= request.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= request._id %>" 
+                             class="btn-view" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View</a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="4" class="table-empty">No pending requests at this time</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+              <% if (pendingRequests && pendingRequests.length > 5) { %>
+                <div style="text-align: center; padding: 0.75rem; background: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 0.875rem; color: #6b7280;">
+                  Showing 5 of <%= pendingRequests.length %> tasks
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- UNASSIGNED TASKS TABLE -->
+          <% if (unassignedTasks && unassignedTasks.length > 0) { %>
+          <div class="table-card">
+            <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #e5e7eb;">
+              <div>
+                <h3 class="table-title" style="margin: 0; font-size: 1rem;">Unassigned Tasks</h3>
+                <p style="font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                  <span style="color: #dc2626; font-weight: 600;"><%= unassignedTasks.filter(t => t.priority === 'critical').length %> Critical</span>, 
+                  <span style="color: #f59e0b; font-weight: 600;"><%= unassignedTasks.filter(t => t.priority === 'urgent').length %> Urgent</span>
+                </p>
+                <p style="font-size: 0.75rem; margin: 0.25rem 0 0 0; color: #6b7280;">
+                  Showing <%= Math.min(5, unassignedTasks.length) %> of <%= unassignedTasks.length %> tasks
+                </p>
+              </div>
+              <button onclick="maximizeUnassignedTasks()" style="padding: 0.5rem 1rem; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                View All
+              </button>
+            </div>
+            <div class="table-content">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 10%;">P</th>
+                    <th style="width: 35%;">Title</th>
+                    <th style="width: 15%;">Type</th>
+                    <th style="width: 20%;">Deadline</th>
+                    <th style="width: 20%;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% unassignedTasks.slice(0, 5).forEach((task, index) => { 
+                    const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                    const bgColor = task.priority === 'critical' ? '#fee2e2' : task.priority === 'urgent' ? '#fef3c7' : 'transparent';
+                  %>
+                    <tr style="background-color: <%= bgColor %>; cursor: pointer;" 
+                        onclick="openUnassignedTaskModal('<%= task._id %>', '<%= task.requestType %>')">
+                      <td style="text-align: center;">
+                        <span style="display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; background: <%= task.priorityColor %>; color: white; font-weight: 700; font-size: 0.7rem;">
+                          <%= index + 1 %>
+                        </span>
+                      </td>
+                      <td>
+                        <strong><%= task.title || task.description ? (task.title || task.description).substring(0, 30) + ((task.title || task.description).length > 30 ? '...' : '') : 'No title' %></strong>
+                      </td>
+                      <td>
+                        <span class="type-badge <%= task.requestType %>">
+                          <%= task.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (daysLeft !== null) { %>
+                          <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 0.75rem;"><%= new Date(task.deadline).toLocaleDateString() %></span>
+                            <span style="color: <%= task.priorityColor %>; font-weight: 600; font-size: 0.7rem;">
+                              <%= daysLeft > 0 ? daysLeft + 'd' : 'Today' %>
+                            </span>
+                          </div>
+                        <% } else { %>
+                          <span style="color: #6b7280; font-size: 0.75rem;">-</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
+                           class="btn-view" style="background: <%= task.priorityColor %>; padding: 0.4rem 0.8rem; font-size: 0.875rem;"
+                           onclick="event.stopPropagation();">Assign</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+              <% if (unassignedTasks.length > 5) { %>
+                <div style="text-align: center; padding: 0.75rem; background: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 0.875rem; color: #6b7280;">
+                  Showing 5 of <%= unassignedTasks.length %> tasks
+                </div>
+              <% } %>
+            </div>
+          </div>
+          <% } %>
+
+        </div>
+      </div>
+
+      <!-- MAXIMIZE MODALS -->
+      <!-- Pending Tasks Full View Modal -->
+      <div id="pendingTasksModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 1200px;">
+          <header class="modal-header">
+            <span class="modal-title">All Pending Tasks for Admin Action</span>
+            <span class="close" id="closePendingTasksModal">&times;</span>
+          </header>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Requestor</th>
+                  <th>Organization</th>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Date Submitted</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (pendingRequests && pendingRequests.length > 0) { %>
+                  <% pendingRequests.forEach(request => { %>
+                    <tr>
+                      <td><strong><%= request.userId ? (request.userId.fName + ' ' + request.userId.lName) : 'Unknown' %></strong></td>
+                      <td><%= request.userId?.organization || 'N/A' %></td>
+                      <td><strong><%= request.title || request.description || 'No title' %></strong></td>
+                      <td>
+                        <span class="type-badge <%= request.requestType %>">
+                          <%= request.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                        </span>
+                      </td>
+                      <td><%= request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'N/A' %></td>
+                      <td>
+                        <a href="/admin/<%= request.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= request._id %>" 
+                           class="btn-view">View & Assign</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unassigned Tasks Full View Modal -->
+      <div id="unassignedTasksMaxModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 1200px;">
+          <header class="modal-header unified-modal-header">
+            <h3 class="modal-title">All Unassigned Tasks</h3>
+            <span class="close" id="closeUnassignedTasksMaxModal">&times;</span>
+          </header>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <!-- Priority Legend -->
+            <div class="priority-legend">
+              <span class="legend-label">Priority Legend:</span>
+              <div class="legend-items">
+                <div class="legend-item">
+                  <span class="legend-color" style="background: #fee2e2;"></span>
+                  <span class="legend-text">Critical</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background: #fef3c7;"></span>
+                  <span class="legend-text">Urgent</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background: #ffffff; border: 1px solid #e5e7eb;"></span>
+                  <span class="legend-text">Moderate/Low</span>
+                </div>
+              </div>
+            </div>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 150px;">Requestor</th>
+                  <th style="width: 140px;">Organization</th>
+                  <th style="width: auto;">Title</th>
+                  <th style="width: 120px; text-align: center;">Type</th>
+                  <th style="width: 120px;">Deadline</th>
+                  <th style="width: 100px; text-align: center;">Days Left</th>
+                  <th style="width: 130px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (unassignedTasks && unassignedTasks.length > 0) { %>
+                  <% unassignedTasks.forEach((task, index) => { 
+                    const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                    const bgColor = task.priority === 'critical' ? '#fee2e2' : task.priority === 'urgent' ? '#fef3c7' : 'transparent';
+                  %>
+                    <tr style="background-color: <%= bgColor %>;">
+                      <td style="padding: 1rem 1.25rem;"><strong><%= task.userId?.fName || 'Unknown' %> <%= task.userId?.lName || '' %></strong></td>
+                      <td style="padding: 1rem 1.25rem;"><%= task.userId?.organization || 'N/A' %></td>
+                      <td style="padding: 1rem 1.25rem;"><strong><%= task.title || task.description || 'No title' %></strong></td>
+                      <td style="text-align: center; padding: 1rem 0.75rem;">
+                        <span class="type-badge <%= task.requestType %>" style="padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem;">
+                          <%= task.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                        </span>
+                      </td>
+                      <td style="padding: 1rem 1.25rem;">
+                        <span style="font-size: 0.875rem; font-weight: 500;"><%= task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline' %></span>
+                      </td>
+                      <td style="text-align: center; padding: 1rem 0.75rem;">
+                        <% if (daysLeft !== null) { %>
+                          <span style="color: <%= task.priorityColor %>; font-weight: 600; font-size: 0.875rem;">
+                            <%= daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : 'Today' %>
+                          </span>
+                        <% } else { %>
+                          <span style="color: #6b7280;">-</span>
+                        <% } %>
+                      </td>
+                      <td style="text-align: center; padding: 1rem 0.75rem;">
+                        <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
+                           class="btn-view" style="background: <%= task.priorityColor %>; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block; color: white;">Assign Now</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Maximize Pending Tasks
+        function maximizePendingTasks() {
+          document.getElementById('pendingTasksModal').style.display = 'block';
+        }
+
+        document.getElementById('closePendingTasksModal').onclick = function() {
+          document.getElementById('pendingTasksModal').style.display = 'none';
+        };
+
+        // Maximize Unassigned Tasks
+        function maximizeUnassignedTasks() {
+          document.getElementById('unassignedTasksMaxModal').style.display = 'block';
+        }
+
+        document.getElementById('closeUnassignedTasksMaxModal').onclick = function() {
+          document.getElementById('unassignedTasksMaxModal').style.display = 'none';
+        };
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+          const pendingModal = document.getElementById('pendingTasksModal');
+          const unassignedMaxModal = document.getElementById('unassignedTasksMaxModal');
+          
+          if (event.target === pendingModal) {
+            pendingModal.style.display = 'none';
+          }
+          if (event.target === unassignedMaxModal) {
+            unassignedMaxModal.style.display = 'none';
+          }
+        });
+      </script>
+
+      <!-- Unassigned Task Details Modal -->
+      <div id="unassignedTaskModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 700px;">
+          <header class="modal-header">
+            <span class="modal-title">Unassigned Task Details</span>
+            <span class="close" id="closeUnassignedTaskModal">&times;</span>
+          </header>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <div id="unassignedTaskDetails">
+              <!-- Details will be populated via JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Store unassigned tasks data
+        const unassignedTasksData = <%- JSON.stringify(unassignedTasks || []) %>;
+
+        function openUnassignedTaskModal(taskId, requestType) {
+          const task = unassignedTasksData.find(t => t._id.toString() === taskId);
+          if (!task) return;
+
+          const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+          
+          const detailsHtml = `
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Priority Badge -->
+              <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: ${task.priority === 'critical' || task.priority === 'urgent' ? '#fef2f2' : '#f9fafb'}; border-radius: 8px; border-left: 4px solid ${task.priorityColor};">
+                <span style="display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: ${task.priorityColor}; color: white; font-weight: 700; font-size: 1rem; text-align: center;">
+                  ${task.priorityLabel.charAt(0)}
+                </span>
+                <div>
+                  <div style="font-weight: 700; font-size: 1.1rem; color: ${task.priorityColor};">${task.priorityLabel} Priority</div>
+                  <div style="font-size: 0.875rem; color: #6b7280;">Requires immediate assignment</div>
+                </div>
+              </div>
+
+              <!-- Title & Type -->
+              <div>
+                <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Title</label>
+                <div style="font-size: 1rem; color: #111827;">${task.title || task.description || 'No title'}</div>
+                <span class="type-badge ${requestType}" style="margin-top: 0.5rem; display: inline-block;">
+                  ${requestType === 'service' ? 'SERVICE REQUEST' : 'APPROVAL REQUEST'}
+                </span>
+              </div>
+
+              <!-- Requestor Info -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Requestor</label>
+                  <div style="font-size: 0.95rem; color: #111827;">${task.userId?.fName || 'Unknown'} ${task.userId?.lName || ''}</div>
+                </div>
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Organization</label>
+                  <div style="font-size: 0.95rem; color: #111827;">${task.userId?.organization || 'N/A'}</div>
+                </div>
+              </div>
+
+              <!-- Deadline Info -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Deadline</label>
+                  <div style="font-size: 0.95rem; color: #111827;">
+                    ${task.deadline ? new Date(task.deadline).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'No deadline set'}
+                  </div>
+                </div>
+                ${daysLeft !== null ? `
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Time Remaining</label>
+                  <div style="font-size: 1.1rem; font-weight: 700; color: ${task.priorityColor};">
+                    ${daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : '⚠️ Due Today'}
+                  </div>
+                </div>
+                ` : ''}
+              </div>
+
+              <!-- Description -->
+              ${task.description ? `
+              <div>
+                <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Description</label>
+                <div style="font-size: 0.9rem; color: #4b5563; line-height: 1.6; padding: 0.75rem; background: #f9fafb; border-radius: 6px;">
+                  ${task.description}
+                </div>
+              </div>
+              ` : ''}
+
+              <!-- Created Date -->
+              <div>
+                <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Submitted</label>
+                <div style="font-size: 0.875rem; color: #6b7280;">
+                  ${task.createdAt ? new Date(task.createdAt).toLocaleString() : 'Unknown'}
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display: flex; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                <a href="/admin/${requestType === 'service' ? 'services' : 'approvals'}?openModalId=${taskId}" 
+                   class="btn-view" style="flex: 1; text-align: center; background: ${task.priorityColor}; padding: 0.75rem 1.5rem;">
+                  Assign Unit Team
+                </a>
+                <button onclick="document.getElementById('unassignedTaskModal').style.display='none'" 
+                        style="flex: 1; padding: 0.75rem 1.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                  Close
+                </button>
+              </div>
+            </div>
+          `;
+
+          document.getElementById('unassignedTaskDetails').innerHTML = detailsHtml;
+          document.getElementById('unassignedTaskModal').style.display = 'block';
+        }
+
+        // Close modal handlers
+        document.getElementById('closeUnassignedTaskModal').onclick = function() {
+          document.getElementById('unassignedTaskModal').style.display = 'none';
+        };
+
+        window.onclick = function(event) {
+          const modal = document.getElementById('unassignedTaskModal');
+          if (event.target === modal) {
+            modal.style.display = 'none';
+          }
+        };
+      </script>
+
+      <!-- ORIGINAL CHARTS SECTION (Keep for backward compatibility) -->
+      <div class="analytics-section">
+        <h2 class="section-header-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          Workflow Snapshot
+        </h2>
+        <p class="section-subtitle">Quick overview of request distribution and workload</p>
 
       <!-- CHARTS SECTION -->
       <div class="charts-grid">
         <!-- Request Status Overview Chart -->
         <div class="chart-card">
           <div class="chart-header">
-            <h3 class="chart-title">Request Status Overview</h3>
-            <p class="chart-subtitle">Current workflow pipeline breakdown</p>
+            <h3 class="chart-title">Current Request Status</h3>
+            <p class="chart-subtitle">Real-time snapshot of the entire workflow pipeline (Pending, In Progress, Completed, etc.)</p>
           </div>
           <div class="chart-content">
             <canvas id="statusChart"></canvas>
@@ -959,42 +1498,6 @@
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-
-      <!-- CALENDAR SECTION -->
-      <div class="calendar-standalone">
-        <div class="calendar-header">
-          <div style="display: flex; align-items: center;">
-            <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <h3 class="calendar-title">Calendar</h3>
-          </div>
-          <div class="calendar-controls">
-            <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">⛶</button>
-            <div class="calendar-month-controls">
-              <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">❮</button>
-              <span class="calendar-month-year" id="calendar-month-year"></span>
-              <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">❯</button>
-            </div>
-          </div>
-        </div>
-        <div class="calendar-legend">
-          <div class="legend-item">
-            <div class="legend-dot approval"></div>
-            <span class="legend-text">Approval Requests</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot service"></div>
-            <span class="legend-text">Service Requests</span>
-          </div>
-        </div>
-        <div class="calendar-content">
-          <div id="calendar-standalone" class="calendar-grid"></div>
         </div>
       </div>
     </div>
@@ -1135,17 +1638,332 @@
       }
     });
 
+    /* ==========================================
+       ANALYTICS FILTERS FUNCTIONALITY
+       ========================================== */
+    
+    // Date Range Filter
+    const dateRangeFilter = document.getElementById('dateRangeFilter');
+    const customDateRange = document.getElementById('customDateRange');
+    const customDateRangeEnd = document.getElementById('customDateRangeEnd');
+    
+    if (dateRangeFilter) {
+      dateRangeFilter.addEventListener('change', function() {
+        if (this.value === 'custom') {
+          customDateRange.style.display = 'block';
+          customDateRangeEnd.style.display = 'block';
+        } else {
+          customDateRange.style.display = 'none';
+          customDateRangeEnd.style.display = 'none';
+        }
+      });
+    }
+
+    // Apply Filters Button
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', function() {
+        applyAnalyticsFilters();
+      });
+    }
+
+    // Reset Filters Button
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener('click', function() {
+        resetAnalyticsFilters();
+      });
+    }
+
+    function applyAnalyticsFilters() {
+      const dateRange = document.getElementById('dateRangeFilter').value;
+      const units = Array.from(document.getElementById('unitFilter').selectedOptions).map(opt => opt.value);
+      const requestType = document.getElementById('requestTypeFilter').value;
+      const status = document.getElementById('statusFilter').value;
+      
+      const filters = {
+        dateRange,
+        units,
+        requestType,
+        status
+      };
+      
+      if (dateRange === 'custom') {
+        filters.startDate = document.getElementById('customStartDate').value;
+        filters.endDate = document.getElementById('customEndDate').value;
+      }
+      
+      console.log('Applying filters:', filters);
+      
+      // TODO: Fetch filtered data from API and update all charts/KPIs
+      // This will be implemented with backend API endpoints
+      updateDashboardWithFilters(filters);
+    }
+
+    function resetAnalyticsFilters() {
+      document.getElementById('dateRangeFilter').value = 'monthly';
+      document.getElementById('unitFilter').selectedIndex = 0;
+      document.getElementById('requestTypeFilter').value = 'all';
+      document.getElementById('statusFilter').value = 'all';
+      document.getElementById('customStartDate').value = '';
+      document.getElementById('customEndDate').value = '';
+      customDateRange.style.display = 'none';
+      customDateRangeEnd.style.display = 'none';
+      
+      // Reload dashboard with default filters
+      applyAnalyticsFilters();
+    }
+
+    async function updateDashboardWithFilters(filters) {
+      try {
+        // TODO: Replace with actual API call
+        // const response = await fetch('/api/admin/analytics', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify(filters)
+        // });
+        // const data = await response.json();
+        
+        // For now, just log the filters
+        console.log('Dashboard would be updated with:', filters);
+        
+        // Update KPIs
+        // updateKPIs(data.kpis);
+        
+        // Update Charts
+        // updateCharts(data.charts);
+      } catch (error) {
+        console.error('Error updating dashboard:', error);
+      }
+    }
+
+    /* ==========================================
+       CHART.JS CONFIGURATIONS - NEW ANALYTICS CHARTS
+       ========================================== */
+    
+    // Top Requestors Pie Chart (Section B)
+    const topRequestorsCtx = document.getElementById('topRequestorsChart');
+    if (topRequestorsCtx) {
+      new Chart(topRequestorsCtx.getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: ['CVPA', 'GSS', 'SSO', 'CICSSG', 'Others'],
+          datasets: [{
+            data: [25, 20, 18, 15, 22],
+            backgroundColor: [
+              '#43a047',
+              '#66bb6a',
+              '#81c784',
+              '#a5d6a7',
+              '#c8e6c9'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 15,
+                font: { size: 12, family: 'Inter' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} requests (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Request Volume Over Time Line Chart (Section B)
+    const requestVolumeCtx = document.getElementById('requestVolumeChart');
+    if (requestVolumeCtx) {
+      new Chart(requestVolumeCtx.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          datasets: [{
+            label: 'Approval Requests',
+            data: [8, 12, 15, 10],
+            borderColor: '#43a047',
+            backgroundColor: 'rgba(67, 160, 71, 0.1)',
+            tension: 0.4,
+            fill: true,
+            borderWidth: 3
+          }, {
+            label: 'Service Requests',
+            data: [5, 8, 10, 12],
+            borderColor: '#f97316',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+            tension: 0.4,
+            fill: true,
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 15, font: { size: 12, family: 'Inter' } }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 5 } }
+          }
+        }
+      });
+    }
+
+    // Active Workload by Unit Bar Chart (Section C)
+    const activeWorkloadCtx = document.getElementById('activeWorkloadChart');
+    if (activeWorkloadCtx) {
+      new Chart(activeWorkloadCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+          datasets: [{
+            label: 'Active Tasks',
+            data: [12, 19, 8, 15],
+            backgroundColor: [
+              'rgba(67, 160, 71, 0.8)',
+              'rgba(67, 160, 71, 0.6)',
+              'rgba(67, 160, 71, 0.4)',
+              'rgba(67, 160, 71, 0.3)'
+            ],
+            borderColor: '#43a047',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 5 } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Turnaround Time by Unit Bar Chart (Section C)
+    const turnaroundByUnitCtx = document.getElementById('turnaroundByUnitChart');
+    if (turnaroundByUnitCtx) {
+      new Chart(turnaroundByUnitCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+          datasets: [{
+            label: 'Avg. Days',
+            data: [2.1, 3.5, 1.8, 2.9],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(59, 130, 246, 0.6)',
+              'rgba(59, 130, 246, 0.4)',
+              'rgba(59, 130, 246, 0.3)'
+            ],
+            borderColor: '#3b82f6',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                callback: function(value) { return value + ' days'; }
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return 'Avg. Turnaround: ' + context.parsed.y + ' days';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Current Request Status Donut Chart (Section D)
+    const currentStatusCtx = document.getElementById('currentStatusChart');
+    if (currentStatusCtx) {
+      new Chart(currentStatusCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Pending', 'In Progress', 'Awaiting Approval', 'For Revision', 'Completed'],
+          datasets: [{
+            data: [8, 12, 5, 3, 25],
+            backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#6b7280'],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { padding: 15, font: { size: 12, family: 'Inter' } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    /* ==========================================
+       ORIGINAL CHART.JS CONFIGURATIONS (BACKWARD COMPATIBILITY)
+       ========================================== */
+
     // Chart.js configurations
     const statusChartCtx = document.getElementById('statusChart').getContext('2d');
     const statusChart = new Chart(statusChartCtx, {
       type: 'doughnut',
       data: {
-        labels: ['Pending', 'In Progress', 'Awaiting Approval', 'In Revision', 'Completed'],
+        labels: ['Pending Assignment', 'Awaiting Approval', 'In Revision', 'Completed'],
         datasets: [{
-          data: [<%= stats.pendingApprovals || 0 %>, 5, <%= stats.pendingServices || 0 %>, 3, 15],
+          data: [
+            <%= stats.pendingApprovals + stats.pendingServices || 0 %>,
+            <%= stats.awaitingApproval || 0 %>,
+            <%= stats.inRevision || 0 %>,
+            <%= (stats.totalApprovals + stats.totalServices) - stats.totalPending || 0 %>
+          ],
           backgroundColor: [
             '#f59e0b',
-            '#3b82f6',
             '#10b981',
             '#ef4444',
             '#6b7280'
@@ -1173,13 +1991,19 @@
     });
 
     const unitChartCtx = document.getElementById('unitChart').getContext('2d');
+    
+    // Get unit data from backend
+    const unitData = <%- JSON.stringify(stats.requestsByUnit || {}) %>;
+    const unitLabels = Object.keys(unitData).length > 0 ? Object.keys(unitData) : ['No Data'];
+    const unitValues = Object.keys(unitData).length > 0 ? Object.values(unitData) : [0];
+    
     const unitChart = new Chart(unitChartCtx, {
       type: 'bar',
       data: {
-        labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+        labels: unitLabels,
         datasets: [{
           label: 'Active Tasks',
-          data: [12, 19, 8, 15],
+          data: unitValues,
           backgroundColor: [
             'rgba(67, 160, 71, 0.8)',
             'rgba(67, 160, 71, 0.6)',
@@ -1267,16 +2091,60 @@
     // Fetch and populate dashboard data
     async function loadDashboardData() {
       try {
-        // TODO: Add API endpoints to fetch actual data
-        // For now using placeholder data
+        // Load revision hotspot data
+        await loadRevisionHotspot();
         
-        // Update KPIs
-        document.getElementById('kpi-revision').textContent = '3';
-        document.getElementById('kpi-urgent').textContent = '2';
-        document.getElementById('kpi-completed').textContent = '28';
+        // Update additional KPIs
+        document.getElementById('kpi-in-revision').textContent = '3';
         
       } catch (error) {
         console.error('Error loading dashboard data:', error);
+      }
+    }
+
+    // Load revision hotspot table
+    async function loadRevisionHotspot() {
+      try {
+        const response = await fetch('/api/admin/revision-hotspot');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const tbody = document.getElementById('revision-hotspot-tbody');
+          
+          if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No revision data available</td></tr>';
+            return;
+          }
+          
+          let html = '';
+          result.data.forEach(item => {
+            const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
+            const typeClass = item.type === 'Approval Request' ? 'approval' : 'service';
+            const url = item.type === 'Approval Request' 
+              ? `/admin/approvals?openModalId=${item._id}`
+              : `/admin/services?openModalId=${item._id}`;
+            
+            html += `
+              <tr>
+                <td>${item.title || 'Untitled'}</td>
+                <td><span class="type-badge ${typeClass}">${item.type}</span></td>
+                <td>${item.userName}</td>
+                <td>${item.assignedUnits || 'Not assigned'}</td>
+                <td class="text-center"><span class="revision-count major">${item.majorRevisions}</span></td>
+                <td class="text-center"><span class="revision-count minor">${item.minorRevisions}</span></td>
+                <td class="text-center"><span class="revision-count total">${item.totalRevisions}</span></td>
+                <td><span class="status-badge ${statusClass}">${item.status}</span></td>
+                <td><a href="${url}" class="btn-view">View</a></td>
+              </tr>
+            `;
+          });
+          
+          tbody.innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading revision hotspot:', error);
+        document.getElementById('revision-hotspot-tbody').innerHTML = 
+          '<tr><td colspan="9" class="table-empty">Error loading revision data</td></tr>';
       }
     }
 

@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>S-CORE Analytics & Performance Insights</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/adminpage.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/analytics.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+      
+      <a href="/admin/analytics" class="sidebar-item active" title="Analytics">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="20" x2="12" y2="10"></line>
+          <line x1="18" y1="20" x2="18" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="16"></line>
+        </svg>
+        <span class="sidebar-label">Analytics</span>
+      </a>
+      
+      <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"></path>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+        </svg>
+        <span class="sidebar-label">Track All Requests</span>
+      </a>
+      
+      <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Manage Approvals</span>
+      </a>
+      
+      <a href="/admin/services" class="sidebar-item" title="Manage Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Manage Services</span>
+      </a>
+      
+      <a href="/admin/users" class="sidebar-item" title="User Accounts">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 010 7.75"></path>
+        </svg>
+        <span class="sidebar-label">User Accounts</span>
+      </a>
+    </div>
+    
+    <!-- Logout Button at Bottom -->
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Logout</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT WITH HEADER -->
+  <div class="admin-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <div class="group">
+        <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+      </div>
+      <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+      <span class="text-wrapper-2">Welcome, Admin <%= user.fName %>!</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS DASHBOARD CONTENT -->
+    <div class="dashboard-container">
+      <!-- DASHBOARD HEADER WITH TITLE AND REPORTS BUTTON -->
+      <div class="dashboard-header-section">
+        <div>
+          <h1 class="dashboard-main-title">Analytics & Performance Insights</h1>
+          <p class="dashboard-subtitle">Comprehensive data analysis and reporting for S-CORE operations</p>
+        </div>
+        <a href="/admin/reports" class="generate-reports-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Generate Reports
+        </a>
+      </div>
+
+      <!-- ANALYTICS FILTERS SECTION -->
+      <div class="analytics-filters-container">
+        <h2 class="filters-section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          Performance Insights Filters
+        </h2>
+        <p class="filters-subtitle">Filter all analytics data below</p>
+
+        <div class="filters-grid">
+          <!-- Date Range Filter -->
+          <div class="filter-group">
+            <label for="dateRangeFilter" class="filter-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              Date Range
+            </label>
+            <select id="dateRangeFilter" class="filter-select">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="annually">Annually</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Range (Hidden by default) -->
+          <div class="filter-group custom-date-range" id="customDateRange" style="display: none;">
+            <label for="customStartDate" class="filter-label">Start Date</label>
+            <input type="date" id="customStartDate" class="filter-input">
+          </div>
+
+          <div class="filter-group custom-date-range" id="customDateRangeEnd" style="display: none;">
+            <label for="customEndDate" class="filter-label">End Date</label>
+            <input type="date" id="customEndDate" class="filter-input">
+          </div>
+
+          <!-- Unit Filter -->
+          <div class="filter-group">
+            <label for="unitFilter" class="filter-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Unit
+            </label>
+            <select id="unitFilter" class="filter-select" multiple size="1">
+              <option value="all" selected>All Units</option>
+              <option value="social-media">Social Media Unit</option>
+              <option value="graphics">Graphics Unit</option>
+              <option value="multimedia">Multimedia Unit</option>
+              <option value="public-relations">Public Relations Unit</option>
+            </select>
+          </div>
+
+          <!-- Request Type Filter -->
+          <div class="filter-group">
+            <label for="requestTypeFilter" class="filter-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Request Type
+            </label>
+            <select id="requestTypeFilter" class="filter-select">
+              <option value="all" selected>All Requests</option>
+              <option value="approval">Approval Requests</option>
+              <option value="service">Service Requests</option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="filter-group">
+            <label for="statusFilter" class="filter-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 11 12 14 22 4"></polyline>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              Status
+            </label>
+            <select id="statusFilter" class="filter-select">
+              <option value="all" selected>All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="in-progress">In Progress</option>
+              <option value="for-revision">For Revision</option>
+              <option value="completed">Completed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <!-- Apply Filters Button -->
+          <div class="filter-group filter-actions">
+            <button id="applyFilters" class="btn-apply-filters">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 11 12 14 22 4"></polyline>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              Apply Filters
+            </button>
+            <button id="resetFilters" class="btn-reset-filters">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+              </svg>
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- UNASSIGNED TASKS INSIGHT -->
+      <% if (unassignedTasks && unassignedTasks.length > 0) { %>
+      <div class="analytics-section unassigned-tasks-section" style="background: linear-gradient(135deg, #fef9f3, #ffffff); border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div>
+            <h2 class="section-header-title" style="margin-bottom: 0.5rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Unassigned Tasks - Priority View
+            </h2>
+            <p class="section-subtitle" style="font-weight: 600; margin: 0;">
+              <%= unassignedTasks.length %> total - 
+              <span style="color: #dc2626;"><%= unassignedTasks.filter(t => t.priority === 'critical').length %> Critical</span>, 
+              <span style="color: #f59e0b;"><%= unassignedTasks.filter(t => t.priority === 'urgent').length %> Urgent</span>, 
+              <span style="color: #f97316;"><%= unassignedTasks.filter(t => t.priority === 'moderate').length %> Moderate</span>, 
+              <span style="color: #10b981;"><%= unassignedTasks.filter(t => t.priority === 'low').length %> Low</span>
+            </p>
+            <p style="font-size: 0.75rem; margin: 0.5rem 0 0 0; color: #6b7280;">
+              Showing <%= Math.min(5, unassignedTasks.length) %> of <%= unassignedTasks.length %> tasks below
+            </p>
+          </div>
+          <button onclick="maximizeAnalyticsUnassignedTasks()" style="padding: 0.75rem 1.25rem; background: linear-gradient(135deg, #43a047, #66bb6a); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+            View All Tasks
+          </button>
+        </div>
+
+        <div class="table-card" style="margin-top: 0;">
+          <div class="table-content">
+            <table class="data-table unassigned-tasks-table">
+              <thead>
+                <tr>
+                  <th style="width: 100px; text-align: center;">Priority</th>
+                  <th style="width: auto;">Title</th>
+                  <th style="width: 130px; text-align: center;">Type</th>
+                  <th style="width: 160px;">Deadline</th>
+                  <th style="width: 130px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% unassignedTasks.slice(0, 5).forEach((task, index) => { 
+                  const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                  const bgColor = task.priority === 'critical' ? '#fee2e2' : task.priority === 'urgent' ? '#fef3c7' : 'transparent';
+                %>
+                  <tr style="background-color: <%= bgColor %>; cursor: pointer;" 
+                      onclick="openAnalyticsTaskModal('<%= task._id %>', '<%= task.requestType %>')">
+                    <td style="text-align: center; padding: 1rem 0.75rem;">
+                      <div style="display: flex; align-items: center; justify-content: center; gap: 0rem;">
+                        <span style="display: inline-block; width: 32px; height: 32px; line-height: 32px; border-radius: 50%; background: <%= task.priorityColor %>; color: white; font-weight: 700; font-size: 0.875rem;">
+                          <%= index + 1 %>
+                        </span>
+                      </div>
+                    </td>
+                    <td style="padding: 1rem 1.25rem;">
+                      <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <strong><%= task.title || task.description ? (task.title || task.description).substring(0, 70) + ((task.title || task.description).length > 70 ? '...' : '') : 'No title' %></strong>
+                        <span style="font-size: 0.75rem; color: #6b7280;"><%= task.userId?.fName || 'Unknown' %> <%= task.userId?.lName || '' %></span>
+                      </div>
+                    </td>
+                    <td style="text-align: center; padding: 1rem 0.75rem;">
+                      <span class="type-badge" style="background: <%= task.requestType === 'service' ? '#fef3c7' : '#e0f2fe' %>; color: <%= task.requestType === 'service' ? '#d97706' : '#0369a1' %>; padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                        <%= task.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                      </span>
+                    </td>
+                    <td style="padding: 1rem 1.25rem;">
+                      <% if (daysLeft !== null) { %>
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                          <span style="font-size: 0.875rem; font-weight: 500; color: #111827;"><%= new Date(task.deadline).toLocaleDateString() %></span>
+                          <span style="color: <%= task.priorityColor %>; font-weight: 600; font-size: 0.75rem;">
+                            <%= daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : '⚠️ Today' %>
+                          </span>
+                        </div>
+                      <% } else { %>
+                        <span style="color: #6b7280; font-size: 0.875rem;">No deadline</span>
+                      <% } %>
+                    </td>
+                    <td style="text-align: center; padding: 1rem 0.75rem;">
+                      <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
+                         class="btn-view" style="background: <%= task.priorityColor %>; color: white !important; padding: 0.5rem 1rem; font-size: 0.875rem; display: inline-block; border-radius: 6px; font-weight: 600; text-decoration: none;"
+                         onclick="event.stopPropagation();">Assign</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+            <% if (unassignedTasks.length > 5) { %>
+              <div style="text-align: center; padding: 0.75rem; background: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 0.875rem; color: #6b7280;">
+                Showing 5 of <%= unassignedTasks.length %> tasks - Click "View All Tasks" to see complete list
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Unassigned Tasks Maximize Modal -->
+      <div id="analyticsUnassignedTasksMaxModal" class="modal" style="display:none;">
+        <div class="modal-content analytics-modal-content" style="max-width: 1400px;">
+          <header class="modal-header unified-modal-header">
+            <h3 class="modal-title">All Unassigned Tasks - Complete View</h3>
+            <span class="close" id="closeAnalyticsUnassignedTasksMaxModal">&times;</span>
+          </header>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <!-- Priority Legend -->
+            <div class="priority-legend">
+              <span class="legend-label">Priority Legend:</span>
+              <div class="legend-items">
+                <div class="legend-item">
+                  <span class="legend-color" style="background: #fee2e2;"></span>
+                  <span class="legend-text">Critical</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background: #fef3c7;"></span>
+                  <span class="legend-text">Urgent</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color" style="background: #ffffff; border: 1px solid #e5e7eb;"></span>
+                  <span class="legend-text">Moderate/Low</span>
+                </div>
+              </div>
+            </div>
+
+            <table class="data-table unassigned-tasks-modal-table">
+              <thead>
+                <tr>
+                  <th style="width: 150px;">Requestor</th>
+                  <th style="width: 140px;">Organization</th>
+                  <th style="width: auto;">Title</th>
+                  <th style="width: 120px; text-align: center;">Type</th>
+                  <th style="width: 120px;">Deadline</th>
+                  <th style="width: 100px; text-align: center;">Days Left</th>
+                  <th style="width: 120px;">Submitted</th>
+                  <th style="width: 130px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% unassignedTasks.forEach((task, index) => { 
+                  const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                  const bgColor = task.priority === 'critical' ? '#fee2e2' : task.priority === 'urgent' ? '#fef3c7' : 'transparent';
+                %>
+                  <tr style="background-color: <%= bgColor %>;">
+                    <td style="padding: 1rem 1.25rem;"><strong><%= task.userId?.fName || 'Unknown' %> <%= task.userId?.lName || '' %></strong></td>
+                    <td style="padding: 1rem 1.25rem;"><%= task.userId?.organization || 'N/A' %></td>
+                    <td style="padding: 1rem 1.25rem;"><strong><%= task.title || task.description || 'No title' %></strong></td>
+                    <td style="text-align: center; padding: 1rem 0.75rem;">
+                      <span class="type-badge" style="background: <%= task.requestType === 'service' ? '#fef3c7' : '#e0f2fe' %>; color: <%= task.requestType === 'service' ? '#d97706' : '#0369a1' %>; padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
+                        <%= task.requestType === 'service' ? 'SERVICE' : 'APPROVAL' %>
+                      </span>
+                    </td>
+                    <td style="padding: 1rem 1.25rem;">
+                      <span style="font-size: 0.875rem; font-weight: 500;"><%= task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline' %></span>
+                    </td>
+                    <td style="text-align: center; padding: 1rem 0.75rem;">
+                      <% if (daysLeft !== null) { %>
+                        <span style="color: <%= task.priorityColor %>; font-weight: 600; font-size: 0.875rem;">
+                          <%= daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : 'Today' %>
+                        </span>
+                      <% } else { %>
+                        <span style="color: #6b7280;">-</span>
+                      <% } %>
+                    </td>
+                    <td style="padding: 1rem 1.25rem;">
+                      <span style="font-size: 0.875rem;"><%= task.createdAt ? new Date(task.createdAt).toLocaleDateString() : 'N/A' %></span>
+                    </td>
+                    <td style="text-align: center; padding: 1rem 0.75rem;">
+                      <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
+                         class="btn-view" style="background: <%= task.priorityColor %>; color: white !important; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block;">Assign Now</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Maximize Analytics Unassigned Tasks
+        function maximizeAnalyticsUnassignedTasks() {
+          document.getElementById('analyticsUnassignedTasksMaxModal').style.display = 'block';
+        }
+
+        document.getElementById('closeAnalyticsUnassignedTasksMaxModal').onclick = function() {
+          document.getElementById('analyticsUnassignedTasksMaxModal').style.display = 'none';
+        };
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+          const analyticsUnassignedMaxModal = document.getElementById('analyticsUnassignedTasksMaxModal');
+          
+          if (event.target === analyticsUnassignedMaxModal) {
+            analyticsUnassignedMaxModal.style.display = 'none';
+          }
+        });
+      </script>
+
+      <!-- Analytics Task Details Modal -->
+      <div id="analyticsTaskModal" class="modal" style="display:none;">
+        <div class="modal-content" style="max-width: 700px;">
+          <header class="modal-header">
+            <span class="modal-title">Unassigned Task Details</span>
+            <span class="close" id="closeAnalyticsTaskModal">&times;</span>
+          </header>
+          <div class="modal-body" style="padding: 1.5rem;">
+            <div id="analyticsTaskDetails">
+              <!-- Details will be populated via JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Store unassigned tasks data for analytics
+        const analyticsTasksData = <%- JSON.stringify(unassignedTasks) %>;
+
+        function openAnalyticsTaskModal(taskId, requestType) {
+          const task = analyticsTasksData.find(t => t._id.toString() === taskId);
+          if (!task) return;
+
+          const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+          
+          const detailsHtml = `
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Priority Badge -->
+              <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: ${task.priority === 'critical' || task.priority === 'urgent' ? '#fef2f2' : '#f9fafb'}; border-radius: 8px; border-left: 4px solid ${task.priorityColor};">
+                <span style="display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: ${task.priorityColor}; color: white; font-weight: 700; font-size: 1rem; text-align: center;">
+                  ${task.priorityLabel.charAt(0)}
+                </span>
+                <div>
+                  <div style="font-weight: 700; font-size: 1.1rem; color: ${task.priorityColor};">${task.priorityLabel} Priority</div>
+                  <div style="font-size: 0.875rem; color: #6b7280;">Requires immediate assignment</div>
+                </div>
+              </div>
+
+              <!-- Title & Type -->
+              <div>
+                <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Title</label>
+                <div style="font-size: 1rem; color: #111827;">${task.title || task.description || 'No title'}</div>
+                <span class="type-badge ${requestType}" style="margin-top: 0.5rem; display: inline-block;">
+                  ${requestType === 'service' ? 'SERVICE REQUEST' : 'APPROVAL REQUEST'}
+                </span>
+              </div>
+
+              <!-- Requestor Info -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Requestor</label>
+                  <div style="font-size: 0.95rem; color: #111827;">${task.userId?.fName || 'Unknown'} ${task.userId?.lName || ''}</div>
+                </div>
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Organization</label>
+                  <div style="font-size: 0.95rem; color: #111827;">${task.userId?.organization || 'N/A'}</div>
+                </div>
+              </div>
+
+              <!-- Deadline Info -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Deadline</label>
+                  <div style="font-size: 0.95rem; color: #111827;">
+                    ${task.deadline ? new Date(task.deadline).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'No deadline set'}
+                  </div>
+                </div>
+                ${daysLeft !== null ? `
+                <div>
+                  <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Time Remaining</label>
+                  <div style="font-size: 1.1rem; font-weight: 700; color: ${task.priorityColor};">
+                    ${daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : '⚠️ Due Today'}
+                  </div>
+                </div>
+                ` : ''}
+              </div>
+
+              <!-- Description -->
+              ${task.description ? `
+              <div>
+                <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Description</label>
+                <div style="font-size: 0.9rem; color: #4b5563; line-height: 1.6; padding: 0.75rem; background: #f9fafb; border-radius: 6px;">
+                  ${task.description}
+                </div>
+              </div>
+              ` : ''}
+
+              <!-- Created Date -->
+              <div>
+                <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Submitted</label>
+                <div style="font-size: 0.875rem; color: #6b7280;">
+                  ${task.createdAt ? new Date(task.createdAt).toLocaleString() : 'Unknown'}
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display: flex; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                <a href="/admin/${requestType === 'service' ? 'services' : 'approvals'}?openModalId=${taskId}" 
+                   class="btn-view" style="flex: 1; text-align: center; background: ${task.priorityColor}; padding: 0.75rem 1.5rem;">
+                  Assign Unit Team
+                </a>
+                <button onclick="document.getElementById('analyticsTaskModal').style.display='none'" 
+                        style="flex: 1; padding: 0.75rem 1.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                  Close
+                </button>
+              </div>
+            </div>
+          `;
+
+          document.getElementById('analyticsTaskDetails').innerHTML = detailsHtml;
+          document.getElementById('analyticsTaskModal').style.display = 'block';
+        }
+
+        // Close modal handlers
+        document.getElementById('closeAnalyticsTaskModal').onclick = function() {
+          document.getElementById('analyticsTaskModal').style.display = 'none';
+        };
+
+        window.onclick = function(event) {
+          const modal = document.getElementById('analyticsTaskModal');
+          if (event.target === modal) {
+            modal.style.display = 'none';
+          }
+        };
+      </script>
+      <% } %>
+
+      <!-- SECTION A: AT-A-GLANCE KPIs -->
+      <div class="analytics-section">
+        <h2 class="section-header-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          At-a-Glance Key Performance Indicators
+        </h2>
+      
+        <!-- KPI CARDS -->
+        <div class="kpi-container">
+          <!-- Total Requests -->
+          <div class="kpi-card" data-kpi="total-requests">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Total Requests</div>
+              <div class="kpi-value" id="kpi-total-requests"><%= stats.totalApprovals + stats.totalServices %></div>
+              <div class="kpi-subtext">In selected period</div>
+            </div>
+          </div>
+
+          <!-- Avg Turnaround Time -->
+          <div class="kpi-card" data-kpi="avg-turnaround">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Avg. Turnaround Time</div>
+              <div class="kpi-value" id="kpi-avg-turnaround">
+                <span class="kpi-number">2.5</span>
+                <span class="kpi-unit">days</span>
+              </div>
+              <div class="kpi-subtext">From submission to done</div>
+            </div>
+          </div>
+
+          <!-- Pending Assignment -->
+          <div class="kpi-card" data-kpi="pending-assignment">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Pending Assignment</div>
+              <div class="kpi-value" id="kpi-pending-assignment"><%= stats.pendingApprovals + stats.pendingServices %></div>
+              <div class="kpi-subtext">Needs assignment by admin</div>
+            </div>
+          </div>
+
+          <!-- In Revision -->
+          <div class="kpi-card" data-kpi="in-revision">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">In Revision</div>
+              <div class="kpi-value" id="kpi-in-revision">0</div>
+              <div class="kpi-subtext">Currently being revised</div>
+            </div>
+          </div>
+
+          <!-- Completion Rate -->
+          <div class="kpi-card" data-kpi="completion-rate">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Completion Rate</div>
+              <div class="kpi-value" id="kpi-completion-rate">
+                <span class="kpi-number">85</span>
+                <span class="kpi-unit">%</span>
+              </div>
+              <div class="kpi-subtext">Successfully completed</div>
+            </div>
+          </div>
+
+          <!-- Avg Response Time -->
+          <div class="kpi-card" data-kpi="response-time">
+            <div class="kpi-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-label">Avg. Response Time</div>
+              <div class="kpi-value" id="kpi-response-time">
+                <span class="kpi-number">4.2</span>
+                <span class="kpi-unit">hrs</span>
+              </div>
+              <div class="kpi-subtext">Initial response time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION B: REQUEST PATTERNS & TRENDS -->
+      <div class="analytics-section">
+        <h2 class="section-header-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          Request Patterns & Trends
+        </h2>
+        <p class="section-subtitle">Identify request patterns and peak periods</p>
+
+        <div class="charts-grid">
+          <!-- Top Requestors Pie Chart -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Top Requestors</h3>
+                <p class="chart-subtitle">Shows which organizations or departments are submitting the most requests, helping to identify key stakeholders</p>
+              </div>
+            </div>
+            <div class="chart-content">
+              <canvas id="topRequestorsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Request Volume Over Time Line Chart -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Request Volume Over Time</h3>
+                <p class="chart-subtitle">Tracks the total number of 'Approval' vs. 'Service' requests submitted to identify peak periods</p>
+              </div>
+            </div>
+            <div class="chart-content">
+              <canvas id="requestVolumeChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION C: UNIT PERFORMANCE & WORKLOAD -->
+      <div class="analytics-section">
+        <h2 class="section-header-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Unit Performance & Workload
+        </h2>
+        <p class="section-subtitle">Compare tasks per unit and measure efficiency</p>
+
+        <div class="charts-grid">
+          <!-- Active Workload by Unit Bar Chart -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Active Workload by Unit</h3>
+                <p class="chart-subtitle">Compares the number of 'In Progress' tasks assigned to each unit to monitor workload distribution</p>
+              </div>
+            </div>
+            <div class="chart-content">
+              <canvas id="activeWorkloadChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Average Turnaround Time by Unit Bar Chart -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Avg. Turnaround Time by Unit</h3>
+                <p class="chart-subtitle">Measures the average time (in days) from request submission to completion for each unit to track efficiency</p>
+              </div>
+            </div>
+            <div class="chart-content">
+              <canvas id="turnaroundByUnitChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION D: WORKFLOW BOTTLENECKS & STATUS -->
+      <div class="analytics-section">
+        <h2 class="section-header-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          Workflow Bottlenecks & Status
+        </h2>
+        <p class="section-subtitle">Monitor tasks, deadlines, and identify bottlenecks</p>
+
+        <div class="charts-grid">
+          <!-- Current Request Status Donut Chart -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Current Request Status</h3>
+                <p class="chart-subtitle">A real-time snapshot of all requests in the workflow pipeline, filterable by date and unit</p>
+              </div>
+            </div>
+            <div class="chart-content">
+              <canvas id="currentStatusChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Quick Stats Card -->
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title">Quick Statistics</h3>
+                <p class="chart-subtitle">Key workflow metrics</p>
+              </div>
+            </div>
+            <div class="stats-grid-content">
+              <div class="stat-item">
+                <div class="stat-icon" style="background: #eff6ff; color: #3b82f6;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Completion Rate</div>
+                  <div class="stat-value" id="stat-completion-rate">85%</div>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Avg. Response Time</div>
+                  <div class="stat-value" id="stat-response-time">4.2 hrs</div>
+                </div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-icon" style="background: #fee2e2; color: #ef4444;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Overdue Tasks</div>
+                  <div class="stat-value" id="stat-overdue">3</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revision Hotspot Table -->
+        <div class="table-card table-card-wide" style="margin-top: 1.5rem;">
+          <div class="table-header">
+            <div>
+              <h3 class="table-title">Revision Hotspot</h3>
+              <p class="table-subtitle">Highlights requests that have required the most revisions, helping to identify potential bottlenecks or communication issues (Max: 3 major, 2 minor)</p>
+            </div>
+            <a href="/admin/all-requests" class="view-all-link">View All →</a>
+          </div>
+          <div class="table-content">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request Title</th>
+                  <th>Type</th>
+                  <th>Requester</th>
+                  <th>Unit</th>
+                  <th>Major Revisions</th>
+                  <th>Minor Revisions</th>
+                  <th>Total Revisions</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="revision-hotspot-tbody">
+                <tr>
+                  <td colspan="9" class="table-empty">Loading revision data...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/javascripts/notifications.js"></script>
+  <script src="/javascripts/ejs/analytics.js"></script>
+</body>
+</html>

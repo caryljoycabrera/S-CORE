@@ -412,7 +412,13 @@
       data: {
         labels: ['Pending', 'In Progress', 'Awaiting Approval', 'In Revision', 'Completed'],
         datasets: [{
-          data: [<%= stats.pendingApprovals || 0 %>, 5, <%= stats.pendingServices || 0 %>, 3, 15],
+          data: [
+            <%= stats.pendingApprovals || 0 %>,
+            5,
+            <%= stats.pendingServices || 0 %>,
+            3,
+            15
+          ],
           backgroundColor: [
             '#f59e0b',
             '#3b82f6',

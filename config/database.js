@@ -12,7 +12,10 @@ const uri = 'mongodb+srv://scoadmin:JoJiCa52425@cluster0.18ajqou.mongodb.net/';
  */
 const connectDB = async () => {
   try {
-    await mongoose.connect(uri);
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+    });
     console.log("MongoDB connected successfully");
     
     // Test the connection
@@ -31,7 +34,9 @@ const connectDB = async () => {
 
   } catch (err) {
     console.error("MongoDB connection error:", err);
-    process.exit(1); // Exit process on connection failure
+    console.log("Server will continue running without database connection...");
+    // Don't exit - allow server to run without DB for frontend testing
+    // process.exit(1); 
   }
 };
 

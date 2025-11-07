@@ -24,15 +24,114 @@ router.get('/admin', requireAdmin, async (req, res) => {
     const approvals = await RequestApproval.find().populate('userId').lean();
     const serviceRequests = await ServiceRequest.find().populate('userId').lean();
 
-    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending');
-    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending');
+    // Filter by status
+    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending')
+      .map(a => ({ ...a, requestType: 'approval' }));
+    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending')
+      .map(s => ({ ...s, requestType: 'service' }));
+    const awaitingApprovalReqs = [...approvals, ...serviceRequests].filter(r => 
+      r.status?.toLowerCase() === 'awaiting approval' || r.status?.toLowerCase() === 'awaiting-approval'
+    );
+    const inRevisionReqs = [...approvals, ...serviceRequests].filter(r => 
+      r.status?.toLowerCase() === 'for revision' || r.status?.toLowerCase() === 'for-revision' || r.status?.toLowerCase() === 'in revision'
+    );
+    const completedReqs = [...approvals, ...serviceRequests].filter(r => 
+      r.status?.toLowerCase() === 'completed' || r.status?.toLowerCase() === 'done'
+    );
+
+    // Calculate total pending (not completed)
+    const totalRequests = approvals.length + serviceRequests.length;
+    const totalPending = totalRequests - completedReqs.length;
+
+    // Get pending requests for admin action list (sorted by most recent)
+    const allPendingRequests = [...pendingApprovals, ...pendingServices]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Calculate requests by unit (from user's organization)
+    const allRequests = [...approvals, ...serviceRequests];
+    const requestsByUnit = {};
+    allRequests.forEach(req => {
+      if (req.userId && req.userId.organization) {
+        const unit = req.userId.organization;
+        requestsByUnit[unit] = (requestsByUnit[unit] || 0) + 1;
+      }
+    });
+
+    // Get ALL unassigned tasks with priority classification
+    const now = new Date();
+    const oneDayFromNow = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
+    const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+    const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+    
+    const unassignedTasks = allRequests.filter(req => {
+      const isUnassigned = !req.assignedUnits || req.assignedUnits === 'Not yet assigned';
+      const isPending = req.status?.toLowerCase() === 'pending';
+      return isUnassigned && isPending;
+    }).map(req => {
+      const isService = serviceRequests.some(s => s._id.toString() === req._id.toString());
+      const deadline = req.deadline ? new Date(req.deadline) : null;
+      
+      // Determine priority level
+      let priority = 'low';
+      let priorityLabel = 'No Deadline';
+      let priorityColor = '#6b7280';
+      
+      if (deadline && deadline >= now) {
+        if (deadline <= oneDayFromNow) {
+          priority = 'critical';
+          priorityLabel = 'Critical';
+          priorityColor = '#dc2626';
+        } else if (deadline <= threeDaysFromNow) {
+          priority = 'urgent';
+          priorityLabel = 'Urgent';
+          priorityColor = '#f59e0b';
+        } else if (deadline <= sevenDaysFromNow) {
+          priority = 'moderate';
+          priorityLabel = 'Moderate';
+          priorityColor = '#f97316';
+        } else {
+          priority = 'low';
+          priorityLabel = 'Low';
+          priorityColor = '#10b981';
+        }
+      }
+      
+      return {
+        ...req,
+        requestType: isService ? 'service' : 'approval',
+        priority,
+        priorityLabel,
+        priorityColor
+      };
+    }).sort((a, b) => {
+      // Sort by priority first, then by deadline
+      const priorityOrder = { critical: 0, urgent: 1, moderate: 2, low: 3 };
+      if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      }
+      // If same priority, sort by deadline (earliest first)
+      if (a.deadline && b.deadline) {
+        return new Date(a.deadline) - new Date(b.deadline);
+      }
+      if (a.deadline) return -1;
+      if (b.deadline) return 1;
+      return 0;
+    });
+    
+    const urgentCount = unassignedTasks.filter(t => t.priority === 'critical' || t.priority === 'urgent').length;
 
     const stats = {
       totalUsers: users.length,
       totalApprovals: approvals.length,
       totalServices: serviceRequests.length,
       pendingApprovals: pendingApprovals.length,
-      pendingServices: pendingServices.length
+      pendingServices: pendingServices.length,
+      awaitingApproval: awaitingApprovalReqs.length,
+      inRevision: inRevisionReqs.length,
+      totalPending: totalPending,
+      requestsByUnit: requestsByUnit,
+      urgentUnassigned: urgentCount,
+      totalUnassigned: unassignedTasks.length
     };
 
     res.render('Admin/adminpage', {
@@ -41,11 +140,106 @@ router.get('/admin', requireAdmin, async (req, res) => {
       users,
       approvals,
       serviceRequests,
+      pendingRequests: allPendingRequests,
+      unassignedTasks: unassignedTasks,
       stats
     });
   } catch (err) {
     console.error('Error loading admin dashboard:', err);
     res.status(500).render('error', { message: 'Failed to load admin page.' });
+  }
+});
+
+/**
+ * GET /admin/analytics
+ * Analytics & Performance Insights page with detailed charts and metrics
+ */
+router.get('/admin/analytics', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+
+    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending');
+    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending');
+
+    // Get ALL unassigned tasks with priority classification
+    const now = new Date();
+    const oneDayFromNow = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
+    const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+    const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+    const allRequests = [...approvals, ...serviceRequests];
+    
+    const unassignedTasks = allRequests.filter(req => {
+      const isUnassigned = !req.assignedUnits || req.assignedUnits === 'Not yet assigned';
+      const isPending = req.status?.toLowerCase() === 'pending';
+      return isUnassigned && isPending;
+    }).map(req => {
+      const isService = serviceRequests.some(s => s._id.toString() === req._id.toString());
+      const deadline = req.deadline ? new Date(req.deadline) : null;
+      
+      let priority = 'low';
+      let priorityLabel = 'No Deadline';
+      let priorityColor = '#6b7280';
+      
+      if (deadline && deadline >= now) {
+        if (deadline <= oneDayFromNow) {
+          priority = 'critical';
+          priorityLabel = 'Critical';
+          priorityColor = '#dc2626';
+        } else if (deadline <= threeDaysFromNow) {
+          priority = 'urgent';
+          priorityLabel = 'Urgent';
+          priorityColor = '#f59e0b';
+        } else if (deadline <= sevenDaysFromNow) {
+          priority = 'moderate';
+          priorityLabel = 'Moderate';
+          priorityColor = '#f97316';
+        } else {
+          priority = 'low';
+          priorityLabel = 'Low';
+          priorityColor = '#10b981';
+        }
+      }
+      
+      return {
+        ...req,
+        requestType: isService ? 'service' : 'approval',
+        priority,
+        priorityLabel,
+        priorityColor
+      };
+    }).sort((a, b) => {
+      const priorityOrder = { critical: 0, urgent: 1, moderate: 2, low: 3 };
+      if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      }
+      if (a.deadline && b.deadline) {
+        return new Date(a.deadline) - new Date(b.deadline);
+      }
+      if (a.deadline) return -1;
+      if (b.deadline) return 1;
+      return 0;
+    });
+    
+    const urgentCount = unassignedTasks.filter(t => t.priority === 'critical' || t.priority === 'urgent').length;
+
+    const stats = {
+      totalApprovals: approvals.length,
+      totalServices: serviceRequests.length,
+      pendingApprovals: pendingApprovals.length,
+      pendingServices: pendingServices.length,
+      urgentUnassigned: urgentCount,
+      totalUnassigned: unassignedTasks.length
+    };
+
+    res.render('Admin/analytics', {
+      user: req.user,
+      stats,
+      unassignedTasks
+    });
+  } catch (err) {
+    console.error('Error loading analytics page:', err);
+    res.status(500).render('error', { message: 'Failed to load analytics page.' });
   }
 });
 
@@ -1156,6 +1350,215 @@ router.post('/admin/toggle-additional-file-upload', requireAdmin, async (req, re
     res.status(500).json({
       success: false,
       message: 'Failed to toggle additional file upload permission'
+    });
+  }
+});
+
+/**
+ * GET /admin/reports
+ * Reports generation page (placeholder for future implementation)
+ */
+router.get('/admin/reports', requireAdmin, async (req, res) => {
+  res.render('Admin/reports', { 
+    user: req.user,
+    message: 'Reports generation feature coming soon!'
+  });
+});
+
+/**
+ * POST /api/admin/analytics
+ * Get analytics data based on filters
+ */
+router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
+  try {
+    const { dateRange, units, requestType, status, startDate, endDate } = req.body;
+    
+    // Build query based on filters
+    let query = {};
+    
+    // Date range filter
+    if (dateRange || (startDate && endDate)) {
+      let dateFilter = {};
+      const now = new Date();
+      
+      switch (dateRange) {
+        case 'daily':
+          dateFilter.$gte = new Date(now.setHours(0, 0, 0, 0));
+          break;
+        case 'weekly':
+          dateFilter.$gte = new Date(now.setDate(now.getDate() - 7));
+          break;
+        case 'monthly':
+          dateFilter.$gte = new Date(now.setMonth(now.getMonth() - 1));
+          break;
+        case 'quarterly':
+          dateFilter.$gte = new Date(now.setMonth(now.getMonth() - 3));
+          break;
+        case 'annually':
+          dateFilter.$gte = new Date(now.setFullYear(now.getFullYear() - 1));
+          break;
+        case 'custom':
+          if (startDate && endDate) {
+            dateFilter.$gte = new Date(startDate);
+            dateFilter.$lte = new Date(endDate);
+          }
+          break;
+      }
+      
+      if (Object.keys(dateFilter).length > 0) {
+        query.createdAt = dateFilter;
+      }
+    }
+    
+    // Unit filter
+    if (units && units.length > 0 && !units.includes('all')) {
+      query.assignedUnits = { $in: units };
+    }
+    
+    // Status filter
+    if (status && status !== 'all') {
+      query.status = new RegExp(status, 'i');
+    }
+    
+    // Fetch data based on request type
+    let approvals = [];
+    let services = [];
+    
+    if (!requestType || requestType === 'all' || requestType === 'approval') {
+      approvals = await RequestApproval.find(query).populate('userId').lean();
+    }
+    
+    if (!requestType || requestType === 'all' || requestType === 'service') {
+      services = await ServiceRequest.find(query).populate('userId').lean();
+    }
+    
+    // Calculate KPIs
+    const totalRequests = approvals.length + services.length;
+    const pendingRequests = [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length;
+    const inRevision = [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'for revision').length;
+    
+    // Calculate average turnaround time (placeholder calculation)
+    const completedRequests = [...approvals, ...services].filter(r => 
+      r.status?.toLowerCase() === 'completed' || r.status?.toLowerCase() === 'approved'
+    );
+    
+    let totalDays = 0;
+    completedRequests.forEach(req => {
+      if (req.updatedAt && req.createdAt) {
+        const days = Math.ceil((new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60 * 24));
+        totalDays += days;
+      }
+    });
+    
+    const avgTurnaround = completedRequests.length > 0 ? (totalDays / completedRequests.length).toFixed(1) : 0;
+    
+    // Top requestors calculation
+    const orgCounts = {};
+    [...approvals, ...services].forEach(req => {
+      const org = req.organization || 'Unknown';
+      orgCounts[org] = (orgCounts[org] || 0) + 1;
+    });
+    
+    const topOrgs = Object.entries(orgCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .reduce((acc, [org, count]) => {
+        acc[org] = count;
+        return acc;
+      }, {});
+    
+    // Unit workload calculation
+    const unitWorkload = {};
+    [...approvals, ...services].forEach(req => {
+      if (req.assignedUnits && req.status?.toLowerCase() !== 'completed' && req.status?.toLowerCase() !== 'rejected') {
+        unitWorkload[req.assignedUnits] = (unitWorkload[req.assignedUnits] || 0) + 1;
+      }
+    });
+    
+    // Send response
+    res.json({
+      success: true,
+      kpis: {
+        totalRequests,
+        avgTurnaround,
+        pendingAssignment: pendingRequests,
+        inRevision
+      },
+      charts: {
+        topRequestors: topOrgs,
+        unitWorkload,
+        statusBreakdown: {
+          pending: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length,
+          inProgress: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'in progress').length,
+          awaiting: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'awaiting approval' || r.status?.toLowerCase() === 'approved').length,
+          revision: inRevision,
+          completed: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'completed').length
+        }
+      }
+    });
+    
+  } catch (err) {
+    console.error('Error fetching analytics data:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch analytics data'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/revision-hotspot
+ * Get top requests by revision count
+ */
+router.get('/api/admin/revision-hotspot', requireAdmin, async (req, res) => {
+  try {
+    // Fetch all requests with populated user data
+    const approvals = await RequestApproval.find()
+      .populate('userId', 'fName lName')
+      .lean();
+    
+    const services = await ServiceRequest.find()
+      .populate('userId', 'fName lName')
+      .lean();
+    
+    // Combine and calculate total revisions (placeholder - you may need to add revision tracking)
+    const allRequests = [
+      ...approvals.map(r => ({
+        ...r,
+        type: 'Approval Request',
+        // Placeholder revision counts - replace with actual revision tracking
+        majorRevisions: Math.floor(Math.random() * 4),
+        minorRevisions: Math.floor(Math.random() * 3),
+        userName: r.userId ? `${r.userId.fName} ${r.userId.lName}` : 'Unknown'
+      })),
+      ...services.map(r => ({
+        ...r,
+        type: 'Service Request',
+        majorRevisions: Math.floor(Math.random() * 4),
+        minorRevisions: Math.floor(Math.random() * 3),
+        userName: r.userId ? `${r.userId.fName} ${r.userId.lName}` : 'Unknown'
+      }))
+    ];
+    
+    // Sort by total revisions
+    allRequests.forEach(r => {
+      r.totalRevisions = r.majorRevisions + r.minorRevisions;
+    });
+    
+    const topRevisions = allRequests
+      .sort((a, b) => b.totalRevisions - a.totalRevisions)
+      .slice(0, 10);
+    
+    res.json({
+      success: true,
+      data: topRevisions
+    });
+    
+  } catch (err) {
+    console.error('Error fetching revision hotspot data:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch revision data'
     });
   }
 });
