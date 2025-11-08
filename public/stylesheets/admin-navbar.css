@@ -165,7 +165,7 @@
   margin-left: 64px;
   min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding-top: 0;
+  padding-top: 100px; /* Add padding to prevent header overlap on all pages */
   padding-left: 0;
   padding-right: 0;
   background: #f8f9fa;
@@ -182,12 +182,27 @@
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
   z-index: 10000; /* Higher than sidebar so it stays on top */
   box-shadow: none; /* Remove shadow for seamless blend */
-  border-bottom: none; /* Remove border for seamless blend */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Clean separator instead of shadow */
   height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
+}
+
+/* Header Left Group - Contains hamburger, logo, and title */
+.header-left-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0; /* Allows the group to shrink */
+  flex: 1 1 auto;
+}
+
+.header-left-group .text-wrapper {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Ensure header text is white */
@@ -220,6 +235,7 @@
   align-items: center;
   gap: 1rem;
   margin-left: auto;
+  flex-shrink: 0; /* Prevents icons from shrinking */
 }
 
 /* Header Reports Button */
@@ -360,8 +376,8 @@
     display: flex !important; /* Force display flex always */
     position: fixed;
     left: -250px; /* Hide off-screen to the left */
-    top: 0;
-    height: 100%;
+    top: 80px; /* Start below the header */
+    height: calc(100% - 80px); /* Full height minus header */
     z-index: 9999; /* Extremely high z-index to ensure it's on top of everything except header */
     width: 250px; /* Give it a fixed width on mobile */
     padding-top: 1rem;
@@ -377,6 +393,11 @@
   /* Show the hamburger button */
   .admin-menu-toggle {
     display: block !important; /* Force display on mobile */
+  }
+  
+  /* Hide the "Welcome..." text on mobile */
+  .admin-main-content .overlap .text-wrapper-2 {
+    display: none;
   }
   
   .admin-main-content,

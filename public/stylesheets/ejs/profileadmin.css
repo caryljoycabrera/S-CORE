@@ -47,7 +47,7 @@
   text-align: center;
   height: fit-content;
   position: sticky;
-  top: 100px;
+  top: 120px; /* Adjusted to account for header + padding */
 }
 
 .admin-main-content .section-header .profile-info {

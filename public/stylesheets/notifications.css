@@ -224,7 +224,7 @@
 
 /* Notification Item */
 .notification-item {
-  padding: 12px 16px;
+  padding: 16px;
   border-bottom: 1px solid #f3f4f6;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -243,13 +243,13 @@
 }
 
 .notification-item.unread {
-  background-color: #e8f5e9;
-  border-left: 4px solid #43a047;
-  padding-left: 12px;
+  background-color: #f0fdf4;
+  border-left: 3px solid #43a047;
+  padding-left: 13px;
 }
 
 .notification-item.unread:hover {
-  background-color: #c8e6c9;
+  background-color: #dcfce7;
 }
 
 /* Priority Indicators */
@@ -272,43 +272,69 @@
 /* Notification Icon */
 .notification-icon {
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+}
+
+.notification-icon svg {
   width: 20px;
   height: 20px;
-  margin-top: 2px;
 }
 
 .notification-icon.service-created,
-.notification-icon.service-updated {
+.notification-icon.service-updated,
+.notification-icon.service_created {
+  background-color: #f3e8ff;
   color: #7c3aed;
 }
 
 .notification-icon.service-approved,
-.notification-icon.approval-approved {
+.notification-icon.approval-approved,
+.notification-icon.service_approved,
+.notification-icon.approval_approved {
+  background-color: #d1fae5;
   color: #059669;
 }
 
 .notification-icon.service-rejected,
-.notification-icon.approval-rejected {
+.notification-icon.approval-rejected,
+.notification-icon.service_rejected,
+.notification-icon.approval_rejected {
+  background-color: #fee2e2;
   color: #dc2626;
 }
 
-.notification-icon.service-completed {
+.notification-icon.service-completed,
+.notification-icon.service_completed {
+  background-color: #d1fae5;
   color: #059669;
 }
 
-.notification-icon.approval-created {
+.notification-icon.approval-created,
+.notification-icon.approval_created {
+  background-color: #f3e8ff;
   color: #7c3aed;
 }
 
-.notification-icon.approval-revision {
+.notification-icon.approval-revision,
+.notification-icon.approval_revision {
+  background-color: #fef3c7;
   color: #d97706;
 }
 
-.notification-icon.new-message {
-  color: #43a047;
+.notification-icon.new-message,
+.notification-icon.new_message {
+  background-color: #dbeafe;
+  color: #3b82f6;
 }
 
 .notification-icon.system {
+  background-color: #f3f4f6;
   color: #6b7280;
 }
 
@@ -327,16 +353,17 @@
 }
 
 .notification-item.unread .notification-item-title {
-  color: #1b5e20;
+  color: #065f46;
 }
 
 .notification-item-message {
   color: #6b7280;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -345,17 +372,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
+  margin-top: 6px;
+  gap: 8px;
 }
 
 .notification-time {
   color: #9ca3af;
   font-size: 12px;
+  font-weight: 400;
 }
 
 .notification-sender {
   color: #9ca3af;
   font-size: 12px;
+  font-weight: 400;
+  text-align: right;
 }
 
 /* Notification Actions */
