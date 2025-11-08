@@ -1,10 +1,369 @@
 /* ===========================================
    PROFILE ADMIN PAGE STYLES
    ===========================================
-   This CSS file contains all styles for the profile admin page.
-   Connected to: views/Admin/profileadmin.ejs and views\Admin\profileadmin.ejs
-   Last updated: 2025-11-04
+   Modern card-based layout inspired by professional designs
+   Last updated: 2025-11-08
    =========================================== */
+
+/* Main Container */
+.admin-main-content .student-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  padding: 2.5rem 2rem 3rem 2rem;
+  background: #f3f4f6;
+}
+
+/* Content Wrapper */
+.admin-main-content .student-side .div {
+  width: 100%;
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  padding: 0;
+}
+
+/* Activity Section */
+.admin-main-content .activity-section {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  display: contents;
+}
+
+/* LEFT SIDEBAR - Profile Card */
+.admin-main-content .section-header {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  height: fit-content;
+  position: sticky;
+  top: 100px;
+}
+
+.admin-main-content .section-header .profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+
+.admin-main-content .section-header .profile-info img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.admin-main-content .section-header .profile-info h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.3;
+}
+
+.admin-main-content .section-header .profile-info p {
+  font-size: 0.95rem;
+  color: #047857;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  background: #d1fae5;
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+}
+
+/* About Section in Sidebar */
+.admin-main-content .section-header .about-section {
+  width: 100%;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.admin-main-content .section-header .about-section h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-align: left;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-main-content .section-header .about-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.admin-main-content .section-header .about-item svg {
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.admin-main-content .section-header .about-item .about-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  min-width: 60px;
+}
+
+.admin-main-content .section-header .about-item .about-value {
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+/* RIGHT SIDE - Main Content */
+.admin-main-content .profile-table {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+/* Section Headers */
+.admin-main-content .profile-table .info-header {
+  background: #f9fafb;
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-main-content .profile-table .info-header svg {
+  width: 20px;
+  height: 20px;
+  color: #047857;
+}
+
+.admin-main-content .profile-table .info-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+/* Table Styling */
+.admin-main-content .profile-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-main-content .profile-table tbody {
+  background: white;
+}
+
+.admin-main-content .profile-table tr {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.admin-main-content .profile-table tr:last-child {
+  border-bottom: none;
+}
+
+.admin-main-content .profile-table td {
+  padding: 1.25rem 2rem;
+  vertical-align: middle;
+}
+
+.admin-main-content .profile-table td.label {
+  font-weight: 600;
+  color: #374151;
+  width: 200px;
+  font-size: 0.875rem;
+}
+
+.admin-main-content .profile-table td:not(.label) {
+  color: #111827;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Action Buttons - Move to Sidebar */
+.admin-main-content .profile-actions {
+  width: 100%;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-main-content .profile-actions button,
+.admin-main-content .profile-actions .view-all-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f3f4f6;
+  color: #374151;
+  text-align: center;
+}
+
+.admin-main-content .profile-actions button:hover,
+.admin-main-content .profile-actions .view-all-btn:hover {
+  background: #047857;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Remove old button styling */
+.admin-main-content .profile-table + div {
+  display: none;
+}
+
+/* Admin Color Theme - Teal/Cyan */
+.admin-main-content .student-side {
+  background: linear-gradient(135deg, #f0fdfa 0%, #f3f4f6 100%);
+}
+
+.admin-main-content .section-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+  border-left: 4px solid #14b8a6;
+}
+
+.admin-main-content .profile-info h2 {
+  color: #115e59;
+}
+
+.admin-main-content .profile-info p {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+.admin-main-content .about-section h3 {
+  color: #0f766e;
+}
+
+.admin-main-content .info-header {
+  background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
+  border-left: 4px solid #14b8a6;
+}
+
+.admin-main-content .info-header svg {
+  color: #0d9488;
+}
+
+.admin-main-content .info-header h3 {
+  color: #115e59;
+}
+
+/* Stats Grid for Admin */
+.admin-main-content .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 0 2rem 2rem 2rem; /* Added padding to prevent touching edges */
+}
+
+.admin-main-content .stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+  border: 1px solid #99f6e4;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.admin-main-content .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(20, 184, 166, 0.15);
+  border-color: #5eead4;
+}
+
+.admin-main-content .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-main-content .stat-icon.admin-accent {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+}
+
+.admin-main-content .stat-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.admin-main-content .stat-content {
+  flex: 1;
+}
+
+.admin-main-content .stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.admin-main-content .stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #115e59;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .admin-main-content .student-side .div {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .admin-main-content .section-header {
+    position: static;
+  }
+
+  .admin-main-content .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Enhanced Modal Styling */
 .modal-content {
@@ -335,6 +694,15 @@
   white-space: nowrap;
   z-index: 1000;
   pointer-events: none;
+}
+
+/* Select2 Dropdown Z-index Fix for Modal */
+.select2-container--open .select2-dropdown {
+  z-index: 99999 !important;
+}
+
+.select2-dropdown {
+  z-index: 99999 !important;
 }
 
 /* Organization Counter */

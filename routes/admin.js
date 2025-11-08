@@ -7,12 +7,15 @@ const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
+const Notification = require('../models/Notification');
 const { requireAdmin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
+const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 
 /**
  * GET /admin
@@ -1511,17 +1514,6 @@ router.post('/admin/toggle-additional-file-upload', requireAdmin, async (req, re
 });
 
 /**
- * GET /admin/reports
- * Reports generation page (placeholder for future implementation)
- */
-router.get('/admin/reports', requireAdmin, async (req, res) => {
-  res.render('Admin/reports', { 
-    user: req.user,
-    message: 'Reports generation feature coming soon!'
-  });
-});
-
-/**
  * POST /api/admin/analytics
  * Get analytics data based on filters
  */
@@ -1718,5 +1710,440 @@ router.get('/api/admin/revision-hotspot', requireAdmin, async (req, res) => {
     });
   }
 });
+
+// ==================== REPORTS ROUTES ====================
+
+/**
+ * GET /admin/reports
+ * Render the Report Generation Page
+ * Accessible by admin users only
+ */
+router.get('/admin/reports', requireAdmin, async (req, res) => {
+  try {
+    // Get unread notification count for the user
+    const unreadCount = await Notification.countDocuments({
+      recipient: req.user._id,
+      read: false
+    });
+
+    res.render('admin/reports', {
+      user: req.user,
+      unreadCount: unreadCount
+    });
+  } catch (error) {
+    console.error('Error rendering reports page:', error);
+    res.status(500).render('error', {
+      message: 'Error loading reports page'
+    });
+  }
+});
+
+/**
+ * GET /api/admin/report-data
+ * Fetch filtered report data for preview
+ */
+router.get('/api/admin/report-data', requireAdmin, async (req, res) => {
+  try {
+    const query = buildReportQuery(req.query);
+    
+    // Fetch both service requests and approval requests
+    const serviceRequests = await ServiceRequest.find(query)
+      .populate('userId', 'fName lName email userType studentOrganization affiliation')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    const approvalRequests = await RequestApproval.find(query)
+      .populate('userId', 'fName lName email userType studentOrganization affiliation')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    // Combine and tag request types
+    const allRequests = [
+      ...serviceRequests.map(r => ({ ...r, requestType: 'Service' })),
+      ...approvalRequests.map(r => ({ ...r, requestType: 'Approval' }))
+    ];
+    
+    // Sort by date
+    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json({ 
+      success: true,
+      requests: allRequests 
+    });
+    
+  } catch (error) {
+    console.error('Error fetching report data:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching data' 
+    });
+  }
+});
+
+/**
+ * GET /admin/export/excel
+ * Generate and download Excel report
+ */
+router.get('/admin/export/excel', requireAdmin, async (req, res) => {
+  try {
+    const query = buildReportQuery(req.query);
+    
+    // Fetch both service requests and approval requests
+    const serviceRequests = await ServiceRequest.find(query)
+      .populate('userId', 'fName lName email userType studentOrganization affiliation')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    const approvalRequests = await RequestApproval.find(query)
+      .populate('userId', 'fName lName email userType studentOrganization affiliation')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    // Combine requests
+    const allRequests = [
+      ...serviceRequests.map(r => ({ ...r, requestType: 'Service' })),
+      ...approvalRequests.map(r => ({ ...r, requestType: 'Approval' }))
+    ];
+    
+    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Create Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('S-CORE Report');
+    
+    // Define columns
+    worksheet.columns = [
+      { header: 'Requesting Department', key: 'dept', width: 30 },
+      { header: 'Title of Project/Event', key: 'title', width: 35 },
+      { header: 'Short Description', key: 'desc', width: 45 },
+      { header: 'In-Charge (Unit)', key: 'unit', width: 20 },
+      { header: 'Date Received', key: 'received', width: 18 },
+      { header: 'Date Completed', key: 'completed', width: 18 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Remarks', key: 'remarks', width: 30 }
+    ];
+
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE8F5E9' }
+    };
+
+    // Add data rows
+    allRequests.forEach(req => {
+      let displayOrganization = 'N/A';
+      if (req.userId) {
+        if (req.userId.userType === 'nonstudent') {
+          displayOrganization = Array.isArray(req.userId.affiliation)
+            ? req.userId.affiliation.join(', ')
+            : (req.userId.affiliation || req.organization || 'N/A');
+        } else {
+          displayOrganization = Array.isArray(req.userId.studentOrganization)
+            ? req.userId.studentOrganization.join(', ')
+            : (req.userId.studentOrganization || req.organization || 'N/A');
+        }
+      } else if (req.organization) {
+        displayOrganization = req.organization;
+      }
+
+      let completionDate = '';
+      if (req.status === 'Completed' || req.status === 'Approved') {
+        completionDate = req.updatedAt ? new Date(req.updatedAt) : '';
+      }
+
+      worksheet.addRow({
+        dept: displayOrganization,
+        title: req.title || '',
+        desc: req.description || '',
+        unit: req.assignedUnits || 'Not yet assigned',
+        received: req.createdAt ? new Date(req.createdAt) : '',
+        completed: completionDate,
+        status: req.status || '',
+        remarks: req.specificRequestType || ''
+      });
+    });
+
+    // Set response headers
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=S-CORE-Report-${Date.now()}.xlsx`
+    );
+
+    // Write to response
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('Error generating Excel:', error);
+    res.status(500).send('Error generating Excel file');
+  }
+});
+
+/**
+ * GET /admin/export/pdf
+ * Generate and download PDF report
+ */
+router.get('/admin/export/pdf', requireAdmin, async (req, res) => {
+  try {
+    const query = buildReportQuery(req.query);
+    
+    // Fetch both service requests and approval requests
+    const serviceRequests = await ServiceRequest.find(query)
+      .populate('userId', 'fName lName email userType studentOrganization affiliation')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    const approvalRequests = await RequestApproval.find(query)
+      .populate('userId', 'fName lName email userType studentOrganization affiliation')
+      .sort({ createdAt: -1 })
+      .lean();
+    
+    // Combine requests
+    const allRequests = [
+      ...serviceRequests.map(r => ({ ...r, requestType: 'Service' })),
+      ...approvalRequests.map(r => ({ ...r, requestType: 'Approval' }))
+    ];
+    
+    allRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Create PDF document
+    const doc = new PDFDocument({ 
+      margin: 30, 
+      size: 'A4', 
+      layout: 'landscape' 
+    });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=S-CORE-Report-${Date.now()}.pdf`);
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Add header
+    doc.fontSize(18).text('S-CORE Report', { align: 'center' });
+    doc.fontSize(10).text(`Generated by: ${req.user.fName} ${req.user.lName}`, { align: 'center' });
+    doc.fontSize(9).text(`Date: ${new Date().toLocaleString()}`, { align: 'center' });
+    doc.moveDown(2);
+
+    // Add filter information
+    const filterInfo = buildFilterInfoText(req.query);
+    if (filterInfo) {
+      doc.fontSize(9).text(`Filters: ${filterInfo}`, { align: 'left' });
+      doc.moveDown();
+    }
+
+    // Table setup
+    const tableTop = doc.y;
+    const rowHeight = 20;
+    const colWidths = {
+      dept: 80,
+      title: 100,
+      desc: 150,
+      unit: 70,
+      received: 70,
+      completed: 70,
+      status: 60,
+      remarks: 80
+    };
+    
+    let xPos = 30;
+    const cols = [
+      { key: 'dept', label: 'Department', x: xPos },
+      { key: 'title', label: 'Title', x: (xPos += colWidths.dept) },
+      { key: 'desc', label: 'Description', x: (xPos += colWidths.title) },
+      { key: 'unit', label: 'Unit', x: (xPos += colWidths.desc) },
+      { key: 'received', label: 'Received', x: (xPos += colWidths.unit) },
+      { key: 'completed', label: 'Completed', x: (xPos += colWidths.received) },
+      { key: 'status', label: 'Status', x: (xPos += colWidths.completed) },
+      { key: 'remarks', label: 'Remarks', x: (xPos += colWidths.status) }
+    ];
+
+    // Draw header
+    doc.fontSize(8).fillColor('black');
+    cols.forEach(col => {
+      doc.text(col.label, col.x, tableTop, { width: colWidths[col.key], align: 'left' });
+    });
+    
+    doc.moveDown(0.5);
+    let y = doc.y;
+
+    // Draw rows
+    allRequests.forEach((req, index) => {
+      // Check if we need a new page
+      if (y > 500) {
+        doc.addPage({ margin: 30, size: 'A4', layout: 'landscape' });
+        y = 30;
+      }
+
+      let displayOrganization = 'N/A';
+      if (req.userId) {
+        if (req.userId.userType === 'nonstudent') {
+          displayOrganization = Array.isArray(req.userId.affiliation)
+            ? req.userId.affiliation.join(', ')
+            : (req.userId.affiliation || req.organization || 'N/A');
+        } else {
+          displayOrganization = Array.isArray(req.userId.studentOrganization)
+            ? req.userId.studentOrganization.join(', ')
+            : (req.userId.studentOrganization || req.organization || 'N/A');
+        }
+      } else if (req.organization) {
+        displayOrganization = req.organization;
+      }
+
+      let completionDate = '';
+      if (req.status === 'Completed' || req.status === 'Approved') {
+        completionDate = formatDateForPDF(req.updatedAt);
+      }
+
+      const rowData = [
+        { text: truncateForPDF(displayOrganization, 25), x: cols[0].x, width: colWidths.dept },
+        { text: truncateForPDF(req.title || '', 30), x: cols[1].x, width: colWidths.title },
+        { text: truncateForPDF(req.description || '', 45), x: cols[2].x, width: colWidths.desc },
+        { text: req.assignedUnits || 'N/A', x: cols[3].x, width: colWidths.unit },
+        { text: formatDateForPDF(req.createdAt), x: cols[4].x, width: colWidths.received },
+        { text: completionDate, x: cols[5].x, width: colWidths.completed },
+        { text: req.status || '', x: cols[6].x, width: colWidths.status },
+        { text: truncateForPDF(req.specificRequestType || '', 25), x: cols[7].x, width: colWidths.remarks }
+      ];
+
+      rowData.forEach(cell => {
+        doc.text(cell.text, cell.x, y, { width: cell.width, height: rowHeight, align: 'left' });
+      });
+
+      y += rowHeight;
+    });
+
+    // Finalize PDF
+    doc.end();
+
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    if (!res.headersSent) {
+      res.status(500).send('Error generating PDF file');
+    }
+  }
+});
+
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Builds MongoDB query from filter parameters
+ * @param {Object} queryParams - URL query parameters
+ * @returns {Object} MongoDB query object
+ */
+function buildReportQuery(queryParams) {
+  const { datePreset, month, year, quarter, startDate, endDate, unit, requestType, status } = queryParams;
+  
+  let query = {};
+  
+  // 1. Date Filtering
+  if (datePreset === 'monthly' && month && year) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month
+    query.createdAt = { $gte: start, $lte: end };
+  } else if (datePreset === 'quarterly' && quarter && year) {
+    let startMonth;
+    if (quarter == 1) startMonth = 0; // Jan
+    else if (quarter == 2) startMonth = 3; // Apr
+    else if (quarter == 3) startMonth = 6; // Jul
+    else if (quarter == 4) startMonth = 9; // Oct
+    
+    const start = new Date(year, startMonth, 1);
+    const end = new Date(year, startMonth + 3, 0, 23, 59, 59, 999);
+    query.createdAt = { $gte: start, $lte: end };
+  } else if (datePreset === 'custom' && startDate && endDate) {
+    query.createdAt = { 
+      $gte: new Date(startDate), 
+      $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+    };
+  }
+  // if 'all', no date filter is added.
+
+  // 2. Unit Filtering
+  if (unit && unit !== 'all') {
+    if (Array.isArray(unit)) {
+      query.assignedUnits = { $in: unit };
+    } else {
+      query.assignedUnits = unit;
+    }
+  }
+  
+  // 3. Status Filtering
+  if (status && status !== 'all') {
+    query.status = status;
+  }
+
+  // Note: requestType filtering is handled after fetching both collections
+  
+  return query;
+}
+
+/**
+ * Formats date for PDF display
+ * @param {Date|string} dateString - Date to format
+ * @returns {string} Formatted date string
+ */
+function formatDateForPDF(dateString) {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  } catch (error) {
+    return '';
+  }
+}
+
+/**
+ * Truncates text for PDF display
+ * @param {string} text - Text to truncate
+ * @param {number} maxLength - Maximum length
+ * @returns {string} Truncated text
+ */
+function truncateForPDF(text, maxLength) {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+}
+
+/**
+ * Builds filter information text for PDF header
+ * @param {Object} queryParams - URL query parameters
+ * @returns {string} Filter description text
+ */
+function buildFilterInfoText(queryParams) {
+  const { datePreset, month, year, quarter, startDate, endDate, unit, requestType, status } = queryParams;
+  let parts = [];
+  
+  if (datePreset === 'monthly' && month && year) {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    parts.push(`${monthNames[month - 1]} ${year}`);
+  } else if (datePreset === 'quarterly' && quarter && year) {
+    parts.push(`Q${quarter} ${year}`);
+  } else if (datePreset === 'custom' && startDate && endDate) {
+    parts.push(`${startDate} to ${endDate}`);
+  }
+  
+  if (unit && unit !== 'all') {
+    parts.push(`Unit: ${Array.isArray(unit) ? unit.join(', ') : unit}`);
+  }
+  
+  if (requestType && requestType !== 'all') {
+    parts.push(`Type: ${requestType}`);
+  }
+  
+  if (status && status !== 'all') {
+    parts.push(`Status: ${status}`);
+  }
+  
+  return parts.join(' | ');
+}
 
 module.exports = router;

@@ -224,8 +224,10 @@ function openModal(id) {
 
   // Student logic with enhanced functionality
   if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
+    console.log('Initializing student organization select for student user');
     const select = $('#studentOrganization');
     if (!select.hasClass('select2-hidden-accessible')) {
+      console.log('Select2 not yet initialized, initializing now...');
       select.select2({
         placeholder: "Search and select organizations...",
         allowClear: true,

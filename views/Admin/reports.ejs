@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -8,103 +8,16 @@
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/adminpage.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/reports.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    .coming-soon-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 60vh;
-      text-align: center;
-      padding: 2rem;
-    }
-
-    .coming-soon-icon {
-      font-size: 5rem;
-      margin-bottom: 2rem;
-      color: var(--primary-green);
-      animation: bounce 2s infinite;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-20px); }
-    }
-
-    .coming-soon-title {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: var(--primary-green);
-      margin-bottom: 1rem;
-    }
-
-    .coming-soon-text {
-      font-size: 1.25rem;
-      color: #6b7280;
-      margin-bottom: 2rem;
-    }
-
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      background: linear-gradient(135deg, var(--primary-green), #20c997);
-      color: white;
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);
-    }
-
-    .back-btn:hover {
-      background: linear-gradient(135deg, #20c997, var(--primary-green));
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(67, 160, 71, 0.4);
-      color: white;
-    }
-
-    .feature-list {
-      text-align: left;
-      max-width: 600px;
-      margin: 2rem auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    .feature-list h3 {
-      color: var(--primary-green);
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
-    }
-
-    .feature-list ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    .feature-list li {
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .feature-list li:last-child {
-      border-bottom: none;
-    }
-
-    .feature-icon {
-      color: var(--primary-green);
-      font-size: 1.25rem;
-    }
-  </style>
+<style>
+/* NEW RULE TO FIX FLUID LAYOUT */
+.student-side > .div {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+</style>
 </head>
 <body>
   <!-- SIDEBAR NAVIGATION -->
@@ -119,7 +32,7 @@
         </svg>
         <span class="sidebar-label">Dashboard</span>
       </a>
-      
+
       <a href="/admin/analytics" class="sidebar-item" title="Analytics">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="20" x2="12" y2="10"></line>
@@ -128,7 +41,7 @@
         </svg>
         <span class="sidebar-label">Analytics</span>
       </a>
-      
+
       <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 11l3 3L22 4"></path>
@@ -136,7 +49,7 @@
         </svg>
         <span class="sidebar-label">Track All Requests</span>
       </a>
-      
+
       <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
@@ -147,14 +60,14 @@
         </svg>
         <span class="sidebar-label">Manage Approvals</span>
       </a>
-      
+
       <a href="/admin/services" class="sidebar-item" title="Manage Services">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
         </svg>
         <span class="sidebar-label">Manage Services</span>
       </a>
-      
+
       <a href="/admin/users" class="sidebar-item" title="User Accounts">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
@@ -163,6 +76,13 @@
           <path d="M16 3.13a4 4 0 010 7.75"></path>
         </svg>
         <span class="sidebar-label">User Accounts</span>
+      </a>
+
+      <a href="/admin/reports" class="sidebar-item active" title="Generate Reports">
+        <svg class="sidebar-icon" viewBox="0 0 105.53 122.88" fill="currentColor" stroke="none">
+          <path d="M98.66,87l2.84,2.85a1.9,1.9,0,0,1,0,2.71l-2.28,2.29a15.46,15.46,0,0,1,1.42,3.79h3a1.92,1.92,0,0,1,1.92,1.92v4a1.93,1.93,0,0,1-1.92,1.93h-3.23a15.4,15.4,0,0,1-1.67,3.67l2.09,2.09a1.93,1.93,0,0,1,0,2.72L98,117.86a1.93,1.93,0,0,1-2.72,0L93,115.58A15.88,15.88,0,0,1,89.16,117v3a1.93,1.93,0,0,1-1.92,1.92h-4A1.93,1.93,0,0,1,81.31,120v-3.23a15.32,15.32,0,0,1-3.68-1.68l-2.09,2.1a1.93,1.93,0,0,1-2.72,0L70,114.3a1.91,1.91,0,0,1,0-2.71l2.28-2.29a15.88,15.88,0,0,1-1.42-3.79h-3A1.93,1.93,0,0,1,66,103.59v-4a1.94,1.94,0,0,1,1.92-1.93H71.1A15.43,15.43,0,0,1,72.78,94l-2.1-2.09a1.93,1.93,0,0,1,0-2.72l2.85-2.84a1.91,1.91,0,0,1,2.71,0l2.29,2.28a15.83,15.83,0,0,1,3.79-1.42v-3a1.93,1.93,0,0,1,1.92-1.92h4a1.93,1.93,0,0,1,1.92,1.92v3.23a15,15,0,0,1,3.67,1.68L95.94,87a1.94,1.94,0,0,1,2.72,0ZM60.26,117a3,3,0,0,1,0,5.92H6.89A6.89,6.89,0,0,1,0,116V6.85A6.82,6.82,0,0,1,2,2,6.79,6.79,0,0,1,6.88,0H91.52a6.9,6.9,0,0,1,6.89,6.89V68.23c0,.06,0,.12,0,.18a3,3,0,0,1-5.94,0V6.89h0a1,1,0,0,0-.28-.68,1,1,0,0,0-.68-.29H6.89a.94.94,0,0,0-1,1V116h0a1,1,0,0,0,.28.67,1,1,0,0,0,.69.29H60.26ZM19,102.66V96H47.83v6.63l-28.82,0Zm55.3-42.9v6.11H65.62V59.76ZM58.77,54.38V65.87H50.08V54.38ZM43.24,37.92v28H34.55V37.92ZM27.7,26.41V65.87H19V26.41ZM69,29.31l13.11.05a13.14,13.14,0,0,1-3.91,9.29,13.55,13.55,0,0,1-1.91,1.56L69,29.31Zm-1.34-2.6L67,12.7a.51.51,0,0,1,.48-.53H68A14.56,14.56,0,0,1,82.69,25.67a.52.52,0,0,1-.47.54l-14,1a.49.49,0,0,1-.53-.46.08.08,0,0,0,0,0Zm.83-13.55.65,12.51L80.9,24.61a11.68,11.68,0,0,0-4-7.86c-2.46-2.27-4.74-3.62-8.32-3.58ZM66.1,28.7l7,12.17A14.05,14.05,0,1,1,64.06,14.8l2,13.9ZM19,84.83V78.15H59.86v6.63L19,84.83Zm66.73,9.38a7.89,7.89,0,1,1-7.89,7.89,7.89,7.89,0,0,1,7.89-7.89Z"/>
+        </svg>
+        <span class="sidebar-label">Generate Reports</span>
       </a>
     </div>
     
@@ -183,11 +103,20 @@
   <div class="admin-main-content">
     <!-- HEADER -->
     <div class="overlap">
+      <!-- Hamburger Menu Button for Mobile -->
+      <button class="admin-menu-toggle" id="adminMenuToggle" title="Open Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
       <div class="group">
         <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
       </div>
       <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
-      <span class="text-wrapper-2">Welcome, Admin <%= user.fName %>!</span>
+      <span class="text-wrapper-2">Generate Reports</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
@@ -207,80 +136,194 @@
       </div>
     </div>
 
-    <!-- COMING SOON CONTENT -->
-    <div class="dashboard-container">
-      <div class="coming-soon-container">
-        <div class="coming-soon-icon">📊</div>
-        <h1 class="coming-soon-title">Reports Generation</h1>
-        <p class="coming-soon-text">This feature is under development and will be available soon!</p>
-        
-        <div class="feature-list">
-          <h3>Planned Features</h3>
-          <ul>
-            <li>
-              <span class="feature-icon">✓</span>
-              <span>Generate custom reports based on date range and filters</span>
-            </li>
-            <li>
-              <span class="feature-icon">✓</span>
-              <span>Export reports to PDF, Excel, and CSV formats</span>
-            </li>
-            <li>
-              <span class="feature-icon">✓</span>
-              <span>Automated report scheduling and email delivery</span>
-            </li>
-            <li>
-              <span class="feature-icon">✓</span>
-              <span>Performance reports by unit and time period</span>
-            </li>
-            <li>
-              <span class="feature-icon">✓</span>
-              <span>Request volume and trend analysis reports</span>
-            </li>
-            <li>
-              <span class="feature-icon">✓</span>
-              <span>User activity and engagement reports</span>
-            </li>
-          </ul>
+    <!-- REPORTS PAGE CONTENT -->
+    <div class="main-content-area" style="padding: 2rem;">
+      <div class="reports-page-header">
+        <h1>Generate Reports</h1>
+        <p>Filter and export service requests and approval data</p>
+      </div>
+
+      <!-- FILTER PANEL -->
+      <div class="report-filters-container">
+        <div class="filter-group">
+          <label for="dateRange">Date Range</label>
+          <select id="dateRange" class="filter-input">
+            <option value="all">All Time</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="custom">Custom Range</option>
+          </select>
         </div>
-        
-        <a href="/admin" class="back-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          Back to Dashboard
-        </a>
+
+        <div class="filter-group" id="customDateGroup" style="display: none;">
+          <label for="startDate">Start Date</label>
+          <input type="date" id="startDate" class="filter-input">
+        </div>
+
+        <div class="filter-group" id="customEndDateGroup" style="display: none;">
+          <label for="endDate">End Date</label>
+          <input type="date" id="endDate" class="filter-input">
+        </div>
+
+        <div class="filter-group">
+          <label for="unitFilter">Unit</label>
+          <select id="unitFilter" class="filter-input" multiple size="3">
+            <option value="">All Units</option>
+            <option value="Graphics">Graphics</option>
+            <option value="Multimedia">Multimedia</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Public Relations">Public Relations</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="requestTypeFilter">Request Type</label>
+          <select id="requestTypeFilter" class="filter-input">
+            <option value="">All Types</option>
+            <option value="Service Request">Service Request</option>
+            <option value="Request for Approval">Request for Approval</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter" class="filter-input">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button id="generatePreviewBtn" class="btn-primary">Generate Preview</button>
+          <button id="clearFiltersBtn" class="btn-secondary">Clear Filters</button>
+        </div>
+      </div>
+
+      <!-- PREVIEW TABLE -->
+      <div class="report-preview-container">
+        <div class="preview-header">
+          <h2>Report Preview</h2>
+          <div class="export-buttons">
+            <button id="exportExcelBtn" class="btn-export btn-excel" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Export Excel
+            </button>
+            <button id="exportPdfBtn" class="btn-export btn-pdf" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Export PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="report-table" id="reportTable">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Type</th>
+                <th>Requester</th>
+                <th>Unit</th>
+                <th>Service/Purpose</th>
+                <th>Status</th>
+                <th>Date Submitted</th>
+                <th>Deadline</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody">
+              <tr class="no-data-row">
+                <td colspan="8">Click "Generate Preview" to load data</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // Sidebar hover effect
-    const sidebar = document.getElementById('adminSidebar');
-    sidebar.addEventListener('mouseenter', function() {
-      this.classList.add('expanded');
-    });
-    sidebar.addEventListener('mouseleave', function() {
-      this.classList.remove('expanded');
-    });
+  <!-- Notifications Panel -->
+  <%- include('../partials/notifications', { unreadCount: unreadCount || 0 }) %>
 
-    // Header Dropdown
+  <!-- Scripts -->
+  <script src="/javascripts/notifications.js"></script>
+  <script src="/javascripts/ejs/reports.js"></script>
+  <script>
+    // Dropdown toggle function
     function toggleDropdown() {
-      const menu = document.getElementById("dropdownMenu");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
+      const dropdown = document.getElementById('dropdownMenu');
+      if (dropdown) {
+        dropdown.classList.toggle('show');
+      }
     }
 
     // Close dropdown when clicking outside
     window.addEventListener('click', function(e) {
-      if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-toggle')) {
-        const dropdownMenu = document.getElementById('dropdownMenu');
-        if (dropdownMenu && dropdownMenu.style.display === 'block') {
-          dropdownMenu.style.display = 'none';
+      if (!e.target.closest('.dropdown-wrapper')) {
+        const dropdown = document.getElementById('dropdownMenu');
+        if (dropdown && dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
         }
       }
     });
+
+    // Sidebar hover expand/collapse
+    const sidebar = document.getElementById('adminSidebar');
+    if (sidebar) {
+      sidebar.addEventListener('mouseenter', function() {
+        this.classList.add('expanded');
+      });
+      sidebar.addEventListener('mouseleave', function() {
+        this.classList.remove('expanded');
+      });
+    }
+
+    // Mobile hamburger menu toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuToggle = document.getElementById('adminMenuToggle');
+      const sidebarEl = document.getElementById('adminSidebar');
+
+      console.log('Menu Toggle:', menuToggle); // Debug
+      console.log('Sidebar:', sidebarEl); // Debug
+      console.log('Window width:', window.innerWidth); // Debug
+
+      if (menuToggle && sidebarEl) {
+        menuToggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Menu button clicked!'); // Debug
+          const isActive = sidebarEl.classList.toggle('mobile-active');
+          console.log('Sidebar is now:', isActive ? 'OPEN' : 'CLOSED'); // Debug
+          console.log('Sidebar classes:', sidebarEl.className); // Debug
+          console.log('Computed left position:', window.getComputedStyle(sidebarEl).left); // Debug
+        });
+      }
+
+      // Close sidebar when clicking outside of it on mobile
+      document.addEventListener('click', (e) => {
+        if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
+          if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
+            console.log('Clicking outside - closing sidebar'); // Debug
+            sidebarEl.classList.remove('mobile-active');
+          }
+        }
+      });
+    });
+
+    // Sidebar toggle (mobile)
+    const menuToggle = document.getElementById('menuToggle');
+    if (menuToggle) {
+      menuToggle.addEventListener('click', () => {
+        document.getElementById('adminSidebar').classList.toggle('active');
+      });
+    }
   </script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/javascripts/notifications.js"></script>
 </body>
 </html>

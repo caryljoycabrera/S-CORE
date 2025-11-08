@@ -434,8 +434,8 @@
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
-  table-layout: fixed;
+  font-size: 0.8rem; /* Smaller base font size */
+  table-layout: auto; /* Changed to auto for better responsiveness */
 }
 
 .data-table thead {
@@ -444,22 +444,35 @@
 }
 
 .data-table th {
-  padding: 1rem 1.25rem;
+  padding: 0.6rem 0.5rem; /* Reduced padding */
   text-align: left;
   font-weight: 600;
   color: #6b7280;
   font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.75px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   border: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
 
 .data-table td {
-  padding: 1.25rem 1.25rem;
+  padding: 0.6rem 0.5rem; /* Reduced padding */
   border-bottom: 1px solid #f3f4f6;
   color: #4b5563;
   vertical-align: middle;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.data-table td strong {
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .data-table tbody tr {
@@ -851,12 +864,35 @@
   }
 
   .data-table {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 
   .data-table th,
   .data-table td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem 0.4rem;
+    font-size: 0.75rem;
+  }
+
+  .data-table th {
+    font-size: 0.7rem;
+  }
+
+  .data-table .type-badge {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .data-table .btn-view {
+    font-size: 0.7rem !important;
+    padding: 0.3rem 0.5rem !important;
+  }
+
+  .table-title {
+    font-size: 1rem;
+  }
+
+  .table-subtitle {
+    font-size: 0.75rem;
   }
 }
 

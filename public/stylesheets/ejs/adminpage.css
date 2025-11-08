@@ -12,8 +12,8 @@
 
 .dashboard-container {
   padding: 1.5rem 2.5rem;
-  max-width: 1600px;
-  margin: 0 auto;
+  max-width: 100%; /* Changed from 1600px for fluid layout */
+  margin: 0; /* Changed from 0 auto to remove centering */
 }
 
 .dashboard-main-title {
@@ -493,6 +493,7 @@
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.8rem; /* Smaller base font size for better fit */
 }
 
 .data-table thead {
@@ -501,20 +502,33 @@
 }
 
 .data-table th {
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.5rem; /* Reduced padding */
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.75rem; /* Smaller headers */
   font-weight: 600;
   color: #374151;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
 
 .data-table td {
-  padding: 1rem;
-  font-size: 0.875rem;
+  padding: 0.6rem 0.5rem; /* Reduced padding */
+  font-size: 0.8rem;
   color: #111827;
   border-bottom: 1px solid #f3f4f6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.data-table td strong {
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .data-table tbody tr:hover {
@@ -752,7 +766,30 @@
 
   .data-table th,
   .data-table td {
-    padding: 0.5rem;
+    padding: 0.5rem 0.4rem;
+    font-size: 0.75rem;
+  }
+
+  .data-table th {
+    font-size: 0.7rem;
+  }
+
+  .data-table .type-badge {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .data-table .btn-view {
+    font-size: 0.7rem !important;
+    padding: 0.3rem 0.5rem !important;
+  }
+
+  .table-title {
+    font-size: 1rem;
+  }
+
+  .table-subtitle {
+    font-size: 0.75rem;
   }
 }
 
