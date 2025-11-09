@@ -9,11 +9,32 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 
 <style>
-/* NEW RULE TO FIX FLUID LAYOUT */
+/* Breathing room and fluid layout for Service Request page */
+.student-side {
+  padding: 120px 3rem 3rem 3rem !important;
+  background: white !important;
+  box-sizing: border-box;
+}
+
 .student-side > .div {
   max-width: 100%;
   margin-left: 0;
   margin-right: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/* Responsive breathing room */
+@media (max-width: 1200px) {
+  .student-side {
+    padding: 120px 2rem 2.5rem 2rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-side {
+    padding: 110px 1.5rem 2rem 1.5rem !important;
+  }
 }
 
 /* Modal Styles */

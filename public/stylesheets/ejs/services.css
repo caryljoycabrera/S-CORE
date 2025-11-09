@@ -1,6 +1,141 @@
-/* Filter section spacing override */
+/* ===========================================
+   SERVICES PAGE STYLES
+   File: public/stylesheets/ejs/services.css
+   =========================================== */
+
+/* ========================================
+   STANDARDIZED ADMIN PAGE LAYOUT
+   Applied to: Users, Approvals, Services, All Requests
+   DO NOT MODIFY - Ensures consistent navigation experience
+   ======================================== */
+
+/* Seamless header fix - Eliminates gap below fixed header */
+.admin-main-content {
+  background: #f8f9fa !important;
+}
+
+/* Seamless layout - Everything on light gray background */
+.activity-section {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #f8f9fa !important;
+}
+
+/* Header section - Title and description stacked vertically */
+.section-header {
+  padding: 2rem 3rem 0 3rem;
+  background: transparent !important;
+  margin-bottom: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  gap: 0.5rem !important;
+}
+
+.section-header h1 {
+  margin: 0 !important;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.section-header p {
+  margin: 0 !important;
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Tabs - Below description, before divider - LEFT ALIGNED */
+.tabs {
+  margin: 0 !important;
+  padding: 0 3rem 1rem 3rem !important;
+  background: transparent;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 0.625rem !important;
+}
+
+/* Divider line */
+hr {
+  margin: 0 3rem 2rem 3rem;
+  border: none;
+  border-top: 2px solid #e5e7eb;
+}
+
+/* Table section container */
+.table-section {
+  background: white;
+  border: none;
+  border-radius: 0;
+  padding: 1.25rem;
+  margin: 0 3rem 1.5rem 3rem;
+  box-shadow: none;
+  overflow-x: auto;
+}
+
+/* Back/View All button spacing */
+.view-all-btn {
+  margin: 0 !important;
+  padding: 0.875rem 1.5rem !important;
+  font-size: 0.9375rem !important;
+  min-width: 130px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.625rem !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+.view-all-btn:hover {
+  background: #e5e7eb !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Active tab button - Green styling */
+.view-all-btn[style*="background: var(--primary-green)"],
+.view-all-btn[style*="background:var(--primary-green)"] {
+  background: var(--primary-green) !important;
+  color: white !important;
+}
+
+.view-all-btn[style*="background: var(--primary-green)"]:hover,
+.view-all-btn[style*="background:var(--primary-green)"]:hover {
+  background: #157347 !important;
+  color: white !important;
+}
+
+/* Container width adjustment */
+.student-side > .div {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* ========================================
+   SERVICES PAGE SPECIFIC STYLES
+   ======================================== */
+
+/* Filter section container */
 .filter-section {
-  padding: 1.5rem !important;
+  background: white;
+  border: none;
+  border-radius: 0;
+  padding: 1.25rem;
+  margin: 0 3rem 1.5rem 3rem;
+  box-shadow: none;
   overflow: visible !important;
   position: relative;
   z-index: 1;
@@ -19,60 +154,14 @@
   width: 100% !important;
 }
 
-.filter-label {
-  margin-bottom: 0.75rem;
-  display: block;
-  font-weight: 600;
-  color: #374151;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--primary-green);
-}
-
-.filter-controls {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 1;
-  overflow: visible;
-}
-
-/* CRITICAL: Raise entire filter-controls container when any dropdown is active */
-.filter-controls:has(.select-dropdown.show),
-.filter-controls:has(.single-select-dropdown.show),
-.filter-controls:has(.custom-select.active) {
-  z-index: 99999 !important; /* Raise above all other filter rows and elements */
-}
-
-.filter-controls + .filter-controls {
-  margin-top: 0.75rem;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  position: relative;
-  overflow: visible;
-  flex: 1;
-  min-width: 200px;
-  z-index: 1;
-}
-
-/* Raise z-index when dropdown is active */
-.filter-item:has(.enhanced-multi-select-wrapper .select-dropdown.show),
-.filter-item:has(.custom-select.active) {
-  z-index: 99999 !important;
-}
-
+/* Filter actions positioning fix */
 .filter-actions {
   position: absolute !important;
   bottom: 0 !important;
   right: 0 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 1.5rem !important;
+  gap: 0.625rem !important; /* 10px - compact spacing */
   border-top: none !important;
   padding-top: 0 !important;
 }
@@ -80,13 +169,45 @@
 /* Clear button styling */
 .clear-filters-btn {
   white-space: nowrap;
-  min-width: 120px;
+  min-width: 130px;
+  padding: 0.875rem 1.5rem !important; /* 14px 24px - compact */
+  font-size: 0.9375rem !important; /* 15px */
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.clear-filters-btn:hover {
+  background: #dc2626;
+}
+
+.clear-filters-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 /* Results count styling */
 .results-count {
   text-align: right;
   white-space: nowrap;
+  padding: 0.875rem 1.5rem !important; /* Match button exactly */
+  font-size: 0.9375rem !important; /* 15px */
+  margin: 0 !important;
+  background: #f3f4f6;
+  border-radius: 6px;
+  color: #374151;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .status-badge.for-revision {
@@ -183,8 +304,8 @@
 }
 
 .status-badge.completed {
-  background-color: #e8f5e9;
-  color: #43a047;
+  background-color: #dbeafe;
+  color: #3b82f6;
 }
 
 .status-badge.rejected {
@@ -387,9 +508,9 @@
 }
 
 .status-badge-large.completed {
-  background: #e8f5e9;
-  color: #1b5e20;
-  border-color: #43a047;
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #3b82f6;
 }
 
 .status-badge-large.for-revision {
@@ -641,12 +762,12 @@
 }
 
 .quick-action-btn.chat {
-  background: #43a047;
+  background: #3b82f6;
 }
 
 .quick-action-btn.chat:hover {
-  background: #2c5d31;
-  box-shadow: 0 4px 12px rgba(67, 160, 71, 0.2);
+  background: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 /* Notification Styles */
@@ -903,12 +1024,14 @@
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
 }
 
 .confirmation-modal.show {
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
@@ -923,6 +1046,7 @@
   max-width: 500px;
   width: 90%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
 }
 
 @keyframes slideUp {
@@ -1176,28 +1300,6 @@
   .enhanced-file-preview {
     margin-bottom: 1.5rem;
   }
-  
-  .filter-container {
-    padding-bottom: 0 !important;
-  }
-  
-  .filter-actions {
-    position: relative !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 1rem !important;
-    margin-top: 1.5rem !important;
-    border-top: 1px solid #e5e7eb !important;
-    padding-top: 1rem !important;
-  }
-  
-  .clear-filters-btn {
-    width: 100%;
-  }
-  
-  .results-count {
-    text-align: center !important;
-  }
 }
 
 /* Add these keyframes to the existing style section */
@@ -1236,12 +1338,6 @@
 .enhanced-multi-select-wrapper {
   position: relative;
   width: 100%;
-  z-index: 1 !important;
-}
-
-/* Raise z-index when dropdown is open */
-.enhanced-multi-select-wrapper:has(.select-dropdown.show) {
-  z-index: 99999 !important;
 }
 
 .enhanced-multi-select {
@@ -1308,7 +1404,7 @@
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  z-index: 99999 !important;
+  z-index: 1000;
   max-height: 300px;
   overflow: hidden;
   animation: dropdownSlideIn 0.2s ease-out;
@@ -1515,4 +1611,116 @@
 /* Ensure first filter row doesn't have extra top margin */
 .filter-controls:first-of-type {
   margin-top: 0;
+}
+
+/* ========================================
+   STANDARDIZED RESPONSIVE LAYOUT
+   ======================================== */
+
+/* Responsive - Medium screens (tablets) */
+@media (max-width: 1200px) {
+  .section-header {
+    padding: 2rem 2rem 0 2rem;
+  }
+  
+  .tabs {
+    padding: 0 2rem 1rem 2rem !important;
+  }
+  
+  hr,
+  .filter-section,
+  .table-section,
+  .view-all-btn {
+    margin-left: 2rem;
+    margin-right: 2rem;
+  }
+}
+
+/* Responsive - Small screens (mobile) */
+@media (max-width: 768px) {
+  .section-header {
+    padding: 1.5rem 1.5rem 0 1.5rem;
+  }
+  
+  .section-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .tabs {
+    padding: 0 1.5rem 1rem 1.5rem !important;
+    flex-wrap: wrap;
+  }
+  
+  hr,
+  .filter-section,
+  .table-section,
+  .view-all-btn {
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+  }
+  
+  .filter-section,
+  .table-section {
+    padding: 1rem;
+  }
+  
+  .view-all-btn {
+    margin-bottom: 2rem !important;
+  }
+}
+
+/* ========================================
+   STANDARDIZED RESPONSIVE LAYOUT
+   ======================================== */
+
+/* Responsive - Medium screens (tablets) */
+@media (max-width: 1200px) {
+  .section-header {
+    padding: 2rem 2rem 0 2rem;
+  }
+  
+  .tabs {
+    padding: 0 2rem 1rem 2rem !important;
+  }
+  
+  hr,
+  .filter-section,
+  .table-section,
+  .view-all-btn {
+    margin-left: 2rem;
+    margin-right: 2rem;
+  }
+}
+
+/* Responsive - Small screens (mobile) */
+@media (max-width: 768px) {
+  .section-header {
+    padding: 1.5rem 1.5rem 0 1.5rem;
+  }
+  
+  .section-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .tabs {
+    padding: 0 1.5rem 1rem 1.5rem !important;
+    flex-wrap: wrap;
+  }
+  
+  hr,
+  .filter-section,
+  .table-section,
+  .view-all-btn {
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+  }
+  
+  .filter-section,
+  .table-section {
+    padding: 1rem;
+  }
+  
+  .view-all-btn {
+    margin-bottom: 2rem !important;
+  }
 }

@@ -224,6 +224,13 @@ body:has(.profile-page) .student-side,
   background: #f3f4f6;
 }
 
+/* General student-side container for user pages - Add padding to prevent header overlap */
+.student-side {
+  padding-top: 100px;
+  min-height: 100vh;
+  background: #f3f4f6;
+}
+
 .profile-page .div {
   width: 100%;
   max-width: 1200px;
@@ -1085,7 +1092,7 @@ body:has(.profile-page) .student-side,
   }
 
   .student-side {
-    padding-top: 70px;
+    padding-top: 100px !important;
   }
 
   .div {

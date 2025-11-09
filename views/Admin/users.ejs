@@ -10,13 +10,6 @@
   <link rel="stylesheet" href="/stylesheets/ejs/users.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
-/* NEW RULE TO FIX FLUID LAYOUT */
-.student-side > .div {
-  max-width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-}
-
 /* ========================================
    MODAL STYLES
    ======================================== */
@@ -798,20 +791,18 @@
 
     <section class="activity-section">
       <div class="section-header">
-        <div class="profile-info" style="display: flex; align-items: center; gap: 1rem;">
-          <div>
-            <h2 style="margin-bottom: 0.25rem;">Registered Users</h2>
-            <p style="color: #6b7280;">View and manage user accounts</p>
-          </div>
-        </div>
-        </div>
-
-        <nav class="tabs" style="display:flex; gap: 1rem; margin-bottom: 1rem;">
-          <a href="/admin/all-requests" class="view-all-btn">All Requests</a>
-          <a href="/admin/approvals" class="view-all-btn">Approvals</a>
-          <a href="/admin/services" class="view-all-btn">Services</a>
-          <a href="/admin/users" class="view-all-btn" style="background: var(--primary-green); color: white;">Users</a>
-        </nav>
+        <h1>Registered Users</h1>
+        <p>View and manage user accounts</p>
+      </div>
+      
+      <nav class="tabs">
+        <a href="/admin/all-requests" class="view-all-btn">All Requests</a>
+        <a href="/admin/approvals" class="view-all-btn">Approvals</a>
+        <a href="/admin/services" class="view-all-btn">Services</a>
+        <a href="/admin/users" class="view-all-btn" style="background: var(--primary-green); color: white;">Users</a>
+      </nav>
+      
+      <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
 
         <div class="filter-section">
           <div class="filter-container">
