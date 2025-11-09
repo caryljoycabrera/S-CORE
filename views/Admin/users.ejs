@@ -201,10 +201,109 @@
   border: 1px solid #16a34a;
 }
 
-.user-type-badge.nonstudent {
+.user-type-badge.nonstudent,
+.user-type-badge.faculty,
+.user-type-badge.staff {
   background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
   color: #7c2d12;
   border: 1px solid #7c3aed;
+}
+
+.user-type-cell {
+  position: relative;
+  display: inline-block;
+}
+
+.type-badge-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.change-type-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.change-type-btn:hover {
+  color: var(--primary-green);
+  transform: translateY(-1px);
+}
+
+.type-options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 120px;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.type-options.show {
+  display: block;
+  animation: slideDown 0.2s ease-out;
+}
+
+.type-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.type-option:hover {
+  background: #f3f4f6;
+  color: var(--primary-green);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-type-badge.admin {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.user-type-badge.faculty {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.user-type-badge.student {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+  border: 1px solid #16a34a;
 }
 
 .org-tags-container {
@@ -1086,8 +1185,8 @@
             </div>
                      <div class="filter-actions" style="justify-content: space-between; align-items: center;">
               <div class="user-status-tabs">
-                <a href="#" class="status-tab active" data-status="all">All Users</a>
-                <a href="#" class="status-tab" data-status="approved">Approved</a>
+                <a href="#" class="status-tab" data-status="all">All Users</a>
+                <a href="#" class="status-tab active" data-status="approved">Approved</a>
                 <a href="#" class="status-tab" data-status="pending">Pending</a>
                 <a href="#" class="status-tab" data-status="denied">Denied</a>
               </div>
@@ -1119,6 +1218,7 @@
                 <th>User ID</th>
                 <th>Name</th>
                 <th>Email</th>
+                <th>User Type</th>
                 <th>Registration Date</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -1132,40 +1232,45 @@
                 data-fname="<%= u.fName %>"
                 data-lname="<%= u.lName %>"
                 data-email="<%= u.email %>"
-                data-status="<%= u.verificationStatus || 'pending' %>"
+                data-usertype="<%= u.userType || 'student' %>"
+                data-status="approved"
                 data-registration-date="<%= u.createdAt %>">
                 <td><%= u._id.toString().slice(-6) %></td>
                 <td><%= u.fName %> <%= u.lName %></td>
                 <td><%= u.email %></td>
+                <td>
+                  <div class="user-type-cell">
+                    <% const userType = u.role === 'admin' ? 'Admin' : u.userType || 'user'; %>
+                    <div class="type-badge-container">
+                      <span class="user-type-badge <%= userType.toLowerCase() %>" id="badge-<%= u._id %>">
+                        <%= userType.toUpperCase() %>
+                      </span>
+                      <button class="change-type-btn" onclick="showTypeOptions('<%= u._id %>')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M6 9l6 6 6-6"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="type-options" id="options-<%= u._id %>">
+                      <button onclick="updateUserType('<%= u._id %>', 'student')" class="type-option">Student</button>
+                      <button onclick="updateUserType('<%= u._id %>', 'faculty')" class="type-option">Faculty</button>
+                      <button onclick="updateUserType('<%= u._id %>', 'admin')" class="type-option">Admin</button>
+                    </div>
+                  </div>
+                </td>
                 <td><%= new Date(u.createdAt).toLocaleDateString() %></td>
                 <td>
-                  <span class="status-badge status-<%= u.verificationStatus || 'pending' %>">
-                    <%= (u.verificationStatus || 'pending').toUpperCase() %>
+                  <span class="status-badge status-approved">
+                    APPROVED
                   </span>
                 </td>
                 <td class="action-buttons">
-                  <% if (!u.verificationStatus || u.verificationStatus === 'pending') { %>
-                    <button class="approve-btn" onclick="approveUser('<%= u._id %>')">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                      Approve
-                    </button>
-                    <button class="deny-btn" onclick="denyUser('<%= u._id %>')">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                      Deny
-                    </button>
-                  <% } else { %>
-                    <button class="reset-btn" onclick="resetStatus('<%= u._id %>')">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
-                      </svg>
-                      Reset Status
-                    </button>
-                  <% } %>
+                  <button class="reset-btn" onclick="resetStatus('<%= u._id %>')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+                    </svg>
+                    Reset Status
+                  </button>
                 </td>
               </tr>
               <% }) %>
@@ -1186,28 +1291,100 @@
 
   <script>
     // Tab switching functionality
+    function filterUsersByStatus(status) {
+      // Update active tab
+      document.querySelectorAll('.status-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.status === status);
+      });
+      
+      // Filter table rows
+      const rows = document.querySelectorAll('.user-row');
+      rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // Add click event listeners to tabs
     document.querySelectorAll('.status-tab').forEach(tab => {
       tab.addEventListener('click', (e) => {
         e.preventDefault();
-        const status = tab.dataset.status;
-        
-        // Update active tab
-        document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        
-        // Filter table rows
-        const rows = document.querySelectorAll('.user-row');
-        rows.forEach(row => {
-          if (status === 'all' || row.dataset.status === status) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
-          }
-        });
+        filterUsersByStatus(tab.dataset.status);
       });
     });
 
-    // User verification actions
+    // Show approved users by default when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  filterUsersByStatus('approved');
+});
+
+// Function to show type options
+function showTypeOptions(userId) {
+  // Hide all other open type options first
+  document.querySelectorAll('.type-options.show').forEach(el => {
+    if (el.id !== `options-${userId}`) {
+      el.classList.remove('show');
+    }
+  });
+
+  const options = document.getElementById(`options-${userId}`);
+  options.classList.toggle('show');
+}
+
+// Function to handle user type changes
+async function updateUserType(userId, newType) {
+  try {
+    const response = await fetch(`/api/users/${userId}/type`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userType: newType })
+    });
+
+    if (response.ok) {
+      // Update the badge immediately
+      const badge = document.getElementById(`badge-${userId}`);
+      const options = document.getElementById(`options-${userId}`);
+      
+      if (badge) {
+        // Remove all existing type classes
+        badge.classList.remove('student', 'faculty', 'admin', 'user');
+        // Add new type class
+        badge.classList.add(newType.toLowerCase());
+        // Update text
+        badge.textContent = newType.toUpperCase();
+      }
+      
+      // Hide the options menu
+      if (options) {
+        options.classList.remove('show');
+      }
+
+      // Show success notification
+      showNotificationPersistent(`User type successfully updated to ${newType}`, 'success');
+    } else {
+      throw new Error('Failed to update user type');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showNotificationPersistent('Failed to update user type. Please try again.', 'error');
+  }
+}
+
+// Close type options when clicking outside
+document.addEventListener('click', function(event) {
+  const typeOptions = document.querySelectorAll('.type-options');
+  typeOptions.forEach(options => {
+    const cell = options.closest('.user-type-cell');
+    if (cell && !cell.contains(event.target)) {
+      options.classList.remove('show');
+    }
+  });
+});    // User verification actions
     async function approveUser(userId) {
       try {
         const response = await fetch(`/api/users/${userId}/verify`, {

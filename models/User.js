@@ -9,6 +9,11 @@ const mongoose = require('mongoose');
  * Defines the structure for user documents in MongoDB
  */
 const userSchema = new mongoose.Schema({
+  // Account approval status
+  approved: {
+    type: Boolean,
+    default: false
+  },
   // Basic user information
   fName: {
     type: String,
@@ -97,6 +102,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
+  },
+
+  // Account approval status
+  approved: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields
