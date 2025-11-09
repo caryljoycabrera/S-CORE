@@ -1086,8 +1086,8 @@
             </div>
                      <div class="filter-actions" style="justify-content: space-between; align-items: center;">
               <div class="user-status-tabs">
-                <a href="#" class="status-tab active" data-status="all">All Users</a>
-                <a href="#" class="status-tab" data-status="approved">Approved</a>
+                <a href="#" class="status-tab" data-status="all">All Users</a>
+                <a href="#" class="status-tab active" data-status="approved">Approved</a>
                 <a href="#" class="status-tab" data-status="pending">Pending</a>
                 <a href="#" class="status-tab" data-status="denied">Denied</a>
               </div>
@@ -1132,40 +1132,25 @@
                 data-fname="<%= u.fName %>"
                 data-lname="<%= u.lName %>"
                 data-email="<%= u.email %>"
-                data-status="<%= u.verificationStatus || 'pending' %>"
+                data-status="approved"
                 data-registration-date="<%= u.createdAt %>">
                 <td><%= u._id.toString().slice(-6) %></td>
                 <td><%= u.fName %> <%= u.lName %></td>
                 <td><%= u.email %></td>
                 <td><%= new Date(u.createdAt).toLocaleDateString() %></td>
                 <td>
-                  <span class="status-badge status-<%= u.verificationStatus || 'pending' %>">
-                    <%= (u.verificationStatus || 'pending').toUpperCase() %>
+                  <span class="status-badge status-approved">
+                    APPROVED
                   </span>
                 </td>
                 <td class="action-buttons">
-                  <% if (!u.verificationStatus || u.verificationStatus === 'pending') { %>
-                    <button class="approve-btn" onclick="approveUser('<%= u._id %>')">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                      Approve
-                    </button>
-                    <button class="deny-btn" onclick="denyUser('<%= u._id %>')">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                      Deny
-                    </button>
-                  <% } else { %>
-                    <button class="reset-btn" onclick="resetStatus('<%= u._id %>')">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
-                      </svg>
-                      Reset Status
-                    </button>
-                  <% } %>
+                  <button class="view-btn" onclick="viewUser('<%= u._id %>')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    View Details
+                  </button>
                 </td>
               </tr>
               <% }) %>
@@ -1186,133 +1171,57 @@
 
   <script>
     // Tab switching functionality
-    document.querySelectorAll('.status-tab').forEach(tab => {
-      tab.addEventListener('click', (e) => {
-        e.preventDefault();
-        const status = tab.dataset.status;
-        
-        // Update active tab
-        document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        
-        // Filter table rows
-        const rows = document.querySelectorAll('.user-row');
-        rows.forEach(row => {
-          if (status === 'all' || row.dataset.status === status) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set all existing users to approved status initially
+      document.querySelectorAll('.user-row').forEach(row => {
+        row.dataset.status = 'approved';
+        const statusBadge = row.querySelector('.status-badge');
+        if (statusBadge) {
+          statusBadge.className = 'status-badge status-approved';
+          statusBadge.textContent = 'APPROVED';
+        }
+      });
+
+      // Tab click handlers
+      document.querySelectorAll('.status-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          e.preventDefault();
+          const status = tab.dataset.status;
+          
+          // Update active tab
+          document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // Filter table rows
+          const rows = document.querySelectorAll('.user-row');
+          rows.forEach(row => {
+            if (status === 'all' || row.dataset.status === status) {
+              row.style.display = '';
+            } else {
+              row.style.display = 'none';
+            }
+          });
+
+          // Update results count
+          const visibleRows = document.querySelectorAll('.user-row[style=""]').length;
+          const totalRows = document.querySelectorAll('.user-row').length;
+          const resultsCount = document.getElementById('resultsCount');
+          if (resultsCount) {
+            if (status === 'all') {
+              resultsCount.textContent = `Showing all ${totalRows} users`;
+            } else {
+              resultsCount.textContent = `Showing ${visibleRows} of ${totalRows} users`;
+            }
           }
         });
       });
     });
 
-    // User verification actions
-    async function approveUser(userId) {
-      try {
-        const response = await fetch(`/api/users/${userId}/verify`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: 'approved' })
-        });
-
-        if (response.ok) {
-          const row = document.querySelector(`tr[data-id="${userId}"]`);
-          row.dataset.status = 'approved';
-          updateRowStatus(row, 'approved');
-        } else {
-          alert('Failed to approve user');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while approving the user');
-      }
-    }
-
-    async function denyUser(userId) {
-      try {
-        const response = await fetch(`/api/users/${userId}/verify`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: 'denied' })
-        });
-
-        if (response.ok) {
-          const row = document.querySelector(`tr[data-id="${userId}"]`);
-          row.dataset.status = 'denied';
-          updateRowStatus(row, 'denied');
-        } else {
-          alert('Failed to deny user');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while denying the user');
-      }
-    }
-
-    async function resetStatus(userId) {
-      try {
-        const response = await fetch(`/api/users/${userId}/verify`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: 'pending' })
-        });
-
-        if (response.ok) {
-          const row = document.querySelector(`tr[data-id="${userId}"]`);
-          row.dataset.status = 'pending';
-          updateRowStatus(row, 'pending');
-        } else {
-          alert('Failed to reset user status');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while resetting the user status');
-      }
-    }
-
-    function updateRowStatus(row, status) {
-      // Update status badge
-      const statusCell = row.querySelector('td:nth-child(5)');
-      statusCell.innerHTML = `
-        <span class="status-badge status-${status}">
-          ${status.toUpperCase()}
-        </span>
-      `;
-
-      // Update action buttons
-      const actionCell = row.querySelector('td:last-child');
-      if (status === 'pending') {
-        actionCell.innerHTML = `
-          <button class="approve-btn" onclick="approveUser('${row.dataset.id}')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            Approve
-          </button>
-          <button class="deny-btn" onclick="denyUser('${row.dataset.id}')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-            Deny
-          </button>
-        `;
-      } else {
-        actionCell.innerHTML = `
-          <button class="reset-btn" onclick="resetStatus('${row.dataset.id}')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
-            </svg>
-            Reset Status
-          </button>
-        `;
+    // View user details
+    function viewUser(userId) {
+      const row = document.querySelector(`tr[data-id="${userId}"]`);
+      if (row) {
+        row.click(); // This will trigger the existing modal open logic
       }
     }
   </script>
