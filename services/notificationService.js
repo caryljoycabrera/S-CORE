@@ -284,6 +284,82 @@ class NotificationService {
   }
 
   /**
+   * User Registration Notifications
+   */
+
+  // Notify admins when a new user registers (pending approval)
+  async notifyNewUserRegistration(userId) {
+    try {
+      const user = await User.findById(userId);
+      if (!user) return;
+
+      // Get all admin users
+      const admins = await User.find({ role: 'admin' });
+      const adminIds = admins.map(admin => admin._id);
+
+      const userType = user.userType === 'student' ? 'Student' : 'Non-Student';
+      const notificationData = {
+        title: 'New User Registration',
+        message: `${user.fName} ${user.lName} (${userType}) has registered and is pending approval`,
+        type: 'user_registered',
+        relatedId: userId,
+        relatedModel: 'User',
+        sender: userId,
+        priority: 'high',
+        actionUrl: `/admin/users?tab=pending&userId=${userId}`
+      };
+
+      // Create notifications for all admins
+      const notifications = adminIds.map(adminId => 
+        this.createNotification({ ...notificationData, recipient: adminId })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`New user registration notifications sent to ${adminIds.length} admin(s)`);
+    } catch (error) {
+      console.error('Error notifying new user registration:', error);
+    }
+  }
+
+  // Notify user when their account is approved
+  async notifyUserApproved(userId, adminId) {
+    try {
+      await this.createNotification({
+        recipient: userId,
+        sender: adminId,
+        title: 'Account Approved',
+        message: 'Your account has been approved! You can now access all system features.',
+        type: 'user_approved',
+        relatedId: userId,
+        relatedModel: 'User',
+        priority: 'high',
+        actionUrl: '/user/dashboard'
+      });
+    } catch (error) {
+      console.error('Error notifying user approval:', error);
+    }
+  }
+
+  // Notify user when their account is denied
+  async notifyUserDenied(userId, adminId) {
+    try {
+      await this.createNotification({
+        recipient: userId,
+        sender: adminId,
+        title: 'Account Access Denied',
+        message: 'Your account registration was not approved. Please contact the administrator for more information.',
+        type: 'user_denied',
+        relatedId: userId,
+        relatedModel: 'User',
+        priority: 'high',
+        actionUrl: '/contact'
+      });
+    } catch (error) {
+      console.error('Error notifying user denial:', error);
+    }
+  }
+
+  /**
    * Chat/Message Notifications
    */
 

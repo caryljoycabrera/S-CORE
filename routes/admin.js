@@ -677,7 +677,43 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
   : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
   }));
 
-  res.render('Admin/users', { users: usersWithDisplay, user: req.user });
+  // Extract unique affiliations and student organizations for filters
+  const affiliationsSet = new Set();
+  const studentOrgsSet = new Set();
+  
+  users.forEach(user => {
+    // Collect affiliations (for non-students)
+    if (user.affiliation) {
+      if (Array.isArray(user.affiliation)) {
+        user.affiliation.forEach(aff => {
+          if (aff && aff.trim()) affiliationsSet.add(aff.trim());
+        });
+      } else if (user.affiliation.trim()) {
+        affiliationsSet.add(user.affiliation.trim());
+      }
+    }
+    
+    // Collect student organizations
+    if (user.studentOrganization) {
+      if (Array.isArray(user.studentOrganization)) {
+        user.studentOrganization.forEach(org => {
+          if (org && org.trim()) studentOrgsSet.add(org.trim());
+        });
+      } else if (user.studentOrganization.trim()) {
+        studentOrgsSet.add(user.studentOrganization.trim());
+      }
+    }
+  });
+  
+  const affiliations = Array.from(affiliationsSet).sort();
+  const studentOrgs = Array.from(studentOrgsSet).sort();
+
+  res.render('Admin/users', { 
+    users: usersWithDisplay, 
+    user: req.user,
+    affiliations,
+    studentOrgs
+  });
 });
 
 /**
@@ -1152,9 +1188,12 @@ router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => 
  */
 router.post('/admin/user/update', requireAdmin, async (req, res) => {
   try {
+    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to update user role`);
+    
     const { userId, role } = req.body;
 
     if (!userId || !role) {
+      console.log('[ERROR] Missing userId or role in request body');
       return res.status(400).json({
         success: false,
         message: 'User ID and role are required.'
@@ -1162,6 +1201,7 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
     }
 
     if (!['user', 'admin'].includes(role)) {
+      console.log(`[ERROR] Invalid role provided: ${role}`);
       return res.status(400).json({
         success: false,
         message: 'Invalid role. Must be either "user" or "admin".'
@@ -1170,12 +1210,14 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
+      console.log(`[ERROR] User not found: ${userId}`);
       return res.status(404).json({
         success: false,
         message: 'User not found.'
       });
     }
 
+    const previousRole = user.role;
     const result = await User.findByIdAndUpdate(
       userId,
       { role: role },
@@ -1183,11 +1225,14 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
     );
 
     if (!result) {
+      console.log(`[ERROR] Failed to update user role for ${userId}`);
       return res.status(500).json({
         success: false,
         message: 'Failed to update user role.'
       });
     }
+
+    console.log(`[SUCCESS] User ${result.username} (${result.email}) role changed from ${previousRole} to ${role} by admin ${req.user?.username || req.session.userId}`);
 
     res.json({
       success: true,
@@ -1200,11 +1245,110 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Error updating user role:', err);
+    console.error('[ERROR] Error updating user role:', err);
     res.status(500).json({
       success: false,
       message: 'Server error: Failed to update user role.'
     });
+  }
+});
+
+/**
+ * POST /admin/user/approve/:id
+ * Approves a pending user
+ */
+router.post('/admin/user/approve/:id', requireAdmin, async (req, res) => {
+  try {
+    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to approve user ${req.params.id}`);
+    
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      console.log(`[ERROR] User not found: ${req.params.id}`);
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    const previousStatus = user.status;
+    user.status = 'approved';
+    await user.save();
+    
+    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to approved by admin ${req.user?.username || req.session.userId}`);
+    
+    // Notify user about approval
+    const adminId = req.user?._id || req.session.userId;
+    if (adminId) {
+      await notificationService.notifyUserApproved(user._id, adminId);
+      console.log(`[NOTIFICATION] User approval notification sent to ${user.username}`);
+    }
+    
+    // Send success response for the frontend JS
+    res.json({ success: true, newStatus: 'approved' });
+
+  } catch (error) {
+    console.error('[ERROR] Error approving user:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/user/deny/:id
+ * Denies a pending user
+ */
+router.post('/admin/user/deny/:id', requireAdmin, async (req, res) => {
+  try {
+    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to deny user ${req.params.id}`);
+    
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      console.log(`[ERROR] User not found: ${req.params.id}`);
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const previousStatus = user.status;
+    user.status = 'denied';
+    await user.save();
+    
+    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to denied by admin ${req.user?.username || req.session.userId}`);
+    
+    // Notify user about denial
+    const adminId = req.user?._id || req.session.userId;
+    if (adminId) {
+      await notificationService.notifyUserDenied(user._id, adminId);
+      console.log(`[NOTIFICATION] User denial notification sent to ${user.username}`);
+    }
+    
+    res.json({ success: true, newStatus: 'denied' });
+
+  } catch (error) {
+    console.error('[ERROR] Error denying user:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/user/reset/:id
+ * Resets a denied/approved user back to pending
+ */
+router.post('/admin/user/reset/:id', requireAdmin, async (req, res) => {
+  try {
+    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to reset user ${req.params.id}`);
+    
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      console.log(`[ERROR] User not found: ${req.params.id}`);
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const previousStatus = user.status;
+    user.status = 'pending';
+    await user.save();
+    
+    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to pending by admin ${req.user?.username || req.session.userId}`);
+    
+    res.json({ success: true, newStatus: 'pending' });
+
+  } catch (error) {
+    console.error('[ERROR] Error resetting user:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

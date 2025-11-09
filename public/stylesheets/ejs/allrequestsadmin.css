@@ -2138,6 +2138,177 @@ input:checked + .toggle-slider:before {
 }
 
 /* ========================================
+   INLINE STYLES MOVED FROM EJS
+   ======================================== */
+
+/* Toggle Switch Styles */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+  margin: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--primary-green);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+/* Hide the checkbox input */
+.toggle-switch input[type="checkbox"] {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Message Modal Styles - copied from user pages */
+.message {
+  margin-bottom: 1rem;
+  max-width: 80%;
+  clear: both;
+}
+
+.admin-message {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.user-message {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.message-content {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.user-message .message-content {
+  background: var(--primary-green);
+  color: white;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.message-time {
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+
+.message-text {
+  word-wrap: break-word;
+}
+
+/* Enhanced Conversation Message Styles */
+.message {
+  margin-bottom: 1.5rem;
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-message {
+  align-self: flex-start;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.user-message {
+  align-self: flex-end;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.message-content {
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background: #f3f4f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.admin-message .message-content {
+  background: var(--primary-green);
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.user-message .message-content {
+  background: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.admin-message .message-header {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.user-message .message-header {
+  color: #6b7280;
+}
+
+.message-time {
+  opacity: 0.8;
+  font-size: 0.75rem;
+}
+
+.message-text {
+  word-wrap: break-word;
+  line-height: 1.5;
+}
+
+/* Format Button Hover Effects */
+.format-btn:hover {
+  background: #f3f4f6;
+  border-color: var(--primary-green);
+}
+
+/* ========================================
    STANDARDIZED RESPONSIVE LAYOUT
    ======================================== */
 

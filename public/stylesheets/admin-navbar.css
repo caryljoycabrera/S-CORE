@@ -26,8 +26,11 @@
   padding-top: 1rem; /* Regular padding for content */
 }
 
-.admin-sidebar.expanded {
-  width: 240px;
+/* Desktop hover expansion - will be overridden on mobile */
+@media (min-width: 769px) {
+  .admin-sidebar.expanded {
+    width: 240px;
+  }
 }
 
 .sidebar-items {
@@ -107,22 +110,25 @@
   letter-spacing: 0.3px;
 }
 
-.admin-sidebar.expanded .sidebar-label {
-  opacity: 1;
-}
+/* Desktop only: Show labels on expanded state */
+@media (min-width: 769px) {
+  .admin-sidebar.expanded .sidebar-label {
+    opacity: 1;
+  }
 
-/* Center icons in collapsed sidebar */
-.admin-sidebar:not(.expanded) .sidebar-label {
-  display: none;
-  opacity: 0;
-}
+  /* Center icons in collapsed sidebar */
+  .admin-sidebar:not(.expanded) .sidebar-label {
+    display: none;
+    opacity: 0;
+  }
 
-.admin-sidebar:not(.expanded) .sidebar-item {
-  justify-content: center;
-}
+  .admin-sidebar:not(.expanded) .sidebar-item {
+    justify-content: center;
+  }
 
-.admin-sidebar:not(.expanded) .sidebar-icon {
-  margin-right: 0;
+  .admin-sidebar:not(.expanded) .sidebar-icon {
+    margin-right: 0;
+  }
 }
 
 .sidebar-item.active .sidebar-label {
@@ -182,11 +188,11 @@
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
   z-index: 10000; /* Higher than sidebar so it stays on top */
   box-shadow: none; /* Remove shadow for seamless blend */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Clean separator instead of shadow */
+  border-bottom: none; /* Remove border for seamless connection */
   height: 80px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* Ensure left content stays left, right content stays right */
   gap: 1.5rem;
 }
 
@@ -194,9 +200,10 @@
 .header-left-group {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem; /* Reduced gap to bring logo closer to menu icon */
   min-width: 0; /* Allows the group to shrink */
-  flex: 1 1 auto;
+  flex: 0 1 auto; /* Changed from flex: 1 1 auto to prevent centering */
+  justify-content: flex-start; /* Ensure content stays on the left */
 }
 
 .header-left-group .text-wrapper {
@@ -216,10 +223,20 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* Ensure logo stays on the left */
+  margin-left: 0.5rem; /* Reduced to bring logo closer to menu */
+}
+
+/* Logo styling - Rounded corners with breathing room and scaled size */
+.admin-main-content .overlap .group img {
+  width: 45px; /* Smaller size to prevent touching header edges */
+  height: 45px;
+  border-radius: 8px; /* Rounded corners */
+  margin: 0.5rem; /* Reduced margin for closer spacing */
 }
 
 .admin-main-content .overlap .text-wrapper {
-  margin-left: 1rem;
+  margin-left: 0.75rem; /* Reduced margin */
   margin-right: 1rem;
   white-space: nowrap;
 }
@@ -366,6 +383,23 @@
   opacity: 1;
 }
 
+/* Mobile overlay - alternative naming */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998; /* Below sidebar but above content */
+  backdrop-filter: blur(4px);
+}
+
+.mobile-overlay.active {
+  display: block;
+}
+
 /* ==========================================
    RESPONSIVE DESIGN
    ========================================== */
@@ -379,10 +413,29 @@
     top: 80px; /* Start below the header */
     height: calc(100% - 80px); /* Full height minus header */
     z-index: 9999; /* Extremely high z-index to ensure it's on top of everything except header */
-    width: 250px; /* Give it a fixed width on mobile */
+    width: 250px !important; /* Give it a fixed width on mobile - force to always be expanded width */
     padding-top: 1rem;
     box-shadow: 2px 0 10px rgba(0,0,0,0.3);
     transition: left 0.3s ease-in-out; /* Smooth slide animation */
+  }
+  
+  /* Force sidebar to always show labels on mobile - no hover needed */
+  .admin-sidebar .sidebar-label {
+    opacity: 1 !important;
+    display: inline !important;
+  }
+  
+  .admin-sidebar .sidebar-item {
+    justify-content: flex-start !important;
+  }
+  
+  .admin-sidebar .sidebar-icon {
+    margin-right: 1.5rem !important;
+  }
+  
+  /* Disable hover expansion on mobile - it's always expanded when visible */
+  .admin-sidebar:hover {
+    width: 250px !important;
   }
   
   /* This class will be toggled by JavaScript - slides sidebar in */
@@ -400,17 +453,69 @@
     display: none;
   }
   
+  /* Scale down logo on mobile - maintain rounded corners and breathing room */
+  .admin-main-content .overlap .group img {
+    width: 32px; /* Smaller to prevent touching header edges on mobile */
+    height: 32px;
+    border-radius: 6px; /* Slightly smaller rounded corners for smaller logo */
+    margin: 0.4rem; /* Reduced margin to fit better in compact header */
+  }
+  
+  /* Scale down title text on mobile */
+  .admin-main-content .overlap .text-wrapper {
+    font-size: 1rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+  
+  /* Adjust header left group spacing */
+  .header-left-group {
+    gap: 0.4rem; /* Tighter spacing on mobile */
+    flex: 0 1 auto; /* Ensure it doesn't grow and stays left */
+    min-width: 0;
+    justify-content: flex-start; /* Keep content on the left */
+  }
+  
+  /* Adjust header right section */
+  .header-right-section {
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  /* Hide reports button text on mobile, keep icon */
+  .header-reports-btn .header-reports-text {
+    display: none;
+  }
+  
+  .header-reports-btn {
+    padding: 0.6rem;
+    margin-right: 0.5rem;
+  }
+  
+  /* Make header more compact */
+  .admin-main-content .overlap {
+    height: 60px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  /* Adjust sidebar to account for smaller header */
+  .admin-sidebar {
+    top: 60px !important;
+    height: calc(100% - 60px) !important;
+  }
+  
+  /* Adjust main content padding */
+  .admin-main-content {
+    padding-top: 60px;
+  }
+  
   .admin-main-content,
   .student-side.with-sidebar {
     margin-left: 0;
     padding-left: 0;
     padding-right: 0;
-  }
-  
-  .admin-main-content .overlap {
-    left: 0;
-    padding-left: 1rem;
-    padding-right: 1rem;
   }
   
   .admin-main-content .activity-section {
@@ -431,6 +536,53 @@
   }
 }
 
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  /* Make header even more compact */
+  .admin-main-content .overlap {
+    height: 56px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* Smaller logo - maintain rounded corners and breathing room */
+  .admin-main-content .overlap .group img {
+    width: 28px; /* Extra small to prevent touching on tiny screens */
+    height: 28px;
+    border-radius: 5px; /* Smaller rounded corners for extra small screens */
+    margin: 0.3rem; /* Minimal margin for compact layout */
+  }
+  
+  /* Smaller title */
+  .admin-main-content .overlap .text-wrapper {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
+  
+  /* Extra compact hamburger button */
+  .admin-menu-toggle {
+    padding: 0.4rem;
+    width: 36px;
+    height: 36px;
+  }
+  
+  .admin-menu-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* Adjust sidebar for smaller header */
+  .admin-sidebar {
+    top: 56px !important;
+    height: calc(100% - 56px) !important;
+  }
+  
+  /* Adjust main content */
+  .admin-main-content {
+    padding-top: 56px;
+  }
+}
+
 @media (min-width: 769px) {
   .mobile-menu-toggle {
     display: none;
@@ -438,6 +590,15 @@
   
   .admin-menu-toggle {
     display: none !important; /* Force hide on desktop */
+  }
+  
+  /* Desktop-only: Enable hover-to-expand behavior */
+  .admin-sidebar:hover {
+    width: 240px;
+  }
+  
+  .admin-sidebar:hover .sidebar-label {
+    opacity: 1;
   }
 }
 

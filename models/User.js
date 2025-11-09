@@ -58,6 +58,13 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
+  // NEW FIELD: User status for admin verification
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'denied'],
+    default: 'pending'
+  },
+
   // User type enum: determines student vs non-student user
   userType: {
     type: String,

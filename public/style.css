@@ -70,10 +70,19 @@ a:visited {
   align-items: center;
   flex-shrink: 0; /* Prevent logo from shrinking */
   min-width: 0;
+  margin-left: 0.75rem; /* Reduced for closer spacing */
+}
+
+/* Logo styling - Rounded corners with breathing room and scaled size */
+.group img {
+  width: 45px; /* Smaller size to prevent touching header edges */
+  height: 45px;
+  border-radius: 8px; /* Rounded corners */
+  margin: 0.5rem; /* Reduced margin for closer spacing */
 }
 
 .text-wrapper {
-  margin-left: 1rem;
+  margin-left: 0.75rem; /* Reduced margin */
   font-size: 2rem;
   font-weight: 800;
   color: #ffffff !important;
@@ -1927,4 +1936,116 @@ body:has(.profile-page) .student-side,
 
 .type-badge:hover {
   transform: scale(1.05);
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE HEADER STYLES
+   ========================================== */
+
+@media (max-width: 768px) {
+  /* User page header adjustments */
+  .overlap {
+    height: 60px;
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+  
+  /* Scale down logo - maintain rounded corners and breathing room */
+  .group img {
+    width: 32px; /* Smaller to prevent touching header edges on mobile */
+    height: 32px;
+    border-radius: 6px; /* Slightly smaller rounded corners for smaller logo */
+    margin: 0.4rem; /* Reduced margin to fit better in compact header */
+  }
+  
+  /* Scale down title */
+  .text-wrapper {
+    font-size: 1.2rem;
+    margin-left: 0.5rem;
+    letter-spacing: 1px;
+  }
+  
+  /* Hide welcome text on mobile */
+  .text-wrapper-2 {
+    display: none;
+  }
+  
+  /* Adjust header right section */
+  .header-right-section {
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  /* Make dropdown more compact */
+  .overlap-group {
+    padding: 0.4rem 0.6rem;
+    min-width: auto;
+  }
+  
+  .text-wrapper-3 {
+    font-size: 0.85rem;
+    max-width: 80px;
+  }
+  
+  .user-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* Adjust student-side padding for smaller header */
+  .student-side {
+    padding-top: 60px;
+  }
+  
+  /* Make notification bell more compact */
+  .notification-bell {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .notification-bell-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .notification-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 0.65rem;
+    top: -4px;
+    right: -4px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens - further reduce */
+  .overlap {
+    height: 56px;
+    padding: 0 0.5rem;
+  }
+  
+  /* Smaller logo - maintain rounded corners and breathing room */
+  .group img {
+    width: 28px; /* Extra small to prevent touching on tiny screens */
+    height: 28px;
+    border-radius: 5px; /* Smaller rounded corners for extra small screens */
+    margin: 0.3rem; /* Minimal margin for compact layout */
+  }
+  
+  .text-wrapper {
+    font-size: 1rem;
+    margin-left: 0.25rem;
+  }
+  
+  .text-wrapper-3 {
+    display: none; /* Hide username text on very small screens */
+  }
+  
+  .overlap-group {
+    padding: 0.4rem;
+  }
+  
+  .student-side {
+    padding-top: 56px;
+  }
 }

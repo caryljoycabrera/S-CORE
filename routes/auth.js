@@ -6,6 +6,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const User = require('../models/User');
+const notificationService = require('../services/notificationService');
 
 /**
  * GET /register
@@ -126,6 +127,12 @@ router.post('/register', async (req, res) => {
       const savedUser = await User.findOne({ username: userData.username });
       console.log('Verification - Found user in database:', savedUser ? 'Yes' : 'No');
       
+      // Notify admins about new user registration
+      if (savedUser) {
+        await notificationService.notifyNewUserRegistration(savedUser._id);
+        console.log('New user registration notification sent to admins');
+      }
+      
       // Redirect to login on successful registration
       res.redirect('/login');
     } catch (saveError) {
@@ -166,6 +173,28 @@ router.post('/login', async (req, res) => {
     // Validate username and password
     if (!passwordMatch) {
       return res.status(401).render('index', { message: 'Invalid credentials.' });
+    }
+
+    // !! NEW VERIFICATION STEP !!
+    // Check the user's status BEFORE creating a session
+    if (user.status !== 'approved') {
+      if (user.status === 'pending') {
+        console.log('User account pending approval:', username);
+        return res.status(403).render('index', { 
+          message: 'Your account is pending admin approval. Please wait for verification.' 
+        });
+      }
+      if (user.status === 'denied') {
+        console.log('User account denied:', username);
+        return res.status(403).render('index', { 
+          message: 'Your account has been denied. Please contact an administrator.' 
+        });
+      }
+      // Failsafe for any other status
+      console.log('User account not active:', username);
+      return res.status(403).render('index', { 
+        message: 'Account not active. Please contact an administrator.' 
+      });
     }
 
     // Create session

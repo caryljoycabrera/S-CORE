@@ -1,778 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Manage Users</title>
-  <link rel="stylesheet" href="/style.css" />
-  <link rel="stylesheet" href="/stylesheets/notifications.css" />
-  <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/users.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-</head>
-<body>
-  <!-- Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
+// ========================================
+// USERS PAGE JAVASCRIPT
+// File: public/javascripts/ejs/users.js
+// Purpose: JavaScript functionality for the admin users management page
+// ========================================
 
-  <!-- Mobile Overlay -->
-  <div class="mobile-overlay" id="mobileOverlay"></div>
-
-  <!-- SIDEBAR NAVIGATION -->
-  <div class="admin-sidebar" id="adminSidebar">
-    <div class="sidebar-items">
-      <a href="/admin" class="sidebar-item" title="Dashboard">
-        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-        <span class="sidebar-label">Dashboard</span>
-      </a>
-      
-      <a href="/admin/analytics" class="sidebar-item" title="Analytics">
-        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="20" x2="12" y2="10"></line>
-          <line x1="18" y1="20" x2="18" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="16"></line>
-        </svg>
-        <span class="sidebar-label">Analytics</span>
-      </a>
-      
-      <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
-        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 11l3 3L22 4"></path>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-        </svg>
-        <span class="sidebar-label">Track All Requests</span>
-      </a>
-      
-      <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
-        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-        <span class="sidebar-label">Manage Approvals</span>
-      </a>
-      
-      <a href="/admin/services" class="sidebar-item" title="Manage Services">
-        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
-        </svg>
-        <span class="sidebar-label">Manage Services</span>
-      </a>
-      
-      <a href="/admin/users" class="sidebar-item active" title="User Accounts">
-        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
-          <circle cx="9" cy="7" r="4"></circle>
-          <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
-          <path d="M16 3.13a4 4 0 010 7.75"></path>
-        </svg>
-        <span class="sidebar-label">User Accounts</span>
-      </a>
-
-      <a href="/admin/reports" class="sidebar-item" title="Generate Reports">
-        <svg class="sidebar-icon" viewBox="0 0 105.53 122.88" fill="currentColor" stroke="none">
-          <path d="M98.66,87l2.84,2.85a1.9,1.9,0,0,1,0,2.71l-2.28,2.29a15.46,15.46,0,0,1,1.42,3.79h3a1.92,1.92,0,0,1,1.92,1.92v4a1.93,1.93,0,0,1-1.92,1.93h-3.23a15.4,15.4,0,0,1-1.67,3.67l2.09,2.09a1.93,1.93,0,0,1,0,2.72L98,117.86a1.93,1.93,0,0,1-2.72,0L93,115.58A15.88,15.88,0,0,1,89.16,117v3a1.93,1.93,0,0,1-1.92,1.92h-4A1.93,1.93,0,0,1,81.31,120v-3.23a15.32,15.32,0,0,1-3.68-1.68l-2.09,2.1a1.93,1.93,0,0,1-2.72,0L70,114.3a1.91,1.91,0,0,1,0-2.71l2.28-2.29a15.88,15.88,0,0,1-1.42-3.79h-3A1.93,1.93,0,0,1,66,103.59v-4a1.94,1.94,0,0,1,1.92-1.93H71.1A15.43,15.43,0,0,1,72.78,94l-2.1-2.09a1.93,1.93,0,0,1,0-2.72l2.85-2.84a1.91,1.91,0,0,1,2.71,0l2.29,2.28a15.83,15.83,0,0,1,3.79-1.42v-3a1.93,1.93,0,0,1,1.92-1.92h4a1.93,1.93,0,0,1,1.92,1.92v3.23a15,15,0,0,1,3.67,1.68L95.94,87a1.94,1.94,0,0,1,2.72,0ZM60.26,117a3,3,0,0,1,0,5.92H6.89A6.89,6.89,0,0,1,0,116V6.85A6.82,6.82,0,0,1,2,2,6.79,6.79,0,0,1,6.88,0H91.52a6.9,6.9,0,0,1,6.89,6.89V68.23c0,.06,0,.12,0,.18a3,3,0,0,1-5.94,0V6.89h0a1,1,0,0,0-.28-.68,1,1,0,0,0-.68-.29H6.89a.94.94,0,0,0-1,1V116h0a1,1,0,0,0,.28.67,1,1,0,0,0,.69.29H60.26ZM19,102.66V96H47.83v6.63l-28.82,0Zm55.3-42.9v6.11H65.62V59.76ZM58.77,54.38V65.87H50.08V54.38ZM43.24,37.92v28H34.55V37.92ZM27.7,26.41V65.87H19V26.41ZM69,29.31l13.11.05a13.14,13.14,0,0,1-3.91,9.29,13.55,13.55,0,0,1-1.91,1.56L69,29.31Zm-1.34-2.6L67,12.7a.51.51,0,0,1,.48-.53H68A14.56,14.56,0,0,1,82.69,25.67a.52.52,0,0,1-.47.54l-14,1a.49.49,0,0,1-.53-.46.08.08,0,0,0,0,0Zm.83-13.55.65,12.51L80.9,24.61a11.68,11.68,0,0,0-4-7.86c-2.46-2.27-4.74-3.62-8.32-3.58ZM66.1,28.7l7,12.17A14.05,14.05,0,1,1,64.06,14.8l2,13.9ZM19,84.83V78.15H59.86v6.63L19,84.83Zm66.73,9.38a7.89,7.89,0,1,1-7.89,7.89,7.89,7.89,0,0,1,7.89-7.89Z"/>
-        </svg>
-        <span class="sidebar-label">Generate Reports</span>
-      </a>
-    </div>
-    
-    <!-- Logout Button at Bottom -->
-    <div class="sidebar-bottom">
-      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
-        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
-          <polyline points="16 17 21 12 16 7"></polyline>
-          <line x1="21" y1="12" x2="9" y2="12"></line>
-        </svg>
-        <span class="sidebar-label">Logout</span>
-      </a>
-    </div>
-  </div>
-
-  <!-- MAIN CONTENT WITH SIDEBAR -->
-  <div class="admin-main-content">
-    <div class="overlap">
-      <!-- Left Group: Hamburger, Logo, Title -->
-      <div class="header-left-group">
-        <!-- Hamburger Menu Button for Mobile -->
-        <button class="admin-menu-toggle" id="adminMenuToggle" title="Open Menu">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
-
-        <div class="group">
-          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
-        </div>
-        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
-      </div>
-      
-      <span class="text-wrapper-2">Manage Users</span>
-
-      <div class="header-right-section">
-        <%- include('../partials/notifications') %>
-        
-        <div class="dropdown-wrapper">
-          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-            <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
-            </div>
-          </div>
-          <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/admin/profile">My Profile</a>
-            <a href="/logout">Logout</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <section class="activity-section">
-      <div class="section-header">
-        <h1>Registered Users</h1>
-        <p>View and manage user accounts</p>
-      </div>
-      
-   
-      <nav class="tabs">
-        <a href="/admin/all-requests" class="view-all-btn">All Requests</a>
-        <a href="/admin/approvals" class="view-all-btn">Approvals</a>
-        <a href="/admin/services" class="view-all-btn">Services</a>
-        <a href="/admin/users" class="view-all-btn" style="background: var(--primary-green); color: white;">Users</a>
-      </nav>
-      
-      <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
-
-        <div class="filter-section">
-          <div class="filter-container">
-            <div class="filter-group">
-              <label class="filter-label">Filter by:</label>
-              
-              <!-- First Row: User ID, Name, Username, Email -->
-              <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="userIdFilter" class="filter-sublabel">User ID</label>
-                  <input type="text" id="userIdFilter" class="filter-input" placeholder="Search user ID...">
-                </div>
-                <div class="filter-item">
-                  <label for="nameFilter" class="filter-sublabel">Name</label>
-                  <input type="text" id="nameFilter" class="filter-input" placeholder="Search name...">
-                </div>
-                <div class="filter-item">
-                  <label for="usernameFilter" class="filter-sublabel">Username</label>
-                  <input type="text" id="usernameFilter" class="filter-input" placeholder="Search username...">
-                </div>
-                <div class="filter-item">
-                  <label for="emailFilter" class="filter-sublabel">Email</label>
-                  <input type="text" id="emailFilter" class="filter-input" placeholder="Search email...">
-                </div>
-              </div>
-
-              <!-- Second Row: Course/Yr/Sec and Role -->
-              <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="cysFilter" class="filter-sublabel">Course/Yr/Sec</label>
-                  <input type="text" id="cysFilter" class="filter-input" placeholder="Search CYS...">
-                </div>
-                <div class="filter-item">
-                  <label for="roleFilter" class="filter-sublabel">Role</label>
-                  <div class="enhanced-multi-select-wrapper">
-                    <div class="enhanced-multi-select" id="roleFilter">
-                      <div class="select-display" data-placeholder="Select Roles">
-                        <span class="selected-text">All Roles</span>
-                        <span class="dropdown-arrow">▼</span>
-                      </div>
-                      <div class="select-dropdown" id="roleDropdown">
-                        <div class="options-container"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Third Row: Office/Department and Student Organization ONLY - with dropdown-row class -->
-              <div class="filter-controls dropdown-row">
-                <div class="filter-item">
-                  <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
-                  <div class="enhanced-multi-select-wrapper">
-                    <div class="enhanced-multi-select" id="studentOrgFilter">
-                      <div class="select-display" data-placeholder="Select Student Organizations">
-                        <span class="selected-text">All Student Organizations</span>
-                        <span class="dropdown-arrow">▼</span>
-                      </div>
-                      <div class="select-dropdown" id="studentOrgDropdown">
-                        <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search organizations...">
-                        </div>
-                        <div class="options-container"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="filter-item">
-                  <label for="affiliationFilter" class="filter-sublabel">Office/Department</label>
-                  <div class="enhanced-multi-select-wrapper">
-                    <div class="enhanced-multi-select" id="affiliationFilter">
-                      <div class="select-display" data-placeholder="Select Offices/Departments">
-                        <span class="selected-text">All Offices/Departments</span>
-                        <span class="dropdown-arrow">▼</span>
-                      </div>
-                      <div class="select-dropdown" id="affiliationDropdown">
-                        <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search offices/departments...">
-                        </div>
-                        <div class="options-container"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Filter Actions - Clear Button and Results Count -->
-            <div class="filter-actions">
-              <button id="clearFilters" class="clear-filters-btn">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="6" width="18" height="14" rx="2"/>
-                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  <line x1="1" y1="6" x2="23" y2="6"/>
-                  <line x1="10" y1="11" x2="10" y2="17"/>
-                  <line x1="14" y1="11" x2="14" y2="17"/>
-                </svg>
-                Clear All
-              </button>
-              <div class="results-count">
-                <span id="resultsCount">Showing all users</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Status Tabs - Outside filter section, above table -->
-        <div class="user-status-tabs-container">
-          <div class="user-status-tabs">
-            <a href="#" class="status-tab" data-status="all">All Users</a>
-            <a href="#" class="status-tab active" data-status="approved">Approved</a>
-            <a href="#" class="status-tab" data-status="pending">Pending</a>
-            <a href="#" class="status-tab" data-status="denied">Denied</a>
-          </div>
-        </div>
-
-      
-
-        <section class="table-section" style="overflow-x:auto;">
-          <table class="requests-table">
-            <thead>
-              <tr>
-                <th style="width: 100px;">User ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th style="width: 100px;">Role</th>
-                <th style="width: 140px;">Registration Date</th>
-                <th style="width: 140px;">Status</th>
-                <th style="width: 320px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody">
-              <% users.forEach(u => { %>
-              <tr class="user-row" 
-                data-id="<%= u._id %>"
-                data-user-id="<%= u._id.toString().slice(-6) %>"
-                data-username="<%= u.username %>"
-                data-fullname="<%= u.fName %> <%= u.lName %>"
-                data-fname="<%= u.fName %>"
-                data-mname="<%= u.mName || '' %>"
-                data-lname="<%= u.lName %>"
-                data-email="<%= u.email %>"
-                data-phone="<%= u.phoneNumber || '' %>"
-                data-role="<%= u.role %>"
-                data-usertype="<%= u.userType %>"
-                data-studentid="<%= u.studentId || '' %>"
-                data-studentorg="<%= Array.isArray(u.studentOrganization) ? u.studentOrganization.join('||') : (u.studentOrganization || '') %>"
-                data-affiliation="<%= Array.isArray(u.affiliation) ? u.affiliation.join('||') : (u.affiliation || '') %>"
-                data-organization="<%= u.userType === 'student' ? (Array.isArray(u.studentOrganization) ? u.studentOrganization.join(',') : (u.studentOrganization || '')) : (Array.isArray(u.affiliation) ? u.affiliation.join(',') : (u.affiliation || '')) %>"
-                data-cys="<%= u.cys || '' %>"
-                data-profilepicture="<%= u.profilePicture || '' %>"
-                data-status="<%= u.status %>"
-                data-registration-date="<%= u.createdAt %>">
-                <td style="width: 100px;"><%= u._id.toString().slice(-6) %></td>
-                <td><%= u.fName %> <%= u.lName %></td>
-                <td><%= u.email %></td>
-                <td style="width: 100px;">
-                  <span class="role-badge <%= u.role === 'admin' ? 'role-admin' : 'role-user' %>">
-                    <%= u.role.toUpperCase() %>
-                  </span>
-                </td>
-                <td style="font-size: 0.85rem; white-space: nowrap; width: 140px;">
-                  <%= new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %><br>
-                  <span style="color: #6b7280; font-size: 0.75rem;"><%= new Date(u.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %></span>
-                </td>
-                <td style="width: 140px;">
-                  <% if (u.status === 'approved') { %>
-                    <span style="color: #059669; font-weight: 500;">APPROVED</span>
-                  <% } else if (u.status === 'pending') { %>
-                    <span style="color: #d97706; font-weight: 500;">PENDING</span>
-                  <% } else { %>
-                    <span style="color: #dc2626; font-weight: 500;">DENIED</span>
-                  <% } %>
-                </td>
-                <td class="action-buttons" style="width: 320px;">
-                  <% if (u.status === 'pending') { %>
-                    <button class="approve-btn" data-id="<%= u._id %>" data-status="<%= u.status %>">Approve</button>
-                    <button class="deny-btn" data-id="<%= u._id %>" data-status="<%= u.status %>">Deny</button>
-                  <% } else if (u.status === 'approved') { %>
-                    <button class="deny-btn" data-id="<%= u._id %>" data-status="<%= u.status %>">Deny</button>
-                    <button class="reset-btn" data-id="<%= u._id %>" data-status="<%= u.status %>">Reset to Pending</button>
-                  <% } else if (u.status === 'denied') { %>
-                    <button class="approve-btn" data-id="<%= u._id %>" data-status="<%= u.status %>">Approve</button>
-                    <button class="reset-btn" data-id="<%= u._id %>" data-status="<%= u.status %>">Reset to Pending</button>
-                  <% } %>
-                </td>
-              </tr>
-              <% }) %>
-            </tbody>
-          </table>
-
-          <% if (users.length === 0) { %>
-          <div style="text-align: center; padding: 2rem; color: #6b7280;">
-            <p>No users found.</p>
-          </div>
-          <% } %>
-        </section>
-
-        <a href="/admin" class="view-all-btn" style="margin-top: 1rem; display: inline-block;">← Back to Dashboard</a>
-      </section>
-    </div>
-  </div>
-
-
-
-<!-- Enhanced User Details Modal - Inspired by profile.ejs -->
-<div id="userModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <header class="modal-header">
-      <span class="modal-title">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-      User Profile Management
-    </span>
-      <span class="close" id="closeUserModal">&times;</span>
-    </header>
-    <div class="modal-body user-details-modal-body">
-      <div class="user-details-content">
-        
-        <!-- 1. Personal Information Section -->
-        <div class="user-info-section">
-          <h3>
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            Personal Information
-          </h3>
-          <table class="user-info-table">
-            <tbody>
-              <tr>
-                <td>User ID:</td>
-                <td id="viewUserId"></td>
-              </tr>
-              <tr>
-                <td>Full Name:</td>
-                <td id="viewFullName"></td>
-              </tr>
-              <tr>
-                <td>Username:</td>
-                <td id="viewUsername"></td>
-              </tr>
-              <tr>
-                <td>Email Address:</td>
-                <td id="viewEmail"></td>
-              </tr>
-              <tr>
-                <td>Phone Number:</td>
-                <td id="viewPhone"></td>
-              </tr>
-              <tr>
-                <td>User Type:</td>
-                <td>
-                  <span class="user-type-badge" id="viewUserType"></span>
-                </td>
-              </tr>
-              <tr id="viewCysRow" style="display: none;">
-                <td>Course/Year/Section:</td>
-                <td id="viewCys"></td>
-              </tr>
-              <tr>
-                <td id="viewOrgLabel">Organization:</td>
-                <td>
-                  <div id="viewOrganizationContainer">
-                    <span id="viewOrganization"></span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- 2. User Status Section -->
-        <div class="user-admin-form-section">
-          <h3>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 6v6l4 2"/>
-            </svg>
-            User Status
-            <span class="user-admin-badge" style="background: linear-gradient(135deg, #10b981, #059669);">
-              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M5 13l4 4L19 7"/>
-              </svg>
-              MANAGE ACCESS
-            </span>
-          </h3>
-          
-          <div class="user-form-grid">
-            <div class="user-form-field">
-              <label>Current Status</label>
-              <div style="margin-top: 0.5rem;">
-                <span class="status-badge" id="modalStatusBadge">PENDING</span>
-              </div>
-            </div>
-            
-            <div class="user-form-field">
-              <label>Change Status</label>
-              <div class="quick-action-buttons" style="margin-top: 0.5rem; display: flex; gap: 0.625rem; flex-wrap: wrap;">
-                <button type="button" class="approve-btn" id="modalApproveBtn" style="min-width: 100px;">Approve</button>
-                <button type="button" class="deny-btn" id="modalDenyBtn" style="min-width: 80px;">Deny</button>
-                <button type="button" class="reset-btn" id="modalResetBtn" style="min-width: 160px;">Reset to Pending</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Administrative Controls Section -->
-        <div class="user-admin-form-section">
-          <h3>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-            </svg>
-            Administrative Controls
-            <span class="user-admin-badge">
-              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              EDIT ROLE
-            </span>
-          </h3>        
-          <form action="/admin/user/update" method="POST" id="userUpdateForm">
-            <input type="hidden" name="userId" id="editUserId" />
-            
-            <div class="user-form-grid">
-              <div class="user-form-field role-update-field">
-                <label for="editRole">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                  </svg>
-                  Change User Role
-                </label>
-                
-                <div class="custom-role-dropdown" id="customRoleDropdown">
-                  <div class="dropdown-selected" onclick="toggleCustomDropdown()">
-                    <div class="selected-content">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                      </svg>
-                      <span class="selected-text" id="selectedRoleText">Standard User - Submit & View Own Requests</span>
-                    </div>
-                    <svg class="dropdown-arrow" width="40" height="40" viewBox="0 0 24 24" fill="#f59e0b">
-                      <path d="M7 10l5 5 5-5z"/>
-                    </svg>
-                  </div>
-                  
-                  <div class="dropdown-options" id="customDropdownOptions" style="display: none;">
-                    <div class="dropdown-option" data-value="user" onclick="selectCustomRole('user', 'Standard User - Submit & View Own Requests')">
-                      <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              <span>Standard User - Submit & View Own Requests</span>
-            </div>
-            <div class="dropdown-option" data-value="admin" onclick="selectCustomRole('admin', 'Administrator - Full System Access')">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-              </svg>
-              <span>Administrator - Full System Access</span>
-            </div>
-          </div>
-          
-          <input type="hidden" name="role" id="editRole" value="user">
-        </div>
-        
-        <!-- Simplified Current Role Display - Just Text -->
-        <div class="current-role-display">
-          <span class="current-role-label">Current Role:</span>
-          <span class="current-role-text" id="currentRoleDisplay">Loading...</span>
-        </div>
-        
-        <div class="role-update-warning">
-          <svg width="16" height="16" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.5rem; vertical-align: text-top;">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <strong>Important:</strong> Changing user roles affects system access permissions. 
-          Administrators have full system access and can manage all users and requests.
-        </div>
-      </div>
-    </div>
-    
-    <div class="user-form-actions">
-      <button type="button" class="user-admin-btn user-admin-btn-secondary" id="cancelUpdateBtn">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-        Cancel Changes
-      </button>
-      <button type="submit" class="user-admin-btn user-admin-btn-primary">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17,21 17,13 7,13 7,21"/>
-          <polyline points="7,3 7,8 15,8"/>
-        </svg>
-        Save Changes
-      </button>
-    </div>
-  </form>
-</div>
-
-<!-- Status Change Confirmation Modal -->
-<div id="confirmStatusModal" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width: 500px;">
-    <header class="modal-header">
-      <span class="modal-title">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 16v-4M12 8h.01"/>
-        </svg>
-        Confirm Status Change
-      </span>
-      <span class="close" id="closeConfirmModal">&times;</span>
-    </header>
-    <div class="modal-body" style="padding: 2rem;">
-      <div id="confirmMessage" style="margin-bottom: 2rem; color: #374151; line-height: 1.6; font-size: 1rem;">
-        <!-- Dynamic message will be inserted here -->
-      </div>
-      <div class="user-form-actions" style="justify-content: center; gap: 1rem;">
-        <button type="button" id="cancelConfirmBtn" class="user-admin-btn user-admin-btn-secondary">
-          Cancel
-        </button>
-        <button type="button" id="confirmActionBtn" class="user-admin-btn user-admin-btn-primary">
-          Confirm
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Page-specific JavaScript variables - MUST be defined before main script -->
-<script>
-// Data arrays - hardcoded for consistency
-const affiliationsArray = [
-  "Office of the President",
-  "Office of the Chief Administrative Officer",
-  "Office of the Provost",
-  "Office of the Chief Lasallian Mission Officer",
-  "Office of the Principal",
-  "Corporate and Executive Management Office",
-  "Center for Heritage Conservation",
-  "Museo De La Salle",
-  "Risk, Compliance and Audit Office",
-  "University Chaplain",
-  "Office of the Vice President for Administrative Services",
-  "Office of the Vice President for Finance",
-  "Office of the Vice President for Global Engagement and External Relations",
-  "Human Resource Management Office",
-  "Strategic Communications Office",
-  "Ancillary and Asset Management Office",
-  "Legal Counsel",
-  "Data Protection Office",
-  "Campus Development Office",
-  "Buildings and Facilities Maintenance Office",
-  "Campus Sustainability Office",
-  "General Services Office",
-  "Green Architecture and Campus Planning Office",
-  "Information and Communications Technology Center",
-  "Accounting Office",
-  "Treasury Office",
-  "Advancement and Alumni Relations Office",
-  "Lasallian Community Development Center",
-  "Linkages and Scholarship Office",
-  "Office of the Vice Provost for Academics",
-  "Office of the Deputy Provost for Research",
-  "Academic Planning and Quality Management",
-  "College of Law",
-  "College of Professional and Graduate Studies",
-  "School of Innovative and Flexible Learning",
-  "School of Governance, Public Service, and Corporate Leadership",
-  "Aklatang Emilio Aguinaldo-Information Resource Center",
-  "Center for Student Admissions",
-  "University Registrar",
-  "Cavite Studies Center",
-  "University Research Office",
-  "Herminia D. Torres Quality Assurance Office",
-  "Center for Innovative Learning Program",
-  "Center for Curriculum Development and Instruction",
-  "Language Learning Center",
-  "Center for Artificial Intelligence",
-  "Center for Creative Program",
-  "Academy of Continuing Education",
-  "College of Business Administration and Accountancy",
-  "Accountancy Department",
-  "Allied Business Department",
-  "Business Management Department",
-  "Marketing Department",
-  "College of Criminal Justice Education",
-  "College of Education",
-  "Physical Education Department",
-  "Professional Education Department",
-  "Religious Education Department",
-  "College of Engineering, Architecture and Technology",
-  "Architecture Department",
-  "Engineering Department",
-  "Graphics Design and Multimedia Department",
-  "Center of Technology",
-  "College of Information and Computer Studies",
-  "Computer Studies Department",
-  "Information Technology Department",
-  "College of Liberal Arts and Communication",
-  "Communication and Journalism Department",
-  "Languages and Literature Department",
-  "Social Sciences Department",
-  "Philosophy and Psychology Department",
-  "College of Tourism and Hospitality Management",
-  "Hospitality Management Department",
-  "Tourism Management Department",
-  "College of Science",
-  "Biological Sciences Department",
-  "Mathematics & Statistics Department",
-  "Physical Sciences Department",
-  "Office of Student Services",
-  "Student Development and Activities Office",
-  "Student Welfare and Formation Office",
-  "Student Wellness Center",
-  "NSTP-CWTS",
-  "Campus Ministry Office",
-  "DLS Bahay Pag-asa Dasmariñas",
-  "Night College",
-  "Sports Development Office",
-  "University Lasallian Family Office",
-  "Basic Education",
-  "Office of the Associate Principal for Academics and Research",
-  "Office of the Associate Principal for Administrative Services and Student Affairs",
-  "Dormitory",
-  "Materials Reproduction Office / Food Services Office",
-  "Retreat and Conference Center / Sports & Recreation Complex",
-  "Warehouse Office",
-  "Safety & Health Office",
-  "Purchasing Office",
-  "Transportation Office",
-  "Facilities Maintenance Office",
-  "Housekeeping & Grounds",
-  "De La Salle Dasmariñas Alumni Association",
-  "DLSU-D Development Cooperative",
-  "Faculty Organization",
-  "KABALIKAT ng DLSU-D Inc.",
-  "Parents Organization La Salle Cavite",
-  "Human Resource Management Office"
-];
-
-const studentOrgsArray = [
-  "University Student Government (USG)",
-  "Internal Audit Service (IAS)",
-  "University Student Election Commission (USEC)",
-  "Office of the Solicitor General (OSG)",
-  "College of Business Administration and Accountancy Student Government (CBAASG)",
-  "Business Management Program Council (BMPC)",
-  "Junior Philippine Institute of Accountants (JPIA)",
-  "Marketing Management Program Council (MMPC)",
-  "College of Education Student Government (COEdSG)",
-  "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-  "Architecture Program Council (ArchPC)",
-  "Civil Engineering Program Council (CEEPC)",
-  "Computer Engineering Program Council (CpEPC)",
-  "Electrical Engineering Program Council (EEEPC)",
-  "Electronics Engineering Program Council (ECEPC)",
-  "Industrial Engineering Program Council (IEEPC)",
-  "Mechanical Engineering Program Council (MEEPC)",
-  "Multimedia Arts Program Council (MMAPC)",
-  "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-  "College of Criminal Justice Education Student Government (CCJESG)",
-  "Criminology Program Council (CrimPC)",
-  "Forensic Science Program Council (FScPC)",
-  "College of Liberal Arts and Communication Student Government (CLACSG)",
-  "Communication Program Council (CPC)",
-  "International Development Program Council (IDPC)",
-  "Political Science Program Council (PSPC)",
-  "Psychology Program Council (PPC)",
-  "College of Science Student Government (COSSG)",
-  "Applied Mathematics Program Council (AMPC)",
-  "Biology Program Council (BioPC)",
-  "College of Information and Computer Studies Student Government (CICSSG)",
-  "Computer Science Program Council (CSPC)",
-  "Information Technology Program Council (ITPC)",
-  "DLSU-D Chorale (CHORALE)",
-  "Lasallian Symphony Orchestra (LSO)",
-  "La Salle Filipiniana Dance Company (LSFDC)",
-  "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-  "Lasallian Pop Band (LPB)",
-  "Teatro Lasalliana (TEATRO)",
-  "Visual and Performing Arts Production Unit (VPAPU)",
-  "Heraldo Filipino",
-  "Vicissitude",
-  "Council of Student Organizations (CSO)",
-  "Business Operations Management Society (BOMS)",
-  "Junior Marketing Association (JMA)",
-  "DLSU-D Psychological Society (DPS)",
-  "DLSU-D Pre-Medical Society (DPMS)",
-  "Hotel and Restaurant Management Society (HRMS)",
-  "Turismo Lasalleño Society (TLS)",
-  "Lasallian Educators Society (LES)",
-  "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-  "DLSU-D Pre-Law Society (DPLS)",
-  "Astraeus Literary and Arts Guild",
-  "Accounting Enrichment Society (ACES)",
-  "Circle of Student Assistants (COSA)",
-  "DLSU-D Lifters",
-  "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-  "DLSU-D United Patriots Football Club",
-  "Junior Financial Executives Institute of the Philippines (JFINEX)",
-  "Marché Société (MS)",
-  "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-  "SINAG Society of Leaders (SISOL)",
-  "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-  "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-  "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-  "LS Verde of Campus Sustainability Office",
-  "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-  "Green FM of Communications and Journalism Department",
-  "International Students' Association (ISA) of International Students Office",
-  "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
-];
-</script>
-
-<script>
 // ========================================
 // DOM ELEMENTS
 // ========================================
@@ -827,13 +58,13 @@ function showToast(title, message, type = 'success') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  
-  const iconSvg = type === 'success' 
+
+  const iconSvg = type === 'success'
     ? '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>'
     : type === 'error'
     ? '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
     : '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
-  
+
   toast.innerHTML = `
     <div class="toast-icon">${iconSvg}</div>
     <div class="toast-content">
@@ -846,9 +77,9 @@ function showToast(title, message, type = 'success') {
       </svg>
     </button>
   `;
-  
+
   container.appendChild(toast);
-  
+
   // Auto-remove after 4 seconds
   setTimeout(() => {
     toast.classList.add('hiding');
@@ -874,7 +105,7 @@ function showNotificationPersistent(message, type = 'success') {
     z-index: 99999;
     backdrop-filter: blur(4px);
   `;
-  
+
   const modal = document.createElement('div');
   modal.style.cssText = `
     background: white;
@@ -885,7 +116,7 @@ function showNotificationPersistent(message, type = 'success') {
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
     overflow: hidden;
   `;
-  
+
   let headerColor;
   switch(type) {
     case 'success':
@@ -899,7 +130,7 @@ function showNotificationPersistent(message, type = 'success') {
       headerColor = 'linear-gradient(135deg, #3b82f6, #2563eb)';
       break;
   }
-  
+
   modal.innerHTML = `
     <div style="background: ${headerColor}; color: white; padding: 2rem; text-align: center;">
       <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">
@@ -938,28 +169,28 @@ function showNotificationPersistent(message, type = 'success') {
       </div>
     </div>
   `;
-  
+
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  
+
   const okBtn = modal.querySelector('#persistentNotificationOkBtn');
   const refreshBtn = modal.querySelector('#persistentNotificationRefreshBtn');
-  
+
   function closeModal() {
     if (document.body.contains(overlay)) {
       document.body.removeChild(overlay);
     }
     document.body.style.overflow = '';
   }
-  
+
   okBtn.addEventListener('click', closeModal);
-  
+
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
       window.location.reload();
     });
   }
-  
+
   document.body.style.overflow = 'hidden';
 }
 
@@ -968,19 +199,18 @@ function showNotificationPersistent(message, type = 'success') {
 // ========================================
 let selectedAffiliations = [];
 let selectedStudentOrgs = [];
-let selectedRoles = [];
 
 // Dropdown Manager
 const DropdownManager = {
   activeDropdown: null,
-  
+
   registerOpen(dropdown) {
     if (this.activeDropdown && this.activeDropdown !== dropdown) {
       this.activeDropdown.close();
     }
     this.activeDropdown = dropdown;
   },
-  
+
   clearActive(dropdown) {
     if (this.activeDropdown === dropdown) {
       this.activeDropdown = null;
@@ -1174,7 +404,7 @@ class EnhancedMultiSelect {
 
   open() {
     DropdownManager.registerOpen(this);
-    
+
     this.isOpen = true;
     this.display.classList.add('active');
     this.dropdown.classList.add('show');
@@ -1187,9 +417,9 @@ class EnhancedMultiSelect {
     this.isOpen = false;
     this.display.classList.remove('active');
     this.dropdown.classList.remove('show');
-    
+
     DropdownManager.clearActive(this);
-    
+
     if (this.hasSearch && this.searchInput) {
       this.searchInput.value = '';
       this.filterOptions('');
@@ -1205,47 +435,22 @@ class EnhancedMultiSelect {
 }
 
 // Initialize dropdowns
-let affiliationFilter, studentOrgFilter, roleFilter;
+let affiliationFilter, studentOrgFilter;
 
 function initializeSearchableDropdowns() {
-  console.log('🚀 Initializing dropdowns...');
-  console.log('Affiliations array:', affiliationsArray);
-  console.log('Student orgs array:', studentOrgsArray);
-  
-  try {
-    affiliationFilter = new EnhancedMultiSelect('affiliationFilter',
-      affiliationsArray, 'Select Offices/Departments', true);
-    console.log('✅ Affiliation filter created:', affiliationFilter);
-    
-    studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter',
-      studentOrgsArray, 'Select Student Organizations', true);
-    console.log('✅ Student org filter created:', studentOrgFilter);
-    
-    // Initialize role filter WITHOUT search (only 3 options)
-    const roles = ['admin', 'user', 'unit team'];
-    roleFilter = new EnhancedMultiSelect('roleFilter', roles, 'Select Roles', false);
-    console.log('✅ Role filter created:', roleFilter);
-    
-    // Listen to selection changes
-    document.getElementById('affiliationFilter').addEventListener('selectionChange', () => {
-      console.log('Affiliation selection changed');
-      filterUsers();
-    });
-    
-    document.getElementById('studentOrgFilter').addEventListener('selectionChange', () => {
-      console.log('Student org selection changed');
-      filterUsers();
-    });
-    
-    document.getElementById('roleFilter').addEventListener('selectionChange', () => {
-      console.log('Role selection changed');
-      filterUsers();
-    });
-    
-    console.log('✅ Dropdowns initialized successfully');
-  } catch (error) {
-    console.error('❌ Error initializing dropdowns:', error);
-  }
+  affiliationFilter = new EnhancedMultiSelect('affiliationFilter',
+    affiliationsArray, 'Select Offices/Departments', true);
+  studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter',
+    studentOrgsArray, 'Select Student Organizations', true);
+
+  // Listen to selection changes
+  document.getElementById('affiliationFilter').addEventListener('selectionChange', () => {
+    filterUsers();
+  });
+
+  document.getElementById('studentOrgFilter').addEventListener('selectionChange', () => {
+    filterUsers();
+  });
 }
 
 // Call this on load
@@ -1260,7 +465,7 @@ function filterUsers() {
   const usernameValue = document.getElementById('usernameFilter').value.toLowerCase();
   const emailValue = document.getElementById('emailFilter').value.toLowerCase();
   const cysValue = document.getElementById('cysFilter').value.toLowerCase();
-  
+
   let visibleCount = 0;
 
   allRows.forEach(row => {
@@ -1271,14 +476,13 @@ function filterUsers() {
     const rowCys = row.dataset.cys.toLowerCase();
     const rowAffiliation = (row.dataset.affiliation || '').toLowerCase();
     const rowStudentOrg = (row.dataset.studentorg || '').toLowerCase();
-    const rowRole = (row.dataset.role || '').toLowerCase();
 
     const userIdMatch = userIdValue === '' || rowUserId.includes(userIdValue);
     const nameMatch = nameValue === '' || rowFullname.includes(nameValue);
     const usernameMatch = usernameValue === '' || rowUsername.includes(usernameValue);
     const emailMatch = emailValue === '' || rowEmail.includes(emailValue);
     const cysMatch = cysValue === '' || rowCys.includes(cysValue);
-    
+
     // Multi-select matching for affiliations using EnhancedMultiSelect
     let affiliationMatch = true;
     if (affiliationFilter && affiliationFilter.selectedValues) {
@@ -1287,7 +491,7 @@ function filterUsers() {
         affiliationMatch = selectedAffs.some(aff => rowAffiliation.includes(aff.toLowerCase()));
       }
     }
-    
+
     // Multi-select matching for student orgs using EnhancedMultiSelect
     let studentOrgMatch = true;
     if (studentOrgFilter && studentOrgFilter.selectedValues) {
@@ -1296,19 +500,10 @@ function filterUsers() {
         studentOrgMatch = selectedOrgs.some(org => rowStudentOrg.includes(org.toLowerCase()));
       }
     }
-    
-    // Multi-select matching for roles using EnhancedMultiSelect
-    let roleMatch = true;
-    if (roleFilter && roleFilter.selectedValues) {
-      const selectedRoles = roleFilter.getSelectedValues();
-      if (!selectedRoles.includes('all')) {
-        roleMatch = selectedRoles.some(role => rowRole === role.toLowerCase());
-      }
-    }
 
-    const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && affiliationMatch && studentOrgMatch && roleMatch;
+    const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && affiliationMatch && studentOrgMatch;
     row.style.display = isVisible ? '' : 'none';
-    
+
     if (isVisible) visibleCount++;
   });
 
@@ -1336,7 +531,7 @@ clearFiltersBtn.addEventListener('click', () => {
   document.getElementById('usernameFilter').value = '';
   document.getElementById('emailFilter').value = '';
   document.getElementById('cysFilter').value = '';
-  
+
   // Reset EnhancedMultiSelect dropdowns
   if (affiliationFilter) {
     affiliationFilter.reset();
@@ -1344,10 +539,7 @@ clearFiltersBtn.addEventListener('click', () => {
   if (studentOrgFilter) {
     studentOrgFilter.reset();
   }
-  if (roleFilter) {
-    roleFilter.reset();
-  }
-  
+
   filterUsers();
 });
 
@@ -1364,7 +556,7 @@ function updateCurrentRoleDisplay(role) {
 function toggleCustomDropdown() {
   const dropdown = document.getElementById('customDropdownOptions');
   const selected = document.querySelector('.dropdown-selected');
-  
+
   if (dropdown.style.display === 'none' || dropdown.style.display === '') {
     dropdown.style.display = 'block';
     selected.classList.add('active');
@@ -1380,7 +572,7 @@ function selectCustomRole(value, text) {
   document.getElementById('customDropdownOptions').style.display = 'none';
   document.querySelector('.dropdown-selected').classList.remove('active');
   updateCurrentRoleDisplay(value);
-  
+
   const changeEvent = new Event('change');
   document.getElementById('editRole').dispatchEvent(changeEvent);
 }
@@ -1393,42 +585,42 @@ document.querySelectorAll('.user-row').forEach(row => {
     const userType = row.dataset.usertype;
     const viewCysRow = document.getElementById('viewCysRow');
     const viewOrgLabel = document.getElementById('viewOrgLabel');
-    
+
     // Populate view information
     document.getElementById('viewUserId').textContent = row.dataset.userId;
     document.getElementById('viewFullName').textContent = row.dataset.fullname;
     document.getElementById('viewUsername').textContent = row.dataset.username;
     document.getElementById('viewEmail').textContent = row.dataset.email;
     document.getElementById('viewPhone').textContent = row.dataset.phone || 'Not provided';
-    
+
     // User type badge
     const userTypeBadge = document.getElementById('viewUserType');
     userTypeBadge.textContent = userType === 'student' ? 'Student' : 'Staff/Faculty';
     userTypeBadge.className = `user-type-badge ${userType}`;
-    
+
     // Role display
     const roleDisplay = document.getElementById('viewRole');
     roleDisplay.textContent = row.dataset.role;
-    
+
     // Populate edit form
     document.getElementById('editUserId').value = row.dataset.id;
     document.getElementById('editRole').value = row.dataset.role;
-    
+
     // Set the custom dropdown text
-    const roleText = row.dataset.role === 'admin' ? 
-      'Administrator - Full System Access' : 
+    const roleText = row.dataset.role === 'admin' ?
+      'Administrator - Full System Access' :
       'Standard User - Submit & View Own Requests';
     document.getElementById('selectedRoleText').textContent = roleText;
 
     updateCurrentRoleDisplay(row.dataset.role);
-    
+
     // Handle organization display
     const organizationContainer = document.getElementById('viewOrganizationContainer');
     const organizationData = row.dataset.organization;
-    
+
     if (organizationData && organizationData !== 'N/A' && organizationData.trim() !== '') {
       const organizations = organizationData.split(',').map(org => org.trim()).filter(Boolean);
-      
+
       if (organizations.length > 0) {
         organizationContainer.innerHTML = `
           <div class="org-tags-container">
@@ -1445,7 +637,7 @@ document.querySelectorAll('.user-row').forEach(row => {
     } else {
       organizationContainer.innerHTML = '<span class="no-organizations">No organizations listed</span>';
     }
-    
+
     // Handle student vs non-student specific fields
     if (userType === 'student') {
       viewCysRow.style.display = '';
@@ -1466,24 +658,24 @@ document.querySelectorAll('.user-row').forEach(row => {
 // ========================================
 document.getElementById('userUpdateForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  
+
   const submitBtn = this.querySelector('button[type="submit"]');
   const originalText = submitBtn.innerHTML;
-  
+
   // Show loading state
   submitBtn.disabled = true;
   submitBtn.classList.add('loading');
-  
+
   // Get role change information
   const newRole = document.getElementById('editRole').value;
   const userName = document.getElementById('viewFullName').textContent;
   const userId = document.getElementById('editUserId').value;
-  
+
   const requestData = {
     userId: userId,
     role: newRole
   };
-  
+
   fetch(this.action, {
     method: 'POST',
     headers: {
@@ -1503,27 +695,27 @@ document.getElementById('userUpdateForm').addEventListener('submit', function(e)
       submitBtn.disabled = false;
       submitBtn.classList.remove('loading');
       submitBtn.innerHTML = originalText;
-      
+
       // Update displays in modal
       const roleText = newRole.charAt(0).toUpperCase() + newRole.slice(1);
       document.getElementById('viewRole').textContent = roleText;
       document.getElementById('currentRoleDisplay').textContent = roleText;
-      
+
       // Update custom dropdown display
-      const selectedText = newRole === 'admin' 
-        ? 'Administrator - Full System Access' 
+      const selectedText = newRole === 'admin'
+        ? 'Administrator - Full System Access'
         : 'Standard User - Submit & View Own Requests';
       document.getElementById('selectedRoleText').textContent = selectedText;
-      
+
       // Update the row in the table
       const currentRow = document.querySelector(`tr.user-row[data-id="${userId}"]`);
       if (currentRow) {
         currentRow.dataset.role = newRole;
       }
-      
+
       // Show success toast
       showToast('Success', `${userName}'s role updated to ${roleText}`, 'success');
-      
+
       // Scroll to top of modal to see personal information
       const modalBody = document.querySelector('.user-details-modal-body');
       if (modalBody) {
@@ -1549,11 +741,11 @@ document.getElementById('userUpdateForm').addEventListener('submit', function(e)
 const headerDropdown = {
   menu: null,
   isOpen: false,
-  
+
   init() {
     this.menu = document.getElementById("dropdownMenu");
   },
-  
+
   toggle() {
     if (this.isOpen) {
       this.close();
@@ -1561,14 +753,14 @@ const headerDropdown = {
       this.open();
     }
   },
-  
+
   open() {
     if (this.menu) {
       this.menu.style.display = "block";
       this.isOpen = true;
     }
   },
-  
+
   close() {
     if (this.menu) {
       this.menu.style.display = "none";
@@ -1595,7 +787,7 @@ document.addEventListener("click", function (event) {
   if (!toggle.contains(event.target)) {
     headerDropdown.close();
   }
-  
+
   // Close custom dropdown when clicking outside
   const dropdown = document.getElementById('customRoleDropdown');
   if (dropdown && !dropdown.contains(event.target)) {
@@ -1702,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebarEl.classList.add('mobile-active');
       mobileOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
-      
+
       // Announce for screen readers
       const announcement = document.createElement('div');
       announcement.setAttribute('role', 'status');
@@ -1769,7 +961,7 @@ usersTableBody.addEventListener('click', function(e) {
     if (btn.classList.contains('approve-btn') || btn.classList.contains('deny-btn') || btn.classList.contains('reset-btn')) {
       e.stopPropagation(); // Prevent row click from triggering
       const action = btn.classList.contains('approve-btn') ? 'approve' : (btn.classList.contains('deny-btn') ? 'deny' : 'reset');
-      
+
       // Show confirmation modal
       showConfirmationModal(action, userId, btn);
       return;
@@ -1788,7 +980,7 @@ document.getElementById('modalApproveBtn').addEventListener('click', function(e)
   e.preventDefault();
   const userId = this.dataset.userId;
   if (!userId) return;
-  
+
   showConfirmationModal('approve', userId, this);
 });
 
@@ -1796,7 +988,7 @@ document.getElementById('modalDenyBtn').addEventListener('click', function(e) {
   e.preventDefault();
   const userId = this.dataset.userId;
   if (!userId) return;
-  
+
   showConfirmationModal('deny', userId, this);
 });
 
@@ -1804,7 +996,7 @@ document.getElementById('modalResetBtn').addEventListener('click', function(e) {
   e.preventDefault();
   const userId = this.dataset.userId;
   if (!userId) return;
-  
+
   showConfirmationModal('reset', userId, this);
 });
 
@@ -1813,10 +1005,10 @@ function showConfirmationModal(action, userId, buttonElement) {
   const confirmModal = document.getElementById('confirmStatusModal');
   const confirmMessage = document.getElementById('confirmMessage');
   const confirmActionBtn = document.getElementById('confirmActionBtn');
-  
+
   let message = '';
   let confirmBtnClass = '';
-  
+
   if (action === 'approve') {
     message = '<strong>Approve this user?</strong><br><br>The user will gain full access to the system and can submit service requests.';
     confirmBtnClass = 'user-admin-btn-primary';
@@ -1828,18 +1020,18 @@ function showConfirmationModal(action, userId, buttonElement) {
     message = '<strong>Reset to Pending?</strong><br><br>The user status will be changed to pending and will need approval again to access the system.';
     confirmBtnClass = 'user-admin-btn-secondary';
   }
-  
+
   confirmMessage.innerHTML = message;
   confirmModal.style.display = 'block';
   document.body.style.overflow = 'hidden';
-  
+
   // Reset confirm button style
   confirmActionBtn.style.background = action === 'deny' ? '#ef4444' : '';
-  
+
   // Remove previous listeners
   const newConfirmBtn = confirmActionBtn.cloneNode(true);
   confirmActionBtn.parentNode.replaceChild(newConfirmBtn, confirmActionBtn);
-  
+
   // Add new confirm listener
   newConfirmBtn.addEventListener('click', () => {
     confirmModal.style.display = 'none';
@@ -1878,11 +1070,11 @@ function openUserModal(row) {
   document.getElementById('viewUsername').textContent = row.dataset.username || '';
   document.getElementById('viewEmail').textContent = row.dataset.email || '';
   document.getElementById('viewPhone').textContent = row.dataset.phone || '';
-  
+
   const typeBadge = document.getElementById('viewUserType');
   typeBadge.textContent = row.dataset.usertype || '';
   typeBadge.className = 'user-type-badge ' + (row.dataset.usertype === 'student' ? 'student' : 'nonstudent');
-  
+
   if (row.dataset.usertype === 'student') {
     document.getElementById('viewCysRow').style.display = '';
     document.getElementById('viewCys').textContent = row.dataset.cys || '';
@@ -1890,8 +1082,8 @@ function openUserModal(row) {
     const orgs = (row.dataset.studentorg || '').split('||').filter(Boolean);
     if (orgs.length > 0) {
       const orgContainer = document.getElementById('viewOrganizationContainer');
-      orgContainer.innerHTML = '<div class="org-tags-container">' + 
-        orgs.map(org => `<span class="org-tag">${org}</span>`).join('') + 
+      orgContainer.innerHTML = '<div class="org-tags-container">' +
+        orgs.map(org => `<span class="org-tag">${org}</span>`).join('') +
         '</div>';
     } else {
       document.getElementById('viewOrganizationContainer').innerHTML = '<span class="no-organizations">No organizations</span>';
@@ -1902,8 +1094,8 @@ function openUserModal(row) {
     const affs = (row.dataset.affiliation || '').split('||').filter(Boolean);
     if (affs.length > 0) {
       const orgContainer = document.getElementById('viewOrganizationContainer');
-      orgContainer.innerHTML = '<div class="org-tags-container">' + 
-        affs.map(aff => `<span class="org-tag">${aff}</span>`).join('') + 
+      orgContainer.innerHTML = '<div class="org-tags-container">' +
+        affs.map(aff => `<span class="org-tag">${aff}</span>`).join('') +
         '</div>';
     } else {
       document.getElementById('viewOrganizationContainer').innerHTML = '<span class="no-organizations">No affiliation</span>';
@@ -1943,17 +1135,17 @@ function openUserModal(row) {
   // populate admin form hidden inputs and dropdown
   document.getElementById('editUserId').value = row.dataset.id || '';
   document.getElementById('editRole').value = row.dataset.role || 'user';
-  
+
   // Update the custom dropdown display
-  const selectedText = row.dataset.role === 'admin' 
-    ? 'Administrator - Full System Access' 
+  const selectedText = row.dataset.role === 'admin'
+    ? 'Administrator - Full System Access'
     : 'Standard User - Submit & View Own Requests';
   document.getElementById('selectedRoleText').textContent = selectedText;
 
   // Open modal and scroll to top
   userModal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  
+
   // Scroll modal content to top (personal information section)
   const modalBody = document.querySelector('.user-details-modal-body');
   if (modalBody) {
@@ -1983,12 +1175,12 @@ function updateRowState(button, action) {
     if (row) row.dataset.status = newStatus;
     if (badge) { badge.className = 'status-badge status-pending'; badge.textContent = 'PENDING'; }
   }
-  
+
   // Re-enable all buttons in the row
   if (approveBtn) approveBtn.disabled = false;
   if (denyBtn) denyBtn.disabled = false;
   if (resetBtn) resetBtn.disabled = false;
-  
+
   // Update modal status badge and buttons if modal is open
   const userModal = document.getElementById('userModal');
   if (userModal && userModal.style.display === 'flex') {
@@ -1996,13 +1188,13 @@ function updateRowState(button, action) {
     const modalApproveBtn = document.getElementById('modalApproveBtn');
     const modalDenyBtn = document.getElementById('modalDenyBtn');
     const modalResetBtn = document.getElementById('modalResetBtn');
-    
+
     // Update badge
     if (modalStatusBadge) {
       modalStatusBadge.textContent = newStatus.toUpperCase();
       modalStatusBadge.className = 'status-badge status-' + newStatus;
     }
-    
+
     // Update button visibility based on new status
     if (newStatus === 'pending') {
       if (modalApproveBtn) { modalApproveBtn.style.display = 'inline-flex'; modalApproveBtn.disabled = false; }
@@ -2018,7 +1210,7 @@ function updateRowState(button, action) {
       if (modalResetBtn) { modalResetBtn.style.display = 'inline-flex'; modalResetBtn.disabled = false; }
     }
   }
-  
+
   // Refresh visibility based on active tab
   if (row) {
     const activeTab = document.querySelector('.status-tab.active');
@@ -2041,28 +1233,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
     const tab = urlParams.get('tab') || 'all';
-    
+
     if (userId) {
       // If userId is present, switch to the specified tab
       const targetTab = document.querySelector(`.status-tab[data-status="${tab}"]`);
       if (targetTab) {
         targetTab.click();
-        
+
         // Wait for tab content to load, then open the user modal
         setTimeout(() => {
           const userRow = document.querySelector(`tr.user-row[data-id="${userId}"]`);
           if (userRow) {
             openUserModal(userRow);
-            
+
             // Scroll to the row
             userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             // Highlight the row briefly
             userRow.style.backgroundColor = '#fef3c7';
             setTimeout(() => {
               userRow.style.backgroundColor = '';
             }, 2000);
-            
+
             // Clean up URL parameters
             const cleanUrl = window.location.pathname + '?tab=' + tab;
             window.history.replaceState({}, '', cleanUrl);
@@ -2079,57 +1271,3 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 });
-
-// ========================================
-// STATUS TAB FUNCTIONALITY
-// ========================================
-document.querySelectorAll('.status-tab').forEach(tab => {
-  tab.addEventListener('click', function(e) {
-    e.preventDefault();
-    console.log('Tab clicked:', this.dataset.status);
-    
-    // Remove active class from all tabs
-    document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-    
-    // Add active class to clicked tab
-    this.classList.add('active');
-    
-    // Get the status to filter by
-    const filterStatus = this.dataset.status;
-    
-    // Filter users by status
-    const allRows = document.querySelectorAll('.user-row');
-    let visibleCount = 0;
-    
-    allRows.forEach(row => {
-      const rowStatus = row.dataset.status;
-      
-      if (filterStatus === 'all') {
-        row.style.display = '';
-        visibleCount++;
-      } else if (rowStatus === filterStatus) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-    
-    // Update results count
-    const resultsCount = document.getElementById('resultsCount');
-    if (resultsCount) {
-      const totalCount = allRows.length;
-      if (filterStatus === 'all') {
-        resultsCount.textContent = `Showing all ${totalCount} users`;
-      } else {
-        resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} users`;
-      }
-    }
-    
-    console.log(`Filtered to ${filterStatus}: ${visibleCount} users visible`);
-  });
-});
-
-</script>
-</body>
-</html>

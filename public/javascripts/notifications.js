@@ -625,6 +625,28 @@ class NotificationSystem {
       console.log('📝 URL parameters:', Object.fromEntries(params.entries()));
       console.log('🗺️ Current path:', window.location.pathname, 'Target path:', urlObj.pathname);
       
+      // Check if this is a user registration notification
+      if (type === 'user_registered' && params.has('userId')) {
+        const userId = params.get('userId');
+        const tab = params.get('tab') || 'pending';
+        
+        console.log('👤 User registration notification detected:', { userId, tab });
+        
+        const currentPath = window.location.pathname;
+        const targetPath = urlObj.pathname;
+        
+        if (currentPath === targetPath) {
+          // We're on the users page, open the modal
+          console.log('✅ On users page, opening user modal...');
+          this.openUserModal(userId, tab);
+        } else {
+          // Navigate to users page with userId parameter
+          console.log('🔄 Navigating to users page:', url);
+          window.location.href = url;
+        }
+        return;
+      }
+      
       // Check if this is a modal-opening URL
       if (params.has('modal') && params.has('requestId')) {
         const requestId = params.get('requestId');
@@ -687,6 +709,53 @@ class NotificationSystem {
       this.openServiceModal(requestId);
     } else {
       console.warn('Unknown request type for modal:', requestType);
+    }
+  }
+
+  /**
+   * Open user detail modal (for admin user management page)
+   */
+  openUserModal(userId, tab = 'pending') {
+    console.log('👤 OpenUserModal called with:', { userId, tab });
+    
+    try {
+      // First, switch to the correct tab if needed
+      const tabElement = document.querySelector(`.status-tab[data-status="${tab}"]`);
+      if (tabElement) {
+        console.log('🔄 Switching to tab:', tab);
+        tabElement.click();
+        
+        // Wait a bit for tab content to load
+        setTimeout(() => {
+          // Find the user row with the matching ID
+          const userRow = document.querySelector(`tr.user-row[data-id="${userId}"]`);
+          if (userRow) {
+            console.log('✅ Found user row, opening modal');
+            // Check if global openUserModal function exists
+            if (typeof window.openUserModal === 'function') {
+              window.openUserModal(userRow);
+            } else {
+              // Fallback: trigger click on the row
+              userRow.click();
+            }
+            
+            // Scroll the row into view
+            userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Highlight the row briefly
+            userRow.style.backgroundColor = '#fef3c7';
+            setTimeout(() => {
+              userRow.style.backgroundColor = '';
+            }, 2000);
+          } else {
+            console.warn('⚠️ User row not found with ID:', userId);
+          }
+        }, 300);
+      } else {
+        console.warn('⚠️ Tab element not found:', tab);
+      }
+    } catch (error) {
+      console.error('❌ Error opening user modal:', error);
     }
   }
 

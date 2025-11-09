@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Manage Approvals</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <!-- ===========================================
    APPROVALS PAGE STYLES CONNECTION
@@ -119,6 +120,8 @@
         <span class="text-wrapper-2">Manage Approvals</span>
 
         <div class="header-right-section">
+           <%- include('../partials/notifications') %>
+
           <div class="dropdown-wrapper">
             <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
               <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
