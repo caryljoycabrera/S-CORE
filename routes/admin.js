@@ -668,33 +668,16 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
  * Admin view of all users for management
  */
 router.get('/admin/users', requireAdmin, async (req, res) => {
-  try {
-    const users = await User.find().lean();
+  const users = await User.find().lean();
 
-    // Log user records for debugging
-    users.forEach(user => {
-      console.log(`User ${user._id}: approved = ${user.approved}, role = ${user.role}`);
-    });
+  const usersWithDisplay = users.map(user => ({
+    ...user,
+    displayOrganization: user.userType === 'nonstudent'
+  ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
+  : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
+  }));
 
-    const usersWithDisplay = users.map(user => ({
-      ...user,
-      displayOrganization: user.userType === 'nonstudent'
-        ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
-        : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
-    }));
-
-    // Default to approved for older accounts if approved status is not set
-    usersWithDisplay.forEach(user => {
-      if (user.approved === undefined || user.approved === null) {
-        user.approved = true; // Set existing accounts as approved by default
-      }
-    });
-
-    res.render('Admin/users', { users: usersWithDisplay, user: req.user });
-  } catch (err) {
-    console.error('Error loading admin users:', err);
-    res.status(500).render('error', { message: 'Failed to load users page.' });
-  }
+  res.render('Admin/users', { users: usersWithDisplay, user: req.user });
 });
 
 /**
@@ -1221,80 +1204,6 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error: Failed to update user role.'
-    });
-  }
-});
-
-/**
- * POST /admin/user/approve
- * Updates user approval status (approve/deny)
- */
-router.post('/admin/user/approve', requireAdmin, async (req, res) => {
-  try {
-    const { userId, action } = req.body;
-
-    if (!userId || !action) {
-      return res.status(400).json({
-        success: false,
-        message: 'User ID and action are required.'
-      });
-    }
-
-    if (!['approve', 'deny'].includes(action)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid action. Must be either "approve" or "deny".'
-      });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found.'
-      });
-    }
-
-    // For approve action, set approved to true
-    // For deny action, delete the user account
-    if (action === 'approve') {
-      const result = await User.findByIdAndUpdate(
-        userId,
-        { approved: true },
-        { new: true }
-      );
-
-      if (!result) {
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to approve user.'
-        });
-      }
-
-      return res.json({
-        success: true,
-        message: 'User approved successfully',
-        user: {
-          id: result._id,
-          name: `${result.fName} ${result.lName}`,
-          approved: result.approved
-        }
-      });
-    } else {
-      // Delete denied user
-      await User.findByIdAndDelete(userId);
-
-      return res.json({
-        success: true,
-        message: 'User denied and removed successfully'
-      });
-    }
-
-  } catch (err) {
-    console.error('Error updating user approval:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error: Failed to update user approval status.'
     });
   }
 });
