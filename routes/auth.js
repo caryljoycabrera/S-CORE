@@ -98,8 +98,7 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
       phoneNumber,
       agreedToTerms: terms === 'on',
-      userType,
-      approved: false  // Ensure new accounts start as not approved
+      userType
     };
 
     // Add student-specific fields
@@ -120,15 +119,15 @@ router.post('/register', async (req, res) => {
     const newUser = new User(userData);
     
     try {
-        await newUser.save();
+      await newUser.save();
       console.log('User successfully created with username:', userData.username);
       
       // Verify the user was actually saved
       const savedUser = await User.findOne({ username: userData.username });
       console.log('Verification - Found user in database:', savedUser ? 'Yes' : 'No');
       
-      // Redirect to login with pending approval message
-      res.redirect('/login?status=pending');
+      // Redirect to login on successful registration
+      res.redirect('/login');
     } catch (saveError) {
       console.error('Error saving user:', saveError);
       throw saveError;
@@ -167,11 +166,6 @@ router.post('/login', async (req, res) => {
     // Validate username and password
     if (!passwordMatch) {
       return res.status(401).render('index', { message: 'Invalid credentials.' });
-    }
-
-    // Check if account is approved
-    if (!user.approved && user.role !== 'admin') {
-      return res.status(401).render('index', { message: 'Your account is pending approval. Please wait for admin approval.' });
     }
 
     // Create session

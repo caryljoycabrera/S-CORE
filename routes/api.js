@@ -6,52 +6,11 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
-const { requireAdmin } = require('../middleware/auth');
 const ServiceRequest = require('../models/ServiceRequest');
 const Conversation = require('../models/Conversation');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
 const { upload } = require('../config/upload');
 const notificationService = require('../services/notificationService');
-
-/**
- * POST /api/users/approve
- * Endpoint to approve a new user account
- */
-router.post('/api/users/approve', requireAdmin, async (req, res) => {
-  try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'User ID is required' 
-      });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
-      });
-    }
-
-    user.approved = true;
-    await user.save();
-
-    res.json({ 
-      success: true, 
-      message: 'User account approved successfully' 
-    });
-
-  } catch (error) {
-    console.error('Error approving user:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Internal server error while approving user' 
-    });
-  }
-});
 
 /**
  * POST /api/users/verify
