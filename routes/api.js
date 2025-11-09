@@ -13,6 +13,85 @@ const { upload } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 
 /**
+ * POST /api/users/verify
+ * Endpoint to verify a new user
+ */
+router.post('/api/users/verify', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User ID is required' 
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: 'User verified successfully' 
+    });
+
+  } catch (error) {
+    console.error('Error verifying user:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error while verifying user' 
+    });
+  }
+});
+
+/**
+ * POST /api/users/deny
+ * Endpoint to deny and delete a new user
+ */
+router.post('/api/users/deny', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User ID is required' 
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    res.json({ 
+      success: true, 
+      message: 'User denied and removed successfully' 
+    });
+
+  } catch (error) {
+    console.error('Error denying user:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error while denying user' 
+    });
+  }
+});
+
+/**
  * GET /api/deadlines
  * Admin API endpoint for all request deadlines grouped by date
  */
