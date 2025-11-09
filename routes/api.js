@@ -6,7 +6,6 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
-const { requireAdmin } = require('../middleware/auth');
 const ServiceRequest = require('../models/ServiceRequest');
 const Conversation = require('../models/Conversation');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
@@ -59,12 +58,19 @@ router.post('/api/users/approve', requireAdmin, async (req, res) => {
  */
 router.post('/api/users/verify', requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, status } = req.body;
 
     if (!userId) {
       return res.status(400).json({ 
         success: false, 
         message: 'User ID is required' 
+      });
+    }
+
+    if (!status || !['pending', 'approved', 'denied'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid status (pending, approved, or denied) is required'
       });
     }
 
@@ -76,19 +82,24 @@ router.post('/api/users/verify', requireAdmin, async (req, res) => {
       });
     }
 
-    user.isVerified = true;
+    // Update user approval status
+    user.approved = status === 'approved';
     await user.save();
+
+    const action = status === 'approved' ? 'approved' : 
+                   status === 'denied' ? 'denied' : 
+                   'set to pending';
 
     res.json({ 
       success: true, 
-      message: 'User verified successfully' 
+      message: `User account ${action} successfully` 
     });
 
   } catch (error) {
-    console.error('Error verifying user:', error);
+    console.error('Error updating user verification status:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Internal server error while verifying user' 
+      message: 'Internal server error while updating user status' 
     });
   }
 });
@@ -636,6 +647,51 @@ router.get('/debug/deadlines', requireLogin, async (req, res) => {
       sampleApprovals: approvals.slice(0, 3),
       sampleServices: services.slice(0, 3)
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /debug/user-statuses 
+ * Debug route to show and fix user account statuses
+ */
+router.get('/debug/user-statuses', requireAdmin, async (req, res) => {
+  try {
+    // Get all users
+    const users = await User.find({}, 'username email approved role createdAt').lean();
+    
+    // Group users by status
+    const usersByStatus = {
+      approved: users.filter(u => u.approved === true),
+      pending: users.filter(u => u.approved === false),
+      inconsistent: users.filter(u => typeof u.approved !== 'boolean')
+    };
+
+    // Optional: Reset problematic accounts to pending
+    if (req.query.fix === 'true') {
+      const fixedCount = await User.updateMany(
+        { approved: { $ne: false }, role: { $ne: 'admin' }}, 
+        { $set: { approved: false }}
+      );
+
+      return res.json({
+        message: 'Fixed user statuses',
+        fixed: fixedCount.modifiedCount,
+        current: await User.countDocuments({ approved: false })
+      });
+    }
+
+    res.json({
+      total: users.length,
+      approvedCount: usersByStatus.approved.length,
+      pendingCount: usersByStatus.pending.length,
+      inconsistentCount: usersByStatus.inconsistent.length,
+      sampleApproved: usersByStatus.approved.slice(0, 5),
+      samplePending: usersByStatus.pending.slice(0, 5),
+      sampleInconsistent: usersByStatus.inconsistent
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
