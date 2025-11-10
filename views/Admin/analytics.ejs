@@ -9,7 +9,10 @@
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/adminpage.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/analytics.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 /* NEW RULE TO FIX FLUID LAYOUT */
@@ -487,7 +490,7 @@
                         <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                           <span style="font-size: 0.875rem; font-weight: 500; color: #111827;"><%= new Date(task.deadline).toLocaleDateString() %></span>
                           <span style="color: <%= task.priorityColor %>; font-weight: 600; font-size: 0.75rem;">
-                            <%= daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : '⚠️ Today' %>
+                            <%= daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : 'Today' %>
                           </span>
                         </div>
                       <% } else { %>
@@ -684,7 +687,7 @@
                 <div>
                   <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Time Remaining</label>
                   <div style="font-size: 1.1rem; font-weight: 700; color: ${task.priorityColor};">
-                    ${daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : '⚠️ Due Today'}
+                    ${daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : 'Due Today'}
                   </div>
                 </div>
                 ` : ''}

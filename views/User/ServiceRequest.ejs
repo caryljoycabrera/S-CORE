@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
 
 <style>
 /* ========================================
@@ -131,7 +134,7 @@
   }
 }
 
-/* Modal Styles */
+/* Modal Styles - z-index handled by modal-centered.css */
 .modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -139,7 +142,7 @@
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  /* z-index removed - using global modal-centered.css (99999) to ensure backdrop covers sidebar */
   padding: 20px;
 }
 
@@ -243,9 +246,92 @@
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-  margin-top: 1rem;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  border-top: 2px solid #f1f5f9;
+}
+
+.form-actions button {
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  min-width: 120px;
+}
+
+.form-actions button[type="submit"] {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+.form-actions button[type="submit"]:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 139, 78, 0.4);
+}
+
+.form-actions button[type="button"] {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
+}
+
+/* Confirmation Modal Actions */
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1.5rem;
+  border-top: 2px solid #f1f5f9;
+  background: #f9fafb;
+}
+
+.modal-actions button {
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-actions button:first-child {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+.modal-actions button:first-child:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 139, 78, 0.4);
+}
+
+.modal-actions button:last-child {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.modal-actions button:last-child:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
 }
 
 /* Enhanced Filter Styles */
@@ -1696,14 +1782,22 @@
           </table>
 
           <% if (!allRequests || allRequests.length === 0) { %>
-          <div style="text-align: center; padding: 2rem; color: #6b7280;">
+          <div class="no-requests-message">
             <p>No requests found.</p>
           </div>
           <% } %>
         </section>
-      </section>
 
-      <a href="/dashboard" class="view-all-btn" style="display: inline-block;">← Back to Dashboard</a>
+        <!-- Back to Dashboard Button -->
+        <div class="back-to-dashboard-container">
+          <a href="/dashboard" class="back-to-dashboard-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Dashboard
+          </a>
+        </div>
+      </section>
     </div>
   </div>
   </div> <!-- Close user-main-content -->
@@ -1867,8 +1961,8 @@
 
           <!-- Form Actions -->
           <div class="form-actions">
-            <button type="button" class="view-all-btn" id="cancelModalBtn" style="background: #e5e7eb; color: #374151;">Cancel</button>
-            <button type="submit" class="view-all-btn" style="background: var(--success); color: white;">Submit Request</button>
+            <button type="button" id="cancelModalBtn">Cancel</button>
+            <button type="submit">Submit Request</button>
           </div>
         </form>
       </div>
@@ -1891,9 +1985,9 @@
         <br>
         <p>For urgent requests, we recommend contacting the S-CORE office directly.</p>
       </div>
-      <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 1rem;">
-        <button id="deadlineProceedBtn" class="view-all-btn" style="background: rgb(194, 122, 40); color: white;">I Understand, Proceed</button>
-        <button id="deadlineCancelBtn" class="view-all-btn" style="background: #e5e7eb; color: #374151;">Cancel</button>
+      <div class="modal-actions">
+        <button id="deadlineProceedBtn">I Understand, Proceed</button>
+        <button id="deadlineCancelBtn">Cancel</button>
       </div>
     </div>
   </div>

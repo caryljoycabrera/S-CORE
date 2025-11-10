@@ -1,0 +1,288 @@
+/* ========================================
+   GLOBAL MODAL CENTERING STYLES
+   ======================================== 
+   Purpose: Ensure all modals are perfectly centered
+   across the entire application
+   ======================================== */
+
+/* Universal Modal Container - All modal types */
+.modal,
+.confirmation-modal,
+.edit-modal,
+.calendar-modal,
+.deadline-details-modal,
+.notification-modal {
+  display: none;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 100000 !important; /* Below Select2 dropdowns */
+  background: rgba(0, 0, 0, 0.6) !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* When modal is shown */
+.modal.show,
+.modal.active,
+.modal[style*="display: flex"],
+.modal[style*="display:flex"],
+.confirmation-modal.show,
+.edit-modal.show,
+.calendar-modal.active,
+.deadline-details-modal.active,
+.notification-modal.show {
+  display: flex !important;
+}
+
+/* Universal Modal Content - Perfect Centering */
+.modal-content,
+.confirmation-modal-content,
+.edit-modal-content,
+.calendar-modal-content,
+.deadline-details-modal-content,
+.notification-modal-content {
+  position: relative !important;
+  margin: auto !important;
+  background: white !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3) !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important; /* Enable scrolling */
+  overflow-x: visible !important; /* Allow Select2 to overflow horizontally */
+  transform: translateY(0) !important;
+}
+
+/* Ensure modal content doesn't have absolute positioning */
+.modal .modal-content,
+.confirmation-modal .confirmation-modal-content,
+.edit-modal .edit-modal-content,
+.calendar-modal .calendar-modal-content,
+.deadline-details-modal .deadline-details-modal-content,
+.notification-modal .notification-modal-content {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+/* ========================================
+   MODAL WIDTH MANAGEMENT
+   Prevent modals from touching sidebar
+   ======================================== */
+
+/* Default modal widths with sidebar clearance */
+.modal-content {
+  /* Account for sidebar (64px collapsed, 280px expanded) + padding */
+  /* Default: medium width suitable for most modals including profile updates */
+  max-width: min(800px, calc(100vw - 120px)) !important;
+  width: 90% !important;
+}
+
+/* Small modals - includes confirmation, notification modals */
+#confirmStatusModal .modal-content,
+#quickActionModal .modal-content,
+.confirmation-modal-content,
+.notification-modal-content,
+#updateConfirmationModal .confirmation-modal-content {
+  max-width: min(500px, calc(100vw - 100px)) !important;
+  width: 90% !important;
+}
+
+/* Medium modals - calendar, deadline details */
+.modal-content[style*="max-width: 500px"],
+.modal-content[style*="max-width: 700px"],
+.modal-content[style*="max-width: 800px"],
+.calendar-modal-content,
+.deadline-details-modal-content {
+  max-width: min(800px, calc(100vw - 120px)) !important;
+  width: 90% !important;
+}
+
+/* Large modals - edit modals, request details */
+#userModal .modal-content,
+.modal-content[style*="max-width: 1000px"],
+.modal-content[style*="max-width: 1200px"],
+.edit-modal-content {
+  max-width: min(1000px, calc(100vw - 150px)) !important;
+  width: 90% !important;
+}
+
+/* Extra large modals (analytics, etc.) */
+.modal-content[style*="max-width: 1400px"],
+.analytics-modal-content {
+  max-width: min(1200px, calc(100vw - 200px)) !important;
+  width: 85% !important;
+}
+
+/* Full-height modals (request details) */
+.modal-content[style*="height: 100vh"] {
+  max-width: min(900px, calc(100vw - 150px)) !important;
+  width: 85% !important;
+  max-height: 95vh !important;
+}
+
+/* Remove backdrop blur if it causes positioning issues */
+.modal,
+.confirmation-modal,
+.edit-modal,
+.calendar-modal,
+.deadline-details-modal,
+.notification-modal {
+  backdrop-filter: none !important;
+}
+
+/* Ensure body doesn't scroll when modal is open */
+body.modal-open {
+  overflow: hidden !important;
+}
+
+/* Allow animations on modal content (removed: animation: none, transition: none) */
+/* Modal content can now have fade-in, slide-in, and other animations */
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+/* Tablet and below */
+@media (max-width: 1024px) {
+  .modal-content,
+  .confirmation-modal-content,
+  .edit-modal-content,
+  .calendar-modal-content,
+  .deadline-details-modal-content,
+  .notification-modal-content {
+    max-width: calc(100vw - 80px) !important;
+    width: 95% !important;
+  }
+  
+  .modal-content[style*="max-width: 1400px"],
+  .analytics-modal-content {
+    max-width: calc(100vw - 80px) !important;
+    width: 95% !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .modal,
+  .confirmation-modal,
+  .edit-modal,
+  .calendar-modal,
+  .deadline-details-modal,
+  .notification-modal {
+    padding: 0.5rem;
+  }
+  
+  .modal-content,
+  .confirmation-modal-content,
+  .edit-modal-content,
+  .calendar-modal-content,
+  .deadline-details-modal-content,
+  .notification-modal-content {
+    max-width: 98% !important;
+    width: 98% !important;
+    max-height: 95vh !important;
+    border-radius: 12px !important;
+  }
+  
+  /* All modals same width on mobile */
+  .modal-content[style*="max-width"],
+  #userModal .modal-content,
+  .analytics-modal-content {
+    max-width: 98% !important;
+    width: 98% !important;
+  }
+}
+
+/* ========================================
+   Z-INDEX MANAGEMENT
+   Ensure modals stack properly
+   ======================================== */
+
+.modal,
+.confirmation-modal,
+.edit-modal,
+.calendar-modal,
+.deadline-details-modal,
+.notification-modal {
+  display: none;
+}
+
+.modal.active,
+.modal.show,
+.modal[style*="display: flex"],
+.modal[style*="display:flex"],
+.confirmation-modal.show,
+.edit-modal.show,
+.calendar-modal.active,
+.deadline-details-modal.active,
+.notification-modal.show {
+  display: flex !important;
+}
+
+/* Ensure modals appear above sidebar (sidebar is z-index 999, expanded sidebar is 9999) 
+   Modal container itself serves as the backdrop */
+.modal,
+.confirmation-modal,
+.edit-modal,
+.calendar-modal,
+.deadline-details-modal,
+.notification-modal {
+  z-index: 100000 !important; /* Above expanded sidebar, below Select2 */
+}
+
+.modal-content,
+.confirmation-modal-content,
+.edit-modal-content,
+.calendar-modal-content,
+.deadline-details-modal-content,
+.notification-modal-content {
+  z-index: 100001 !important; /* Above modal backdrop, below Select2 */
+}
+
+/* ========================================
+   SELECT2 IN MODALS - CRITICAL FIXES
+   ======================================== */
+
+/* Allow modal to scroll vertically - don't override */
+.modal {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Modal content scrolls vertically, Select2 can overflow horizontally */
+/* Note: overflow-y: auto is already set above at line 54 */
+
+/* Modal body allows content to flow */
+.modal-body {
+  position: relative !important;
+  /* Don't set overflow here - let it inherit from modal-content */
+}
+
+/* Ensure Select2 containers in modals don't get clipped */
+.modal .organization-section,
+.modal .office-section {
+  position: relative;
+  overflow: visible !important;
+}
+
+.modal .form-group,
+.modal .form-section {
+  position: relative;
+}
+
+/* Force all Select2 elements to maximum z-index */
+.select2-container,
+.select2-dropdown,
+body > .select2-container,
+.modal ~ .select2-container,
+#updateProfileModal ~ .select2-container {
+  z-index: 999999 !important;
+}

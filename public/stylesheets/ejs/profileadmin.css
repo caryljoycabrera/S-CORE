@@ -215,8 +215,7 @@
   gap: 0.75rem;
 }
 
-.admin-main-content .profile-actions button,
-.admin-main-content .profile-actions .view-all-btn {
+.admin-main-content .profile-actions button {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -230,11 +229,45 @@
   text-align: center;
 }
 
-.admin-main-content .profile-actions button:hover,
-.admin-main-content .profile-actions .view-all-btn:hover {
+.admin-main-content .profile-actions button:hover {
   background: #047857;
   color: white;
   transform: translateY(-1px);
+}
+
+/* Back to Dashboard Button - Consistent Styling */
+.admin-main-content .profile-actions .back-to-dashboard-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #065f46;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(6, 95, 70, 0.3);
+}
+
+.admin-main-content .profile-actions .back-to-dashboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(6, 95, 70, 0.5);
+  background: #047857;
+  color: #ffffff;
+}
+
+.admin-main-content .profile-actions .back-to-dashboard-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(6, 95, 70, 0.4);
+  background: #064e3b;
+}
+
+.admin-main-content .profile-actions .back-to-dashboard-btn svg {
+  flex-shrink: 0;
 }
 
 /* Remove old button styling */
@@ -365,18 +398,9 @@
   }
 }
 
-/* Enhanced Modal Styling */
-.modal-content {
-  background: white;
-  border-radius: 20px;
-  max-width: 900px;
-  width: 95%;
-  max-height: 90vh;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+/* Enhanced Modal Styling - REMOVED TO USE GLOBAL MODAL-CENTERED.CSS */
+/* The modal-centered.css file now handles all modal widths consistently across the app */
+/* DO NOT override .modal-content width here - it causes modals to be too wide */
 
 .modal-header {
   padding: 2rem 2.5rem 1rem 2.5rem;
@@ -698,11 +722,16 @@
 
 /* Select2 Dropdown Z-index Fix for Modal */
 .select2-container--open .select2-dropdown {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
 }
 
 .select2-dropdown {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
+}
+
+/* Special class for dropdowns inside modals */
+.select2-dropdown-above-modal {
+  z-index: 999999 !important;
 }
 
 /* Organization Counter */
@@ -1281,14 +1310,8 @@
   box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
 }
 
-/* Mobile Responsiveness */
+/* Mobile Responsiveness - Using global modal-centered.css */
 @media (max-width: 768px) {
-  .modal-content {
-    max-width: 95%;
-    margin: 1rem;
-    border-radius: 16px;
-  }
-
   .modal-header {
     padding: 1.5rem;
   }

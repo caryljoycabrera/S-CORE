@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
 <style>
 /* NEW RULE TO FIX FLUID LAYOUT */
 .student-side > .div {
@@ -1407,6 +1410,87 @@ It's already a flex container, but we need to add two key properties:
       color: #2e7d32;
       font-weight: 600;
     }
+
+    /* Help & Guide Card Styles */
+    .guide-card-container {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .dashboard-guide-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 24px;
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      border: 2px solid #43a047;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(67, 160, 71, 0.15);
+    }
+
+    .dashboard-guide-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(67, 160, 71, 0.25);
+      border-color: #2c5d31;
+    }
+
+    .guide-card-icon {
+      flex-shrink: 0;
+      width: 64px;
+      height: 64px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #43a047;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .guide-card-content {
+      flex: 1;
+    }
+
+    .guide-card-content h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1b5e20;
+    }
+
+    .guide-card-content p {
+      margin: 0;
+      font-size: 14px;
+      color: #2c5d31;
+      line-height: 1.5;
+    }
+
+    .guide-card-arrow {
+      flex-shrink: 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #43a047;
+      transition: transform 0.3s ease;
+    }
+
+    .dashboard-guide-card:hover .guide-card-arrow {
+      transform: translateX(4px);
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-guide-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+        gap: 16px;
+      }
+
+      .guide-card-arrow {
+        display: none;
+      }
+    }
 </style>
 </head>
 <body>
@@ -1470,6 +1554,15 @@ It's already a flex container, but we need to add two key properties:
           <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
         </svg>
         <span class="sidebar-label">Request Services</span>
+      </a>
+      
+      <a href="/user-guide" class="sidebar-item" title="Help & Guide">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span class="sidebar-label">Help & Guide</span>
       </a>
     </div>
     
@@ -1804,6 +1897,24 @@ It's already a flex container, but we need to add two key properties:
           <div class="stat-number"><%= inReviewRequests %></div>
           <div class="stat-label">For Revision</div>
         </div>
+      </div>
+      
+      <!-- Help & Guide Card -->
+      <div class="guide-card-container" style="margin-top: 24px;">
+        <a href="/user-guide" class="dashboard-guide-card">
+          <div class="guide-card-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div class="guide-card-content">
+            <h3>Need Help?</h3>
+            <p>Check out our comprehensive user guide to learn everything about the S-CORE system</p>
+          </div>
+          <div class="guide-card-arrow">→</div>
+        </a>
       </div>
     </div>
   </div>

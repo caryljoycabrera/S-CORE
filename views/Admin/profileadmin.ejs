@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/profileadmin.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <script src="/javascripts/alert-handler.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -215,7 +218,12 @@ body.profile-page .student-side > .div {
             <button id="openUpdateProfile">Update Profile</button>
             <button id="openChangePassword">Change Password</button>
             <button id="openPictureModal" type="button">Update Picture</button>
-            <a href="/admin" class="view-all-btn">← Back to Dashboard</a>
+            <a href="/admin" class="back-to-dashboard-btn">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Back to Dashboard
+            </a>
           </div>
         </div>
 
@@ -338,7 +346,7 @@ body.profile-page .student-side > .div {
 
   <!-- Enhanced Update Profile Modal -->
   <div id="updateProfileModal" class="modal" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h2 class="modal-title">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
@@ -499,13 +507,29 @@ body.profile-page .student-side > .div {
             <div class="office-section">
               <div class="form-group">
                 <label for="officeSelect">Office/Department
+                  <span class="org-counter" id="officeCounter">No offices selected</span>
                   <small style="display: block; color: #065f46; font-style: italic; margin-top: 0.5rem;">
-                    💡 Click on any selected office/department to remove it
+                    Tip: Click on any selected office/department to remove it
                   </small>
                 </label>
                 <select name="affiliation[]" id="officeSelect" multiple="multiple" style="width: 100%">
                   <!-- options will be filled dynamically -->
                 </select>
+              </div>
+
+              <!-- Toggle Button for Custom Office -->
+              <button type="button" class="toggle-org-button" id="toggleCustomOfficeBtn">
+                Can't find your office/department? Add it here
+              </button>
+
+              <!-- Hidden Custom Office Input -->
+              <div class="input-group has-label" id="customOfficeContainer" style="display: none;">
+                <label for="otherOffice" class="input-label">Add Custom Office/Department</label>
+                <div class="custom-org-input-wrapper">
+                  <input type="text" id="otherOffice" name="otherOffice" placeholder="Enter office/department name" maxlength="150" />
+                  <button type="button" id="addOfficeButton" class="add-org-button">+</button>
+                </div>
+                <div id="officeAddedFeedback" class="org-added-feedback"></div>
               </div>
             </div>
           </div>
@@ -530,7 +554,7 @@ body.profile-page .student-side > .div {
 
   <!-- Password Change Modal -->
   <div id="passwordModal" class="modal" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <h2 class="modal-title">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
@@ -629,7 +653,7 @@ body.profile-page .student-side > .div {
 
   <!-- Enhanced Picture Upload Modal -->
   <div id="pictureModal" class="modal" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h2 class="modal-title">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
@@ -757,10 +781,12 @@ body.profile-page .student-side > .div {
      JAVASCRIPT CONNECTION
      ===========================================
      This page includes JavaScript functionality from:
+     - public/javascripts/shared-data.js (centralized data arrays)
      - public/javascripts/ejs/profileadmin.js (main client-side logic)
      Note: Socket.IO is loaded via the notifications partial
+     Note: notifications.js is already loaded in the notifications partial
      =========================================== -->
-<script src="/javascripts/notifications.js"></script>
+<script src="/javascripts/shared-data.js"></script>
 <script src="/javascripts/ejs/profileadmin.js"></script>
 
 <script>
@@ -777,130 +803,112 @@ if (sidebar) {
 
 // OVERRIDE openModal function with EJS template support
 function openModal(id) {
+  console.log('=== OPENING MODAL ===');
+  console.log('Modal ID:', id);
+  console.log('User Type:', '<%= user.userType %>');
+  
   const modal = document.getElementById(id);
+  if (!modal) {
+    console.error('ERROR: Modal element not found:', id);
+    return;
+  }
+  
   modal.style.display = 'flex';
+  console.log('Modal display set to flex');
 
   // Student logic with enhanced functionality
   if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
+    console.log('=== INITIALIZING STUDENT ORGANIZATION DROPDOWN ===');
     console.log('Initializing student organization select for student user');
     const select = $('#studentOrganization');
+    
+    if (!select.length) {
+      console.error('ERROR: Student organization select element not found');
+      return;
+    }
+    
+    console.log('Select element found:', select.length, 'elements');
+    
     if (!select.hasClass('select2-hidden-accessible')) {
       console.log('Select2 not yet initialized, initializing now...');
+      
+      // Check if shared-data.js is loaded
+      console.log('🔍 Checking shared-data.js availability:');
+      console.log('   - window.studentOrgsArray exists?', typeof window.studentOrgsArray !== 'undefined');
+      console.log('   - window.affiliationsArray exists?', typeof window.affiliationsArray !== 'undefined');
+      
+      // Use the organization options from shared-data.js
+      const organizationOptions = window.studentOrgsArray || [];
+      console.log('Organization options loaded:', organizationOptions.length, 'items');
+      
+      if (organizationOptions.length === 0) {
+        console.warn('WARNING: No organization options found in shared-data.js');
+        console.warn('   - Checking if script is loaded...');
+        console.warn('   - window object keys:', Object.keys(window).filter(k => k.includes('Org') || k.includes('affiliation')));
+      }
+
+      const currentOrgs = `<%= user.studentOrganization || '' %>`
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean);
+      
+      console.log('Current user organizations:', currentOrgs);
+
+      // Clear existing options first
+      select.empty();
+      console.log('Select cleared');
+
+      // Add predefined options
+      let addedCount = 0;
+      organizationOptions.forEach(org => {
+        const exists = currentOrgs.includes(org);
+        const option = new Option(org, org, exists, exists);
+        select.append(option);
+        if (exists) addedCount++;
+      });
+      console.log('Added', organizationOptions.length, 'organization options,', addedCount, 'pre-selected');
+
+      // Add custom organizations
+      let customCount = 0;
+      currentOrgs.forEach(org => {
+        if (!organizationOptions.includes(org)) {
+          const option = new Option(org, org, true, true);
+          select.append(option);
+          customCount++;
+        }
+      });
+      
+      if (customCount > 0) {
+        console.log('Added', customCount, 'custom organizations');
+      }
+
+      // NOW initialize Select2 AFTER adding all options
+      console.log('Initializing Select2 with modal parent...');
       select.select2({
         placeholder: "Search and select organizations...",
         allowClear: true,
         width: '100%',
         dropdownParent: $('#updateProfileModal'),
         closeOnSelect: false,
+        dropdownCssClass: 'select2-dropdown-above-modal',
         templateResult: function(data) {
           if (!data.id) return data.text;
           return $(`<div style="padding: 4px 0;">${data.text}</div>`);
         }
       });
-
-      // Initialize with organization options
-      const organizationOptions = [
-        "University Student Government (USG)",
-        "Internal Audit Service (IAS)",
-        "University Student Election Commission (USEC)",
-        "Office of the Solicitor General (OSG)",
-        "College of Business Administration and Accountancy Student Government (CBAASG)",
-        "Business Management Program Council (BMPC)",
-        "Junior Philippine Institute of Accountants (JPIA)",
-        "Marketing Management Program Council (MMPC)",
-        "College of Education Student Government (COEdSG)",
-        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-        "Architecture Program Council (ArchPC)",
-        "Civil Engineering Program Council (CEEPC)",
-        "Computer Engineering Program Council (CpEPC)",
-        "Electrical Engineering Program Council (EEEPC)",
-        "Electronics Engineering Program Council (ECEPC)",
-        "Industrial Engineering Program Council (IEEPC)",
-        "Mechanical Engineering Program Council (MEEPC)",
-        "Multimedia Arts Program Council (MMAPC)",
-        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-        "College of Criminal Justice Education Student Government (CCJESG)",
-        "Criminology Program Council (CrimPC)",
-        "Forensic Science Program Council (FScPC)",
-        "College of Liberal Arts and Communication Student Government (CLACSG)",
-        "Communication Program Council (CPC)",
-        "International Development Program Council (IDPC)",
-        "Political Science Program Council (PSPC)",
-        "Psychology Program Council (PPC)",
-        "College of Science Student Government (COSSG)",
-        "Applied Mathematics Program Council (AMPC)",
-        "Biology Program Council (BioPC)",
-        "College of Information and Computer Studies Student Government (CICSSG)",
-        "Computer Science Program Council (CSPC)",
-        "Information Technology Program Council (ITPC)",
-        "DLSU-D Chorale (CHORALE)",
-        "Lasallian Symphony Orchestra (LSO)",
-        "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-        "Lasallian Pop Band (LPB)",
-        "Teatro Lasalliana (TEATRO)",
-        "Visual and Performing Arts Production Unit (VPAPU)",
-        "Heraldo Filipino",
-        "Vicissitude",
-        "Council of Student Organizations (CSO)",
-        "Business Operations Management Society (BOMS)",
-        "Junior Marketing Association (JMA)",
-        "DLSU-D Psychological Society (DPS)",
-        "DLSU-D Pre-Medical Society (DPMS)",
-        "Hotel and Restaurant Management Society (HRMS)",
-        "Turismo Lasalleño Society (TLS)",
-        "Lasallian Educators Society (LES)",
-        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-        "DLSU-D Pre-Law Society (DPLS)",
-        "Astraeus Literary and Arts Guild",
-        "Accounting Enrichment Society (ACES)",
-        "Circle of Student Assistants (COSA)",
-        "DLSU-D Lifters",
-        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-        "DLSU-D United Patriots Football Club",
-        "Junior Financial Executives Institute of the Philippines (JFINEX)",
-        "Marché Société (MS)",
-        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-        "SINAG Society of Leaders (SISOL)",
-        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-        "LS Verde of Campus Sustainability Office",
-        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-        "Green FM of Communications and Journalism Department",
-        "International Students' Association (ISA) of International Students Office",
-        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
-      ];
-
-      const currentOrgs = `<%= user.studentOrganization || '' %>`
-        .split(',')
-        .map(o => o.trim())
-        .filter(Boolean);
-
-      // Add predefined options
-      organizationOptions.forEach(org => {
-        const exists = currentOrgs.includes(org);
-        if (select.find(`option[value="${org}"]`).length === 0) {
-          const option = new Option(org, org, exists, exists);
-          select.append(option);
-        }
-      });
-
-      // Add custom organizations
-      currentOrgs.forEach(org => {
-        if (!organizationOptions.includes(org)) {
-          if (select.find(`option[value="${org}"]`).length === 0) {
-            const option = new Option(org, org, true, true);
-            select.append(option);
-          }
-        }
-      });
+      
+      console.log('Select2 initialized successfully');
 
       select.trigger('change');
+      console.log('Triggered change event');
+      
       updateOrganizationCounter();
+      console.log('Organization counter updated');
 
       // Listen for selection changes
       select.on('change', function() {
+        const selectedCount = select.val()?.length || 0;
+        console.log('Organization selection changed:', selectedCount, 'items selected');
         updateOrganizationCounter();
         // Re-setup click handlers after any change
         setTimeout(setupOrganizationClickHandlers, 100);
@@ -908,95 +916,74 @@ function openModal(id) {
 
       // Initial setup of click handlers
       setTimeout(setupOrganizationClickHandlers, 200);
+      console.log('Click handlers setup scheduled');
+    } else {
+      console.log('Select2 already initialized, skipping');
     }
 
     // Set up toggle functionality
-    document.getElementById('toggleCustomOrg').onclick = toggleCustomOrg;
+    const toggleBtn = document.getElementById('toggleCustomOrg');
+    if (toggleBtn) {
+      toggleBtn.onclick = toggleCustomOrg;
+      console.log('Toggle custom org button handler set');
+    } else {
+      console.error('ERROR: Toggle custom org button not found');
+    }
 
     // Set up add organization button
-    document.getElementById('addOrganizationButton').onclick = addCustomOrganization;
+    const addBtn = document.getElementById('addOrganizationButton');
+    if (addBtn) {
+      addBtn.onclick = addCustomOrganization;
+      console.log('Add organization button handler set');
+    } else {
+      console.error('ERROR: Add organization button not found');
+    }
 
     // Set up Enter key functionality
-    document.getElementById('otherOrganization').onkeypress = function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        addCustomOrganization();
-      }
-    };
+    const orgInput = document.getElementById('otherOrganization');
+    if (orgInput) {
+      orgInput.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addCustomOrganization();
+        }
+      };
+      console.log('Enter key handler set for organization input');
+    } else {
+      console.error('ERROR: Organization input field not found');
+    }
+    
+    console.log('=== STUDENT DROPDOWN INITIALIZATION COMPLETE ===');
   }
 
   // NON-STUDENT LOGIC - Fixed version for multiple selection
   if (id === 'updateProfileModal' && '<%= user.userType %>' !== 'student') {
+    console.log('=== ADMIN: INITIALIZING OFFICE/DEPT DROPDOWN (NON-STUDENT) ===');
     const select = $('#officeSelect');
+    
+    if (!select.length) {
+      console.error('ERROR: Office select element not found');
+      return;
+    }
+    
+    console.log('Office select element found:', select.length, 'elements');
     
     // Only initialize if not already initialized
     if (!select.hasClass('select2-hidden-accessible')) {
       console.log('Initializing office select for non-student user');
       
-      // Office options array
-      const officeOptions = [
-        "Office of the President",
-        "Office of the Chief Administrative Officer",
-        "Office of the Provost",
-        "Office of the Chief Lasallian Mission Officer",
-        "Office of the Principal",
-        "Corporate and Executive Management Office",
-        "Center for Heritage Conservation",
-        "Museo De La Salle",
-        "Risk, Compliance and Audit Office",
-        "University Chaplain",
-        "Office of the Vice President for Administrative Services",
-        "Office of the Vice President for Finance",
-        "Office of the Vice President for Global Engagement and External Relations",
-        "Office of the Vice President for Research, Innovation, and Productive Partnerships",
-        "Office of the Vice President for Student Welfare and Services",
-        "Office of the Vice Chancellor for Academics",
-        "Office of the Vice Chancellor for Administration and Finance",
-        "Office of the Vice Chancellor for Research and Innovation",
-        "Office of the Vice Chancellor for Lasallian Mission and Internationalization",
-        "Office of the Vice Chancellor for Student Services",
-        "University Registrar",
-        "Admissions and Aid Office",
-        "Learning Management Center",
-        "Quality Assurance Office",
-        "University Strategic Planning Office",
-        "Graduate School Office",
-        "Research and Advanced Studies Office",
-        "Technology Transfer and Management Office",
-        "Linkages and Scholarship Office",
-        "Publications and External Relations Office",
-        "Career Services Office",
-        "Cultural Arts Office",
-        "Sports Development Office",
-        "Student Discipline Office",
-        "Student Wellness Center",
-        "Student Publication Office",
-        "Campus Ministry Office",
-        "Lasallian Community Engagement and Development Center",
-        "Human Resources Management Office",
-        "Accounting Office",
-        "Budget Office",
-        "Internal Audit Office",
-        "Procurement Office",
-        "Treasury Office",
-        "Corporate Planning Office",
-        "Legal Office",
-        "Safety and Security Office",
-        "Facilities Management Office",
-        "Information Communication Technology Management Office",
-        "Learning Innovation Center",
-        "Library Services",
-        "University Lasallian Family Office",
-        "University Student Services",
-        "College of Business Administration and Accountancy",
-        "College of Criminal Justice Education",
-        "College of Education",
-        "College of Engineering, Architecture and Technology",
-        "College of Information and Computer Studies",
-        "College of Liberal Arts and Communication",
-        "College of Science",
-        "College of Tourism and Hospitality Management"
-      ];
+      // Check if shared-data.js is loaded
+      console.log('🔍 Checking shared-data.js availability for office:');
+      console.log('   - window.affiliationsArray exists?', typeof window.affiliationsArray !== 'undefined');
+      
+      // Use the office options from shared-data.js
+      const officeOptions = window.affiliationsArray || [];
+      console.log('Office options loaded:', officeOptions.length, 'items');
+      
+      if (officeOptions.length === 0) {
+        console.warn('WARNING: No office options found in shared-data.js');
+        console.warn('   - window object keys:', Object.keys(window).filter(k => k.includes('Org') || k.includes('affiliation')));
+      }
 
       // Get current affiliations from server
       const currentAffiliations = `<%= user.affiliation || '' %>`
@@ -1004,37 +991,81 @@ function openModal(id) {
         .map(o => o.trim())
         .filter(Boolean);
 
-      console.log('Current affiliations:', currentAffiliations);
+      console.log('Current user affiliations:', currentAffiliations);
 
       // Clear any existing options first
       select.empty();
+      console.log('Office select cleared');
 
       // Add predefined office options
+      let preSelectedCount = 0;
       officeOptions.forEach(office => {
         const isSelected = currentAffiliations.includes(office);
         const option = new Option(office, office, isSelected, isSelected);
         select.append(option);
+        if (isSelected) preSelectedCount++;
       });
+      console.log('Added', officeOptions.length, 'office options,', preSelectedCount, 'pre-selected');
 
       // Add any custom affiliations not in the predefined list
+      let customAffiliationCount = 0;
       currentAffiliations.forEach(affiliation => {
         if (!officeOptions.includes(affiliation)) {
           const option = new Option(affiliation, affiliation, true, true);
           select.append(option);
+          customAffiliationCount++;
         }
       });
+      
+      if (customAffiliationCount > 0) {
+        console.log('Added', customAffiliationCount, 'custom affiliations');
+      }
 
       // Initialize Select2 AFTER adding all options
+      console.log('Initializing Select2 for office dropdown...');
       select.select2({
         placeholder: "Search and select office/department...",
         allowClear: true,
         width: '100%',
         dropdownParent: $('#updateProfileModal'),
         closeOnSelect: false,
+        dropdownCssClass: 'select2-dropdown-above-modal',
         templateResult: function(data) {
           if (!data.id) return data.text;
           return $(`<div style="padding: 4px 0;">${data.text}</div>`);
         }
+      });
+      
+      console.log('Select2 initialized successfully for office dropdown');
+
+      // Add Select2 event listeners for debugging and z-index fixing
+      select.on('select2:opening', function(e) {
+        console.log('🔓 ADMIN: Office Select2 OPENING');
+      });
+      
+      select.on('select2:open', function(e) {
+        console.log('✅ ADMIN: Office Select2 OPENED');
+        
+        // Debug and fix z-index
+        setTimeout(function() {
+          const dropdown = $('.select2-dropdown');
+          console.log('🔍 ADMIN: Office Dropdown z-index:', dropdown.css('z-index'));
+          
+          const currentZIndex = parseInt(dropdown.css('z-index')) || 0;
+          if (currentZIndex < 9999) {
+            console.warn('⚠️  WARNING: Office dropdown z-index too low! Forcing to 9999');
+            dropdown.css({'z-index': '9999', 'position': 'absolute'});
+            console.log('   - ✅ New office dropdown z-index:', dropdown.css('z-index'));
+          }
+        }, 100);
+      });
+      
+      select.on('select2:closing', function(e) {
+        console.log('🔒 ADMIN: Office Select2 CLOSING');
+      });
+      
+      select.on('select2:close', function(e) {
+        console.log('❌ ADMIN: Office Select2 CLOSED');
       });
 
       // Trigger change to update display
@@ -1045,16 +1076,302 @@ function openModal(id) {
       // Listen for selection changes
       select.on('change', function() {
         const selectedCount = select.val()?.length || 0;
-        console.log('Office selection changed:', selectedCount, 'items');
+        console.log('Office selection changed:', selectedCount, 'items selected');
+        updateOfficeCounter();
         // Re-setup click handlers after any change
         setTimeout(setupOfficeClickHandlers, 100);
       });
 
-      // Initial setup of click handlers
+      // Initial setup of click handlers and counter
+      updateOfficeCounter();
+      console.log('Office counter updated');
       setTimeout(setupOfficeClickHandlers, 200);
+      console.log('Office click handlers setup scheduled');
+    } else {
+      console.log('Office Select2 already initialized, skipping');
     }
+    
+    // Set up toggle functionality for custom office
+    const toggleOfficeBtn = document.getElementById('toggleCustomOfficeBtn');
+    if (toggleOfficeBtn) {
+      toggleOfficeBtn.onclick = toggleCustomOffice;
+      console.log('Toggle custom office button handler set');
+    } else {
+      console.error('ERROR: Toggle custom office button not found');
+    }
+    
+    // Set up add office button
+    const addOfficeBtn = document.getElementById('addOfficeButton');
+    if (addOfficeBtn) {
+      addOfficeBtn.onclick = addCustomOffice;
+      console.log('Add office button handler set');
+    } else {
+      console.error('ERROR: Add office button not found');
+    }
+    
+    // Set up Enter key functionality
+    const officeInput = document.getElementById('otherOffice');
+    if (officeInput) {
+      officeInput.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addCustomOffice();
+        }
+      };
+      console.log('Enter key handler set for office input');
+    } else {
+      console.error('ERROR: Office input field not found');
+    }
+    
+    console.log('=== OFFICE/DEPT DROPDOWN INITIALIZATION COMPLETE ===');
+  }
+  
+  console.log('=== MODAL OPENED SUCCESSFULLY ===\n');
+}
+
+// Organization counter update
+function updateOrganizationCounter() {
+  const select = $('#studentOrganization');
+  const counter = document.getElementById('orgCounter');
+  if (!counter) return;
+  
+  const selectedCount = select.val()?.length || 0;
+  
+  if (selectedCount === 0) {
+    counter.textContent = 'No organizations selected';
+    counter.classList.remove('has-selections');
+  } else if (selectedCount === 1) {
+    counter.textContent = '1 organization selected';
+    counter.classList.add('has-selections');
+  } else {
+    counter.textContent = `${selectedCount} organizations selected`;
+    counter.classList.add('has-selections');
   }
 }
+
+// Organization click handlers
+function setupOrganizationClickHandlers() {
+  $(document).off('click', '#studentOrganization + .select2-container .select2-selection__choice');
+  
+  $(document).on('click', '#studentOrganization + .select2-container .select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#studentOrganization');
+    
+    if (value) {
+      let currentValues = select.val() || [];
+      currentValues = currentValues.filter(v => v !== value);
+      select.val(currentValues).trigger('change');
+      updateOrganizationCounter();
+    }
+  });
+}
+
+// Toggle custom organization input
+function toggleCustomOrg() {
+  const customOrgContainer = document.getElementById('customOrgSection');
+  const isVisible = customOrgContainer.style.display !== 'none';
+  customOrgContainer.style.display = isVisible ? 'none' : 'block';
+  
+  if (!isVisible) {
+    document.getElementById('otherOrganization').focus();
+  } else {
+    document.getElementById('otherOrganization').value = '';
+    hideFeedback();
+  }
+}
+
+// Add custom organization
+function addCustomOrganization() {
+  const input = document.getElementById('otherOrganization');
+  const orgName = input.value.trim();
+  const select = $('#studentOrganization');
+
+  if (!orgName) {
+    showFeedback('Please enter an organization name.', 'error');
+    input.focus();
+    return;
+  }
+  
+  if (orgName.length < 3) {
+    showFeedback('Organization name must be at least 3 characters long.', 'error');
+    input.focus();
+    return;
+  }
+
+  const existingOptions = Array.from(select[0].options).map(option => option.value.toLowerCase());
+  if (existingOptions.includes(orgName.toLowerCase())) {
+    showFeedback('This organization is already in your list.', 'warning');
+    input.focus();
+    return;
+  }
+
+  if (select.find(`option[value="${orgName}"]`).length === 0) {
+    const newOption = new Option(orgName, orgName, true, true);
+    select.append(newOption);
+  }
+
+  const current = select.val() || [];
+  if (!current.includes(orgName)) {
+    current.push(orgName);
+    select.val(current).trigger('change');
+  }
+
+  input.value = '';
+  showFeedback(`"${orgName}" has been added successfully!`, 'success');
+  updateOrganizationCounter();
+  
+  setTimeout(hideFeedback, 3000);
+}
+
+// Organization feedback system
+function showFeedback(message, type = 'success') {
+  const feedback = document.getElementById('orgAddedFeedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.className = 'org-added-feedback ' + type;
+    feedback.style.display = 'block';
+  }
+}
+
+function hideFeedback() {
+  const feedback = document.getElementById('orgAddedFeedback');
+  if (feedback) {
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+    feedback.className = 'org-added-feedback';
+  }
+}
+
+// Office counter update
+function updateOfficeCounter() {
+  const select = $('#officeSelect');
+  const counter = document.getElementById('officeCounter');
+  if (!counter) return;
+  
+  const selectedCount = select.val()?.length || 0;
+  
+  if (selectedCount === 0) {
+    counter.textContent = 'No offices selected';
+    counter.classList.remove('has-selections');
+  } else if (selectedCount === 1) {
+    counter.textContent = '1 office selected';
+    counter.classList.add('has-selections');
+  } else {
+    counter.textContent = `${selectedCount} offices selected`;
+    counter.classList.add('has-selections');
+  }
+}
+
+// Office click handlers
+function setupOfficeClickHandlers() {
+  $(document).off('click', '#officeSelect + .select2-container .select2-selection__choice');
+  
+  $(document).on('click', '#officeSelect + .select2-container .select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#officeSelect');
+    
+    if (value) {
+      let currentValues = select.val() || [];
+      currentValues = currentValues.filter(v => v !== value);
+      select.val(currentValues).trigger('change');
+      updateOfficeCounter();
+    }
+  });
+}
+
+// Toggle custom office input
+function toggleCustomOffice() {
+  const customOfficeContainer = document.getElementById('customOfficeContainer');
+  const isVisible = customOfficeContainer.style.display !== 'none';
+  customOfficeContainer.style.display = isVisible ? 'none' : 'block';
+  
+  if (!isVisible) {
+    document.getElementById('otherOffice').focus();
+  } else {
+    document.getElementById('otherOffice').value = '';
+    hideOfficeFeedback();
+  }
+}
+
+// Add custom office
+function addCustomOffice() {
+  const input = document.getElementById('otherOffice');
+  const officeName = input.value.trim();
+  const select = $('#officeSelect');
+
+  if (!officeName) {
+    showOfficeFeedback('Please enter an office/department name.', 'error');
+    input.focus();
+    return;
+  }
+  
+  if (officeName.length < 3) {
+    showOfficeFeedback('Office/department name must be at least 3 characters long.', 'error');
+    input.focus();
+    return;
+  }
+
+  const existingOptions = Array.from(select[0].options).map(option => option.value.toLowerCase());
+  if (existingOptions.includes(officeName.toLowerCase())) {
+    showOfficeFeedback('This office/department is already in your list.', 'warning');
+    input.focus();
+    return;
+  }
+
+  if (select.find(`option[value="${officeName}"]`).length === 0) {
+    const newOption = new Option(officeName, officeName, true, true);
+    select.append(newOption);
+  }
+
+  const current = select.val() || [];
+  if (!current.includes(officeName)) {
+    current.push(officeName);
+    select.val(current).trigger('change');
+  }
+
+  input.value = '';
+  showOfficeFeedback(`"${officeName}" has been added successfully!`, 'success');
+  updateOfficeCounter();
+  
+  setTimeout(hideOfficeFeedback, 3000);
+}
+
+// Office feedback system
+function showOfficeFeedback(message, type = 'success') {
+  const feedback = document.getElementById('officeAddedFeedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.className = 'org-added-feedback ' + type;
+    feedback.style.display = 'block';
+  }
+}
+
+function hideOfficeFeedback() {
+  const feedback = document.getElementById('officeAddedFeedback');
+  if (feedback) {
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+    feedback.className = 'org-added-feedback';
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+window.onclick = function (e) {
+  ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
+    if (e.target.id === id) closeModal(id);
+  });
+};
 
 // Mobile hamburger menu toggle
 document.addEventListener('DOMContentLoaded', () => {

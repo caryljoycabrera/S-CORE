@@ -191,22 +191,43 @@ router.post('/register', async (req, res) => {
     
     try {
       await newUser.save();
-      console.log('User successfully created with username:', userData.username);
+      console.log('✅ User successfully created with username:', userData.username);
       
       // Verify the user was actually saved
       const savedUser = await User.findOne({ username: userData.username });
-      console.log('Verification - Found user in database:', savedUser ? 'Yes' : 'No');
+      console.log('🔍 Verification - Found user in database:', savedUser ? 'Yes' : 'No');
       
       // Notify admins about new user registration
       if (savedUser) {
-        await notificationService.notifyNewUserRegistration(savedUser._id);
-        console.log('New user registration notification sent to admins');
+        console.log('📧 ===== TRIGGERING ADMIN NOTIFICATION =====');
+        console.log('👤 New user registered:', {
+          id: savedUser._id,
+          username: savedUser.username,
+          name: `${savedUser.fName} ${savedUser.lName}`,
+          email: savedUser.email,
+          userType: savedUser.userType,
+          status: savedUser.status
+        });
+        
+        try {
+          await notificationService.notifyNewUserRegistration(savedUser._id);
+          console.log('✅ Admin notification process completed successfully');
+        } catch (notifError) {
+          console.error('❌ Error sending admin notification:', notifError);
+          console.error('Notification error stack:', notifError.stack);
+          // Don't throw - allow registration to complete even if notification fails
+        }
+        
+        console.log('📧 ===== ADMIN NOTIFICATION COMPLETE =====');
+      } else {
+        console.error('⚠️ User not found after save - cannot send notification');
       }
       
       // Redirect to login on successful registration
+      console.log('🔄 Redirecting user to login page...');
       res.redirect('/login');
     } catch (saveError) {
-      console.error('Error saving user:', saveError);
+      console.error('❌ Error saving user:', saveError);
       throw saveError;
     }
 

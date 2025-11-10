@@ -513,6 +513,10 @@ class NotificationSystem {
     const priorityClass = `priority-${notification.priority}`;
     // Handle both _id (from MongoDB) and id fields
     const notifId = notification._id || notification.id;
+    const isDeletable = notification.isDeletable !== false; // Default to true if not specified
+    
+    // For onboarding/welcome notifications, show only time without sender
+    const showSender = notification.sender && notification.type !== 'user_approved';
     
     return `
       <div class="notification-item ${isUnread ? 'unread' : ''} ${priorityClass}" 
@@ -527,16 +531,16 @@ class NotificationSystem {
           <p class="notification-item-message">${this.escapeHtml(notification.message)}</p>
           <div class="notification-meta">
             <span class="notification-time">${timeAgo}</span>
-            ${notification.sender ? `<span class="notification-sender">from ${this.escapeHtml(notification.sender.name)}</span>` : ''}
+            ${showSender ? `<span class="notification-sender">from ${this.escapeHtml(notification.sender.name)}</span>` : ''}
           </div>
         </div>
         ${isUnread ? '<div class="unread-indicator"></div>' : ''}
-        <button class="notification-delete-btn" data-id="${notifId}" title="Delete notification">
+        ${isDeletable ? `<button class="notification-delete-btn" data-id="${notifId}" title="Delete notification">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-        </button>
+        </button>` : ''}
       </div>
     `;
   }
@@ -554,6 +558,9 @@ class NotificationSystem {
       'approval_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
       'approval_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
       'approval_revision': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+      'user_registered': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
+      'user_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17,11 19,13 23,9"></polyline></svg>',
+      'user_denied': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>',
       'new_message': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
       'system': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'
     };
@@ -608,6 +615,15 @@ class NotificationSystem {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const id = btn.dataset.id;
+        
+        // Find the notification to check if it's deletable
+        const notification = this.notifications.find(n => (n._id || n.id) === id);
+        
+        if (notification && notification.isDeletable === false) {
+          console.error('This notification cannot be deleted (system notification)');
+          return;
+        }
+        
         this.deleteNotification(id);
       });
     });
@@ -626,12 +642,21 @@ class NotificationSystem {
       console.log('📝 URL parameters:', Object.fromEntries(params.entries()));
       console.log('🗺️ Current path:', window.location.pathname, 'Target path:', urlObj.pathname);
       
-      // Check if this is a user registration notification
-      if (type === 'user_registered' && params.has('userId')) {
+      // Check if this is an onboarding/welcome notification
+      if (url.includes('/onboarding') || urlObj.pathname === '/onboarding') {
+        console.log('🎓 Onboarding notification clicked');
+        this.closeDropdown();
+        this.showOnboardingModal();
+        return;
+      }
+      
+      // Check if this is a user registration notification (system type with User relatedModel)
+      if (type === 'system' && params.has('userId') && urlObj.pathname.includes('/admin/users')) {
         const userId = params.get('userId');
         const tab = params.get('tab') || 'pending';
+        const scrollTo = params.get('scrollTo') || null;
         
-        console.log('👤 User registration notification detected:', { userId, tab });
+        console.log('👤 User registration notification detected:', { userId, tab, scrollTo });
         
         const currentPath = window.location.pathname;
         const targetPath = urlObj.pathname;
@@ -639,7 +664,30 @@ class NotificationSystem {
         if (currentPath === targetPath) {
           // We're on the users page, open the modal
           console.log('✅ On users page, opening user modal...');
-          this.openUserModal(userId, tab);
+          this.openUserModal(userId, tab, scrollTo);
+        } else {
+          // Navigate to users page with userId parameter
+          console.log('🔄 Navigating to users page:', url);
+          window.location.href = url;
+        }
+        return;
+      }
+      
+      // Check if this is a user registration notification (legacy check for user_registered type)
+      if (type === 'user_registered' && params.has('userId')) {
+        const userId = params.get('userId');
+        const tab = params.get('tab') || 'pending';
+        const scrollTo = params.get('scrollTo') || null;
+        
+        console.log('👤 User registration notification detected:', { userId, tab, scrollTo });
+        
+        const currentPath = window.location.pathname;
+        const targetPath = urlObj.pathname;
+        
+        if (currentPath === targetPath) {
+          // We're on the users page, open the modal
+          console.log('✅ On users page, opening user modal...');
+          this.openUserModal(userId, tab, scrollTo);
         } else {
           // Navigate to users page with userId parameter
           console.log('🔄 Navigating to users page:', url);
@@ -716,8 +764,8 @@ class NotificationSystem {
   /**
    * Open user detail modal (for admin user management page)
    */
-  openUserModal(userId, tab = 'pending') {
-    console.log('👤 OpenUserModal called with:', { userId, tab });
+  openUserModal(userId, tab = 'pending', scrollTo = null) {
+    console.log('👤 OpenUserModal called with:', { userId, tab, scrollTo });
     
     try {
       // First, switch to the correct tab if needed
@@ -728,16 +776,23 @@ class NotificationSystem {
         
         // Wait a bit for tab content to load
         setTimeout(() => {
-          // Find the user row with the matching ID
-          const userRow = document.querySelector(`tr.user-row[data-id="${userId}"]`);
+          // Find the user row with the matching ID - use .grid-row instead of tr.user-row
+          const userRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
           if (userRow) {
             console.log('✅ Found user row, opening modal');
             // Check if global openUserModal function exists
             if (typeof window.openUserModal === 'function') {
-              window.openUserModal(userRow);
+              window.openUserModal(userRow, scrollTo);
             } else {
               // Fallback: trigger click on the row
               userRow.click();
+              
+              // Handle scroll after modal opens
+              if (scrollTo === 'actions') {
+                setTimeout(() => {
+                  this.scrollToUserActions();
+                }, 500);
+              }
             }
             
             // Scroll the row into view
@@ -758,6 +813,147 @@ class NotificationSystem {
     } catch (error) {
       console.error('❌ Error opening user modal:', error);
     }
+  }
+
+  /**
+   * Scroll to the user status actions section in the modal
+   */
+  scrollToUserActions() {
+    console.log('📜 Scrolling to user status actions section');
+    
+    const modalBody = document.querySelector('.user-details-modal-body');
+    const actionsSection = document.querySelector('.user-admin-form-section');
+    
+    if (modalBody && actionsSection) {
+      // Scroll to the actions section
+      actionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
+      // Highlight the section briefly
+      actionsSection.style.backgroundColor = '#fef3c7';
+      actionsSection.style.transition = 'background-color 0.3s ease';
+      
+      setTimeout(() => {
+        actionsSection.style.backgroundColor = '';
+      }, 2000);
+      
+      console.log('✅ Scrolled to user actions section');
+    } else {
+      console.warn('⚠️ Could not find modal body or actions section');
+    }
+  }
+
+  /**
+   * Show onboarding modal with system guide
+   */
+  showOnboardingModal() {
+    console.log('🎓 Showing onboarding modal');
+    
+    // Create modal HTML
+    const modalHTML = `
+      <div id="onboarding-modal" class="onboarding-modal-overlay">
+        <div class="onboarding-modal-content">
+          <button class="onboarding-close-btn" id="onboarding-close-btn">&times;</button>
+          
+          <div class="onboarding-header">
+            <div class="onboarding-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22,4 12,14.01 9,11.01"></polyline>
+              </svg>
+            </div>
+            <h1>Welcome to S-CORE!</h1>
+            <p>Your account has been approved. Let's get you started!</p>
+          </div>
+          
+          <div class="onboarding-body">
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="9" x2="15" y2="9"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Dashboard Overview</h3>
+                <p>Your dashboard provides a quick overview of your service requests, approval requests, and important notifications.</p>
+              </div>
+            </div>
+            
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Submit Requests</h3>
+                <p>You can submit service requests and approval requests through the navigation menu. Fill out the forms carefully and attach any required files.</p>
+              </div>
+            </div>
+            
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Stay Updated</h3>
+                <p>You'll receive notifications when your requests are reviewed, approved, or require revisions. Check the bell icon regularly.</p>
+              </div>
+            </div>
+            
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Need Help?</h3>
+                <p>Access the complete user guide anytime from the sidebar menu. It contains detailed instructions on all system features.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="onboarding-footer">
+            <a href="/user-guide" class="btn-secondary">View Full Guide</a>
+            <button class="btn-primary" id="onboarding-got-it">Got it, Let's Start!</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Add modal to DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Add event listeners
+    const modal = document.getElementById('onboarding-modal');
+    const closeBtn = document.getElementById('onboarding-close-btn');
+    const gotItBtn = document.getElementById('onboarding-got-it');
+    
+    const closeModal = () => {
+      modal.remove();
+      document.body.style.overflow = '';
+    };
+    
+    closeBtn.addEventListener('click', closeModal);
+    gotItBtn.addEventListener('click', closeModal);
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
   }
 
   /**
@@ -901,11 +1097,12 @@ class NotificationSystem {
         this.handleNotificationDeleted(notificationId);
         return true;
       } else {
-        console.error('Failed to delete notification');
+        const errorData = await response.json().catch(() => ({ message: 'Failed to delete notification' }));
+        console.error('Failed to delete notification:', errorData.message || 'Unknown error');
         return false;
       }
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error('Error deleting notification:', error.message || error);
       return false;
     }
   }

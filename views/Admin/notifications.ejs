@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/stylesheets/notifications.css">
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css">
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
   <style>
     /* Page-specific styles */
     .notifications-page-container {
@@ -319,15 +322,147 @@
         width: 100%;
         justify-content: center;
       }
+      
+      .notifications-actions {
+        gap: 0.5rem;
+      }
+      
+      .action-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 0.75rem 0.75rem;
+        font-size: 13px;
+      }
+      
+      .action-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+      
+      .filter-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 13px;
+      }
 
       .notification-page-item {
         padding: 1rem;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .notification-icon {
+        width: 36px;
+        height: 36px;
+      }
+      
+      .notification-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+      
+      .notification-page-content {
+        width: 100%;
+      }
+
+      .notification-page-title {
+        font-size: 15px;
+      }
+
+      .notification-page-message {
+        font-size: 13px;
+      }
+
+      .notification-page-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        font-size: 12px;
+      }
+      
+      .notification-page-sender {
+        max-width: 100%;
+      }
+
+      .notification-page-actions {
+        width: 100%;
+        flex-direction: column;
+        opacity: 1;
+      }
+      
+      .notification-action-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem;
+        font-size: 13px;
       }
 
       .pagination-container {
         flex-direction: column;
         gap: 1rem;
         padding: 1rem;
+      }
+      
+      .pagination-controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .pagination-btn {
+        flex: 1;
+        max-width: 100px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .notifications-page-container {
+        padding: 0.75rem;
+      }
+      
+      .page-title {
+        font-size: 1.25rem;
+      }
+      
+      .page-subtitle {
+        font-size: 0.875rem;
+      }
+      
+      .notifications-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+        scrollbar-width: thin;
+      }
+      
+      .notifications-filters::-webkit-scrollbar {
+        height: 4px;
+      }
+      
+      .filter-btn {
+        flex-shrink: 0;
+        font-size: 12px;
+        padding: 0.5rem 0.75rem;
+      }
+      
+      .action-btn {
+        font-size: 12px;
+        padding: 0.75rem 0.5rem;
+      }
+      
+      .notification-page-item {
+        padding: 0.75rem;
+      }
+      
+      .notification-page-title {
+        font-size: 14px;
+      }
+      
+      .notification-page-message {
+        font-size: 12px;
+      }
+      
+      .notification-action-btn {
+        font-size: 12px;
+        padding: 0.625rem;
       }
     }
   </style>
@@ -670,7 +805,7 @@
             <div class="notification-icon ${notification.type}">
               ${icon}
             </div>
-            <div class="notification-page-content" data-id="${notifId}" data-type="${notification.type}" data-url="${notification.actionUrl || ''}">
+            <div class="notification-page-content" data-id="${notifId}" data-type="${notification.type}" data-url="${notification.actionUrl || ''}" style="cursor: ${notification.actionUrl ? 'pointer' : 'default'};">
               <h4 class="notification-page-title">${escapeHtml(notification.title)}</h4>
               <p class="notification-page-message">${escapeHtml(notification.message)}</p>
               <div class="notification-page-meta">
@@ -711,9 +846,20 @@
           const type = content.dataset.type;
           const url = content.dataset.url;
           
+          if (!url) {
+            console.log('No action URL for this notification');
+            return;
+          }
+          
+          // Mark as read first
           markAsRead(notifId);
-          if (url && window.notificationSystem) {
+          
+          // Use the notification system's navigation handler if available
+          if (window.notificationSystem && typeof window.notificationSystem.handleNotificationNavigation === 'function') {
             window.notificationSystem.handleNotificationNavigation(url, type);
+          } else {
+            // Fallback: direct navigation
+            window.location.href = url;
           }
         });
       });

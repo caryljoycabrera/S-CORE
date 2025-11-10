@@ -13,12 +13,23 @@ class NotificationService {
    * @returns {Object} Created notification
    */
   async createNotification(data) {
+    console.log('📝 createNotification called with data:', {
+      recipient: data.recipient,
+      type: data.type,
+      title: data.title,
+      priority: data.priority
+    });
+    
     try {
+      console.log('💾 Creating notification document...');
       const notification = new Notification(data);
       await notification.save();
+      console.log('✅ Notification saved to database with ID:', notification._id);
       
       // Populate sender info for real-time emission
+      console.log('👤 Populating sender information...');
       await notification.populate('sender', 'fName lName role');
+      console.log('✅ Sender populated:', notification.sender ? `${notification.sender.fName} ${notification.sender.lName}` : 'No sender');
       
       // Emit real-time notification if user is online
       const notificationData = {
@@ -37,11 +48,14 @@ class NotificationService {
         relatedModel: notification.relatedModel
       };
       
+      console.log('📡 Emitting real-time notification to user:', data.recipient);
       socketService.emitToUser(data.recipient, 'newNotification', notificationData);
+      console.log('✅ Real-time notification emitted successfully');
       
       return notification;
     } catch (error) {
-      console.error('Error creating notification:', error);
+      console.error('❌ Error creating notification:', error);
+      console.error('Error stack:', error.stack);
       throw error;
     }
   }
@@ -289,52 +303,108 @@ class NotificationService {
 
   // Notify admins when a new user registers (pending approval)
   async notifyNewUserRegistration(userId) {
+    console.log('🔔 ===== USER REGISTRATION NOTIFICATION START =====');
+    console.log('📝 Attempting to notify admins about new user registration');
+    console.log('👤 User ID:', userId);
+    
     try {
+      // Find the user
+      console.log('🔍 Searching for user in database...');
       const user = await User.findById(userId);
-      if (!user) return;
+      
+      if (!user) {
+        console.error('❌ User not found in database with ID:', userId);
+        console.log('🔔 ===== USER REGISTRATION NOTIFICATION END (FAILED - User Not Found) =====');
+        return;
+      }
+      
+      console.log('✅ User found:', {
+        id: user._id,
+        name: `${user.fName} ${user.lName}`,
+        email: user.email,
+        userType: user.userType,
+        role: user.role,
+        status: user.status
+      });
 
       // Get all admin users
+      console.log('🔍 Searching for admin users...');
       const admins = await User.find({ role: 'admin' });
       const adminIds = admins.map(admin => admin._id);
+      
+      console.log(`✅ Found ${admins.length} admin(s):`, admins.map(a => ({
+        id: a._id,
+        name: `${a.fName} ${a.lName}`,
+        email: a.email
+      })));
+
+      if (adminIds.length === 0) {
+        console.warn('⚠️ No admin users found in the system!');
+        console.log('🔔 ===== USER REGISTRATION NOTIFICATION END (NO ADMINS) =====');
+        return;
+      }
 
       const userType = user.userType === 'student' ? 'Student' : 'Staff/Faculty';
       const notificationData = {
         title: 'New User Registration',
         message: `${user.fName} ${user.lName} (${userType}) has registered and is awaiting approval`,
-        type: 'user_registered',
+        type: 'system',
         relatedId: userId,
         relatedModel: 'User',
         sender: userId,
         priority: 'high',
-        actionUrl: `/admin/users?tab=pending&userId=${userId}`
+        actionUrl: `/admin/users?tab=pending&userId=${userId}&scrollTo=actions`
       };
+      
+      console.log('📋 Notification data prepared:', notificationData);
 
       // Create notifications for all admins
-      const notifications = adminIds.map(adminId => 
-        this.createNotification({ ...notificationData, recipient: adminId })
-      );
+      console.log(`📤 Creating ${adminIds.length} notification(s)...`);
+      const notifications = adminIds.map(adminId => {
+        console.log(`   → Creating notification for admin ${adminId}`);
+        return this.createNotification({ ...notificationData, recipient: adminId });
+      });
       
-      await Promise.all(notifications);
-      console.log(`New user registration notifications sent to ${adminIds.length} admin(s)`);
+      const results = await Promise.all(notifications);
+      console.log(`✅ Successfully created ${results.length} notification(s)`);
+      
+      results.forEach((notification, index) => {
+        console.log(`   ✓ Notification ${index + 1}:`, {
+          id: notification._id,
+          recipient: notification.recipient,
+          type: notification.type,
+          title: notification.title
+        });
+      });
+      
+      console.log(`🎉 New user registration notifications sent to ${adminIds.length} admin(s)`);
+      console.log('🔔 ===== USER REGISTRATION NOTIFICATION END (SUCCESS) =====');
     } catch (error) {
-      console.error('Error notifying new user registration:', error);
+      console.error('❌ ===== ERROR in notifyNewUserRegistration =====');
+      console.error('Error details:', error);
+      console.error('Error stack:', error.stack);
+      console.log('🔔 ===== USER REGISTRATION NOTIFICATION END (ERROR) =====');
     }
   }
 
   // Notify user when their account is approved
   async notifyUserApproved(userId, adminId) {
     try {
+      // Send the welcome notification
       await this.createNotification({
         recipient: userId,
         sender: adminId,
-        title: 'Account Approved',
-        message: 'Your account has been approved! You can now access all system features.',
+        title: 'Welcome to S-CORE!',
+        message: 'Your account has been approved! Click here to learn how to navigate the system and get started.',
         type: 'user_approved',
         relatedId: userId,
         relatedModel: 'User',
         priority: 'high',
-        actionUrl: '/user/dashboard'
+        actionUrl: '/user-guide',
+        isDeletable: false  // Cannot be deleted
       });
+      
+      console.log('✅ Welcome notification sent to user:', userId);
     } catch (error) {
       console.error('Error notifying user approval:', error);
     }

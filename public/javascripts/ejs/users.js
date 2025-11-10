@@ -640,41 +640,6 @@ function selectCustomRole(value, text) {
 }
 
 // ========================================
-// USER ROW CLICK HANDLERS
-// ========================================
-// Handle clicks on user info section to open modal
-const gridBody = document.getElementById('gridBody');
-if (gridBody) {
-  gridBody.addEventListener('click', function(e) {
-    // If click is on an action button (Approve, Deny, Reset), show confirmation modal only
-    const button = e.target.closest('button');
-    if (button && button.closest('.grid-row-actions')) {
-      e.preventDefault();
-      e.stopPropagation();
-      const userId = button.dataset.userid;
-      if (!userId) return;
-      if (button.classList.contains('approve-btn')) {
-        showConfirmationModal('approve', userId, button);
-      } else if (button.classList.contains('deny-btn')) {
-        showConfirmationModal('deny', userId, button);
-      } else if (button.classList.contains('reset-btn')) {
-        showConfirmationModal('reset', userId, button);
-      }
-      return; // Prevent row modal from opening
-    }
-    // Otherwise, if click is on the grid-row-info section (not buttons), open the user modal
-    const gridRowInfo = e.target.closest('.grid-row-info');
-    if (gridRowInfo) {
-      const gridRow = gridRowInfo.closest('.grid-row');
-      if (gridRow) {
-        openUserModal(gridRow);
-      }
-      return;
-    }
-  });
-}
-
-// ========================================
 // FORM SUBMISSION
 // ========================================
 document.getElementById('userUpdateForm').addEventListener('submit', function(e) {
@@ -944,7 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Adjust sidebar visibility based on screen size
   function handleResize() {
-    if (window.innerWidth > 768) {
+    if (window.innerWidth > 768 && sidebarEl && mobileOverlay) {
       // Reset mobile menu state on desktop
       sidebarEl.classList.remove('mobile-active');
       mobileOverlay.classList.remove('active');
@@ -959,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Close sidebar when clicking outside
   document.addEventListener('click', (e) => {
     if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
-      if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
+      if (!sidebarEl.contains(e.target) && menuToggle && !menuToggle.contains(e.target)) {
         toggleMobileMenu(false);
       }
     }
@@ -970,116 +935,315 @@ document.addEventListener('DOMContentLoaded', () => {
 // EVENT LISTENERS FOR STATUS BUTTONS
 // ========================================
 
-// Attach listeners to modal action buttons by ID (these are the visible buttons in modal)
-['modalApproveBtn', 'modalDenyBtn', 'modalResetBtn'].forEach(id => {
-  const btn = document.getElementById(id);
-  if (btn) {
-    btn.addEventListener('click', function(e) {
+// ========================================
+// GRID ROW CLICK - Open User Detail Modal
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 DOMContentLoaded - Initializing grid row click listeners...');
+  
+  const gridBody = document.getElementById('gridBody');
+  console.log('📋 Grid Body Element:', gridBody ? 'FOUND ✓' : 'NOT FOUND ✗');
+  
+  if (gridBody) {
+    // Single event listener for clicking on user rows
+    gridBody.addEventListener('click', function(e) {
+      console.log('🖱️ Click detected in grid body', e.target);
+      
+      // Find the grid row
+      const gridRow = e.target.closest('.grid-row');
+      if (gridRow) {
+        console.log('📄 Opening user modal for row');
+        // Always scroll to actions when clicking on the row (especially "Click to Manage")
+        openUserModal(gridRow, 'actions');
+      }
+    });
+    
+    console.log('✅ Grid row click listener attached successfully');
+  }
+  
+  console.log('🎉 Grid event listeners initialized successfully!');
+});
+
+// ========================================
+// MODAL ACTION BUTTONS - Separate Event Listeners
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 DOMContentLoaded - Initializing MODAL action button listeners...');
+  
+  // Attach listeners to modal action buttons by ID - DIFFERENT FUNCTION
+  const modalApproveBtn = document.getElementById('modalApproveBtn');
+  const modalDenyBtn = document.getElementById('modalDenyBtn');
+  const modalResetBtn = document.getElementById('modalResetBtn');
+  
+  console.log('🔘 Modal Approve Button:', modalApproveBtn ? 'FOUND ✓' : 'NOT FOUND ✗');
+  console.log('🔘 Modal Deny Button:', modalDenyBtn ? 'FOUND ✓' : 'NOT FOUND ✗');
+  console.log('🔘 Modal Reset Button:', modalResetBtn ? 'FOUND ✓' : 'NOT FOUND ✗');
+  
+  if (modalApproveBtn) {
+    modalApproveBtn.addEventListener('click', function(e) {
       e.preventDefault();
+      e.stopPropagation();
       const userId = this.dataset.userid;
-      if (!userId) return;
-
-      if (this.id === 'modalApproveBtn') {
-        showConfirmationModal('approve', userId, this);
-      } else if (this.id === 'modalDenyBtn') {
-        showConfirmationModal('deny', userId, this);
-      } else if (this.id === 'modalResetBtn') {
-        showConfirmationModal('reset', userId, this);
+      console.log('✅ MODAL Approve clicked for userId:', userId);
+      if (!userId) {
+        console.warn('⚠️ No userId found on modal approve button');
+        return;
       }
+      handleModalAction('approve', userId, this);
     });
   }
-});
-
-// Re-attach listeners after status update
-window.addEventListener('DOMContentLoaded', function() {
-  if (typeof updateRowState === 'function') {
-    const originalUpdateRowState = updateRowState;
-    window.updateRowState = function(button, action) {
-      originalUpdateRowState(button, action);
-      // Re-attach modal button listeners after DOM update
-      ['modalApproveBtn', 'modalDenyBtn', 'modalResetBtn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn && !btn.hasListener) {
-          btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const userId = this.dataset.userid;
-            if (!userId) return;
-
-            if (this.id === 'modalApproveBtn') {
-              showConfirmationModal('approve', userId, this);
-            } else if (this.id === 'modalDenyBtn') {
-              showConfirmationModal('deny', userId, this);
-            } else if (this.id === 'modalResetBtn') {
-              showConfirmationModal('reset', userId, this);
-            }
-          });
-          btn.hasListener = true; // Mark as having listener
-        }
-      });
-    };
+  
+  if (modalDenyBtn) {
+    modalDenyBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const userId = this.dataset.userid;
+      console.log('❌ MODAL Deny clicked for userId:', userId);
+      if (!userId) {
+        console.warn('⚠️ No userId found on modal deny button');
+        return;
+      }
+      handleModalAction('deny', userId, this);
+    });
   }
+  
+  if (modalResetBtn) {
+    modalResetBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const userId = this.dataset.userid;
+      console.log('🔄 MODAL Reset clicked for userId:', userId);
+      if (!userId) {
+        console.warn('⚠️ No userId found on modal reset button');
+        return;
+      }
+      handleModalAction('reset', userId, this);
+    });
+  }
+  
+  console.log('🎉 MODAL event listeners initialized successfully!');
 });
 
-// Show the confirmation modal for status change
-function showConfirmationModal(action, userId, buttonElement) {
-  const confirmModal = document.getElementById('confirmStatusModal');
+// ========================================
+// GRID ACTION HANDLER - Quick confirmation and execution
+// ========================================
+// MODAL ACTION HANDLER - Confirmation dialog
+// ========================================
+function handleModalAction(action, userId, buttonElement) {
+  console.log('📋 handleModalAction called (MODAL BUTTONS):', { action, userId, buttonElement });
+  
+  const confirmStatusModal = document.getElementById('confirmStatusModal');
   const confirmMessage = document.getElementById('confirmMessage');
-  const confirmActionBtn = document.getElementById('confirmActionBtn');
-  let message = '';
-
-  if (action === 'approve') {
-    message = '<strong>Approve this user?</strong><br><br>The user will gain full access to the system and can submit service requests.';
-    confirmActionBtn.className = 'user-admin-btn user-admin-btn-primary';
-    confirmActionBtn.style.background = '';
-  } else if (action === 'deny') {
-    message = '<strong>Deny this user?</strong><br><br>The user will be blocked from logging in and accessing the system.';
-    confirmActionBtn.className = 'user-admin-btn user-admin-btn-danger';
-    confirmActionBtn.style.background = '#ef4444';
-  } else if (action === 'reset') {
-    message = '<strong>Reset to Pending?</strong><br><br>The user status will be changed to pending and will need approval again to access the system.';
-    confirmActionBtn.className = 'user-admin-btn user-admin-btn-secondary';
-    confirmActionBtn.style.background = '';
+  const confirmStatusBtn = document.getElementById('confirmStatusBtn');
+  const closeConfirmModal = document.getElementById('closeConfirmModal');
+  const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+  
+  if (!confirmStatusModal) {
+    console.error('❌ Confirm status modal not found');
+    return;
   }
-
-  confirmMessage.innerHTML = message;
-  confirmModal.style.display = 'block';
-  document.body.style.overflow = 'hidden';
-
-  // Remove previous listeners by replacing the button
-  const newConfirmBtn = confirmActionBtn.cloneNode(true);
-  confirmActionBtn.parentNode.replaceChild(newConfirmBtn, confirmActionBtn);
-
-  // Add new confirm listener
-  newConfirmBtn.addEventListener('click', function () {
-    confirmModal.style.display = 'none';
+  
+  // Set modal content based on action
+  let actionText = '';
+  let actionColor = '';
+  
+  if (action === 'approve') {
+    actionText = 'Approve User';
+    actionColor = '#10b981';
+    confirmMessage.innerHTML = `<strong>Approve this user?</strong><br>The user will be granted access to the system.`;
+  } else if (action === 'deny') {
+    actionText = 'Deny User';
+    actionColor = '#ef4444';
+    confirmMessage.innerHTML = `<strong>Deny this user?</strong><br>The user will not be able to access the system.`;
+  } else if (action === 'reset') {
+    actionText = 'Reset to Pending';
+    actionColor = '#f59e0b';
+    confirmMessage.innerHTML = `<strong>Reset user status to Pending?</strong><br>The user status will be changed back to pending review.`;
+  }
+  
+  // Update confirm button
+  confirmStatusBtn.textContent = actionText;
+  confirmStatusBtn.style.background = actionColor;
+  
+  // Remove old event listeners by cloning and replacing
+  const newConfirmBtn = confirmStatusBtn.cloneNode(true);
+  const newCancelBtn = cancelConfirmBtn.cloneNode(true);
+  const newCloseBtn = closeConfirmModal.cloneNode(true);
+  
+  confirmStatusBtn.parentNode.replaceChild(newConfirmBtn, confirmStatusBtn);
+  cancelConfirmBtn.parentNode.replaceChild(newCancelBtn, cancelConfirmBtn);
+  closeConfirmModal.parentNode.replaceChild(newCloseBtn, closeConfirmModal);
+  
+  // Close modal function
+  function closeModal() {
+    confirmStatusModal.style.display = 'none';
     document.body.style.overflow = '';
-    executeStatusChange(action, userId, buttonElement);
-  });
+  }
+  
+  // Confirm button - execute action
+  newConfirmBtn.onclick = function() {
+    console.log('✅ Modal confirm clicked - executing status change');
+    closeModal();
+    executeModalStatusChange(action, userId, buttonElement);
+  };
+  
+  // Cancel and close buttons
+  newCancelBtn.onclick = closeModal;
+  newCloseBtn.onclick = closeModal;
+  
+  // Show modal
+  confirmStatusModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  
+  console.log('✅ Modal confirmation dialog displayed');
 }
 
-function executeStatusChange(action, userId, buttonElement) {
-  buttonElement.disabled = true;
-  fetch(`/admin/user/${action}/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        updateRowState(buttonElement, action);
-        const actionText = action.charAt(0).toUpperCase() + action.slice(1);
-        showToast('Success', `User ${actionText === 'Reset' ? 'reset to pending' : actionText + 'd'} successfully`, 'success');
-      } else {
-        console.error('Action failed:', data.message || 'Unknown error');
-        showToast('Error', data.message || 'Failed to update user status', 'error');
-        buttonElement.disabled = false;
-      }
-    })
-    .catch(err => {
-      console.error('Action failed:', err);
-      showToast('Error', 'Network error. Please try again.', 'error');
-      buttonElement.disabled = false;
+// ========================================
+// UPDATE MODAL ACTION BUTTONS
+// ========================================
+function updateModalActionButtons(action) {
+  console.log('🔄 updateModalActionButtons called with action:', action);
+  
+  const approveBtn = document.getElementById('modalApproveBtn');
+  const denyBtn = document.getElementById('modalDenyBtn');
+  const resetBtn = document.getElementById('modalResetBtn');
+  
+  if (!approveBtn || !denyBtn || !resetBtn) {
+    console.error('❌ Modal action buttons not found!', {
+      approveBtn: !!approveBtn,
+      denyBtn: !!denyBtn,
+      resetBtn: !!resetBtn
     });
+    return;
+  }
+  
+  console.log('📋 Buttons found:', {
+    approve: approveBtn.textContent,
+    deny: denyBtn.textContent,
+    reset: resetBtn.textContent
+  });
+  
+  // Determine new status based on action
+  let newStatus = '';
+  if (action === 'approve') newStatus = 'approved';
+  else if (action === 'deny') newStatus = 'denied';
+  else if (action === 'reset') newStatus = 'pending';
+  
+  console.log(`🎯 New status will be: ${newStatus}`);
+  
+  // Reset all buttons to default state and text
+  approveBtn.disabled = false;
+  approveBtn.style.opacity = '1';
+  approveBtn.style.cursor = 'pointer';
+  approveBtn.textContent = 'Approve';
+  
+  denyBtn.disabled = false;
+  denyBtn.style.opacity = '1';
+  denyBtn.style.cursor = 'pointer';
+  denyBtn.textContent = 'Deny';
+  
+  resetBtn.disabled = false;
+  resetBtn.style.opacity = '1';
+  resetBtn.style.cursor = 'pointer';
+  resetBtn.textContent = 'Reset to Pending';
+  
+  console.log('🔄 All buttons reset to default state');
+  
+  // Show only relevant buttons based on NEW status
+  if (newStatus === 'approved') {
+    // User is now approved - can only deny or reset
+    approveBtn.style.display = 'none';
+    denyBtn.style.display = 'inline-block';
+    resetBtn.style.display = 'inline-block';
+    console.log('✅ Status: APPROVED - Showing: Deny, Reset');
+  } else if (newStatus === 'denied') {
+    // User is now denied - can only approve or reset
+    approveBtn.style.display = 'inline-block';
+    denyBtn.style.display = 'none';
+    resetBtn.style.display = 'inline-block';
+    console.log('✅ Status: DENIED - Showing: Approve, Reset');
+  } else if (newStatus === 'pending') {
+    // User is now pending - can only approve or deny
+    approveBtn.style.display = 'inline-block';
+    denyBtn.style.display = 'inline-block';
+    resetBtn.style.display = 'none';
+    console.log('✅ Status: PENDING - Showing: Approve, Deny');
+  }
+  
+  console.log(`✅ Modal action buttons updated successfully for new status: ${newStatus}`);
 }
 
-function openUserModal(row) {
+// ========================================
+// EXECUTE MODAL STATUS CHANGE
+// ========================================
+async function executeModalStatusChange(action, userId, buttonElement) {
+  console.log('🚀 executeModalStatusChange called:', { action, userId });
+  
+  try {
+    const response = await fetch('/admin/user/update-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, action })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      console.log('✅ Status update successful:', result.message);
+      
+      // Determine new status
+      let newStatus = '';
+      if (action === 'approve') newStatus = 'approved';
+      else if (action === 'deny') newStatus = 'denied';
+      else if (action === 'reset') newStatus = 'pending';
+      
+      // Update the modal status badge with smooth transition
+      const modalStatusBadge = document.getElementById('modalStatusBadge');
+      if (modalStatusBadge) {
+        modalStatusBadge.style.transition = 'all 0.3s ease';
+        modalStatusBadge.style.transform = 'scale(1.1)';
+        modalStatusBadge.className = `status-badge status-${newStatus}`;
+        modalStatusBadge.textContent = newStatus.toUpperCase();
+        
+        setTimeout(() => {
+          modalStatusBadge.style.transform = 'scale(1)';
+        }, 300);
+      }
+      
+      // Update the corresponding grid row
+      const gridRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
+      if (gridRow) {
+        const statusBadge = gridRow.querySelector('.grid-col-status .status-badge');
+        if (statusBadge) {
+          statusBadge.className = `status-badge status-${newStatus}`;
+          statusBadge.textContent = newStatus.toUpperCase();
+          gridRow.dataset.status = newStatus;
+        }
+      }
+      
+      // Update modal action buttons to reflect new status
+      updateModalActionButtons(action);
+      
+      // Show brief visual feedback in console only (no toasts/pop-ups)
+      logSuccess(`User status updated to ${newStatus.toUpperCase()}`);
+      console.log('✅ Modal status change completed seamlessly');
+    } else {
+      console.error('❌ Status update failed:', result.message || 'Failed to update user status');
+      logError('Failed to update user status: ' + (result.message || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('❌ Error updating user status:', error);
+    logError('Network error while updating user status');
+  }
+}
+
+// ========================================
+// ========================================
+// OPEN USER MODAL
+// ========================================
+function openUserModal(row, scrollTo = null) {
   // Populate modal fields from row dataset
   document.getElementById('viewUserId').textContent = row.dataset.userId || '';
   const fullName = `${row.dataset.fname || ''} ${row.dataset.mname ? row.dataset.mname + ' ' : ''}${row.dataset.lname || ''}`.trim();
@@ -1126,34 +1290,52 @@ function openUserModal(row) {
   modalStatusBadge.textContent = status.toUpperCase();
   modalStatusBadge.className = 'status-badge status-' + status;
 
-  // Show/hide status action buttons based on current status (new modal button classes)
-  const modalApproveBtn = document.querySelector('.modal-approve-btn');
-  const modalDenyBtn = document.querySelector('.modal-deny-btn');
-  const modalResetBtn = document.querySelector('.modal-reset-btn');
+  // Show/hide status action buttons based on current status (select by ID)
+  const modalApproveBtn = document.getElementById('modalApproveBtn');
+  const modalDenyBtn = document.getElementById('modalDenyBtn');
+  const modalResetBtn = document.getElementById('modalResetBtn');
 
   // Set userId for modal buttons
   [modalApproveBtn, modalDenyBtn, modalResetBtn].forEach(btn => {
     if (btn) btn.dataset.userid = row.dataset.id;
   });
 
+  console.log('🔍 openUserModal - Current user status:', status);
+  console.log('📋 Modal buttons before update:', {
+    approve: modalApproveBtn ? 'Found' : 'Not found',
+    deny: modalDenyBtn ? 'Found' : 'Not found',
+    reset: modalResetBtn ? 'Found' : 'Not found'
+  });
+
+  // Reset all buttons to default text first
+  if (modalApproveBtn) modalApproveBtn.textContent = 'Approve';
+  if (modalDenyBtn) modalDenyBtn.textContent = 'Deny';
+  if (modalResetBtn) modalResetBtn.textContent = 'Reset to Pending';
+
   // Show/hide based on status
   if (status === 'pending') {
-    if (modalApproveBtn) modalApproveBtn.style.display = '';
-    if (modalDenyBtn) modalDenyBtn.style.display = '';
+    console.log('🟡 User is PENDING - Showing: Approve, Deny | Hiding: Reset');
+    if (modalApproveBtn) modalApproveBtn.style.display = 'inline-block';
+    if (modalDenyBtn) modalDenyBtn.style.display = 'inline-block';
     if (modalResetBtn) modalResetBtn.style.display = 'none';
   } else if (status === 'approved') {
+    console.log('🟢 User is APPROVED - Showing: Deny, Reset | Hiding: Approve');
     if (modalApproveBtn) modalApproveBtn.style.display = 'none';
-    if (modalDenyBtn) modalDenyBtn.style.display = '';
-    if (modalResetBtn) modalResetBtn.style.display = '';
+    if (modalDenyBtn) modalDenyBtn.style.display = 'inline-block';
+    if (modalResetBtn) modalResetBtn.style.display = 'inline-block';
   } else if (status === 'denied') {
-    if (modalApproveBtn) modalApproveBtn.style.display = '';
+    console.log('🔴 User is DENIED - Showing: Approve, Reset | Hiding: Deny');
+    if (modalApproveBtn) modalApproveBtn.style.display = 'inline-block';
     if (modalDenyBtn) modalDenyBtn.style.display = 'none';
-    if (modalResetBtn) modalResetBtn.style.display = '';
+    if (modalResetBtn) modalResetBtn.style.display = 'inline-block';
   } else {
+    console.log('⚪ User has unknown status - Hiding all buttons');
     if (modalApproveBtn) modalApproveBtn.style.display = 'none';
     if (modalDenyBtn) modalDenyBtn.style.display = 'none';
     if (modalResetBtn) modalResetBtn.style.display = 'none';
   }
+
+  console.log('✅ Modal buttons configured for status:', status);
 
   // Update the custom dropdown display
   const selectedText = row.dataset.role === 'admin'
@@ -1161,109 +1343,40 @@ function openUserModal(row) {
     : 'Standard User - Submit & View Own Requests';
   document.getElementById('selectedRoleText').textContent = selectedText;
 
-  // Open modal and scroll to top
+  // Open modal and handle scrolling
   userModal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
-  // Scroll modal content to top (personal information section)
+  // Scroll modal content based on scrollTo parameter
   const modalBody = document.querySelector('.user-details-modal-body');
   if (modalBody) {
-    modalBody.scrollTop = 0;
-  }
-}
-
-function updateRowState(button, action) {
-  // Get user ID from button's dataset
-  const userId = button.dataset.userid;
-  if (!userId) return;
-
-  // Find the grid row using data-id
-  const gridRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
-  if (!gridRow) return;
-
-  // Get badge from grid row
-  const badge = gridRow.querySelector('.status-badge');
-  
-  // Get action buttons container
-  const actionsContainer = gridRow.querySelector('.grid-row-actions');
-  if (!actionsContainer) return;
-
-  let newStatus = '';
-  if (action === 'approve') {
-    newStatus = 'approved';
-    gridRow.dataset.status = newStatus;
-    if (badge) { badge.className = 'status-badge status-approved'; badge.textContent = 'APPROVED'; }
-
-    // Update action buttons for approved status
-    actionsContainer.innerHTML = `
-      <button class="table-deny-btn" data-userid="${userId}">Deny</button>
-      <button class="table-reset-btn" data-userid="${userId}">Reset to Pending</button>
-    `;
-  } else if (action === 'deny') {
-    newStatus = 'denied';
-    gridRow.dataset.status = newStatus;
-    if (badge) { badge.className = 'status-badge status-denied'; badge.textContent = 'DENIED'; }
-
-    // Update action buttons for denied status
-    actionsContainer.innerHTML = `
-      <button class="table-approve-btn" data-userid="${userId}">Approve</button>
-      <button class="table-reset-btn" data-userid="${userId}">Reset to Pending</button>
-    `;
-  } else if (action === 'reset') {
-    newStatus = 'pending';
-    gridRow.dataset.status = newStatus;
-    if (badge) { badge.className = 'status-badge status-pending'; badge.textContent = 'PENDING'; }
-
-    // Update action buttons for pending status
-    actionsContainer.innerHTML = `
-      <button class="table-approve-btn" data-userid="${userId}">Approve</button>
-      <button class="table-deny-btn" data-userid="${userId}">Deny</button>
-    `;
-  }
-
-  // Update modal status badge and buttons if modal is open
-  const userModal = document.getElementById('userModal');
-  if (userModal && userModal.style.display === 'flex') {
-    const modalStatusBadge = document.getElementById('modalStatusBadge');
-    const modalApproveBtn = document.getElementById('modalApproveBtn');
-    const modalDenyBtn = document.getElementById('modalDenyBtn');
-    const modalResetBtn = document.getElementById('modalResetBtn');
-
-    // Update badge
-    if (modalStatusBadge) {
-      modalStatusBadge.textContent = newStatus.toUpperCase();
-      modalStatusBadge.className = 'status-badge status-' + newStatus;
-    }
-
-    // Update button visibility based on new status
-    if (newStatus === 'pending') {
-      if (modalApproveBtn) { modalApproveBtn.style.display = 'inline-flex'; modalApproveBtn.disabled = false; }
-      if (modalDenyBtn) { modalDenyBtn.style.display = 'inline-flex'; modalDenyBtn.disabled = false; }
-      if (modalResetBtn) modalResetBtn.style.display = 'none';
-    } else if (newStatus === 'approved') {
-      if (modalApproveBtn) modalApproveBtn.style.display = 'none';
-      if (modalDenyBtn) { modalDenyBtn.style.display = 'inline-flex'; modalDenyBtn.disabled = false; }
-      if (modalResetBtn) { modalResetBtn.style.display = 'inline-flex'; modalResetBtn.disabled = false; }
-    } else if (newStatus === 'denied') {
-      if (modalApproveBtn) { modalApproveBtn.style.display = 'inline-flex'; modalApproveBtn.disabled = false; }
-      if (modalDenyBtn) modalDenyBtn.style.display = 'none';
-      if (modalResetBtn) { modalResetBtn.style.display = 'inline-flex'; modalResetBtn.disabled = false; }
-    }
-  }
-
-  // Refresh visibility based on active tab
-  if (gridRow) {
-    const activeTab = document.querySelector('.status-tab.active');
-    if (activeTab) {
-      const filterStatus = activeTab.dataset.status;
-      if (filterStatus !== 'all' && gridRow.dataset.status !== filterStatus) {
-        gridRow.style.display = 'none';
-      } else {
-        gridRow.style.display = 'grid';
-      }
+    if (scrollTo === 'actions') {
+      // Scroll to the User Status section (first user-admin-form-section)
+      setTimeout(() => {
+        const actionsSection = modalBody.querySelector('.user-admin-form-section');
+        if (actionsSection) {
+          actionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          
+          // Highlight the section briefly
+          actionsSection.style.backgroundColor = '#fef3c7';
+          actionsSection.style.transition = 'background-color 0.3s ease';
+          
+          setTimeout(() => {
+            actionsSection.style.backgroundColor = '';
+          }, 2000);
+          
+          console.log('✅ Scrolled to user actions section');
+        }
+      }, 300);
+    } else {
+      // Default: scroll to top (personal information section)
+      modalBody.scrollTop = 0;
     }
   }
 }
+
+// Make openUserModal available globally for notification system
+window.openUserModal = openUserModal;
 
 // ========================================
 // ACTIVATE 'ALL USERS' TAB ON LOAD
@@ -1273,6 +1386,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
     const tab = urlParams.get('tab') || 'all';
+    const scrollTo = urlParams.get('scrollTo') || null;
 
     if (userId) {
       // If userId is present, switch to the specified tab
@@ -1284,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           const gridRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
           if (gridRow) {
-            openUserModal(gridRow);
+            openUserModal(gridRow, scrollTo);
 
             // Scroll to the row
             gridRow.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -547,6 +547,21 @@ router.get('/profile', async (req, res) => {
 });
 
 /**
+ * GET /user-guide
+ * User guide and help documentation page
+ */
+router.get('/user-guide', async (req, res) => {
+  if (!req.session.userId) return res.redirect('/');
+  try {
+    const user = await User.findById(req.session.userId);
+    res.render('User/guide', { user });
+  } catch (err) {
+    console.error('Error loading user guide:', err);
+    res.status(500).render('error', { message: 'Failed to load guide page.' });
+  }
+});
+
+/**
  * POST /profile/update-popup
  * Updates user profile information
  */

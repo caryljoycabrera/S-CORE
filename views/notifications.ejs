@@ -6,7 +6,11 @@
   <title>Notifications - S-CORE</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/stylesheets/notifications.css">
+  <link rel="stylesheet" href="/stylesheets/user-navbar.css">
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
   <style>
     body {
       margin: 0;
@@ -17,7 +21,7 @@
 
     /* Use the standard user dashboard styles from style.css */
     .student-side {
-      padding-top: 100px;
+      padding-top: 30px;
       padding-left: 2rem;
       padding-right: 2rem;
       padding-bottom: 3rem;
@@ -230,17 +234,259 @@
     .back-link:hover {
       color: #2c5d31;
     }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .student-side {
+        padding: 1rem;
+        padding-top: 20px;
+      }
+      
+      .notifications-page {
+        max-width: 100%;
+      }
+      
+      .notifications-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .notifications-title {
+        font-size: 1.5rem;
+      }
+      
+      .notifications-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+      
+      .notifications-actions .btn {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        font-size: 13px;
+      }
+      
+      .notifications-filters {
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      
+      .filter-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      
+      .notification-item-page {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .notification-content-page {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .notification-details {
+        width: 100%;
+      }
+      
+      .notification-title-page {
+        font-size: 15px;
+      }
+      
+      .notification-message-page {
+        font-size: 13px;
+      }
+      
+      .notification-meta-page {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        font-size: 12px;
+      }
+      
+      .notification-actions-page {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .notification-actions-page .btn {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding: 0.75rem;
+        font-size: 14px;
+      }
+      
+      .pagination {
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+      
+      .pagination button,
+      .pagination span {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+      }
+      
+      .back-link {
+        font-size: 14px;
+        margin-bottom: 0.75rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .student-side {
+        padding: 0.75rem;
+        padding-top: 15px;
+      }
+      
+      .notifications-title {
+        font-size: 1.25rem;
+      }
+      
+      .notifications-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+      }
+      
+      .filter-btn {
+        flex-shrink: 0;
+      }
+      
+      .notification-item-page {
+        padding: 0.75rem;
+      }
+      
+      .notification-title-page {
+        font-size: 14px;
+      }
+      
+      .notification-message-page {
+        font-size: 12px;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="user-sidebar" id="userSidebar">
+    <!-- Profile Section at Top -->
+    <div class="sidebar-profile">
+      <a href="/profile" class="sidebar-profile-link" title="Go to Profile">
+        <div class="sidebar-profile-icon-container">
+          <!-- SVG Icon (shows when collapsed) -->
+          <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <!-- Profile Avatar (shows when expanded) -->
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+               alt="<%= user.fName %> <%= user.lName %>" 
+               class="sidebar-profile-avatar" />
+        </div>
+        <div class="sidebar-profile-info">
+          <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
+          <p class="sidebar-profile-role"><%= user.userType || 'User' %></p>
+        </div>
+        <span class="sidebar-profile-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="sidebar-items">
+      <a href="/dashboard" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+      
+      <a href="/all-requests" class="sidebar-item" title="All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span class="sidebar-label">All Requests</span>
+      </a>
+      
+      <a href="/request-approvals" class="sidebar-item" title="Request Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Request Approvals</span>
+      </a>
+      
+      <a href="/service-requests" class="sidebar-item" title="Request Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Request Services</span>
+      </a>
+      
+      <a href="/user-guide" class="sidebar-item" title="Help & Guide">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span class="sidebar-label">Help & Guide</span>
+      </a>
+    </div>
+    
+    <!-- Logout Button at Bottom -->
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Logout</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="user-main-content">
   <div class="student-side">
     <div class="div">
       <!-- Header matching user dashboard -->
       <div class="overlap">
-        <div class="group">
-          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        <!-- Left Group: Hamburger, Logo, Title -->
+        <div class="header-left-group">
+          <!-- Hamburger Menu Button for Mobile -->
+          <button class="user-menu-toggle" id="userMenuToggle" title="Open Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="group">
+            <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+          </div>
+          <a href="/dashboard" class="text-wrapper">S-CORE</a>
         </div>
-        <a href="/dashboard" class="text-wrapper">S-CORE</a>
+        
         <span class="text-wrapper-2">Welcome, <%= user.fName %> <%= user.lName %>!</span>
         
         <div class="header-right-section">
@@ -301,6 +547,7 @@
       <button id="next-btn" onclick="nextPage()">Next</button>
     </div>
     </div>
+  </div>
   </div>
   </div>
 
@@ -398,6 +645,9 @@
         const isUnread = !notification.isRead;
         const timeAgo = formatTimeAgo(new Date(notification.createdAt));
         const icon = getNotificationIcon(notification.type);
+        const isDeletable = notification.isDeletable !== false; // Default to true if not specified
+        const notificationId = notification._id || notification.id;
+        const actionUrl = notification.actionUrl || '';
         
         // Get sender name from notification
         let senderName = 'System';
@@ -413,9 +663,12 @@
           }
         }
         
+        // Hide sender info for welcome/onboarding notifications
+        const showSender = notification.sender && notification.type !== 'user_approved';
+        
         return `
-          <div class="notification-item-page ${isUnread ? 'unread' : ''}" data-id="${notification._id}">
-            <div class="notification-content-page">
+          <div class="notification-item-page ${isUnread ? 'unread' : ''}" data-id="${notificationId}" data-action-url="${actionUrl}" data-type="${notification.type}">
+            <div class="notification-content-page" style="cursor: ${actionUrl ? 'pointer' : 'default'};" onclick="handleNotificationClick('${notificationId}', '${actionUrl}', '${notification.type}')">
               <div class="notification-icon ${notification.type}">
                 ${icon}
               </div>
@@ -424,13 +677,13 @@
                 <p class="notification-message-page">${escapeHtml(notification.message)}</p>
                 <div class="notification-meta-page">
                   <span>${timeAgo}</span>
-                  <span style="font-style: italic; color: #6b7280;">from ${escapeHtml(senderName)}</span>
+                  ${showSender ? `<span style="font-style: italic; color: #6b7280;">from ${escapeHtml(senderName)}</span>` : ''}
                 </div>
               </div>
-              <div class="notification-actions-page">
-                ${isUnread ? `<button class="btn" onclick="markAsRead('${notification._id}')">Mark as Read</button>` : ''}
-                <button class="btn" onclick="deleteNotification('${notification._id}')" style="color: #dc2626;">Delete</button>
-              </div>
+            </div>
+            <div class="notification-actions-page">
+              ${isUnread ? `<button class="btn" onclick="event.stopPropagation(); markAsRead('${notificationId}')">Mark as Read</button>` : ''}
+              ${isDeletable ? `<button class="btn" onclick="event.stopPropagation(); deleteNotification('${notificationId}')" style="color: #dc2626;">Delete</button>` : ''}
             </div>
           </div>
         `;
@@ -508,10 +761,6 @@
     }
 
     async function deleteNotification(notificationId) {
-      if (!confirm('Are you sure you want to delete this notification?')) {
-        return;
-      }
-
       try {
         const response = await fetch(`/api/notifications/${notificationId}`, {
           method: 'DELETE',
@@ -520,9 +769,12 @@
 
         if (response.ok) {
           loadNotifications();
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to delete notification' }));
+          console.error('Failed to delete notification:', errorData.message || 'Unknown error');
         }
       } catch (error) {
-        console.error('Error deleting notification:', error);
+        console.error('Error deleting notification:', error.message || error);
       }
     }
 
@@ -573,6 +825,25 @@
       return div.innerHTML;
     }
 
+    // Handle notification click - navigate to action URL
+    async function handleNotificationClick(notificationId, actionUrl, notificationType) {
+      if (!actionUrl) {
+        console.log('No action URL for this notification');
+        return;
+      }
+
+      // Mark as read first
+      await markAsRead(notificationId);
+
+      // Use the notification system's navigation handler if available
+      if (window.notificationSystem && typeof window.notificationSystem.handleNotificationNavigation === 'function') {
+        window.notificationSystem.handleNotificationNavigation(actionUrl, notificationType);
+      } else {
+        // Fallback: direct navigation
+        window.location.href = actionUrl;
+      }
+    }
+
     // Dropdown toggle
     function toggleDropdown() {
       const dropdown = document.getElementById('dropdownMenu');
@@ -585,6 +856,85 @@
         const dropdown = document.getElementById('dropdownMenu');
         dropdown.classList.remove('show');
       }
+    });
+
+    // Sidebar hover effect for desktop
+    const sidebar = document.getElementById('userSidebar');
+    if (sidebar) {
+      sidebar.addEventListener('mouseenter', function() {
+        this.classList.add('expanded');
+      });
+      sidebar.addEventListener('mouseleave', function() {
+        this.classList.remove('expanded');
+      });
+    }
+
+    // Mobile Navigation Setup
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuToggle = document.getElementById('userMenuToggle');
+      const sidebarEl = document.getElementById('userSidebar');
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      // Initialize Mobile Navigation
+      function initMobileNavigation() {
+        if (menuToggle && sidebarEl) {
+          // Toggle menu on button click
+          menuToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sidebarEl.classList.toggle('mobile-active');
+          });
+
+          // Handle touch swipe gestures
+          document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+          }, { passive: true });
+
+          document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+          }, { passive: true });
+
+          // Close sidebar when clicking outside on mobile
+          document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+              if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
+                sidebarEl.classList.remove('mobile-active');
+              }
+            }
+          });
+
+          // Close sidebar when clicking any sidebar link on mobile
+          const sidebarLinks = sidebarEl.querySelectorAll('.sidebar-item, .sidebar-profile-link');
+          sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+              if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                  sidebarEl.classList.remove('mobile-active');
+                }, 100);
+              }
+            });
+          });
+        }
+      }
+
+      function handleSwipe() {
+        const swipeDistance = touchEndX - touchStartX;
+        const minSwipeDistance = 50;
+
+        // Swipe right to open
+        if (swipeDistance > minSwipeDistance && touchStartX < 50) {
+          sidebarEl.classList.add('mobile-active');
+        }
+        // Swipe left to close
+        else if (swipeDistance < -minSwipeDistance && sidebarEl.classList.contains('mobile-active')) {
+          sidebarEl.classList.remove('mobile-active');
+        }
+      }
+
+      // Initialize on page load
+      initMobileNavigation();
     });
   </script>
 </body>

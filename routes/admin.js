@@ -1353,6 +1353,82 @@ router.post('/admin/user/reset/:id', requireAdmin, async (req, res) => {
 });
 
 /**
+ * POST /admin/user/update-status
+ * Unified endpoint to update user status (approve, deny, reset)
+ */
+router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
+  try {
+    const { userId, action } = req.body;
+    
+    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to ${action} user ${userId}`);
+    
+    // Validate input
+    if (!userId || !action) {
+      return res.status(400).json({ success: false, message: 'Missing userId or action' });
+    }
+
+    if (!['approve', 'deny', 'reset'].includes(action)) {
+      return res.status(400).json({ success: false, message: 'Invalid action. Must be approve, deny, or reset' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log(`[ERROR] User not found: ${userId}`);
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const previousStatus = user.status;
+    let newStatus = '';
+    let notificationSent = false;
+    const adminId = req.user?._id || req.session.userId;
+
+    // Update status based on action
+    if (action === 'approve') {
+      newStatus = 'approved';
+      user.status = 'approved';
+      await user.save();
+      
+      // Send notification
+      if (adminId) {
+        await notificationService.notifyUserApproved(user._id, adminId);
+        notificationSent = true;
+      }
+    } else if (action === 'deny') {
+      newStatus = 'denied';
+      user.status = 'denied';
+      await user.save();
+      
+      // Send notification
+      if (adminId) {
+        await notificationService.notifyUserDenied(user._id, adminId);
+        notificationSent = true;
+      }
+    } else if (action === 'reset') {
+      newStatus = 'pending';
+      user.status = 'pending';
+      await user.save();
+    }
+
+    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to ${newStatus} by admin ${req.user?.username || req.session.userId}`);
+    
+    if (notificationSent) {
+      console.log(`[NOTIFICATION] User ${action} notification sent to ${user.username}`);
+    }
+
+    res.json({ 
+      success: true, 
+      message: `User ${action === 'reset' ? 'reset to pending' : action + 'd'} successfully`,
+      newStatus: newStatus,
+      previousStatus: previousStatus
+    });
+
+  } catch (error) {
+    console.error('[ERROR] Error updating user status:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * GET /admin/debug/orphaned-requests
  * Debug route to check for orphaned requests
  */

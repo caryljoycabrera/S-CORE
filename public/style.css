@@ -2089,3 +2089,76 @@ body:has(.profile-page) .student-side,
     padding-top: 35px;
   }
 }
+
+/* ============================================
+   SELECT2 DROPDOWN Z-INDEX FIX
+   Ensure Select2 dropdowns appear above modals
+   ============================================ */
+
+/* Base Select2 container */
+.select2-container {
+  z-index: 999999 !important;
+}
+
+/* Select2 dropdown (the actual list that appears) */
+.select2-dropdown {
+  z-index: 999999 !important;
+  position: absolute !important;
+}
+
+/* Custom class for dropdowns above modals */
+.select2-dropdown-above-modal {
+  z-index: 999999 !important;
+}
+
+/* Select2 inside modals - container */
+.modal .select2-container {
+  z-index: 999999 !important;
+  position: relative !important;
+}
+
+/* Select2 dropdown when inside modal */
+.modal .select2-dropdown {
+  z-index: 999999 !important;
+}
+
+/* Ensure Select2 search input is clickable */
+.select2-search__field {
+  z-index: 999999 !important;
+}
+
+/* Select2 results container */
+.select2-results {
+  z-index: 999999 !important;
+}
+
+/* Ensure the backdrop doesn't cover the dropdown */
+.select2-container--open .select2-dropdown {
+  z-index: 999999 !important;
+}
+
+/* If Select2 creates dropdown in body (common behavior) */
+body > .select2-container {
+  z-index: 999999 !important;
+}
+
+body > .select2-container--open {
+  z-index: 999999 !important;
+}
+
+/* Specific fix for dropdowns that are appended to modal */
+#updateProfileModal .select2-dropdown,
+#passwordModal .select2-dropdown,
+#pictureModal .select2-dropdown {
+  z-index: 999999 !important;
+}
+
+/* Select2 container that gets appended to body */
+.select2-container--open {
+  z-index: 999999 !important;
+}
+
+/* Ensure Select2 is visible when dropdown is opened */
+.select2-container--default.select2-container--open {
+  z-index: 999999 !important;
+}

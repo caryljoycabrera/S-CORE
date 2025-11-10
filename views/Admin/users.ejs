@@ -8,11 +8,12 @@
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/users.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
 </head>
 <body>
-  <!-- Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
 
   <!-- SIDEBAR NAVIGATION -->
   <div class="admin-sidebar" id="adminSidebar">
@@ -347,18 +348,14 @@
                   </div>
                 </div>
 
-                <!-- Action Buttons Section (Separate, not clickable for modal) -->
+                <!-- Click Indicator -->
                 <div class="grid-row-actions">
-                  <% if (u.status === 'pending') { %>
-                    <button class="table-approve-btn" data-userid="<%= u._id %>">Approve</button>
-                    <button class="table-deny-btn" data-userid="<%= u._id %>">Deny</button>
-                  <% } else if (u.status === 'approved') { %>
-                    <button class="table-deny-btn" data-userid="<%= u._id %>">Deny</button>
-                    <button class="table-reset-btn" data-userid="<%= u._id %>">Reset to Pending</button>
-                  <% } else if (u.status === 'denied') { %>
-                    <button class="table-approve-btn" data-userid="<%= u._id %>">Approve</button>
-                    <button class="table-reset-btn" data-userid="<%= u._id %>">Reset to Pending</button>
-                  <% } %>
+                  <div class="click-to-manage-indicator">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M9 5l7 7-7 7"/>
+                    </svg>
+                    Click to Manage
+                  </div>
                 </div>
               </div>
               <% }) %>
@@ -366,21 +363,22 @@
           </div>
 
           <% if (users.length === 0) { %>
-          <div style="text-align: center; padding: 2rem; color: #6b7280; margin: 0 3rem;">
+          <div class="no-users-message">
             <p>No users found.</p>
           </div>
           <% } %>
-
-          <!-- Back to Dashboard Button -->
-          <div style="margin: 2rem 3rem 1.5rem 3rem;">
-            <a href="/admin" class="back-to-dashboard-btn">
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
-              Back to Dashboard
-            </a>
-          </div>
         </section>
+
+        <!-- Back to Dashboard Button -->
+        <div class="back-to-dashboard-container">
+          <a href="/admin" class="back-to-dashboard-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Dashboard
+          </a>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -482,9 +480,9 @@
             <div class="user-form-field">
               <label>Change Status</label>
               <div class="quick-action-buttons" style="margin-top: 0.5rem; display: flex; gap: 0.625rem; flex-wrap: wrap;">
-                <button type="button" class="approve-btn" id="modalApproveBtn" style="min-width: 100px;">Approve</button>
-                <button type="button" class="deny-btn" id="modalDenyBtn" style="min-width: 80px;">Deny</button>
-                <button type="button" class="reset-btn" id="modalResetBtn" style="min-width: 160px;">Reset to Pending</button>
+                <button type="button" class="modal-approve-btn" id="modalApproveBtn" data-userid="" style="min-width: 100px;">Approve</button>
+                <button type="button" class="modal-deny-btn" id="modalDenyBtn" data-userid="" style="min-width: 100px;">Deny</button>
+                <button type="button" class="modal-reset-btn" id="modalResetBtn" data-userid="" style="min-width: 100px;">Reset to Pending</button>
               </div>
             </div>
           </div>
@@ -575,9 +573,6 @@
         </svg>
         Cancel Changes
       </button>
-      <button type="button" class="modal-approve-btn user-admin-btn user-admin-btn-primary" data-userid="" style="display:none;">Approve</button>
-      <button type="button" class="modal-deny-btn user-admin-btn user-admin-btn-danger" data-userid="" style="display:none;">Deny</button>
-      <button type="button" class="modal-reset-btn user-admin-btn user-admin-btn-secondary" data-userid="" style="display:none;">Reset to Pending</button>
       <button type="submit" class="user-admin-btn user-admin-btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -590,7 +585,7 @@
   </form>
 </div>
 
-<!-- Status Change Confirmation Modal -->
+<!-- Status Change Confirmation Modal - For modal action buttons -->
 <div id="confirmStatusModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width: 500px; margin: auto;">
     <header class="modal-header">
@@ -611,7 +606,7 @@
         <button type="button" id="cancelConfirmBtn" class="user-admin-btn user-admin-btn-secondary">
           Cancel
         </button>
-        <button type="button" id="confirmActionBtn" class="user-admin-btn user-admin-btn-primary">
+        <button type="button" id="confirmStatusBtn" class="user-admin-btn user-admin-btn-primary">
           Confirm
         </button>
       </div>

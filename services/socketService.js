@@ -29,6 +29,12 @@ class SocketService {
 
       // Handle user authentication and registration
       socket.on('authenticate', (data) => {
+        console.log('🔐 Socket authentication request received:', { 
+          socketId: socket.id, 
+          userId: data.userId, 
+          userRole: data.userRole 
+        });
+        
         const { userId, userRole } = data;
         if (userId) {
           socket.userId = userId;
@@ -38,24 +44,38 @@ class SocketService {
           // Track admin sockets
           if (userRole === 'admin') {
             this.adminSockets.add(socket.id);
+            console.log(`👑 ADMIN socket registered! Socket: ${socket.id}, User: ${userId}`);
+            console.log(`👑 Total admin sockets connected: ${this.adminSockets.size}`);
           }
           
-          console.log(`User ${userId} (${userRole}) authenticated with socket ${socket.id}`);
+          console.log(`✅ User ${userId} (${userRole}) authenticated with socket ${socket.id}`);
+          console.log(`📊 Total users connected: ${this.users.size}`);
+          console.log(`📊 Total admins connected: ${this.adminSockets.size}`);
           
           // Send authentication confirmation
           socket.emit('authenticated', { 
             success: true, 
             message: 'Connected to notification service' 
           });
+        } else {
+          console.warn('⚠️ Authentication failed - no userId provided');
         }
       });
 
       // Handle disconnection
       socket.on('disconnect', () => {
         if (socket.userId) {
-          console.log(`User ${socket.userId} disconnected`);
+          const wasAdmin = socket.userRole === 'admin';
+          console.log(`🔌 User ${socket.userId} (${socket.userRole}) disconnected from socket ${socket.id}`);
           this.users.delete(socket.userId.toString());
           this.adminSockets.delete(socket.id);
+          
+          if (wasAdmin) {
+            console.log(`👑 Admin disconnected. Remaining admins: ${this.adminSockets.size}`);
+          }
+          console.log(`📊 Total users connected: ${this.users.size}`);
+        } else {
+          console.log(`🔌 Unauthenticated socket ${socket.id} disconnected`);
         }
       });
 
@@ -76,13 +96,19 @@ class SocketService {
    * @param {Object} data - Notification data
    */
   emitToUser(userId, event, data) {
+    console.log('📡 emitToUser called:', { userId, event });
+    console.log('🔍 Current connected users:', Array.from(this.users.keys()));
+    console.log('🔍 Current admin sockets:', this.adminSockets.size);
+    
     const socketId = this.users.get(userId.toString());
     if (socketId && this.io) {
       this.io.to(socketId).emit(event, data);
-      console.log(`Notification sent to user ${userId}: ${event}`);
+      console.log(`✅ Notification sent to user ${userId}: ${event}`);
       return true;
     }
-    console.log(`User ${userId} not connected - notification queued in database`);
+    console.log(`⚠️ User ${userId} not connected - notification queued in database only`);
+    console.log(`   Socket ID found: ${socketId ? 'Yes' : 'No'}`);
+    console.log(`   IO initialized: ${this.io ? 'Yes' : 'No'}`);
     return false;
   }
 

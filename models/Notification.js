@@ -37,6 +37,9 @@ const notificationSchema = new mongoose.Schema({
       'approval_rejected',   // Approval request rejected
       'approval_updated',    // Approval request updated
       'approval_revision',   // Approval request needs revision
+      'user_registered',     // New user registration (admin notification)
+      'user_approved',       // User account approved
+      'user_denied',         // User account denied
       'new_message',         // New chat message
       'system',              // System notification
       'deadline_reminder',   // Deadline reminder
@@ -88,6 +91,18 @@ const notificationSchema = new mongoose.Schema({
   actionUrl: {
     type: String,
     trim: true
+  },
+
+  // Prevent deletion (for important system notifications like welcome messages)
+  isDeletable: {
+    type: Boolean,
+    default: true
+  },
+
+  // Track if user has interacted with the notification
+  isInteracted: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

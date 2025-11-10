@@ -745,3 +745,82 @@
     opacity: 1;
   }
 }
+
+/* ========================================
+   BACK TO DASHBOARD BUTTON - CONSISTENT STYLING
+   ======================================== */
+
+.back-to-dashboard-container {
+  margin: 2rem 3rem 1.5rem 3rem;
+}
+
+.back-to-dashboard-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #b4f3b7;
+  color: #065f46;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.back-to-dashboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 95, 70, 0.3);
+  background: #065f46;
+  color: #ffffff;
+}
+
+.back-to-dashboard-btn svg {
+  flex-shrink: 0;
+}
+
+/* No requests message styling */
+.no-requests-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* ========================================
+   PROFILE PAGE BACK TO DASHBOARD BUTTON
+   ======================================== */
+
+.profile-actions .back-to-dashboard-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #065f46;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(6, 95, 70, 0.3);
+}
+
+.profile-actions .back-to-dashboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(6, 95, 70, 0.5);
+  background: #047857;
+  color: #ffffff;
+}
+
+.profile-actions .back-to-dashboard-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(6, 95, 70, 0.4);
+  background: #064e3b;
+}
+
+.profile-actions .back-to-dashboard-btn svg {
+  flex-shrink: 0;
+}

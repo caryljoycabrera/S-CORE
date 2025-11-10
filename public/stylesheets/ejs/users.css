@@ -231,6 +231,11 @@ hr {
   box-shadow: 0 4px 12px rgba(44, 93, 49, 0.3);
 }
 
+.grid-row-actions .approve-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(44, 93, 49, 0.3);
+}
+
 .grid-row-actions .deny-btn {
   background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
@@ -242,6 +247,11 @@ hr {
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
+.grid-row-actions .deny-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.3);
+}
+
 .grid-row-actions .reset-btn {
   background: linear-gradient(135deg, #6b7280, #4b5563);
   color: white;
@@ -251,6 +261,11 @@ hr {
 .grid-row-actions .reset-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.grid-row-actions .reset-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(107, 114, 128, 0.3);
 }
 
 .grid-row-actions button:disabled {
@@ -289,29 +304,42 @@ hr {
    BACK TO DASHBOARD BUTTON - CONSISTENT STYLING
    ======================================== */
 
+.back-to-dashboard-container {
+  margin: 0rem 3rem 1.5rem 3rem;
+}
+
 .back-to-dashboard-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-green), #20c997);
-  color: white;
+  background: #92d495;
+  color: #065f46;
   text-decoration: none;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(44, 93, 49, 0.3);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .back-to-dashboard-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(44, 93, 49, 0.4);
-  color: white;
+  box-shadow: 0 4px 12px rgba(6, 95, 70, 0.3);
+  background: #065f46;
+  color: #ffffff;
 }
 
 .back-to-dashboard-btn svg {
   flex-shrink: 0;
+}
+
+/* No users message styling */
+.no-users-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  margin: 0 3rem;
 }
 
 /* ========================================
@@ -556,13 +584,46 @@ hr {
 }
 
 /* ========================================
-   ACTION BUTTON STYLES
+   CLICK TO MANAGE INDICATOR - Shows in actions column
    ======================================== */
 
-/* Base button styles for approve, deny, reset */
-.approve-btn,
-.deny-btn,
-.reset-btn {
+.click-to-manage-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--primary-green);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.click-to-manage-indicator svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--primary-green);
+  transition: transform 0.2s ease;
+}
+
+.grid-row:hover .click-to-manage-indicator {
+  color: var(--secondary-green);
+}
+
+.grid-row:hover .click-to-manage-indicator svg {
+  stroke: var(--secondary-green);
+  transform: translateX(4px);
+}
+
+/* ========================================
+   GRID ACTION BUTTON STYLES - Quick actions in grid rows
+   ======================================== */
+
+/* Base button styles for grid approve, deny, reset */
+.grid-approve-btn,
+.grid-deny-btn,
+.grid-reset-btn {
   padding: 0.625rem 1.25rem;
   border: none;
   border-radius: 6px;
@@ -578,46 +639,126 @@ hr {
   justify-content: center;
 }
 
-/* Approve button - Green */
-.approve-btn {
+/* Grid Approve button - Green */
+.grid-approve-btn {
   background: #10b981;
   color: white;
 }
 
-.approve-btn:hover:not(:disabled) {
+.grid-approve-btn:hover:not(:disabled) {
   background: #059669;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 }
 
-/* Deny button - Red */
-.deny-btn {
+.grid-approve-btn:active {
+  transform: translateY(0);
+}
+
+/* Grid Deny button - Red */
+.grid-deny-btn {
   background: #ef4444;
   color: white;
 }
 
-.deny-btn:hover:not(:disabled) {
+.grid-deny-btn:hover:not(:disabled) {
   background: #dc2626;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
-/* Reset button - Gray */
-.reset-btn {
+.grid-deny-btn:active {
+  transform: translateY(0);
+}
+
+/* Grid Reset button - Gray */
+.grid-reset-btn {
   background: #6b7280;
   color: white;
 }
 
-.reset-btn:hover:not(:disabled) {
+.grid-reset-btn:hover:not(:disabled) {
   background: #4b5563;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
 }
 
-/* Disabled state for all action buttons */
-.approve-btn:disabled,
-.deny-btn:disabled,
-.reset-btn:disabled {
+.grid-reset-btn:active {
+  transform: translateY(0);
+}
+
+/* Disabled state for all grid action buttons */
+.grid-approve-btn:disabled,
+.grid-deny-btn:disabled,
+.grid-reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ========================================
+   MODAL ACTION BUTTON STYLES (Inside User Details Modal)
+   ======================================== */
+
+/* Base button styles for modal buttons */
+.modal-approve-btn,
+.modal-deny-btn,
+.modal-reset-btn {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal Approve button - Green */
+.modal-approve-btn {
+  background: #10b981;
+  color: white;
+}
+
+.modal-approve-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+/* Modal Deny button - Red */
+.modal-deny-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.modal-deny-btn:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* Modal Reset button - Gray */
+.modal-reset-btn {
+  background: #6b7280;
+  color: white;
+}
+
+.modal-reset-btn:hover:not(:disabled) {
+  background: #4b5563;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
+}
+
+/* Disabled state for modal action buttons */
+.modal-approve-btn:disabled,
+.modal-deny-btn:disabled,
+.modal-reset-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
@@ -627,7 +768,10 @@ hr {
 @media (max-width: 768px) {
   .approve-btn,
   .deny-btn,
-  .reset-btn {
+  .reset-btn,
+  .modal-approve-btn,
+  .modal-deny-btn,
+  .modal-reset-btn {
     padding: 0.5rem 1rem;
     font-size: 0.8125rem;
     min-height: 36px;
@@ -642,33 +786,6 @@ hr {
     font-size: 0.75rem;
     min-height: 34px;
   }
-}
-
-/* Back to Dashboard button styling */
-.back-to-dashboard-btn {
-  margin-top: 2rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-green), #20c997);
-  color: white;
-  text-decoration: none;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(44, 93, 49, 0.3);
-}
-
-.back-to-dashboard-btn:hover {
-  background: linear-gradient(135deg, #1e4a23, #17a882);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(44, 93, 49, 0.4);
-}
-
-.back-to-dashboard-btn:active {
-  transform: translateY(0);
 }
 
 /* Back/View All button spacing */
@@ -2503,9 +2620,13 @@ hr {
    CONFIRMATION MODAL SPECIFIC STYLES
    ======================================== */
 
-/* Ensure confirmation modal is properly centered */
-#confirmStatusModal.modal {
-  display: none;
+/* ========================================
+   CONFIRMATION MODALS - Quick Action & Status Change
+   ======================================== */
+
+/* Quick Action Modal - For grid action buttons (outside user modal) */
+#quickActionModal.modal {
+  display: none !important;
   position: fixed;
   top: 0;
   left: 0;
@@ -2518,9 +2639,40 @@ hr {
   backdrop-filter: blur(2px);
 }
 
+/* When quick action modal is shown with flex display */
+#quickActionModal.modal[style*="display: flex"],
+#quickActionModal.modal[style*="display:flex"],
+#quickActionModal.modal.show {
+  display: flex !important;
+}
+
+/* Center the quick action modal content */
+#quickActionModal .modal-content {
+  position: relative;
+  margin: auto;
+  transform: translateY(0);
+  opacity: 1 !important;
+}
+
+/* Status Confirmation Modal - For modal action buttons (inside user modal) */
+#confirmStatusModal.modal {
+  display: none !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10001; /* Higher than quick action modal */
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px);
+}
+
 /* When modal is shown with flex display */
 #confirmStatusModal.modal[style*="display: flex"],
-#confirmStatusModal.modal[style*="display:flex"] {
+#confirmStatusModal.modal[style*="display:flex"],
+#confirmStatusModal.modal.show {
   display: flex !important;
 }
 
@@ -2529,4 +2681,5 @@ hr {
   position: relative;
   margin: auto;
   transform: translateY(0);
+  opacity: 1 !important;
 }

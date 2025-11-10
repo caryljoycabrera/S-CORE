@@ -1,0 +1,46 @@
+/**
+ * S-CORE Minimal Animations Stylesheet
+ * Disables only the gray background transition
+ * All other animations are enabled for better UX
+ */
+
+/* ========================================
+   DISABLE GRAY BACKGROUND TRANSITIONS
+   ======================================== */
+
+/* Remove gray/dark background transitions on modals and overlays */
+.modal,
+[class*="modal-overlay"],
+[class*="modal-backdrop"],
+[class*="overlay"],
+[class*="backdrop"] {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Override any backdrop transition classes */
+.modal.show,
+.modal.active,
+[class*="modal"].show,
+[class*="modal"].active {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* ========================================
+   ALL OTHER ANIMATIONS ENABLED
+   Buttons, cards, modals, dropdowns, etc.
+   ======================================== */
+
+/* Note: All other animations, transitions, and transforms 
+   are now ENABLED for a better user experience:
+   - Button hover effects
+   - Card hover animations  
+   - Modal content slide-in effects
+   - Dropdown animations
+   - Loading spinners
+   - Progress bars
+   - Transform effects
+   - Fade effects
+   - Scale animations
+*/

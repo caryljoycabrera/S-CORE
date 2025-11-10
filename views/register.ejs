@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registration Page</title>
+<link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+<link rel="stylesheet" href="/stylesheets/no-animations.css" />
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="/javascripts/alert-handler.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <style>
@@ -1006,7 +1009,7 @@ body::before {
             Student Organization(s)
             <span class="org-counter" id="orgCounter">No organizations selected</span>
             <small style="display: block; color: #6c757d; font-style: italic; margin-top: 4px;">
-              💡 Click on any selected organization to remove it
+              Tip: Click on any selected organization to remove it
             </small>
           </label>
           <select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%"></select>
@@ -1052,8 +1055,29 @@ body::before {
 
         <!-- Office/Department Selection -->
         <div class="input-group has-label office-selections">
-          <label for="nonStudentOffice" class="input-label">Office/Department</label>
+          <label for="nonStudentOffice" class="input-label">
+            Office/Department
+            <span class="org-counter" id="officeCounter">No offices selected</span>
+            <small style="display: block; color: #6c757d; font-style: italic; margin-top: 4px;">
+              Tip: Click on any selected office/department to remove it
+            </small>
+          </label>
           <select name="affiliation[]" id="nonStudentOffice" multiple="multiple" style="width: 100%" required></select>
+        </div>
+
+        <!-- Toggle Button for Custom Office -->
+        <button type="button" class="toggle-org-button" onclick="toggleCustomOffice()">
+          Can't find your office/department? Add it here
+        </button>
+
+        <!-- Hidden Custom Office Input -->
+        <div class="input-group has-label" id="customOfficeContainer" style="display: none;">
+          <label for="otherOffice" class="input-label">Add Custom Office/Department</label>
+          <div class="custom-org-input-wrapper">
+            <input type="text" id="otherOffice" name="otherOffice" placeholder="Enter office/department name" maxlength="150" />
+            <button type="button" id="addOfficeButton" class="add-org-button">+</button>
+          </div>
+          <div id="officeAddedFeedback" class="org-added-feedback"></div>
         </div>
       </div>
 
@@ -1851,6 +1875,18 @@ $(document).ready(function () {
     width: "100%",
     closeOnSelect: false
   });
+
+  // Set up office counter and click handlers
+  nonStudentOfficeSelect.on('change', function() {
+    updateOfficeCounter();
+    setTimeout(setupOfficeClickHandlers, 100);
+  });
+
+  // Initial counter update
+  updateOfficeCounter();
+  
+  // Setup click handlers for offices
+  setTimeout(setupOfficeClickHandlers, 200);
 });
 
 // Enhanced add organization functionality
@@ -1861,6 +1897,151 @@ document.getElementById('otherOrganization').addEventListener('keypress', functi
   if (e.key === 'Enter') {
     e.preventDefault();
     addCustomOrganization();
+  }
+});
+
+// ========================================
+// OFFICE/DEPARTMENT FUNCTIONS
+// ========================================
+
+// Office counter update
+function updateOfficeCounter() {
+  const select = $('#nonStudentOffice');
+  const counter = document.getElementById('officeCounter');
+  if (!counter) return;
+  
+  const selectedCount = select.val()?.length || 0;
+  
+  if (selectedCount === 0) {
+    counter.textContent = 'No offices selected';
+    counter.classList.remove('has-selections');
+  } else if (selectedCount === 1) {
+    counter.textContent = '1 office selected';
+    counter.classList.add('has-selections');
+  } else {
+    counter.textContent = `${selectedCount} offices selected`;
+    counter.classList.add('has-selections');
+  }
+}
+
+// Office click handlers for removal
+function setupOfficeClickHandlers() {
+  // Remove existing handlers to prevent duplicates
+  $(document).off('click', '#nonStudentOffice + .select2-container .select2-selection__choice');
+  
+  // Add click handler for office removal
+  $(document).on('click', '#nonStudentOffice + .select2-container .select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#nonStudentOffice');
+    
+    if (value) {
+      // Get current selections
+      let currentValues = select.val() || [];
+      
+      // Remove the clicked value
+      currentValues = currentValues.filter(v => v !== value);
+      
+      // Update the select
+      select.val(currentValues).trigger('change');
+      
+      // Update counter
+      updateOfficeCounter();
+      
+      // Show feedback (using same feedback system)
+      showFeedback(`"${value}" has been removed.`, 'warning');
+      setTimeout(hideFeedback, 2000);
+    }
+  });
+}
+
+// Toggle custom office input
+function toggleCustomOffice() {
+  const customOfficeContainer = document.getElementById('customOfficeContainer');
+  const isVisible = customOfficeContainer.style.display !== 'none';
+  customOfficeContainer.style.display = isVisible ? 'none' : 'block';
+  
+  if (!isVisible) {
+    document.getElementById('otherOffice').focus();
+  } else {
+    document.getElementById('otherOffice').value = '';
+    hideOfficeFeedback();
+  }
+}
+
+// Add custom office
+function addCustomOffice() {
+  const input = document.getElementById('otherOffice');
+  const officeName = input.value.trim();
+  const select = $('#nonStudentOffice');
+
+  if (!officeName) {
+    showOfficeFeedback('Please enter an office/department name.', 'error');
+    input.focus();
+    return;
+  }
+  
+  if (officeName.length < 3) {
+    showOfficeFeedback('Office/department name must be at least 3 characters long.', 'error');
+    input.focus();
+    return;
+  }
+
+  // Check if office already exists
+  const existingOptions = Array.from(select[0].options).map(option => option.value.toLowerCase());
+  if (existingOptions.includes(officeName.toLowerCase())) {
+    showOfficeFeedback('This office/department is already in your list.', 'warning');
+    input.focus();
+    return;
+  }
+
+  // Add new option
+  if (select.find(`option[value="${officeName}"]`).length === 0) {
+    const newOption = new Option(officeName, officeName, true, true);
+    select.append(newOption);
+  }
+
+  const current = select.val() || [];
+  if (!current.includes(officeName)) {
+    current.push(officeName);
+    select.val(current).trigger('change');
+  }
+
+  input.value = '';
+  showOfficeFeedback(`"${officeName}" has been added successfully!`, 'success');
+  updateOfficeCounter();
+  
+  // Auto-hide feedback after 3 seconds
+  setTimeout(hideOfficeFeedback, 3000);
+}
+
+// Office feedback system
+function showOfficeFeedback(message, type = 'success') {
+  const feedback = document.getElementById('officeAddedFeedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.className = `org-added-feedback ${type}`;
+    feedback.classList.add('show');
+  }
+}
+
+function hideOfficeFeedback() {
+  const feedback = document.getElementById('officeAddedFeedback');
+  if (feedback) {
+    feedback.classList.remove('show');
+  }
+}
+
+// Event listeners for office functions
+document.getElementById('addOfficeButton').addEventListener('click', addCustomOffice);
+
+document.getElementById('otherOffice').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addCustomOffice();
   }
 });
 

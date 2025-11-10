@@ -134,6 +134,47 @@ hr {
 }
 
 /* ========================================
+   BACK TO DASHBOARD BUTTON - CONSISTENT STYLING
+   ======================================== */
+
+.back-to-dashboard-container {
+  margin: 2rem 3rem 1.5rem 3rem;
+}
+
+.back-to-dashboard-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #b4f3b7;
+  color: #065f46;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.back-to-dashboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 95, 70, 0.3);
+  background: #065f46;
+  color: #ffffff;
+}
+
+.back-to-dashboard-btn svg {
+  flex-shrink: 0;
+}
+
+/* No requests message styling */
+.no-requests-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* ========================================
    RESPONSIVE DESIGN
    ======================================== */
 
