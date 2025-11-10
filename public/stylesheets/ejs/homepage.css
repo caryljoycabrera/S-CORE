@@ -92,7 +92,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 max(1rem, 20px); /* Minimum 1rem padding on all screen sizes */
 }
 
 .logo-area {
@@ -806,6 +806,10 @@ body {
   .mobile-menu-toggle {
     display: flex;
   }
+  
+  .nav-container {
+    padding: 0 max(0.75rem, 15px); /* Minimum 0.75rem padding on mobile */
+  }
 
   .logo-area {
     gap: 10px;
@@ -942,15 +946,15 @@ body {
 
 @media (max-width: 480px) {
   .nav-container {
-    padding: 0 15px;
+    padding: 0 max(0.75rem, 15px); /* Minimum 0.75rem padding on very small screens */
   }
 
   .section-container {
-    padding: 0 15px;
+    padding: 0 max(0.75rem, 15px); /* Minimum 0.75rem padding on very small screens */
   }
 
   .hero-container {
-    padding: 0 15px;
+    padding: 0 max(0.75rem, 15px); /* Minimum 0.75rem padding on very small screens */
   }
 
   .logo-text {
@@ -1000,6 +1004,26 @@ body {
     width: 45px;
     height: 45px;
     font-size: 1.2rem;
+  }
+}
+
+/* Extra small screens - ensure minimum padding */
+@media (max-width: 360px) {
+  .nav-container {
+    padding: 0 0.75rem !important; /* Force minimum 0.75rem padding on extra small screens */
+  }
+  
+  .section-container,
+  .hero-container {
+    padding: 0 0.75rem !important; /* Force minimum 0.75rem padding on extra small screens */
+  }
+  
+  .logo-area img {
+    height: 30px;
+  }
+  
+  .logo-text {
+    font-size: 0.85rem;
   }
 }
 

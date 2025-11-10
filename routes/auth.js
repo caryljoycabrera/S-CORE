@@ -50,40 +50,110 @@ router.post('/register', async (req, res) => {
       ? [req.body.affiliation]
       : [];
 
-    // Check if email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).render('register', {
-
-        message: 'Email is already registered.', formData: req.body });
-    }
-
-    // Validate required fields
+    // ===== ENHANCED VALIDATION =====
+    
+    // Validate required fields first
     if (!firstName || !lastName || !username || !password || !phoneNumber || !userType) {
       return res.status(400).render('register', {
+        error: 'All required fields must be filled. Please check and try again.',
+        formData: req.body
+      });
+    }
 
-        message: 'Please fill in all required fields.', formData: req.body });
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).render('register', {
+        error: 'Please provide a valid email address.',
+        formData: req.body
+      });
+    }
+
+    // Normalize email to lowercase for consistency
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Username validation (minimum length)
+    if (username.length < 4) {
+      return res.status(400).render('register', {
+        error: 'Username must be at least 4 characters long.',
+        formData: req.body
+      });
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+      return res.status(400).render('register', {
+        error: 'Password must be at least 8 characters long.',
+        formData: req.body
+      });
+    }
+
+    if (!/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
+      return res.status(400).render('register', {
+        error: 'Password must contain at least one letter and one number.',
+        formData: req.body
+      });
+    }
+
+    // Check for duplicate email
+    const existingEmail = await User.findOne({ email: normalizedEmail });
+    if (existingEmail) {
+      return res.status(400).render('register', {
+        error: 'This email is already registered. Please use a different email or try logging in.',
+        formData: req.body
+      });
+    }
+
+    // Check for duplicate username
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).render('register', {
+        error: 'This username is already taken. Please choose a different username.',
+        formData: req.body
+      });
     }
 
     // Student-specific validation
-    if (userType === 'student' && (!studentId || !studentOrganization?.length || !cys)){
-      return res.status(400).render('register', {
+    if (userType === 'student') {
+      if (!studentId || !studentOrganization?.length || !cys) {
+        return res.status(400).render('register', {
+          error: 'All student fields (Student ID, Organization, Course/Year/Section) are required.',
+          formData: req.body
+        });
+      }
 
-        message: 'Please fill in all student fields.', formData: req.body });
+      // Student ID format validation
+      if (!/^\d{9}$/.test(studentId)) {
+        return res.status(400).render('register', {
+          error: 'Student ID must be exactly 9 digits.',
+          formData: req.body
+        });
+      }
+
+      // Check for duplicate Student ID
+      const existingStudentId = await User.findOne({ studentId });
+      if (existingStudentId) {
+        return res.status(400).render('register', {
+          error: 'This Student ID is already registered. Please contact support if this is an error.',
+          formData: req.body
+        });
+      }
     }
 
     // Non-student specific validation
-    if (userType === 'nonstudent' && (!affiliation?.length)){
+    if (userType === 'nonstudent' && (!affiliation?.length)) {
       return res.status(400).render('register', {
-
-        message: 'Please select at least one office/department.', formData: req.body });
+        error: 'Please select at least one office/department.',
+        formData: req.body
+      });
     }
 
-    // Student ID format validation
-    if (userType === 'student' && !/^\d{9}$/.test(studentId)) {
+    // Terms agreement validation
+    if (!terms || terms !== 'on') {
       return res.status(400).render('register', {
-
-        message: 'Student ID must be exactly 9 digits.', formData: req.body });
+        error: 'You must agree to the Terms and Conditions to register.',
+        formData: req.body
+      });
     }
 
     // Hash password
@@ -94,7 +164,7 @@ router.post('/register', async (req, res) => {
       fName: firstName,
       mName: middleName,
       lName: lastName,
-      email,
+      email: normalizedEmail,
       username,
       password: hashedPassword,
       phoneNumber,
@@ -175,25 +245,25 @@ router.post('/login', async (req, res) => {
       return res.status(401).render('index', { message: 'Invalid credentials.' });
     }
 
-    // !! NEW VERIFICATION STEP !!
+    // !! ACCOUNT STATUS VERIFICATION !!
     // Check the user's status BEFORE creating a session
     if (user.status !== 'approved') {
       if (user.status === 'pending') {
-        console.log('User account pending approval:', username);
+        console.log('Login blocked - User account pending approval:', username);
         return res.status(403).render('index', { 
-          message: 'Your account is pending admin approval. Please wait for verification.' 
+          error: 'Your account is pending approval. Please wait for an admin to verify your registration.' 
         });
       }
       if (user.status === 'denied') {
-        console.log('User account denied:', username);
+        console.log('Login blocked - User account denied:', username);
         return res.status(403).render('index', { 
-          message: 'Your account has been denied. Please contact an administrator.' 
+          error: 'Your account registration was not approved. Please contact an administrator for more information.' 
         });
       }
       // Failsafe for any other status
-      console.log('User account not active:', username);
+      console.log('Login blocked - User account not active:', username, 'Status:', user.status);
       return res.status(403).render('index', { 
-        message: 'Account not active. Please contact an administrator.' 
+        error: 'Your account is not active. Please contact an administrator for assistance.' 
       });
     }
 

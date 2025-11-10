@@ -297,10 +297,10 @@ class NotificationService {
       const admins = await User.find({ role: 'admin' });
       const adminIds = admins.map(admin => admin._id);
 
-      const userType = user.userType === 'student' ? 'Student' : 'Non-Student';
+      const userType = user.userType === 'student' ? 'Student' : 'Staff/Faculty';
       const notificationData = {
         title: 'New User Registration',
-        message: `${user.fName} ${user.lName} (${userType}) has registered and is pending approval`,
+        message: `${user.fName} ${user.lName} (${userType}) has registered and is awaiting approval`,
         type: 'user_registered',
         relatedId: userId,
         relatedModel: 'User',

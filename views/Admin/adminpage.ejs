@@ -767,11 +767,30 @@
   </style>
 </head>
 <body>
-  <!-- Mobile Overlay -->
-  <div class="mobile-overlay" id="mobileOverlay"></div>
-  
   <!-- SIDEBAR NAVIGATION -->
   <div class="admin-sidebar" id="adminSidebar">
+    <!-- Profile Section at Top -->
+    <div class="sidebar-profile">
+      <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
+        <div class="sidebar-profile-icon-container">
+          <!-- SVG Icon (shows when collapsed) -->
+          <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <!-- Profile Avatar (shows when expanded) -->
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+               alt="<%= user.fName %> <%= user.lName %>" 
+               class="sidebar-profile-avatar" />
+        </div>
+        <div class="sidebar-profile-info">
+          <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
+          <p class="sidebar-profile-role"><%= user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
+        </div>
+        <span class="sidebar-profile-arrow">→</span>
+      </a>
+    </div>
+
     <div class="sidebar-items">
       <a href="/admin" class="sidebar-item active" title="Dashboard">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -905,6 +924,54 @@
           </svg>
           Generate Reports
         </a>
+      </div>
+
+      <!-- ADMIN ACTION CARDS -->
+      <div class="action-cards-container">
+        <div class="action-card" onclick="location.href='/admin/all-requests'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">All Requests</h3>
+          <p class="card-subtitle">Track all requests across the system</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/approvals'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/File.png" alt="Request Approvals" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Request Approvals</h3>
+          <p class="card-subtitle">Manage approval requests</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/services'">
+          <div class="card-icon-wrapper">
+            <img src="/Picture/Repair.png" alt="Service Requests" class="card-icon" />
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Service Requests</h3>
+          <p class="card-subtitle">Manage service deliverables</p>
+          <div class="card-arrow">→</div>
+        </div>
+
+        <div class="action-card" onclick="location.href='/admin/users'">
+          <div class="card-icon-wrapper">
+            <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 80px; height: 80px; filter: drop-shadow(0 4px 12px rgba(67, 160, 71, 0.3));">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 010 7.75"></path>
+            </svg>
+            <div class="icon-glow"></div>
+          </div>
+          <h3 class="card-title">Users</h3>
+          <p class="card-subtitle">Manage user accounts</p>
+          <div class="card-arrow">→</div>
+        </div>
       </div>
 
       <!-- CALENDAR SECTION -->
@@ -1784,24 +1851,18 @@
     document.addEventListener('DOMContentLoaded', () => {
       const menuToggle = document.getElementById('adminMenuToggle');
       const sidebarEl = document.getElementById('adminSidebar');
-      const mobileOverlay = document.getElementById('mobileOverlay');
       const adminMainContent = document.querySelector('.admin-main-content');
       let touchStartX = 0;
       let touchEndX = 0;
 
       // Initialize Mobile Navigation
       function initMobileNavigation() {
-        if (menuToggle && sidebarEl && mobileOverlay) {
+        if (menuToggle && sidebarEl) {
           // Toggle menu on button click
           menuToggle.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            toggleMobileMenu(true);
-          });
-
-          // Close menu when clicking overlay
-          mobileOverlay.addEventListener('click', () => {
-            toggleMobileMenu(false);
+            sidebarEl.classList.toggle('mobile-active');
           });
 
           // Handle touch swipe gestures
@@ -1822,22 +1883,9 @@
             if (sidebarEl.classList.contains('mobile-active') &&
                 !sidebarEl.contains(e.target) &&
                 !menuToggle.contains(e.target)) {
-              toggleMobileMenu(false);
+              sidebarEl.classList.remove('mobile-active');
             }
           });
-        }
-      }
-
-      // Toggle Mobile Menu
-      function toggleMobileMenu(show) {
-        if (show) {
-          sidebarEl.classList.add('mobile-active');
-          mobileOverlay.classList.add('active');
-          document.body.style.overflow = 'hidden';
-        } else {
-          sidebarEl.classList.remove('mobile-active');
-          mobileOverlay.classList.remove('active');
-          document.body.style.overflow = '';
         }
       }
 
@@ -1847,27 +1895,17 @@
         
         // Swipe left to close
         if (swipeDistance < -50 && sidebarEl.classList.contains('mobile-active')) {
-          toggleMobileMenu(false);
+          sidebarEl.classList.remove('mobile-active');
         }
         
         // Swipe right to open
         if (swipeDistance > 50 && !sidebarEl.classList.contains('mobile-active')) {
-          toggleMobileMenu(true);
+          sidebarEl.classList.add('mobile-active');
         }
       }
 
       // Initialize mobile navigation
       initMobileNavigation();
-
-      // Close sidebar when clicking outside of it on mobile
-      document.addEventListener('click', (e) => {
-        if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
-          if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
-            console.log('Clicking outside - closing sidebar'); // Debug
-            sidebarEl.classList.remove('mobile-active');
-          }
-        }
-      });
     });
 
     // Header Dropdown Manager

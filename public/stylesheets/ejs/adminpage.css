@@ -827,15 +827,114 @@
 /* Action Cards Grid Layout */
 .action-cards-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
   width: 100%;
-  margin: 0 auto;
+  margin: 0 0 2rem 0;
   box-sizing: border-box;
 }
 
-/* Base Card Styles */
-.action-card,
+/* ==========================================
+   ACTION CARDS STYLES - Matching User Side
+   ========================================== */
+
+.action-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 160px;
+  height: auto;
+  box-sizing: border-box;
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  position: relative;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* Card Icon Wrapper */
+.card-icon-wrapper {
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Card Icon - Image and SVG support */
+.card-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 4px 12px rgba(67, 160, 71, 0.3));
+}
+
+.action-card:hover .card-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 6px 16px rgba(67, 160, 71, 0.4));
+}
+
+/* Icon Glow Effect */
+.icon-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(67, 160, 71, 0.2) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.action-card:hover .icon-glow {
+  opacity: 1;
+}
+
+/* Card Title */
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.75rem 0 0.5rem 0;
+  color: #1f2937;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+/* Card Subtitle */
+.card-subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+  line-height: 1.4;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card Arrow */
+.card-arrow {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #388e3c;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+/* Base Card Styles for Calendar */
 .calendar-standalone {
   min-height: 340px;
   height: 340px;
@@ -854,25 +953,11 @@
 }
 
 /* ==========================================
-   ACTION CARDS STYLES
-   ========================================== */
-
-.action-card {
-  justify-content: center;
-}
-
-.action-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-}
-
-/* ==========================================
    CALENDAR STYLES
    ========================================== */
 
-/* Calendar Layout */
+/* Calendar Layout - Full width below action cards */
 .calendar-standalone {
-  grid-column: 2 / 4;
   justify-content: flex-start;
   margin-bottom: 3rem;
 }
@@ -2082,21 +2167,39 @@
    ========================================== */
 
 /* Tablet and smaller desktop screens */
+@media (max-width: 1200px) {
+  .action-cards-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .action-card {
+    min-height: 140px;
+  }
+}
+
 @media (max-width: 1024px) {
   .action-cards-container {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
-  .calendar-standalone {
-    grid-column: 1 / -1;
-    margin-top: 1.5rem;
+  .action-card {
+    min-height: 140px;
+    padding: 1.25rem;
   }
 
-  .action-card,
-  .calendar-standalone {
-    min-height: 300px;
-    height: 300px;
+  .card-icon {
+    width: 70px;
+    height: 70px;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
+
+  .card-subtitle {
+    font-size: 0.9rem;
   }
 }
 
@@ -2107,11 +2210,14 @@
     gap: 1rem;
   }
 
-  .action-card,
-  .calendar-standalone {
-    min-height: 280px;
-    height: 280px;
-    padding: 1rem;
+  .action-card {
+    min-height: 140px;
+    padding: 1.5rem;
+  }
+
+  .card-icon {
+    width: 80px;
+    height: 80px;
   }
 
   .calendar-standalone {

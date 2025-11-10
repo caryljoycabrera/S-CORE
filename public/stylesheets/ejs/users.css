@@ -79,11 +79,423 @@ hr {
   overflow-x: auto;
 }
 
+/* ========================================
+   CSS GRID LAYOUT FOR USERS TABLE
+   ======================================== */
+
+/* Main grid container */
+.users-grid-container {
+  background: white;
+  border-radius: 0;
+  box-shadow: none;
+  overflow-x: auto;
+}
+
+/* Grid Header */
+.grid-header {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.grid-header-info {
+  display: grid;
+  grid-template-columns: minmax(80px, auto) minmax(150px, auto) minmax(200px, 1fr) minmax(80px, auto) minmax(120px, auto) minmax(120px, auto);
+  gap: 0.75rem;
+  padding: 1rem 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  text-align: left;
+  align-items: center;
+}
+
+.grid-header-actions {
+  padding: 1rem 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 2px solid #e5e7eb;
+}
+
+/* Grid Body */
+.grid-body {
+  background: white;
+}
+
+/* Individual Grid Row */
+.grid-row {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+.grid-row:hover {
+  background-color: #f9fafb;
+}
+
+/* User Info Section (Clickable for modal) */
+.grid-row-info {
+  display: grid;
+  grid-template-columns: minmax(80px, auto) minmax(150px, auto) minmax(200px, 1fr) minmax(80px, auto) minmax(120px, auto) minmax(120px, auto);
+  gap: 0.75rem;
+  padding: 1rem 0.75rem;
+  cursor: pointer;
+  align-items: center;
+}
+
+.grid-row-info > div {
+  font-size: 0.875rem;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grid-col-userid {
+  font-weight: 500;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.grid-col-name {
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+.grid-col-email {
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grid-col-role {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.grid-col-date {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.grid-col-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Action Buttons Section (Not clickable for modal) */
+.grid-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-left: 2px solid #e5e7eb;
+}
+
+.grid-row-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.grid-row-actions .approve-btn {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  box-shadow: 0 2px 8px rgba(44, 93, 49, 0.2);
+}
+
+.grid-row-actions .approve-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(44, 93, 49, 0.3);
+}
+
+.grid-row-actions .deny-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.grid-row-actions .deny-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.grid-row-actions .reset-btn {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: white;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
+}
+
+.grid-row-actions .reset-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.grid-row-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+  .grid-header-info,
+  .grid-row-info {
+    grid-template-columns: 90px 150px 1fr 90px 130px 130px;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .grid-header-info,
+  .grid-row-info {
+    grid-template-columns: 80px 140px 1fr 80px 120px 120px;
+  }
+  
+  .grid-header,
+  .grid-row {
+    grid-template-columns: 1fr 280px;
+  }
+  
+  .grid-header-actions,
+  .grid-row-actions {
+    width: 280px;
+  }
+}
+
+/* ========================================
+   BACK TO DASHBOARD BUTTON - CONSISTENT STYLING
+   ======================================== */
+
+.back-to-dashboard-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(44, 93, 49, 0.3);
+}
+
+.back-to-dashboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(44, 93, 49, 0.4);
+  color: white;
+}
+
+.back-to-dashboard-btn svg {
+  flex-shrink: 0;
+}
+
+/* ========================================
+   FLOATING ACTION BUTTONS LAYOUT (LEGACY - KEEP FOR COMPATIBILITY)
+   ======================================== */
+
+/* Wrapper for table + floating actions */
+.table-with-floating-actions {
+  position: relative;
+  background: white;
+  border-radius: 0;
+  box-shadow: none;
+  overflow-x: auto;
+}
+
+/* Main users table */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  margin-right: 340px; /* Space for floating buttons */
+}
+
+.users-table thead th {
+  vertical-align: middle !important;
+  padding: 1rem 0.75rem !important;
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.users-table tbody tr.user-row {
+  height: 70px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.users-table tbody tr.user-row:hover {
+  background-color: #f9fafb;
+}
+
+.users-table tbody td {
+  vertical-align: middle !important;
+  padding: 1rem 0.75rem !important;
+  height: 70px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Floating actions container - positioned absolutely */
+.floating-actions-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 320px;
+  padding-top: 55px; /* Offset for table header height */
+  background: white;
+  border-left: 2px solid #e5e7eb;
+  pointer-events: none; /* Allow clicks to pass through container */
+  z-index: 15;
+}
+
+/* Individual floating action button groups */
+.floating-action-buttons {
+  height: 70px; /* Match row height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  pointer-events: auto; /* Re-enable clicks on buttons */
+}
+
+/* Ensure floating buttons don't interfere with scrolling */
+.table-section-wrapper {
+  margin: 0 3rem 1.5rem 3rem;
+  overflow: visible;
+}
+
+/* ========================================
+   DUAL TABLE LAYOUT - Main Table + Actions Table (LEGACY - KEEP FOR COMPATIBILITY)
+   ======================================== */
+
+/* Wrapper for dual table system */
+.table-section-wrapper {
+  margin: 0 3rem 1.5rem 3rem;
+}
+
+/* Container for both tables side by side */
+.dual-table-container {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  background: white;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Main table container (scrollable) */
+.main-table-container {
+  flex: 1;
+  min-width: 0; /* Allow flex shrinking */
+  overflow-x: auto;
+}
+
+/* Actions table container (fixed width, sticky) */
+.actions-table-container {
+  flex-shrink: 0;
+  width: 320px;
+  position: sticky;
+  right: 0;
+  background: white;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+/* Both tables should have consistent styling */
+.users-main-table,
+.actions-only-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+/* Ensure table rows align perfectly */
+.users-main-table tbody tr,
+.actions-only-table tbody tr {
+  height: 70px; /* Fixed height for alignment */
+}
+
+/* Main table row hover and cursor */
+.users-main-table tbody tr.user-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.users-main-table tbody tr.user-row:hover {
+  background-color: #f9fafb;
+}
+
+/* Actions table rows should NOT be clickable */
+.actions-only-table tbody tr.action-row {
+  cursor: default;
+}
+
+/* Synchronize row heights */
+.users-main-table tbody td,
+.actions-only-table tbody td {
+  vertical-align: middle !important;
+  padding: 1rem 0.75rem !important;
+  height: 70px;
+}
+
+.users-main-table thead th,
+.actions-only-table thead th {
+  vertical-align: middle !important;
+  padding: 1rem 0.75rem !important;
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+}
+
 /* Table cell vertical alignment - Force all cells to align middle */
 .table-section table tbody td {
   vertical-align: middle !important;
   padding: 1rem 0.75rem !important;
   height: 70px; /* Fixed height to maintain consistency */
+}
+
+/* User rows should be clickable */
+.table-section table tbody tr.user-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.table-section table tbody tr.user-row:hover {
+  background-color: #f9fafb;
 }
 
 .table-section table thead th {
@@ -124,6 +536,7 @@ hr {
 .table-section table tbody td.action-buttons {
   display: table-cell;
   vertical-align: middle !important;
+  cursor: default; /* Don't show pointer cursor on this cell */
 }
 
 .action-buttons {
@@ -132,11 +545,14 @@ hr {
   align-items: center;
   justify-content: flex-start;
   flex-wrap: wrap;
+  pointer-events: none; /* Disable pointer events on container */
 }
 
 .action-buttons button {
   margin: 0 !important;
   flex-shrink: 0;
+  pointer-events: auto; /* Re-enable pointer events on buttons */
+  cursor: pointer; /* Explicit cursor for buttons */
 }
 
 /* ========================================
@@ -226,6 +642,33 @@ hr {
     font-size: 0.75rem;
     min-height: 34px;
   }
+}
+
+/* Back to Dashboard button styling */
+.back-to-dashboard-btn {
+  margin-top: 2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(44, 93, 49, 0.3);
+}
+
+.back-to-dashboard-btn:hover {
+  background: linear-gradient(135deg, #1e4a23, #17a882);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(44, 93, 49, 0.4);
+}
+
+.back-to-dashboard-btn:active {
+  transform: translateY(0);
 }
 
 /* Back/View All button spacing */
@@ -522,6 +965,7 @@ hr {
   hr,
   .filter-section,
   .table-section,
+  .table-section-wrapper,
   .view-all-btn {
     margin-left: 1.5rem;
     margin-right: 1.5rem;
@@ -534,6 +978,28 @@ hr {
   
   .view-all-btn {
     margin-bottom: 2rem !important;
+  }
+  
+  /* Stack dual tables vertically on mobile */
+  .dual-table-container {
+    flex-direction: column;
+  }
+  
+  .actions-table-container {
+    width: 100%;
+    position: relative;
+    box-shadow: none;
+    border-top: 2px solid #e5e7eb;
+    margin-top: -1px;
+  }
+  
+  /* Adjust button sizes for mobile */
+  .approve-btn,
+  .deny-btn,
+  .reset-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.875rem;
+    min-height: 32px;
   }
 }
 
@@ -2031,4 +2497,36 @@ hr {
   .results-count {
     font-size: 0.85rem;
   }
+}
+
+/* ========================================
+   CONFIRMATION MODAL SPECIFIC STYLES
+   ======================================== */
+
+/* Ensure confirmation modal is properly centered */
+#confirmStatusModal.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px);
+}
+
+/* When modal is shown with flex display */
+#confirmStatusModal.modal[style*="display: flex"],
+#confirmStatusModal.modal[style*="display:flex"] {
+  display: flex !important;
+}
+
+/* Center the modal content */
+#confirmStatusModal .modal-content {
+  position: relative;
+  margin: auto;
+  transform: translateY(0);
 }

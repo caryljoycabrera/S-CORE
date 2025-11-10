@@ -13,12 +13,41 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
  */
 router.get('/notifications', requireAuth, async (req, res) => {
   try {
-    res.render('notifications', { 
-      user: req.user,
-      title: 'Notifications'
-    });
+    // Render different templates based on user role
+    if (req.user.role === 'admin') {
+      res.render('Admin/notifications', { 
+        user: req.user,
+        title: 'Notifications - Admin',
+        name: `${req.user.fName} ${req.user.lName}`
+      });
+    } else {
+      res.render('notifications', { 
+        user: req.user,
+        title: 'Notifications'
+      });
+    }
   } catch (error) {
     console.error('Error loading notifications page:', error);
+    res.status(500).render('error', { 
+      message: 'Failed to load notifications page',
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /admin/notifications
+ * Admin notifications page
+ */
+router.get('/admin/notifications', requireAdmin, async (req, res) => {
+  try {
+    res.render('Admin/notifications', { 
+      user: req.user,
+      title: 'Notifications - Admin',
+      name: `${req.user.fName} ${req.user.lName}`
+    });
+  } catch (error) {
+    console.error('Error loading admin notifications page:', error);
     res.status(500).render('error', { 
       message: 'Failed to load notifications page',
       error: error.message 

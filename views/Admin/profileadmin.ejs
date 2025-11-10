@@ -33,6 +33,26 @@ body.profile-page .student-side > .div {
 <body class="profile-page">
   <!-- SIDEBAR NAVIGATION -->
   <div class="admin-sidebar" id="adminSidebar">
+    <!-- Profile Section at Top -->
+    <div class="sidebar-profile">
+      <a href="/admin/profile" class="sidebar-profile-link active" title="Go to Profile">
+        <div class="sidebar-profile-icon-container">
+          <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+               alt="<%= user.fName %> <%= user.lName %>" 
+               class="sidebar-profile-avatar" />
+        </div>
+        <div class="sidebar-profile-info">
+          <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
+          <p class="sidebar-profile-role"><%= user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
+        </div>
+        <span class="sidebar-profile-arrow">→</span>
+      </a>
+    </div>
+
     <div class="sidebar-items">
       <a href="/admin" class="sidebar-item" title="Dashboard">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -105,7 +125,7 @@ body.profile-page .student-side > .div {
 
   <!-- MAIN CONTENT WITH SIDEBAR -->
   <div class="admin-main-content">
-    <header class="overlap">
+    <div class="overlap">
       <!-- Left Group: Hamburger, Logo, Title -->
       <div class="header-left-group">
         <!-- Hamburger Menu Button for Mobile -->
@@ -141,7 +161,7 @@ body.profile-page .student-side > .div {
           </div>
         </div>
       </div>
-    </header>
+    </div>
 
     <main class="student-side">
       <div class="div">

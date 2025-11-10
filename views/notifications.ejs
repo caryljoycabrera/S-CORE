@@ -8,9 +8,27 @@
   <link rel="stylesheet" href="/stylesheets/notifications.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Use the standard user dashboard styles from style.css */
+    .student-side {
+      padding-top: 100px;
+      padding-left: 2rem;
+      padding-right: 2rem;
+      padding-bottom: 3rem;
+      background: #f3f4f6;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
     .notifications-page {
-      margin: 2rem 0;
-      padding: 0 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
     }
     
     .notifications-header {
@@ -53,14 +71,14 @@
     }
     
     .btn-primary {
-      background: #3b82f6;
+      background: #43a047;
       color: white;
-      border-color: #3b82f6;
+      border-color: #43a047;
     }
     
     .btn-primary:hover {
-      background: #2563eb;
-      border-color: #2563eb;
+      background: #2c5d31;
+      border-color: #2c5d31;
     }
     
     .notifications-filters {
@@ -82,9 +100,9 @@
     }
     
     .filter-btn.active {
-      background: #3b82f6;
+      background: #43a047;
       color: white;
-      border-color: #3b82f6;
+      border-color: #43a047;
     }
     
     .notifications-list-page {
@@ -109,8 +127,8 @@
     }
     
     .notification-item-page.unread {
-      background-color: #eff6ff;
-      border-left: 4px solid #3b82f6;
+      background-color: #f0fdf4;
+      border-left: 4px solid #43a047;
     }
     
     .notification-content-page {
@@ -171,9 +189,9 @@
     }
     
     .pagination button.active {
-      background: #3b82f6;
+      background: #43a047;
       color: white;
-      border-color: #3b82f6;
+      border-color: #43a047;
     }
     
     .pagination button:disabled {
@@ -203,24 +221,53 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      color: #3b82f6;
+      color: #43a047;
       text-decoration: none;
       margin-bottom: 1rem;
       font-weight: 500;
     }
     
     .back-link:hover {
-      color: #1d4ed8;
+      color: #2c5d31;
     }
   </style>
 </head>
 <body>
-  <div class="notifications-page">
-    <a href="javascript:history.back()" class="back-link">
+  <div class="student-side">
+    <div class="div">
+      <!-- Header matching user dashboard -->
+      <div class="overlap">
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/dashboard" class="text-wrapper">S-CORE</a>
+        <span class="text-wrapper-2">Welcome, <%= user.fName %> <%= user.lName %>!</span>
+        
+        <div class="header-right-section">
+          <!-- Notification Bell -->
+          <%- include('partials/notifications') %>
+          
+          <div class="dropdown-wrapper">
+            <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+              <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+              <div class="user">
+                <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              </div>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="/profile">My Profile</a>
+              <a href="/logout">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notifications-page">
+    <a href="/dashboard" class="back-link">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="15,18 9,12 15,6"></polyline>
       </svg>
-      Back
+      Back to Dashboard
     </a>
     
     <div class="notifications-header">
@@ -253,6 +300,8 @@
       <span id="page-info">Page 1 of 1</span>
       <button id="next-btn" onclick="nextPage()">Next</button>
     </div>
+    </div>
+  </div>
   </div>
 
   <!-- User Data for JavaScript -->
@@ -350,6 +399,20 @@
         const timeAgo = formatTimeAgo(new Date(notification.createdAt));
         const icon = getNotificationIcon(notification.type);
         
+        // Get sender name from notification
+        let senderName = 'System';
+        if (notification.sender) {
+          if (typeof notification.sender === 'object') {
+            if (notification.sender.fName || notification.sender.lName) {
+              senderName = `${notification.sender.fName || ''} ${notification.sender.lName || ''}`.trim();
+            } else if (notification.sender.name) {
+              senderName = notification.sender.name;
+            }
+          } else if (typeof notification.sender === 'string') {
+            senderName = notification.sender;
+          }
+        }
+        
         return `
           <div class="notification-item-page ${isUnread ? 'unread' : ''}" data-id="${notification._id}">
             <div class="notification-content-page">
@@ -361,7 +424,7 @@
                 <p class="notification-message-page">${escapeHtml(notification.message)}</p>
                 <div class="notification-meta-page">
                   <span>${timeAgo}</span>
-                  ${notification.sender ? `<span>from ${escapeHtml(notification.sender.fName)} ${escapeHtml(notification.sender.lName)}</span>` : ''}
+                  <span style="font-style: italic; color: #6b7280;">from ${escapeHtml(senderName)}</span>
                 </div>
               </div>
               <div class="notification-actions-page">
@@ -509,6 +572,20 @@
       div.textContent = text;
       return div.innerHTML;
     }
+
+    // Dropdown toggle
+    function toggleDropdown() {
+      const dropdown = document.getElementById('dropdownMenu');
+      dropdown.classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown-wrapper')) {
+        const dropdown = document.getElementById('dropdownMenu');
+        dropdown.classList.remove('show');
+      }
+    });
   </script>
 </body>
 </html>

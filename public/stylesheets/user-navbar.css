@@ -1,15 +1,17 @@
 /* =============================================================================
-   ADMIN-NAVBAR.CSS - SHARED SIDEBAR NAVIGATION STYLES FOR ALL ADMIN PAGES
+   USER-NAVBAR.CSS - SHARED SIDEBAR NAVIGATION STYLES FOR ALL USER PAGES
    =============================================================================
-   Purpose: Consistent sidebar navigation across all admin pages
-   Used by: All admin pages (adminpage.ejs, approvals.ejs, allrequestsadmin.ejs, etc.)
+   Purpose: Consistent sidebar navigation across all user pages
+   Used by: All user pages (userPage.ejs, allRequestsUser.ejs, etc.)
+   Mirrors: admin-navbar.css styling and functionality
    ============================================================================= */
 
 /* ==========================================
    SIDEBAR NAVIGATION STYLES
    ========================================== */
 
-.admin-sidebar {
+.user-sidebar,
+.sidebar {
   position: fixed;
   left: 0;
   top: 80px; /* Start below the header */
@@ -128,10 +130,10 @@
   font-weight: 500;
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
+  text-transform: capitalize;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-transform: capitalize;
   line-height: 1.2;
 }
 
@@ -150,50 +152,61 @@
 
 /* Desktop: Show profile info on expanded state */
 @media (min-width: 769px) {
-  .admin-sidebar.expanded .sidebar-profile-info,
-  .admin-sidebar.expanded .sidebar-profile-arrow {
+  .user-sidebar.expanded .sidebar-profile-info,
+  .user-sidebar.expanded .sidebar-profile-arrow,
+  .sidebar.expanded .sidebar-profile-info,
+  .sidebar.expanded .sidebar-profile-arrow {
     opacity: 1;
   }
 
   /* Toggle between SVG and avatar based on expansion */
-  .admin-sidebar.expanded .sidebar-profile-icon-svg {
+  .user-sidebar.expanded .sidebar-profile-icon-svg,
+  .sidebar.expanded .sidebar-profile-icon-svg {
     opacity: 0;
   }
 
-  .admin-sidebar.expanded .sidebar-profile-avatar {
+  .user-sidebar.expanded .sidebar-profile-avatar,
+  .sidebar.expanded .sidebar-profile-avatar {
     opacity: 1;
   }
 
-  .admin-sidebar:not(.expanded) .sidebar-profile-icon-svg {
+  .user-sidebar:not(.expanded) .sidebar-profile-icon-svg,
+  .sidebar:not(.expanded) .sidebar-profile-icon-svg {
     opacity: 1;
   }
 
-  .admin-sidebar:not(.expanded) .sidebar-profile-avatar {
+  .user-sidebar:not(.expanded) .sidebar-profile-avatar,
+  .sidebar:not(.expanded) .sidebar-profile-avatar {
     opacity: 0;
   }
 
   /* Center avatar when collapsed */
-  .admin-sidebar:not(.expanded) .sidebar-profile-link {
+  .user-sidebar:not(.expanded) .sidebar-profile-link,
+  .sidebar:not(.expanded) .sidebar-profile-link {
     justify-content: center;
     padding: 0.5rem;
     gap: 0;
   }
 
   /* Center the icon container when collapsed */
-  .admin-sidebar:not(.expanded) .sidebar-profile-icon-container {
+  .user-sidebar:not(.expanded) .sidebar-profile-icon-container,
+  .sidebar:not(.expanded) .sidebar-profile-icon-container {
     margin: 0 auto;
   }
 
   /* Hide info and arrow when collapsed */
-  .admin-sidebar:not(.expanded) .sidebar-profile-info,
-  .admin-sidebar:not(.expanded) .sidebar-profile-arrow {
+  .user-sidebar:not(.expanded) .sidebar-profile-info,
+  .user-sidebar:not(.expanded) .sidebar-profile-arrow,
+  .sidebar:not(.expanded) .sidebar-profile-info,
+  .sidebar:not(.expanded) .sidebar-profile-arrow {
     display: none;
   }
 }
 
 /* Desktop hover expansion - will be overridden on mobile */
 @media (min-width: 769px) {
-  .admin-sidebar.expanded {
+  .user-sidebar.expanded,
+  .sidebar.expanded {
     width: 240px;
   }
 }
@@ -277,21 +290,21 @@
 
 /* Desktop only: Show labels on expanded state */
 @media (min-width: 769px) {
-  .admin-sidebar.expanded .sidebar-label {
+  .user-sidebar.expanded .sidebar-label {
     opacity: 1;
   }
 
   /* Center icons in collapsed sidebar */
-  .admin-sidebar:not(.expanded) .sidebar-label {
+  .user-sidebar:not(.expanded) .sidebar-label {
     display: none;
     opacity: 0;
   }
 
-  .admin-sidebar:not(.expanded) .sidebar-item {
+  .user-sidebar:not(.expanded) .sidebar-item {
     justify-content: center;
   }
 
-  .admin-sidebar:not(.expanded) .sidebar-icon {
+  .user-sidebar:not(.expanded) .sidebar-icon {
     margin-right: 0;
   }
 }
@@ -332,7 +345,7 @@
    MAIN CONTENT AREA WITH SIDEBAR
    ========================================== */
 
-.admin-main-content {
+.user-main-content {
   margin-left: 64px;
   min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -345,7 +358,7 @@
 }
 
 /* Adjust existing overlap/header to work with sidebar */
-.admin-main-content .overlap {
+.user-main-content .overlap {
   padding-left: max(1rem, 2rem); /* Minimum 1rem padding on all screen sizes */
   padding-right: max(1rem, 2rem); /* Minimum 1rem padding on all screen sizes */
   position: fixed;
@@ -384,13 +397,13 @@
 }
 
 /* Ensure header text is white */
-.admin-main-content .overlap .text-wrapper,
-.admin-main-content .overlap .text-wrapper-2 {
+.user-main-content .overlap .text-wrapper,
+.user-main-content .overlap .text-wrapper-2 {
   color: white !important;
 }
 
 /* Header left section (logo and titles) */
-.admin-main-content .overlap .group {
+.user-main-content .overlap .group {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -399,20 +412,20 @@
 }
 
 /* Logo styling - Rounded corners with breathing room and scaled size */
-.admin-main-content .overlap .group img {
+.user-main-content .overlap .group img {
   width: 45px; /* Smaller size to prevent touching header edges */
   height: 45px;
   border-radius: 8px; /* Rounded corners */
   margin: 0.5rem; /* Reduced margin for closer spacing */
 }
 
-.admin-main-content .overlap .text-wrapper {
+.user-main-content .overlap .text-wrapper {
   margin-left: 0.75rem; /* Reduced margin */
   margin-right: 1rem;
   white-space: nowrap;
 }
 
-.admin-main-content .overlap .text-wrapper-2 {
+.user-main-content .overlap .text-wrapper-2 {
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -429,50 +442,6 @@
   z-index: 10; /* Ensure it's above other header content */
 }
 
-/* Header Reports Button */
-.header-reports-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  background: rgba(255, 255, 255, 0.15);
-  color: white !important;
-  text-decoration: none;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  margin-right: 1rem;
-  white-space: nowrap;
-}
-
-.header-reports-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  color: white !important;
-}
-
-.header-reports-btn svg {
-  flex-shrink: 0;
-}
-
-.header-reports-text {
-  display: inline;
-}
-
-@media (max-width: 1024px) {
-  .header-reports-text {
-    display: none;
-  }
-  
-  .header-reports-btn {
-    padding: 0.6rem;
-  }
-}
-
 /* Adjust student-side class if it's being used */
 .student-side.with-sidebar {
   margin-left: 64px;
@@ -480,41 +449,19 @@
 }
 
 /* Add padding to activity sections to prevent content from touching edges */
-.admin-main-content .activity-section {
-  padding: 0;
+.user-main-content .activity-section {
+  padding: 1;
   margin: 0;
   margin-top: 0; /* Remove gap - content starts immediately after header */
   max-width: 100%;
   background: white;
 }
 
-/* Add responsive padding for table sections */
-.admin-main-content .table-section,
-.admin-main-content .filter-section {
-  padding: 1.5rem;
-}
-
-/* Ensure proper spacing for section headers */
-.admin-main-content .section-header {
-  margin-bottom: 1.5rem;
-  padding: 1.5rem 1.5rem 0 1.5rem;
-}
-
-/* Tabs navigation padding */
-.admin-main-content .tabs {
-  padding: 0 1.5rem;
-}
-
-/* Back button padding */
-.admin-main-content .view-all-btn {
-  margin-left: 1.5rem;
-}
-
 /* ==========================================
    HAMBURGER MENU BUTTON
    ========================================== */
 
-.admin-menu-toggle {
+.user-menu-toggle {
   display: none; /* Hidden by default on desktop */
   background: rgba(255, 255, 255, 0.15);
   border: none;
@@ -528,11 +475,11 @@
   order: -1; /* Make it appear first in flex order */
 }
 
-.admin-menu-toggle:hover {
+.user-menu-toggle:hover {
   background: rgba(255, 255, 255, 0.25);
 }
 
-.admin-menu-toggle svg {
+.user-menu-toggle svg {
   width: 24px;
   height: 24px;
   display: block;
@@ -580,7 +527,8 @@
 
 @media (max-width: 768px) {
   /* Keep sidebar in DOM but hidden off-screen on mobile */
-  .admin-sidebar {
+  .user-sidebar,
+  .sidebar {
     display: flex !important; /* Force display flex always */
     position: fixed;
     left: -250px; /* Hide off-screen to the left */
@@ -592,58 +540,67 @@
     box-shadow: 2px 0 10px rgba(0,0,0,0.3);
     transition: left 0.3s ease-in-out; /* Smooth slide animation */
   }
-
+  
   /* Force sidebar profile info to show on mobile */
-  .admin-sidebar .sidebar-profile-info,
-  .admin-sidebar .sidebar-profile-arrow {
+  .user-sidebar .sidebar-profile-info,
+  .user-sidebar .sidebar-profile-arrow,
+  .sidebar .sidebar-profile-info,
+  .sidebar .sidebar-profile-arrow {
     opacity: 1 !important;
   }
 
   /* Mobile: Always show profile avatar, hide SVG icon */
-  .admin-sidebar .sidebar-profile-icon-svg {
+  .user-sidebar .sidebar-profile-icon-svg,
+  .sidebar .sidebar-profile-icon-svg {
     opacity: 0 !important;
   }
 
-  .admin-sidebar .sidebar-profile-avatar {
+  .user-sidebar .sidebar-profile-avatar,
+  .sidebar .sidebar-profile-avatar {
     opacity: 1 !important;
   }
   
   /* Force sidebar to always show labels on mobile - no hover needed */
-  .admin-sidebar .sidebar-label {
+  .user-sidebar .sidebar-label,
+  .sidebar .sidebar-label {
     opacity: 1 !important;
     display: inline !important;
   }
   
-  .admin-sidebar .sidebar-item {
+  .user-sidebar .sidebar-item,
+  .sidebar .sidebar-item {
     justify-content: flex-start !important;
   }
   
-  .admin-sidebar .sidebar-icon {
+  .user-sidebar .sidebar-icon,
+  .sidebar .sidebar-icon {
     margin-right: 1.5rem !important;
   }
   
   /* Disable hover expansion on mobile - it's always expanded when visible */
-  .admin-sidebar:hover {
+  .user-sidebar:hover,
+  .sidebar:hover {
     width: 250px !important;
   }
   
   /* This class will be toggled by JavaScript - slides sidebar in */
-  .admin-sidebar.mobile-active {
+  .user-sidebar.mobile-active,
+  .sidebar.mobile-open {
     left: 0 !important; /* Slide into view - force with !important */
   }
   
   /* Show the hamburger button */
-  .admin-menu-toggle {
+  .user-menu-toggle {
     display: block !important; /* Force display on mobile */
   }
   
   /* Hide the "Welcome..." text on mobile */
-  .admin-main-content .overlap .text-wrapper-2 {
+  .user-main-content .overlap .text-wrapper-2 {
     display: none;
   }
   
   /* Scale down logo on mobile - maintain rounded corners and breathing room */
-  .admin-main-content .overlap .group img {
+  .user-main-content .overlap .group img {
     width: 32px; /* Smaller to prevent touching header edges on mobile */
     height: 32px;
     border-radius: 6px; /* Slightly smaller rounded corners for smaller logo */
@@ -651,7 +608,7 @@
   }
   
   /* Scale down title text on mobile */
-  .admin-main-content .overlap .text-wrapper {
+  .user-main-content .overlap .text-wrapper {
     font-size: 1rem;
     margin-left: 0.5rem;
     margin-right: 0.5rem;
@@ -671,18 +628,8 @@
     flex-shrink: 0;
   }
   
-  /* Hide reports button text on mobile, keep icon */
-  .header-reports-btn .header-reports-text {
-    display: none;
-  }
-  
-  .header-reports-btn {
-    padding: 0.6rem;
-    margin-right: 0.5rem;
-  }
-  
   /* Make header more compact */
-  .admin-main-content .overlap {
+  .user-main-content .overlap {
     height: 60px;
     padding-left: max(0.75rem, 0.75rem); /* Minimum 0.75rem padding on mobile */
     padding-right: max(0.75rem, 0.75rem); /* Minimum 0.75rem padding on mobile */
@@ -690,52 +637,39 @@
   }
   
   /* Adjust sidebar to account for smaller header */
-  .admin-sidebar {
+  .user-sidebar {
     top: 60px !important;
     height: calc(100% - 60px) !important;
   }
   
   /* Adjust main content padding */
-  .admin-main-content {
+  .user-main-content {
     padding-top: 60px;
   }
   
-  .admin-main-content,
+  .user-main-content,
   .student-side.with-sidebar {
     margin-left: 0;
     padding-left: 0;
     padding-right: 0;
   }
   
-  .admin-main-content .activity-section {
-    padding: 0;
-  }
-  
-  .admin-main-content .section-header {
-    padding: 1rem;
-  }
-  
-  .admin-main-content .table-section,
-  .admin-main-content .filter-section {
-    padding: 1rem;
-  }
-  
-  .admin-main-content .tabs {
-    padding: 0 1rem;
+  .user-main-content .activity-section {
+    padding: 1;
   }
 }
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
   /* Make header even more compact */
-  .admin-main-content .overlap {
+  .user-main-content .overlap {
     height: 56px;
     padding-left: max(0.5rem, 0.5rem); /* Minimum 0.5rem padding on very small screens */
     padding-right: max(0.5rem, 0.5rem); /* Minimum 0.5rem padding on very small screens */
   }
   
   /* Smaller logo - maintain rounded corners and breathing room */
-  .admin-main-content .overlap .group img {
+  .user-main-content .overlap .group img {
     width: 28px; /* Extra small to prevent touching on tiny screens */
     height: 28px;
     border-radius: 5px; /* Smaller rounded corners for extra small screens */
@@ -743,51 +677,51 @@
   }
   
   /* Smaller title */
-  .admin-main-content .overlap .text-wrapper {
+  .user-main-content .overlap .text-wrapper {
     font-size: 0.9rem;
     letter-spacing: 1px;
   }
   
   /* Extra compact hamburger button */
-  .admin-menu-toggle {
+  .user-menu-toggle {
     padding: 0.4rem;
     width: 36px;
     height: 36px;
   }
   
-  .admin-menu-toggle svg {
+  .user-menu-toggle svg {
     width: 20px;
     height: 20px;
   }
   
   /* Adjust sidebar for smaller header */
-  .admin-sidebar {
+  .user-sidebar {
     top: 56px !important;
     height: calc(100% - 56px) !important;
   }
   
   /* Adjust main content */
-  .admin-main-content {
+  .user-main-content {
     padding-top: 56px;
   }
 }
 
 /* Extra small screens - ensure minimum padding */
 @media (max-width: 360px) {
-  .admin-main-content .overlap {
+  .user-main-content .overlap {
     padding-left: 0.75rem !important; /* Force minimum 0.75rem padding on extra small screens */
     padding-right: 0.75rem !important; /* Force minimum 0.75rem padding on extra small screens */
     height: 56px;
     min-height: 56px;
   }
   
-  .admin-main-content .overlap .group img {
+  .user-main-content .overlap .group img {
     width: 28px;
     height: 28px;
     margin: 0.25rem;
   }
   
-  .admin-main-content .overlap .text-wrapper {
+  .user-main-content .overlap .text-wrapper {
     font-size: 0.85rem;
     margin-left: 0.4rem;
   }
@@ -798,35 +732,16 @@
     display: none;
   }
   
-  .admin-menu-toggle {
+  .user-menu-toggle {
     display: none !important; /* Force hide on desktop */
   }
   
   /* Desktop-only: Enable hover-to-expand behavior */
-  .admin-sidebar:hover {
+  .user-sidebar:hover {
     width: 240px;
   }
   
-  .admin-sidebar:hover .sidebar-label {
+  .user-sidebar:hover .sidebar-label {
     opacity: 1;
   }
 }
-
-/* ==========================================
-   SIDEBAR TOGGLE SCRIPT (Include this in your pages)
-   ========================================== */
-/*
-  Add this JavaScript to enable sidebar expand/collapse:
-  
-  <script>
-    const sidebar = document.getElementById('adminSidebar');
-    if (sidebar) {
-      sidebar.addEventListener('mouseenter', function() {
-        this.classList.add('expanded');
-      });
-      sidebar.addEventListener('mouseleave', function() {
-        this.classList.remove('expanded');
-      });
-    }
-  </script>
-*/

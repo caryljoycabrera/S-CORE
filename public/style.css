@@ -60,8 +60,8 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
-  z-index: 1000;
+  padding: 0 max(1rem, 2rem); /* Minimum 1rem padding on all screen sizes */
+  z-index: 9999; /* High z-index to stay above content */
   min-width: 0; /* Allow flex items to shrink below content size */
 }
 
@@ -132,12 +132,15 @@ a:visited {
   margin-left: auto;
   flex-shrink: 0; /* Prevent from shrinking */
   min-width: 0;
+  position: relative; /* Ensure positioning context */
+  z-index: 10; /* Ensure it's above other header content */
 }
 
 /* Dropdown Styles */
 .dropdown-wrapper {
-  position: relative;
-  flex-shrink: 0; /* Prevent dropdown from shrinking */
+  position: relative !important;
+  flex-shrink: 0 !important; /* Prevent dropdown from shrinking */
+  margin: 0 !important;
 }
 
 .overlap-group {
@@ -197,7 +200,7 @@ a:visited {
   box-shadow: var(--card-shadow);
   min-width: 180px;
   overflow: hidden;
-  z-index: 1000;
+  z-index: 10000; /* Above header but below notifications */
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
@@ -229,15 +232,17 @@ body:has(.profile-page) .student-side,
   align-items: center;
   width: 100%;
   min-height: 100vh;
-  padding: calc(80px + 2.5rem) 2rem 3rem 2rem;
+  padding: calc(0px + 2.5rem) 2rem 3rem 2rem;
   background: #f3f4f6;
 }
 
 /* General student-side container for user pages - Add padding to prevent header overlap */
 .student-side {
-  padding-top: 100px;
+  padding-top: 35px;
   min-height: 100vh;
   background: #f3f4f6;
+  position: relative; /* Create positioning context */
+  z-index: 1; /* Low z-index, below header */
 }
 
 .profile-page .div {
@@ -262,7 +267,7 @@ body:has(.profile-page) .student-side,
   text-align: center;
   height: fit-content;
   position: sticky;
-  top: 100px;
+  top: 90px;
 }
 
 .profile-page .section-header .profile-info {
@@ -382,7 +387,7 @@ body:has(.profile-page) .student-side,
 .profile-page .profile-actions .view-all-btn:hover {
   background: #047857;
   color: white;
-  transform: translateY(-1px);
+  /* Remove transform to avoid double animation */
 }
 
 /* RIGHT SIDE - Main Content */
@@ -610,6 +615,7 @@ body:has(.profile-page) .student-side,
   text-decoration: none;
 }
 
+/* Single, consistent hover effect for all view-all-btn */
 .view-all-btn:hover {
   background: #10b981;
   color: white;
@@ -729,7 +735,7 @@ body:has(.profile-page) .student-side,
 .activity-section {
   background: white;
   border-radius: 24px;
-  padding: 2.5rem;
+  padding: 2rem 2.5rem 2.5rem 2.5rem;
   box-shadow: var(--card-shadow);
   border: 1px solid rgba(0, 0, 0, 0.05);
   width: 100%;
@@ -740,7 +746,7 @@ body:has(.profile-page) .student-side,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .section-header .profile-info {
@@ -783,38 +789,21 @@ body:has(.profile-page) .student-side,
   border-radius: 2px;
 }
 
-.view-all-btn {
-  background: #d1fae5;
-  color: #065f46;
-  border: none;
-  padding: 0.875rem 1.75rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-}
-
-.view-all-btn:hover {
-  background: #10b981;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
+/* Duplicate removed - see line 606 for .view-all-btn definition */
 
 .activity-grid {
   display: grid;
   gap: 1rem;
+  margin-top: 1.5rem;
 }
 
 .activity-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: 1.25rem;
+  padding: 1.5rem 2rem;
   background: #f8fafc;
-  border-radius: var(--border-radius);
+  border-radius: 12px;
   border-left: 4px solid transparent;
   transition: var(--transition);
   cursor: pointer;
@@ -1057,13 +1046,13 @@ body:has(.profile-page) .student-side,
   }
   
   .overlap {
-    padding: 0 1.5rem;
+    padding: 0 max(0.75rem, 1.5rem); /* Minimum 0.75rem padding */
   }
 }
 
 @media (max-width: 768px) {
   .overlap {
-    padding: 0 1.5rem;
+    padding: 0 max(0.75rem, 1.5rem); /* Minimum 0.75rem padding on tablets */
     height: 70px;
   }
 
@@ -1101,7 +1090,7 @@ body:has(.profile-page) .student-side,
   }
 
   .student-side {
-    padding-top: 100px !important;
+    padding-top: 35px !important;
   }
 
   .div {
@@ -1114,19 +1103,21 @@ body:has(.profile-page) .student-side,
   }
 
   .activity-section {
-    padding: 1.5rem;
+    padding: 1.5rem 1.25rem;
   }
 
   .section-header {
     flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
+    margin-bottom: 1.25rem;
   }
 
   .activity-card {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
+    padding: 1.5rem 1.25rem;
   }
 
   .stats-section {
@@ -1136,8 +1127,9 @@ body:has(.profile-page) .student-side,
 
 @media (max-width: 480px) {
   .overlap {
-    padding: 0 1rem;
+    padding: 0 max(0.75rem, 1rem); /* Minimum 0.75rem padding on mobile */
     height: 70px;
+    min-height: 70px; /* Ensure minimum height */
   }
 
   .group img {
@@ -1167,6 +1159,25 @@ body:has(.profile-page) .student-side,
 
   .stats-section {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Extra small screens - ensure minimum padding */
+@media (max-width: 360px) {
+  .overlap {
+    padding: 0 0.75rem !important; /* Force minimum 0.75rem padding on extra small screens */
+    min-height: 60px;
+  }
+  
+  .group img {
+    width: 32px;
+    height: 32px;
+    margin: 0.3rem;
+  }
+  
+  .text-wrapper {
+    font-size: 1rem;
+    margin-left: 0.5rem;
   }
 }
 
@@ -1391,6 +1402,43 @@ body:has(.profile-page) .student-side,
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+/* Navigation tabs - keeps buttons grouped on the left */
+.nav-tabs {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: nowrap;
+}
+
+.nav-tabs .tab-btn {
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-tabs .tab-btn.active {
+  background: var(--primary-green);
+  color: white;
+}
+
+.nav-tabs .tab-btn:not(.active) {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.nav-tabs .tab-btn:not(.active):hover {
+  background: #e5e7eb;
 }
 
 .sidebar {
@@ -1451,15 +1499,7 @@ body:has(.profile-page) .student-side,
   line-height: 1.6;
 }
 
-.view-all-btn {
-  background: var(--light-green);
-  color: var(--primary-green);
-}
-
-.view-all-btn:hover {
-  background: var(--accent-green);
-  color: white;
-}
+/* Duplicate removed - see line 606 for .view-all-btn definition */
 
 .view-all-btn.active {
   background: var(--primary-green);
@@ -1994,7 +2034,7 @@ body:has(.profile-page) .student-side,
   
   /* Adjust student-side padding for smaller header */
   .student-side {
-    padding-top: 60px;
+    padding-top: 35px;
   }
   
   /* Make notification bell more compact */
@@ -2046,6 +2086,6 @@ body:has(.profile-page) .student-side,
   }
   
   .student-side {
-    padding-top: 56px;
+    padding-top: 35px;
   }
 }

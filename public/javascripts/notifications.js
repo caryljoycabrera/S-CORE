@@ -482,7 +482,8 @@ class NotificationSystem {
 
     if (this.notifications.length === 0) {
       list.innerHTML = '<div class="notification-empty">No notifications yet</div>';
-      if (footer) footer.style.display = 'none';
+      // Always show footer with "View all notifications" button even when empty
+      if (footer) footer.style.display = 'flex';
       return;
     }
 
@@ -493,9 +494,9 @@ class NotificationSystem {
 
     list.innerHTML = notificationsHTML;
 
-    // Show footer if there are more notifications
-    if (footer && this.notifications.length >= 10) {
-      footer.style.display = 'block';
+    // Always show footer
+    if (footer) {
+      footer.style.display = 'flex';
     }
 
     // Add event listeners to notification items
@@ -898,11 +899,14 @@ class NotificationSystem {
 
       if (response.ok) {
         this.handleNotificationDeleted(notificationId);
+        return true;
       } else {
         console.error('Failed to delete notification');
+        return false;
       }
     } catch (error) {
       console.error('Error deleting notification:', error);
+      return false;
     }
   }
 
@@ -1029,6 +1033,13 @@ class NotificationSystem {
     if (container) {
       container.remove();
     }
+
+    const modal = document.getElementById('notification-modal-overlay');
+    if (modal) {
+      modal.remove();
+    }
+    
+    document.body.style.overflow = ''; // Restore scrolling
   }
 }
 

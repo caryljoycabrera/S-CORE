@@ -20,6 +20,26 @@
 <body>
   <!-- SIDEBAR NAVIGATION -->
   <div class="admin-sidebar" id="adminSidebar">
+    <!-- Profile Section at Top -->
+    <div class="sidebar-profile">
+      <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
+        <div class="sidebar-profile-icon-container">
+          <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+               alt="<%= user.fName %> <%= user.lName %>" 
+               class="sidebar-profile-avatar" />
+        </div>
+        <div class="sidebar-profile-info">
+          <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
+          <p class="sidebar-profile-role"><%= user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
+        </div>
+        <span class="sidebar-profile-arrow">→</span>
+      </a>
+    </div>
+
     <div class="sidebar-items">
       <a href="/admin" class="sidebar-item" title="Dashboard">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -122,18 +142,18 @@
         <div class="header-right-section">
            <%- include('../partials/notifications') %>
 
-          <div class="dropdown-wrapper">
-            <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
-              <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-              <div class="user">
-                <img class="user-icon" src="/Picture/user.png" alt="Admin Icon" />
-              </div>
-            </div>
-            <div class="dropdown-menu" id="dropdownMenu">
-              <a href="/admin/profile">My Profile</a>
-              <a href="/logout">Logout</a>
+       <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="Admin Icon" />
             </div>
           </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -143,11 +163,11 @@
           <p>Review and manage user approval requests</p>
         </div>
         
-        <nav class="tabs">
-          <a href="/admin/all-requests" class="view-all-btn">All Requests</a>
-          <a href="/admin/approvals" class="view-all-btn" style="background: var(--primary-green); color: white;">Approvals</a>
-          <a href="/admin/services" class="view-all-btn">Services</a>
-          <a href="/admin/users" class="view-all-btn">Users</a>
+        <nav class="nav-tabs tabs">
+          <a href="/admin/all-requests" class="tab-btn">All Requests</a>
+          <a href="/admin/approvals" class="tab-btn active">Approvals</a>
+          <a href="/admin/services" class="tab-btn">Services</a>
+          <a href="/admin/users" class="tab-btn">Users</a>
         </nav>
         
         <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">

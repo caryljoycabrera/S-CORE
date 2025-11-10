@@ -11,7 +11,7 @@ const userModal = document.getElementById("userModal");
 const closeUserModal = document.getElementById("closeUserModal");
 const cancelUpdateBtn = document.getElementById("cancelUpdateBtn");
 const clearFiltersBtn = document.getElementById("clearFilters");
-const allRows = Array.from(document.querySelectorAll('.user-row'));
+const allRows = Array.from(document.querySelectorAll('.grid-row'));
 
 // Confirmation Modal Elements
 const confirmStatusModal = document.getElementById("confirmStatusModal");
@@ -435,15 +435,23 @@ class EnhancedMultiSelect {
 }
 
 // Initialize dropdowns
-let affiliationFilter, studentOrgFilter;
+let affiliationFilter, studentOrgFilter, roleFilter;
 
 function initializeSearchableDropdowns() {
+  // Initialize role filter (simple dropdown without search)
+  roleFilter = new EnhancedMultiSelect('roleFilter',
+    ['admin', 'user'], 'Select Roles', false);
+    
   affiliationFilter = new EnhancedMultiSelect('affiliationFilter',
     affiliationsArray, 'Select Offices/Departments', true);
   studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter',
     studentOrgsArray, 'Select Student Organizations', true);
 
   // Listen to selection changes
+  document.getElementById('roleFilter').addEventListener('selectionChange', () => {
+    filterUsers();
+  });
+  
   document.getElementById('affiliationFilter').addEventListener('selectionChange', () => {
     filterUsers();
   });
@@ -469,11 +477,13 @@ function filterUsers() {
   let visibleCount = 0;
 
   allRows.forEach(row => {
+    const userId = row.dataset.id; // Get the user ID for matching action row
     const rowUserId = row.dataset.userId.toLowerCase();
     const rowFullname = `${row.dataset.fname} ${row.dataset.mname} ${row.dataset.lname}`.toLowerCase();
     const rowUsername = row.dataset.username.toLowerCase();
     const rowEmail = row.dataset.email.toLowerCase();
     const rowCys = row.dataset.cys.toLowerCase();
+    const rowRole = (row.dataset.role || '').toLowerCase();
     const rowAffiliation = (row.dataset.affiliation || '').toLowerCase();
     const rowStudentOrg = (row.dataset.studentorg || '').toLowerCase();
 
@@ -482,6 +492,15 @@ function filterUsers() {
     const usernameMatch = usernameValue === '' || rowUsername.includes(usernameValue);
     const emailMatch = emailValue === '' || rowEmail.includes(emailValue);
     const cysMatch = cysValue === '' || rowCys.includes(cysValue);
+
+    // Multi-select matching for roles using EnhancedMultiSelect
+    let roleMatch = true;
+    if (roleFilter && roleFilter.selectedValues) {
+      const selectedRoles = roleFilter.getSelectedValues();
+      if (!selectedRoles.includes('all')) {
+        roleMatch = selectedRoles.includes(rowRole);
+      }
+    }
 
     // Multi-select matching for affiliations using EnhancedMultiSelect
     let affiliationMatch = true;
@@ -501,8 +520,10 @@ function filterUsers() {
       }
     }
 
-    const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && affiliationMatch && studentOrgMatch;
-    row.style.display = isVisible ? '' : 'none';
+    const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && roleMatch && affiliationMatch && studentOrgMatch;
+    
+    // Update grid row visibility
+    row.style.display = isVisible ? 'grid' : 'none';
 
     if (isVisible) visibleCount++;
   });
@@ -533,6 +554,9 @@ clearFiltersBtn.addEventListener('click', () => {
   document.getElementById('cysFilter').value = '';
 
   // Reset EnhancedMultiSelect dropdowns
+  if (roleFilter) {
+    roleFilter.reset();
+  }
   if (affiliationFilter) {
     affiliationFilter.reset();
   }
@@ -541,6 +565,44 @@ clearFiltersBtn.addEventListener('click', () => {
   }
 
   filterUsers();
+});
+
+// ========================================
+// STATUS TAB FILTERING
+// ========================================
+document.querySelectorAll('.status-tab').forEach(tab => {
+  tab.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Remove active class from all tabs
+    document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+    
+    // Add active class to clicked tab
+    this.classList.add('active');
+    
+    // Get the status to filter by
+    const filterStatus = this.dataset.status;
+    
+    // Get all grid rows
+    const gridRows = document.querySelectorAll('.grid-row');
+    
+    gridRows.forEach(row => {
+      const userStatus = row.dataset.status;
+      
+      if (filterStatus === 'all' || userStatus === filterStatus) {
+        row.style.display = 'grid';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    
+    // Update results count
+    const visibleRows = Array.from(gridRows).filter(row => row.style.display !== 'none');
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) {
+      resultsCount.textContent = `Showing ${visibleRows.length} of ${gridRows.length} users`;
+    }
+  });
 });
 
 // ========================================
@@ -580,78 +642,37 @@ function selectCustomRole(value, text) {
 // ========================================
 // USER ROW CLICK HANDLERS
 // ========================================
-document.querySelectorAll('.user-row').forEach(row => {
-  row.addEventListener('click', () => {
-    const userType = row.dataset.usertype;
-    const viewCysRow = document.getElementById('viewCysRow');
-    const viewOrgLabel = document.getElementById('viewOrgLabel');
-
-    // Populate view information
-    document.getElementById('viewUserId').textContent = row.dataset.userId;
-    document.getElementById('viewFullName').textContent = row.dataset.fullname;
-    document.getElementById('viewUsername').textContent = row.dataset.username;
-    document.getElementById('viewEmail').textContent = row.dataset.email;
-    document.getElementById('viewPhone').textContent = row.dataset.phone || 'Not provided';
-
-    // User type badge
-    const userTypeBadge = document.getElementById('viewUserType');
-    userTypeBadge.textContent = userType === 'student' ? 'Student' : 'Staff/Faculty';
-    userTypeBadge.className = `user-type-badge ${userType}`;
-
-    // Role display
-    const roleDisplay = document.getElementById('viewRole');
-    roleDisplay.textContent = row.dataset.role;
-
-    // Populate edit form
-    document.getElementById('editUserId').value = row.dataset.id;
-    document.getElementById('editRole').value = row.dataset.role;
-
-    // Set the custom dropdown text
-    const roleText = row.dataset.role === 'admin' ?
-      'Administrator - Full System Access' :
-      'Standard User - Submit & View Own Requests';
-    document.getElementById('selectedRoleText').textContent = roleText;
-
-    updateCurrentRoleDisplay(row.dataset.role);
-
-    // Handle organization display
-    const organizationContainer = document.getElementById('viewOrganizationContainer');
-    const organizationData = row.dataset.organization;
-
-    if (organizationData && organizationData !== 'N/A' && organizationData.trim() !== '') {
-      const organizations = organizationData.split(',').map(org => org.trim()).filter(Boolean);
-
-      if (organizations.length > 0) {
-        organizationContainer.innerHTML = `
-          <div class="org-tags-container">
-            ${organizations.map(org => `
-              <span class="org-tag" title="${org}">
-                ${org}
-              </span>
-            `).join('')}
-          </div>
-        `;
-      } else {
-        organizationContainer.innerHTML = '<span class="no-organizations">No organizations listed</span>';
+// Handle clicks on user info section to open modal
+const gridBody = document.getElementById('gridBody');
+if (gridBody) {
+  gridBody.addEventListener('click', function(e) {
+    // If click is on an action button (Approve, Deny, Reset), show confirmation modal only
+    const button = e.target.closest('button');
+    if (button && button.closest('.grid-row-actions')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const userId = button.dataset.userid;
+      if (!userId) return;
+      if (button.classList.contains('approve-btn')) {
+        showConfirmationModal('approve', userId, button);
+      } else if (button.classList.contains('deny-btn')) {
+        showConfirmationModal('deny', userId, button);
+      } else if (button.classList.contains('reset-btn')) {
+        showConfirmationModal('reset', userId, button);
       }
-    } else {
-      organizationContainer.innerHTML = '<span class="no-organizations">No organizations listed</span>';
+      return; // Prevent row modal from opening
     }
-
-    // Handle student vs non-student specific fields
-    if (userType === 'student') {
-      viewCysRow.style.display = '';
-      viewOrgLabel.textContent = 'Student Organization:';
-      document.getElementById('viewCys').textContent = row.dataset.cys || 'Not specified';
-    } else {
-      viewCysRow.style.display = 'none';
-      viewOrgLabel.textContent = 'Office/Department:';
+    // Otherwise, if click is on the grid-row-info section (not buttons), open the user modal
+    const gridRowInfo = e.target.closest('.grid-row-info');
+    if (gridRowInfo) {
+      const gridRow = gridRowInfo.closest('.grid-row');
+      if (gridRow) {
+        openUserModal(gridRow);
+      }
+      return;
     }
-
-    // Show modal - instant display
-    userModal.style.display = 'flex';
   });
-});
+}
 
 // ========================================
 // FORM SUBMISSION
@@ -946,94 +967,90 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ========================================
-// NEW USER VERIFICATION ACTIONS
+// EVENT LISTENERS FOR STATUS BUTTONS
 // ========================================
-const usersTableBody = document.getElementById('usersTableBody');
 
-usersTableBody.addEventListener('click', function(e) {
-  // Prefer button clicks first
-  const btn = e.target.closest('button');
-  if (btn && usersTableBody.contains(btn)) {
-    const userId = btn.dataset.id;
-    if (!userId) return;
+// Attach listeners to modal action buttons by ID (these are the visible buttons in modal)
+['modalApproveBtn', 'modalDenyBtn', 'modalResetBtn'].forEach(id => {
+  const btn = document.getElementById(id);
+  if (btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const userId = this.dataset.userid;
+      if (!userId) return;
 
-    // Approve / Deny / Reset actions
-    if (btn.classList.contains('approve-btn') || btn.classList.contains('deny-btn') || btn.classList.contains('reset-btn')) {
-      e.stopPropagation(); // Prevent row click from triggering
-      const action = btn.classList.contains('approve-btn') ? 'approve' : (btn.classList.contains('deny-btn') ? 'deny' : 'reset');
-
-      // Show confirmation modal
-      showConfirmationModal(action, userId, btn);
-      return;
-    }
-  }
-
-  // If not a button, treat as row click to open modal
-  const row = e.target.closest('tr.user-row');
-  if (row && usersTableBody.contains(row)) {
-    openUserModal(row);
+      if (this.id === 'modalApproveBtn') {
+        showConfirmationModal('approve', userId, this);
+      } else if (this.id === 'modalDenyBtn') {
+        showConfirmationModal('deny', userId, this);
+      } else if (this.id === 'modalResetBtn') {
+        showConfirmationModal('reset', userId, this);
+      }
+    });
   }
 });
 
-// Event listeners for modal status buttons
-document.getElementById('modalApproveBtn').addEventListener('click', function(e) {
-  e.preventDefault();
-  const userId = this.dataset.userId;
-  if (!userId) return;
+// Re-attach listeners after status update
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof updateRowState === 'function') {
+    const originalUpdateRowState = updateRowState;
+    window.updateRowState = function(button, action) {
+      originalUpdateRowState(button, action);
+      // Re-attach modal button listeners after DOM update
+      ['modalApproveBtn', 'modalDenyBtn', 'modalResetBtn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn && !btn.hasListener) {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const userId = this.dataset.userid;
+            if (!userId) return;
 
-  showConfirmationModal('approve', userId, this);
+            if (this.id === 'modalApproveBtn') {
+              showConfirmationModal('approve', userId, this);
+            } else if (this.id === 'modalDenyBtn') {
+              showConfirmationModal('deny', userId, this);
+            } else if (this.id === 'modalResetBtn') {
+              showConfirmationModal('reset', userId, this);
+            }
+          });
+          btn.hasListener = true; // Mark as having listener
+        }
+      });
+    };
+  }
 });
 
-document.getElementById('modalDenyBtn').addEventListener('click', function(e) {
-  e.preventDefault();
-  const userId = this.dataset.userId;
-  if (!userId) return;
-
-  showConfirmationModal('deny', userId, this);
-});
-
-document.getElementById('modalResetBtn').addEventListener('click', function(e) {
-  e.preventDefault();
-  const userId = this.dataset.userId;
-  if (!userId) return;
-
-  showConfirmationModal('reset', userId, this);
-});
-
-// Confirmation Modal Handler
+// Show the confirmation modal for status change
 function showConfirmationModal(action, userId, buttonElement) {
   const confirmModal = document.getElementById('confirmStatusModal');
   const confirmMessage = document.getElementById('confirmMessage');
   const confirmActionBtn = document.getElementById('confirmActionBtn');
-
   let message = '';
-  let confirmBtnClass = '';
 
   if (action === 'approve') {
     message = '<strong>Approve this user?</strong><br><br>The user will gain full access to the system and can submit service requests.';
-    confirmBtnClass = 'user-admin-btn-primary';
+    confirmActionBtn.className = 'user-admin-btn user-admin-btn-primary';
+    confirmActionBtn.style.background = '';
   } else if (action === 'deny') {
     message = '<strong>Deny this user?</strong><br><br>The user will be blocked from logging in and accessing the system.';
-    confirmBtnClass = 'user-admin-btn-danger';
+    confirmActionBtn.className = 'user-admin-btn user-admin-btn-danger';
     confirmActionBtn.style.background = '#ef4444';
   } else if (action === 'reset') {
     message = '<strong>Reset to Pending?</strong><br><br>The user status will be changed to pending and will need approval again to access the system.';
-    confirmBtnClass = 'user-admin-btn-secondary';
+    confirmActionBtn.className = 'user-admin-btn user-admin-btn-secondary';
+    confirmActionBtn.style.background = '';
   }
 
   confirmMessage.innerHTML = message;
   confirmModal.style.display = 'block';
   document.body.style.overflow = 'hidden';
 
-  // Reset confirm button style
-  confirmActionBtn.style.background = action === 'deny' ? '#ef4444' : '';
-
-  // Remove previous listeners
+  // Remove previous listeners by replacing the button
   const newConfirmBtn = confirmActionBtn.cloneNode(true);
   confirmActionBtn.parentNode.replaceChild(newConfirmBtn, confirmActionBtn);
 
   // Add new confirm listener
-  newConfirmBtn.addEventListener('click', () => {
+  newConfirmBtn.addEventListener('click', function () {
     confirmModal.style.display = 'none';
     document.body.style.overflow = '';
     executeStatusChange(action, userId, buttonElement);
@@ -1102,39 +1119,41 @@ function openUserModal(row) {
     }
   }
 
+
   // Populate status section
   const status = row.dataset.status || 'pending';
   const modalStatusBadge = document.getElementById('modalStatusBadge');
   modalStatusBadge.textContent = status.toUpperCase();
   modalStatusBadge.className = 'status-badge status-' + status;
 
-  // Show/hide status action buttons based on current status
-  const modalApproveBtn = document.getElementById('modalApproveBtn');
-  const modalDenyBtn = document.getElementById('modalDenyBtn');
-  const modalResetBtn = document.getElementById('modalResetBtn');
+  // Show/hide status action buttons based on current status (new modal button classes)
+  const modalApproveBtn = document.querySelector('.modal-approve-btn');
+  const modalDenyBtn = document.querySelector('.modal-deny-btn');
+  const modalResetBtn = document.querySelector('.modal-reset-btn');
 
-  // Store the row reference on the buttons
-  modalApproveBtn.dataset.userId = row.dataset.id;
-  modalDenyBtn.dataset.userId = row.dataset.id;
-  modalResetBtn.dataset.userId = row.dataset.id;
+  // Set userId for modal buttons
+  [modalApproveBtn, modalDenyBtn, modalResetBtn].forEach(btn => {
+    if (btn) btn.dataset.userid = row.dataset.id;
+  });
 
+  // Show/hide based on status
   if (status === 'pending') {
-    modalApproveBtn.style.display = 'inline-flex';
-    modalDenyBtn.style.display = 'inline-flex';
-    modalResetBtn.style.display = 'none';
+    if (modalApproveBtn) modalApproveBtn.style.display = '';
+    if (modalDenyBtn) modalDenyBtn.style.display = '';
+    if (modalResetBtn) modalResetBtn.style.display = 'none';
   } else if (status === 'approved') {
-    modalApproveBtn.style.display = 'none';
-    modalDenyBtn.style.display = 'inline-flex';
-    modalResetBtn.style.display = 'inline-flex';
+    if (modalApproveBtn) modalApproveBtn.style.display = 'none';
+    if (modalDenyBtn) modalDenyBtn.style.display = '';
+    if (modalResetBtn) modalResetBtn.style.display = '';
   } else if (status === 'denied') {
-    modalApproveBtn.style.display = 'inline-flex';
-    modalDenyBtn.style.display = 'none';
-    modalResetBtn.style.display = 'inline-flex';
+    if (modalApproveBtn) modalApproveBtn.style.display = '';
+    if (modalDenyBtn) modalDenyBtn.style.display = 'none';
+    if (modalResetBtn) modalResetBtn.style.display = '';
+  } else {
+    if (modalApproveBtn) modalApproveBtn.style.display = 'none';
+    if (modalDenyBtn) modalDenyBtn.style.display = 'none';
+    if (modalResetBtn) modalResetBtn.style.display = 'none';
   }
-
-  // populate admin form hidden inputs and dropdown
-  document.getElementById('editUserId').value = row.dataset.id || '';
-  document.getElementById('editRole').value = row.dataset.role || 'user';
 
   // Update the custom dropdown display
   const selectedText = row.dataset.role === 'admin'
@@ -1154,32 +1173,53 @@ function openUserModal(row) {
 }
 
 function updateRowState(button, action) {
-  const row = button.closest('tr.user-row');
-  const badge = row ? row.querySelector('.status-badge') : null;
+  // Get user ID from button's dataset
+  const userId = button.dataset.userid;
+  if (!userId) return;
 
-  const approveBtn = row ? row.querySelector('.approve-btn') : null;
-  const denyBtn = row ? row.querySelector('.deny-btn') : null;
-  const resetBtn = row ? row.querySelector('.reset-btn') : null;
+  // Find the grid row using data-id
+  const gridRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
+  if (!gridRow) return;
+
+  // Get badge from grid row
+  const badge = gridRow.querySelector('.status-badge');
+  
+  // Get action buttons container
+  const actionsContainer = gridRow.querySelector('.grid-row-actions');
+  if (!actionsContainer) return;
 
   let newStatus = '';
   if (action === 'approve') {
     newStatus = 'approved';
-    if (row) row.dataset.status = newStatus;
+    gridRow.dataset.status = newStatus;
     if (badge) { badge.className = 'status-badge status-approved'; badge.textContent = 'APPROVED'; }
+
+    // Update action buttons for approved status
+    actionsContainer.innerHTML = `
+      <button class="table-deny-btn" data-userid="${userId}">Deny</button>
+      <button class="table-reset-btn" data-userid="${userId}">Reset to Pending</button>
+    `;
   } else if (action === 'deny') {
     newStatus = 'denied';
-    if (row) row.dataset.status = newStatus;
+    gridRow.dataset.status = newStatus;
     if (badge) { badge.className = 'status-badge status-denied'; badge.textContent = 'DENIED'; }
+
+    // Update action buttons for denied status
+    actionsContainer.innerHTML = `
+      <button class="table-approve-btn" data-userid="${userId}">Approve</button>
+      <button class="table-reset-btn" data-userid="${userId}">Reset to Pending</button>
+    `;
   } else if (action === 'reset') {
     newStatus = 'pending';
-    if (row) row.dataset.status = newStatus;
+    gridRow.dataset.status = newStatus;
     if (badge) { badge.className = 'status-badge status-pending'; badge.textContent = 'PENDING'; }
-  }
 
-  // Re-enable all buttons in the row
-  if (approveBtn) approveBtn.disabled = false;
-  if (denyBtn) denyBtn.disabled = false;
-  if (resetBtn) resetBtn.disabled = false;
+    // Update action buttons for pending status
+    actionsContainer.innerHTML = `
+      <button class="table-approve-btn" data-userid="${userId}">Approve</button>
+      <button class="table-deny-btn" data-userid="${userId}">Deny</button>
+    `;
+  }
 
   // Update modal status badge and buttons if modal is open
   const userModal = document.getElementById('userModal');
@@ -1212,14 +1252,14 @@ function updateRowState(button, action) {
   }
 
   // Refresh visibility based on active tab
-  if (row) {
+  if (gridRow) {
     const activeTab = document.querySelector('.status-tab.active');
     if (activeTab) {
       const filterStatus = activeTab.dataset.status;
-      if (filterStatus !== 'all' && row.dataset.status !== filterStatus) {
-        row.style.display = 'none';
+      if (filterStatus !== 'all' && gridRow.dataset.status !== filterStatus) {
+        gridRow.style.display = 'none';
       } else {
-        row.style.display = '';
+        gridRow.style.display = 'grid';
       }
     }
   }
@@ -1242,17 +1282,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Wait for tab content to load, then open the user modal
         setTimeout(() => {
-          const userRow = document.querySelector(`tr.user-row[data-id="${userId}"]`);
-          if (userRow) {
-            openUserModal(userRow);
+          const gridRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
+          if (gridRow) {
+            openUserModal(gridRow);
 
             // Scroll to the row
-            userRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            gridRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             // Highlight the row briefly
-            userRow.style.backgroundColor = '#fef3c7';
+            gridRow.style.backgroundColor = '#fef3c7';
             setTimeout(() => {
-              userRow.style.backgroundColor = '';
+              gridRow.style.backgroundColor = '';
             }, 2000);
 
             // Clean up URL parameters

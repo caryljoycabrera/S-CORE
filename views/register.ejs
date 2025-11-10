@@ -1397,37 +1397,198 @@ function toggleCustomOrg() {
   }
 }
 
-// Form validation
+// ========================================
+// CLIENT-SIDE VALIDATION
+// ========================================
+
+// Email validation function
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Password strength validation
+function checkPasswordRequirements(password) {
+  return {
+    length: password.length >= 8,
+    hasNumber: /\d/.test(password),
+    hasLetter: /[a-zA-Z]/.test(password),
+    isValid: password.length >= 8 && /\d/.test(password) && /[a-zA-Z]/.test(password)
+  };
+}
+
+// Real-time Student ID formatting
 document.getElementById('studentId')?.addEventListener('input', function(e) {
   e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9);
+  
+  // Real-time validation
+  if (this.value.length > 0 && this.value.length !== 9) {
+    this.style.borderColor = '#ef4444';
+  } else if (this.value.length === 9) {
+    this.style.borderColor = '#10b981';
+  } else {
+    this.style.borderColor = '';
+  }
 });
 
+// Real-time email validation
+document.querySelector('input[name="email"]')?.addEventListener('blur', function(e) {
+  if (this.value && !isValidEmail(this.value)) {
+    this.style.borderColor = '#ef4444';
+    showMessage('Please enter a valid email address.', 'error');
+  } else if (this.value) {
+    this.style.borderColor = '#10b981';
+  } else {
+    this.style.borderColor = '';
+  }
+});
+
+// Enhanced form validation
 document.querySelector('form').addEventListener('submit', function(e) {
+  const userType = document.getElementById('userType').value;
+  const firstName = document.querySelector('input[name="firstName"]').value.trim();
+  const lastName = document.querySelector('input[name="lastName"]').value.trim();
+  const email = document.querySelector('input[name="email"]').value.trim();
+  const username = document.querySelector('input[name="username"]').value.trim();
   const password = document.querySelector('input[name="password"]').value;
   const confirmPassword = document.querySelector('input[name="confirmPassword"]').value;
-  const userType = document.getElementById('userType').value;
-  const studentId = document.getElementById('studentId')?.value;
+  const phoneNumber = document.querySelector('input[name="phoneNumber"]').value.trim();
+  const terms = document.querySelector('input[name="terms"]').checked;
 
-  if (password !== confirmPassword) {
+  // Check user type selection
+  if (!userType) {
     e.preventDefault();
-    showMessage('Passwords do not match. Please try again.', 'error');
+    showMessage('Please select a user type (Student or Staff/Faculty).', 'error');
+    document.getElementById('userType').focus();
     return false;
   }
 
-  if (password.length < 6) {
+  // Check required fields
+  if (!firstName || !lastName) {
     e.preventDefault();
-    showMessage('Password must be at least 6 characters long.', 'error');
+    showMessage('First name and last name are required.', 'error');
     return false;
   }
 
+  // Email validation
+  if (!email) {
+    e.preventDefault();
+    showMessage('Email address is required.', 'error');
+    return false;
+  }
+
+  if (!isValidEmail(email)) {
+    e.preventDefault();
+    showMessage('Please enter a valid email address (e.g., user@example.com).', 'error');
+    document.querySelector('input[name="email"]').focus();
+    return false;
+  }
+
+  // Username validation
+  if (!username) {
+    e.preventDefault();
+    showMessage('Username is required.', 'error');
+    return false;
+  }
+
+  if (username.length < 4) {
+    e.preventDefault();
+    showMessage('Username must be at least 4 characters long.', 'error');
+    return false;
+  }
+
+  // Phone number validation
+  if (!phoneNumber) {
+    e.preventDefault();
+    showMessage('Phone number is required.', 'error');
+    return false;
+  }
+
+  // Student-specific validation
   if (userType === 'student') {
+    const studentId = document.getElementById('studentId')?.value;
+    const studentOrg = $('#studentOrganization').val();
+    const cys = document.querySelector('input[name="cys"]')?.value.trim();
+
+    if (!studentId) {
+      e.preventDefault();
+      showMessage('Student ID is required for student registration.', 'error');
+      return false;
+    }
+
     const studentIdPattern = /^\d{9}$/;
     if (!studentIdPattern.test(studentId)) {
       e.preventDefault();
       showMessage('Student ID must be exactly 9 digits.', 'error');
+      document.getElementById('studentId').focus();
+      return false;
+    }
+
+    if (!studentOrg || studentOrg.length === 0) {
+      e.preventDefault();
+      showMessage('Please select at least one student organization.', 'error');
+      return false;
+    }
+
+    if (!cys) {
+      e.preventDefault();
+      showMessage('Course/Year/Section is required for student registration.', 'error');
       return false;
     }
   }
+
+  // Non-student validation
+  if (userType === 'nonstudent') {
+    const affiliation = $('#nonStudentOffice').val();
+    
+    if (!affiliation || affiliation.length === 0) {
+      e.preventDefault();
+      showMessage('Please select at least one office/department.', 'error');
+      return false;
+    }
+  }
+
+  // Password validation
+  if (!password) {
+    e.preventDefault();
+    showMessage('Password is required.', 'error');
+    return false;
+  }
+
+  const passwordCheck = checkPasswordRequirements(password);
+  if (!passwordCheck.isValid) {
+    e.preventDefault();
+    let errorMsg = 'Password must: ';
+    const errors = [];
+    if (!passwordCheck.length) errors.push('be at least 8 characters');
+    if (!passwordCheck.hasNumber) errors.push('contain at least one number');
+    if (!passwordCheck.hasLetter) errors.push('contain at least one letter');
+    errorMsg += errors.join(', ');
+    showMessage(errorMsg, 'error');
+    return false;
+  }
+
+  if (password !== confirmPassword) {
+    e.preventDefault();
+    showMessage('Passwords do not match. Please re-enter your password.', 'error');
+    return false;
+  }
+
+  // Terms validation
+  if (!terms) {
+    e.preventDefault();
+    showMessage('You must agree to the Terms and Conditions to register.', 'error');
+    return false;
+  }
+
+  // If all validations pass, show loading state
+  const submitBtn = this.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating Account...';
+  }
+
+  return true;
 });
 
 // Real-time password confirmation validation
