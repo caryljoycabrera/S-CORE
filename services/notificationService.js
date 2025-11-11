@@ -680,6 +680,144 @@ class NotificationService {
       throw error;
     }
   }
+
+  /**
+   * Unit Team Member Notifications
+   */
+
+  // Notify unit members when a new task is assigned to their team
+  async notifyUnitTaskAssigned(requestId, requestType, assignedUnits, adminId) {
+    try {
+      console.log(`📧 Notifying units about new task assignment: ${assignedUnits}`);
+      
+      // Convert assignedUnits to array if it's a string
+      const unitsArray = typeof assignedUnits === 'string' 
+        ? assignedUnits.split(',').map(u => u.trim()) 
+        : assignedUnits;
+
+      // Find all unit members belonging to the assigned units
+      const unitMembers = await User.find({
+        role: 'unit',
+        unitTeam: { $in: unitsArray }
+      });
+
+      if (unitMembers.length === 0) {
+        console.log('⚠️ No unit members found for assigned units:', unitsArray);
+        return;
+      }
+
+      console.log(`📨 Found ${unitMembers.length} unit members to notify`);
+
+      const requestTypeName = requestType === 'approval' ? 'Approval Request' : 'Service Request';
+      const actionUrl = requestType === 'approval' 
+        ? `/unit/tasks?modal=true&requestId=${requestId}&type=approval`
+        : `/unit/tasks?modal=true&requestId=${requestId}&type=service`;
+
+      const notificationData = {
+        title: `New Task Assigned to ${unitsArray.join(', ')}`,
+        message: `A new ${requestTypeName} has been assigned to your unit team`,
+        type: 'unit_task_assigned',
+        relatedId: requestId,
+        relatedModel: requestType === 'approval' ? 'RequestApproval' : 'ServiceRequest',
+        sender: adminId,
+        priority: 'high',
+        actionUrl: actionUrl
+      };
+
+      // Create notifications for all unit members
+      const notifications = unitMembers.map(member => 
+        this.createNotification({ ...notificationData, recipient: member._id })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`✅ Task assignment notifications sent to ${unitMembers.length} unit members`);
+    } catch (error) {
+      console.error('❌ Error notifying unit task assignment:', error);
+    }
+  }
+
+  // Notify unit members when a task is updated
+  async notifyUnitTaskUpdated(requestId, requestType, assignedUnits, adminId, updateMessage) {
+    try {
+      const unitsArray = typeof assignedUnits === 'string' 
+        ? assignedUnits.split(',').map(u => u.trim()) 
+        : assignedUnits;
+
+      const unitMembers = await User.find({
+        role: 'unit',
+        unitTeam: { $in: unitsArray }
+      });
+
+      if (unitMembers.length === 0) return;
+
+      const requestTypeName = requestType === 'approval' ? 'Approval Request' : 'Service Request';
+      const actionUrl = requestType === 'approval' 
+        ? `/unit/tasks?modal=true&requestId=${requestId}&type=approval`
+        : `/unit/tasks?modal=true&requestId=${requestId}&type=service`;
+
+      const notificationData = {
+        title: `Task Updated`,
+        message: updateMessage || `A ${requestTypeName} assigned to your unit has been updated`,
+        type: 'unit_task_updated',
+        relatedId: requestId,
+        relatedModel: requestType === 'approval' ? 'RequestApproval' : 'ServiceRequest',
+        sender: adminId,
+        priority: 'medium',
+        actionUrl: actionUrl
+      };
+
+      const notifications = unitMembers.map(member => 
+        this.createNotification({ ...notificationData, recipient: member._id })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`✅ Task update notifications sent to ${unitMembers.length} unit members`);
+    } catch (error) {
+      console.error('Error notifying unit task update:', error);
+    }
+  }
+
+  // Notify unit members when a task has a new comment
+  async notifyUnitTaskComment(requestId, requestType, assignedUnits, commenterId, commenterName) {
+    try {
+      const unitsArray = typeof assignedUnits === 'string' 
+        ? assignedUnits.split(',').map(u => u.trim()) 
+        : assignedUnits;
+
+      const unitMembers = await User.find({
+        role: 'unit',
+        unitTeam: { $in: unitsArray }
+      });
+
+      if (unitMembers.length === 0) return;
+
+      const actionUrl = requestType === 'approval' 
+        ? `/unit/tasks?modal=true&requestId=${requestId}&type=approval`
+        : `/unit/tasks?modal=true&requestId=${requestId}&type=service`;
+
+      const notificationData = {
+        title: 'New Comment on Task',
+        message: `${commenterName} commented on a task assigned to your unit`,
+        type: 'unit_task_comment',
+        relatedId: requestId,
+        relatedModel: requestType === 'approval' ? 'RequestApproval' : 'ServiceRequest',
+        sender: commenterId,
+        priority: 'low',
+        actionUrl: actionUrl
+      };
+
+      // Filter out the commenter from recipients
+      const notifications = unitMembers
+        .filter(member => member._id.toString() !== commenterId.toString())
+        .map(member => 
+          this.createNotification({ ...notificationData, recipient: member._id })
+        );
+      
+      await Promise.all(notifications);
+    } catch (error) {
+      console.error('Error notifying unit task comment:', error);
+    }
+  }
 }
 
 // Export singleton instance

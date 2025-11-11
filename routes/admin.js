@@ -1190,7 +1190,7 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
   try {
     console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to update user role`);
     
-    const { userId, role } = req.body;
+    const { userId, role, unitTeam } = req.body;
 
     if (!userId || !role) {
       console.log('[ERROR] Missing userId or role in request body');
@@ -1200,11 +1200,11 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
-    if (!['user', 'admin'].includes(role)) {
+    if (!['user', 'unit', 'admin'].includes(role)) {
       console.log(`[ERROR] Invalid role provided: ${role}`);
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be either "user" or "admin".'
+        message: 'Invalid role. Must be "user", "unit", or "admin".'
       });
     }
 
@@ -1218,9 +1218,17 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
     }
 
     const previousRole = user.role;
+    const previousUnitTeam = user.unitTeam;
+
+    // Prepare update data
+    const updateData = {
+      role: role,
+      unitTeam: (role === 'unit') ? (unitTeam || 'N/A') : 'N/A'
+    };
+
     const result = await User.findByIdAndUpdate(
       userId,
-      { role: role },
+      updateData,
       { new: true, runValidators: false }
     );
 
@@ -1232,7 +1240,7 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
-    console.log(`[SUCCESS] User ${result.username} (${result.email}) role changed from ${previousRole} to ${role} by admin ${req.user?.username || req.session.userId}`);
+    console.log(`[SUCCESS] User ${result.username} (${result.email}) role changed from ${previousRole} to ${role} (Unit: ${previousUnitTeam} → ${result.unitTeam}) by admin ${req.user?.username || req.session.userId}`);
 
     res.json({
       success: true,
@@ -1240,7 +1248,8 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       user: {
         id: result._id,
         name: `${result.fName} ${result.lName}`,
-        role: result.role
+        role: result.role,
+        unitTeam: result.unitTeam
       }
     });
 

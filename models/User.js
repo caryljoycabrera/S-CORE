@@ -99,11 +99,18 @@ const userSchema = new mongoose.Schema({
     type: String
   },
 
-  // User role for permissions (user or admin)
+  // User role for permissions (user, unit, or admin)
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'unit', 'admin'],
     default: 'user'
+  },
+
+  // Unit team assignment (only applicable if role is 'unit')
+  unitTeam: {
+    type: String,
+    enum: ['N/A', 'Graphics', 'Multimedia', 'Public Relations', 'Social Media'],
+    default: 'N/A'
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

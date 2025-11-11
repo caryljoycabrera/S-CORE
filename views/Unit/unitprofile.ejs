@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile - <%= user.unitTeam %> Unit</title>
+  <!-- ===========================================
+       UNIT PROFILE PAGE STYLES CONNECTION
+       ===========================================
+       This page is connected to:
+       - public/stylesheets/ejs/Unit/unitprofile.css (main styles)
+       - public/stylesheets/unit-navbar.css (unit sidebar)
+       - public/style.css (global styles)
+       =========================================== -->
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/unitprofile.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <script src="/javascripts/alert-handler.js"></script>
+  <script src="/javascripts/unit-navbar.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+/* NEW RULE TO FIX FLUID LAYOUT */
+body.profile-page .student-side > .div {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+</style>
+
+</head>
+<body class="profile-page">
+  <!-- Unit Sidebar Navigation (using partials) -->
+  <%- include('../partials/unit-navbar', { user: user, activePage: 'profile' }) %>
+
+  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <div class="unit-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
+      <div class="header-left-group">
+        <!-- Hamburger Menu Button for Mobile -->
+        <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
+      </div>
+      
+      <span class="text-wrapper-2">My Profile</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/unit/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main class="student-side">
+      <div class="div">
+        <!-- LEFT SIDEBAR - Profile Card -->
+        <div class="section-header">
+          <div class="profile-info">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+                 alt="Profile Picture" class="profile-pic-large" />
+            <h2><%= user.fName %> <%= user.lName %></h2>
+            <p><%= user.unitTeam %> Unit</p>
+          </div>
+
+          <!-- About Section -->
+          <div class="about-section">
+            <h3>About</h3>
+            <div class="about-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <div>
+                <div class="about-label">Email:</div>
+                <div class="about-value"><%= user.email %></div>
+              </div>
+            </div>
+            
+            <div class="about-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              <div>
+                <div class="about-label">Phone:</div>
+                <div class="about-value"><%= user.phoneNumber || 'N/A' %></div>
+              </div>
+            </div>
+
+            <% if (user.userType === 'student') { %>
+            <div class="about-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/>
+              </svg>
+              <div>
+                <div class="about-label">Student ID:</div>
+                <div class="about-value"><%= user.studentId || 'N/A' %></div>
+              </div>
+            </div>
+            <% } %>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="profile-actions">
+            <button id="openUpdateProfile">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Update Profile
+            </button>
+            <button id="openChangePassword">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Change Password
+            </button>
+            <button id="openPictureModal" type="button">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              Update Picture
+            </button>
+            <a href="/unit/dashboard" class="back-to-dashboard-btn">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Back to Dashboard
+            </a>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDE - Profile Information -->
+        <div class="profile-table">
+          <div class="info-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <h3>Profile Information</h3>
+          </div>
+          <table>
+            <tbody>
+              <tr><td class="label">FULL NAME</td><td><%= user.fName %> <%= user.mName %> <%= user.lName %></td></tr>
+              <tr><td class="label">USERNAME</td><td><%= user.username %></td></tr>
+              <tr><td class="label">EMAIL</td><td><%= user.email %></td></tr>
+              <tr><td class="label">PHONE</td><td><%= user.phoneNumber || 'N/A' %></td></tr>
+              
+              <% if (user.userType === 'student') { %>
+                <tr>
+                  <td class="label">ORGANIZATION</td>
+                  <td>
+                    <% if (user.studentOrganization && user.studentOrganization.length > 0) { %>
+                      <div class="org-tags-container">
+                        <% 
+                        let organizations = Array.isArray(user.studentOrganization) 
+                          ? user.studentOrganization 
+                          : user.studentOrganization.split(',').map(org => org.trim()).filter(Boolean);
+                        
+                        organizations.forEach((org, index) => { %>
+                      <span class="org-tag <%= organizations.length === 1 ? 'single' : '' %>" 
+                            title="<%= org %>">
+                        <%= org %>
+                      </span>
+                        <% }); %>
+                      </div>
+                    <% } else { %>
+                      <span class="no-organizations">No organizations</span>
+                    <% } %>
+                  </td>
+                </tr>
+                <tr><td class="label">COURSE/YEAR/SECTION</td><td><%= user.cys || 'N/A' %></td></tr>
+                <tr><td class="label">STUDENT ID</td><td><%= user.studentId || 'N/A' %></td></tr>
+              <% } else { %>
+                <tr>
+                  <td class="label">OFFICE/DEPARTMENT</td>
+                  <td>
+                    <% if (user.affiliation && user.affiliation.length > 0) { %>
+                      <div class="org-tags-container">
+                        <% 
+                        let affiliations = Array.isArray(user.affiliation) 
+                          ? user.affiliation 
+                          : user.affiliation.split(',').map(aff => aff.trim()).filter(Boolean);
+                        
+                        affiliations.forEach((aff, index) => { %>
+                      <span class="org-tag <%= affiliations.length === 1 ? 'single' : '' %>" 
+                            title="<%= aff %>">
+                        <%= aff %>
+                      </span>
+                        <% }); %>
+                      </div>
+                    <% } else { %>
+                      <span class="no-organizations">No office/department</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+
+          <!-- Unit Member Overview Section -->
+          <div class="info-header" style="margin-top: 2rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <h3>Unit Member Overview</h3>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon unit-accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Unit Team</div>
+                <div class="stat-value"><%= user.unitTeam || 'N/A' %></div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon unit-accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Role</div>
+                <div class="stat-value"><%= user.role === 'unit' ? 'Unit Member' : user.role.charAt(0).toUpperCase() + user.role.slice(1) %></div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon unit-accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Account Status</div>
+                <div class="stat-value"><%= user.status.charAt(0).toUpperCase() + user.status.slice(1) %></div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon admin-accent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-label">Access Level</div>
+                <div class="stat-value"><%= user.role === 'admin' ? 'Full Access' : user.role === 'unit' ? 'Unit Access' : 'Standard Access' %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Enhanced Update Profile Modal -->
+  <div id="updateProfileModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Update Profile
+        </h2>
+        <span class="close" onclick="closeModal('updateProfileModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="updateProfileForm" class="modal-form profile-update-form">
+          <input type="hidden" name="userId" value="<%= user._id %>" />
+          
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <h3 class="section-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M2 20c0-3.3137 3.134-6 7-6h6c3.866 0 7 2.6863 7 6"/>
+            </svg>
+            Personal Information
+          </h3>
+            
+            <div class="form-group">
+              <label for="fName">First Name <span class="required">*</span></label>
+              <input name="fName" id="fName" type="text" value="<%= user.fName %>" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="mName">Middle Name <span class="required">*</span></label>
+              <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="lName">Last Name <span class="required">*</span></label>
+              <input name="lName" id="lName" type="text" value="<%= user.lName %>" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="phoneNumber">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              Phone Number
+            </label>
+              <input name="phoneNumber" id="phoneNumber" type="text" value="<%= user.phoneNumber || '' %>" placeholder="Enter your phone number" />
+            </div>
+          </div>
+
+          <!-- Account Information Section -->
+          <div class="form-section">
+            <h3 class="section-title">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <circle cx="12" cy="16" r="1"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Account Information
+        </h3>
+            
+            <div class="form-group">
+              <label for="email">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            Email Address
+          </label>
+              <input name="email" id="email" type="email" value="<%= user.email %>" disabled title="Email cannot be changed" />
+              <small style="color: #64748b; margin-top: 0.5rem; font-style: italic;">Email address cannot be modified</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="username">
+          Username
+        </label>
+              <input name="username" id="username" type="text" value="<%= user.username %>" disabled title="Username cannot be changed" />
+              <small style="color: #64748b; margin-top: 0.5rem; font-style: italic;">Username cannot be modified</small>
+            </div>
+          </div>
+
+          <% if (user.userType === 'student') { %>
+          <!-- Student-Specific Information -->
+          <div class="form-section student-info-grid">
+            <h3 class="section-title">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+              Student Information
+            </h3>
+            
+            <!-- Organization Section -->
+            <div class="organization-section">
+              <label for="studentOrganization">
+                Student Organizations
+                <span class="org-counter" id="orgCounter">No organizations selected</span>
+                <small style="display: block; color: #065f46; font-style: italic; margin-top: 0.5rem;">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.25rem;">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Click on any selected organization to remove it
+        </small>
+              </label>
+              <select name="studentOrganization[]" id="studentOrganization" multiple="multiple" style="width: 100%"></select>
+
+              <div class="custom-org-section" id="customOrgSection">
+                <button type="button" class="toggle-org-button" id="toggleCustomOrg">
+                  Add organization not in the list
+                </button>
+
+                <div id="customOrgContainer" style="display: none;">
+                  <div class="custom-org-input-group">
+                    <input 
+                      type="text" 
+                      id="otherOrganization" 
+                      placeholder="Enter organization name..." 
+                      class="custom-org-input"
+                      maxlength="100"
+                    />
+                    <button type="button" id="addOrganizationButton" class="add-org-button" title="Add Organization"></button>
+                  </div>
+                  <div id="orgAddedFeedback" class="org-added-feedback"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Academic Information -->
+            <div class="academic-info">
+              <div class="form-group">
+                <label for="cys">
+            Course / Year / Section
+          </label>
+                <input name="cys" id="cys" type="text" value="<%= user.cys || '' %>" placeholder="e.g., BSCS-4A" />
+              </div>
+              
+              <div class="form-group">
+                <label for="studentId">Student ID </label>
+                <input name="studentId" id="studentId" type="text" value="<%= user.studentId || '' %>" placeholder="Enter your student ID" />
+              </div>
+            </div>
+          </div>
+          
+          <% } else { %>
+          <!-- Staff-Specific Information -->
+          <div class="form-section">
+            <h3 class="section-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+            Professional Information
+          </h3>
+            
+            <div class="office-section">
+              <div class="form-group">
+                <label for="officeSelect">Office/Department
+                  <span class="org-counter" id="officeCounter">No offices selected</span>
+                  <small style="display: block; color: #065f46; font-style: italic; margin-top: 0.5rem;">
+                    Tip: Click on any selected office/department to remove it
+                  </small>
+                </label>
+                <select name="affiliation[]" id="officeSelect" multiple="multiple" style="width: 100%">
+                  <!-- options will be filled dynamically -->
+                </select>
+              </div>
+
+              <!-- Toggle Button for Custom Office -->
+              <button type="button" class="toggle-org-button" id="toggleCustomOfficeBtn">
+                Can't find your office/department? Add it here
+              </button>
+
+              <!-- Hidden Custom Office Input -->
+              <div class="input-group has-label" id="customOfficeContainer" style="display: none;">
+                <label for="otherOffice" class="input-label">Add Custom Office/Department</label>
+                <div class="custom-org-input-wrapper">
+                  <input type="text" id="otherOffice" name="otherOffice" placeholder="Enter office/department name" maxlength="150" />
+                  <button type="button" id="addOfficeButton" class="add-org-button">+</button>
+                </div>
+                <div id="officeAddedFeedback" class="org-added-feedback"></div>
+              </div>
+            </div>
+          </div>
+          <% } %>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="button" onclick="closeModal('updateProfileModal')">Cancel</button>
+            <button type="submit">
+        <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17,21 17,13 7,13 7,21"/>
+          <polyline points="7,3 7,8 15,8"/>
+        </svg>
+        Save Changes
+      </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Change Modal -->
+  <div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <circle cx="12" cy="16" r="1"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Change Password
+        </h2>
+        <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="passwordForm" class="modal-form password-form">
+          <div class="form-group">
+            <label for="oldPassword">Current Password</label>
+            <div class="password-input-container">
+              <input name="oldPassword" id="oldPassword" type="password" required />
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('oldPassword', 'oldPasswordIcon')">
+                <svg id="oldPasswordIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <div class="password-input-container">
+              <input name="newPassword" id="newPassword" type="password" required />
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('newPassword', 'newPasswordIcon')">
+                <svg id="newPasswordIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Password Strength Indicator -->
+            <div class="password-strength" id="passwordStrength" style="display: none;">
+              <div class="strength-bar">
+                <div class="strength-fill" id="strengthFill"></div>
+              </div>
+              <span id="strengthText">Password strength</span>
+            </div>
+            
+            <!-- Password Validation Rules -->
+            <div class="password-validation" id="passwordValidation" style="display: none;">
+              <div class="validation-item" id="lengthCheck">
+                <svg class="validation-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <span>At least 8 characters</span>
+              </div>
+              <div class="validation-item" id="numberCheck">
+                <svg class="validation-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <span>At least one number</span>
+              </div>
+              <div class="validation-item" id="specialCheck">
+                <svg class="validation-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <span>At least one special character</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="confirmNewPassword">Confirm New Password</label>
+            <div class="password-input-container">
+              <input name="confirmNewPassword" id="confirmNewPassword" type="password" required />
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('confirmNewPassword', 'confirmPasswordIcon')">
+                <svg id="confirmPasswordIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Password Match Indicator -->
+            <div class="password-match-indicator" id="passwordMatchIndicator">
+              Enter password confirmation
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" onclick="closeModal('passwordModal')" style="background: #6b7280; color: white;">Cancel</button>
+            <button type="submit" id="updatePasswordBtn" disabled>Update Password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Picture Upload Modal -->
+  <div id="pictureModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8" cy="8" r="2"/>
+            <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+          </svg>
+          Update Profile Picture
+        </h2>
+        <span class="close" onclick="closeModal('pictureModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="picture-modal-body">
+          
+          <!-- Current Picture Section at the top -->
+          <div class="current-picture-header">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+                 alt="Current Profile Picture" id="currentProfileImg" />
+            <h4>Current Picture</h4>
+            <p>This is your current profile picture that others will see.</p>
+          </div>
+
+          <!-- Upload Selection Section -->
+          <div class="upload-selection-section">
+            
+            <!-- Drop Zone -->
+            <div class="file-upload-container" id="fileUploadContainer">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7,10 12,15 17,10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <p class="upload-text">Drop your image here</p>
+              <p class="upload-subtext">or click to browse from your device</p>
+              <input type="file" id="fileInput" name="profilePicture" accept="image/*" class="file-input-hidden" />
+              <button type="button" class="browse-button" onclick="document.getElementById('fileInput').click()">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14,2 14,8 20,8"/>
+            <path d="M16 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+            <path d="M14 5v4a2 2 0 0 1-2 2H8"/>
+          </svg>
+          Choose File
+        </button>
+            </div>
+
+            <!-- Selected Image Preview -->
+            <div class="selected-image-preview" id="selectedImagePreview">
+              <h4>Selected Image</h4>
+              <div id="imagePreviewContent">
+                <p class="no-image-placeholder">No image selected</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="picture-actions">
+            <!-- Upload Section -->
+            <div class="action-section upload-section">
+              <p>Replace your current profile picture with a new one.</p>
+              <button type="button" id="uploadBtn" class="upload-action-btn" disabled>
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Upload Picture
+          </button>
+            </div>
+
+            <!-- Delete Section -->
+            <div class="action-section delete-section">
+              <p>Delete your current profile picture and use the default avatar.</p>
+              <button type="button" id="deleteBtn" class="delete-action-btn">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
+              <polyline points="3,6 5,6 21,6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            Delete Picture
+          </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Modal -->
+<div id="notificationModal" class="notification-modal">
+  <div class="notification-content">
+    <div id="notificationIcon" class="notification-icon">
+      <span id="notificationIconText">✓</span>
+    </div>
+    <h3 id="notificationTitle" class="notification-title">Success</h3>
+    <p id="notificationMessage" class="notification-message">Operation completed successfully!</p>
+    <div id="notificationActions" class="notification-actions">
+      <button id="notificationOkBtn" class="notification-btn primary">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="notification-modal">
+  <div class="notification-content">
+          <div class="notification-icon warning">
+        <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+    <h3 id="confirmationTitle" class="notification-title">Confirm Action</h3>
+    <p id="confirmationMessage" class="notification-message">Are you sure you want to proceed?</p>
+    <div class="notification-actions">
+      <button id="confirmationCancelBtn" class="notification-btn secondary">Cancel</button>
+      <button id="confirmationConfirmBtn" class="notification-btn danger">Confirm</button>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ===========================================
+     JAVASCRIPT CONNECTION
+     ===========================================
+     This page includes JavaScript functionality from:
+     - public/javascripts/shared-data.js (centralized data arrays)
+     - public/javascripts/ejs/Unit/unitprofile.js (main client-side logic)
+     Note: Socket.IO is loaded via the notifications partial
+     Note: notifications.js is already loaded in the notifications partial
+     =========================================== -->
+<script src="/javascripts/shared-data.js"></script>
+<script src="/javascripts/ejs/Unit/unitprofile.js"></script>
+
+<script>
+// Sidebar hover effect - Unit sidebar uses different behavior (handled in unit-navbar.js)
+// No need for manual hover effect here
+
+// OVERRIDE openModal function with EJS template support
+function openModal(id) {
+  console.log('=== OPENING MODAL ===');
+  console.log('Modal ID:', id);
+  console.log('User Type:', '<%= user.userType %>');
+  
+  const modal = document.getElementById(id);
+  if (!modal) {
+    console.error('ERROR: Modal element not found:', id);
+    return;
+  }
+  
+  modal.style.display = 'flex';
+  console.log('Modal display set to flex');
+
+  // Student logic with enhanced functionality
+  if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
+    console.log('=== INITIALIZING STUDENT ORGANIZATION DROPDOWN ===');
+    console.log('Initializing student organization select for student user');
+    const select = $('#studentOrganization');
+    
+    if (!select.length) {
+      console.error('ERROR: Student organization select element not found');
+      return;
+    }
+    
+    console.log('Select element found:', select.length, 'elements');
+    
+    if (!select.hasClass('select2-hidden-accessible')) {
+      console.log('Select2 not yet initialized, initializing now...');
+      
+      // Check if shared-data.js is loaded
+      console.log('🔍 Checking shared-data.js availability:');
+      console.log('   - window.studentOrgsArray exists?', typeof window.studentOrgsArray !== 'undefined');
+      console.log('   - window.affiliationsArray exists?', typeof window.affiliationsArray !== 'undefined');
+      
+      // Use the organization options from shared-data.js
+      const organizationOptions = window.studentOrgsArray || [];
+      console.log('Organization options loaded:', organizationOptions.length, 'items');
+      
+      if (organizationOptions.length === 0) {
+        console.warn('WARNING: No organization options found in shared-data.js');
+        console.warn('   - Checking if script is loaded...');
+        console.warn('   - window object keys:', Object.keys(window).filter(k => k.includes('Org') || k.includes('affiliation')));
+      }
+
+      const currentOrgs = `<%= user.studentOrganization || '' %>`
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean);
+      
+      console.log('Current user organizations:', currentOrgs);
+
+      // Clear existing options first
+      select.empty();
+      console.log('Select cleared');
+
+      // Add predefined options
+      let addedCount = 0;
+      organizationOptions.forEach(org => {
+        const exists = currentOrgs.includes(org);
+        const option = new Option(org, org, exists, exists);
+        select.append(option);
+        if (exists) addedCount++;
+      });
+      console.log('Added', organizationOptions.length, 'organization options,', addedCount, 'pre-selected');
+
+      // Add custom organizations
+      let customCount = 0;
+      currentOrgs.forEach(org => {
+        if (!organizationOptions.includes(org)) {
+          const option = new Option(org, org, true, true);
+          select.append(option);
+          customCount++;
+        }
+      });
+      
+      if (customCount > 0) {
+        console.log('Added', customCount, 'custom organizations');
+      }
+
+      // NOW initialize Select2 AFTER adding all options
+      console.log('Initializing Select2 with modal parent...');
+      select.select2({
+        placeholder: "Search and select organizations...",
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#updateProfileModal'),
+        closeOnSelect: false,
+        dropdownCssClass: 'select2-dropdown-above-modal',
+        templateResult: function(data) {
+          if (!data.id) return data.text;
+          return $(`<div style="padding: 4px 0;">${data.text}</div>`);
+        }
+      });
+      
+      console.log('Select2 initialized successfully');
+
+      select.trigger('change');
+      console.log('Triggered change event');
+      
+      updateOrganizationCounter();
+      console.log('Organization counter updated');
+
+      // Listen for selection changes
+      select.on('change', function() {
+        const selectedCount = select.val()?.length || 0;
+        console.log('Organization selection changed:', selectedCount, 'items selected');
+        updateOrganizationCounter();
+        // Re-setup click handlers after any change
+        setTimeout(setupOrganizationClickHandlers, 100);
+      });
+
+      // Initial setup of click handlers
+      setTimeout(setupOrganizationClickHandlers, 200);
+      console.log('Click handlers setup scheduled');
+    } else {
+      console.log('Select2 already initialized, skipping');
+    }
+
+    // Set up toggle functionality
+    const toggleBtn = document.getElementById('toggleCustomOrg');
+    if (toggleBtn) {
+      toggleBtn.onclick = toggleCustomOrg;
+      console.log('Toggle custom org button handler set');
+    } else {
+      console.error('ERROR: Toggle custom org button not found');
+    }
+
+    // Set up add organization button
+    const addBtn = document.getElementById('addOrganizationButton');
+    if (addBtn) {
+      addBtn.onclick = addCustomOrganization;
+      console.log('Add organization button handler set');
+    } else {
+      console.error('ERROR: Add organization button not found');
+    }
+
+    // Set up Enter key functionality
+    const orgInput = document.getElementById('otherOrganization');
+    if (orgInput) {
+      orgInput.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addCustomOrganization();
+        }
+      };
+      console.log('Enter key handler set for organization input');
+    } else {
+      console.error('ERROR: Organization input field not found');
+    }
+    
+    console.log('=== STUDENT DROPDOWN INITIALIZATION COMPLETE ===');
+  }
+
+  // NON-STUDENT LOGIC - Fixed version for multiple selection
+  if (id === 'updateProfileModal' && '<%= user.userType %>' !== 'student') {
+    console.log('=== ADMIN: INITIALIZING OFFICE/DEPT DROPDOWN (NON-STUDENT) ===');
+    const select = $('#officeSelect');
+    
+    if (!select.length) {
+      console.error('ERROR: Office select element not found');
+      return;
+    }
+    
+    console.log('Office select element found:', select.length, 'elements');
+    
+    // Only initialize if not already initialized
+    if (!select.hasClass('select2-hidden-accessible')) {
+      console.log('Initializing office select for non-student user');
+      
+      // Check if shared-data.js is loaded
+      console.log('🔍 Checking shared-data.js availability for office:');
+      console.log('   - window.affiliationsArray exists?', typeof window.affiliationsArray !== 'undefined');
+      
+      // Use the office options from shared-data.js
+      const officeOptions = window.affiliationsArray || [];
+      console.log('Office options loaded:', officeOptions.length, 'items');
+      
+      if (officeOptions.length === 0) {
+        console.warn('WARNING: No office options found in shared-data.js');
+        console.warn('   - window object keys:', Object.keys(window).filter(k => k.includes('Org') || k.includes('affiliation')));
+      }
+
+      // Get current affiliations from server
+      const currentAffiliations = `<%= user.affiliation || '' %>`
+        .split(',')
+        .map(o => o.trim())
+        .filter(Boolean);
+
+      console.log('Current user affiliations:', currentAffiliations);
+
+      // Clear any existing options first
+      select.empty();
+      console.log('Office select cleared');
+
+      // Add predefined office options
+      let preSelectedCount = 0;
+      officeOptions.forEach(office => {
+        const isSelected = currentAffiliations.includes(office);
+        const option = new Option(office, office, isSelected, isSelected);
+        select.append(option);
+        if (isSelected) preSelectedCount++;
+      });
+      console.log('Added', officeOptions.length, 'office options,', preSelectedCount, 'pre-selected');
+
+      // Add any custom affiliations not in the predefined list
+      let customAffiliationCount = 0;
+      currentAffiliations.forEach(affiliation => {
+        if (!officeOptions.includes(affiliation)) {
+          const option = new Option(affiliation, affiliation, true, true);
+          select.append(option);
+          customAffiliationCount++;
+        }
+      });
+      
+      if (customAffiliationCount > 0) {
+        console.log('Added', customAffiliationCount, 'custom affiliations');
+      }
+
+      // Initialize Select2 AFTER adding all options
+      console.log('Initializing Select2 for office dropdown...');
+      select.select2({
+        placeholder: "Search and select office/department...",
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#updateProfileModal'),
+        closeOnSelect: false,
+        dropdownCssClass: 'select2-dropdown-above-modal',
+        templateResult: function(data) {
+          if (!data.id) return data.text;
+          return $(`<div style="padding: 4px 0;">${data.text}</div>`);
+        }
+      });
+      
+      console.log('Select2 initialized successfully for office dropdown');
+
+      // Add Select2 event listeners for debugging and z-index fixing
+      select.on('select2:opening', function(e) {
+        console.log('🔓 ADMIN: Office Select2 OPENING');
+      });
+      
+      select.on('select2:open', function(e) {
+        console.log('✅ ADMIN: Office Select2 OPENED');
+        
+        // Debug and fix z-index
+        setTimeout(function() {
+          const dropdown = $('.select2-dropdown');
+          console.log('🔍 ADMIN: Office Dropdown z-index:', dropdown.css('z-index'));
+          
+          const currentZIndex = parseInt(dropdown.css('z-index')) || 0;
+          if (currentZIndex < 9999) {
+            console.warn('⚠️  WARNING: Office dropdown z-index too low! Forcing to 9999');
+            dropdown.css({'z-index': '9999', 'position': 'absolute'});
+            console.log('   - ✅ New office dropdown z-index:', dropdown.css('z-index'));
+          }
+        }, 100);
+      });
+      
+      select.on('select2:closing', function(e) {
+        console.log('🔒 ADMIN: Office Select2 CLOSING');
+      });
+      
+      select.on('select2:close', function(e) {
+        console.log('❌ ADMIN: Office Select2 CLOSED');
+      });
+
+      // Trigger change to update display
+      select.trigger('change');
+
+      console.log('Office select initialized with', select.val()?.length || 0, 'selections');
+
+      // Listen for selection changes
+      select.on('change', function() {
+        const selectedCount = select.val()?.length || 0;
+        console.log('Office selection changed:', selectedCount, 'items selected');
+        updateOfficeCounter();
+        // Re-setup click handlers after any change
+        setTimeout(setupOfficeClickHandlers, 100);
+      });
+
+      // Initial setup of click handlers and counter
+      updateOfficeCounter();
+      console.log('Office counter updated');
+      setTimeout(setupOfficeClickHandlers, 200);
+      console.log('Office click handlers setup scheduled');
+    } else {
+      console.log('Office Select2 already initialized, skipping');
+    }
+    
+    // Set up toggle functionality for custom office
+    const toggleOfficeBtn = document.getElementById('toggleCustomOfficeBtn');
+    if (toggleOfficeBtn) {
+      toggleOfficeBtn.onclick = toggleCustomOffice;
+      console.log('Toggle custom office button handler set');
+    } else {
+      console.error('ERROR: Toggle custom office button not found');
+    }
+    
+    // Set up add office button
+    const addOfficeBtn = document.getElementById('addOfficeButton');
+    if (addOfficeBtn) {
+      addOfficeBtn.onclick = addCustomOffice;
+      console.log('Add office button handler set');
+    } else {
+      console.error('ERROR: Add office button not found');
+    }
+    
+    // Set up Enter key functionality
+    const officeInput = document.getElementById('otherOffice');
+    if (officeInput) {
+      officeInput.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addCustomOffice();
+        }
+      };
+      console.log('Enter key handler set for office input');
+    } else {
+      console.error('ERROR: Office input field not found');
+    }
+    
+    console.log('=== OFFICE/DEPT DROPDOWN INITIALIZATION COMPLETE ===');
+  }
+  
+  console.log('=== MODAL OPENED SUCCESSFULLY ===\n');
+}
+
+// Organization counter update
+function updateOrganizationCounter() {
+  const select = $('#studentOrganization');
+  const counter = document.getElementById('orgCounter');
+  if (!counter) return;
+  
+  const selectedCount = select.val()?.length || 0;
+  
+  if (selectedCount === 0) {
+    counter.textContent = 'No organizations selected';
+    counter.classList.remove('has-selections');
+  } else if (selectedCount === 1) {
+    counter.textContent = '1 organization selected';
+    counter.classList.add('has-selections');
+  } else {
+    counter.textContent = `${selectedCount} organizations selected`;
+    counter.classList.add('has-selections');
+  }
+}
+
+// Organization click handlers
+function setupOrganizationClickHandlers() {
+  $(document).off('click', '#studentOrganization + .select2-container .select2-selection__choice');
+  
+  $(document).on('click', '#studentOrganization + .select2-container .select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#studentOrganization');
+    
+    if (value) {
+      let currentValues = select.val() || [];
+      currentValues = currentValues.filter(v => v !== value);
+      select.val(currentValues).trigger('change');
+      updateOrganizationCounter();
+    }
+  });
+}
+
+// Toggle custom organization input
+function toggleCustomOrg() {
+  const customOrgContainer = document.getElementById('customOrgSection');
+  const isVisible = customOrgContainer.style.display !== 'none';
+  customOrgContainer.style.display = isVisible ? 'none' : 'block';
+  
+  if (!isVisible) {
+    document.getElementById('otherOrganization').focus();
+  } else {
+    document.getElementById('otherOrganization').value = '';
+    hideFeedback();
+  }
+}
+
+// Add custom organization
+function addCustomOrganization() {
+  const input = document.getElementById('otherOrganization');
+  const orgName = input.value.trim();
+  const select = $('#studentOrganization');
+
+  if (!orgName) {
+    showFeedback('Please enter an organization name.', 'error');
+    input.focus();
+    return;
+  }
+  
+  if (orgName.length < 3) {
+    showFeedback('Organization name must be at least 3 characters long.', 'error');
+    input.focus();
+    return;
+  }
+
+  const existingOptions = Array.from(select[0].options).map(option => option.value.toLowerCase());
+  if (existingOptions.includes(orgName.toLowerCase())) {
+    showFeedback('This organization is already in your list.', 'warning');
+    input.focus();
+    return;
+  }
+
+  if (select.find(`option[value="${orgName}"]`).length === 0) {
+    const newOption = new Option(orgName, orgName, true, true);
+    select.append(newOption);
+  }
+
+  const current = select.val() || [];
+  if (!current.includes(orgName)) {
+    current.push(orgName);
+    select.val(current).trigger('change');
+  }
+
+  input.value = '';
+  showFeedback(`"${orgName}" has been added successfully!`, 'success');
+  updateOrganizationCounter();
+  
+  setTimeout(hideFeedback, 3000);
+}
+
+// Organization feedback system
+function showFeedback(message, type = 'success') {
+  const feedback = document.getElementById('orgAddedFeedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.className = 'org-added-feedback ' + type;
+    feedback.style.display = 'block';
+  }
+}
+
+function hideFeedback() {
+  const feedback = document.getElementById('orgAddedFeedback');
+  if (feedback) {
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+    feedback.className = 'org-added-feedback';
+  }
+}
+
+// Office counter update
+function updateOfficeCounter() {
+  const select = $('#officeSelect');
+  const counter = document.getElementById('officeCounter');
+  if (!counter) return;
+  
+  const selectedCount = select.val()?.length || 0;
+  
+  if (selectedCount === 0) {
+    counter.textContent = 'No offices selected';
+    counter.classList.remove('has-selections');
+  } else if (selectedCount === 1) {
+    counter.textContent = '1 office selected';
+    counter.classList.add('has-selections');
+  } else {
+    counter.textContent = `${selectedCount} offices selected`;
+    counter.classList.add('has-selections');
+  }
+}
+
+// Office click handlers
+function setupOfficeClickHandlers() {
+  $(document).off('click', '#officeSelect + .select2-container .select2-selection__choice');
+  
+  $(document).on('click', '#officeSelect + .select2-container .select2-selection__choice', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const $choice = $(this);
+    const value = $choice.attr('title');
+    const select = $('#officeSelect');
+    
+    if (value) {
+      let currentValues = select.val() || [];
+      currentValues = currentValues.filter(v => v !== value);
+      select.val(currentValues).trigger('change');
+      updateOfficeCounter();
+    }
+  });
+}
+
+// Toggle custom office input
+function toggleCustomOffice() {
+  const customOfficeContainer = document.getElementById('customOfficeContainer');
+  const isVisible = customOfficeContainer.style.display !== 'none';
+  customOfficeContainer.style.display = isVisible ? 'none' : 'block';
+  
+  if (!isVisible) {
+    document.getElementById('otherOffice').focus();
+  } else {
+    document.getElementById('otherOffice').value = '';
+    hideOfficeFeedback();
+  }
+}
+
+// Add custom office
+function addCustomOffice() {
+  const input = document.getElementById('otherOffice');
+  const officeName = input.value.trim();
+  const select = $('#officeSelect');
+
+  if (!officeName) {
+    showOfficeFeedback('Please enter an office/department name.', 'error');
+    input.focus();
+    return;
+  }
+  
+  if (officeName.length < 3) {
+    showOfficeFeedback('Office/department name must be at least 3 characters long.', 'error');
+    input.focus();
+    return;
+  }
+
+  const existingOptions = Array.from(select[0].options).map(option => option.value.toLowerCase());
+  if (existingOptions.includes(officeName.toLowerCase())) {
+    showOfficeFeedback('This office/department is already in your list.', 'warning');
+    input.focus();
+    return;
+  }
+
+  if (select.find(`option[value="${officeName}"]`).length === 0) {
+    const newOption = new Option(officeName, officeName, true, true);
+    select.append(newOption);
+  }
+
+  const current = select.val() || [];
+  if (!current.includes(officeName)) {
+    current.push(officeName);
+    select.val(current).trigger('change');
+  }
+
+  input.value = '';
+  showOfficeFeedback(`"${officeName}" has been added successfully!`, 'success');
+  updateOfficeCounter();
+  
+  setTimeout(hideOfficeFeedback, 3000);
+}
+
+// Office feedback system
+function showOfficeFeedback(message, type = 'success') {
+  const feedback = document.getElementById('officeAddedFeedback');
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.className = 'org-added-feedback ' + type;
+    feedback.style.display = 'block';
+  }
+}
+
+function hideOfficeFeedback() {
+  const feedback = document.getElementById('officeAddedFeedback');
+  if (feedback) {
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+    feedback.className = 'org-added-feedback';
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+window.onclick = function (e) {
+  ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
+    if (e.target.id === id) closeModal(id);
+  });
+};
+
+// Mobile hamburger menu toggle - handled by unit-navbar.js
+// No additional code needed here as unit-navbar.js handles all sidebar interactions
+</script>
+
+</body>
+</html>

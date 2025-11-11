@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -9,1326 +9,10 @@
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
-  <link rel="stylesheet" href="/stylesheets/announcements-shared.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
-<style>
-/* NEW RULE TO FIX FLUID LAYOUT */
-.student-side > .div {
-  max-width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-}
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/unitdashboard.css" />
 
-/* NEW -- For small KPI cards */
-.auto-fit-grid-kpi {
-  display: grid;
-  gap: 1.5rem;
-  /* Automatically fits columns with a 300px minimum */
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-/* NEW -- For large charts and tables */
-.auto-fit-grid-main {
-  display: grid;
-  gap: 1.5rem;
-  /* Automatically fits columns with a 450px minimum */
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-}
-
-/* Main Container - Add padding to prevent header overlap */
-.student-side {
-  padding-top: 35px;
-  padding-left: 2rem;
-  padding-right: 2rem;
-  padding-bottom: 3rem;
-  background: #f3f4f6;
-  min-height: 100vh;
-  box-sizing: border-box;
-  /* Note: margin-left is handled by user-main-content wrapper */
-}
-
-/* User Dashboard 2-Row Grid Layout - OPTIMIZED */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  width: 100%;
-  box-sizing: border-box;
-  align-items: stretch;
-}
-
-/* LEFT COLUMN: Action Cards */
-.left-actions {
-  display: flex;
-  flex-direction: row;
-  gap: 1.25rem;
-  grid-column: 1 / -1;
-}
-
-.left-actions .action-card {
-  min-height: 160px;
-  height: auto;
-}
-
-/* Calendar and Card Base Styles */
-.action-card,
-.calendar-standalone {
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  padding: 1.5rem;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  border: 1px solid rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-/* Announcements panel - uses announcements-shared.css */
-/* Only layout-specific overrides here */
-.announcements-panel {
-  grid-row: 2;
-  grid-column: 2;
-  height: 500px; /* Match calendar height */
-  max-height: 580px;
-}
-
-.action-card {
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
-  cursor: pointer;
-}
-
-.action-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-}
-
-/* Card internal elements */
-.card-icon-wrapper {
-  margin-bottom: 1rem;
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0.75rem 0 0.5rem 0;
-  color: #1f2937;
-  line-height: 1.2;
-  flex-shrink: 0;
-}
-
-.card-subtitle {
-  font-size: 0.95rem;
-  color: #6b7280;
-  margin: 0 0 1rem 0;
-  line-height: 1.4;
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-arrow {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #388e3c;
-  flex-shrink: 0;
-  margin-top: auto;
-}
-
-/* Calendar Specific Styles - OPTIMIZED */
-.calendar-standalone {
-  min-height: 500px;
-  max-height: 580px;
-  height: fit-content;
-  justify-content: flex-start;
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  grid-row: 2;
-  grid-column: 1;
-}
-
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e5e7eb;
-  flex-shrink: 0;
-  min-height: 36px;
-}
-
-.calendar-title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1f2937;
-  font-family: 'Inter', sans-serif;
-  flex-shrink: 0;
-}
-
-.calendar-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.calendar-maximize-btn {
-  background: linear-gradient(135deg, #ffffff, #f8f9fa);
-  border: 2px solid #e1e8ed;
-  color: #388e3c;
-  font-size: 0.9rem;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: all 0.25s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  min-width: 32px;
-  height: 32px;
-  margin-right: 0.5rem;
-}
-
-.calendar-maximize-btn:hover {
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border-color: #388e3c;
-  color: #2e7d32;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-}
-
-.calendar-month-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-}
-
-.calendar-nav-btn {
-  background: linear-gradient(135deg, #ffffff, #f8f9fa);
-  border: 2px solid #e1e8ed;
-  color: #388e3c;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 10px;
-  transition: all 0.25s ease;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  min-width: 38px;
-  height: 38px;
-}
-
-.calendar-nav-btn:hover {
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border-color: #388e3c;
-  color: #2e7d32;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.calendar-month-year {
-  font-size: 1rem;
-  color: #27632a;
-  font-weight: 700;
-  margin: 0;
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-  min-width: 140px;
-  text-align: center;
-}
-
-.calendar-content {
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-legend {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  font-size: 0.65rem;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-  white-space: nowrap;
-}
-
-.legend-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.legend-dot.approval {
-  background: #3b82f6;
-}
-
-.legend-dot.service {
-  background: #f97316;
-}
-
-.legend-text {
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  font-size: 0.8rem;
-  font-family: 'Inter', sans-serif;
-  width: 100%;
-  grid-auto-rows: minmax(38px, auto);
-  overflow: hidden;
-}
-
-.calendar-day-header {
-  font-weight: 700;
-  text-align: center;
-  padding: 6px 2px;
-  color: #388e3c;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  border-bottom: 1px solid #e8f5e9;
-  margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.calendar-day {
-  font-size: 0.8rem;
-  padding: 6px 4px;
-  border-radius: 6px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #374151;
-  font-weight: 600;
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
-  background-color: #e8f5e9;
-  transform: scale(1.05);
-  color: #2e7d32;
-}
-
-.calendar-today {
-  background: linear-gradient(135deg, #43a047, #66bb6a) !important;
-  color: #fff !important;
-  font-weight: 700;
-  border: 2px solid #388e3c;
-  box-shadow: 0 2px 6px rgba(67, 160, 71, 0.3);
-  position: relative;
-}
-
-.calendar-today::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: 2px solid #c8e6c9;
-  border-radius: 6px;
-  pointer-events: none;
-}
-
-/* Ensure today always shows green background even with deadline classes */
-.calendar-today.has-approval-deadline,
-.calendar-today.has-service-deadline,
-.calendar-today.has-mixed-deadlines {
-  background: linear-gradient(135deg, #43a047, #66bb6a) !important;
-  color: #fff !important;
-}
-
-.calendar-day.has-approval-deadline {
-  border-left: 4px solid #3b82f6;
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border-radius: 6px 6px 6px 2px;
-}
-
-.calendar-day.has-service-deadline {
-  border-left: 4px solid #f97316;
-  background: linear-gradient(135deg, #fff7ed, #fed7aa);
-  border-radius: 6px 6px 6px 2px;
-}
-
-.calendar-day.has-mixed-deadlines {
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-radius: 6px;
-  position: relative;
-}
-
-.calendar-day.has-mixed-deadlines::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #3b82f6;
-  border-radius: 2px 0 0 2px;
-}
-
-.calendar-day.has-mixed-deadlines::after {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: #f97316;
-  border-radius: 0 2px 2px 0;
-}
-
-.deadline-indicators {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  display: flex;
-  gap: 2px;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.deadline-badge {
-  color: white;
-  border-radius: 50%;
-  width: 14px;
-  height: 14px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.5px solid #fff;
-  line-height: 1;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.deadline-badge.approval {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-}
-
-.deadline-badge.service {
-  background: linear-gradient(135deg, #f97316, #ea580c);
-}
-
-.calendar-empty {
-  cursor: default;
-  color: transparent;
-}
-
-.calendar-icon {
-  width: 18px;
-  height: 18px;
-  color: #6b7280;
-  margin-right: 0.5rem;
-  flex-shrink: 0;
-}
-
-/* Modal Styles */
-.calendar-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  padding: 2rem;
-  box-sizing: border-box;
-  overflow-y: auto;
-  transition: none !important;
-  animation: none !important;
-}
-
-.calendar-modal.active {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
-
-.calendar-modal-content {
-  background: #fff;
-  border-radius: 1.5rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-  width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  padding: 2.5rem;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  margin: auto;
-  transition: none !important;
-  animation: none !important;
-  transform: none !important;
-}
-
-.deadline-details-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1001;
-  padding: 2rem;
-  box-sizing: border-box;
-  overflow-y: auto;
-  transition: none !important;
-  animation: none !important;
-}
-
-.deadline-details-modal.active {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
-
-.deadline-details-content {
-  background: #fff;
-  border-radius: 1.5rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-  width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
-  padding: 2rem;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  margin: auto;
-  transition: none !important;
-  animation: none !important;
-  transform: none !important;
-}
-
-.deadline-details-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e5e7eb;
-  flex-shrink: 0;
-}
-
-.deadline-details-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-}
-
-.deadline-details-date {
-  font-size: 1rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.deadline-details-controls {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-shrink: 0;
-}
-
-.deadline-control-btn {
-  background: linear-gradient(135deg, #ffffff, #f8f9fa);
-  border: 2px solid #e1e8ed;
-  color: #388e3c;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: all 0.25s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.deadline-control-btn:hover {
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border-color: #388e3c;
-  color: #2e7d32;
-  transform: translateY(-1px);
-}
-
-.deadline-control-btn.close-btn {
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-.deadline-control-btn.close-btn:hover {
-  color: #b91c1c;
-  border-color: #dc2626;
-}
-
-.deadline-list {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-}
-
-.deadline-item {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-}
-
-.deadline-item:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-.deadline-item-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.deadline-item-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-  flex: 1;
-}
-
-.deadline-item-type {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.deadline-item-type.approval {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  color: #1d4ed8;
-  border: 1px solid #3b82f6;
-}
-
-.deadline-item-type.service {
-  background: linear-gradient(135deg, #fff7ed, #fed7aa);
-  color: #c2410c;
-  border: 1px solid #f97316;
-}
-
-.deadline-item-description {
-  color: #6b7280;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin-bottom: 1rem;
-}
-
-.deadline-item-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  color: #9ca3af;
-  margin-bottom: 1rem;
-}
-
-.deadline-item-meta span {
-  display: block;
-}
-
-.deadline-item-meta strong {
-  color: #374151;
-  font-weight: 600;
-}
-
-.deadline-empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: #6b7280;
-}
-
-.deadline-empty-state-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-/* ANNOUNCEMENTS PANEL - Layout overrides only */
-/* Main styles are in announcements-shared.css */
-/* Grid positioning handled above */
-
-/* Activity Search Bar Styles */
-.activity-search-wrapper {
-  margin-bottom: 1.5rem;
-}
-
-.search-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: 100%;
-}
-
-.search-icon {
-  position: absolute;
-  left: 1.25rem;
-  color: #6b7280;
-  pointer-events: none;
-  transition: all 0.3s ease;
-  z-index: 2;
-}
-
-.search-hint {
-  position: absolute;
-  right: 1.25rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #6b7280;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  padding: 0.375rem 0.625rem;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  pointer-events: none;
-  transition: all 0.3s ease;
-  letter-spacing: 0.02em;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-#activitySearchInput {
-  width: 100%;
-  padding: 1rem 8rem 1rem 3.25rem;
-  font-size: 1rem;
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  border-radius: 16px;
-  border: 2px solid #e5e7eb;
-  background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-sizing: border-box;
-  color: #1f2937;
-  line-height: 1.5;
-}
-
-#activitySearchInput:hover {
-  border-color: #9ca3af;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.06);
-  transform: translateY(-1px);
-}
-
-#activitySearchInput:focus {
-  outline: none;
-  border-color: #2e7d32;
-  background: #ffffff;
-  box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1), 0 4px 20px rgba(46, 125, 50, 0.15);
-  transform: translateY(-1px);
-}
-
-#activitySearchInput:focus ~ .search-hint {
-  opacity: 0;
-  transform: translateX(8px);
-}
-
-#activitySearchInput:focus ~ .search-icon {
-  color: #2e7d32;
-  transform: scale(1.1);
-}
-
-#activitySearchInput::placeholder {
-  color: #9ca3af;
-  font-weight: 400;
-}
-
-/* Activity Section Header - Keep "View All" on Same Line */
-/*
-This rule targets the header for "Recent Activity"
-It's already a flex container, but we need to add two key properties:
-'flex-wrap: nowrap;' stops the button from wrapping
-'gap: 1rem;' adds spacing so the title and button don't touch
-*/
-.activity-section .section-header {
-  display: flex !important;
-  flex-direction: row !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  flex-wrap: nowrap !important; /* Prevents the "View All" button from wrapping */
-  gap: 1rem;          /* Adds spacing between title and button */
-  margin-bottom: 1.25rem;
-  width: 100%;
-}
-
-/* This tells the title to take up the available space */
-.activity-section .section-title {
-  flex-grow: 1;
-  margin: 0;
-  white-space: nowrap;
-}
-
-/* This tells the "View All" button NOT to shrink */
-.activity-section .view-all-btn {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* Responsive Design - OPTIMIZED FOR ALL SCREEN SIZES */
-@media (max-width: 1200px) and (min-width: 769px) {
-  .student-side {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .student-side {
-    padding-top: 35px !important;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-bottom: 2rem;
-  }
-
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .left-actions {
-    flex-direction: column;
-  }
-  
-  .action-card {
-    min-height: 140px;
-  }
-  
-  .calendar-standalone {
-    grid-column: 1 / -1; /* Span the full single column */
-    grid-row: 2;         /* Place in 2nd row (after action cards) */
-    min-height: 450px;
-    max-height: 550px;
-  }
-  
-  .announcements-panel {
-    grid-column: 1 / -1; /* Span the full single column */
-    grid-row: 3;         /* Place in 3rd row (after calendar) */
-    min-height: 450px;
-  }
-
-  .action-card,
-  .calendar-standalone {
-    padding: 1.5rem;
-  }
-
-  .calendar-grid {
-    gap: 2px;
-  }
-
-  .calendar-day {
-    font-size: 0.75rem;
-    min-height: 34px;
-    padding: 4px 2px;
-  }
-
-  .calendar-day-header {
-    font-size: 0.65rem;
-    padding: 4px 2px;
-  }
-  
-  .activity-section {
-    margin-bottom: 2rem;
-  }
-
-  /* Makes the month/year text shrink instead of staying rigid */
-  .calendar-month-year {
-    min-width: 100px;
-    font-size: 0.9rem;
-    letter-spacing: 0;
-  }
-
-  /* Reduces padding on nav buttons to save horizontal space */
-  .calendar-nav-btn {
-    padding: 6px 10px;
-    min-width: 32px;
-    height: 32px;
-  }
-
-  /* Reduces padding on maximize button */
-  .calendar-maximize-btn {
-    padding: 4px 6px;
-    min-width: 30px;
-    height: 30px;
-    margin-right: 0.25rem;
-  }
-
-  /* Reduces the gap between the maximize btn and month controls */
-  .calendar-controls {
-    gap: 0.25rem;
-  }
-  
-  .stats-container {
-    gap: 1rem;
-  }
-
-  .stretch-card {
-    min-height: 280px;
-    height: 280px;
-  }
-  
-  .all-requests-card {
-    min-height: 300px;
-    height: 300px;
-  }
-  
-  .calendar-modal,
-  .deadline-details-modal {
-    padding: 1rem;
-  }
-  
-  .calendar-modal-content,
-  .deadline-details-content {
-    padding: 1.5rem;
-  }
-}
-
-/* Add these deadline item styles to match admin page */
-.deadline-item-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.deadline-action-btn {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white !important;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.deadline-action-btn:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-  color: white !important;
-}
-
-.deadline-action-btn.service {
-  background: linear-gradient(135deg, #f97316, #ea580c);
-  color: white !important;
-}
-
-.deadline-action-btn.service:hover {
-  background: linear-gradient(135deg, #ea580c, #dc2626);
-  box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
-  color: white !important;
-}
-
-/* Update deadline-item-meta to handle multiple lines better */
-.deadline-item-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  color: #9ca3af;
-  margin-bottom: 1rem;
-}
-
-.deadline-item-meta span {
-  display: block;
-}
-
-.deadline-item-meta strong {
-  color: #374151;
-  font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .deadline-item-meta {
-    font-size: 0.75rem;
-    gap: 0.2rem;
-  }
-  
-  .deadline-item-actions {
-    flex-direction: column;
-  }
-}
-
-/* Status badge styles for calendar modal */
-.status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-badge.pending {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.status-badge.approved {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge.rejected {
-  background-color: #fecaca;
-  color: #dc2626;
-}
-
-.status-badge.forrevision,
-.status-badge.revision {
-  background-color: #e0e7ff;
-  color: #3730a3;
-}
-
-.status-badge.completed {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge.archived {
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.status-badge.unknown {
-  background-color: #f3f4f6;
-  color: #6b7280;
-}
-.guidelines-container {
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      padding: 1rem;
-      margin: 1rem 0;
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      position: relative;
-    }
-
-    .guidelines-header {
-      padding: 1.25rem 1.5rem;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: linear-gradient(135deg, #d1f4e0 0%, #e8f5e9 100%);
-      border: 2px solid #4caf50;
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .guidelines-header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(46, 125, 50, 0.05) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .guidelines-header:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25);
-      border-color: #388e3c;
-    }
-
-    .guidelines-header:hover::before {
-      opacity: 1;
-    }
-
-    .guidelines-header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      position: relative;
-      z-index: 1;
-    }
-
-    .guidelines-title-group {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .guidelines-icon-wrapper {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-      flex-shrink: 0;
-    }
-
-    .guidelines-icon-wrapper svg {
-      color: white;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    }
-
-    .guidelines-title {
-      color: #1b5e20;
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin: 0;
-      line-height: 1.2;
-      letter-spacing: -0.01em;
-    }
-
-    .guidelines-subtitle {
-      color: #2e7d32;
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin: 0.25rem 0 0 0;
-      line-height: 1.4;
-      animation: pulse-text 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-text {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.7;
-      }
-    }
-
-    .guidelines-toggle {
-      color: #388e3c;
-      transition: transform 0.3s ease;
-      font-size: 1.25rem;
-      font-weight: 700;
-      padding: 0.5rem;
-      background: rgba(255, 255, 255, 0.5);
-      border-radius: 8px;
-      backdrop-filter: blur(10px);
-    }
-
-    .guidelines-content {
-      overflow: hidden;
-      transition: all 0.3s ease;
-      opacity: 0;
-      max-height: 0;
-    }
-
-    .guidelines-content.active {
-      opacity: 1;
-      max-height: 1000px;
-      margin-top: 1rem;
-    }
-
-    .guidelines-section {
-      background: #f9fafb;
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      border: 1px solid #e5e7eb;
-    }
-
-    .section-title {
-      color: #1b5e20;
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .section-icon {
-      font-size: 1.2rem;
-    }
-
-    .guidelines-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .guidelines-list li {
-      position: relative;
-      padding-left: 1.5rem;
-      margin-bottom: 0.75rem;
-      color: #374151;
-      line-height: 1.5;
-      font-size: 0.95rem;
-    }
-
-    .guidelines-list li::before {
-      content: '•';
-      position: absolute;
-      left: 0;
-      color: #43a047;
-      font-weight: bold;
-    }
-
-    .guidelines-list li strong {
-      color: #2e7d32;
-      font-weight: 600;
-    }
-
-    /* Help & Guide Card Styles */
-    .guide-card-container {
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .dashboard-guide-card {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      padding: 24px;
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-      border: 2px solid #43a047;
-      border-radius: 12px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(67, 160, 71, 0.15);
-    }
-
-    .dashboard-guide-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(67, 160, 71, 0.25);
-      border-color: #2c5d31;
-    }
-
-    .guide-card-icon {
-      flex-shrink: 0;
-      width: 64px;
-      height: 64px;
-      background: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #43a047;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .guide-card-content {
-      flex: 1;
-    }
-
-    .guide-card-content h3 {
-      margin: 0 0 8px;
-      font-size: 20px;
-      font-weight: 700;
-      color: #1b5e20;
-    }
-
-    .guide-card-content p {
-      margin: 0;
-      font-size: 14px;
-      color: #2c5d31;
-      line-height: 1.5;
-    }
-
-    .guide-card-arrow {
-      flex-shrink: 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: #43a047;
-      transition: transform 0.3s ease;
-    }
-
-    .dashboard-guide-card:hover .guide-card-arrow {
-      transform: translateX(4px);
-    }
-
-    @media (max-width: 768px) {
-      .dashboard-guide-card {
-        flex-direction: column;
-        text-align: center;
-        padding: 20px;
-        gap: 16px;
-      }
-
-      .guide-card-arrow {
-        display: none;
-      }
-    }
-</style>
 </head>
 <body>
   <!-- SIDEBAR NAVIGATION -->
@@ -1351,7 +35,7 @@ It's already a flex container, but we need to add two key properties:
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
           <p class="sidebar-profile-role"><%= user.userType || 'User' %></p>
         </div>
-        <span class="sidebar-profile-arrow">→</span>
+        <span class="sidebar-profile-arrow">â†’</span>
       </a>
     </div>
 
@@ -1465,33 +149,33 @@ It's already a flex container, but we need to add two key properties:
       <div class="dashboard-grid">
         <!-- LEFT COLUMN: Action Cards -->
         <div class="left-actions">
-          <div class="action-card" onclick="location.href='/all-requests'">
+          <div class="action-card" onclick="location.href='/unit/all-tasks'">
             <div class="card-icon-wrapper">
-              <img src="/Picture/Stats.png" alt="All Requests" class="card-icon" />
+              <img src="/Picture/Stats.png" alt="All Tasks" class="card-icon" />
               <div class="icon-glow"></div>
             </div>
-            <h3 class="card-title">All Requests</h3>
-            <p class="card-subtitle">Manage all your requests</p>
-            <div class="card-arrow">→</div>
+            <h3 class="card-title">All Tasks</h3>
+            <p class="card-subtitle">View all assigned tasks</p>
+            <div class="card-arrow">â†’</div>
           </div>
-          <div class="action-card" onclick="location.href='/request-approvals'">
+          <div class="action-card" onclick="location.href='/unit/task-approvals'">
             <div class="card-icon-wrapper">
-              <img src="/Picture/File.png" alt="Request Approval" class="card-icon" />
+              <img src="/Picture/File.png" alt="Approval Tasks" class="card-icon" />
               <div class="icon-glow"></div>
             </div>
-            <h3 class="card-title">Request Approvals</h3>
-            <p class="card-subtitle">Submit materials for approval</p>
-            <div class="card-arrow">→</div>
+            <h3 class="card-title">Approval Tasks</h3>
+            <p class="card-subtitle">Manage approval requests</p>
+            <div class="card-arrow">â†’</div>
           </div>
 
-          <div class="action-card" onclick="location.href='/service-requests'">
+          <div class="action-card" onclick="location.href='/unit/task-services'">
             <div class="card-icon-wrapper">
-              <img src="/Picture/Repair.png" alt="Request Service" class="card-icon" />
+              <img src="/Picture/Repair.png" alt="Service Tasks" class="card-icon" />
               <div class="icon-glow"></div>
             </div>
-            <h3 class="card-title">Request Services</h3>
-            <p class="card-subtitle">Request deliverables</p>
-            <div class="card-arrow">→</div>
+            <h3 class="card-title">Service Tasks</h3>
+            <p class="card-subtitle">Manage service requests</p>
+            <div class="card-arrow">â†’</div>
           </div>
 
           
@@ -1512,15 +196,15 @@ It's already a flex container, but we need to add two key properties:
             </div>
             <div class="calendar-controls">
               <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">
-                ⛶
+                â›¶
               </button>
               <div class="calendar-month-controls">
                 <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">
-                  ❮
+                  â®
                 </button>
                 <span class="calendar-month-year" id="calendar-month-year"></span>
                 <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">
-                  ❯
+                  â¯
                 </button>
               </div>
             </div>
@@ -1562,8 +246,8 @@ It's already a flex container, but we need to add two key properties:
               <p>No announcements yet.</p>
               <span>Check back later for updates!</span>
               <div class="quick-tip">
-                <strong>Quick Tip:</strong> Remember to submit all service requests at least 
-                <strong>one week</strong> in advance!
+                <strong>Quick Tip:</strong> Remember to review and respond to assigned tasks promptly 
+                to meet deadlines!
               </div>
             </div>
           </div>
@@ -1585,11 +269,11 @@ It's already a flex container, but we need to add two key properties:
           </svg>
         </div>
         <div>
-          <h4 class="guidelines-title">Request Guidelines</h4>
-          <p class="guidelines-subtitle"> Important! Read this before submitting your requests</p>
+          <h4 class="guidelines-title">Task Management Guidelines</h4>
+          <p class="guidelines-subtitle"> Important! Read this for effective task handling</p>
         </div>
       </div>
-      <span class="guidelines-toggle" id="guidelinesToggle">▼</span>
+      <span class="guidelines-toggle" id="guidelinesToggle">â–¼</span>
     </div>
   </div>
 
@@ -1605,11 +289,12 @@ It's already a flex container, but we need to add two key properties:
             <line x1="10" y1="9" x2="8" y2="9"></line>
           </svg>
         </span>
-        Request Approvals
+        Approval Request Tasks
       </h5>
       <ul class="guidelines-list">
-        <li>All requests must be submitted at least <strong>three (3) to five (5) working days</strong> prior to the required date.</li>
-        <li>This lead time allows sufficient review, revisions, and endorsement.</li>
+        <li>Review approval requests promptly within <strong>24-48 hours</strong> of assignment.</li>
+        <li>Provide clear feedback for any revisions needed to ensure quality deliverables.</li>
+        <li>Coordinate with other units if cross-unit collaboration is required.</li>
       </ul>
     </div>
 
@@ -1620,12 +305,13 @@ It's already a flex container, but we need to add two key properties:
               <path d="M22.7 19.3l-6-6a7 7 0 1 1 2.1-2.1l6 6a1.5 1.5 0 1 1-2.1 2.1zM8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
             </svg>
           </span>
-          Service Requests
+          Service Request Tasks
         </h5>
       <ul class="guidelines-list">
-        <li>All service requests must be submitted at least <strong>seven (7) to ten (10) working days</strong> prior to the required date.</li>
-        <li>This gives the team ample time to assess the request, assign resources, and schedule accordingly.</li>
-        <li>Requests involving large-scale projects or specialized requirements may require a longer lead time with a minimum of <strong>fourteen (14) working days</strong>, subject to assessment by the concerned unit/s and is case-to-case basis.</li>
+        <li>Acknowledge service requests within <strong>24 hours</strong> and provide estimated completion time.</li>
+        <li>Update task status regularly to keep requesters informed of progress.</li>
+        <li>For complex requests, break down the work and communicate milestones.</li>
+        <li>Ensure quality standards are met before marking tasks as completed.</li>
       </ul>
     </div>
   </div>
@@ -1658,14 +344,14 @@ It's already a flex container, but we need to add two key properties:
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="text" id="activitySearchInput" onkeyup="filterActivity()" placeholder="Search your recent requests..." aria-label="Search recent requests">
+            <input type="text" id="activitySearchInput" onkeyup="filterActivity()" placeholder="Search recent tasks..." aria-label="Search recent tasks">
             <span class="search-hint">Press / to focus</span>
           </div>
         </div>
 
         <div class="activity-grid">
           <% if (recentActivity.length === 0) { %>
-            <p>No recent activity yet.</p>
+            <p>No recent tasks yet.</p>
           <% } else {
             recentActivity.forEach(activity => {
               const statusClass = activity.status.toLowerCase();
@@ -1720,25 +406,25 @@ It's already a flex container, but we need to add two key properties:
       <div class="stats-container">
         <div class="stats-card">
           <div class="stat-number"><%= totalRequests %></div>
-          <div class="stat-label">Total Requests</div>
+          <div class="stat-label">Total Tasks</div>
         </div>
         <div class="stats-card">
           <div class="stat-number"><%= approvedRequests %></div>
-          <div class="stat-label">Approved</div>
+          <div class="stat-label">Approved Tasks</div>
         </div>
         <div class="stats-card">
           <div class="stat-number"><%= pendingRequests %></div>
-          <div class="stat-label">Pending</div>
+          <div class="stat-label">New/Pending Tasks</div>
         </div>
         <div class="stats-card">
           <div class="stat-number"><%= inReviewRequests %></div>
-          <div class="stat-label">For Revision</div>
+          <div class="stat-label">In Revision</div>
         </div>
       </div>
       
       <!-- Help & Guide Card -->
       <div class="guide-card-container" style="margin-top: 24px;">
-        <a href="/user-guide" class="dashboard-guide-card">
+        <a href="/unit/guide" class="dashboard-guide-card">
           <div class="guide-card-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
@@ -1748,9 +434,9 @@ It's already a flex container, but we need to add two key properties:
           </div>
           <div class="guide-card-content">
             <h3>Need Help?</h3>
-            <p>Check out our comprehensive user guide to learn everything about the S-CORE system</p>
+            <p>Check out the unit team guide to learn how to manage tasks effectively</p>
           </div>
-          <div class="guide-card-arrow">→</div>
+          <div class="guide-card-arrow">â†’</div>
         </a>
       </div>
     </div>
@@ -1774,15 +460,15 @@ It's already a flex container, but we need to add two key properties:
         </div>
         <div class="calendar-controls">
           <button class="calendar-maximize-btn" id="calendar-minimize" aria-label="Minimize Calendar" title="Minimize Calendar">
-            ✕
+            âœ•
           </button>
           <div class="calendar-month-controls">
             <button class="calendar-nav-btn" id="calendar-modal-prev-month" aria-label="Previous Month" title="Previous Month">
-              ❮
+              â®
             </button>
             <span class="calendar-month-year" id="calendar-modal-month-year"></span>
             <button class="calendar-nav-btn" id="calendar-modal-next-month" aria-label="Next Month" title="Next Month">
-              ❯
+              â¯
             </button>
           </div>
         </div>
@@ -2281,7 +967,7 @@ document.querySelectorAll('.action-card').forEach(card => {
     if (!hasApprovals && !hasServices) {
       html = `
         <div class="deadline-empty-state">
-          <div class="deadline-empty-state-icon">📅</div>
+          <div class="deadline-empty-state-icon">ðŸ“…</div>
           <div class="deadline-empty-state-text">No requests for this date</div>
           <div class="deadline-empty-state-subtext">You have no requests on this date.</div>
         </div>

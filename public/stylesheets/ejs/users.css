@@ -313,7 +313,7 @@ hr {
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: #92d495;
+  background: #b4f3b7;
   color: #065f46;
   text-decoration: none;
   border-radius: 12px;
@@ -553,6 +553,11 @@ hr {
 .role-admin {
   background-color: #dbeafe;
   color: #1e40af;
+}
+
+.role-unit {
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 .role-user {

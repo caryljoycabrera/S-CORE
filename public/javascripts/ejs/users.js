@@ -55,7 +55,23 @@ window.onclick = e => {
 // TOAST NOTIFICATION FUNCTION
 // ========================================
 function showToast(title, message, type = 'success') {
-  const container = document.getElementById('toastContainer');
+  // Get or create toast container
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.style.cssText = `
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    `;
+    document.body.appendChild(container);
+  }
+
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
 
@@ -611,7 +627,12 @@ document.querySelectorAll('.status-tab').forEach(tab => {
 function updateCurrentRoleDisplay(role) {
   const currentRoleDisplay = document.getElementById('currentRoleDisplay');
   if (currentRoleDisplay) {
-    currentRoleDisplay.textContent = role === 'admin' ? 'Administrator' : 'Standard User';
+    const roleNames = {
+      'admin': 'Administrator',
+      'unit': 'Unit Member',
+      'user': 'Standard User'
+    };
+    currentRoleDisplay.textContent = roleNames[role] || 'Standard User';
   }
 }
 
@@ -635,6 +656,15 @@ function selectCustomRole(value, text) {
   document.querySelector('.dropdown-selected').classList.remove('active');
   updateCurrentRoleDisplay(value);
 
+  // Show/hide unit team assignment dropdown based on role
+  const unitContainer = document.getElementById('unitAssignmentContainer');
+  if (value === 'unit') {
+    unitContainer.style.display = 'block';
+  } else {
+    unitContainer.style.display = 'none';
+    document.getElementById('editUnitTeam').value = 'N/A'; // Reset if role is not 'unit'
+  }
+
   const changeEvent = new Event('change');
   document.getElementById('editRole').dispatchEvent(changeEvent);
 }
@@ -656,10 +686,12 @@ document.getElementById('userUpdateForm').addEventListener('submit', function(e)
   const newRole = document.getElementById('editRole').value;
   const userName = document.getElementById('viewFullName').textContent;
   const userId = document.getElementById('editUserId').value;
+  const newUnitTeam = document.getElementById('editUnitTeam').value;
 
   const requestData = {
     userId: userId,
-    role: newRole
+    role: newRole,
+    unitTeam: newUnitTeam
   };
 
   fetch(this.action, {
@@ -682,25 +714,53 @@ document.getElementById('userUpdateForm').addEventListener('submit', function(e)
       submitBtn.classList.remove('loading');
       submitBtn.innerHTML = originalText;
 
-      // Update displays in modal
-      const roleText = newRole.charAt(0).toUpperCase() + newRole.slice(1);
-      document.getElementById('viewRole').textContent = roleText;
-      document.getElementById('currentRoleDisplay').textContent = roleText;
+      // Update custom dropdown display with the new role
+      const roleTextMap = {
+        'user': 'Requestor (User) - Submits requests',
+        'unit': 'Unit Member - Works on tasks',
+        'admin': 'Administrator - Full System Access'
+      };
+      const roleText = roleTextMap[newRole] || roleTextMap['user'];
+      document.getElementById('selectedRoleText').textContent = roleText;
+      
+      // Update current role display
+      const roleNames = {
+        'admin': 'Administrator',
+        'unit': 'Unit Member',
+        'user': 'Standard User'
+      };
+      const currentRoleDisplay = document.getElementById('currentRoleDisplay');
+      if (currentRoleDisplay) {
+        currentRoleDisplay.textContent = roleNames[newRole] || 'Standard User';
+      }
 
-      // Update custom dropdown display
-      const selectedText = newRole === 'admin'
-        ? 'Administrator - Full System Access'
-        : 'Standard User - Submit & View Own Requests';
-      document.getElementById('selectedRoleText').textContent = selectedText;
-
-      // Update the row in the table
-      const currentRow = document.querySelector(`tr.user-row[data-id="${userId}"]`);
+      // Update the row in the grid
+      const currentRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
       if (currentRow) {
         currentRow.dataset.role = newRole;
+        currentRow.dataset.unitteam = newUnitTeam;
+        
+        // Update the role badge in the grid
+        const roleBadge = currentRow.querySelector('.role-badge');
+        if (roleBadge) {
+          // Remove old classes
+          roleBadge.classList.remove('role-admin', 'role-unit', 'role-user');
+          // Add new class
+          roleBadge.classList.add(`role-${newRole}`);
+          // Update text
+          let badgeText = newRole.toUpperCase();
+          if (newRole === 'unit' && newUnitTeam && newUnitTeam !== 'N/A') {
+            badgeText += ` - ${newUnitTeam}`;
+          }
+          roleBadge.textContent = badgeText;
+        }
       }
 
       // Show success toast
-      showToast('Success', `${userName}'s role updated to ${roleText}`, 'success');
+      const unitInfo = (newRole === 'unit' && newUnitTeam && newUnitTeam !== 'N/A') 
+        ? ` (${newUnitTeam})` 
+        : '';
+      showToast('Success', `${userName}'s role updated to ${roleNames[newRole]}${unitInfo}`, 'success');
 
       // Scroll to top of modal to see personal information
       const modalBody = document.querySelector('.user-details-modal-body');
@@ -1337,11 +1397,46 @@ function openUserModal(row, scrollTo = null) {
 
   console.log('✅ Modal buttons configured for status:', status);
 
+  // Show/hide Administrative Controls section based on user status
+  const adminControlsSection = document.getElementById('adminControlsSection');
+  if (adminControlsSection) {
+    if (status === 'approved') {
+      adminControlsSection.style.display = 'block';
+      console.log('✅ Administrative Controls section shown (user is approved)');
+    } else {
+      adminControlsSection.style.display = 'none';
+      console.log('🔒 Administrative Controls section hidden (user is not approved)');
+    }
+  }
+
+  // CRITICAL: Set the user ID for the role update form
+  document.getElementById('editUserId').value = row.dataset.id;
+  console.log('🆔 Set editUserId to:', row.dataset.id);
+
   // Update the custom dropdown display
-  const selectedText = row.dataset.role === 'admin'
-    ? 'Administrator - Full System Access'
-    : 'Standard User - Submit & View Own Requests';
-  document.getElementById('selectedRoleText').textContent = selectedText;
+  const userRole = row.dataset.role || 'user';
+  document.getElementById('editRole').value = userRole;
+  
+  const roleTextMap = {
+    'user': 'Requestor (User) - Submits requests',
+    'unit': 'Unit Member - Works on tasks',
+    'admin': 'Administrator - Full System Access'
+  };
+  document.getElementById('selectedRoleText').textContent = roleTextMap[userRole] || roleTextMap['user'];
+  updateCurrentRoleDisplay(userRole);
+
+  // Handle unit team dropdown visibility and value
+  const unitContainer = document.getElementById('unitAssignmentContainer');
+  const unitDropdown = document.getElementById('editUnitTeam');
+  const userUnit = row.dataset.unitteam || 'N/A';
+
+  if (userRole === 'unit') {
+    unitContainer.style.display = 'block';
+    unitDropdown.value = userUnit;
+  } else {
+    unitContainer.style.display = 'none';
+    unitDropdown.value = 'N/A';
+  }
 
   // Open modal and handle scrolling
   userModal.style.display = 'flex';

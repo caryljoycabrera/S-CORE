@@ -49,6 +49,15 @@ app.use(session({
 
 // Logging middleware for API calls
 app.use((req, res, next) => {
+  // Log all unit-related routes
+  if (req.path.startsWith('/unit')) {
+    console.log('========================================');
+    console.log('[SERVER] Unit route accessed:', req.method, req.path);
+    console.log('[SERVER] Session ID:', req.session?.id);
+    console.log('[SERVER] Session User ID:', req.session?.userId);
+    console.log('========================================');
+  }
+  
   if (req.path === '/api/deadlines') {
     console.log('Deadlines API called by:', req.session.userId);
   }
@@ -65,6 +74,7 @@ app.set('views', path.join(__dirname, 'views'));
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
+const unitRoutes = require('./routes/unit');
 const apiRoutes = require('./routes/api');
 const notificationRoutes = require('./routes/notifications');
 
@@ -72,6 +82,7 @@ const notificationRoutes = require('./routes/notifications');
 app.use('/', authRoutes);
 app.use('/', userRoutes);
 app.use('/', adminRoutes);
+app.use('/', unitRoutes);
 app.use('/', apiRoutes);
 app.use('/', notificationRoutes);
 

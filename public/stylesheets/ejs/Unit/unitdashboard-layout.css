@@ -1,0 +1,3731 @@
+/* ==========================================
+   UNIT DASHBOARD LAYOUT - DEDICATED CSS
+   Consistent with Admin/User pages
+   ========================================== */
+
+/* ==========================================
+   MAIN CONTAINER
+   ========================================== */
+.student-side {
+  padding: 1.5rem 2.5rem 3rem;
+  background: #f3f4f6;
+  min-height: 100vh;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 0; /* Ensure content stays below sidebar */
+}
+
+.student-side > .div {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}
+
+/* ==========================================
+   KPI CARDS SECTION
+   ========================================== */
+.kpi-cards-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.kpi-card.new-tasks::before {
+  background: #2d7a4a;
+}
+
+.kpi-card.active-revisions::before {
+  background: #f59e0b;
+}
+
+.kpi-card.upcoming-deadlines::before {
+  background: #ef4444;
+}
+
+.kpi-card.completed-week::before {
+  background: #3b82f6;
+}
+
+.kpi-card.total-tasks::before {
+  background: #8b5cf6;
+}
+
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.kpi-card:hover::before {
+  width: 8px;
+}
+
+.kpi-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.new-tasks .kpi-icon {
+  background: linear-gradient(135deg, #2d7a4a, #388e3c);
+}
+
+.active-revisions .kpi-icon {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+}
+
+.upcoming-deadlines .kpi-icon {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.completed-week .kpi-icon {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.total-tasks .kpi-icon {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.kpi-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: white;
+  stroke-width: 2.5;
+}
+
+.kpi-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-subtitle {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* ==========================================
+   DASHBOARD LAYOUT - ROW 2: Action Cards | Calendar | Announcements
+   Action cards horizontal, Calendar and Announcements in row below
+   ========================================== */
+.row-2-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  align-items: start;
+}
+
+.action-cards-group {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* ==========================================
+   ACTION CARDS
+   ========================================== */
+.action-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+.card-icon-wrapper {
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.card-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.action-card:hover .card-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.2));
+}
+
+.icon-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: radial-gradient(circle at center, rgba(45, 122, 74, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.action-card:hover .icon-glow {
+  opacity: 1;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0 0 0.375rem 0;
+}
+
+.card-subtitle {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.card-arrow {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  font-size: 1.25rem;
+  color: #6b7280;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+
+.action-card:hover .card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ==========================================
+   ROW 3: Workload Snapshot | Task Breakdown
+   ========================================== */
+.row-3-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* ==========================================
+   ROW 4: New Tasks | Urgent Tasks
+   Side-by-side on desktop, stacked on tablets/mobile
+   ========================================== */
+.row-4-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem; /* Reduced gap */
+}
+
+.new-tasks-panel,
+.urgent-tasks-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 0; /* Remove padding, let children control spacing */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8f5e9;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid #e8f5e9;
+  flex-shrink: 0; /* Don't shrink header */
+  background: white;
+}
+
+.panel-header svg {
+  width: 24px;
+  height: 24px;
+  color: #2d7a4a;
+  flex-shrink: 0;
+}
+
+.panel-header.urgent svg {
+  color: #ef4444;
+}
+
+.panel-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+  min-height: 0; /* Allow flex shrinking */
+}
+
+.panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.task-item {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.task-item:hover {
+  border-color: #2d7a4a;
+  box-shadow: 0 2px 6px rgba(45, 122, 74, 0.1);
+}
+
+.task-item.urgent {
+  border-left: 3px solid #ef4444;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.task-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0;
+  flex: 1;
+}
+
+.task-type {
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.task-type.approval {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.task-type.service {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.task-requester,
+.task-deadline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.task-requester svg,
+.task-deadline svg {
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.view-task-btn {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: #2d7a4a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.view-task-btn:hover {
+  background: #236235;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(45, 122, 74, 0.3);
+}
+
+.no-tasks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.no-tasks svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #d1d5db;
+}
+
+.no-tasks p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 0.375rem 0;
+}
+
+.no-tasks span {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+/* Smart Empty State Styling */
+.smart-empty-state {
+  padding: 2.5rem 1.5rem !important;
+}
+
+.smart-empty-state svg {
+  width: 56px;
+  height: 56px;
+  color: #2d7a4a;
+  stroke-width: 2;
+}
+
+.smart-empty-state p {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #2d7a4a;
+}
+
+.motivational-tip {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-left: 4px solid #2d7a4a;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1.25rem;
+  text-align: left;
+  box-shadow: 0 2px 6px rgba(45, 122, 74, 0.1);
+}
+
+/* Completed Task Styling */
+.task-item.completed-task {
+  background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%);
+  border-left: 3px solid #10b981;
+}
+
+.task-type.completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* ==========================================
+   REQUESTER ANALYTICS CHART PANEL
+   ========================================== */
+.requester-chart-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8f5e9;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-wrapper {
+  flex: 1; /* Take available space */
+  position: relative;
+  min-height: 0; /* Allow flex shrinking */
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-legend-custom {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  border-top: 2px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+.legend-item-custom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.legend-item-custom:hover {
+  background: #f8fafc;
+}
+
+.legend-item-custom.disabled {
+  opacity: 0.4;
+}
+
+.legend-item-custom.disabled span {
+  text-decoration: line-through;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.legend-item-custom.disabled .legend-color {
+  opacity: 0.3;
+}
+
+.legend-item-custom span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  user-select: none;
+}
+
+/* ==========================================
+   COMPLIANCE PANEL STYLING (Legacy - can be removed if not needed)
+   ========================================== */
+.compliance-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8f5e9;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.compliance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.compliance-item {
+  padding: 1rem;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 8px;
+  border-left: 4px solid #2d7a4a;
+}
+
+.compliance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.org-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.org-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #2d7a4a;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.org-name {
+  font-weight: 600;
+  color: #1e3a5f;
+  font-size: 0.9375rem;
+}
+
+.compliance-rate {
+  font-size: 1.125rem;
+  font-weight: 700;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+}
+
+.compliance-rate.good {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.compliance-rate.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.compliance-rate.poor {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.compliance-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.compliance-stats .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.compliance-stats .stat-item svg {
+  width: 16px;
+  height: 16px;
+  color: #2d7a4a;
+}
+
+.compliance-bar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.compliance-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2d7a4a 0%, #10b981 100%);
+  transition: width 0.5s ease;
+}
+
+.no-data {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.no-data svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-data p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.no-data span {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+/* ==========================================
+   URGENT TASKS TWO-COLUMN LAYOUT
+   ========================================== */
+.urgent-tasks-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  height: 100%;
+}
+
+.urgent-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+.urgent-column.approval-column {
+  border-color: #bfdbfe;
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+}
+
+.urgent-column.service-column {
+  border-color: #fde68a;
+  background: linear-gradient(135deg, #fef9c3 0%, #ffffff 100%);
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+.column-header svg {
+  width: 20px;
+  height: 20px;
+}
+
+.approval-column .column-header svg {
+  color: #3b82f6;
+}
+
+.service-column .column-header svg {
+  color: #eab308;
+}
+
+.column-header h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.task-item-compact {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 4px solid #e5e7eb;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid #f3f4f6;
+  border-left-width: 4px;
+}
+
+.task-item-compact.approval-task {
+  border-left-color: #3b82f6;
+}
+
+.task-item-compact.service-task {
+  border-left-color: #eab308;
+}
+
+.task-item-compact:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  background: white;
+}
+
+.task-compact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.task-compact-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0;
+  line-height: 1.5;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.task-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.task-badge.approval {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.task-badge.service {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.task-compact-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.task-compact-info svg {
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.task-compact-deadline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #ef4444;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.task-compact-deadline svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.view-task-btn-compact {
+  width: 100%;
+  padding: 0.625rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.view-task-btn-compact.approval {
+  background: #3b82f6;
+  color: white;
+}
+
+.view-task-btn-compact.approval:hover {
+  background: #2563eb;
+}
+
+.view-task-btn-compact.service {
+  background: #eab308;
+  color: white;
+}
+
+.view-task-btn-compact.service:hover {
+  background: #ca9a04;
+}
+
+.no-tasks-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.no-tasks-column svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.75rem;
+  opacity: 0.4;
+}
+
+.no-tasks-column p {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ==========================================
+   URGENT TASKS TAB SYSTEM
+   ========================================== */
+.urgent-tasks-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 0 1.5rem;
+  margin: 0;
+  border-bottom: 2px solid #f3f4f6;
+  background: white;
+}
+
+.urgent-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  margin-bottom: -2px;
+}
+
+.urgent-tab-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.urgent-tab-btn:hover {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.urgent-tab-btn.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  background: transparent;
+}
+
+.urgent-tab-btn .tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.urgent-tab-btn.active .tab-count {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.urgent-tasks-tab-content {
+  padding: 1.25rem 1.5rem 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* Allow scrolling */
+}
+
+.urgent-tasks-tab-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.urgent-tasks-tab-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.urgent-tasks-tab-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.urgent-tasks-tab-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.urgent-tab-pane {
+  display: none;
+  min-height: 0;
+}
+
+.urgent-tab-pane.active {
+  display: block;
+}
+
+.urgent-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ==========================================
+   GUIDELINES & NEED HELP STYLING
+   ========================================== */
+.guidelines-container {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8f5e9;
+  margin-bottom: 1.5rem; /* Reduced gap */
+  overflow: hidden;
+  position: relative;
+  z-index: 0; /* Ensure guidelines stay below sidebar */
+}
+
+.guidelines-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8faf9 0%, #e8f5e9 100%);
+  border-bottom: 2px solid #e8f5e9;
+}
+
+.guidelines-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.guidelines-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.guidelines-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(45, 122, 74, 0.1);
+}
+
+.guidelines-icon-wrapper svg {
+  color: #2d7a4a;
+}
+
+.guidelines-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0 0 0.25rem 0;
+}
+
+.guidelines-subtitle {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.guidelines-toggle {
+  font-size: 1.25rem;
+  color: #2d7a4a;
+  font-weight: 700;
+  transition: transform 0.3s ease;
+}
+
+.guidelines-toggle.rotated {
+  transform: rotate(180deg);
+}
+
+.guidelines-content {
+  padding: 1.5rem;
+  background: white;
+}
+
+.guidelines-section {
+  margin-bottom: 1.5rem;
+}
+
+.guidelines-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0 0 0.875rem 0;
+}
+
+.section-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guidelines-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.guidelines-list li {
+  padding: 0.625rem 0 0.625rem 1.75rem;
+  position: relative;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.guidelines-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0.375rem;
+  top: 0.625rem;
+  color: #2d7a4a;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.guidelines-list li strong {
+  color: #1e3a5f;
+  font-weight: 600;
+}
+
+/* Need Help Card */
+.guide-card-container {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-guide-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8f5e9;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-guide-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #2d7a4a 0%, #1e3a5f 100%);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.dashboard-guide-card:hover::before {
+  transform: scaleY(1);
+}
+
+.dashboard-guide-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45, 122, 74, 0.15);
+  border-color: #2d7a4a;
+}
+
+.guide-card-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.guide-card-icon svg {
+  color: #2d7a4a;
+}
+
+.guide-card-content {
+  flex: 1;
+}
+
+.guide-card-content h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0 0 0.375rem 0;
+}
+
+.guide-card-content p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.guide-card-arrow {
+  font-size: 1.5rem;
+  color: #2d7a4a;
+  font-weight: 700;
+  transition: transform 0.3s ease;
+}
+
+.dashboard-guide-card:hover .guide-card-arrow {
+  transform: translateX(5px);
+}
+
+/* Stats Container (old design - keep for compatibility) */
+.stats-container {
+  display: none;
+}
+
+/* ==========================================
+   WORKLOAD SNAPSHOT CARD
+   ========================================== */
+.workload-snapshot-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8f5e9;
+  display: flex;
+  flex-direction: column;
+}
+
+.workload-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e8f5e9;
+  flex-shrink: 0; /* Don't shrink header */
+}
+
+.workload-header svg {
+  width: 24px;
+  height: 24px;
+  color: #2d7a4a;
+  flex-shrink: 0;
+}
+
+.workload-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.workload-table-wrapper {
+  flex: 1; /* Take available space */
+  overflow-y: auto; /* Enable scrolling if needed */
+  overflow-x: auto; /* Enable horizontal scroll if needed */
+  min-height: 0; /* Allow flex shrinking */
+}
+
+.workload-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.workload-table-wrapper::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.workload-table-wrapper::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.workload-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.workload-snapshot-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.workload-snapshot-table thead th {
+  background: #f8faf9;
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #2d7a4a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e8f5e9;
+}
+
+.workload-snapshot-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.workload-snapshot-table tbody tr:hover {
+  background: #f8faf9;
+}
+
+.workload-snapshot-table tbody td {
+  padding: 1rem;
+  vertical-align: top;
+}
+
+.workload-snapshot-table tbody td strong {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin-bottom: 0.25rem;
+}
+
+.workload-snapshot-table tbody td small {
+  display: block;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.workload-snapshot-table .count-cell {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d7a4a;
+  width: 100px;
+}
+
+.workload-snapshot-table .task-cell strong {
+  color: #1e3a5f;
+  font-size: 0.875rem;
+  margin-bottom: 0.375rem;
+}
+
+.workload-snapshot-table .task-cell small {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+/* ==========================================
+   CHART CARD
+   ========================================== */
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 0; /* Remove padding, let children control spacing */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8f5e9;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent content overflow */
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid #e8f5e9;
+  flex-shrink: 0; /* Don't shrink header */
+  background: white;
+}
+
+.chart-header svg {
+  width: 24px;
+  height: 24px;
+  color: #2d7a4a;
+  flex-shrink: 0;
+}
+
+.chart-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.chart-content {
+  position: relative;
+  flex: 1; /* Take available space */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0; /* Allow flex shrinking */
+  overflow: visible; /* Don't hide chart */
+  padding: 1.5rem;
+}
+
+.chart-content canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Legend strikethrough effect */
+.chart-card canvas + div ul li.strikethrough span,
+.chart-card canvas + div ul li[style*="text-decoration"] span {
+  text-decoration: line-through !important;
+  opacity: 0.5;
+}
+
+/* Chart Statistics Display */
+.chart-stats {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 2px solid #f3f4f6;
+  flex-shrink: 0;
+  background: #fafafa;
+}
+
+.chart-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.chart-stats .stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.chart-stats .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  line-height: 1;
+}
+
+.chart-stats .stat-item:first-child .stat-value {
+  color: #10b981; /* Green for completion rate */
+}
+
+.chart-stats .stat-item:nth-child(2) .stat-value {
+  color: #3b82f6; /* Blue for active tasks */
+}
+
+.chart-stats .stat-item:last-child .stat-value {
+  color: #2d7a4a; /* Unit green for completed */
+}
+
+/* ==========================================
+   ACTION CARDS COLUMN (VERTICAL STACK)
+   Note: Duplicate styling removed - using main action-card styles above
+   ========================================== */
+
+.card-icon-wrapper {
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.card-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.action-card:hover .card-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.2));
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.card-arrow {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  color: #d1d5db;
+  transition: all 0.3s ease;
+}
+
+.action-card:hover .card-arrow {
+  color: #6b7280;
+  transform: translateX(4px);
+}
+
+/* ==========================================
+   URGENT TASKS PANEL (Legacy styles - mostly unused)
+   Main panel styles are defined in ROW 4 section above
+   ========================================== */
+.urgent-tasks-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid #f3f4f6;
+  background: linear-gradient(to right, #fef3c7, #fde68a);
+  border-radius: 12px 12px 0 0;
+}
+
+.urgent-tasks-header svg {
+  width: 22px;
+  height: 22px;
+  stroke: #d97706;
+  flex-shrink: 0;
+}
+
+.urgent-tasks-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.urgent-tasks-content {
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.urgent-tasks-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.urgent-tasks-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.urgent-tasks-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.urgent-tasks-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.urgent-task-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.urgent-task-item:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateX(3px);
+}
+
+.urgent-task-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+}
+
+.urgent-task-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.urgent-task-type {
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.urgent-task-type.service {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.urgent-task-type.approval {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.urgent-task-requester,
+.urgent-task-deadline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.urgent-task-requester svg,
+.urgent-task-deadline svg {
+  width: 15px;
+  height: 15px;
+  stroke: #9ca3af;
+  flex-shrink: 0;
+}
+
+.deadline-text {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.view-task-btn {
+  width: 100%;
+  padding: 0.625rem;
+  background: #2d7a4a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.view-task-btn:hover {
+  background: #256d3f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45,122,74,0.3);
+}
+
+.no-urgent-tasks {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #9ca3af;
+}
+
+.no-urgent-tasks svg {
+  width: 64px;
+  height: 64px;
+  stroke: #d1d5db;
+  margin: 0 auto 1rem;
+}
+
+.no-urgent-tasks p {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0.5rem 0;
+}
+
+.no-urgent-tasks span {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+/* ==========================================
+   CALENDAR PANEL - NEXT TO ACTION CARDS
+   ========================================== */
+.calendar-standalone {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to right, #f0fdf4, #dcfce7);
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0; /* Don't shrink header */
+}
+
+.calendar-header > div {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-icon {
+  width: 22px;
+  height: 22px;
+  stroke: #2d7a4a;
+  flex-shrink: 0;
+}
+
+.calendar-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-maximize-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: #6b7280;
+  padding: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.calendar-maximize-btn:hover {
+  color: #2d7a4a;
+}
+
+.calendar-month-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-nav-btn {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.calendar-nav-btn:hover {
+  background: #2d7a4a;
+  border-color: #2d7a4a;
+  color: white;
+}
+
+.calendar-month-year {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  min-width: 120px;
+  text-align: center;
+}
+
+.calendar-legend {
+  padding: 0.625rem 1.25rem;
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  background: #fafafa;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.approval {
+  background: #3b82f6; /* Blue for Request Approvals */
+}
+
+.legend-dot.service {
+  background: #fde047; /* Light yellow for Service Requests */
+}
+
+.legend-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.calendar-content {
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex: 1; /* Take remaining space */
+  min-height: 0; /* Allow flex shrinking */
+}
+
+.calendar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.calendar-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.calendar-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.calendar-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  padding-right: 2px;
+  grid-auto-rows: minmax(28px, auto); /* Start at 28px, grow as needed */
+}
+
+.calendar-day-header {
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 2px;
+  color: #2d7a4a;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e8f5e9;
+  margin-bottom: 4px;
+}
+
+.calendar-day {
+  font-size: 0.8rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #374151;
+  font-weight: 600;
+  min-height: 28px;
+  aspect-ratio: 1 / 1; /* Maintain square shape */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
+  background-color: #e8f5e9;
+  transform: scale(1.05);
+  color: #2d7a4a;
+}
+
+.calendar-today {
+  background: linear-gradient(135deg, #2d7a4a, #3d8f5a) !important;
+  color: #fff !important;
+  font-weight: 700;
+  border: 2px solid #256d3f;
+  box-shadow: 0 2px 6px rgba(45, 122, 74, 0.3);
+  position: relative;
+}
+
+.calendar-today::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid #c8e6c9;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.calendar-today.has-approval-deadline,
+.calendar-today.has-service-deadline,
+.calendar-today.has-mixed-deadlines {
+  background: linear-gradient(135deg, #2d7a4a, #3d8f5a) !important;
+  color: #fff !important;
+}
+
+.calendar-empty {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calendar-empty:hover {
+  background: transparent;
+  border-color: transparent;
+  transform: none;
+}
+
+/* Calendar Deadline Indicators */
+.calendar-day.has-approval-deadline {
+  background: #bfdbfe; /* Blue background for Request Approvals */
+  border-radius: 6px;
+}
+
+.calendar-day.has-service-deadline {
+  background: #fde68a; /* Light yellow background for Service Requests */
+  border-radius: 6px;
+}
+
+.calendar-day.has-mixed-deadlines {
+  background: #a7f3d0; /* Light green for both types */
+  border-radius: 6px;
+  position: relative;
+}
+
+.deadline-indicators {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  display: flex;
+  gap: 2px;
+  z-index: 10;
+}
+
+.deadline-badge {
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.deadline-badge.approval {
+  background: linear-gradient(135deg, #3b82f6, #2563eb); /* Blue for Request Approvals */
+}
+
+.deadline-badge.service {
+  background: linear-gradient(135deg, #fde047, #fbbf24); /* Light yellow for Service Requests */
+}
+
+.deadline-badge.total {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  width: 18px;
+  height: 18px;
+  font-size: 0.7rem;
+}
+
+.calendar-today .deadline-indicators {
+  top: -4px;
+  right: -4px;
+}
+
+.calendar-today .deadline-badge {
+  border: 2px solid #2d7a4a;
+}
+
+/* ==========================================
+   RECENT ACTIVITY PANEL (Legacy - Not used in current layout)
+   ========================================== */
+.recent-activity-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  max-height: 500px;
+}
+
+.recent-activity-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid #f3f4f6;
+  background: linear-gradient(to right, #dbeafe, #bfdbfe);
+  border-radius: 12px 12px 0 0;
+}
+
+.recent-activity-header svg {
+  width: 22px;
+  height: 22px;
+  stroke: #1e40af;
+  flex-shrink: 0;
+}
+
+.recent-activity-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.recent-activity-content {
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.recent-activity-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.recent-activity-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.recent-activity-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.recent-activity-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.activity-item {
+  display: flex;
+  gap: 0.875rem;
+  padding: 0.875rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 3px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.activity-item:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transform: translateX(3px);
+}
+
+.activity-item.service {
+  border-left-color: #3b82f6;
+}
+
+.activity-item.approval {
+  border-left-color: #10b981;
+}
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-item.service .activity-icon {
+  background: #dbeafe;
+}
+
+.activity-item.approval .activity-icon {
+  background: #d1fae5;
+}
+
+.activity-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.activity-item.service .activity-icon svg {
+  stroke: #1e40af;
+}
+
+.activity-item.approval .activity-icon svg {
+  stroke: #065f46;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.activity-status {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0.25rem 0;
+}
+
+.status-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.revision {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.activity-time {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.no-activity {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #9ca3af;
+}
+
+.no-activity svg {
+  width: 64px;
+  height: 64px;
+  stroke: #d1d5db;
+  margin: 0 auto 1rem;
+}
+
+.no-activity p {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0.5rem 0;
+}
+
+.no-activity span {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+/* ==========================================
+   ANNOUNCEMENTS PANEL - NEXT TO CALENDAR
+   ========================================== */
+/* ==========================================
+   ANNOUNCEMENTS PANEL
+   Note: Main styles are in announcements-shared.css
+   These are layout-specific overrides
+   ========================================== */
+
+/* ==========================================
+   ACTION CARDS SECTION (Horizontal Row)
+   ========================================== */
+.action-cards-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem; /* Fixed margin - matches grid */
+}
+
+/* ==========================================
+   CALENDAR RESPONSIVE BREAKPOINTS
+   Smooth scaling across all screen sizes
+   ========================================== */
+
+/* Extra Large Desktop (1600px+) - Default styles above apply */
+
+/* Large Desktop (1400px - 1599px) */
+@media (max-width: 1599px) {
+  .calendar-day {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.25rem;
+    min-height: 28px;
+  }
+  
+  .calendar-header {
+    padding: 0.95rem 1.2rem;
+  }
+  
+  .calendar-content {
+    padding: 0.7rem;
+  }
+}
+
+/* Standard Desktop (1200px - 1399px) */
+@media (max-width: 1399px) {
+  .calendar-day {
+    font-size: 0.775rem;
+    padding: 0.475rem 0.24rem;
+    min-height: 27px;
+  }
+  
+  .calendar-grid {
+    gap: 3px;
+  }
+  
+  .calendar-header {
+    padding: 0.9rem 1.15rem;
+  }
+  
+  .calendar-legend {
+    padding: 0.55rem 1.15rem;
+  }
+  
+  .calendar-content {
+    padding: 0.65rem;
+  }
+}
+
+/* Laptop (1024px - 1199px) */
+@media (max-width: 1199px) {
+  .calendar-day {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.23rem;
+    min-height: 26px;
+  }
+  
+  .calendar-day-header {
+    font-size: 0.675rem;
+    padding: 3px 2px;
+  }
+  
+  .calendar-header {
+    padding: 0.85rem 1.1rem;
+  }
+  
+  .calendar-title {
+    font-size: 1rem;
+  }
+}
+
+/* Small Laptop (900px - 1023px) */
+@media (max-width: 1023px) {
+  .calendar-day {
+    font-size: 0.725rem;
+    padding: 0.425rem 0.22rem;
+    min-height: 25px;
+  }
+  
+  .calendar-grid {
+    gap: 3px;
+  }
+  
+  .calendar-content {
+    padding: 0.6rem;
+  }
+  
+  .calendar-header {
+    padding: 0.8rem 1rem;
+  }
+  
+  .calendar-legend {
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Tablet Landscape (768px - 899px) */
+@media (max-width: 899px) {
+  .calendar-day {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.2rem;
+    min-height: 24px;
+  }
+  
+  .calendar-day-header {
+    font-size: 0.65rem;
+    padding: 3px 1px;
+  }
+  
+  .calendar-title {
+    font-size: 0.95rem;
+  }
+  
+  .calendar-month-year {
+    font-size: 0.85rem;
+    min-width: 110px;
+  }
+}
+
+/* Tablet Portrait (600px - 767px) */
+@media (max-width: 767px) {
+  .calendar-day {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.2rem;
+    min-height: 24px;
+  }
+  
+  .calendar-grid {
+    gap: 2px;
+  }
+  
+  .calendar-content {
+    padding: 0.55rem;
+  }
+  
+  .calendar-header {
+    padding: 0.75rem 0.95rem;
+  }
+  
+  .calendar-legend {
+    padding: 0.45rem 0.95rem;
+    gap: 1rem;
+  }
+  
+  .legend-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* Large Mobile (480px - 599px) */
+@media (max-width: 599px) {
+  .calendar-day {
+    font-size: 0.675rem;
+    padding: 0.375rem 0.19rem;
+    min-height: 23px;
+  }
+  
+  .calendar-day-header {
+    font-size: 0.625rem;
+  }
+  
+  .calendar-title {
+    font-size: 0.9rem;
+  }
+  
+  .calendar-header {
+    padding: 0.7rem 0.9rem;
+  }
+}
+
+/* Mobile (380px - 479px) */
+@media (max-width: 479px) {
+  .calendar-day {
+    font-size: 0.65rem;
+    padding: 0.35rem 0.18rem;
+    min-height: 22px;
+  }
+  
+  .calendar-grid {
+    gap: 2px;
+  }
+  
+  .calendar-content {
+    padding: 0.5rem;
+  }
+  
+  .calendar-header {
+    padding: 0.65rem 0.85rem;
+  }
+  
+  .calendar-legend {
+    padding: 0.4rem 0.85rem;
+    gap: 0.75rem;
+  }
+  
+  .calendar-nav-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+  
+  .calendar-month-year {
+    font-size: 0.8rem;
+    min-width: 100px;
+  }
+}
+
+/* Small Mobile (320px - 379px) */
+@media (max-width: 379px) {
+  .calendar-day {
+    font-size: 0.625rem;
+    padding: 0.325rem 0.17rem;
+    min-height: 20px;
+  }
+  
+  .calendar-day-header {
+    font-size: 0.6rem;
+    padding: 2px 1px;
+  }
+  
+  .calendar-grid {
+    gap: 1px;
+  }
+  
+  .calendar-content {
+    padding: 0.45rem;
+  }
+  
+  .calendar-header {
+    padding: 0.6rem 0.8rem;
+  }
+  
+  .calendar-title {
+    font-size: 0.85rem;
+  }
+  
+  .calendar-legend {
+    padding: 0.35rem 0.8rem;
+    gap: 0.5rem;
+  }
+  
+  .legend-text {
+    font-size: 0.65rem;
+  }
+  
+  .calendar-nav-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ==========================================
+   UNIFIED DASHBOARD GRID LAYOUT
+   Single cohesive grid for all dashboard panels
+   ========================================== */
+.dashboard-unified-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr; /* First column narrower, Second column wider */
+  grid-template-rows: auto auto auto; /* Auto height rows based on content */
+  gap: 1.5rem;
+  margin-bottom: 2rem; /* Fixed bottom margin */
+  width: 100%;
+}
+
+/* Grid Item Positioning - NEW ORDER */
+
+/* ROW 1: Calendar (Left), Urgent Tasks (Right) */
+.dashboard-unified-grid .calendar-standalone {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 450px; /* Minimum height */
+  height: 100%; /* Match height with adjacent panel */
+}
+
+.dashboard-unified-grid .urgent-tasks-panel {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 450px; /* Minimum height */
+  height: 100%; /* Match height with adjacent panel */
+}
+
+/* ROW 2: Announcements (Left), Task Breakdown (Right) */
+.dashboard-unified-grid .announcements-panel {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px; /* Minimum height */
+  max-height: 600px; /* Maximum height */
+}
+
+.dashboard-unified-grid .chart-card {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px; /* Minimum height */
+  max-height: 600px; /* Maximum height */
+}
+
+/* ROW 3: Organizations (Left), Workload Snapshot (Right) */
+.dashboard-unified-grid .requester-chart-panel {
+  grid-column: 1;
+  grid-row: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px; /* Minimum height */
+  max-height: 600px; /* Maximum height */
+}
+
+.dashboard-unified-grid .workload-snapshot-card {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px; /* Minimum height */
+  max-height: 600px; /* Maximum height */
+}
+
+/* ==========================================
+   LEGACY: TWO-COLUMN DASHBOARD LAYOUT (Deprecated)
+   Keeping for backward compatibility
+   ========================================== */
+.dashboard-two-column-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem; /* Reduced gap */
+}
+
+/* ROW 1: Workload Snapshot & Calendar */
+.row-1-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr; /* Calendar is wider */
+  gap: 1.5rem;
+  margin-bottom: 0;
+}
+
+/* ROW 2: Task Breakdown & Announcements */
+.row-2-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 0;
+}
+
+.dashboard-main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-sidebar-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  /* Removed sticky positioning - now static */
+  position: static;
+  align-self: start;
+}
+
+/* Adjust heights for components in new layout - REMOVED CONFLICTING STYLES */
+.dashboard-sidebar-column .calendar-standalone {
+  height: auto;
+  max-height: 500px;
+  min-height: 400px;
+}
+
+.row-1-grid .calendar-standalone {
+  height: 100%;
+  max-height: none;
+  min-height: 400px;
+}
+
+/* Announcements panel inherits all styles from announcements-shared.css */
+/* No overrides needed for consistent look */
+
+/* ==========================================
+   RESPONSIVE LAYOUT
+   ========================================== */
+/* Large screens */
+@media (max-width: 1400px) {
+  /* Legacy grid adjustments - only for old layout */
+  .dashboard-grid-extended {
+    grid-template-columns: 280px 1fr;
+  }
+  
+  /* Removed conflicting grid-row rules for unified grid panels */
+}
+
+/* Tablet screens - Stack unified grid only when space is tight */
+@media (max-width: 900px) {
+  .student-side {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+  }
+  
+  /* Unified Grid: Stack vertically on tablets */
+  .dashboard-unified-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto; /* Auto height when stacked */
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  /* Maintain panel order: Calendar → Urgent → Announcements → Chart → Organizations → Workload */
+  .dashboard-unified-grid .calendar-standalone {
+    grid-column: 1;
+    grid-row: auto;
+    order: 1; /* First */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  .dashboard-unified-grid .urgent-tasks-panel {
+    grid-column: 1;
+    grid-row: auto;
+    order: 2; /* Second */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  .dashboard-unified-grid .announcements-panel {
+    grid-column: 1;
+    grid-row: auto;
+    order: 3; /* Third */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  .dashboard-unified-grid .chart-card {
+    grid-column: 1;
+    grid-row: auto;
+    order: 4; /* Fourth */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  .dashboard-unified-grid .requester-chart-panel {
+    grid-column: 1;
+    grid-row: auto;
+    order: 5; /* Fifth */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  .dashboard-unified-grid .workload-snapshot-card {
+    grid-column: 1;
+    grid-row: auto;
+    order: 6; /* Sixth */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  /* Content areas adjust for stacked layout */
+  .workload-table-wrapper,
+  .calendar-content,
+  .chart-content,
+  .announcements-content,
+  .panel-content,
+  .chart-wrapper {
+    max-height: none; /* Allow content to determine height */
+  }
+  
+  /* Action cards: Stack to 2 columns on tablets */
+  .action-cards-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Legacy two-column layout: Stack on tablets */
+  .dashboard-two-column-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-sidebar-column {
+    position: static;
+    max-height: none;
+  }
+  
+  .dashboard-sidebar-column .calendar-standalone {
+    max-height: 500px;
+  }
+  
+  /* Row grids: Stack vertically */
+  .row-1-grid,
+  .row-2-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-cards-group {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    order: 1;
+  }
+  
+  .announcements-panel {
+    order: 3;
+  }
+  
+  .calendar-standalone {
+    order: 2;
+  }
+  
+  .row-3-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Row 4: Stack to single column on tablets and below */
+  .row-4-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .kpi-cards-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* Row 2: Stack vertically - Action Cards -> Calendar -> Announcements */
+  .row-2-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-cards-group {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    order: 1;
+  }
+  
+  .announcements-panel {
+    order: 3;
+  }
+  
+  .calendar-standalone {
+    order: 2;
+  }
+  
+  /* Row 3: Stack to single column */
+  .row-3-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Row 4: Stack panels vertically on tablet */
+  .row-4-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  /* Urgent tasks: Keep two columns on tablet but adjust */
+  .urgent-tasks-columns {
+    gap: 0.75rem;
+  }
+  
+  .task-item-compact {
+    padding: 0.625rem;
+  }
+  
+  /* Make workload table responsive */
+  .workload-snapshot-table {
+    font-size: 0.875rem;
+  }
+  
+  .workload-snapshot-table thead th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .workload-snapshot-table tbody td {
+    padding: 0.875rem 0.5rem;
+  }
+  
+  .workload-snapshot-table .count-cell {
+    font-size: 1.25rem;
+  }
+
+  /* Removed conflicting grid-row rules for unified grid panels */
+}
+
+/* Small laptop / large tablet - adjust grid proportions */
+@media (max-width: 1100px) {
+  .student-side {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-top: 1.75rem;
+    padding-bottom: 2.5rem;
+  }
+  
+  .dashboard-unified-grid {
+    grid-template-columns: 1fr 1.3fr; /* Adjust proportions for smaller screens */
+    grid-template-rows: auto auto auto; /* Auto height rows */
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  /* Adjust panel heights for medium screens */
+  .dashboard-unified-grid .workload-snapshot-card,
+  .dashboard-unified-grid .calendar-standalone,
+  .dashboard-unified-grid .chart-card,
+  .dashboard-unified-grid .announcements-panel,
+  .dashboard-unified-grid .requester-chart-panel,
+  .dashboard-unified-grid .urgent-tasks-panel {
+    min-height: 380px; /* Slightly reduced for medium screens */
+    max-height: 550px;
+  }
+  
+  .action-cards-section {
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-side {
+    padding: 1rem 1.5rem;
+  }
+  
+  /* Unified Grid: Single column on mobile */
+  .dashboard-unified-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto; /* Auto height when stacked */
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Maintain panel order on mobile: Calendar → Urgent → Announcements → Chart → Organizations → Workload */
+  .dashboard-unified-grid .calendar-standalone {
+    grid-column: 1;
+    grid-row: auto;
+    order: 1; /* First */
+    min-height: 350px;
+    max-height: none; /* Remove max height restriction on mobile */
+  }
+  
+  .dashboard-unified-grid .urgent-tasks-panel {
+    grid-column: 1;
+    grid-row: auto;
+    order: 2; /* Second */
+    min-height: 350px;
+    max-height: none; /* Remove max height restriction on mobile */
+  }
+  
+  .dashboard-unified-grid .announcements-panel {
+    grid-column: 1;
+    grid-row: auto;
+    order: 3; /* Third */
+    min-height: 300px;
+    max-height: none; /* Remove max height restriction on mobile */
+  }
+  
+  .dashboard-unified-grid .chart-card {
+    grid-column: 1;
+    grid-row: auto;
+    order: 4; /* Fourth */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  .dashboard-unified-grid .requester-chart-panel {
+    grid-column: 1;
+    grid-row: auto;
+    order: 5; /* Fifth */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  .dashboard-unified-grid .workload-snapshot-card {
+    grid-column: 1;
+    grid-row: auto;
+    order: 6; /* Sixth */
+    min-height: auto;
+    max-height: none;
+  }
+  
+  /* Allow content to determine heights on mobile */
+  .workload-table-wrapper,
+  .chart-content,
+  .chart-wrapper {
+    max-height: none;
+    min-height: auto;
+  }
+  
+  .calendar-content,
+  .panel-content,
+  .announcements-content {
+    max-height: none;
+    min-height: auto;
+    padding: 0.75rem; /* Reduce padding */
+  }
+  
+  /* Urgent tasks responsive on tablet */
+  .urgent-tasks-tabs {
+    padding: 0.875rem 1.25rem 0;
+  }
+  
+  .urgent-tab-btn {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+  
+  .urgent-tab-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .urgent-tasks-tab-content {
+    padding: 1rem 1.25rem 1.25rem;
+  }
+  
+  .task-item-compact {
+    padding: 0.875rem;
+  }
+  
+  /* Action cards: Stack to single column on mobile */
+  .action-cards-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  /* Action cards: Single column on mobile */
+  .action-cards-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Two-column layout: Stack on mobile */
+  .dashboard-two-column-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  /* Legacy row grids: Stack on mobile */
+  .row-1-grid,
+  .row-2-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .dashboard-sidebar-column {
+    position: static;
+    max-height: none;
+  }
+  
+  .kpi-cards-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+  
+  .kpi-label {
+    font-size: 0.75rem;
+  }
+  
+  .kpi-subtitle {
+    font-size: 0.6875rem;
+  }
+  
+  /* Mobile: Stack everything, compact spacing */
+  .row-2-grid,
+  .row-3-grid,
+  .row-4-grid {
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+  
+  /* Stack urgent tasks columns on mobile */
+  .urgent-tasks-columns {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .urgent-column {
+    min-height: auto;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .student-side {
+    padding: 1rem;
+  }
+  
+  /* Unified Grid: Extra small spacing */
+  .dashboard-unified-grid {
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  /* Maintain panel order with minimal padding */
+  .dashboard-unified-grid .calendar-standalone,
+  .dashboard-unified-grid .announcements-panel,
+  .dashboard-unified-grid .chart-card,
+  .dashboard-unified-grid .requester-chart-panel,
+  .dashboard-unified-grid .workload-snapshot-card {
+    padding: 0; /* Panels handle their own padding */
+    min-height: auto;
+    max-height: none; /* Remove max height on small screens */
+  }
+  
+  /* Urgent tasks panel doesn't need padding override - it handles internally */
+  .dashboard-unified-grid .urgent-tasks-panel {
+    min-height: auto;
+    max-height: none;
+  }
+  
+  /* Urgent tasks mobile adjustments */
+  .urgent-tasks-tabs {
+    padding: 0.75rem 1rem 0;
+    gap: 0.375rem;
+  }
+  
+  .urgent-tab-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    gap: 0.375rem;
+  }
+  
+  .urgent-tab-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .urgent-tab-btn .tab-count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 0.7rem;
+  }
+  
+  .urgent-tasks-tab-content {
+    padding: 0.875rem 1rem 1rem;
+  }
+  
+  .urgent-tasks-list {
+    gap: 0.875rem;
+  }
+  
+  .task-item-compact {
+    padding: 0.75rem;
+  }
+  
+  .task-compact-title {
+    font-size: 0.8125rem;
+  }
+  
+  .task-compact-info,
+  .task-compact-deadline {
+    font-size: 0.75rem;
+  }
+  
+  .task-compact-info svg,
+  .task-compact-deadline svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .view-task-btn-compact {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .panel-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .chart-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .chart-content {
+    padding: 1.25rem;
+  }
+  
+  .chart-stats {
+    padding: 1rem 1.25rem;
+  }
+  
+  /* Action cards section */
+  .action-cards-section {
+    gap: 0.875rem;
+    margin-bottom: 1rem;
+  }
+  
+  .action-card {
+    padding: 1rem;
+    min-height: 140px;
+  }
+  
+  /* Adjust content padding for extra small screens */
+  .calendar-content,
+  .announcements-content,
+  .panel-content {
+    padding: 0.625rem;
+  }
+  
+  .workload-table-wrapper {
+    padding: 0.5rem 0;
+  }
+  
+  /* Reduce font sizes slightly */
+  .calendar-title,
+  .panel-header h3,
+  .chart-header h3,
+  .workload-header h3 {
+    font-size: 1rem;
+  }
+}
+
+/* Continue with tablet breakpoint content */
+@media (max-width: 768px) {
+  .urgent-column {
+    min-height: auto;
+  }
+  
+  /* Compliance panel adjustments for mobile */
+  .compliance-panel,
+  .requester-chart-panel {
+    min-height: auto;
+  }
+  
+  .chart-legend-custom {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  
+  .compliance-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .action-cards-group {
+    grid-template-columns: 1fr;
+    order: 1;
+  }
+  
+  .announcements-panel {
+    order: 3;
+  }
+  
+  .calendar-standalone {
+    order: 2;
+  }
+  
+  /* Compact workload card */
+  .workload-snapshot-card {
+    padding: 1rem;
+  }
+  
+  /* Compact chart stats on mobile */
+  .chart-stats {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0.75rem 0.5rem;
+  }
+  
+  .chart-stats .stat-item {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .chart-stats .stat-label {
+    font-size: 0.6875rem;
+  }
+  
+  .chart-stats .stat-value {
+    font-size: 1.25rem;
+  }
+  
+  .workload-header h3 {
+    font-size: 1rem;
+  }
+  
+  /* Hide "Next Task Up" column on mobile */
+  .workload-snapshot-table th:nth-child(3),
+  .workload-snapshot-table td:nth-child(3) {
+    display: none;
+  }
+  
+  .workload-snapshot-table thead th {
+    padding: 0.625rem 0.375rem;
+    font-size: 0.6875rem;
+  }
+  
+  .workload-snapshot-table tbody td {
+    padding: 0.75rem 0.375rem;
+  }
+  
+  .workload-snapshot-table tbody td strong {
+    font-size: 0.875rem;
+  }
+  
+  .workload-snapshot-table tbody td small {
+    font-size: 0.75rem;
+  }
+  
+  .workload-snapshot-table .count-cell {
+    font-size: 1.125rem;
+    width: 70px;
+  }
+  
+  /* Compact chart */
+  .chart-card {
+    padding: 1rem;
+  }
+  
+  .chart-header h3 {
+    font-size: 1rem;
+  }
+  
+  .chart-content {
+    height: 250px;
+  }
+  
+  /* Compact calendar and panels - announcements use shared styles */
+  .calendar-standalone,
+  .new-tasks-panel,
+  .urgent-tasks-panel {
+    max-height: 400px;
+  }
+  
+  /* Compact task items */
+  .task-item {
+    padding: 0.875rem;
+  }
+  
+  .task-title {
+    font-size: 0.875rem;
+  }
+  
+  .task-type {
+    font-size: 0.625rem;
+  }
+}
+
+/* Extra small screens - 2x2 KPI grid */
+@media (max-width: 480px) {
+  .kpi-cards-section {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .kpi-card {
+    padding: 1rem 0.875rem;
+  }
+  
+  .kpi-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .kpi-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .kpi-label {
+    font-size: 0.6875rem;
+  }
+  
+  .kpi-value {
+    font-size: 1.375rem;
+  }
+  
+  .kpi-subtitle {
+    font-size: 0.625rem;
+  }
+}
+
+
+/* ==========================================
+   CALENDAR MODAL STYLES
+   ========================================== */
+.calendar-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.calendar-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-modal-content {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  padding: 2.5rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.calendar-modal .calendar-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  min-height: 60px;
+}
+
+.calendar-modal .calendar-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.calendar-modal .calendar-maximize-btn {
+  min-width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
+  border-radius: 12px;
+}
+
+.calendar-modal .calendar-nav-btn {
+  min-width: 50px;
+  height: 50px;
+  font-size: 1.4rem;
+  border-radius: 14px;
+}
+
+.calendar-modal .calendar-month-year {
+  font-size: 1.4rem;
+  min-width: 200px;
+}
+
+.calendar-modal .calendar-legend {
+  font-size: 0.85rem;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  gap: 2rem;
+}
+
+.calendar-modal .legend-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.calendar-modal .legend-text {
+  font-size: 0.85rem;
+}
+
+.calendar-modal .calendar-grid {
+  gap: 6px;
+  font-size: 1.1rem;
+  padding-right: 8px;
+}
+
+.calendar-modal .calendar-day-header {
+  font-size: 0.9rem;
+  padding: 12px 6px;
+  margin-bottom: 6px;
+  border-bottom: 2px solid #e8f5e9;
+}
+
+.calendar-modal .calendar-day {
+  font-size: 1.1rem;
+  padding: 12px 6px;
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.calendar-modal .calendar-today {
+  border: 3px solid #256d3f;
+}
+
+.calendar-modal .calendar-today::after {
+  border: 3px solid #c8e6c9;
+  border-radius: 13px;
+}
+
+.calendar-modal .deadline-indicators {
+  top: -4px;
+  right: -4px;
+}
+
+.calendar-modal .deadline-badge {
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+}
+
+.calendar-modal .deadline-badge.total {
+  width: 22px;
+  height: 22px;
+  font-size: 0.85rem;
+}
+
+/* ==========================================
+   DEADLINE DETAILS MODAL STYLES
+   ========================================== */
+.deadline-details-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.deadline-details-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deadline-details-content {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  padding: 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.deadline-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.deadline-details-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.deadline-details-date {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0;
+}
+
+.deadline-details-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+}
+
+.deadline-control-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.deadline-control-btn:hover {
+  background: #f9fafb;
+  border-color: #2d7a4a;
+  color: #2d7a4a;
+}
+
+.deadline-control-btn.close-btn {
+  margin-left: auto;
+}
+
+.deadline-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.deadline-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.deadline-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.deadline-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.deadline-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.deadline-item {
+  background: #f9fafb;
+  border-left: 4px solid #3b82f6; /* Blue for approval by default */
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.deadline-item:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateX(3px);
+}
+
+.deadline-item.service-deadline {
+  border-left-color: #fde047; /* Light yellow for service */
+}
+
+.deadline-item.approval-deadline {
+  border-left-color: #3b82f6; /* Blue for approval */
+}
+
+.deadline-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.deadline-item-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+}
+
+.deadline-item-type {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.deadline-item-type.approval {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.deadline-item-type.service {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.deadline-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.deadline-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.deadline-item-row svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.deadline-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.deadline-action-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #2d7a4a;
+  background: #2d7a4a;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deadline-action-btn.approval-btn {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.deadline-action-btn.approval-btn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.deadline-action-btn.service-btn {
+  background: #eab308;
+  border-color: #eab308;
+}
+
+.deadline-action-btn.service-btn:hover {
+  background: #ca9a04;
+  border-color: #ca9a04;
+}
+
+.deadline-action-btn:hover {
+  background: #256d3f;
+  border-color: #256d3f;
+}
+
+.no-deadlines {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #9ca3af;
+}
+
+.no-deadlines svg {
+  width: 64px;
+  height: 64px;
+  stroke: currentColor;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-deadlines p {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0 0 0.5rem;
+}
+
+.no-deadlines span {
+  font-size: 0.875rem;
+  color: #d1d5db;
+}

@@ -82,8 +82,76 @@ async function requireAdmin(req, res, next) {
   }
 }
 
+/**
+ * requireUnit Middleware
+ * Ensures user is both authenticated AND has unit member privileges
+ * Used for unit-only routes and operations
+ */
+async function requireUnit(req, res, next) {
+  try {
+    console.log('[requireUnit] Starting unit authentication check');
+    console.log('[requireUnit] Request path:', req.path);
+    console.log('[requireUnit] Session userId:', req.session?.userId);
+    
+    // First check if user is logged in
+    if (!req.session?.userId) {
+      console.log('[requireUnit] ERROR: No session userId found - redirecting to /');
+      return res.redirect('/');
+    }
+
+    // Fetch user from database to verify unit status
+    const User = require('../models/User');
+    console.log('[requireUnit] Fetching user from database...');
+    const user = await User.findById(req.session.userId);
+
+    if (!user) {
+      console.log('[requireUnit] ERROR: User not found in database');
+      return res.status(403).render('error', {
+        message: 'Access denied. User not found.'
+      });
+    }
+
+    console.log('[requireUnit] User found:', {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      unitTeam: user.unitTeam
+    });
+
+    // Check if user exists and has unit role
+    if (user.role !== 'unit') {
+      console.log('[requireUnit] ERROR: User does not have unit role. Role is:', user.role);
+      return res.status(403).render('error', {
+        message: 'Access denied. Unit members only.'
+      });
+    }
+
+    // Check if user is approved
+    if (user.status !== 'approved') {
+      console.log('[requireUnit] ERROR: User status is not approved. Status is:', user.status);
+      return res.status(403).render('error', {
+        message: 'Your account is pending approval. Please wait for an admin to verify your account.'
+      });
+    }
+
+    console.log('[requireUnit] Authentication successful - proceeding to route handler');
+    // User is authenticated and has unit privileges
+    req.user = user; // Make user available to route handlers
+    next();
+
+  } catch (err) {
+    console.error('[requireUnit] EXCEPTION during authentication:', err);
+    console.error('[requireUnit] Stack trace:', err.stack);
+    res.status(500).render('error', {
+      message: 'Server error during authentication'
+    });
+  }
+}
+
 module.exports = {
   requireLogin,
   requireAuth,
-  requireAdmin
+  requireAdmin,
+  requireUnit
 };

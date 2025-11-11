@@ -290,9 +290,19 @@ router.post('/login', async (req, res) => {
 
     // Create session
     req.session.userId = user._id;
+    req.session.role = user.role;
 
     // Redirect based on user role
-    return res.redirect(user.role === 'admin' ? '/admin' : '/dashboard');
+    if (user.role === 'admin') {
+      console.log('Redirecting admin user to /admin');
+      return res.redirect('/admin');
+    } else if (user.role === 'unit') {
+      console.log('Redirecting unit member to /unit/dashboard');
+      return res.redirect('/unit/dashboard');
+    } else {
+      console.log('Redirecting regular user to /dashboard');
+      return res.redirect('/dashboard');
+    }
 
   } catch (err) {
     console.error('Login error:', err);

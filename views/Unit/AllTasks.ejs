@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Tasks - <%= unitTeam %> Unit</title>
+
+  <!-- ==========================================
+       ** EXTERNAL STYLESHEET & JAVASCRIPT LINKS
+       ** ==========================================
+       ** Unit all tasks page styles are now managed in: public/stylesheets/ejs/Unit/alltasks.css
+       ** All tasks page functionality is handled by: public/javascripts/ejs/Unit/alltasks.js
+       ** This improves code organization and maintainability
+       * ========================================== -->
+
+  <!-- Base Stylesheet and Google Fonts -->
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+  <script src="/javascripts/unit-navbar.js"></script>
+
+  <!-- Unit All Tasks Page Specific Stylesheet -->
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css" />
+
+  <!-- Unit All Tasks Page Specific JavaScript -->
+  <script src="/javascripts/ejs/Unit/alltasks.js"></script>
+
+</head>
+<body>
+  <!-- Unit Sidebar Navigation (using partials) -->
+  <%- include('../partials/unit-navbar', { user: user, activePage: 'all-tasks' }) %>
+
+  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <div class="unit-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
+      <div class="header-left-group">
+        <!-- Hamburger Menu Button for Mobile -->
+        <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
+      </div>
+      
+      <span class="text-wrapper-2">All Tasks</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/unit/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="student-side">
+      <div class="div">
+
+      <!-- Section -->
+      <section class="activity-section">
+        <div class="page-header-container">
+          <div class="user-info-section">
+            <h1 style="margin: 0; font-size: 1.75rem; color: #1e293b; font-weight: 700;">
+              <%= unitTeam %> Unit - All Assigned Tasks
+            </h1>
+            <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 0.95rem;">
+              View and manage all tasks assigned to your unit team
+            </p>
+          </div>
+        </div>
+        
+        <nav class="nav-tabs tabs">
+          <a href="/unit/all-tasks" class="tab-btn active">All Tasks</a>
+          <a href="/unit/task-approvals" class="tab-btn">Approval Tasks</a>
+          <a href="/unit/task-services" class="tab-btn">Service Tasks</a>
+        </nav>
+        
+        <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
+
+        <!-- Filter Options -->
+        <div class="filter-section">
+          <div class="filter-container">
+            <div class="filter-group">
+              <label class="filter-label">Filter by:</label>
+
+              <!-- First Row: Title, Type, Status, Requestor -->
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="titleFilter" class="filter-sublabel">Task Title</label>
+                  <input type="text" id="titleFilter" class="filter-input" placeholder="Search task title...">
+                </div>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Type</label>
+                  <div class="custom-select-wrapper">
+                    <div class="custom-select" id="typeFilter">
+                      <div class="select-display" data-placeholder="Select Type">
+                        <span class="selected-text">All Types</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="typeDropdown">
+                        <div class="options-container">
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="all" checked> All Types
+                            <span class="checkbox-custom"></span>
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="approval"> Approval Request
+                            <span class="checkbox-custom"></span>
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="service"> Service Request
+                            <span class="checkbox-custom"></span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Status</label>
+                  <div class="custom-select-wrapper">
+                    <div class="custom-select" id="statusFilter">
+                      <div class="select-display" data-placeholder="Select Status">
+                        <span class="selected-text">All Status</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="statusDropdown">
+                        <div class="options-container">
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="all" checked> All Status
+                            <span class="checkbox-custom"></span>
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="pending"> Pending
+                            <span class="checkbox-custom"></span>
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="in progress"> In Progress
+                            <span class="checkbox-custom"></span>
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="for revision"> For Revision
+                            <span class="checkbox-custom"></span>
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="approved"> Approved
+                            <span class="checkbox-custom"></span>
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="completed"> Completed
+                            <span class="checkbox-custom"></span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-item">
+                  <label for="requestorFilter" class="filter-sublabel">Requestor</label>
+                  <input type="text" id="requestorFilter" class="filter-input" placeholder="Search requestor name...">
+                </div>
+              </div>
+
+              <!-- Second Row: Organization and Date Filters -->
+              <div class="filter-controls dropdown-row">
+                <div class="filter-item">
+                  <label for="organizationFilter" class="filter-sublabel">Requestor Organization</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="organizationFilter">
+                      <div class="select-display" data-placeholder="Select Organizations">
+                        <span class="selected-text">All Organizations</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="organizationDropdown">
+                        <div class="search-container">
+                          <input type="text" class="search-input" placeholder="Search organizations...">
+                        </div>
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-item">
+                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                  <input type="date" id="dateFromFilter" class="filter-input">
+                </div>
+                <div class="filter-item">
+                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                  <input type="date" id="dateToFilter" class="filter-input">
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button id="clearFilters" class="clear-filters-btn">
+                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="6" width="18" height="14" rx="2"/>
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <line x1="1" y1="6" x2="23" y2="6"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                Clear All
+              </button>
+              <div class="results-count">
+                <span id="resultsCount">Showing all requests</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <section class="table-section" style="overflow-x: auto;">
+          <table class="requests-table" style="width: 100%; border-collapse: collapse; background: white;">
+            <thead style="background: var(--light-green); color: var(--primary-green);">
+              <tr>
+                <th>Task ID</th>
+                <th>Type</th>
+                <th>Title</th>
+                <th>Requestor</th>
+                <th>Organization</th>
+                <th>Status</th>
+                <th>Deadline</th>
+                <th>Date Submitted</th>
+              </tr>
+            </thead>
+            <tbody id="requestsTableBody">
+              <!-- Approval Requests -->
+              <% if (approvalRequests && approvalRequests.length > 0) { %>
+                <% approvalRequests.forEach(request => {
+                  // Calculate local deadline
+                  let localDeadline = '';
+                  let formattedDeadline = 'N/A';
+                  if (request.deadline) {
+                    const d = new Date(request.deadline);
+                    localDeadline = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                    formattedDeadline = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                  }
+
+                  // Get requestor name
+                  let displayUserName = 'Unknown User';
+                  if (request.userId && request.userId.fName) {
+                    displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
+                  }
+
+                  // Get organization from request directly
+                  let organization = request.organization || 'N/A';
+                %>
+                <tr class="request-row"
+                  data-id="<%= request._id %>"
+                  data-type="approval"
+                  data-title="<%= request.title %>"
+                  data-status="<%= request.status %>"
+                  data-organization="<%= organization %>"
+                  data-deadline="<%= localDeadline %>"
+                  data-formatted-deadline="<%= formattedDeadline %>"
+                  data-datetime="<%= new Date(request.createdAt).toLocaleString() %>"
+                  data-date="<%= new Date(request.createdAt).toISOString().split('T')[0] %>"
+                  data-description="<%= request.description %>"
+                  data-files="<%= request.files ? request.files.join(',') : '' %>"
+                  data-requestor="<%= displayUserName %>">
+                  <td><%= request._id.toString().slice(-6) %></td>
+                  <td>
+                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #dbeafe; color: #1e40af;">
+                      Approval
+                    </span>
+                  </td>
+                  <td><%= request.title %></td>
+                  <td><%= displayUserName %></td>
+                  <td><%= organization %></td>
+                  <td>
+                    <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
+                      <%= request.status %>
+                    </span>
+                  </td>
+                  <td><%= formattedDeadline %></td>
+                  <td><%= new Date(request.createdAt).toLocaleString() %></td>
+                </tr>
+                <% }); %>
+              <% } %>
+
+              <!-- Service Requests -->
+              <% if (serviceRequests && serviceRequests.length > 0) { %>
+                <% serviceRequests.forEach(request => {
+                  // Calculate local deadline
+                  let localDeadline = '';
+                  let formattedDeadline = 'N/A';
+                  if (request.deadline) {
+                    const d = new Date(request.deadline);
+                    localDeadline = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                    formattedDeadline = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                  }
+
+                  // Get requestor name
+                  let displayUserName = 'Unknown User';
+                  if (request.userId && request.userId.fName) {
+                    displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
+                  }
+
+                  // Get organization from request directly
+                  let organization = request.organization || 'N/A';
+                %>
+                <tr class="request-row"
+                  data-id="<%= request._id %>"
+                  data-type="service"
+                  data-servicetype="<%= request.serviceType %>"
+                  data-title="<%= request.serviceType %>"
+                  data-status="<%= request.status %>"
+                  data-organization="<%= organization %>"
+                  data-deadline="<%= localDeadline %>"
+                  data-formatted-deadline="<%= formattedDeadline %>"
+                  data-datetime="<%= new Date(request.createdAt).toLocaleString() %>"
+                  data-date="<%= new Date(request.createdAt).toISOString().split('T')[0] %>"
+                  data-description="<%= request.details %>"
+                  data-files="<%= request.files ? request.files.join(',') : '' %>"
+                  data-requestor="<%= displayUserName %>">
+                  <td><%= request._id.toString().slice(-6) %></td>
+                  <td>
+                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #fef3c7; color: #92400e;">
+                      Service
+                    </span>
+                  </td>
+                  <td><%= request.serviceType %></td>
+                  <td><%= displayUserName %></td>
+                  <td><%= organization %></td>
+                  <td>
+                    <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
+                      <%= request.status %>
+                    </span>
+                  </td>
+                  <td><%= formattedDeadline %></td>
+                  <td><%= new Date(request.createdAt).toLocaleString() %></td>
+                </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+
+          <% if ((!approvalRequests || approvalRequests.length === 0) && (!serviceRequests || serviceRequests.length === 0)) { %>
+          <div style="text-align: center; padding: 2rem; color: #6b7280;">
+            <p>No tasks assigned to your unit yet.</p>
+          </div>
+          <% } %>
+        </section>
+
+        <!-- Back to Dashboard Button -->
+        <div class="back-to-dashboard-container">
+          <a href="/unit/dashboard" class="back-to-dashboard-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Dashboard
+          </a>
+        </div>
+      </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Request Details Modal -->
+  <div id="detailsModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 1000px;">
+      <header class="modal-header">
+        <span class="modal-title">Request Details</span>
+        <span class="close" id="closeDetailsModal">&times;</span>
+      </header>
+      <div class="modal-body details-modal-body">
+        <div class="details-content">
+
+          <!-- General Information Section -->
+          <div class="general-info-section">
+            <h3>General Information</h3>
+            <div class="general-info-row">
+              <div class="info-item">
+                <span class="info-label">Project Title:</span>
+                <span class="info-value" id="detailTitle"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Requested By:</span>
+                <span class="info-value" id="detailStudent"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Request Type:</span>
+                <span class="info-value" id="detailType"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Specific Request Type:</span>
+                <span class="info-value" id="detailSpecificRequest" style="color: var(--primary-green); font-weight: 600;">Not specified</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Organization:</span>
+                <span class="info-value" id="detailOrganization"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Date Submitted:</span>
+                <span class="info-value" id="detailDatetime"></span>
+              </div>
+              <div class="info-item" id="deadlineInfo" style="display: none;">
+                <span class="info-label">Deadline:</span>
+                <span class="info-value" id="detailDeadlineInfo"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unit Member Actions Section (Replaces Admin Controls) -->
+          <div class="admin-form-section" id="approvalActionsSection" style="display: none;">
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+              </svg>
+              Approval Request Actions
+              <span class="admin-badge">REVIEW & RESPOND</span>
+            </h3>
+
+            <div class="admin-form-grid">
+              <!-- Current Status Display -->
+              <div class="form-field">
+                <label>Current Status</label>
+                <div class="current-value">
+                  <span id="currentStatusValue" class="status-badge">Loading...</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-form-actions">
+              <button type="button" class="admin-btn admin-btn-success" id="approveBtn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Approve Request
+              </button>
+              <button type="button" class="admin-btn admin-btn-warning" id="reviseBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Request Revision
+              </button>
+            </div>
+
+            <!-- Revision Comment Section (Hidden by default) -->
+            <div id="revisionCommentSection" style="display: none; margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
+              <label for="revisionComment" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #92400e;">
+                What needs to be fixed? (Required)
+              </label>
+              <textarea id="revisionComment" rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #f59e0b; border-radius: 6px; font-size: 0.9rem; resize: vertical;" placeholder="Explain what changes are needed..."></textarea>
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end;">
+                <button type="button" class="admin-btn admin-btn-secondary" id="cancelRevisionBtn" style="padding: 0.5rem 1rem;">
+                  Cancel
+                </button>
+                <button type="button" class="admin-btn admin-btn-primary" id="submitRevisionBtn" style="padding: 0.5rem 1rem;">
+                  Submit Revision Request
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Request Actions Section -->
+          <div class="admin-form-section" id="serviceActionsSection" style="display: none;">
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+              </svg>
+              Service Request Actions
+              <span class="admin-badge">DELIVER & COMPLETE</span>
+            </h3>
+
+            <div class="admin-form-grid">
+              <!-- Current Status Display -->
+              <div class="form-field">
+                <label>Current Status</label>
+                <div class="current-value">
+                  <span id="serviceStatusValue" class="status-badge">Loading...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deliverable Upload Section -->
+            <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 1rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #166534;">
+                Upload Deliverable (Your Completed Work)
+              </label>
+              <input type="file" id="deliverableUpload" multiple style="width: 100%; padding: 0.75rem; border: 1px solid #86efac; border-radius: 6px; background: white;">
+              <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem;">
+                Upload the finished file(s) for the requestor to download
+              </div>
+              <div id="deliverablePreview" style="margin-top: 0.75rem;"></div>
+            </div>
+
+            <div class="admin-form-actions">
+              <button type="button" class="admin-btn admin-btn-success" id="uploadDeliverableBtn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Upload Deliverable
+              </button>
+              <button type="button" class="admin-btn admin-btn-primary" id="markDoneBtn" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Mark as Completed
+              </button>
+            </div>
+          </div>
+
+          <!-- Description Section -->
+          <div class="description-section">
+            <h3>Project Description</h3>
+            <div class="description-content" id="detailDescription"></div>
+          </div>
+
+          <!-- Files Section -->
+          <div id="file-preview"></div>
+
+          <!-- Quick Actions -->
+          <div class="quick-action-buttons">
+            <button class="quick-action-btn chat" id="openChatFromModal">
+              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>Start Conversation
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversation Modal -->
+  <div id="conversationModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 800px; width: 90%; height: 100vh; overflow: hidden;">
+      <header class="modal-header">
+        <span class="modal-title">Conversation</span>
+        <span class="close" id="closeConversationModal">&times;</span>
+      </header>
+      <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 60px); padding: 0; overflow: hidden;">
+        <div id="messagesContainer" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f9f9f9; min-height: 400px;">
+        </div>
+        <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: white; flex-shrink: 0;">
+          <!-- Message Formatting Toolbar -->
+          <div id="formattingToolbar" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
+            <button type="button" id="boldBtn" class="format-btn" title="Bold" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-weight: bold; font-size: 0.875rem; transition: all 0.2s;">
+              <strong>B</strong>
+            </button>
+            <button type="button" id="italicBtn" class="format-btn" title="Italic" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-style: italic; font-size: 0.875rem; transition: all 0.2s;">
+              <em>I</em>
+            </button>
+            <button type="button" id="underlineBtn" class="format-btn" title="Underline" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; text-decoration: underline; font-size: 0.875rem; transition: all 0.2s;">
+              U
+            </button>
+            <div style="width: 1px; height: 1.5rem; background: #d1d5db; align-self: center; margin: 0 0.25rem;"></div>
+            <button type="button" id="imageBtn" class="format-btn" title="Upload Image" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+              📷
+            </button>
+            <button type="button" id="fileBtn" class="format-btn" title="Upload File" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+              📎
+            </button>
+            <div style="flex: 1;"></div>
+            <span style="font-size: 0.75rem; color: #6b7280; align-self: center;">Format your text</span>
+          </div>
+          
+          <!-- Hidden file inputs -->
+          <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+          <input type="file" id="fileUpload" style="display: none;">
+          
+          <!-- Attachment preview area -->
+          <div id="attachmentPreview" style="display: none; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; max-height: 80px; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
+              <div id="attachmentInfo" style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+                <span id="attachmentIcon" style="flex-shrink: 0;">📷</span>
+                <span id="attachmentName" style="font-size: 0.875rem; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+              </div>
+              <button type="button" id="removeAttachment" style="padding: 0.25rem; border: none; background: none; cursor: pointer; color: #ef4444; font-size: 1rem; flex-shrink: 0;" title="Remove attachment">
+                ✕
+              </button>
+            </div>
+            <div id="imagePreviewContainer" style="margin-top: 0.25rem; display: none; max-height: 40px; overflow: hidden;">
+              <img id="imagePreview" style="max-width: 80px; max-height: 40px; border-radius: 0.25rem; cursor: pointer; object-fit: cover;" onclick="openImageModal(this.src)">
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="messageInput" placeholder="Type your message..." 
+                   style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-family: 'Inter', sans-serif;">
+            <button id="sendMessageBtn" class="view-all-btn" style="background: var(--primary-green); color: white;">
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Organization Data for Filtering -->
+  <script id="userOrgData" type="application/json">
+  <%
+    // Collect all unique organizations from both approval and service requests
+    const organizations = new Set();
+    
+    if (approvalRequests && approvalRequests.length > 0) {
+      approvalRequests.forEach(request => {
+        if (request.organization && request.organization !== 'N/A') {
+          organizations.add(request.organization);
+        }
+      });
+    }
+    
+    if (serviceRequests && serviceRequests.length > 0) {
+      serviceRequests.forEach(request => {
+        if (request.organization && request.organization !== 'N/A') {
+          organizations.add(request.organization);
+        }
+      });
+    }
+  %>
+  {
+    "userType": "<%= user.userType %>",
+    "organizations": <%= JSON.stringify(Array.from(organizations).sort()) %>
+  }
+  </script>
+
+<script>
+// Enhanced Conversation Modal Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const conversationModal = document.getElementById("conversationModal");
+  const closeConversationModal = document.getElementById("closeConversationModal");
+  const messagesContainer = document.getElementById("messagesContainer");
+  const messageInput = document.getElementById("messageInput");
+  const sendMessageBtn = document.getElementById("sendMessageBtn");
+  
+  // Formatting buttons
+  const boldBtn = document.getElementById("boldBtn");
+  const italicBtn = document.getElementById("italicBtn");
+  const underlineBtn = document.getElementById("underlineBtn");
+  
+  let currentConversationId = null;
+  let uploadedFile = null;
+
+  // Close modal handlers
+  if (closeConversationModal) {
+    closeConversationModal.onclick = () => conversationModal.style.display = 'none';
+  }
+
+  // Click outside to close
+  window.addEventListener('click', function(event) {
+    if (event.target === conversationModal) conversationModal.style.display = 'none';
+  });
+
+  // Formatting button handlers
+  if (boldBtn) {
+    boldBtn.addEventListener('click', function() {
+      insertFormatting('**', '**');
+    });
+  }
+
+  if (italicBtn) {
+    italicBtn.addEventListener('click', function() {
+      insertFormatting('*', '*');
+    });
+  }
+
+  if (underlineBtn) {
+    underlineBtn.addEventListener('click', function() {
+      insertFormatting('<u>', '</u>');
+    });
+  }
+
+  function insertFormatting(startTag, endTag) {
+    const input = messageInput;
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    const before = text.substring(0, start);
+    const selected = text.substring(start, end);
+    const after = text.substring(end);
+    
+    if (selected) {
+      input.value = before + startTag + selected + endTag + after;
+      input.setSelectionRange(start, end + startTag.length + endTag.length);
+    } else {
+      input.value = before + startTag + endTag + after;
+      input.setSelectionRange(start + startTag.length, start + startTag.length);
+    }
+    input.focus();
+  }
+  
+  // Upload functionality
+  const imageBtn = document.getElementById('imageBtn');
+  const fileBtn = document.getElementById('fileBtn');
+  const imageUpload = document.getElementById('imageUpload');
+  const fileUpload = document.getElementById('fileUpload');
+  const attachmentPreview = document.getElementById('attachmentPreview');
+  const attachmentInfo = document.getElementById('attachmentInfo');
+  const attachmentIcon = document.getElementById('attachmentIcon');
+  const attachmentName = document.getElementById('attachmentName');
+  const removeAttachment = document.getElementById('removeAttachment');
+  const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+  const imagePreview = document.getElementById('imagePreview');
+  
+  let currentAttachment = null;
+  
+  // Image upload button click
+  if (imageBtn && imageUpload) {
+    imageBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      imageUpload.click();
+    });
+  }
+  
+  // File upload button click
+  if (fileBtn && fileUpload) {
+    fileBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      fileUpload.click();
+    });
+  }
+  
+  // Handle image upload
+  if (imageUpload) {
+    imageUpload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        currentAttachment = { type: 'image', file: file };
+        uploadedFile = file;
+        showAttachmentPreview(file, 'image');
+      }
+    });
+  }
+  
+  // Handle file upload
+  if (fileUpload) {
+    fileUpload.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        currentAttachment = { type: 'file', file: file };
+        uploadedFile = file;
+        showAttachmentPreview(file, 'file');
+      }
+    });
+  }
+  
+  // Show attachment preview
+  function showAttachmentPreview(file, type) {
+    if (attachmentPreview && attachmentIcon && attachmentName) {
+      attachmentPreview.style.display = 'block';
+      attachmentIcon.textContent = type === 'image' ? '📷' : '📎';
+      attachmentName.textContent = file.name;
+      
+      if (type === 'image' && imagePreviewContainer && imagePreview) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreviewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else if (imagePreviewContainer) {
+        imagePreviewContainer.style.display = 'none';
+      }
+    }
+  }
+  
+  // Remove attachment
+  if (removeAttachment) {
+    removeAttachment.addEventListener('click', function(e) {
+      e.preventDefault();
+      clearAttachment();
+    });
+  }
+
+  // Clear attachment function
+  function clearAttachment() {
+    uploadedFile = null;
+    currentAttachment = null;
+    const attachmentPreview = document.getElementById('attachmentPreview');
+    const imageUpload = document.getElementById('imageUpload');
+    const fileUpload = document.getElementById('fileUpload');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    
+    if (attachmentPreview) {
+      attachmentPreview.style.display = 'none';
+    }
+    if (imageUpload) imageUpload.value = '';
+    if (fileUpload) fileUpload.value = '';
+    if (imagePreviewContainer) {
+      imagePreviewContainer.style.display = 'none';
+    }
+  }
+
+  // Global function to open conversation (updated to match /api/conversation response)
+  window.openConversation = async function(requestId) {
+    currentConversationId = requestId;
+    messagesContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem;">Loading conversation...</p>';
+    conversationModal.style.display = 'flex';
+
+    try {
+      const response = await fetch(`/api/conversation/${requestId}`);
+      const data = await response.json();
+
+      if (response.ok && data) {
+        // API returns the conversation document directly (with .messages array)
+        loadConversation(data);
+        // mark messages as read for the admin view
+        await fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' });
+      } else {
+        throw new Error(data && data.error ? data.error : 'Failed to load conversation');
+      }
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+      messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
+    }
+  };
+
+  function loadConversation(conversation) {
+    messagesContainer.innerHTML = '';
+    
+    if (!conversation || !conversation.messages || conversation.messages.length === 0) {
+      messagesContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem;">No messages yet. Start the conversation!</p>';
+      return;
+    }
+    
+    conversation.messages.forEach(message => {
+      addMessageToUI(message);
+    });
+  }
+
+  function addMessageToUI(message) {
+    // Clear empty state message if it exists
+    const emptyStateMessage = messagesContainer.querySelector('p');
+    if (emptyStateMessage && (emptyStateMessage.textContent.includes('No messages yet') || emptyStateMessage.textContent.includes('No messages yet. Start the conversation!'))) {
+      messagesContainer.innerHTML = '';
+    }
+    
+    const messageDiv = document.createElement('div');
+    const isUser = message.senderRole === 'user';
+    const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
+    
+    // Create user avatar (profile picture or default icon)
+    const userAvatar = `
+      <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? '#d1d5db' : 'var(--primary-green)'};">
+        ${message.senderId && message.senderId.profilePicture ? 
+          `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+           <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+             <circle cx="12" cy="7" r="4"/>
+           </svg>` :
+          `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
+             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+             <circle cx="12" cy="7" r="4"/>
+           </svg>`
+        }
+      </div>
+    `;
+    
+    messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
+    messageDiv.innerHTML = `
+      <div class="message-content">
+        <div style="display: flex; align-items: flex-start;">
+          ${userAvatar}
+          <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
+            <div class="message-header">
+              <strong>${senderName}</strong>
+              <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+            </div>
+            <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;"></div>
+            <div class="message-attachment" style="margin-top: 0.5rem;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Set the message content as HTML to support formatting
+    const messageTextDiv = messageDiv.querySelector('.message-text');
+    if (messageTextDiv && message.content) {
+      // Convert markdown-style formatting to HTML
+      let formattedContent = message.content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
+        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');           // <u>underline</u> stays the same
+      
+      messageTextDiv.innerHTML = formattedContent;
+    }
+    
+    // Handle attachments
+    const attachmentDiv = messageDiv.querySelector('.message-attachment');
+    if (attachmentDiv && message.file_path) {
+      const isImage = message.file_type && message.file_type.startsWith('image/');
+      
+      if (isImage) {
+        attachmentDiv.innerHTML = `
+          <div style="margin-top: 0.5rem;">
+            <img src="${message.file_path}" 
+                 style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
+                 onclick="openImageModal('${message.file_path}')"
+                 alt="${message.original_filename || 'Attached image'}">
+          </div>
+        `;
+      } else {
+        const fileName = message.original_filename || 'File';
+        attachmentDiv.innerHTML = `
+          <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1.2rem;">📎</span>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
+                <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
+              </div>
+              <a href="${message.file_path}" download="${fileName}" 
+                 style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
+                Download
+              </a>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    messagesContainer.appendChild(messageDiv);
+  }
+
+  // Send message functionality
+  if (sendMessageBtn) {
+    sendMessageBtn.onclick = async function() {
+      const content = messageInput.value.trim();
+      if (!content && !currentAttachment && !uploadedFile) return;
+      if (!currentConversationId) return;
+
+      try {
+        let response;
+        
+        if (currentAttachment || uploadedFile) {
+          // Send with file attachment using FormData
+          const formData = new FormData();
+          formData.append('content', content || ''); // Always include content field
+          formData.append('file', currentAttachment?.file || uploadedFile);
+          
+          response = await fetch(`/api/conversation/${currentConversationId}/message`, {
+            method: 'POST',
+            body: formData
+          });
+        } else {
+          // Send text only using JSON
+          response = await fetch(`/api/conversation/${currentConversationId}/message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content })
+          });
+        }
+
+        const result = await response.json();
+        if (result.success) {
+          addMessageToUI(result.message);
+          messageInput.value = '';
+          
+          // Clear attachment
+          clearAttachment();
+        } else {
+          throw new Error(result.error || 'Failed to send message');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message: ' + error.message);
+      }
+    };
+  }
+
+  // Enter key to send message
+  if (messageInput) {
+    messageInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessageBtn.click();
+      }
+    });
+  }
+  
+  // Image modal function for message previews
+  window.openImageModal = function(imageSrc) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+    
+    // Create modal container
+    const container = document.createElement('div');
+    container.style.cssText = `
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+    `;
+    
+    // Create image
+    const img = document.createElement('img');
+    img.src = imageSrc;
+    img.style.cssText = `
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    `;
+    
+    // Create close button
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 30px;
+      height: 30px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    `;
+    
+    // Assemble modal
+    container.appendChild(img);
+    container.appendChild(closeBtn);
+    overlay.appendChild(container);
+    document.body.appendChild(overlay);
+    
+    // Close handlers
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+        document.body.style.overflow = '';
+      }
+    });
+    
+    closeBtn.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      document.body.style.overflow = '';
+    });
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+  };
+});
+
+// Sidebar hover effect
+const sidebar = document.getElementById('adminSidebar');
+if (sidebar) {
+  sidebar.addEventListener('mouseenter', function() {
+    this.classList.add('expanded');
+  });
+  sidebar.addEventListener('mouseleave', function() {
+    this.classList.remove('expanded');
+  });
+}
+
+// Mobile hamburger menu toggle
+document.addEventListener('DOMContentLoaded', () => {
+  const menuToggle = document.getElementById('adminMenuToggle');
+  const sidebarEl = document.getElementById('adminSidebar');
+
+  console.log('Menu Toggle:', menuToggle); // Debug
+  console.log('Sidebar:', sidebarEl); // Debug
+  console.log('Window width:', window.innerWidth); // Debug
+
+  if (menuToggle && sidebarEl) {
+    menuToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Menu button clicked!'); // Debug
+      const isActive = sidebarEl.classList.toggle('mobile-active');
+      console.log('Sidebar is now:', isActive ? 'OPEN' : 'CLOSED'); // Debug
+      console.log('Sidebar classes:', sidebarEl.className); // Debug
+      console.log('Computed left position:', window.getComputedStyle(sidebarEl).left); // Debug
+    });
+  }
+
+  // Close sidebar when clicking outside of it on mobile
+  document.addEventListener('click', (e) => {
+    if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
+      if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
+        console.log('Clicking outside - closing sidebar'); // Debug
+        sidebarEl.classList.remove('mobile-active');
+      }
+    }
+  });
+});
+</script>
+
+</body>
+</html>
