@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - S-CORE Unit</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/stylesheets/notifications.css">
+  <link rel="stylesheet" href="/stylesheets/unit-navbar.css">
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+  <script src="/javascripts/unit-navbar.js"></script>
+  <script src="/javascripts/ejs/Unit/unit-notifications.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Use the standard unit dashboard styles from style.css */
+    .student-side {
+      padding-top: 30px;
+      padding-left: 2rem;
+      padding-right: 2rem;
+      padding-bottom: 3rem;
+      background: #f3f4f6;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .notifications-page {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .notifications-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .notifications-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+    }
+
+    .notifications-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #374151;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+
+    .btn-primary {
+      background: #43a047;
+      color: white;
+      border-color: #43a047;
+    }
+
+    .btn-primary:hover {
+      background: #2c5d31;
+      border-color: #2c5d31;
+    }
+
+    .notifications-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #6b7280;
+      border-radius: 2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+
+    .filter-btn.active {
+      background: #43a047;
+      color: white;
+      border-color: #43a047;
+    }
+
+    .notifications-list-page {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .notification-item-page {
+      padding: 1.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      transition: background-color 0.2s ease;
+    }
+
+    .notification-item-page:hover {
+      background-color: #f9fafb;
+    }
+
+    .notification-item-page:last-child {
+      border-bottom: none;
+    }
+
+    .notification-item-page.unread {
+      background-color: #f0fdf4;
+      border-left: 4px solid #43a047;
+    }
+
+    .notification-content-page {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .notification-details {
+      flex: 1;
+    }
+
+    .notification-title-page {
+      font-weight: 600;
+      color: #111827;
+      margin: 0 0 0.5rem 0;
+      font-size: 16px;
+    }
+
+    .notification-message-page {
+      color: #6b7280;
+      margin: 0 0 1rem 0;
+      line-height: 1.5;
+    }
+
+    .notification-meta-page {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    .notification-actions-page {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+
+    .pagination button {
+      padding: 0.5rem 1rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #374151;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: #f9fafb;
+    }
+
+    .pagination button.active {
+      background: #43a047;
+      color: white;
+      border-color: #43a047;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #6b7280;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #6b7280;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+      color: #374151;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #43a047;
+      text-decoration: none;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+
+    .back-link:hover {
+      color: #2c5d31;
+    }
+
+    /* Onboarding Modal Styles */
+    .onboarding-slide {
+      display: none;
+    }
+
+    .onboarding-slide.active {
+      display: block;
+    }
+
+    .slide-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+
+    .slide-indicator.active {
+      background: var(--primary-green);
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .student-side {
+        padding: 1rem;
+        padding-top: 20px;
+      }
+
+      .notifications-page {
+        max-width: 100%;
+      }
+
+      .notifications-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .notifications-title {
+        font-size: 1.5rem;
+      }
+
+      .notifications-actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .notifications-actions .btn {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        font-size: 13px;
+      }
+
+      .notifications-filters {
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .filter-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .notification-item-page {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .notification-content-page {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .notification-details {
+        width: 100%;
+      }
+
+      .notification-title-page {
+        font-size: 15px;
+      }
+
+      .notification-message-page {
+        font-size: 13px;
+      }
+
+      .notification-meta-page {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        font-size: 12px;
+      }
+
+      .notification-actions-page {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .notification-actions-page .btn {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding: 0.75rem;
+        font-size: 14px;
+      }
+
+      .pagination {
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+
+      .pagination button,
+      .pagination span {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+      }
+
+      .back-link {
+        font-size: 14px;
+        margin-bottom: 0.75rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .student-side {
+        padding: 0.75rem;
+        padding-top: 15px;
+      }
+
+      .notifications-title {
+        font-size: 1.25rem;
+      }
+
+      .notifications-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+      }
+
+      .filter-btn {
+        flex-shrink: 0;
+      }
+
+      .notification-item-page {
+        padding: 0.75rem;
+      }
+
+      .notification-title-page {
+        font-size: 14px;
+      }
+
+      .notification-message-page {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Unit Sidebar Navigation -->
+  <%- include('../partials/unit-navbar', { user: user, activePage: 'notifications' }) %>
+
+  <!-- Main Content -->
+  <div class="unit-main-content">
+  <div class="student-side">
+    <div class="div">
+      <!-- Header matching unit dashboard -->
+      <div class="overlap">
+        <!-- Left Group: Hamburger, Logo, Title -->
+        <div class="header-left-group">
+          <!-- Hamburger Menu Button for Mobile -->
+          <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="group">
+            <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+          </div>
+          <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
+        </div>
+
+        <span class="text-wrapper-2">Welcome, <%= name %>!</span>
+
+        <div class="header-right-section">
+          <!-- Notification Bell -->
+          <%- include('../partials/notifications') %>
+
+          <div class="dropdown-wrapper">
+            <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+              <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+              <div class="user">
+                <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              </div>
+            </div>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="/unit/profile">My Profile</a>
+              <a href="/logout">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notifications-page">
+    <a href="/unit/dashboard" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15,18 9,12 15,6"></polyline>
+      </svg>
+      Back to Dashboard
+    </a>
+
+    <div class="notifications-header">
+      <h1 class="notifications-title">Notifications</h1>
+      <div class="notifications-actions">
+        <button class="btn" onclick="markAllAsRead()" id="mark-all-btn">
+          Mark All as Read
+        </button>
+        <button class="btn" onclick="refreshNotifications()">
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="notifications-filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="unread">Unread</button>
+      <button class="filter-btn" data-filter="service">Services</button>
+      <button class="filter-btn" data-filter="approval">Approvals</button>
+      <button class="filter-btn" data-filter="message">Messages</button>
+      <button class="filter-btn" data-filter="system">System</button>
+    </div>
+
+    <div class="notifications-list-page" id="notifications-container">
+      <div class="loading">Loading notifications...</div>
+    </div>
+
+    <div class="pagination" id="pagination" style="display: none;">
+      <button id="prev-btn" onclick="previousPage()">Previous</button>
+      <span id="page-info">Page 1 of 1</span>
+      <button id="next-btn" onclick="nextPage()">Next</button>
+    </div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <!-- Onboarding Modal -->
+  <div id="onboardingModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 900px; width: 95%;">
+      <header class="modal-header">
+        <span class="modal-title">Welcome to S-CORE Unit Dashboard</span>
+        <span class="close" id="closeOnboardingModal">&times;</span>
+      </header>
+      <div class="modal-body" style="padding: 0;">
+        <div id="onboardingContent">
+          <!-- Introduction Slide -->
+          <div class="onboarding-slide active" data-slide="1">
+            <div style="text-align: center; padding: 3rem 2rem;">
+              <div style="font-size: 4rem; margin-bottom: 1.5rem; color: var(--primary-green);">
+                🎯
+              </div>
+              <h2 style="color: var(--primary-green); margin-bottom: 1rem; font-size: 2rem;">Welcome to S-CORE Unit Dashboard</h2>
+              <p style="font-size: 1.1rem; color: #374151; line-height: 1.6; margin-bottom: 2rem;">
+                Your gateway to efficient request management and collaboration. Let's take a quick tour of the key features that will help you manage requests effectively.
+              </p>
+              <div style="background: linear-gradient(135deg, #f0fdf4, #f7fee7); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--primary-green);">
+                <h3 style="margin: 0 0 0.5rem 0; color: #065f46; font-size: 1rem;">What you'll learn:</h3>
+                <ul style="margin: 0; padding-left: 1.2rem; color: #065f46; text-align: left;">
+                  <li>How to view and manage assigned requests</li>
+                  <li>Communication tools for collaboration</li>
+                  <li>Status tracking and updates</li>
+                  <li>Efficient workflow management</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard Overview Slide -->
+          <div class="onboarding-slide" data-slide="2">
+            <div style="padding: 2rem;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center;">
+                <div>
+                  <h3 style="color: var(--primary-green); margin-bottom: 1rem; font-size: 1.5rem;">📊 Dashboard Overview</h3>
+                  <p style="color: #374151; line-height: 1.6; margin-bottom: 1.5rem;">
+                    Your dashboard provides a comprehensive view of all requests assigned to your unit. Monitor progress, track deadlines, and stay updated on new assignments.
+                  </p>
+                  <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #374151; font-size: 0.9rem;">Key Dashboard Features:</h4>
+                    <ul style="margin: 0; padding-left: 1rem; color: #6b7280; font-size: 0.85rem;">
+                      <li>Real-time request status updates</li>
+                      <li>Priority-based task organization</li>
+                      <li>Quick access to assigned requests</li>
+                      <li>Communication notifications</li>
+                    </ul>
+                  </div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 6rem; margin-bottom: 1rem;">📈</div>
+                  <p style="color: #6b7280; font-style: italic;">Monitor your team's productivity</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Request Management Slide -->
+          <div class="onboarding-slide" data-slide="3">
+            <div style="padding: 2rem;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center;">
+                <div style="text-align: center;">
+                  <div style="font-size: 6rem; margin-bottom: 1rem;">📋</div>
+                  <p style="color: #6b7280; font-style: italic;">Process requests efficiently</p>
+                </div>
+                <div>
+                  <h3 style="color: var(--primary-green); margin-bottom: 1rem; font-size: 1.5rem;">🔄 Request Management</h3>
+                  <p style="color: #374151; line-height: 1.6; margin-bottom: 1.5rem;">
+                    Handle service requests and approval requests with ease. Update statuses, communicate with requestors, and manage deadlines effectively.
+                  </p>
+                  <div style="background: #f0fdf4; padding: 1rem; border-radius: 8px; border: 1px solid #bbf7d0;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #065f46; font-size: 0.9rem;">Management Tools:</h4>
+                    <ul style="margin: 0; padding-left: 1rem; color: #065f46; font-size: 0.85rem;">
+                      <li>Status updates and progress tracking</li>
+                      <li>Direct communication with requestors</li>
+                      <li>File attachment handling</li>
+                      <li>Deadline management</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Communication Slide -->
+          <div class="onboarding-slide" data-slide="4">
+            <div style="padding: 2rem;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center;">
+                <div>
+                  <h3 style="color: var(--primary-green); margin-bottom: 1rem; font-size: 1.5rem;">💬 Communication Hub</h3>
+                  <p style="color: #374151; line-height: 1.6; margin-bottom: 1.5rem;">
+                    Stay connected with requestors through our integrated messaging system. Discuss requirements, provide updates, and collaborate effectively.
+                  </p>
+                  <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; border: 1px solid #fde68a;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #92400e; font-size: 0.9rem;">Communication Features:</h4>
+                    <ul style="margin: 0; padding-left: 1rem; color: #92400e; font-size: 0.85rem;">
+                      <li>Real-time messaging with requestors</li>
+                      <li>File sharing capabilities</li>
+                      <li>Rich text formatting options</li>
+                      <li>Message history and notifications</li>
+                    </ul>
+                  </div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 6rem; margin-bottom: 1rem;">💬</div>
+                  <p style="color: #6b7280; font-style: italic;">Connect and collaborate</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Getting Started Slide -->
+          <div class="onboarding-slide" data-slide="5">
+            <div style="text-align: center; padding: 3rem 2rem;">
+              <div style="font-size: 4rem; margin-bottom: 1.5rem; color: var(--primary-green);">
+                🚀
+              </div>
+              <h2 style="color: var(--primary-green); margin-bottom: 1rem; font-size: 2rem;">Ready to Get Started?</h2>
+              <p style="font-size: 1.1rem; color: #374151; line-height: 1.6; margin-bottom: 2rem;">
+                You're all set to manage requests efficiently! Remember to check your notifications regularly and respond to requests promptly.
+              </p>
+              <div style="background: linear-gradient(135deg, #f0fdf4, #f7fee7); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--primary-green); display: inline-block; text-align: left;">
+                <h3 style="margin: 0 0 0.5rem 0; color: #065f46; font-size: 1rem;">Quick Tips:</h3>
+                <ul style="margin: 0; padding-left: 1.2rem; color: #065f46; text-align: left; font-size: 0.9rem;">
+                  <li>Check notifications daily for new assignments</li>
+                  <li>Update request statuses promptly</li>
+                  <li>Use the messaging system for clarifications</li>
+                  <li>Meet deadlines to maintain efficiency</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div style="padding: 1.5rem 2rem; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; justify-content: space-between; align-items: center;">
+          <button id="prevSlide" class="btn" style="display: none;">← Previous</button>
+          <div style="display: flex; gap: 0.5rem;">
+            <span id="slideIndicators"></span>
+          </div>
+          <button id="nextSlide" class="btn btn-primary">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Data for JavaScript -->
+  <script id="user-data" type="application/json"><%- JSON.stringify({ id: user._id, role: user.role, name: user.fName + ' ' + user.lName, showOnboarding: showOnboarding }) %></script>
+
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+    let currentFilter = 'all';
+    let notifications = [];
+
+    // Load notifications on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadNotifications();
+      setupFilters();
+    });
+
+    function setupFilters() {
+      const filterButtons = document.querySelectorAll('.filter-btn');
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentFilter = btn.dataset.filter;
+          currentPage = 1;
+          loadNotifications();
+        });
+      });
+    }
+
+    async function loadNotifications() {
+      try {
+        const container = document.getElementById('notifications-container');
+        container.innerHTML = '<div class="loading">Loading notifications...</div>';
+
+        let url = `/api/notifications?page=${currentPage}&limit=20`;
+        if (currentFilter === 'unread') {
+          url += '&unreadOnly=true';
+        }
+
+        const response = await fetch(url, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load notifications');
+        }
+
+        const result = await response.json();
+        notifications = result.data.notifications;
+        totalPages = result.data.totalPages;
+
+        // Filter by type if needed
+        let filteredNotifications = notifications;
+        if (currentFilter !== 'all' && currentFilter !== 'unread') {
+          filteredNotifications = notifications.filter(n => {
+            if (currentFilter === 'service') {
+              return n.type.includes('service');
+            } else if (currentFilter === 'approval') {
+              return n.type.includes('approval');
+            } else if (currentFilter === 'message') {
+              return n.type === 'new_message';
+            } else if (currentFilter === 'system') {
+              return n.type === 'system';
+            }
+            return true;
+          });
+        }
+
+        renderNotifications(filteredNotifications);
+        updatePagination();
+
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+        document.getElementById('notifications-container').innerHTML =
+          '<div class="empty-state"><h3>Error</h3><p>Failed to load notifications. Please try again.</p></div>';
+      }
+    }
+
+    function renderNotifications(notifications) {
+      const container = document.getElementById('notifications-container');
+
+      if (notifications.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No notifications</h3>
+            <p>You don't have any notifications yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const notificationsHTML = notifications.map(notification => {
+        const isUnread = !notification.isRead;
+        const timeAgo = formatTimeAgo(new Date(notification.createdAt));
+        const icon = getNotificationIcon(notification.type);
+        const isDeletable = notification.isDeletable !== false; // Default to true if not specified
+        const notificationId = notification._id || notification.id;
+        const actionUrl = notification.actionUrl || '';
+
+        // Get sender name from notification
+        let senderName = 'System';
+        if (notification.sender) {
+          if (typeof notification.sender === 'object') {
+            if (notification.sender.fName || notification.sender.lName) {
+              senderName = `${notification.sender.fName || ''} ${notification.sender.lName || ''}`.trim();
+            } else if (notification.sender.name) {
+              senderName = notification.sender.name;
+            }
+          } else if (typeof notification.sender === 'string') {
+            senderName = notification.sender;
+          }
+        }
+
+        // Hide sender info for welcome/onboarding notifications
+        const showSender = notification.sender && notification.type !== 'user_approved' && notification.type !== 'unit_approved';
+
+        return `
+          <div class="notification-item-page ${isUnread ? 'unread' : ''}" data-id="${notificationId}" data-action-url="${actionUrl}" data-type="${notification.type}">
+            <div class="notification-content-page" style="cursor: ${actionUrl ? 'pointer' : 'default'};" onclick="handleNotificationClick('${notificationId}', '${actionUrl}', '${notification.type}')">
+              <div class="notification-icon ${notification.type}">
+                ${icon}
+              </div>
+              <div class="notification-details">
+                <h3 class="notification-title-page">${escapeHtml(notification.title)}</h3>
+                <p class="notification-message-page">${escapeHtml(notification.message)}</p>
+                <div class="notification-meta-page">
+                  <span>${timeAgo}</span>
+                  ${showSender ? `<span style="font-style: italic; color: #6b7280;">from ${escapeHtml(senderName)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="notification-actions-page">
+              ${isUnread ? `<button class="btn" onclick="event.stopPropagation(); markAsRead('${notificationId}')">Mark as Read</button>` : ''}
+              ${isDeletable ? `<button class="btn" onclick="event.stopPropagation(); deleteNotification('${notificationId}')" style="color: #dc2626;">Delete</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = notificationsHTML;
+    }
+
+    function updatePagination() {
+      const pagination = document.getElementById('pagination');
+      const pageInfo = document.getElementById('page-info');
+      const prevBtn = document.getElementById('prev-btn');
+      const nextBtn = document.getElementById('next-btn');
+
+      if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+      } else {
+        pagination.style.display = 'none';
+      }
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadNotifications();
+      }
+    }
+
+    function nextPage() {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadNotifications();
+      }
+    }
+
+    async function markAsRead(notificationId) {
+      try {
+        const response = await fetch(`/api/notifications/${notificationId}/read`, {
+          method: 'PATCH',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          // Update UI
+          const item = document.querySelector(`[data-id="${notificationId}"]`);
+          if (item) {
+            item.classList.remove('unread');
+            const button = item.querySelector('button');
+            if (button && button.textContent === 'Mark as Read') {
+              button.remove();
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+
+    async function markAllAsRead() {
+      try {
+        const response = await fetch('/api/notifications/read-all', {
+          method: 'PATCH',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          loadNotifications();
+        }
+      } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+      }
+    }
+
+    async function deleteNotification(notificationId) {
+      try {
+        const response = await fetch(`/api/notifications/${notificationId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          loadNotifications();
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to delete notification' }));
+          console.error('Failed to delete notification:', errorData.message || 'Unknown error');
+        }
+      } catch (error) {
+        console.error('Error deleting notification:', error.message || error);
+      }
+    }
+
+    function refreshNotifications() {
+      loadNotifications();
+    }
+
+    function getNotificationIcon(type) {
+      const icons = {
+        'service_created': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10,9 9,9 8,9"></polyline></svg>',
+        'service_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
+        'service_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+        'service_completed': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
+        'approval_created': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>',
+        'approval_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
+        'approval_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+        'approval_revision': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+        'new_message': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+        'system': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
+        'unit_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17,11 19,13 23,9"></polyline></svg>'
+      };
+
+      return icons[type] || icons['system'];
+    }
+
+    function formatTimeAgo(date) {
+      const now = new Date();
+      const diffInSeconds = Math.floor((now - date) / 1000);
+
+      if (diffInSeconds < 60) {
+        return 'just now';
+      } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+      } else if (diffInSeconds < 604800) {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} day${days !== 1 ? 's' : ''} ago`;
+      } else {
+        return date.toLocaleDateString();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Handle notification click - navigate to action URL
+    async function handleNotificationClick(notificationId, actionUrl, notificationType) {
+      if (!actionUrl) {
+        console.log('No action URL for this notification');
+        return;
+      }
+
+      // Mark as read first
+      await markAsRead(notificationId);
+
+      // Use the notification system's navigation handler if available
+      if (window.notificationSystem && typeof window.notificationSystem.handleNotificationNavigation === 'function') {
+        window.notificationSystem.handleNotificationNavigation(actionUrl, notificationType);
+      } else {
+        // Fallback: direct navigation
+        window.location.href = actionUrl;
+      }
+    }
+
+    // Dropdown toggle
+    function toggleDropdown() {
+      const dropdown = document.getElementById('dropdownMenu');
+      dropdown.classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown-wrapper')) {
+        const dropdown = document.getElementById('dropdownMenu');
+        dropdown.classList.remove('show');
+      }
+    });
+
+    // Sidebar hover effect for desktop
+    const sidebar = document.getElementById('unitSidebar');
+    if (sidebar) {
+      sidebar.addEventListener('mouseenter', function() {
+        this.classList.add('expanded');
+      });
+      sidebar.addEventListener('mouseleave', function() {
+        this.classList.remove('expanded');
+      });
+    }
+
+    // Mobile Navigation Setup
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuToggle = document.getElementById('unitMenuToggle');
+      const sidebarEl = document.getElementById('unitSidebar');
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      // Initialize Mobile Navigation
+      function initMobileNavigation() {
+        if (menuToggle && sidebarEl) {
+          // Toggle menu on button click
+          menuToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sidebarEl.classList.toggle('mobile-active');
+          });
+
+          // Handle touch swipe gestures
+          document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+          }, { passive: true });
+
+          document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+          }, { passive: true });
+
+          // Close sidebar when clicking outside on mobile
+          document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+              if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
+                sidebarEl.classList.remove('mobile-active');
+              }
+            }
+          });
+
+          // Close sidebar when clicking any sidebar link on mobile
+          const sidebarLinks = sidebarEl.querySelectorAll('.sidebar-item, .sidebar-profile-link');
+          sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+              if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                  sidebarEl.classList.remove('mobile-active');
+                }, 100);
+              }
+            });
+          });
+        }
+      }
+
+      function handleSwipe() {
+        const swipeDistance = touchEndX - touchStartX;
+        const minSwipeDistance = 50;
+
+        // Swipe right to open
+        if (swipeDistance > minSwipeDistance && touchStartX < 50) {
+          sidebarEl.classList.add('mobile-active');
+        }
+        // Swipe left to close
+        else if (swipeDistance < -minSwipeDistance && sidebarEl.classList.contains('mobile-active')) {
+          sidebarEl.classList.remove('mobile-active');
+        }
+      }
+
+    // Initialize mobile navigation
+    initMobileNavigation();
+
+    // Onboarding modal functionality
+    let currentSlide = 1;
+    const totalSlides = 5;
+
+    // Initialize onboarding modal
+    function initOnboardingModal() {
+      const modal = document.getElementById('onboardingModal');
+      const closeBtn = document.getElementById('closeOnboardingModal');
+      const prevBtn = document.getElementById('prevSlide');
+      const nextBtn = document.getElementById('nextSlide');
+      const slideIndicators = document.getElementById('slideIndicators');
+
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          modal.style.display = 'none';
+        };
+      }
+
+      if (prevBtn) {
+        prevBtn.onclick = () => {
+          if (currentSlide > 1) {
+            currentSlide--;
+            showSlide(currentSlide);
+          }
+        };
+      }
+
+      if (nextBtn) {
+        nextBtn.onclick = () => {
+          if (currentSlide < totalSlides) {
+            currentSlide++;
+            showSlide(currentSlide);
+          } else {
+            // Finish onboarding
+            modal.style.display = 'none';
+            markOnboardingComplete();
+          }
+        };
+      }
+
+      // Create slide indicators
+      if (slideIndicators) {
+        let indicatorsHTML = '';
+        for (let i = 1; i <= totalSlides; i++) {
+          indicatorsHTML += `<span class="slide-indicator ${i === 1 ? 'active' : ''}" data-slide="${i}"></span>`;
+        }
+        slideIndicators.innerHTML = indicatorsHTML;
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function(event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+    }
+
+    function showSlide(slideNumber) {
+      const slides = document.querySelectorAll('.onboarding-slide');
+      const indicators = document.querySelectorAll('.slide-indicator');
+      const prevBtn = document.getElementById('prevSlide');
+      const nextBtn = document.getElementById('nextSlide');
+
+      // Hide all slides
+      slides.forEach(slide => slide.classList.remove('active'));
+      indicators.forEach(indicator => indicator.classList.remove('active'));
+
+      // Show current slide
+      const currentSlideEl = document.querySelector(`[data-slide="${slideNumber}"]`);
+      if (currentSlideEl) {
+        currentSlideEl.classList.add('active');
+      }
+
+      // Update indicator
+      const currentIndicator = document.querySelector(`.slide-indicator[data-slide="${slideNumber}"]`);
+      if (currentIndicator) {
+        currentIndicator.classList.add('active');
+      }
+
+      // Update navigation buttons
+      if (prevBtn) {
+        prevBtn.style.display = slideNumber === 1 ? 'none' : 'inline-flex';
+      }
+
+      if (nextBtn) {
+        nextBtn.textContent = slideNumber === totalSlides ? 'Get Started! 🚀' : 'Next →';
+      }
+
+      currentSlide = slideNumber;
+    }
+
+    async function markOnboardingComplete() {
+      try {
+        const response = await fetch('/api/user/onboarding-complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          console.log('Onboarding marked as complete');
+        }
+      } catch (error) {
+        console.error('Error marking onboarding complete:', error);
+      }
+    }
+
+    // Handle onboarding notification click
+    function handleOnboardingNotification(notificationId, actionUrl, notificationType) {
+      if (notificationType === 'unit_onboarding') {
+        // Show onboarding modal instead of navigating
+        const modal = document.getElementById('onboardingModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          currentSlide = 1;
+          showSlide(1);
+        }
+
+        // Mark as read
+        markAsRead(notificationId);
+        return;
+      }
+
+      // For other notifications, use default behavior
+      handleNotificationClick(notificationId, actionUrl, notificationType);
+    }
+
+    // Override the default notification click handler
+    window.handleNotificationClick = handleOnboardingNotification;
+
+    // Initialize onboarding modal on page load
+    initOnboardingModal();
+
+    // Auto-show onboarding if needed
+    const userData = JSON.parse(document.getElementById('user-data').textContent || '{}');
+    if (userData.showOnboarding) {
+      setTimeout(() => {
+        const modal = document.getElementById('onboardingModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          currentSlide = 1;
+          showSlide(1);
+        }
+      }, 1000);
+    }
+    });
+  </script>
+</body>
+</html>

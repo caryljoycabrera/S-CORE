@@ -60,6 +60,12 @@ const requestApprovalSchema = new mongoose.Schema({
     default: 'Not yet assigned'
   },
 
+  // Track original auto-assignment for unit permissions
+  originalAssignedUnits: {
+    type: String,
+    default: ''
+  },
+
   // File attachments (legacy single file field)
   file: {
     type: String // Keep for backward compatibility

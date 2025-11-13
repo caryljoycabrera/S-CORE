@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Types Management - S-CORE Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css">
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css">
+  <link rel="stylesheet" href="/stylesheets/notifications.css">
+  <link rel="stylesheet" href="/stylesheets/no-animations.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+
+  <style>
+    /* ========================================
+       ADMIN PAGE LAYOUT - STANDARDIZED
+       Matches admin page spacing and structure
+       ======================================== */
+
+    /* Main container - proper padding from header and edges */
+    .admin-side {
+      padding: 0 !important;
+      background: #f8f9fa !important;
+      box-sizing: border-box;
+    }
+
+    /* Activity section - consistent with admin */
+    .activity-section {
+      padding: 0 !important;
+      margin: 0 !important;
+      background: #f8f9fa !important;
+      overflow: visible !important;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Page Header Layout - with proper top spacing */
+    .page-header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 2rem 3rem 0 3rem;
+    }
+
+    .user-info-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .action-button-container {
+      margin-left: auto;
+    }
+
+    /* Filter section - proper spacing from edges */
+    .filter-section {
+      background: white;
+      border: none;
+      border-radius: 0;
+      padding: 1.25rem;
+      margin: 0 3rem 1.5rem 3rem;
+      box-shadow: none;
+      overflow: visible !important;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Table section - proper padding */
+    .table-section {
+      background: white;
+      padding: 1.5rem;
+      margin: 0 3rem 2rem 3rem;
+      border-radius: 0;
+    }
+
+    /* Content wrapper */
+    .admin-side > .div {
+      max-width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      padding: 0;
+      background: transparent;
+    }
+
+    /* Responsive breathing room */
+    @media (max-width: 1200px) {
+      .page-header-container,
+      .filter-section,
+      .table-section {
+        padding-left: 2rem;
+        padding-right: 2rem;
+        margin-left: 2rem;
+        margin-right: 2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .page-header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1.5rem;
+        margin-left: 1.5rem;
+        margin-right: 1.5rem;
+      }
+
+      .filter-section,
+      .table-section {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        margin-left: 1.5rem;
+        margin-right: 1.5rem;
+      }
+
+      .action-button-container {
+        width: 100%;
+        margin-left: 0;
+      }
+
+      .action-button-container .view-all-btn {
+        width: 100%;
+      }
+    }
+
+    /* Statistics Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-green);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #6b7280;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card.pending .stat-number { color: #f59e0b; }
+    .stat-card.approved .stat-number { color: #10b981; }
+    .stat-card.rejected .stat-number { color: #ef4444; }
+
+    /* Request Types Table */
+    .request-types-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+
+    .request-types-table thead {
+      background: var(--light-green);
+      color: var(--primary-green);
+    }
+
+    .request-types-table th,
+    .request-types-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .request-types-table th {
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .request-types-table tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-badge.pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .status-badge.approved {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-badge.rejected {
+      background: #fecaca;
+      color: #dc2626;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .action-btn.approve {
+      background: #10b981;
+      color: white;
+    }
+
+    .action-btn.approve:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    .action-btn.reject {
+      background: #ef4444;
+      color: white;
+    }
+
+    .action-btn.reject:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .action-btn.edit {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .action-btn.edit:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    .action-btn.delete {
+      background: #6b7280;
+      color: white;
+    }
+
+    .action-btn.delete:hover {
+      background: #4b5563;
+      transform: translateY(-1px);
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .modal-actions {
+      padding: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-btn.primary {
+      background: var(--primary-green);
+      color: white;
+    }
+
+    .modal-btn.primary:hover {
+      background: #157347;
+      transform: translateY(-1px);
+    }
+
+    .modal-btn.secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 2px solid #e5e7eb;
+    }
+
+    .modal-btn.secondary:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+    }
+
+    .modal-btn.danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .modal-btn.danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6b7280;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      color: #6b7280;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e5e7eb;
+      border-top: 2px solid var(--primary-green);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.75rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+
+      .request-types-table {
+        font-size: 0.875rem;
+      }
+
+      .request-types-table th,
+      .request-types-table td {
+        padding: 0.75rem 0.5rem;
+      }
+
+      .modal-content {
+        margin: 1rem;
+        width: calc(100% - 2rem);
+      }
+
+      .modal-actions {
+        flex-direction: column;
+      }
+
+      .modal-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-profile">
+      <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
+        <div class="sidebar-profile-icon-container">
+          <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>"
+               alt="<%= user.fName %> <%= user.lName %>"
+               class="sidebar-profile-avatar" />
+        </div>
+        <div class="sidebar-profile-info">
+          <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
+          <p class="sidebar-profile-role">Administrator</p>
+        </div>
+        <span class="sidebar-profile-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+
+      <a href="/admin/all-requests" class="sidebar-item" title="All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span class="sidebar-label">All Requests</span>
+      </a>
+
+      <a href="/admin/approvals" class="sidebar-item" title="Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Approvals</span>
+      </a>
+
+      <a href="/admin/services" class="sidebar-item" title="Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 0 0 1.4 0l1.6 1.6a1 1 0 0 0 0 1.4l-3.77 3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Services</span>
+      </a>
+
+      <a href="/admin/users" class="sidebar-item" title="Users">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="sidebar-label">Users</span>
+      </a>
+
+      <a href="/admin/request-types" class="sidebar-item active" title="Request Types">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="sidebar-label">Request Types</span>
+      </a>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Logout</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="admin-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
+      <div class="header-left-group">
+        <!-- Hamburger Menu Button for Mobile -->
+        <button class="admin-menu-toggle" id="adminMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/admin" class="text-wrapper">S-CORE</a>
+      </div>
+
+      <span class="text-wrapper-2">Request Types Management</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-side">
+      <section class="activity-section">
+        <!-- Page Header with User Info and Action Button -->
+        <div class="page-header-container">
+          <div class="user-info-section">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>"
+                 alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+            <div>
+              <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
+              <p style="color: #6b7280;">Administrator</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number"><%= stats.total %></div>
+            <div class="stat-label">Total Request Types</div>
+          </div>
+          <div class="stat-card pending">
+            <div class="stat-number"><%= stats.pending %></div>
+            <div class="stat-label">Pending Review</div>
+          </div>
+          <div class="stat-card approved">
+            <div class="stat-number"><%= stats.approved %></div>
+            <div class="stat-label">Approved</div>
+          </div>
+          <div class="stat-card rejected">
+            <div class="stat-number"><%= stats.rejected %></div>
+            <div class="stat-label">Rejected</div>
+          </div>
+        </div>
+
+        <!-- Request Types Table -->
+        <section class="table-section">
+          <% if (requestTypes && requestTypes.length > 0) { %>
+          <table class="request-types-table">
+            <thead>
+              <tr>
+                <th>Request Type</th>
+                <th>Category</th>
+                <th>Submitted By</th>
+                <th>Status</th>
+                <th>Assigned Unit</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% requestTypes.forEach(requestType => { %>
+              <tr data-id="<%= requestType._id %>">
+                <td>
+                  <strong><%= requestType.name %></strong>
+                  <% if (requestType.usageCount > 0) { %>
+                  <br><small style="color: #6b7280;">Used <%= requestType.usageCount %> time<%= requestType.usageCount !== 1 ? 's' : '' %></small>
+                  <% } %>
+                </td>
+                <td><%= requestType.category %></td>
+                <td>
+                  <% if (requestType.submittedBy) { %>
+                    <%= requestType.submittedBy.fName %> <%= requestType.submittedBy.lName %>
+                  <% } else { %>
+                    Unknown
+                  <% } %>
+                </td>
+                <td>
+                  <span class="status-badge <%= requestType.status %>">
+                    <%= requestType.status %>
+                  </span>
+                </td>
+                <td><%= requestType.assignedUnit || 'Not assigned' %></td>
+                <td><%= new Date(requestType.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <% if (requestType.status === 'pending') { %>
+                    <button class="action-btn approve" onclick="approveRequestType('<%= requestType._id %>', '<%= requestType.name %>')">
+                      Approve
+                    </button>
+                    <button class="action-btn reject" onclick="rejectRequestType('<%= requestType._id %>', '<%= requestType.name %>')">
+                      Reject
+                    </button>
+                  <% } else { %>
+                    <button class="action-btn edit" onclick="editRequestType('<%= requestType._id %>', '<%= requestType.name %>', '<%= requestType.assignedUnit %>')">
+                      Edit
+                    </button>
+                    <button class="action-btn delete" onclick="deleteRequestType('<%= requestType._id %>', '<%= requestType.name %>')">
+                      Delete
+                    </button>
+                  <% } %>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <% } else { %>
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-title">No Request Types Yet</div>
+            <div class="empty-state-text">
+              Custom request types submitted by users will appear here for review.<br>
+              Users can submit custom request types when the predefined options don't meet their needs.
+            </div>
+          </div>
+          <% } %>
+        </section>
+
+        <!-- Back to Dashboard Button -->
+        <div style="text-align: center; margin-top: 2rem;">
+          <a href="/admin" class="view-all-btn" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Dashboard
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Approve Modal -->
+  <div id="approveModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Approve Request Type</h2>
+        <button class="modal-close" onclick="closeModal('approveModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: #374151;">
+          Approve "<span id="approveTypeName" style="font-weight: 600; color: var(--primary-green);"></span>" as a new request type?
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="approveAssignedUnit">Assign to Unit:</label>
+          <select id="approveAssignedUnit" class="form-input" required>
+            <option value="">Select unit...</option>
+            <option value="Graphics">Graphics</option>
+            <option value="Multimedia">Multimedia</option>
+            <option value="Public Relations">Public Relations</option>
+            <option value="Social Media">Social Media</option>
+          </select>
+        </div>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+          <h4 style="margin: 0 0 0.5rem 0; color: #065f46; font-size: 0.9rem;">What happens when approved?</h4>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #065f46; font-size: 0.85rem; line-height: 1.5;">
+            <li>This request type becomes available to all users</li>
+            <li>Future requests can select this type from the dropdown</li>
+            <li>The assigned unit will handle these types of requests</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('approveModal')">Cancel</button>
+        <button class="modal-btn primary" onclick="submitApprove()">Approve</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Modal -->
+  <div id="rejectModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Reject Request Type</h2>
+        <button class="modal-close" onclick="closeModal('rejectModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: #374151;">
+          Reject "<span id="rejectTypeName" style="font-weight: 600; color: #dc2626;"></span>" as a request type?
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="rejectNotes">Reason for rejection (optional):</label>
+          <textarea id="rejectNotes" class="form-input form-textarea" placeholder="Provide feedback to help the user understand why this was rejected..."></textarea>
+        </div>
+
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+          <h4 style="margin: 0 0 0.5rem 0; color: #991b1b; font-size: 0.9rem;">What happens when rejected?</h4>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #991b1b; font-size: 0.85rem; line-height: 1.5;">
+            <li>This request type will not be available to users</li>
+            <li>The user will be notified of the rejection</li>
+            <li>Users can submit alternative request types</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('rejectModal')">Cancel</button>
+        <button class="modal-btn danger" onclick="submitReject()">Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Request Type</h2>
+        <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="editTypeName">Request Type Name:</label>
+          <input type="text" id="editTypeName" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editAssignedUnit">Assigned Unit:</label>
+          <select id="editAssignedUnit" class="form-input" required>
+            <option value="">Select unit...</option>
+            <option value="Graphics">Graphics</option>
+            <option value="Multimedia">Multimedia</option>
+            <option value="Public Relations">Public Relations</option>
+            <option value="Social Media">Social Media</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('editModal')">Cancel</button>
+        <button class="modal-btn primary" onclick="submitEdit()">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Delete Request Type</h2>
+        <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: #374151;">
+          Are you sure you want to delete "<span id="deleteTypeName" style="font-weight: 600; color: #dc2626;"></span>"?
+        </p>
+
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem;">
+          <h4 style="margin: 0 0 0.5rem 0; color: #991b1b; font-size: 0.9rem;">⚠️ Warning</h4>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #991b1b; font-size: 0.85rem; line-height: 1.5;">
+            <li>This action cannot be undone</li>
+            <li>Existing requests using this type will be unaffected</li>
+            <li>The type will no longer be available for new requests</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('deleteModal')">Cancel</button>
+        <button class="modal-btn danger" onclick="submitDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Modal management
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Global variables for current request type
+    let currentRequestTypeId = null;
+
+    // Approve functions
+    function approveRequestType(id, name) {
+      currentRequestTypeId = id;
+      document.getElementById('approveTypeName').textContent = name;
+      document.getElementById('approveModal').style.display = 'flex';
+    }
+
+    async function submitApprove() {
+      const assignedUnit = document.getElementById('approveAssignedUnit').value;
+
+      if (!assignedUnit) {
+        alert('Please select an assigned unit.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/request-types/${currentRequestTypeId}/approve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ assignedUnit })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showAlert('Request type approved successfully!', 'success');
+          closeModal('approveModal');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showAlert(result.message || 'Failed to approve request type', 'error');
+        }
+      } catch (error) {
+        console.error('Error approving request type:', error);
+        showAlert('An error occurred while approving the request type', 'error');
+      }
+    }
+
+    // Reject functions
+    function rejectRequestType(id, name) {
+      currentRequestTypeId = id;
+      document.getElementById('rejectTypeName').textContent = name;
+      document.getElementById('rejectModal').style.display = 'flex';
+    }
+
+    async function submitReject() {
+      const reviewNotes = document.getElementById('rejectNotes').value;
+
+      try {
+        const response = await fetch(`/admin/request-types/${currentRequestTypeId}/reject`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reviewNotes })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showAlert('Request type rejected successfully!', 'success');
+          closeModal('rejectModal');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showAlert(result.message || 'Failed to reject request type', 'error');
+        }
+      } catch (error) {
+        console.error('Error rejecting request type:', error);
+        showAlert('An error occurred while rejecting the request type', 'error');
+      }
+    }
+
+    // Edit functions
+    function editRequestType(id, name, assignedUnit) {
+      currentRequestTypeId = id;
+      document.getElementById('editTypeName').value = name;
+      document.getElementById('editAssignedUnit').value = assignedUnit;
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    async function submitEdit() {
+      const name = document.getElementById('editTypeName').value.trim();
+      const assignedUnit = document.getElementById('editAssignedUnit').value;
+
+      if (!name || !assignedUnit) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/admin/request-types/${currentRequestTypeId}/edit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, assignedUnit })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showAlert('Request type updated successfully!', 'success');
+          closeModal('editModal');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showAlert(result.message || 'Failed to update request type', 'error');
+        }
+      } catch (error) {
+        console.error('Error updating request type:', error);
+        showAlert('An error occurred while updating the request type', 'error');
+      }
+    }
+
+    // Delete functions
+    function deleteRequestType(id, name) {
+      currentRequestTypeId = id;
+      document.getElementById('deleteTypeName').textContent = name;
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    async function submitDelete() {
+      try {
+        const response = await fetch(`/admin/request-types/${currentRequestTypeId}`, {
+          method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showAlert('Request type deleted successfully!', 'success');
+          closeModal('deleteModal');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showAlert(result.message || 'Failed to delete request type', 'error');
+        }
+      } catch (error) {
+        console.error('Error deleting request type:', error);
+        showAlert('An error occurred while deleting the request type', 'error');
+      }
+    }
+
+    // Header Dropdown Manager
+    const headerDropdown = {
+      menu: null,
+      isOpen: false,
+
+      init() {
+        this.menu = document.getElementById("dropdownMenu");
+      },
+
+      toggle() {
+        if (this.isOpen) {
+          this.close();
+        } else {
+          this.open();
+        }
+      },
+
+      open() {
+        if (this.menu) {
+          this.menu.style.display = "block";
+          this.isOpen = true;
+        }
+      },
+
+      close() {
+        if (this.menu) {
+          this.menu.style.display = "none";
+          this.isOpen = false;
+        }
+      }
+    };
+
+    // Dropdown functionality
+    function toggleDropdown() {
+      if (!headerDropdown.menu) {
+        headerDropdown.init();
+      }
+      headerDropdown.toggle();
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      headerDropdown.init();
+    });
+
+    document.addEventListener("click", function (event) {
+      const toggle = document.querySelector(".dropdown-toggle");
+      const menu = document.getElementById("dropdownMenu");
+      if (toggle && menu && !toggle.contains(event.target)) {
+        headerDropdown.close();
+      }
+    });
+
+    // Sidebar functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.getElementById('adminSidebar');
+      if (sidebar) {
+        sidebar.addEventListener('mouseenter', function() {
+          this.classList.add('expanded');
+        });
+        sidebar.addEventListener('mouseleave', function() {
+          this.classList.remove('expanded');
+        });
+      }
+
+      // Mobile navigation
+      const menuToggle = document.getElementById('adminMenuToggle');
+      if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          sidebar.classList.toggle('mobile-active');
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+          if (sidebar.classList.contains('mobile-active') &&
+              !sidebar.contains(e.target) &&
+              !menuToggle.contains(e.target)) {
+            sidebar.classList.remove('mobile-active');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

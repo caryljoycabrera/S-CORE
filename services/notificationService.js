@@ -68,7 +68,8 @@ class NotificationService {
   async notifyServiceCreated(serviceId, userId, adminIds = null) {
     try {
       const user = await User.findById(userId);
-      if (!user) return;
+      const serviceRequest = await require('../models/ServiceRequest').findById(serviceId);
+      if (!user || !serviceRequest) return;
 
       // Get all admin users if not provided
       if (!adminIds) {
@@ -76,9 +77,10 @@ class NotificationService {
         adminIds = admins.map(admin => admin._id);
       }
 
+      const assignedUnit = serviceRequest.assignedUnits || 'Not yet assigned';
       const notificationData = {
-        title: 'New Service Request',
-        message: `${user.fName} ${user.lName} has submitted a new service request for review`,
+        title: 'New Service Request Auto-Assigned',
+        message: `${user.fName} ${user.lName} submitted a service request and it has been auto-assigned to: ${assignedUnit}`,
         type: 'service_created',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
@@ -88,10 +90,10 @@ class NotificationService {
       };
 
       // Create notifications for all admins
-      const notifications = adminIds.map(adminId => 
+      const notifications = adminIds.map(adminId =>
         this.createNotification({ ...notificationData, recipient: adminId })
       );
-      
+
       await Promise.all(notifications);
       console.log(`Service creation notifications sent to ${adminIds.length} admin(s)`);
     } catch (error) {
@@ -204,6 +206,7 @@ class NotificationService {
   async notifyApprovalCreated(approvalId, userId, adminIds = null) {
     try {
       const user = await User.findById(userId);
+      const approvalRequest = await require('../models/RequestApproval').findById(approvalId);
       if (!user) return;
 
       if (!adminIds) {
@@ -211,9 +214,10 @@ class NotificationService {
         adminIds = admins.map(admin => admin._id);
       }
 
+      const assignedUnit = approvalRequest?.assignedUnits || 'Not yet assigned';
       const notificationData = {
-        title: 'New Approval Request',
-        message: `${user.fName} ${user.lName} has submitted a new approval request`,
+        title: 'New Approval Request Auto-Assigned',
+        message: `${user.fName} ${user.lName} submitted an approval request and it has been auto-assigned to: ${assignedUnit}`,
         type: 'approval_created',
         relatedId: approvalId,
         relatedModel: 'RequestApproval',
@@ -227,6 +231,7 @@ class NotificationService {
       );
       
       await Promise.all(notifications);
+      console.log(`Approval creation notifications sent to ${adminIds.length} admin(s)`);
     } catch (error) {
       console.error('Error notifying approval creation:', error);
     }
@@ -403,10 +408,33 @@ class NotificationService {
         actionUrl: '/user-guide',
         isDeletable: false  // Cannot be deleted
       });
-      
+
       console.log('✅ Welcome notification sent to user:', userId);
     } catch (error) {
       console.error('Error notifying user approval:', error);
+    }
+  }
+
+  // Notify unit member when their account is approved
+  async notifyUnitApproved(userId, adminId) {
+    try {
+      // Send the unit welcome notification - use special URL to trigger modal
+      await this.createNotification({
+        recipient: userId,
+        sender: adminId,
+        title: 'Welcome to S-CORE Unit Team!',
+        message: 'Your unit account has been approved! Click here to learn how to process tasks and manage your workflow.',
+        type: 'unit_approved',
+        relatedId: userId,
+        relatedModel: 'User',
+        priority: 'high',
+        actionUrl: '/notifications?showOnboarding=true',
+        isDeletable: false  // Cannot be deleted
+      });
+
+      console.log('✅ Unit welcome notification sent to user:', userId);
+    } catch (error) {
+      console.error('Error notifying unit approval:', error);
     }
   }
 
@@ -688,28 +716,61 @@ class NotificationService {
   // Notify unit members when a new task is assigned to their team
   async notifyUnitTaskAssigned(requestId, requestType, assignedUnits, adminId) {
     try {
-      console.log(`📧 Notifying units about new task assignment: ${assignedUnits}`);
-      
+      console.log(`📧 ===== UNIT NOTIFICATION START =====`);
+      console.log(`📧 Notifying units about new task assignment`);
+      console.log(`📧 Input assignedUnits:`, assignedUnits);
+      console.log(`📧 Type of assignedUnits:`, typeof assignedUnits);
+
       // Convert assignedUnits to array if it's a string
-      const unitsArray = typeof assignedUnits === 'string' 
-        ? assignedUnits.split(',').map(u => u.trim()) 
-        : assignedUnits;
+      const unitsArray = typeof assignedUnits === 'string'
+        ? assignedUnits.split(',').map(u => u.trim()).filter(u => u && u !== 'Not yet assigned')
+        : Array.isArray(assignedUnits)
+          ? assignedUnits.filter(u => u && u !== 'Not yet assigned')
+          : [assignedUnits].filter(u => u && u !== 'Not yet assigned');
+
+      console.log(`📧 Processed unitsArray:`, unitsArray);
+
+      if (unitsArray.length === 0) {
+        console.log('⚠️ No valid assigned units found');
+        console.log(`📧 ===== UNIT NOTIFICATION END (NO UNITS) =====`);
+        return;
+      }
+
+      console.log('📋 Processing units:', unitsArray);
 
       // Find all unit members belonging to the assigned units
+      console.log('🔍 Searching for unit members with query:', {
+        role: 'unit',
+        unitTeam: { $in: unitsArray }
+      });
+
       const unitMembers = await User.find({
         role: 'unit',
         unitTeam: { $in: unitsArray }
       });
 
+      console.log(`🔍 Query result: Found ${unitMembers.length} unit members`);
+
       if (unitMembers.length === 0) {
         console.log('⚠️ No unit members found for assigned units:', unitsArray);
+        
+        // Debug: Let's check what unit members exist in the database
+        const allUnitMembers = await User.find({ role: 'unit' });
+        console.log(`🔍 DEBUG: Total unit members in database: ${allUnitMembers.length}`);
+        console.log(`🔍 DEBUG: Unit members details:`, allUnitMembers.map(u => ({
+          name: `${u.fName} ${u.lName}`,
+          unitTeam: u.unitTeam,
+          role: u.role
+        })));
+        
+        console.log(`📧 ===== UNIT NOTIFICATION END (NO MEMBERS) =====`);
         return;
       }
 
-      console.log(`📨 Found ${unitMembers.length} unit members to notify`);
+      console.log(`📨 Found ${unitMembers.length} unit members to notify:`, unitMembers.map(u => `${u.fName} ${u.lName} (${u.unitTeam})`));
 
       const requestTypeName = requestType === 'approval' ? 'Approval Request' : 'Service Request';
-      const actionUrl = requestType === 'approval' 
+      const actionUrl = requestType === 'approval'
         ? `/unit/tasks?modal=true&requestId=${requestId}&type=approval`
         : `/unit/tasks?modal=true&requestId=${requestId}&type=service`;
 
@@ -725,14 +786,17 @@ class NotificationService {
       };
 
       // Create notifications for all unit members
-      const notifications = unitMembers.map(member => 
+      const notifications = unitMembers.map(member =>
         this.createNotification({ ...notificationData, recipient: member._id })
       );
-      
+
       await Promise.all(notifications);
       console.log(`✅ Task assignment notifications sent to ${unitMembers.length} unit members`);
+      console.log(`📧 ===== UNIT NOTIFICATION END (SUCCESS) =====`);
     } catch (error) {
       console.error('❌ Error notifying unit task assignment:', error);
+      console.error('❌ Error stack:', error.stack);
+      console.log(`📧 ===== UNIT NOTIFICATION END (ERROR) =====`);
     }
   }
 
@@ -816,6 +880,130 @@ class NotificationService {
       await Promise.all(notifications);
     } catch (error) {
       console.error('Error notifying unit task comment:', error);
+    }
+  }
+
+  // Notify admins when unit approves an approval request
+  async notifyAdminUnitApproved(approvalId, unitMemberId, approvalData) {
+    try {
+      const admins = await User.find({ role: 'admin', status: 'approved' });
+      if (admins.length === 0) return;
+
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+
+      const notificationData = {
+        title: 'Approval Request Processed',
+        message: `${unitName} team approved: "${approvalData.title}"`,
+        type: 'approval_approved',
+        relatedId: approvalId,
+        relatedModel: 'RequestApproval',
+        sender: unitMemberId,
+        priority: 'medium',
+        actionUrl: `/admin/approvals?highlight=${approvalId}`
+      };
+
+      const notifications = admins.map(admin => 
+        this.createNotification({ ...notificationData, recipient: admin._id })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`✅ Unit approval notification sent to ${admins.length} admins`);
+    } catch (error) {
+      console.error('Error notifying admins of unit approval:', error);
+    }
+  }
+
+  // Notify admins when unit requests revision
+  async notifyAdminUnitRevision(approvalId, unitMemberId, approvalData, revisionNotes) {
+    try {
+      const admins = await User.find({ role: 'admin', status: 'approved' });
+      if (admins.length === 0) return;
+
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+
+      const notificationData = {
+        title: 'Revision Requested by Unit',
+        message: `${unitName} team requested revision for: "${approvalData.title}"`,
+        type: 'approval_revision',
+        relatedId: approvalId,
+        relatedModel: 'RequestApproval',
+        sender: unitMemberId,
+        priority: 'high',
+        actionUrl: `/admin/approvals?highlight=${approvalId}`
+      };
+
+      const notifications = admins.map(admin => 
+        this.createNotification({ ...notificationData, recipient: admin._id })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`✅ Unit revision notification sent to ${admins.length} admins`);
+    } catch (error) {
+      console.error('Error notifying admins of unit revision:', error);
+    }
+  }
+
+  // Notify admins when unit uploads deliverable
+  async notifyAdminUnitDeliverable(serviceId, unitMemberId, serviceData, filesCount) {
+    try {
+      const admins = await User.find({ role: 'admin', status: 'approved' });
+      if (admins.length === 0) return;
+
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+
+      const notificationData = {
+        title: 'Deliverable Uploaded',
+        message: `${unitName} team uploaded ${filesCount} file(s) for: "${serviceData.title}"`,
+        type: 'service_updated',
+        relatedId: serviceId,
+        relatedModel: 'ServiceRequest',
+        sender: unitMemberId,
+        priority: 'medium',
+        actionUrl: `/admin/services?highlight=${serviceId}`
+      };
+
+      const notifications = admins.map(admin => 
+        this.createNotification({ ...notificationData, recipient: admin._id })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`✅ Unit deliverable notification sent to ${admins.length} admins`);
+    } catch (error) {
+      console.error('Error notifying admins of unit deliverable:', error);
+    }
+  }
+
+  // Notify admins when unit completes service request
+  async notifyAdminUnitCompleted(serviceId, unitMemberId, serviceData) {
+    try {
+      const admins = await User.find({ role: 'admin', status: 'approved' });
+      if (admins.length === 0) return;
+
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+
+      const notificationData = {
+        title: 'Service Request Completed',
+        message: `${unitName} team completed: "${serviceData.title}"`,
+        type: 'service_completed',
+        relatedId: serviceId,
+        relatedModel: 'ServiceRequest',
+        sender: unitMemberId,
+        priority: 'high',
+        actionUrl: `/admin/services?highlight=${serviceId}`
+      };
+
+      const notifications = admins.map(admin => 
+        this.createNotification({ ...notificationData, recipient: admin._id })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`✅ Unit completion notification sent to ${admins.length} admins`);
+    } catch (error) {
+      console.error('Error notifying admins of unit completion:', error);
     }
   }
 }

@@ -277,10 +277,10 @@ router.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
     // Handle missing user data
     if (!targetRequest.userId) {
       console.warn(`Request ${requestId} has no associated user`);
-      if (user.role !== 'admin') {
+      if (user.role !== 'admin' && user.role !== 'unit') {
         return res.status(403).json({ error: 'Access denied - orphaned request' });
       }
-    } else if (user.role !== 'admin' && targetRequest.userId._id.toString() !== req.session.userId) {
+    } else if (user.role !== 'admin' && user.role !== 'unit' && targetRequest.userId._id.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -299,13 +299,17 @@ router.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
           messages: []
         });
         await conversation.save();
-        conversation = await Conversation.findById(conversation._id).populate('messages.senderId', 'fName lName role');
+        conversation = await Conversation.findById(conversation._id)
+          .populate('messages.senderId', 'fName lName role')
+          .populate('messages.readBy.userId', 'fName lName role');
       }
     } else {
       conversation = await Conversation.findOne({
         approvalRequestId: requestId,
         requestType: 'approval'
-      }).populate('messages.senderId', 'fName lName role');
+      })
+      .populate('messages.senderId', 'fName lName role')
+      .populate('messages.readBy.userId', 'fName lName role');
 
       if (!conversation) {
         conversation = new Conversation({
@@ -314,11 +318,32 @@ router.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
           messages: []
         });
         await conversation.save();
-        conversation = await Conversation.findById(conversation._id).populate('messages.senderId', 'fName lName role');
+        conversation = await Conversation.findById(conversation._id)
+          .populate('messages.senderId', 'fName lName role')
+          .populate('messages.readBy.userId', 'fName lName role');
       }
     }
 
-    res.json(conversation);
+    // Format response with message data including sender names and read receipts
+    const formattedMessages = conversation.messages.map(msg => ({
+      _id: msg._id,
+      senderName: msg.senderId ? `${msg.senderId.fName} ${msg.senderId.lName}` : 'Unknown',
+      senderRole: msg.senderRole,
+      content: msg.content,
+      attachments: msg.attachments || [],
+      timestamp: msg.timestamp,
+      isRead: msg.isRead,
+      readBy: (msg.readBy || []).map(reader => ({
+        userId: reader.userId._id,
+        userName: reader.userId ? `${reader.userId.fName} ${reader.userId.lName}` : 'Unknown',
+        userRole: reader.userId.role,
+        readAt: reader.readAt
+      }))
+    }));
+
+    res.json({
+      conversation: formattedMessages
+    });
   } catch (err) {
     console.error('Error fetching conversation:', err);
     res.status(500).json({ error: 'Failed to fetch conversation', details: err.message });
@@ -329,15 +354,15 @@ router.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
  * POST /api/conversation/:requestId/message
  * API endpoint to send a new message to a conversation
  */
-router.post('/api/conversation/:requestId/message', requireLogin, upload.single('file'), async (req, res) => {
+router.post('/api/conversation/:requestId/message', requireLogin, upload.array('chatFiles', 10), async (req, res) => {
   try {
     const { requestId } = req.params;
     const { content } = req.body;
     const user = await User.findById(req.session.userId);
-    const uploadedFile = req.file;
+    const uploadedFiles = req.files || [];
 
     // Allow empty content if there's a file attachment
-    if ((!content || content.trim() === '') && !uploadedFile) {
+    if ((!content || content.trim() === '') && uploadedFiles.length === 0) {
       return res.status(400).json({ error: 'Message content or file attachment is required' });
     }
 
@@ -351,7 +376,7 @@ router.post('/api/conversation/:requestId/message', requireLogin, upload.single(
 
     // Check access permissions
     const targetRequest = serviceRequest || approvalRequest;
-    if (user.role !== 'admin' && targetRequest.userId.toString() !== req.session.userId) {
+    if (user.role !== 'admin' && user.role !== 'unit' && targetRequest.userId.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -395,62 +420,81 @@ router.post('/api/conversation/:requestId/message', requireLogin, upload.single(
       isRead: false
     };
 
-    // Add file attachment information if file was uploaded
-    if (uploadedFile) {
-      newMessage.file_path = `/uploads/${uploadedFile.filename}`;
-      newMessage.file_type = uploadedFile.mimetype;
-      newMessage.original_filename = uploadedFile.originalname;
-      newMessage.file_size = uploadedFile.size;
+    // Add file attachments information if files were uploaded
+    if (uploadedFiles.length > 0) {
+      newMessage.attachments = uploadedFiles.map(file => ({
+        filename: file.filename,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        path: `/uploads/${file.filename}`
+      }));
     }
 
     conversation.messages.push(newMessage);
     await conversation.save();
 
-    // Populate the sender info for the response
+    // Populate the sender info and read receipts for the response
     await conversation.populate('messages.senderId', 'fName lName role');
+    await conversation.populate('messages.readBy.userId', 'fName lName role');
     
-    // Send notification to the other party (not the sender)
+    // Send notification to the other parties (not the sender)
     try {
       const targetRequest = serviceRequest || approvalRequest;
-      let recipientId;
+      const notificationPromises = [];
       
-      // Determine who should receive the notification
-      if (user.role === 'admin') {
-        // Admin sent message, notify the user who created the request
-        if (targetRequest.userId) {
-          recipientId = targetRequest.userId.toString();
-        }
-      } else {
-        // User sent message, notify admins
+      // Notify admins if message is not from admin
+      if (user.role !== 'admin') {
         const admins = await User.find({ role: 'admin' });
-        const adminIds = admins.map(admin => admin._id);
-        
-        // Send notifications to all admins
-        for (const adminId of adminIds) {
-          await notificationService.notifyNewMessage(
-            conversation._id,
-            user._id,
-            adminId,
-            content || 'Sent a file',
-            requestId,
-            serviceRequest ? 'service' : 'approval'
+        for (const admin of admins) {
+          notificationPromises.push(
+            notificationService.notifyNewMessage(
+              conversation._id,
+              user._id,
+              admin._id,
+              content || 'Sent a file',
+              requestId,
+              serviceRequest ? 'service' : 'approval'
+            ).catch(err => console.error('Admin notification error:', err))
           );
         }
       }
       
-      // Send notification to user if admin sent the message
-      if (recipientId) {
-        await notificationService.notifyNewMessage(
-          conversation._id,
-          user._id,
-          recipientId,
-          content || 'Sent a file',
-          requestId,
-          serviceRequest ? 'service' : 'approval'
+      // Notify unit members if message is not from unit
+      if (user.role !== 'unit') {
+        const unitMembers = await User.find({ role: 'unit' });
+        for (const unitMember of unitMembers) {
+          notificationPromises.push(
+            notificationService.notifyNewMessage(
+              conversation._id,
+              user._id,
+              unitMember._id,
+              content || 'Sent a file',
+              requestId,
+              serviceRequest ? 'service' : 'approval'
+            ).catch(err => console.error('Unit notification error:', err))
+          );
+        }
+      }
+      
+      // Notify the request creator if message is not from them
+      if (targetRequest.userId && targetRequest.userId.toString() !== user._id.toString()) {
+        notificationPromises.push(
+          notificationService.notifyNewMessage(
+            conversation._id,
+            user._id,
+            targetRequest.userId,
+            content || 'Sent a file',
+            requestId,
+            serviceRequest ? 'service' : 'approval'
+          ).catch(err => console.error('User notification error:', err))
         );
       }
+      
+      // Execute all notifications in parallel
+      await Promise.allSettled(notificationPromises);
     } catch (notifError) {
-      console.error('Error sending message notification:', notifError);
+      console.error('Error sending message notifications:', notifError);
     }
 
     res.json({
@@ -492,12 +536,30 @@ router.post('/api/conversation/:requestId/mark-read', requireLogin, async (req, 
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    // Mark messages as read (not sent by current user)
+    // Mark messages as read and add read receipts
     let hasChanges = false;
+    const currentUserId = req.session.userId;
+    const currentTime = new Date();
+    
     conversation.messages.forEach(message => {
-      if (message.senderId.toString() !== req.session.userId && !message.isRead) {
-        message.isRead = true;
-        hasChanges = true;
+      // Only mark as read if not sent by current user
+      if (message.senderId.toString() !== currentUserId) {
+        // Check if user already marked as read
+        const alreadyRead = message.readBy && message.readBy.some(
+          reader => reader.userId.toString() === currentUserId
+        );
+        
+        if (!alreadyRead) {
+          if (!message.readBy) {
+            message.readBy = [];
+          }
+          message.readBy.push({
+            userId: currentUserId,
+            readAt: currentTime
+          });
+          message.isRead = true;
+          hasChanges = true;
+        }
       }
     });
 

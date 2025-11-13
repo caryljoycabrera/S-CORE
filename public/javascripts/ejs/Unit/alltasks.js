@@ -1,1017 +1,1215 @@
-// Global dropdown manager to ensure only one dropdown is open at a time
-const DropdownManager = {
-  activeDropdown: null,
-  
-  registerOpen(dropdown) {
-    // Close the currently active dropdown if it exists and is different
-    if (this.activeDropdown && this.activeDropdown !== dropdown) {
-      this.activeDropdown.close();
-    }
-    this.activeDropdown = dropdown;
-  },
-  
-  clearActive(dropdown) {
-    if (this.activeDropdown === dropdown) {
-      this.activeDropdown = null;
-    }
-  }
-};
+// Global Variables
+let currentRequestId = null;
+let currentRequestType = null;
+let selectedFiles = [];
+let revisionFiles = [];
 
-// Enhanced Multi-Select Class for Organizations
-class EnhancedMultiSelect {
-  constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
-    this.container = document.getElementById(containerId);
-    this.options = options;
-    this.placeholder = placeholder;
-    this.selectedValues = new Set(['all']);
-    this.isOpen = false;
-    this.filteredOptions = [...options];
-    this.hasSearch = hasSearch;
-    
-    this.init();
-  }
-  
-  init() {
-    this.setupElements();
-    this.populateOptions();
-    this.attachEventListeners();
-    this.updateDisplay();
-  }
-  
-  setupElements() {
-    this.display = this.container.querySelector('.select-display');
-    this.dropdown = this.container.querySelector('.select-dropdown');
-    this.searchInput = this.dropdown.querySelector('.search-input');
-    this.optionsContainer = this.dropdown.querySelector('.options-container');
-    this.selectedText = this.display.querySelector('.selected-text');
-  }
-  
-  populateOptions() {
-    // Add "All" option
-    const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
-    this.optionsContainer.appendChild(allOption);
-    
-    // Add other options
-    this.options.forEach(option => {
-      const optionElement = this.createOption(option, option);
-      this.optionsContainer.appendChild(optionElement);
-    });
-  }
-  
-  createOption(value, text) {
-    const label = document.createElement('label');
-    label.className = 'dropdown-option';
-    label.innerHTML = `
-      <input type="checkbox" value="${value}" ${this.selectedValues.has(value) ? 'checked' : ''}>
-      <span class="checkbox-custom"></span>
-      ${text}
-    `;
-    return label;
-  }
-  
-  attachEventListeners() {
-    // Toggle dropdown
-    this.display.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.toggle();
-    });
-    
-    // Search functionality
-    if (this.hasSearch && this.searchInput) {
-      this.searchInput.addEventListener('input', (e) => {
-        this.filterOptions(e.target.value);
-      });
-    }
-    
-    // Option selection
-    this.optionsContainer.addEventListener('change', (e) => {
-      if (e.target.type === 'checkbox') {
-        this.handleOptionChange(e.target);
-      }
-    });
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!this.container.contains(e.target)) {
-        this.close();
-      }
-    });
-    
-    // Prevent dropdown close when clicking inside
-    this.dropdown.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-  }
-  
-  filterOptions(searchTerm) {
-    if (!this.hasSearch) return;
-    
-    const options = this.optionsContainer.querySelectorAll('.dropdown-option');
-    let visibleCount = 0;
-    
-    options.forEach(option => {
-      const text = option.textContent.toLowerCase();
-      const matches = text.includes(searchTerm.toLowerCase());
-      option.style.display = matches ? 'flex' : 'none';
-      if (matches) visibleCount++;
-    });
-    
-    this.toggleNoResults(visibleCount === 0 && searchTerm.length > 0);
-  }
-  
-  toggleNoResults(show) {
-    if (!this.hasSearch) return;
-    
-    let noResultsEl = this.optionsContainer.querySelector('.no-results');
-    
-    if (show && !noResultsEl) {
-      noResultsEl = document.createElement('div');
-      noResultsEl.className = 'no-results';
-      noResultsEl.textContent = 'No results found';
-      this.optionsContainer.appendChild(noResultsEl);
-    } else if (!show && noResultsEl) {
-      noResultsEl.remove();
-    }
-  }
-  
-  handleOptionChange(checkbox) {
-    const value = checkbox.value;
-    
-    if (value === 'all') {
-      if (checkbox.checked) {
-        this.selectedValues.clear();
-        this.selectedValues.add('all');
-        this.updateCheckboxes();
-      } else if (this.selectedValues.size === 1 && this.selectedValues.has('all')) {
-        checkbox.checked = true;
-        return;
-      }
-    } else {
-      if (checkbox.checked) {
-        this.selectedValues.delete('all');
-        this.selectedValues.add(value);
-      } else {
-        this.selectedValues.delete(value);
-        if (this.selectedValues.size === 0) {
-          this.selectedValues.add('all');
-        }
-      }
-      this.updateCheckboxes();
-    }
-    
-    this.updateDisplay();
-    this.triggerChange();
-  }
-  
-  updateCheckboxes() {
-    const checkboxes = this.optionsContainer.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(cb => {
-      cb.checked = this.selectedValues.has(cb.value);
-    });
-  }
-  
-  updateDisplay() {
-    const selectedArray = Array.from(this.selectedValues);
-    
-    if (selectedArray.includes('all') || selectedArray.length === 0) {
-      this.selectedText.textContent = `All ${this.placeholder.replace('Select ', '')}`;
-    } else if (selectedArray.length === 1) {
-      this.selectedText.textContent = selectedArray[0];
-    } else {
-      this.selectedText.textContent = `${selectedArray.length} selected`;
-    }
-  }
-  
-  getSelectedValues() {
-    return Array.from(this.selectedValues);
-  }
-  
-  reset() {
-    this.selectedValues.clear();
-    this.selectedValues.add('all');
-    this.updateCheckboxes();
-    this.updateDisplay();
-    if (this.hasSearch && this.searchInput) {
-      this.searchInput.value = '';
-      this.filterOptions('');
-    }
-    this.triggerChange();
-  }
-  
-  toggle() {
-    if (this.isOpen) {
-      this.close();
-    } else {
-      this.open();
-    }
-  }
-  
-  open() {
-    // Register this dropdown with the manager (will close others)
-    DropdownManager.registerOpen(this);
-    
-    this.isOpen = true;
-    this.display.classList.add('active');
-    this.dropdown.classList.add('show');
-    if (this.hasSearch && this.searchInput) {
-      this.searchInput.focus();
-    }
-  }
-  
-  close() {
-    this.isOpen = false;
-    this.display.classList.remove('active');
-    this.dropdown.classList.remove('show');
-    
-    // Clear this dropdown from the manager
-    DropdownManager.clearActive(this);
-    
-    if (this.hasSearch && this.searchInput) {
-      this.searchInput.value = '';
-      this.filterOptions('');
-    }
-  }
-  
-  triggerChange() {
-    const event = new CustomEvent('selectionChange', {
-      detail: { values: this.getSelectedValues() }
-    });
-    this.container.dispatchEvent(event);
-  }
-}
-
-// Get user organizations data from the JSON script tag
-const userOrgData = JSON.parse(document.getElementById('userOrgData').textContent);
-const userType = userOrgData.userType;
-const userOrganizations = userOrgData.organizations || [];
-
-// DOM Elements
-const detailModal = document.getElementById("detailsModal");
-const closeDetailsModal = document.getElementById("closeDetailsModal");
-const clearFiltersBtn = document.getElementById("clearFilters");
-const tableBody = document.getElementById("requestsTableBody");
-const allRows = Array.from(document.querySelectorAll('.request-row'));
-const conversationModal = document.getElementById("conversationModal");
-const closeConversationModal = document.getElementById("closeConversationModal");
-const messagesContainer = document.getElementById("messagesContainer");
-const messageInput = document.getElementById("messageInput");
-const sendMessageBtn = document.getElementById("sendMessageBtn");
-const openChatFromDetailsModal = document.getElementById("openChatFromDetailsModal");
-let currentConversationId = null;
-
-// Filter variables
-let organizationFilter;
-
-// Initialize when DOM loads
+// DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize organization filter based on user's organizations
-  if (userOrganizations.length > 0) {
-    const placeholderText = userType === 'student' ? 'My Organizations' : 'My Departments';
-    organizationFilter = new EnhancedMultiSelect('organizationFilter', 
-      userOrganizations, 
-      placeholderText, 
-      true);
-    
-    // Add event listener for organization filter changes
-    document.getElementById('organizationFilter').addEventListener('selectionChange', filterRequests);
-  } else {
-    // Hide the organization filter if user has no organizations
-    const orgFilterItem = document.querySelector('.filter-item:has(#organizationFilter)');
-    if (orgFilterItem) {
-      orgFilterItem.style.display = 'none';
-    }
-  }
+    // Initialize all event listeners
+    initializeEventListeners();
+    initializeTableFilters();
+    initializeRevisionFeatures();
 });
 
-// Modal close handlers
-closeDetailsModal.onclick = () => detailModal.style.display = 'none';
-closeConversationModal.onclick = () => conversationModal.style.display = 'none';
-
-openChatFromDetailsModal.onclick = function() {
-  detailModal.style.display = 'none';
-  openChat(currentConversationId);
+// ==========================================
+// DROPDOWN PROFILE MENU
+// ==========================================
+window.toggleDropdown = function() {
+    const dropdown = document.getElementById('dropdownMenu');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
 };
 
-window.onclick = function(event) {
-  if (event.target === detailModal) detailModal.style.display = 'none';
-  if (event.target === conversationModal) conversationModal.style.display = 'none';
-}
-
-function filterRequests() {
-  const selectedTypes = getSelectedTypes();
-  const selectedStatuses = getSelectedStatuses();
-  const titleValue = document.getElementById('titleFilter').value.toLowerCase();
-  const requestorValue = document.getElementById('requestorFilter') ? document.getElementById('requestorFilter').value.toLowerCase() : '';
-  const organizationValue = organizationFilter ? organizationFilter.getSelectedValues() : ['all'];
-  const dateFromValue = document.getElementById('dateFromFilter').value ? new Date(document.getElementById('dateFromFilter').value) : null;
-  const dateToValue = document.getElementById('dateToFilter').value ? new Date(document.getElementById('dateToFilter').value) : null;
-  
-  let visibleCount = 0;
-
-  allRows.forEach(row => {
-    const rowType = row.dataset.type.toLowerCase();
-    const rowStatus = row.dataset.status.toLowerCase();
-    const rowTitle = row.dataset.title.toLowerCase();
-    const rowRequestor = (row.dataset.requestor || '').toLowerCase();
-    const rowOrganization = row.dataset.organization.toLowerCase();
-    const rowDate = new Date(row.dataset.date);
-
-    // Type filter logic
-    let typeMatch = true;
-    if (selectedTypes.length > 0 && !selectedTypes.includes('all')) {
-      typeMatch = selectedTypes.some(type => rowType.includes(type.toLowerCase()));
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdownWrapper = document.querySelector('.dropdown-wrapper');
+    const dropdown = document.getElementById('dropdownMenu');
+    
+    if (dropdown && dropdownWrapper) {
+        if (!dropdownWrapper.contains(event.target)) {
+            dropdown.classList.remove('show');
+        }
     }
-
-    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
-    const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
-    const requestorMatch = requestorValue === '' || rowRequestor.includes(requestorValue);
-    
-    // Organization filter logic
-    let organizationMatch = true;
-    if (organizationFilter && organizationValue.length > 0 && !organizationValue.includes('all')) {
-      organizationMatch = organizationValue.some(org => 
-        rowOrganization.includes(org.toLowerCase())
-      );
-    }
-    
-    let dateMatch = true;
-    if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
-    if (dateToValue && rowDate > dateToValue) dateMatch = false;
-
-    const isVisible = typeMatch && statusMatch && titleMatch && requestorMatch && organizationMatch && dateMatch;
-    row.style.display = isVisible ? '' : 'none';
-    
-    if (isVisible) visibleCount++;
-  });
-
-  const totalCount = allRows.length;
-  const resultsCount = document.getElementById('resultsCount');
-  if (visibleCount === totalCount) {
-    resultsCount.textContent = `Showing all ${totalCount} tasks`;
-  } else {
-    resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} tasks`;
-  }
-
-  toggleNoResultsMessage(visibleCount === 0);
-}
-
-function toggleNoResultsMessage(show) {
-  let noResultsRow = document.getElementById('noResultsRow');
-  
-  if (show && !noResultsRow) {
-    const tbody = document.getElementById('requestsTableBody');
-    noResultsRow = document.createElement('tr');
-    noResultsRow.id = 'noResultsRow';
-    noResultsRow.innerHTML = `
-      <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">
-          <svg width="48" height="48" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21l-4.35-4.35"/>
-          </svg>
-        </div>
-        <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
-        <p>Try adjusting your filters to see more results.</p>
-      </td>
-    `;
-    tbody.appendChild(noResultsRow);
-  } else if (!show && noResultsRow) {
-    noResultsRow.remove();
-  }
-}
-
-// Event listeners for filters
-document.getElementById('titleFilter').addEventListener('input', filterRequests);
-if (document.getElementById('requestorFilter')) {
-  document.getElementById('requestorFilter').addEventListener('input', filterRequests);
-}
-document.getElementById('dateFromFilter').addEventListener('change', filterRequests);
-document.getElementById('dateToFilter').addEventListener('change', filterRequests);
-
-clearFiltersBtn.addEventListener('click', () => {
-  document.getElementById('titleFilter').value = '';
-  if (document.getElementById('requestorFilter')) {
-    document.getElementById('requestorFilter').value = '';
-  }
-  document.getElementById('dateFromFilter').value = '';
-  document.getElementById('dateToFilter').value = '';
-  
-  // Clear type filter
-  typeCheckboxes.forEach(cb => cb.checked = false);
-  allTypeCheckbox.checked = true;
-  updateTypeDisplay();
-  
-  // Clear status filter
-  statusCheckboxes.forEach(cb => cb.checked = false);
-  allStatusCheckbox.checked = true;
-  updateStatusDisplay();
-  
-  // Clear organization filter
-  if (organizationFilter) {
-    organizationFilter.reset();
-  }
-  
-  filterRequests();
 });
 
-// Enhanced row click handler with improved modal population
-document.querySelectorAll('.request-row').forEach(row => {
-  row.addEventListener('click', (e) => {
-    // Mark related notifications as read when opening request
-    const requestId = row.dataset.id;
-    const requestType = row.dataset.type;
-    if (requestId && window.markNotificationReadForRequest) {
-      window.markNotificationReadForRequest(requestId, requestType);
+function initializeEventListeners() {
+    // Clear filters button
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearAllFilters);
     }
-    
-    // Populate basic fields
-    const detailTitle = document.getElementById("detailTitle");
-    const detailStudent = document.getElementById("detailStudent");
-    const detailOrganization = document.getElementById("detailOrganization");
-    const detailDescription = document.getElementById("detailDescription");
-    const detailDatetime = document.getElementById("detailDatetime");
-    const detailType = document.getElementById("detailType");
-    const detailSpecificRequest = document.getElementById("detailSpecificRequest");
-    
-    if (detailTitle) detailTitle.innerText = row.dataset.title || '';
-    if (detailStudent) detailStudent.innerText = row.dataset.requestor || 'Unknown';
-    if (detailOrganization) detailOrganization.innerText = row.dataset.organization || 'N/A';
-    if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
-    if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
 
-    // Set request type
-    if (detailType) {
-      if (requestType === 'approval') {
-        detailType.innerText = 'Approval Request';
-      } else if (requestType === 'service') {
-        detailType.innerText = 'Service Request';
-        if (detailSpecificRequest) {
-          detailSpecificRequest.innerText = row.dataset.servicetype || 'Not specified';
+    // Table row click events - use event delegation
+    const tableBody = document.getElementById('requestsTableBody');
+    if (tableBody) {
+        tableBody.addEventListener('click', function(e) {
+            // Find the closest tr element
+            const row = e.target.closest('tr.request-row');
+            if (row) {
+                const requestId = row.getAttribute('data-request-id');
+                const requestType = row.getAttribute('data-request-type');
+                if (requestId && requestType) {
+                    openRequestDetails(requestId, requestType);
+                }
+            }
+        });
+    }
+
+    // Modal close events
+    const closeModalBtn = document.querySelector('.close-modal');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeRequestModal);
+    }
+
+    const modal = document.getElementById('requestDetailsModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeRequestModal();
+            }
+        });
+    }
+
+    // Approval actions
+    const approveBtn = document.getElementById('approveBtn');
+    if (approveBtn) {
+        approveBtn.addEventListener('click', approveRequest);
+    }
+
+    const requestRevisionBtn = document.getElementById('requestRevisionBtn');
+    if (requestRevisionBtn) {
+        requestRevisionBtn.addEventListener('click', showRevisionForm);
+    }
+
+    const cancelRevisionBtn = document.getElementById('cancelRevisionBtn');
+    if (cancelRevisionBtn) {
+        cancelRevisionBtn.addEventListener('click', hideRevisionForm);
+    }
+
+    const submitRevisionBtn = document.getElementById('submitRevisionBtn');
+    if (submitRevisionBtn) {
+        submitRevisionBtn.addEventListener('click', submitRevision);
+    }
+
+    // Service actions
+    const deliverablesFileInput = document.getElementById('deliverablesFileInput');
+    if (deliverablesFileInput) {
+        deliverablesFileInput.addEventListener('change', handleFileInputChange);
+    }
+
+    const uploadDeliverablesBtn = document.getElementById('uploadDeliverablesBtn');
+    if (uploadDeliverablesBtn) {
+        uploadDeliverablesBtn.addEventListener('click', uploadDeliverables);
+    }
+
+    const completeServiceBtn = document.getElementById('completeServiceBtn');
+    if (completeServiceBtn) {
+        completeServiceBtn.addEventListener('click', completeServiceRequest);
+    }
+
+    // Message sending
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    if (sendMessageBtn) {
+        sendMessageBtn.addEventListener('click', sendMessage);
+    }
+
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+}
+
+function initializeTableFilters() {
+    const filterInputs = {
+        title: document.getElementById('filterTitle'),
+        type: document.getElementById('filterType'),
+        status: document.getElementById('filterStatus'),
+        requestor: document.getElementById('filterRequestor'),
+        dateFrom: document.getElementById('filterDateFrom'),
+        dateTo: document.getElementById('filterDateTo')
+    };
+
+    // Add event listeners to all filter inputs
+    Object.values(filterInputs).forEach(input => {
+        if (input) {
+            input.addEventListener('input', applyTableFilters);
+            input.addEventListener('change', applyTableFilters);
         }
-      }
+    });
+}
+
+function applyTableFilters() {
+    const filters = {
+        title: document.getElementById('filterTitle')?.value.toLowerCase() || '',
+        type: document.getElementById('filterType')?.value.toLowerCase() || '',
+        status: document.getElementById('filterStatus')?.value.toLowerCase() || '',
+        requestor: document.getElementById('filterRequestor')?.value.toLowerCase() || '',
+        dateFrom: document.getElementById('filterDateFrom')?.value || '',
+        dateTo: document.getElementById('filterDateTo')?.value || ''
+    };
+
+    const tableRows = document.querySelectorAll('.requests-table tbody tr');
+    
+    tableRows.forEach(row => {
+        const title = row.getAttribute('data-title')?.toLowerCase() || '';
+        const type = row.getAttribute('data-request-type')?.toLowerCase() || '';
+        const status = row.getAttribute('data-status')?.toLowerCase() || '';
+        const requestor = row.getAttribute('data-requestor')?.toLowerCase() || '';
+        const dateSubmitted = row.getAttribute('data-date-submitted') || '';
+
+        let showRow = true;
+
+        // Apply filters
+        if (filters.title && !title.includes(filters.title)) {
+            showRow = false;
+        }
+        if (filters.type && type !== filters.type) {
+            showRow = false;
+        }
+        if (filters.status && status !== filters.status) {
+            showRow = false;
+        }
+        if (filters.requestor && !requestor.includes(filters.requestor)) {
+            showRow = false;
+        }
+        if (filters.dateFrom && dateSubmitted < filters.dateFrom) {
+            showRow = false;
+        }
+        if (filters.dateTo && dateSubmitted > filters.dateTo) {
+            showRow = false;
+        }
+
+        row.style.display = showRow ? '' : 'none';
+    });
+}
+
+function clearAllFilters() {
+    document.getElementById('filterTitle').value = '';
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterRequestor').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    
+    applyTableFilters();
+}
+
+// Function: openRequestDetails
+function openRequestDetails(requestId, requestType) {
+    currentRequestId = requestId;
+    currentRequestType = requestType;
+
+    // Find the row by request ID
+    const row = document.querySelector(`tr[data-request-id="${requestId}"]`);
+    if (!row) {
+        showErrorMessage('Request not found');
+        return;
     }
 
-    // Enhanced deadline handling
-    const deadlineInfo = document.getElementById("deadlineInfo");
-    const deadline = row.dataset.deadline;
-    if (deadlineInfo && deadline && deadline !== '') {
-      const deadlineElement = document.getElementById("detailDeadlineInfo");
-      const formattedDeadline = row.dataset.formattedDeadline || 'N/A';
-      if (deadlineElement) {
-        deadlineElement.innerText = formattedDeadline;
-      }
-      deadlineInfo.style.display = 'block';
-    } else if (deadlineInfo) {
-      deadlineInfo.style.display = 'none';
+    // Get all data attributes from row
+    const title = row.getAttribute('data-title') || 'Untitled';
+    const requestor = row.getAttribute('data-requestor') || 'Unknown';
+    const requestorEmail = row.getAttribute('data-requestor-email') || 'N/A';
+    const organization = row.getAttribute('data-organization') || 'N/A';
+    const dateSubmitted = row.getAttribute('data-date-submitted') || '';
+    const status = row.getAttribute('data-status') || 'Pending';
+    const description = row.getAttribute('data-description') || 'No description provided';
+    const deadline = row.getAttribute('data-deadline') || '';
+    const serviceType = row.getAttribute('data-service-type') || '';
+    const specificRequestType = row.getAttribute('data-specific-request-type') || '';
+    const filesJson = row.getAttribute('data-files') || '[]';
+    const deliverablesJson = row.getAttribute('data-deliverables') || '[]';
+
+    // Populate modal with data
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalRequestor').textContent = requestor;
+    document.getElementById('modalRequestorEmail').textContent = requestorEmail;
+    document.getElementById('modalOrganization').textContent = organization;
+    document.getElementById('modalDate').textContent = dateSubmitted;
+    document.getElementById('modalStatus').textContent = status.toUpperCase();
+    document.getElementById('modalDescription').textContent = description;
+
+    // Update type badge
+    const typeBadge = document.getElementById('modalTypeBadge');
+    if (typeBadge) {
+        typeBadge.textContent = requestType === 'approval' ? 'APPROVAL' : 'SERVICE';
+        typeBadge.className = `type-badge ${requestType}`;
     }
 
-    // Enhanced file preview
-    const filesData = row.dataset.files;
-    const previewContainer = document.getElementById('file-preview');
-    
-    if (previewContainer) {
-      previewContainer.innerHTML = '';
-      
-      let allFiles = [];
-      if (filesData && filesData.trim() !== '') {
-        allFiles = filesData.split(',').map(f => f.trim()).filter(Boolean);
-      }
-      
-      createEnhancedFilePreview(allFiles, previewContainer);
-    }
-    
-    // Show appropriate action section based on request type
-    const approvalActionsSection = document.getElementById('approvalActionsSection');
-    const serviceActionsSection = document.getElementById('serviceActionsSection');
-    const currentStatusValue = document.getElementById('currentStatusValue');
-    const serviceStatusValue = document.getElementById('serviceStatusValue');
-    const status = row.dataset.status || '';
+    // Show/hide deadline and service type based on type
+    const deadlineField = document.getElementById('deadlineField');
+    const serviceTypeField = document.getElementById('serviceTypeField');
     
     if (requestType === 'approval') {
-      // Show approval actions, hide service actions
-      if (approvalActionsSection) approvalActionsSection.style.display = 'block';
-      if (serviceActionsSection) serviceActionsSection.style.display = 'none';
-      
-      // Update status display
-      if (currentStatusValue) {
-        currentStatusValue.innerText = status;
-        currentStatusValue.className = `status-badge ${status.toLowerCase().replace(/\s+/g, '-')}`;
-      }
+        if (deadlineField) deadlineField.style.display = 'block';
+        if (serviceTypeField) serviceTypeField.style.display = 'none';
+        if (deadline) {
+            document.getElementById('modalDeadline').textContent = new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        } else {
+            document.getElementById('modalDeadline').textContent = 'Not specified';
+        }
     } else if (requestType === 'service') {
-      // Show service actions, hide approval actions
-      if (approvalActionsSection) approvalActionsSection.style.display = 'none';
-      if (serviceActionsSection) serviceActionsSection.style.display = 'block';
-      
-      // Update status display
-      if (serviceStatusValue) {
-        serviceStatusValue.innerText = status;
-        serviceStatusValue.className = `status-badge ${status.toLowerCase().replace(/\s+/g, '-')}`;
-      }
+        if (deadlineField) deadlineField.style.display = 'none';
+        if (serviceTypeField) serviceTypeField.style.display = 'block';
+        if (serviceType || specificRequestType) {
+            document.getElementById('modalServiceType').textContent = serviceType || specificRequestType;
+        } else {
+            document.getElementById('modalServiceType').textContent = 'Not specified';
+        }
     }
-    
-    // Chat functionality
-    currentConversationId = row.dataset.id;
-    
-    if (detailModal) detailModal.style.display = 'flex';
-  });
-});
 
-// Header Dropdown Manager - Integrates with DropdownManager
-const headerDropdown = {
-  menu: null,
-  isOpen: false,
-  
-  init() {
-    this.menu = document.getElementById("dropdownMenu");
-  },
-  
-  toggle() {
-    if (this.isOpen) {
-      this.close();
-    } else {
-      this.open();
+    // Show files if they exist
+    try {
+        const files = JSON.parse(filesJson);
+        const filesSection = document.getElementById('filesSection');
+        const filesContainer = document.getElementById('modalFiles');
+        if (files && files.length > 0) {
+            filesContainer.innerHTML = '';
+            createEnhancedFilePreview(files, filesContainer);
+            if (filesSection) filesSection.style.display = 'block';
+        } else {
+            if (filesSection) filesSection.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('Error parsing files:', e);
+        const filesSection = document.getElementById('filesSection');
+        if (filesSection) filesSection.style.display = 'none';
     }
-  },
-  
-  open() {
-    // Register with DropdownManager to close other dropdowns
-    DropdownManager.registerOpen(this);
-    
-    if (this.menu) {
-      this.menu.style.display = "block";
-      this.isOpen = true;
-    }
-  },
-  
-  close() {
-    if (this.menu) {
-      this.menu.style.display = "none";
-      this.isOpen = false;
-    }
-    
-    // Clear from DropdownManager
-    DropdownManager.clearActive(this);
-  }
-};
 
-function toggleDropdown() {
-  if (!headerDropdown.menu) {
-    headerDropdown.init();
-  }
-  headerDropdown.toggle();
+    // Show deliverables if they exist
+    try {
+        const deliverables = JSON.parse(deliverablesJson);
+        const deliverablesSection = document.getElementById('deliverablesSection');
+        const deliverablesContainer = document.getElementById('modalDeliverables');
+        if (deliverables && deliverables.length > 0) {
+            deliverablesContainer.innerHTML = '';
+            createEnhancedFilePreview(deliverables, deliverablesContainer);
+            if (deliverablesSection) deliverablesSection.style.display = 'block';
+        } else {
+            if (deliverablesSection) deliverablesSection.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('Error parsing deliverables:', e);
+        const deliverablesSection = document.getElementById('deliverablesSection');
+        if (deliverablesSection) deliverablesSection.style.display = 'none';
+    }
+
+    // Show appropriate action panels
+    const approvalActionsPanel = document.getElementById('approvalActionsPanel');
+    const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+    
+    // Update modal header color based on request type
+    const modalHeader = document.querySelector('.unit-modal-header');
+    if (modalHeader) {
+        modalHeader.classList.remove('approval-header-color', 'service-header-color');
+        if (requestType === 'approval') {
+            modalHeader.classList.add('approval-header-color');
+        } else if (requestType === 'service') {
+            modalHeader.classList.add('service-header-color');
+        }
+    }
+    
+    if (requestType === 'approval') {
+        if (approvalActionsPanel) approvalActionsPanel.style.display = 'block';
+        if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+    } else if (requestType === 'service') {
+        if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
+        if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+    }
+
+    // Load team conversation messages
+    loadConversation(requestId);
+
+    // Display modal
+    const modal = document.getElementById('requestDetailsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', () => {
-  headerDropdown.init();
-});
-
-document.addEventListener("click", function (event) {
-  const toggle = document.querySelector(".dropdown-toggle");
-  const menu = document.getElementById("dropdownMenu");
-  if (!toggle.contains(event.target)) {
-    headerDropdown.close();
-  }
-});
-
-// Custom Type Filter Logic with DropdownManager integration
-const typeFilterElement = document.getElementById('typeFilter');
-const typeDropdown = document.getElementById('typeDropdown');
-const typeDisplay = typeFilterElement.querySelector('.select-display');
-const typeCheckboxes = typeDropdown.querySelectorAll('input[type="checkbox"]');
-const allTypeCheckbox = typeDropdown.querySelector('input[value="all"]');
-
-// Create a dropdown wrapper object that works with DropdownManager
-const typeFilterDropdown = {
-  isOpen: false,
-  
-  open() {
-    // Register with DropdownManager to close other dropdowns
-    DropdownManager.registerOpen(this);
-    
-    this.isOpen = true;
-    typeFilterElement.classList.add('active');
-    typeDropdown.classList.add('show');
-  },
-  
-  close() {
-    this.isOpen = false;
-    typeFilterElement.classList.remove('active');
-    typeDropdown.classList.remove('show');
-    
-    // Clear from DropdownManager
-    DropdownManager.clearActive(this);
-  },
-  
-  toggle() {
-    if (this.isOpen) {
-      this.close();
-    } else {
-      this.open();
+// Function: closeRequestModal
+function closeRequestModal() {
+    const modal = document.getElementById('requestDetailsModal');
+    if (modal) {
+        modal.style.display = 'none';
     }
-  }
-};
 
-// Toggle dropdown
-typeFilterElement.addEventListener('click', function(e) {
-  e.stopPropagation();
-  typeFilterDropdown.toggle();
-});
+    // Reset forms
+    const revisionForm = document.getElementById('revisionForm');
+    if (revisionForm) {
+        revisionForm.style.display = 'none';
+    }
 
-// Prevent dropdown from closing when clicking inside
-typeDropdown.addEventListener('click', function(e) {
-  e.stopPropagation();
-});
+    const revisionComments = document.getElementById('revisionComments');
+    if (revisionComments) {
+        revisionComments.value = '';
+    }
+    
+    // Clear revision files
+    revisionFiles = [];
+    const revisionFilesPreview = document.getElementById('revisionFilesPreview');
+    if (revisionFilesPreview) {
+        revisionFilesPreview.style.display = 'none';
+    }
+    const revisionFileInput = document.getElementById('revisionFileInput');
+    if (revisionFileInput) {
+        revisionFileInput.value = '';
+    }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
-  if (!typeFilterElement.contains(e.target)) {
-    typeFilterDropdown.close();
-  }
-});
+    const deliverablesFileInput = document.getElementById('deliverablesFileInput');
+    if (deliverablesFileInput) {
+        deliverablesFileInput.value = '';
+    }
 
-// Handle checkbox changes for type filter
-typeCheckboxes.forEach(checkbox => {
-  checkbox.addEventListener('change', function() {
-    if (this.value === 'all') {
-      // If "All Types" is checked, uncheck others
-      if (this.checked) {
-        typeCheckboxes.forEach(cb => {
-          if (cb.value !== 'all') cb.checked = false;
+    const selectedFilesPreview = document.getElementById('selectedFilesPreview');
+    if (selectedFilesPreview) {
+        selectedFilesPreview.innerHTML = '';
+    }
+
+    // Reset modal header color
+    const modalHeader = document.querySelector('.unit-modal-header');
+    if (modalHeader) {
+        modalHeader.classList.remove('approval-header-color', 'service-header-color');
+    }
+
+    selectedFiles = [];
+    currentRequestId = null;
+    currentRequestType = null;
+}
+
+// Function: approveRequest
+async function approveRequest() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to approve this request?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/unit/task/approve/${currentRequestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
-      }
-    } else {
-      // If any specific type is checked, uncheck "All Types"
-      if (this.checked) {
-        allTypeCheckbox.checked = false;
-      }
-      
-      // If no specific type is checked, check "All Types"
-      const specificChecked = Array.from(typeCheckboxes).some(cb => 
-        cb.value !== 'all' && cb.checked
-      );
-      if (!specificChecked) {
-        allTypeCheckbox.checked = true;
-      }
-    }
-    
-    updateTypeDisplay();
-    filterRequests();
-  });
-});
 
-function updateTypeDisplay() {
-  const checkedBoxes = Array.from(typeCheckboxes).filter(cb => cb.checked);
-  
-  if (allTypeCheckbox.checked || checkedBoxes.length === 0) {
-    typeDisplay.textContent = 'All Types';
-  } else if (checkedBoxes.length === 1) {
-    const value = checkedBoxes[0].value;
-    if (value === 'request approval') {
-      typeDisplay.textContent = 'Request Approval';
-    } else if (value === 'service request') {
-      typeDisplay.textContent = 'Service Request';
-    } else {
-      typeDisplay.textContent = value.charAt(0).toUpperCase() + value.slice(1);
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Request approved successfully');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showErrorMessage(result.message || 'Failed to approve request');
+        }
+    } catch (error) {
+        console.error('Error approving request:', error);
+        showErrorMessage('An error occurred while approving the request');
     }
-  } else {
-    typeDisplay.textContent = `${checkedBoxes.length} Selected`;
-  }
 }
 
-// Get selected type values for filtering
-function getSelectedTypes() {
-  const checkedBoxes = Array.from(typeCheckboxes).filter(cb => 
-    cb.checked && cb.value !== 'all'
-  );
-  
-  if (allTypeCheckbox.checked || checkedBoxes.length === 0) {
-    return [];
-  }
-  
-  return checkedBoxes.map(cb => cb.value.toLowerCase());
+// Function: showRevisionForm
+function showRevisionForm() {
+    const revisionForm = document.getElementById('revisionForm');
+    if (revisionForm) {
+        revisionForm.style.display = 'block';
+    }
 }
 
-// Custom Status Filter Logic with DropdownManager integration
-const statusFilterElement = document.getElementById('statusFilter');
-const statusDropdown = document.getElementById('statusDropdown');
-const statusDisplay = statusFilterElement.querySelector('.select-display');
-const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
-const allStatusCheckbox = statusDropdown.querySelector('input[value="all"]');
-
-// Create a dropdown wrapper object that works with DropdownManager
-const statusFilterDropdown = {
-  isOpen: false,
-  
-  open() {
-    // Register with DropdownManager to close other dropdowns
-    DropdownManager.registerOpen(this);
-    
-    this.isOpen = true;
-    statusFilterElement.classList.add('active');
-    statusDropdown.classList.add('show');
-  },
-  
-  close() {
-    this.isOpen = false;
-    statusFilterElement.classList.remove('active');
-    statusDropdown.classList.remove('show');
-    
-    // Clear from DropdownManager
-    DropdownManager.clearActive(this);
-  },
-  
-  toggle() {
-    if (this.isOpen) {
-      this.close();
-    } else {
-      this.open();
+// Function: hideRevisionForm
+function hideRevisionForm() {
+    const revisionForm = document.getElementById('revisionForm');
+    if (revisionForm) {
+        revisionForm.style.display = 'none';
     }
-  }
-};
 
-// Toggle dropdown
-statusFilterElement.addEventListener('click', function(e) {
-  e.stopPropagation();
-  statusFilterDropdown.toggle();
-});
+    const revisionNotes = document.getElementById('revisionNotes');
+    if (revisionNotes) {
+        revisionNotes.value = '';
+    }
+}
 
-// Prevent dropdown from closing when clicking inside
-statusDropdown.addEventListener('click', function(e) {
-  e.stopPropagation();
-});
+// Function: submitRevision
+async function submitRevision() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function(e) {
-  if (!statusFilterElement.contains(e.target)) {
-    statusFilterDropdown.close();
-  }
-});
+    const revisionComments = document.getElementById('revisionComments')?.value.trim();
 
-// Handle checkbox changes
-statusCheckboxes.forEach(checkbox => {
-  checkbox.addEventListener('change', function() {
-    if (this.value === 'all') {
-      // If "All Status" is checked, uncheck others
-      if (this.checked) {
-        statusCheckboxes.forEach(cb => {
-          if (cb.value !== 'all') cb.checked = false;
+    if (!revisionComments) {
+        showErrorMessage('Please enter revision feedback');
+        return;
+    }
+
+    try {
+        // Create FormData to handle both text and files
+        const formData = new FormData();
+        formData.append('revisionNotes', revisionComments);
+        
+        // Add files if any
+        revisionFiles.forEach((file, index) => {
+            formData.append('revisionFiles', file);
         });
-      }
-    } else {
-      // If any specific status is checked, uncheck "All Status"
-      if (this.checked) {
-        allStatusCheckbox.checked = false;
-      }
-      
-      // If no specific status is checked, check "All Status"
-      const specificChecked = Array.from(statusCheckboxes).some(cb => 
-        cb.value !== 'all' && cb.checked
-      );
-      if (!specificChecked) {
-        allStatusCheckbox.checked = true;
-      }
+
+        const response = await fetch(`/unit/task/revise/${currentRequestId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Revision request submitted successfully');
+            
+            // Clear revision form
+            document.getElementById('revisionComments').value = '';
+            clearAllRevisionFiles();
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showErrorMessage(result.message || 'Failed to submit revision request');
+        }
+    } catch (error) {
+        console.error('Error submitting revision:', error);
+        showErrorMessage('An error occurred while submitting the revision request');
     }
+}
+
+// Function: Handle file input change for deliverables
+let unitSelectedFiles = [];
+
+function handleFileInputChange(event) {
+    const files = event.target.files;
+    unitSelectedFiles = Array.from(files);
+    updateUnitFileUI();
+}
+
+function updateUnitFileUI() {
+    const fileManagement = document.getElementById('unitFileManagement');
+    const filesCount = document.getElementById('unitFilesCount');
+    const selectedFilesContainer = document.getElementById('unitSelectedFiles');
+    const filesSummary = document.getElementById('unitFilesSummary');
+    const uploadBtn = document.getElementById('uploadDeliverablesBtn');
     
-    updateStatusDisplay();
-    filterRequests();
-  });
-});
-
-function updateStatusDisplay() {
-  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => cb.checked);
-  
-  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-    statusDisplay.textContent = 'All Status';
-  } else if (checkedBoxes.length === 1) {
-    statusDisplay.textContent = checkedBoxes[0].value.charAt(0).toUpperCase() + 
-                              checkedBoxes[0].value.slice(1);
-  } else {
-    statusDisplay.textContent = `${checkedBoxes.length} Selected`;
-  }
+    if (unitSelectedFiles.length > 0) {
+        fileManagement.style.display = 'block';
+        filesCount.textContent = `${unitSelectedFiles.length} file${unitSelectedFiles.length > 1 ? 's' : ''} selected`;
+        
+        // Clear and populate selected files
+        selectedFilesContainer.innerHTML = '';
+        let totalSize = 0;
+        
+        unitSelectedFiles.forEach((file, index) => {
+            totalSize += file.size;
+            const fileItem = document.createElement('div');
+            fileItem.className = 'unit-file-item-card';
+            
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            const ext = file.name.split('.').pop().toLowerCase();
+            let iconColor = '#64748b';
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
+            else if (ext === 'pdf') iconColor = '#dc2626';
+            else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+            else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+            
+            fileItem.innerHTML = `
+                <div class="unit-file-info-wrapper">
+                    <div class="unit-file-icon-wrapper" style="color: ${iconColor};">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                            <line x1="8" y1="8" x2="16" y2="8"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                    </div>
+                    <div class="unit-file-details">
+                        <div class="unit-file-name-text" title="${file.name}">${file.name}</div>
+                        <div class="unit-file-size-text">${fileSizeMB} MB · ${ext.toUpperCase()}</div>
+                    </div>
+                </div>
+                <button type="button" class="unit-remove-file-btn" onclick="removeUnitFile(${index})" aria-label="Remove file">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            `;
+            selectedFilesContainer.appendChild(fileItem);
+        });
+        
+        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+        filesSummary.textContent = `Total size: ${totalSizeMB} MB`;
+        
+        if (uploadBtn) uploadBtn.disabled = false;
+    } else {
+        fileManagement.style.display = 'none';
+        if (uploadBtn) uploadBtn.disabled = true;
+    }
 }
 
-// Get selected status values for filtering
-function getSelectedStatuses() {
-  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
-    cb.checked && cb.value !== 'all'
-  );
-  
-  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-    return [];
-  }
-  
-  return checkedBoxes.map(cb => cb.value.toLowerCase());
-}
-// Get selected status values for filtering
-function getSelectedStatuses() {
-  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
-    cb.checked && cb.value !== 'all'
-  );
-  
-  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-    return [];
-  }
-  
-  return checkedBoxes.map(cb => cb.value.toLowerCase());
+function removeUnitFile(index) {
+    unitSelectedFiles.splice(index, 1);
+    
+    // Update file input
+    const dt = new DataTransfer();
+    unitSelectedFiles.forEach(file => dt.items.add(file));
+    document.getElementById('deliverablesFileInput').files = dt.files;
+    
+    updateUnitFileUI();
 }
 
-// Chat functions
-function openChat(requestId) {
-  currentConversationId = requestId;
-  loadConversation(requestId);
-  conversationModal.style.display = 'flex';
+function clearAllUnitFiles() {
+    unitSelectedFiles = [];
+    document.getElementById('deliverablesFileInput').value = '';
+    updateUnitFileUI();
 }
 
+// Function: uploadDeliverables
+async function uploadDeliverables() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    if (unitSelectedFiles.length === 0) {
+        showErrorMessage('Please select files to upload');
+        return;
+    }
+
+    try {
+        // Show upload progress
+        const progressBar = document.getElementById('unitUploadProgress');
+        const progressFill = document.getElementById('unitProgressFill');
+        if (progressBar) {
+            progressBar.classList.add('active');
+            progressFill.style.width = '0%';
+        }
+
+        const formData = new FormData();
+        unitSelectedFiles.forEach(file => {
+            formData.append('deliverables', file);
+        });
+
+        // Simulate progress
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += 10;
+            if (progress <= 90 && progressFill) {
+                progressFill.style.width = progress + '%';
+            }
+        }, 100);
+
+        const response = await fetch(`/unit/task/upload/${currentRequestId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        clearInterval(progressInterval);
+        if (progressFill) progressFill.style.width = '100%';
+
+        const result = await response.json();
+
+        setTimeout(() => {
+            if (progressBar) progressBar.classList.remove('active');
+            if (progressFill) progressFill.style.width = '0%';
+        }, 500);
+
+        if (response.ok && result.success) {
+            showSuccessMessage(result.message || 'Deliverables uploaded successfully. Status changed to "For Checking".');
+            
+            // Clear file input and preview
+            clearAllUnitFiles();
+            document.getElementById('uploadDeliverablesBtn').disabled = true;
+
+            // Reload deliverables section
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showErrorMessage(result.message || 'Failed to upload deliverables');
+        }
+    } catch (error) {
+        console.error('Error uploading deliverables:', error);
+        showErrorMessage('An error occurred while uploading deliverables');
+    }
+}
+
+// Function: completeServiceRequest
+async function completeServiceRequest() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to mark this service request as completed?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/unit/task/complete/${currentRequestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Service request marked as completed');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showErrorMessage(result.message || 'Failed to complete service request');
+        }
+    } catch (error) {
+        console.error('Error completing service request:', error);
+        showErrorMessage('An error occurred while completing the service request');
+    }
+}
+
+// Function: loadConversation
 async function loadConversation(requestId) {
-  try {
-    const response = await fetch(`/api/conversation/${requestId}`);
-    const conversation = await response.json();
-    
-    messagesContainer.innerHTML = '';
-    
-    if (conversation.messages && conversation.messages.length > 0) {
-      conversation.messages.forEach(message => {
-        addMessageToUI(message);
-      });
-      
-      await fetch(`/api/conversation/${requestId}/mark-read`, {
-        method: 'POST'
-      });
-    } else {
-      messagesContainer.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
-          <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">💭</div>
-            <p>No messages yet</p>
-            <small>Start the conversation by sending a message below</small>
-          </div>
-        </div>
-      `;
+    try {
+        const response = await fetch(`/api/conversation/${requestId}`);
+        const result = await response.json();
+
+        const messagesContainer = document.getElementById('conversationMessages');
+        if (!messagesContainer) return;
+
+        if (response.ok && result.success && result.messages) {
+            messagesContainer.innerHTML = '';
+            
+            if (result.messages.length === 0) {
+                messagesContainer.innerHTML = '<p class="no-messages">No messages yet. Start the conversation!</p>';
+                return;
+            }
+
+            result.messages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${message.senderRole === 'unit' ? 'message-unit' : 'message-user'}`;
+                
+                const senderName = message.senderName || (message.senderRole === 'unit' ? 'Unit Member' : 'Requestor');
+                const timestamp = formatDate(message.timestamp);
+                
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender">${senderName}</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-content">${escapeHtml(message.content)}</div>
+                `;
+                
+                messagesContainer.appendChild(messageDiv);
+            });
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } else {
+            messagesContainer.innerHTML = '<p class="no-messages">Unable to load conversation</p>';
+        }
+    } catch (error) {
+        console.error('Error loading conversation:', error);
+        const messagesContainer = document.getElementById('conversationMessages');
+        if (messagesContainer) {
+            messagesContainer.innerHTML = '<p class="no-messages">Error loading conversation</p>';
+        }
     }
-    
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  } catch (error) {
-    console.error('Error loading conversation:', error);
-    messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
-  }
 }
 
-function addMessageToUI(message) {
-  // Clear empty state message if it exists
-  const emptyStateMessage = messagesContainer.querySelector('p');
-  if (emptyStateMessage && (emptyStateMessage.textContent.includes('No messages yet') || emptyStateMessage.textContent.includes('No messages yet. Start the conversation!'))) {
-    messagesContainer.innerHTML = '';
-  }
-  
-  const messageDiv = document.createElement('div');
-  const isUser = message.senderRole === 'user';
-  const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
-  
-  // Create user avatar (profile picture or default icon)
-  const userAvatar = `
-    <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? 'var(--primary-green)' : '#d1d5db'};">
-      ${message.senderId && message.senderId.profilePicture ? 
-        `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-         <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
-           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-           <circle cx="12" cy="7" r="4"/>
-         </svg>` :
-        `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-           <circle cx="12" cy="7" r="4"/>
-         </svg>`
-      }
-    </div>
-  `;
-  
-  messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
-  messageDiv.innerHTML = `
-    <div class="message-content">
-      <div style="display: flex; align-items: flex-start;">
-        ${userAvatar}
-        <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
-          <div class="message-header">
-            <strong>${senderName}</strong>
-            <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
-          </div>
-          <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;"></div>
-          <div class="message-attachment" style="margin-top: 0.5rem;"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // Set the message content as HTML to support formatting
-  const messageTextDiv = messageDiv.querySelector('.message-text');
-  if (messageTextDiv && message.content) {
-    // Convert markdown-style formatting to HTML
-    let formattedContent = message.content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
-      .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');           // <u>underline</u> stays the same
+// Function: sendMessage
+async function sendMessage() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    const messageInput = document.getElementById('messageInput');
+    const messageText = messageInput?.value.trim();
+
+    if (!messageText) {
+        showErrorMessage('Please enter a message');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content: messageText,
+                senderRole: 'unit'
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // Append message to UI
+            const messagesContainer = document.getElementById('conversationMessages');
+            if (messagesContainer) {
+                // Remove "no messages" placeholder if it exists
+                const noMessages = messagesContainer.querySelector('.no-messages');
+                if (noMessages) {
+                    noMessages.remove();
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message message-unit';
+                
+                const senderName = result.message.senderName || 'Unit Member';
+                const timestamp = formatDate(result.message.timestamp);
+                
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender">${senderName}</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-content">${escapeHtml(messageText)}</div>
+                `;
+                
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Clear input
+            messageInput.value = '';
+        } else {
+            showErrorMessage(result.message || 'Failed to send message');
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showErrorMessage('An error occurred while sending the message');
+    }
+}
+
+// Helper Functions
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
     
-    messageTextDiv.innerHTML = formattedContent;
-  }
-  
-  // Handle attachments
-  const attachmentDiv = messageDiv.querySelector('.message-attachment');
-  if (attachmentDiv && message.file_path) {
-    const isImage = message.file_type && message.file_type.startsWith('image/');
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
     
-    if (isImage) {
-      attachmentDiv.innerHTML = `
-        <div style="margin-top: 0.5rem;">
-          <img src="${message.file_path}" 
-               style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
-               onclick="openImageModal('${message.file_path}')"
-               alt="${message.original_filename || 'Attached image'}">
-        </div>
-      `;
+    const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    
+    return date.toLocaleDateString('en-US', options);
+}
+
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    
+    const iconMap = {
+        pdf: '📄',
+        doc: '📝',
+        docx: '📝',
+        xls: '📊',
+        xlsx: '📊',
+        ppt: '📊',
+        pptx: '📊',
+        jpg: '🖼️',
+        jpeg: '🖼️',
+        png: '🖼️',
+        gif: '🖼️',
+        zip: '📦',
+        rar: '📦',
+        txt: '📃',
+        csv: '📋'
+    };
+    
+    return iconMap[ext] || '📎';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Helper function to format text with markdown-style syntax
+function formatText(text) {
+    if (!text) return '';
+    
+    // Escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+}
+
+function showSuccessMessage(message) {
+    // Check if alert handler exists
+    if (typeof window.showAlert === 'function') {
+        window.showAlert(message, 'success');
     } else {
-      const fileName = message.original_filename || 'File';
-      attachmentDiv.innerHTML = `
-        <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 1.2rem;">📎</span>
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
-              <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
+        alert(message);
+    }
+}
+
+function showErrorMessage(message) {
+    // Check if alert handler exists
+    if (typeof window.showAlert === 'function') {
+        window.showAlert(message, 'error');
+    } else {
+        alert(message);
+    }
+}
+
+// ==========================================
+// TEAM CONVERSATION MODAL FUNCTIONS
+// ==========================================
+
+function openTeamConversationModal() {
+    const modal = document.getElementById('teamConversationModal');
+    if (modal && currentRequestId) {
+        loadTeamConversation(currentRequestId);
+        modal.style.display = 'flex';
+    }
+}
+
+function closeTeamConversationModal() {
+    const modal = document.getElementById('teamConversationModal');
+    if (modal) {
+        modal.style.display = 'none';
+        clearConversationInput();
+    }
+}
+
+function loadTeamConversation(requestId) {
+    const container = document.getElementById('teamMessagesContainer');
+    if (!container) return;
+
+    fetch(`/api/conversation/${requestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.conversation && data.conversation.length > 0) {
+                container.innerHTML = '';
+                data.conversation.forEach(msg => {
+                    const messageDiv = createMessageElement(msg);
+                    container.appendChild(messageDiv);
+                });
+                container.scrollTop = container.scrollHeight;
+            } else {
+                container.innerHTML = `
+                    <div class="unit-messages-empty">
+                        <div class="empty-icon">💭</div>
+                        <p>No team discussion yet</p>
+                        <small>Start the conversation below</small>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading conversation:', error);
+            showErrorMessage('Failed to load conversation');
+        });
+}
+
+function createMessageElement(msg) {
+    const div = document.createElement('div');
+    
+    // Determine if this is the current user's message
+    console.log('[AllTasks] Message comparison details:', {
+        'msg.senderRole': msg.senderRole,
+        'typeof msg.senderRole': typeof msg.senderRole,
+        'window.currentUserRole': window.currentUserRole,
+        'typeof window.currentUserRole': typeof window.currentUserRole,
+        'strict comparison (===)': msg.senderRole === window.currentUserRole,
+        'loose comparison (==)': msg.senderRole == window.currentUserRole
+    });
+    
+    const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
+    
+    console.log('[AllTasks] Creating message:', {
+        senderRole: msg.senderRole,
+        currentUserRole: window.currentUserRole,
+        isOwnMessage: isOwnMessage,
+        alignment: isOwnMessage ? 'RIGHT' : 'LEFT',
+        willAddClass: isOwnMessage ? 'message-right' : 'message-left'
+    });
+    
+    // Role-based styling
+    let roleClass = 'user-message';
+    let roleColor = '#e0f2fe'; // Light blue for users
+    
+    if (isOwnMessage) {
+        roleClass = 'own-message';
+        roleColor = '#ffffff'; // White for own messages
+    } else if (msg.senderRole === 'admin') {
+        roleClass = 'admin-message';
+        roleColor = '#fecaca'; // Light red for admin
+    } else if (msg.senderRole === 'unit') {
+        roleClass = 'unit-message';
+        roleColor = '#bbf7d0'; // Light green for unit
+    } else if (msg.senderRole === 'user') {
+        roleClass = 'user-message';
+        roleColor = '#e0f2fe'; // Light blue for users
+    }
+    
+    // Add alignment class
+    div.className = `unit-message-item ${isOwnMessage ? 'message-right' : 'message-left'}`;
+    
+    const time = new Date(msg.timestamp).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let attachmentsHTML = '';
+    if (msg.attachments && msg.attachments.length > 0) {
+        attachmentsHTML = msg.attachments.map(file => {
+            const ext = file.filename.split('.').pop().toLowerCase();
+            const isPdf = ext === 'pdf';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+            
+            let iconColor = '#64748b';
+            if (isImage) iconColor = '#059669';
+            else if (isPdf) iconColor = '#dc2626';
+            else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+            
+            return `
+                <div class="message-attachment">
+                    <div class="message-attachment-icon" style="color: ${iconColor};">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                            <line x1="8" y1="8" x2="16" y2="8"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                            <line x1="8" y1="16" x2="12" y2="16"/>
+                        </svg>
+                    </div>
+                    <div class="message-attachment-info">
+                        <div class="message-attachment-name">${escapeHtml(file.originalname || file.filename)}</div>
+                        <div class="message-attachment-size">${ext.toUpperCase()}</div>
+                    </div>
+                    <div class="message-attachment-actions">
+                        ${isImage ? `
+                            <button class="attachment-action-btn" onclick="viewImage('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View Image">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        ${isPdf ? `
+                            <button class="attachment-action-btn pdf-view" onclick="viewPdf('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View PDF">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="attachment-action-btn" title="Download">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    div.innerHTML = `
+        <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+            <div class="message-header">
+                <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
+                <span class="message-time">${time}</span>
             </div>
-            <a href="${message.file_path}" download="${fileName}" 
-               style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
-              Download
-            </a>
-          </div>
+            <div class="message-content">${formatText(msg.content || '')}</div>
+            ${attachmentsHTML}
         </div>
-      `;
-    }
-  }
-  
-  messagesContainer.appendChild(messageDiv);
+    `;
+    
+    return div;
 }
 
-sendMessageBtn.onclick = async function() {
-  const content = messageInput.value.trim();
-  if (!content && !currentAttachment) return;
-  if (!currentConversationId) return;
+function sendTeamMessage() {
+    const input = document.getElementById('teamMessageInput');
+    if (!input || !currentRequestId) return;
 
-  try {
-    let response;
-    
-    if (currentAttachment) {
-      // Send with file attachment using FormData
-      const formData = new FormData();
-      formData.append('content', content || ''); // Always include content field
-      formData.append('file', currentAttachment.file);
-      
-      response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-        method: 'POST',
-        body: formData
-      });
-    } else {
-      // Send text only using JSON
-      response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content })
-      });
+    const content = input.value.trim();
+    if (!content) {
+        showErrorMessage('Please enter a message');
+        return;
     }
 
-    const result = await response.json();
-    
-    if (result.success) {
-      addMessageToUI(result.message);
-      messageInput.value = '';
-      
-      // Clear attachment
-      if (currentAttachment) {
-        currentAttachment = null;
-        if (attachmentPreview) attachmentPreview.style.display = 'none';
-        if (imageUpload) imageUpload.value = '';
-        if (fileUpload) fileUpload.value = '';
-        if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
-      }
-      
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    } else {
-      throw new Error(result.error || 'Failed to send message');
-    }
-  } catch (error) {
-    console.error('Error sending message:', error);
-    alert('Failed to send message: ' + error.message);
-  }
-};
+    fetch(`/api/conversation/${currentRequestId}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            content: content,
+            senderRole: 'unit'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            input.value = '';
+            loadTeamConversation(currentRequestId);
+        } else {
+            showErrorMessage(data.message || 'Failed to send message');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+        showErrorMessage('Failed to send message');
+    });
+}
 
-messageInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    sendMessageBtn.click();
-  }
+function clearConversationInput() {
+    const input = document.getElementById('teamMessageInput');
+    if (input) input.value = '';
+    
+    const preview = document.getElementById('attachmentPreview');
+    if (preview) preview.style.display = 'none';
+}
+
+// ==========================================
+// TEXT FORMATTING FUNCTIONS
+// ==========================================
+
+function applyTextFormat(format) {
+    const input = document.getElementById('teamMessageInput');
+    if (!input) return;
+
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const text = input.value;
+    const selectedText = text.substring(start, end);
+
+    let formattedText = selectedText;
+    let wrapper = '';
+
+    switch(format) {
+        case 'bold':
+            wrapper = '**';
+            formattedText = `**${selectedText}**`;
+            break;
+        case 'italic':
+            wrapper = '*';
+            formattedText = `*${selectedText}*`;
+            break;
+        case 'underline':
+            wrapper = '__';
+            formattedText = `__${selectedText}__`;
+            break;
+    }
+
+    if (selectedText) {
+        input.value = text.substring(0, start) + formattedText + text.substring(end);
+        input.focus();
+        input.selectionStart = start;
+        input.selectionEnd = start + formattedText.length;
+    }
+}
+
+// Create global alias for notification system
+window.openConversationModal = openTeamConversationModal;
+
+// ==========================================
+// EVENT LISTENER SETUP FOR CONVERSATION
+// ==========================================
+
+// Add conversation modal event listeners after DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced file upload setup
+    setupEnhancedFileUpload();
+    
+    // Open team chat button
+    const openChatBtn = document.getElementById('openTeamChatBtn');
+    if (openChatBtn) {
+        openChatBtn.addEventListener('click', openTeamConversationModal);
+    }
+
+    // Send team message button
+    const sendTeamBtn = document.getElementById('sendTeamMessageBtn');
+    if (sendTeamBtn) {
+        sendTeamBtn.addEventListener('click', sendTeamMessage);
+    }
+
+    // Enter key to send
+    const teamInput = document.getElementById('teamMessageInput');
+    if (teamInput) {
+        teamInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendTeamMessage();
+            }
+        });
+    }
+
+    // Text formatting buttons
+    const boldBtn = document.getElementById('boldBtn');
+    if (boldBtn) {
+        boldBtn.addEventListener('click', () => applyTextFormat('bold'));
+    }
+
+    const italicBtn = document.getElementById('italicBtn');
+    if (italicBtn) {
+        italicBtn.addEventListener('click', () => applyTextFormat('italic'));
+    }
+
+    const underlineBtn = document.getElementById('underlineBtn');
+    if (underlineBtn) {
+        underlineBtn.addEventListener('click', () => applyTextFormat('underline'));
+    }
+
+    // File upload buttons (placeholder - implement as needed)
+    const imageBtn = document.getElementById('imageBtn');
+    if (imageBtn) {
+        imageBtn.addEventListener('click', () => {
+            const imageUpload = document.getElementById('imageUpload');
+            if (imageUpload) imageUpload.click();
+        });
+    }
+
+    const fileBtn = document.getElementById('fileBtn');
+    if (fileBtn) {
+        fileBtn.addEventListener('click', () => {
+            const fileUpload = document.getElementById('fileUpload');
+            if (fileUpload) fileUpload.click();
+        });
+    }
 });
 
-// Enhanced file preview function
+// Enhanced file preview function (like user side)
 function createEnhancedFilePreview(allFiles, previewContainer) {
   if (!previewContainer) return;
   
@@ -1022,7 +1220,7 @@ function createEnhancedFilePreview(allFiles, previewContainer) {
     let fileGridHTML = `
       <h3>
         <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
         </svg>
         Attached Files (${allFiles.length})
       </h3>
@@ -1030,170 +1228,174 @@ function createEnhancedFilePreview(allFiles, previewContainer) {
     `;
     
     allFiles.forEach((file, index) => {
-      if (file && file.trim()) {
-        const fileUrl = `/uploads/${file.trim()}`;
-        const ext = file.split('.').pop().toLowerCase();
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
-        const isPDF = ext === 'pdf';
-        const isDoc = ['doc', 'docx'].includes(ext);
-        const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
-        const isText = ['txt', 'rtf'].includes(ext);
-        
-        // Determine file icon and preview
-        let fileIcon = `
-          <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="4" y="4" width="16" height="16" rx="2"/>
-            <line x1="8" y1="8" x2="16" y2="8"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-            <line x1="8" y1="16" x2="12" y2="16"/>
+      const fileObj = typeof file === 'string' ? { filename: file, originalname: file } : file;
+      const fileName = fileObj.originalname || fileObj.filename || file;
+      const fileUrl = `/uploads/${fileObj.filename || file}`;
+      const ext = fileName.split('.').pop().toLowerCase();
+      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+      const isPDF = ext === 'pdf';
+      const isDoc = ['doc', 'docx'].includes(ext);
+      const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+      const isText = ['txt', 'rtf'].includes(ext);
+      
+      // Determine file icon
+      let fileIcon = `
+        <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="2"/>
+          <line x1="8" y1="8" x2="16" y2="8"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+          <line x1="8" y1="16" x2="12" y2="16"/>
+        </svg>
+      `;
+
+      if (isImage) {
+        fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8" cy="8" r="2"/>
+            <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
           </svg>
         `;
-
-        if (isImage) {
-          fileIcon = `
-            <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8" cy="8" r="2"/>
-              <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-            </svg>
-          `;
-        } else if (isPDF) {
-          fileIcon = `
-            <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="4" y="2" width="16" height="20" rx="2"/>
-              <path d="M8 6h8M8 10h8M8 14h4"/>
-            </svg>
-          `;
-        } else if (isDoc) {
-          fileIcon = `
-            <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="4" y="2" width="16" height="20" rx="2"/>
-              <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
-            </svg>
-          `;
-        } else if (isSpreadsheet) {
-          fileIcon = `
-            <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <rect x="7" y="10" width="2" height="7"/>
-              <rect x="11" y="7" width="2" height="10"/>
-              <rect x="15" y="13" width="2" height="4"/>
-            </svg>
-          `;
-        } else if (isText) {
-          fileIcon = `
-            <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="4" y="2" width="16" height="20" rx="2"/>
-              <line x1="8" y1="8" x2="16" y2="8"/>
-              <line x1="8" y1="12" x2="16" y2="12"/>
-            </svg>
-          `;
-        }
-        
-        fileGridHTML += `
-          <div class="enhanced-file-item">
-            <div class="file-header-enhanced">
-              <div style="color: #059669;">${fileIcon}</div>
-              <div class="file-info-enhanced">
-                <div class="file-name-enhanced" title="${file}">${file}</div>
-                <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
-              </div>
-            </div>
-            
-            <div class="file-preview-container">
+      } else if (isPDF) {
+        fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <path d="M8 6h8M8 10h8M8 14h4"/>
+          </svg>
         `;
-        
-        if (isImage) {
-          fileGridHTML += `
-            <img src="${fileUrl}" 
-                 alt="Preview of ${file}" 
-                 style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; cursor: pointer;"
-                 onclick="openImagePreview('${fileUrl}', '${file}')"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">
-                <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8" cy="8" r="2"/>
-                  <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-                </svg>
-              </div>
-              <p>Image Preview Not Available</p>
-              <small>Click download to view</small>
-            </div>
-          `;
-        } else if (isPDF) {
-          fileGridHTML += `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
-              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="4" y="2" width="16" height="20" rx="2"/>
-                  <path d="M8 6h8M8 10h8M8 14h4"/>
-                </svg>
-              </div>
-              <p><strong>PDF Document</strong></p>
-              <small>Click download to view</small>
-            </div>
-          `;
-        } else if (isDoc) {
-          fileGridHTML += `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
-              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                <svg width="48" height="48" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="4" y="2" width="16" height="20" rx="2"/>
-                  <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
-                </svg>
-              </div>
-              <p><strong>Word Document</strong></p>
-              <small>Click download to view</small>
-            </div>
-          `;
-        } else if (isSpreadsheet) {
-          fileGridHTML += `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
-              <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                <svg width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <rect x="7" y="10" width="2" height="7"/>
-                  <rect x="11" y="7" width="2" height="10"/>
-                  <rect x="15" y="13" width="2" height="4"/>
-                </svg>
-              </div>
-              <p><strong>Spreadsheet</strong></p>
-              <small>Click download to view</small>
-            </div>
-          `;
-        } else {
-          fileGridHTML += `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
-              <div style="font-size: 3rem; margin-bottom: 0.5rem;">${fileIcon}</div>
-              <p><strong>Document File</strong></p>
-              <small>Click download to view</small>
-            </div>
-          `;
-        }
-        
-        fileGridHTML += `
-          </div>
-          
-          <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
-            <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced">
-              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-              </svg>
-              Download
-            </a>
-            ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6;">
-              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                <ellipse cx="12" cy="12" rx="9" ry="6"/>
-                <circle cx="12" cy="12" r="2"/>
-              </svg>
-              View
-            </button>` : ''}
-          </div>
-        </div>
+      } else if (isDoc) {
+        fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+          </svg>
+        `;
+      } else if (isSpreadsheet) {
+        fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <rect x="7" y="10" width="2" height="7"/>
+            <rect x="11" y="7" width="2" height="10"/>
+            <rect x="15" y="13" width="2" height="4"/>
+          </svg>
+        `;
+      } else if (isText) {
+        fileIcon = `
+          <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
         `;
       }
+      
+      fileGridHTML += `
+        <div class="enhanced-file-item">
+          <div class="file-header-enhanced">
+            <div style="color: #059669;">${fileIcon}</div>
+            <div class="file-info-enhanced">
+              <div class="file-name-enhanced" title="${fileName}">${fileName}</div>
+              <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
+            </div>
+          </div>
+          
+          <div class="file-preview-container">
+      `;
+      
+      if (isImage) {
+        fileGridHTML += `
+          <img src="${fileUrl}" 
+               alt="Preview of ${fileName}" 
+               onclick="openImagePreview('${fileUrl}', '${fileName}')"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 160px;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+              <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8" cy="8" r="2"/>
+                <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+              </svg>
+            </div>
+            <p>Preview Not Available</p>
+            <small>Click download</small>
+          </div>
+        `;
+      } else if (isPDF) {
+        fileGridHTML += `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 160px;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+              <svg width="40" height="40" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="4" y="2" width="16" height="20" rx="2"/>
+                <path d="M8 6h8M8 10h8M8 14h4"/>
+              </svg>
+            </div>
+            <p><strong>PDF Document</strong></p>
+            <small>Click download to view</small>
+          </div>
+        `;
+      } else if (isDoc) {
+        fileGridHTML += `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 160px;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+              <svg width="40" height="40" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="4" y="2" width="16" height="20" rx="2"/>
+              </svg>
+            </div>
+            <p><strong>Word Document</strong></p>
+            <small>Click download to view</small>
+          </div>
+        `;
+      } else if (isSpreadsheet) {
+        fileGridHTML += `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 160px;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">
+              <svg width="40" height="40" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <rect x="7" y="10" width="2" height="7"/>
+                <rect x="11" y="7" width="2" height="10"/>
+                <rect x="15" y="13" width="2" height="4"/>
+              </svg>
+            </div>
+            <p><strong>Spreadsheet</strong></p>
+            <small>Click download to view</small>
+          </div>
+        `;
+      } else {
+        fileGridHTML += `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 160px;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">${fileIcon}</div>
+            <p><strong>Document File</strong></p>
+            <small>Click download to view</small>
+          </div>
+        `;
+      }
+      
+      fileGridHTML += `
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
+          <a href="${fileUrl}" download="${fileName}" class="download-btn-enhanced">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            Download
+          </a>
+          ${isPDF ? `<button onclick="viewPdf('${fileUrl}', '${fileName}')" class="download-btn-enhanced" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            View PDF
+          </button>` : ''}
+          ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${fileName}')" class="download-btn-enhanced" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            View
+          </button>` : ''}
+        </div>
+      </div>
+      `;
     });
     
     fileGridHTML += `</div>`;
@@ -1204,23 +1406,20 @@ function createEnhancedFilePreview(allFiles, previewContainer) {
       <div class="enhanced-file-preview">
         <h3>
           <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
           Attached Files
         </h3>
-        <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
-          <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">
+        <div class="no-files-message">
+          <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.6;">
             <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
               <rect x="3" y="7" width="18" height="11" rx="2"/>
               <path d="M3 7l9 6 9-6"/>
             </svg>
           </div>
-          <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
-            No Files Attached
-          </div>
-          <div class="no-files-subtitle" style="font-size: 0.95rem; color: #64748b; line-height: 1.5;">
-            This request was submitted without any file attachments.<br>
-            <small>Files may have been uploaded but are not accessible.</small>
+          <div class="no-files-title">No Files Attached</div>
+          <div class="no-files-subtitle">
+            This request was submitted without any file attachments.
           </div>
         </div>
       </div>
@@ -1228,7 +1427,7 @@ function createEnhancedFilePreview(allFiles, previewContainer) {
   }
 }
 
-// Add image preview modal function
+// Image preview modal function
 window.openImagePreview = function(imageUrl, fileName) {
   // Create modal overlay
   const overlay = document.createElement('div');
@@ -1242,7 +1441,7 @@ window.openImagePreview = function(imageUrl, fileName) {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 99999;
+    z-index: 999999;
     cursor: pointer;
   `;
   
@@ -1267,7 +1466,7 @@ window.openImagePreview = function(imageUrl, fileName) {
   
   // Create close button
   const closeBtn = document.createElement('button');
-  closeBtn.innerHTML = '✕';
+  closeBtn.innerHTML = '&times;';
   closeBtn.style.cssText = `
     position: absolute;
     top: -40px;
@@ -1278,8 +1477,9 @@ window.openImagePreview = function(imageUrl, fileName) {
     height: 32px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 20px;
     font-weight: bold;
+    color: #1e293b;
   `;
   
   // Assemble modal
@@ -1305,566 +1505,581 @@ window.openImagePreview = function(imageUrl, fileName) {
   document.body.style.overflow = 'hidden';
 };
 
-// Formatting toolbar functionality
-document.addEventListener('DOMContentLoaded', function() {
-  const messageInput = document.getElementById('messageInput');
-  const boldBtn = document.getElementById('boldBtn');
-  const italicBtn = document.getElementById('italicBtn');
-  const underlineBtn = document.getElementById('underlineBtn');
-  
-  // Style format buttons on hover
-  const formatBtns = document.querySelectorAll('.format-btn');
-  formatBtns.forEach(btn => {
-    btn.addEventListener('mouseenter', function() {
-      this.style.background = '#f3f4f6';
-      this.style.borderColor = 'var(--primary-green)';
+// Setup Enhanced File Upload with Drag and Drop
+function setupEnhancedFileUpload() {
+    const fileUploadGroup = document.getElementById('unitFileUploadGroup');
+    const fileInput = document.getElementById('deliverablesFileInput');
+    const clearAllBtn = document.getElementById('unitClearAllBtn');
+    
+    if (!fileUploadGroup || !fileInput) return;
+    
+    // Click to select files
+    fileUploadGroup.addEventListener('click', (e) => {
+        if (e.target.closest('.unit-browse-file-btn')) return;
+        fileInput.click();
     });
     
-    btn.addEventListener('mouseleave', function() {
-      this.style.background = 'white';
-      this.style.borderColor = '#d1d5db';
-    });
-  });
-  
-  // Format text function
-  function formatText(startTag, endTag) {
-    if (!messageInput) return;
+    // File input change
+    fileInput.addEventListener('change', handleFileInputChange);
     
-    const start = messageInput.selectionStart;
-    const end = messageInput.selectionEnd;
-    const selectedText = messageInput.value.substring(start, end);
-    
-    if (selectedText) {
-      const formattedText = `${startTag}${selectedText}${endTag}`;
-      const beforeText = messageInput.value.substring(0, start);
-      const afterText = messageInput.value.substring(end);
-      
-      messageInput.value = beforeText + formattedText + afterText;
-      
-      // Set cursor position after formatted text
-      const newPosition = start + formattedText.length;
-      messageInput.setSelectionRange(newPosition, newPosition);
-    } else {
-      // If no text selected, insert tags where cursor is
-      const cursorPos = messageInput.selectionStart;
-      const beforeText = messageInput.value.substring(0, cursorPos);
-      const afterText = messageInput.value.substring(cursorPos);
-      
-      messageInput.value = beforeText + startTag + endTag + afterText;
-      
-      // Position cursor between tags
-      const newPosition = cursorPos + startTag.length;
-      messageInput.setSelectionRange(newPosition, newPosition);
+    // Clear all button
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', clearAllUnitFiles);
     }
     
-    messageInput.focus();
-  }
-  
-  // Format button event listeners
-  if (boldBtn) {
-    boldBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      formatText('**', '**');
-    });
-  }
-  
-  if (italicBtn) {
-    italicBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      formatText('*', '*');
-    });
-  }
-  
-  if (underlineBtn) {
-    underlineBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      formatText('<u>', '</u>');
-    });
-  }
-  
-  // Upload functionality
-  const imageBtn = document.getElementById('imageBtn');
-  const fileBtn = document.getElementById('fileBtn');
-  const imageUpload = document.getElementById('imageUpload');
-  const fileUpload = document.getElementById('fileUpload');
-  const attachmentPreview = document.getElementById('attachmentPreview');
-  const attachmentInfo = document.getElementById('attachmentInfo');
-  const attachmentIcon = document.getElementById('attachmentIcon');
-  const attachmentName = document.getElementById('attachmentName');
-  const removeAttachment = document.getElementById('removeAttachment');
-  const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-  const imagePreview = document.getElementById('imagePreview');
-  
-  let currentAttachment = null;
-  
-  // Image upload button click
-  if (imageBtn && imageUpload) {
-    imageBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      imageUpload.click();
-    });
-  }
-  
-  // File upload button click
-  if (fileBtn && fileUpload) {
-    fileBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      fileUpload.click();
-    });
-  }
-  
-  // Handle image upload
-  if (imageUpload) {
-    imageUpload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        currentAttachment = { type: 'image', file: file };
-        showAttachmentPreview(file, 'image');
-      }
-    });
-  }
-  
-  // Handle file upload
-  if (fileUpload) {
-    fileUpload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        currentAttachment = { type: 'file', file: file };
-        showAttachmentPreview(file, 'file');
-      }
-    });
-  }
-  
-  // Show attachment preview
-  function showAttachmentPreview(file, type) {
-    if (attachmentPreview && attachmentIcon && attachmentName) {
-      attachmentPreview.style.display = 'block';
-      attachmentIcon.textContent = type === 'image' ? '📷' : '📎';
-      attachmentName.textContent = file.name;
-      
-      if (type === 'image' && imagePreviewContainer && imagePreview) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          imagePreview.src = e.target.result;
-          imagePreviewContainer.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      } else if (imagePreviewContainer) {
-        imagePreviewContainer.style.display = 'none';
-      }
-    }
-  }
-  
-  // Remove attachment
-  if (removeAttachment) {
-    removeAttachment.addEventListener('click', function(e) {
-      e.preventDefault();
-      currentAttachment = null;
-      if (attachmentPreview) {
-        attachmentPreview.style.display = 'none';
-      }
-      if (imageUpload) imageUpload.value = '';
-      if (fileUpload) fileUpload.value = '';
-      if (imagePreviewContainer) {
-        imagePreviewContainer.style.display = 'none';
-      }
-    });
-  }
-});
-
-// Image modal function for message previews
-function openImageModal(imageSrc) {
-  // Create modal overlay
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-  `;
-  
-  // Create modal container
-  const container = document.createElement('div');
-  container.style.cssText = `
-    position: relative;
-    max-width: 90%;
-    max-height: 90%;
-    background: white;
-    border-radius: 8px;
-    padding: 1rem;
-  `;
-  
-  // Create image
-  const img = document.createElement('img');
-  img.src = imageSrc;
-  img.style.cssText = `
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border-radius: 4px;
-  `;
-  
-  // Create close button
-  const closeBtn = document.createElement('button');
-  closeBtn.innerHTML = '✕';
-  closeBtn.style.cssText = `
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 30px;
-    height: 30px;
-    background: #ef4444;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-  `;
-  
-  // Assemble modal
-  container.appendChild(img);
-  container.appendChild(closeBtn);
-  overlay.appendChild(container);
-  document.body.appendChild(overlay);
-  
-  // Close handlers
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      document.body.removeChild(overlay);
-      document.body.style.overflow = '';
-    }
-  });
-  
-  closeBtn.addEventListener('click', () => {
-    document.body.removeChild(overlay);
-    document.body.style.overflow = '';
-  });
-  
-  // Prevent body scroll
-  document.body.style.overflow = 'hidden';
-}
-
-// Global function to open request modal by ID (for notification clicks)
-window.openRequestModal = function(requestId, requestType) {
-  console.log('Opening request modal for:', requestId, requestType);
-  
-  // Find the row with the matching request ID and type
-  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"][data-type="${requestType === 'approval' ? 'Request Approval' : 'Service Request'}"]`);
-  
-  if (targetRow) {
-    // Trigger the existing click handler
-    targetRow.click();
-  } else {
-    console.warn('Request not found on current page:', requestId, requestType);
-    // Navigate to the appropriate specific page
-    const targetPage = requestType === 'approval' ? '/request-approvals' : '/service-requests';
-    window.location.href = `${targetPage}?highlight=${requestId}`;
-  }
-};
-
-// Global function alternative names for backward compatibility
-window.showApprovalDetails = function(requestId) {
-  window.openRequestModal(requestId, 'approval');
-};
-
-window.showServiceDetails = function(requestId) {
-  window.openRequestModal(requestId, 'service');
-};
-
-// Global function to open conversation modal by ID (for message notifications)
-window.openConversationModal = function(requestId, requestType) {
-  console.log('Opening user conversation modal for:', requestId, requestType);
-  
-  // Find the row with the matching request ID
-  const targetRow = document.querySelector(`.request-row[data-id="${requestId}"]`);
-  
-  if (targetRow) {
-    // Simulate row click to open the details modal
-    console.log('Found target row, simulating click...');
-    targetRow.click();
-    
-    // Then trigger the conversation modal after a short delay
-    setTimeout(() => {
-      const chatButton = document.getElementById('openChatFromDetailsModal');
-      if (chatButton) {
-        console.log('Found chat button, clicking it');
-        chatButton.click();
-      } else {
-        console.warn('Chat button #openChatFromDetailsModal not found in modal');
-      }
-    }, 300);
-  } else {
-    console.warn('Request not found for conversation:', requestId);
-    window.location.href = window.location.pathname + `?highlight=${requestId}`;
-  }
-};
-
-// Auto-open modal if URL contains modal parameters
-document.addEventListener('DOMContentLoaded', function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  // Handle regular modal opening
-  if (urlParams.has('modal') && urlParams.has('requestId')) {
-    const requestId = urlParams.get('requestId');
-    const requestType = urlParams.get('type');
-    console.log('Auto-opening modal for request:', requestId, requestType);
-    
-    // Wait for page to fully load
-    setTimeout(() => {
-      window.openRequestModal(requestId, requestType);
-    }, 500);
-  }
-  
-  // Handle conversation modal opening (for message notifications)
-  if (urlParams.has('conversation') && urlParams.has('requestId')) {
-    const requestId = urlParams.get('requestId');
-    const requestType = urlParams.get('type');
-    console.log('Auto-opening conversation modal for request:', requestId, requestType);
-    
-    // Wait for page to fully load
-    setTimeout(() => {
-      window.openConversationModal(requestId, requestType);
-    }, 500);
-  }
-});
-
-// Unit Member Action Handlers
-// Approve Button
-const approveBtn = document.getElementById('approveBtn');
-if (approveBtn) {
-  approveBtn.addEventListener('click', async function() {
-    if (!currentConversationId) return;
-    
-    if (confirm('Are you sure you want to approve this request?')) {
-      try {
-        const response = await fetch(`/api/unit/approve-request/${currentConversationId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (response.ok) {
-          alert('Request approved successfully!');
-          location.reload();
-        } else {
-          const error = await response.json();
-          alert('Error: ' + (error.message || 'Failed to approve request'));
-        }
-      } catch (error) {
-        console.error('Error approving request:', error);
-        alert('An error occurred while approving the request');
-      }
-    }
-  });
-}
-
-// Revise Button
-const reviseBtn = document.getElementById('reviseBtn');
-const revisionCommentSection = document.getElementById('revisionCommentSection');
-const cancelRevisionBtn = document.getElementById('cancelRevisionBtn');
-const submitRevisionBtn = document.getElementById('submitRevisionBtn');
-const revisionComment = document.getElementById('revisionComment');
-
-if (reviseBtn) {
-  reviseBtn.addEventListener('click', function() {
-    if (revisionCommentSection) {
-      revisionCommentSection.style.display = 'block';
-    }
-  });
-}
-
-if (cancelRevisionBtn) {
-  cancelRevisionBtn.addEventListener('click', function() {
-    if (revisionCommentSection) {
-      revisionCommentSection.style.display = 'none';
-      if (revisionComment) revisionComment.value = '';
-    }
-  });
-}
-
-if (submitRevisionBtn) {
-  submitRevisionBtn.addEventListener('click', async function() {
-    if (!currentConversationId) return;
-    
-    const comment = revisionComment ? revisionComment.value.trim() : '';
-    if (!comment) {
-      alert('Please provide a comment explaining what needs to be fixed');
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/api/unit/request-revision/${currentConversationId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment })
-      });
-      
-      if (response.ok) {
-        alert('Revision request sent successfully!');
-        location.reload();
-      } else {
-        const error = await response.json();
-        alert('Error: ' + (error.message || 'Failed to request revision'));
-      }
-    } catch (error) {
-      console.error('Error requesting revision:', error);
-      alert('An error occurred while requesting revision');
-    }
-  });
-}
-
-// Upload Deliverable Button
-const uploadDeliverableBtn = document.getElementById('uploadDeliverableBtn');
-const deliverableUpload = document.getElementById('deliverableUpload');
-const deliverablePreview = document.getElementById('deliverablePreview');
-
-if (deliverableUpload) {
-  deliverableUpload.addEventListener('change', function() {
-    if (deliverablePreview) {
-      deliverablePreview.innerHTML = '';
-      const files = this.files;
-      if (files.length > 0) {
-        const preview = document.createElement('div');
-        preview.style.cssText = 'margin-top: 0.5rem; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid #d1d5db;';
-        preview.innerHTML = `<strong>Selected files:</strong> ${Array.from(files).map(f => f.name).join(', ')}`;
-        deliverablePreview.appendChild(preview);
-      }
-    }
-  });
-}
-
-if (uploadDeliverableBtn) {
-  uploadDeliverableBtn.addEventListener('click', async function() {
-    if (!currentConversationId) return;
-    
-    const files = deliverableUpload ? deliverableUpload.files : null;
-    if (!files || files.length === 0) {
-      alert('Please select at least one file to upload');
-      return;
-    }
-    
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append('deliverables', files[i]);
-    }
-    
-    try {
-      uploadDeliverableBtn.disabled = true;
-      uploadDeliverableBtn.innerText = 'Uploading...';
-      
-      const response = await fetch(`/api/unit/upload-deliverable/${currentConversationId}`, {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (response.ok) {
-        alert('Deliverable uploaded successfully!');
-        location.reload();
-      } else {
-        const error = await response.json();
-        alert('Error: ' + (error.message || 'Failed to upload deliverable'));
-      }
-    } catch (error) {
-      console.error('Error uploading deliverable:', error);
-      alert('An error occurred while uploading');
-    } finally {
-      uploadDeliverableBtn.disabled = false;
-      uploadDeliverableBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload Deliverable';
-    }
-  });
-}
-
-// Mark Done Button
-const markDoneBtn = document.getElementById('markDoneBtn');
-if (markDoneBtn) {
-  markDoneBtn.addEventListener('click', async function() {
-    if (!currentConversationId) return;
-    
-    if (confirm('Are you sure you want to mark this service request as completed?')) {
-      try {
-        const response = await fetch(`/api/unit/mark-completed/${currentConversationId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (response.ok) {
-          alert('Service request marked as completed!');
-          location.reload();
-        } else {
-          const error = await response.json();
-          alert('Error: ' + (error.message || 'Failed to mark as completed'));
-        }
-      } catch (error) {
-        console.error('Error marking as completed:', error);
-        alert('An error occurred while marking as completed');
-      }
-    }
-  });
-}
-
-// Sidebar hover effect for desktop
-const sidebar = document.getElementById('userSidebar');
-if (sidebar) {
-  sidebar.addEventListener('mouseenter', function() {
-    this.classList.add('expanded');
-  });
-  sidebar.addEventListener('mouseleave', function() {
-    this.classList.remove('expanded');
-  });
-}
-
-// Mobile Navigation Setup
-document.addEventListener('DOMContentLoaded', () => {
-  const menuToggle = document.getElementById('userMenuToggle');
-  const sidebarEl = document.getElementById('userSidebar');
-  let touchStartX = 0;
-  let touchEndX = 0;
-
-  function initMobileNavigation() {
-    if (menuToggle && sidebarEl) {
-      menuToggle.addEventListener('click', (e) => {
+    // Drag and drop
+    fileUploadGroup.addEventListener('dragover', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        sidebarEl.classList.toggle('mobile-active');
-      });
-
-      sidebarEl.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-      }, { passive: true });
-
-      sidebarEl.addEventListener('touchmove', (e) => {
-        touchEndX = e.touches[0].clientX;
-      }, { passive: true });
-
-      sidebarEl.addEventListener('touchend', () => {
-        handleSwipe();
-      });
-
-      document.addEventListener('click', (e) => {
-        if (sidebarEl.classList.contains('mobile-active') &&
-            !sidebarEl.contains(e.target) &&
-            !menuToggle.contains(e.target)) {
-          sidebarEl.classList.remove('mobile-active');
+        fileUploadGroup.classList.add('dragging');
+    });
+    
+    fileUploadGroup.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.target === fileUploadGroup) {
+            fileUploadGroup.classList.remove('dragging');
         }
-      });
-    }
-  }
+    });
+    
+    fileUploadGroup.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileUploadGroup.classList.remove('dragging');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            // Update file input
+            const dt = new DataTransfer();
+            Array.from(files).forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+            
+            // Trigger change event
+            handleFileInputChange({ target: { files: dt.files } });
+        }
+    });
+}
 
-  function handleSwipe() {
-    const swipeDistance = touchEndX - touchStartX;
-    if (swipeDistance < -50 && sidebarEl.classList.contains('mobile-active')) {
-      sidebarEl.classList.remove('mobile-active');
-    }
-    if (swipeDistance > 50 && !sidebarEl.classList.contains('mobile-active') && touchStartX < 50) {
-      sidebarEl.classList.add('mobile-active');
-    }
-  }
+// ==========================================
+// REVISION FORM FEATURES
+// ==========================================
 
-  initMobileNavigation();
+function initializeRevisionFeatures() {
+    // Text formatting buttons
+    const formatBtns = document.querySelectorAll('.revision-format-toolbar .format-btn[data-format]');
+    formatBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const format = this.getAttribute('data-format');
+            applyRevisionFormat(format);
+        });
+    });
+
+    // Attach files button
+    const attachBtn = document.getElementById('revisionAttachBtn');
+    const fileInput = document.getElementById('revisionFileInput');
+    
+    if (attachBtn && fileInput) {
+        attachBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', handleRevisionFileSelect);
+    }
+
+    // Clear all files button
+    const clearFilesBtn = document.getElementById('clearRevisionFiles');
+    if (clearFilesBtn) {
+        clearFilesBtn.addEventListener('click', clearAllRevisionFiles);
+    }
+}
+
+function applyRevisionFormat(format) {
+    const textarea = document.getElementById('revisionComments');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    let formattedText = selectedText;
+    let newCursorPos = end;
+
+    switch(format) {
+        case 'bold':
+            formattedText = `**${selectedText}**`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'italic':
+            formattedText = `*${selectedText}*`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'underline':
+            formattedText = `__${selectedText}__`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'bullet':
+            const lines = selectedText.split('\n');
+            formattedText = lines.map(line => line.trim() ? `• ${line.trim()}` : line).join('\n');
+            newCursorPos = start + formattedText.length;
+            break;
+    }
+
+    textarea.value = beforeText + formattedText + afterText;
+    textarea.focus();
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+}
+
+function handleRevisionFileSelect(event) {
+    const files = Array.from(event.target.files);
+    
+    files.forEach(file => {
+        // Check if file already exists
+        const exists = revisionFiles.some(f => f.name === file.name && f.size === file.size);
+        if (!exists) {
+            revisionFiles.push(file);
+        }
+    });
+    
+    updateRevisionFilesPreview();
+}
+
+function updateRevisionFilesPreview() {
+    const preview = document.getElementById('revisionFilesPreview');
+    const container = document.getElementById('revisionFilesContainer');
+    const filesCount = preview.querySelector('.files-count');
+    
+    if (!preview || !container) return;
+    
+    if (revisionFiles.length > 0) {
+        preview.style.display = 'block';
+        filesCount.textContent = `${revisionFiles.length} file(s) attached`;
+        
+        container.innerHTML = '';
+        revisionFiles.forEach((file, index) => {
+            const fileItem = createRevisionFileItem(file, index);
+            container.appendChild(fileItem);
+        });
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function createRevisionFileItem(file, index) {
+    const item = document.createElement('div');
+    item.className = 'revision-file-item';
+    
+    const fileSizeKB = (file.size / 1024).toFixed(1);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize = file.size > 1024 * 1024 ? `${fileSizeMB} MB` : `${fileSizeKB} KB`;
+    
+    const ext = file.name.split('.').pop().toLowerCase();
+    let iconColor = '#64748b';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
+    else if (ext === 'pdf') iconColor = '#dc2626';
+    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+    
+    item.innerHTML = `
+        <div class="file-item-info">
+            <div class="file-item-icon" style="color: ${iconColor};">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <line x1="8" y1="8" x2="16" y2="8"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                    <line x1="8" y1="16" x2="12" y2="16"/>
+                </svg>
+            </div>
+            <div class="file-item-details">
+                <div class="file-item-name" title="${file.name}">${file.name}</div>
+                <div class="file-item-size">${displaySize}</div>
+            </div>
+        </div>
+        <button type="button" class="remove-file-btn" onclick="removeRevisionFile(${index})" title="Remove file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    
+    return item;
+}
+
+window.removeRevisionFile = function(index) {
+    revisionFiles.splice(index, 1);
+    updateRevisionFilesPreview();
+    
+    // Update file input
+    const fileInput = document.getElementById('revisionFileInput');
+    if (fileInput) {
+        const dt = new DataTransfer();
+        revisionFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+    }
+};
+
+function clearAllRevisionFiles() {
+    revisionFiles = [];
+    updateRevisionFilesPreview();
+    
+    const fileInput = document.getElementById('revisionFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+}
+
+// ==========================================
+// CHAT FILE ATTACHMENTS
+// ==========================================
+
+let chatFiles = [];
+
+function initializeChatFileFeatures() {
+    console.log('[AllTasks] Initializing chat file features...');
+    // Attach files button
+    const attachBtn = document.getElementById('chatAttachBtn');
+    const fileInput = document.getElementById('chatFileInput');
+    
+    if (attachBtn && fileInput) {
+        console.log('[AllTasks] Chat file elements found');
+        attachBtn.addEventListener('click', () => {
+            console.log('[AllTasks] Attach button clicked');
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', handleChatFileSelect);
+    } else {
+        console.warn('[AllTasks] Chat file elements not found:', { attachBtn: !!attachBtn, fileInput: !!fileInput });
+    }
+
+    // Clear all files button
+    const clearFilesBtn = document.getElementById('clearChatFiles');
+    if (clearFilesBtn) {
+        clearFilesBtn.addEventListener('click', clearAllChatFiles);
+    }
+    
+    // Text formatting for chat
+    const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
+    chatFormatBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const format = this.getAttribute('data-chat-format');
+            applyChatFormat(format);
+        });
+    });
+}
+
+function handleChatFileSelect(event) {
+    console.log('[AllTasks] File selection triggered');
+    const files = Array.from(event.target.files);
+    console.log('[AllTasks] Selected files:', files.length);
+    
+    files.forEach(file => {
+        // Check if file already exists
+        const exists = chatFiles.some(f => f.name === file.name && f.size === file.size);
+        if (!exists) {
+            chatFiles.push(file);
+            console.log('[AllTasks] Added file:', file.name);
+        } else {
+            console.log('[AllTasks] Duplicate file skipped:', file.name);
+        }
+    });
+    
+    console.log('[AllTasks] Total files:', chatFiles.length);
+    updateChatFilesPreview();
+}
+
+function updateChatFilesPreview() {
+    const preview = document.getElementById('chatFilesPreview');
+    const container = document.getElementById('chatFilesContainer');
+    const filesCount = preview.querySelector('.files-count');
+    
+    if (!preview || !container) return;
+    
+    if (chatFiles.length > 0) {
+        preview.style.display = 'block';
+        filesCount.textContent = `${chatFiles.length} file(s) attached`;
+        
+        container.innerHTML = '';
+        chatFiles.forEach((file, index) => {
+            const fileItem = createChatFileItem(file, index);
+            container.appendChild(fileItem);
+        });
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function createChatFileItem(file, index) {
+    const item = document.createElement('div');
+    item.className = 'revision-file-item';
+    
+    const fileSizeKB = (file.size / 1024).toFixed(1);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize = file.size > 1024 * 1024 ? `${fileSizeMB} MB` : `${fileSizeKB} KB`;
+    
+    const ext = file.name.split('.').pop().toLowerCase();
+    let iconColor = '#64748b';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
+    else if (ext === 'pdf') iconColor = '#dc2626';
+    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+    
+    item.innerHTML = `
+        <div class="file-item-info">
+            <div class="file-item-icon" style="color: ${iconColor};">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <line x1="8" y1="8" x2="16" y2="8"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                    <line x1="8" y1="16" x2="12" y2="16"/>
+                </svg>
+            </div>
+            <div class="file-item-details">
+                <div class="file-item-name" title="${file.name}">${file.name}</div>
+                <div class="file-item-size">${displaySize}</div>
+            </div>
+        </div>
+        <button type="button" class="remove-file-btn" onclick="removeChatFile(${index})" title="Remove file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    
+    return item;
+}
+
+window.removeChatFile = function(index) {
+    chatFiles.splice(index, 1);
+    updateChatFilesPreview();
+    
+    // Update file input
+    const fileInput = document.getElementById('chatFileInput');
+    if (fileInput) {
+        const dt = new DataTransfer();
+        chatFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+    }
+};
+
+function clearAllChatFiles() {
+    chatFiles = [];
+    updateChatFilesPreview();
+    
+    const fileInput = document.getElementById('chatFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+}
+
+function applyChatFormat(format) {
+    const textarea = document.getElementById('teamMessageInput');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    let formattedText = selectedText;
+    let newCursorPos = end;
+
+    switch(format) {
+        case 'bold':
+            formattedText = `**${selectedText}**`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'italic':
+            formattedText = `*${selectedText}*`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'underline':
+            formattedText = `__${selectedText}__`;
+            newCursorPos = start + formattedText.length;
+            break;
+    }
+
+    textarea.value = beforeText + formattedText + afterText;
+    textarea.focus();
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+}
+
+// Update sendTeamMessage to include files
+function sendTeamMessage() {
+    console.log('[AllTasks] Send team message triggered');
+    const input = document.getElementById('teamMessageInput');
+    if (!input || !currentRequestId) {
+        console.error('[AllTasks] Missing input or request ID:', {
+            input: !!input,
+            currentRequestId
+        });
+        return;
+    }
+
+    const content = input.value.trim();
+    console.log('[AllTasks] Message content:', content || '(empty)');
+    console.log('[AllTasks] Files to send:', chatFiles.length);
+    
+    if (!content && chatFiles.length === 0) {
+        console.warn('[AllTasks] No content or files');
+        showErrorMessage('Please enter a message or attach files');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('senderRole', 'unit');
+    
+    // Add files if any
+    chatFiles.forEach((file, index) => {
+        console.log(`[AllTasks] Appending file ${index + 1}:`, file.name);
+        formData.append('chatFiles', file);
+    });
+
+    console.log('[AllTasks] Sending to:', `/api/conversation/${currentRequestId}/message`);
+    fetch(`/api/conversation/${currentRequestId}/message`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('[AllTasks] Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('[AllTasks] Response data:', data);
+        if (data.success) {
+            console.log('[AllTasks] Message sent successfully');
+            input.value = '';
+            clearAllChatFiles();
+            loadTeamConversation(currentRequestId);
+        } else {
+            console.error('[AllTasks] Server error:', data);
+            showErrorMessage(data.message || 'Failed to send message');
+        }
+    })
+    .catch(error => {
+        console.error('[AllTasks] Error sending message:', error);
+        console.error('[AllTasks] Error stack:', error.stack);
+        showErrorMessage('Failed to send message');
+    });
+}
+
+// This duplicate function has been removed - the correct createMessageElement function is already defined earlier in the file at line 920
+
+// PDF Viewer Functions
+window.viewPdf = function(pdfUrl, fileName) {
+    const modal = document.getElementById('pdfViewerModal');
+    const title = document.getElementById('pdfViewerTitle');
+    const iframe = document.getElementById('pdfViewerFrame');
+    
+    if (modal && iframe) {
+        title.textContent = fileName;
+        iframe.src = pdfUrl;
+        modal.style.display = 'flex';
+    }
+};
+
+window.closePdfViewer = function() {
+    const modal = document.getElementById('pdfViewerModal');
+    const iframe = document.getElementById('pdfViewerFrame');
+    
+    if (modal) {
+        modal.style.display = 'none';
+        if (iframe) {
+            iframe.src = '';
+        }
+    }
+};
+
+// Image viewer modal
+window.viewImage = function(imageUrl, fileName) {
+    const modal = document.getElementById('imageViewerModal');
+    if (!modal) {
+        // Create image viewer modal if it doesn't exist
+        const modalHTML = `
+            <div id="imageViewerModal" class="modal" style="display: flex; z-index: 1000000;">
+                <div class="modal-content" style="max-width: 90vw; width: auto; max-height: 90vh; padding: 0; background: #1f2937;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 1.5rem;">
+                        <div class="modal-title-section">
+                            <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: white;">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <h2 id="imageViewerTitle" style="margin: 0; color: white;">Image</h2>
+                        </div>
+                        <button class="close-modal-btn" onclick="closeImageViewer()" aria-label="Close">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div style="padding: 1rem; display: flex; justify-content: center; align-items: center; background: #111827;">
+                        <img id="imageViewerImg" style="max-width: 100%; max-height: 75vh; object-fit: contain;" />
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    const viewerModal = document.getElementById('imageViewerModal');
+    const title = document.getElementById('imageViewerTitle');
+    const img = document.getElementById('imageViewerImg');
+    
+    if (viewerModal && img) {
+        title.textContent = fileName;
+        img.src = imageUrl;
+        viewerModal.style.display = 'flex';
+    }
+};
+
+window.closeImageViewer = function() {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Initialize chat file features when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChatFileFeatures();
+    
+    // Add keyboard shortcuts for team message input
+    const teamMessageInput = document.getElementById('teamMessageInput');
+    if (teamMessageInput) {
+        console.log('[AllTasks] Team message input found, attaching keyboard shortcuts');
+        
+        teamMessageInput.addEventListener('keydown', function(e) {
+            // Ctrl+B or Cmd+B for bold
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                console.log('[AllTasks] Keyboard shortcut: Bold (Ctrl+B)');
+                applyChatFormat('bold');
+                return false;
+            }
+            // Ctrl+I or Cmd+I for italic
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                console.log('[AllTasks] Keyboard shortcut: Italic (Ctrl+I)');
+                applyChatFormat('italic');
+                return false;
+            }
+            // Ctrl+U or Cmd+U for underline
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                console.log('[AllTasks] Keyboard shortcut: Underline (Ctrl+U)');
+                applyChatFormat('underline');
+                return false;
+            }
+        });
+    } else {
+        console.error('[AllTasks] Team message input element not found!');
+    }
 });
+

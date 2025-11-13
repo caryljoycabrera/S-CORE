@@ -1,0 +1,256 @@
+<!-- REPLACE THE MODAL SECTION (starting from line ~240) with this code -->
+
+  <!-- Request Details Modal - Two Column Layout -->
+  <div id="requestDetailsModal" class="modal" style="display: none;">
+    <div class="modal-content unit-modal-wide">
+      <!-- Modal Header -->
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <h2 id="modalTitle">Request Details</h2>
+          <span class="type-badge" id="modalTypeBadge">APPROVAL</span>
+        </div>
+        <span class="close-modal" onclick="closeRequestModal()">&times;</span>
+      </div>
+
+      <!-- Two Column Layout -->
+      <div class="modal-body unit-modal-body">
+        <!-- LEFT COLUMN: Request Details -->
+        <div class="unit-left-column">
+          <!-- Request Information Card -->
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>📋 Request Information</h3>
+              <p class="unit-card-subtitle">Complete details about this request</p>
+            </div>
+            <div class="unit-info-grid">
+              <div class="unit-info-item">
+                <span class="unit-info-label">Requestor</span>
+                <span class="unit-info-value" id="modalRequestor">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Email</span>
+                <span class="unit-info-value" id="modalRequestorEmail">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Organization/Office/Dept</span>
+                <span class="unit-info-value" id="modalOrganization">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Date Submitted</span>
+                <span class="unit-info-value" id="modalDate">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Current Status</span>
+                <span class="status-badge" id="modalStatus">Pending</span>
+              </div>
+              <div class="unit-info-item" id="deadlineField" style="display: none;">
+                <span class="unit-info-label">Deadline</span>
+                <span class="unit-info-value" id="modalDeadline">N/A</span>
+              </div>
+              <div class="unit-info-item" id="serviceTypeField" style="display: none;">
+                <span class="unit-info-label">Service Type</span>
+                <span class="unit-info-value" id="modalServiceType">N/A</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description Card -->
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>📝 Description</h3>
+              <p class="unit-card-subtitle">Request details and requirements</p>
+            </div>
+            <div class="unit-description-content" id="modalDescription">Loading description...</div>
+          </div>
+
+          <!-- Files Section -->
+          <div id="filesSection" class="unit-info-card" style="display: none;">
+            <div class="unit-card-header">
+              <h3>📎 Attached Files</h3>
+              <p class="unit-card-subtitle">Files submitted by requestor</p>
+            </div>
+            <div id="modalFiles" class="unit-file-grid"></div>
+          </div>
+
+          <!-- Deliverables Section -->
+          <div id="deliverablesSection" class="unit-info-card" style="display: none;">
+            <div class="unit-card-header">
+              <h3>📦 Deliverables</h3>
+              <p class="unit-card-subtitle">Files uploaded by unit team</p>
+            </div>
+            <div id="modalDeliverables" class="unit-file-grid"></div>
+          </div>
+
+          <!-- Team Conversation Button -->
+          <div class="unit-info-card unit-conversation-trigger">
+            <button id="openTeamChatBtn" class="unit-chat-button">
+              <span class="unit-chat-icon">💬</span>
+              <div class="unit-chat-text">
+                <strong>Open Team Discussion</strong>
+                <small>Collaborate with your team members</small>
+              </div>
+              <span class="unit-chat-arrow">→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Processing Actions -->
+        <div class="unit-right-column">
+          <!-- Approval Actions Panel -->
+          <div id="approvalActionsPanel" class="unit-action-panel approval-panel" style="display: none;">
+            <div class="unit-panel-header approval-header">
+              <h3>✅ Process Approval Request</h3>
+              <p>Review the request and take appropriate action</p>
+            </div>
+            
+            <div class="unit-action-guide">
+              <div class="guide-item">
+                <span class="guide-icon">👁️</span>
+                <span>Review all details carefully before approving</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">✓</span>
+                <span>Approve if all requirements are met</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">✎</span>
+                <span>Request revision if changes are needed</span>
+              </div>
+            </div>
+
+            <div class="unit-action-buttons">
+              <button id="approveBtn" class="unit-btn unit-btn-approve">
+                <span class="btn-icon">✓</span>
+                <span>Approve Request</span>
+              </button>
+              <button id="requestRevisionBtn" class="unit-btn unit-btn-revision">
+                <span class="btn-icon">✎</span>
+                <span>Request Revision</span>
+              </button>
+            </div>
+
+            <!-- Revision Form -->
+            <div id="revisionForm" class="unit-revision-form" style="display: none;">
+              <label for="revisionComments" class="unit-form-label">
+                <strong>Revision Feedback</strong>
+                <small>Clearly explain what needs to be revised</small>
+              </label>
+              <textarea id="revisionComments" rows="5" class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..."></textarea>
+              <div class="unit-form-actions">
+                <button id="submitRevisionBtn" class="unit-btn unit-btn-submit">Submit Revision Request</button>
+                <button id="cancelRevisionBtn" class="unit-btn unit-btn-cancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Actions Panel -->
+          <div id="serviceActionsPanel" class="unit-action-panel service-panel" style="display: none;">
+            <div class="unit-panel-header service-header">
+              <h3>⚙️ Process Service Request</h3>
+              <p>Upload deliverables and complete the service</p>
+            </div>
+
+            <div class="unit-action-guide">
+              <div class="guide-item">
+                <span class="guide-icon">📤</span>
+                <span>Upload all required deliverables</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">📋</span>
+                <span>Verify all files are correct before uploading</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">✓</span>
+                <span>Mark as complete when all work is done</span>
+              </div>
+            </div>
+
+            <div class="unit-upload-section">
+              <label for="deliverablesFileInput" class="unit-form-label">
+                <strong>Upload Deliverables</strong>
+                <small>Select one or more files to upload</small>
+              </label>
+              <input type="file" id="deliverablesFileInput" multiple accept="*/*" class="unit-file-input">
+              <div id="deliverablePreview" class="unit-file-preview"></div>
+              <button id="uploadDeliverablesBtn" disabled class="unit-btn unit-btn-upload">
+                <span class="btn-icon">⬆</span>
+                <span>Upload Deliverable(s)</span>
+              </button>
+            </div>
+
+            <div class="unit-complete-section">
+              <button id="completeServiceBtn" class="unit-btn unit-btn-complete">
+                <span class="btn-icon">✓</span>
+                <span>Mark Service as Completed</span>
+              </button>
+              <p class="unit-helper-text">⚠️ Ensure all deliverables are uploaded before marking as complete</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Conversation Modal -->
+  <div id="teamConversationModal" class="modal" style="display: none;">
+    <div class="modal-content unit-conversation-modal">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <h2>💬 Team Discussion</h2>
+          <span class="unit-conversation-subtitle">Collaborate on this request</span>
+        </div>
+        <span class="close-modal" onclick="closeTeamConversationModal()">&times;</span>
+      </div>
+      
+      <div class="unit-conversation-body">
+        <!-- Messages Container -->
+        <div id="teamMessagesContainer" class="unit-messages-container">
+          <div class="unit-messages-empty">
+            <div class="empty-icon">💭</div>
+            <p>No team discussion yet</p>
+            <small>Start the conversation below</small>
+          </div>
+        </div>
+
+        <!-- Message Input Area -->
+        <div class="unit-message-input-area">
+          <!-- Formatting Toolbar -->
+          <div class="unit-format-toolbar">
+            <button type="button" id="boldBtn" class="format-btn" title="Bold"><strong>B</strong></button>
+            <button type="button" id="italicBtn" class="format-btn" title="Italic"><em>I</em></button>
+            <button type="button" id="underlineBtn" class="format-btn" title="Underline"><u>U</u></button>
+            <div class="toolbar-divider"></div>
+            <button type="button" id="imageBtn" class="format-btn" title="Upload Image">📷</button>
+            <button type="button" id="fileBtn" class="format-btn" title="Upload File">📎</button>
+            <div class="toolbar-spacer"></div>
+            <span class="toolbar-hint">Format your text</span>
+          </div>
+
+          <!-- Hidden File Inputs -->
+          <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+          <input type="file" id="fileUpload" style="display: none;">
+
+          <!-- Attachment Preview -->
+          <div id="attachmentPreview" class="unit-attachment-preview" style="display: none;">
+            <div class="attachment-content">
+              <span id="attachmentIcon">📷</span>
+              <span id="attachmentName">filename.jpg</span>
+              <button type="button" id="removeAttachment" class="remove-attachment" title="Remove">✕</button>
+            </div>
+            <div id="imagePreviewContainer" style="display: none;">
+              <img id="imagePreview" alt="Preview">
+            </div>
+          </div>
+
+          <!-- Message Input -->
+          <div class="unit-message-input-wrapper">
+            <textarea id="teamMessageInput" placeholder="Type your message to team members..." rows="3" class="unit-message-input"></textarea>
+            <button id="sendTeamMessageBtn" class="unit-send-btn">
+              <span>Send</span>
+              <span class="send-icon">➤</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

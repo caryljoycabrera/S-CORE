@@ -2077,3 +2077,93 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
   }
 });
+
+// Unit Member Action Handlers
+// Upload Deliverable Button
+const uploadDeliverableBtn = document.getElementById('uploadDeliverableBtn');
+const deliverableUpload = document.getElementById('deliverableUpload');
+const deliverablePreview = document.getElementById('deliverablePreview');
+
+if (deliverableUpload) {
+  deliverableUpload.addEventListener('change', function() {
+    if (deliverablePreview) {
+      deliverablePreview.innerHTML = '';
+      const files = this.files;
+      if (files.length > 0) {
+        const preview = document.createElement('div');
+        preview.style.cssText = 'margin-top: 0.5rem; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid #d1d5db;';
+        preview.innerHTML = `<strong>Selected files:</strong> ${Array.from(files).map(f => f.name).join(', ')}`;
+        deliverablePreview.appendChild(preview);
+      }
+    }
+  });
+}
+
+if (uploadDeliverableBtn) {
+  uploadDeliverableBtn.addEventListener('click', async function() {
+    if (!currentConversationId) return;
+    
+    const files = deliverableUpload ? deliverableUpload.files : null;
+    if (!files || files.length === 0) {
+      alert('Please select at least one file to upload');
+      return;
+    }
+    
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('deliverables', files[i]);
+    }
+    
+    try {
+      uploadDeliverableBtn.disabled = true;
+      uploadDeliverableBtn.innerText = 'Uploading...';
+      
+      const response = await fetch(`/unit/task/upload/${currentConversationId}`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        alert('Deliverable uploaded successfully!');
+        location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + (error.message || 'Failed to upload deliverable'));
+      }
+    } catch (error) {
+      console.error('Error uploading deliverable:', error);
+      alert('An error occurred while uploading');
+    } finally {
+      uploadDeliverableBtn.disabled = false;
+      uploadDeliverableBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload Deliverable';
+    }
+  });
+}
+
+// Mark Done Button
+const markDoneBtn = document.getElementById('markDoneBtn');
+if (markDoneBtn) {
+  markDoneBtn.addEventListener('click', async function() {
+    if (!currentConversationId) return;
+    
+    if (confirm('Are you sure you want to mark this service request as completed?')) {
+      try {
+        const response = await fetch(`/unit/task/complete/${currentConversationId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+          alert('Service request marked as completed!');
+          location.reload();
+        } else {
+          const error = await response.json();
+          alert('Error: ' + (error.message || 'Failed to mark as completed'));
+        }
+      } catch (error) {
+        console.error('Error marking as completed:', error);
+        alert('An error occurred while marking as completed');
+      }
+    }
+  });
+}

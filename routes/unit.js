@@ -41,7 +41,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     
     console.log('[/unit/dashboard] Starting database queries for unit:', user.unitTeam);
 
-    // Get tasks assigned to this unit member's team
+    // Get tasks assigned to this unit member's team (for processing - current assignments)
     // Approval requests assigned to their unit (check if unit name is in assignedUnits string)
     console.log('[/unit/dashboard] Querying RequestApproval tasks...');
     const totalApprovalTasks = await RequestApproval.countDocuments({
@@ -62,7 +62,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     });
     console.log('[/unit/dashboard] Revision approval tasks:', revisionApprovalTasks);
 
-    // Service requests assigned to their unit
+    // Service requests assigned to their unit (for processing - current assignments)
     console.log('[/unit/dashboard] Querying ServiceRequest tasks...');
     const totalServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
@@ -81,6 +81,13 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       status: { $regex: /^(revision|for revision)$/i }
     });
     console.log('[/unit/dashboard] Revision service tasks:', revisionServiceTasks);
+
+    // Get viewable tasks count (tasks they were ever auto-assigned to, even if admin removed assignment)
+    const viewableServiceTasks = await ServiceRequest.countDocuments({
+      originalAssignedUnits: user.unitTeam,
+      status: { $nin: ['completed', 'cancelled', 'Archived'] }
+    });
+    console.log('[/unit/dashboard] Viewable service tasks (ever assigned):', viewableServiceTasks);
 
     // Calculate combined statistics
     const totalTasks = totalApprovalTasks + totalServiceTasks;
@@ -526,6 +533,22 @@ router.get('/unit/profile', requireUnit, async (req, res) => {
 });
 
 /**
+ * GET /unit/guide
+ * Unit member guide page
+ */
+router.get('/unit/guide', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    res.render('Unit/unitguide', { user });
+  } catch (err) {
+    console.error('Error loading guide:', err);
+    res.status(500).render('error', {
+      message: 'Failed to load guide.'
+    });
+  }
+});
+
+/**
  * GET /unit/all-tasks
  * View all tasks assigned to the unit member's team (combined view)
  */
@@ -542,14 +565,14 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
       .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
-      .populate('userId', 'fName lName email studentOrg office')
+      .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
 
     // Get all service requests assigned to their unit
     const serviceRequests = await ServiceRequest
       .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
-      .populate('userId', 'fName lName email studentOrg office')
+      .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -615,17 +638,31 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
       });
     }
 
-    // Get all service requests assigned to their unit
-    const serviceRequests = await ServiceRequest
+    // Get service requests currently assigned to their unit (can process)
+    const currentServiceRequests = await ServiceRequest
       .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
       .populate('userId', 'fName lName email studentOrg office')
       .sort({ createdAt: -1 })
       .lean();
 
+    // Get service requests they were ever auto-assigned to (can view)
+    const viewableServiceRequests = await ServiceRequest
+      .find({ originalAssignedUnits: user.unitTeam })
+      .populate('userId', 'fName lName email studentOrg office')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Mark which tasks are currently assignable vs view-only
+    const allServiceRequests = viewableServiceRequests.map(request => ({
+      ...request,
+      canProcess: currentServiceRequests.some(curr => curr._id.toString() === request._id.toString()),
+      isViewOnly: !currentServiceRequests.some(curr => curr._id.toString() === request._id.toString())
+    }));
+
     res.render('Unit/TaskServices', {
       user,
       unitTeam: user.unitTeam,
-      serviceRequests
+      serviceRequests: allServiceRequests
     });
   } catch (err) {
     console.error('Error loading task services:', err);
@@ -983,6 +1020,233 @@ router.post('/unit/profile/delete-picture', requireUnit, async (req, res) => {
   } catch (err) {
     console.error('Error deleting picture:', err);
     res.status(500).send('Error deleting picture: ' + err.message);
+  }
+});
+
+/**
+ * POST /unit/task/approve/:id
+ * Approve an approval request task
+ */
+router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+
+    // Find the approval request
+    const task = await RequestApproval.findById(taskId).populate('userId');
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Update task status to Approved
+    task.status = 'Approved';
+    await task.save();
+
+    // Send notification to the requestor
+    try {
+      await notificationService.notifyApprovalApproved(task._id, task.userId._id, user._id);
+    } catch (notifError) {
+      console.error('Error sending approval notification:', notifError);
+    }
+
+    // Notify admins that unit approved the request
+    try {
+      await notificationService.notifyAdminUnitApproved(task._id, user._id, task);
+    } catch (notifError) {
+      console.error('Error sending admin notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Task approved successfully' });
+  } catch (error) {
+    console.error('Error approving task:', error);
+    res.status(500).json({ success: false, message: 'Error approving task: ' + error.message });
+  }
+});
+
+/**
+ * POST /unit/task/revise/:id
+ * Request revision for an approval request task
+ */
+router.post('/unit/task/revise/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+    const { revisionNotes } = req.body;
+
+    if (!revisionNotes || revisionNotes.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Revision notes are required' });
+    }
+
+    // Find the approval request
+    const task = await RequestApproval.findById(taskId).populate('userId');
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Update task status to For Revision
+    task.status = 'For Revision';
+    await task.save();
+
+    // Add revision notes to conversation
+    const Conversation = require('../models/Conversation');
+    let conversation = await Conversation.findOne({ approvalRequestId: taskId });
+    
+    if (!conversation) {
+      conversation = new Conversation({
+        approvalRequestId: taskId,
+        requestType: 'approval',
+        messages: []
+      });
+    }
+
+    conversation.messages.push({
+      senderId: user._id,
+      senderRole: 'unit',
+      content: revisionNotes,
+      timestamp: new Date()
+    });
+
+    await conversation.save();
+
+    // Send notification to the requestor
+    try {
+      await notificationService.notifyApprovalRevision(task._id, task.userId._id, user._id, revisionNotes);
+    } catch (notifError) {
+      console.error('Error sending revision notification:', notifError);
+    }
+
+    // Notify admins that unit requested revision
+    try {
+      await notificationService.notifyAdminUnitRevision(task._id, user._id, task, revisionNotes);
+    } catch (notifError) {
+      console.error('Error sending admin notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Revision request sent successfully' });
+  } catch (error) {
+    console.error('Error requesting revision:', error);
+    res.status(500).json({ success: false, message: 'Error requesting revision: ' + error.message });
+  }
+});
+
+/**
+ * POST /unit/task/upload/:id
+ * Upload deliverable files for a service request
+ */
+const uploadConfig = require('../config/upload');
+router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('deliverables', 20), async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+
+    // Find the service request
+    const task = await ServiceRequest.findById(taskId);
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Get uploaded file names
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'No files uploaded' });
+    }
+
+    const filenames = req.files.map(file => file.filename);
+
+    // Add deliverables to the task
+    if (!task.deliverables) {
+      task.deliverables = [];
+    }
+    task.deliverables.push(...filenames);
+    
+    // Update status to "For Checking" instead of completed
+    task.status = 'For Checking';
+    
+    await task.save();
+
+    // Notify admins that unit uploaded deliverables
+    try {
+      await notificationService.notifyAdminUnitDeliverable(task._id, user._id, task, filenames.length);
+    } catch (notifError) {
+      console.error('Error sending admin notification:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Deliverables uploaded successfully. Status changed to "For Checking".',
+      filesUploaded: filenames.length 
+    });
+  } catch (error) {
+    console.error('Error uploading deliverables:', error);
+    res.status(500).json({ success: false, message: 'Error uploading deliverables: ' + error.message });
+  }
+});
+
+/**
+ * POST /unit/task/complete/:id
+ * Mark a service request as completed
+ */
+router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+
+    // Find the service request
+    const task = await ServiceRequest.findById(taskId).populate('userId');
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Check if at least one deliverable exists
+    if (!task.deliverables || task.deliverables.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please upload at least one deliverable before marking as completed' });
+    }
+
+    // Update task status to Completed
+    task.status = 'Completed';
+    await task.save();
+
+    // Send notification to the requestor
+    try {
+      await notificationService.notifyServiceCompleted(task._id, task.userId._id, user._id);
+    } catch (notifError) {
+      console.error('Error sending completion notification:', notifError);
+    }
+
+    // Notify admins that unit completed the request
+    try {
+      await notificationService.notifyAdminUnitCompleted(task._id, user._id, task);
+    } catch (notifError) {
+      console.error('Error sending admin notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Task marked as completed successfully' });
+  } catch (error) {
+    console.error('Error completing task:', error);
+    res.status(500).json({ success: false, message: 'Error completing task: ' + error.message });
   }
 });
 

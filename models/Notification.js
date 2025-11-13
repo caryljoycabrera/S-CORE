@@ -43,7 +43,9 @@ const notificationSchema = new mongoose.Schema({
       'new_message',         // New chat message
       'system',              // System notification
       'deadline_reminder',   // Deadline reminder
-      'status_change'        // General status change
+      'status_change',       // General status change
+      'unit_task_assigned',  // Task assigned to unit team
+      'unit_task_updated'    // Task updated for unit team
     ],
     required: true
   },

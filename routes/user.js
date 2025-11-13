@@ -15,6 +15,44 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 
 /**
+ * Request Type to Unit Mapping
+ * Automatically assigns requests to appropriate units based on specificRequestType
+ */
+const requestTypeToUnitMapping = {
+  // Graphics & Design Services (Service Requests)
+  "Creation of New Graphics/Pubmat": "Graphics",
+  "Creation of New Logo/Branding Element": "Graphics",
+
+  // Multimedia Services (Service Requests)
+  "Event Photo & Video Coverage": "Multimedia",
+  "Photo/Video Editing Service": "Multimedia",
+
+  // Content & Communications (Service Requests)
+  "Magazine Content Creation": "Public Relations",
+  "Social Media Content Sharing/Posting": "Social Media",
+
+  // Content & Communications Services (Approval Requests)
+  "Content Posting": "Public Relations",
+  "Social Media Monitoring": "Social Media",
+  "Caption Approval": "Public Relations",
+  "Publication Design": "Graphics",
+  "Proofreading": "Public Relations",
+
+  // Multimedia Services (Approval Requests)
+  "Graphics Design": "Graphics",
+  "Media Coverage": "Multimedia"
+};
+
+/**
+ * Get auto-assigned unit for a specific request type
+ * @param {string} specificRequestType - The type of request
+ * @returns {string} The assigned unit name or empty string if not found
+ */
+function getAutoAssignedUnit(specificRequestType) {
+  return requestTypeToUnitMapping[specificRequestType] || '';
+}
+
+/**
  * GET /
  * Homepage route - serves the public homepage with SCO information
  * If user is logged in, redirects to dashboard
@@ -734,25 +772,38 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
     let actualOrganization = 'N/A';
 
     if (organization && organization.trim()) {
+      // User selected an organization from dropdown - use only that one
       actualOrganization = organization.trim();
+      console.log('User selected organization from dropdown:', actualOrganization);
     } else {
+      // No organization selected - use first available from user's profile
       if (user.userType === 'nonstudent') {
-        if (Array.isArray(user.affiliation)) {
-          actualOrganization = user.affiliation[0] || 'N/A';
-        } else {
-          actualOrganization = user.affiliation || 'N/A';
+        if (Array.isArray(user.affiliation) && user.affiliation.length > 0) {
+          actualOrganization = user.affiliation[0];
+          console.log('Using first affiliation from user profile:', actualOrganization);
+        } else if (user.affiliation) {
+          actualOrganization = user.affiliation;
+          console.log('Using single affiliation from user profile:', actualOrganization);
         }
       } else {
-        if (Array.isArray(user.studentOrganization)) {
-          actualOrganization = user.studentOrganization[0] || 'N/A';
-        } else {
-          actualOrganization = user.studentOrganization || 'N/A';
+        if (Array.isArray(user.studentOrganization) && user.studentOrganization.length > 0) {
+          actualOrganization = user.studentOrganization[0];
+          console.log('Using first student organization from user profile:', actualOrganization);
+        } else if (user.studentOrganization) {
+          actualOrganization = user.studentOrganization;
+          console.log('Using single student organization from user profile:', actualOrganization);
         }
       }
     }
 
+    // Ensure we have a valid organization
+    if (!actualOrganization || actualOrganization === 'N/A') {
+      throw new Error('No valid organization found. Please select an organization or update your profile.');
+    }
+
     console.log('Final organization (single):', actualOrganization);
 
+    // Validate that actualOrganization is a string
     if (typeof actualOrganization !== 'string') {
       throw new Error('Organization must be a single string value');
     }
@@ -760,6 +811,10 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
     // Calculate 3 working days from now
     const { addWorkingDays } = require('../utils/helpers');
     const deadline = addWorkingDays(new Date(), 3);
+
+    // Auto-assign unit based on request type
+    const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);
+    const assignedUnits = autoAssignedUnit || 'Not yet assigned';
 
     const newRequest = new RequestApproval({
       title: projectTitle,
@@ -769,7 +824,9 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
       deadline: deadline,
       userId: req.session.userId,
       files: filePaths,
-      file: filePaths[0] || null
+      file: filePaths[0] || null,
+      assignedUnits: assignedUnits,
+      originalAssignedUnits: autoAssignedUnit // Store original auto-assignment
     });
 
     await newRequest.save();
@@ -784,6 +841,22 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
       await notificationService.notifyApprovalCreated(newRequest._id, req.session.userId, adminIds);
     } catch (notifError) {
       console.error('Error sending approval creation notifications:', notifError);
+    }
+
+    // Notify assigned unit members if auto-assigned
+    if (autoAssignedUnit && autoAssignedUnit !== '') {
+      try {
+        console.log(`🚀 USER ROUTE (APPROVAL): Attempting to notify unit members`);
+        console.log(`🚀 USER ROUTE (APPROVAL): autoAssignedUnit =`, autoAssignedUnit);
+        console.log(`🚀 USER ROUTE (APPROVAL): Request ID =`, newRequest._id);
+        await notificationService.notifyUnitTaskAssigned(newRequest._id, 'approval', autoAssignedUnit, null);
+        console.log('✅ USER ROUTE (APPROVAL): Unit notification sent for auto-assigned approval request to:', autoAssignedUnit);
+      } catch (unitNotifError) {
+        console.error('❌ USER ROUTE (APPROVAL): Error sending unit notification:', unitNotifError);
+        console.error('❌ USER ROUTE (APPROVAL): Error stack:', unitNotifError.stack);
+      }
+    } else {
+      console.log('⚠️ USER ROUTE (APPROVAL): No unit auto-assigned or empty unit:', autoAssignedUnit);
     }
 
     // Return JSON response instead of redirect
@@ -896,7 +969,7 @@ router.post('/add-files/:requestId', upload.array('additionalFiles', 20), async 
 router.post('/submit-service-request', upload.array('uploadServiceFile', 20), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
 
-  const { projectTitle, organization, description, deadline, specificRequestType } = req.body;
+  const { projectTitle, organization, description, deadline, specificRequestType, isCustomType } = req.body;
 
   console.log('Files received:', req.files);
   console.log('Organization received:', organization);
@@ -940,6 +1013,10 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
       throw new Error('Organization must be a single string value');
     }
 
+    // Auto-assign unit based on request type
+    const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);
+    const assignedUnits = autoAssignedUnit || 'Not yet assigned';
+
     const newRequest = new ServiceRequest({
       title: projectTitle,
       organization: actualOrganization,
@@ -948,13 +1025,57 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
       specificRequestType: specificRequestType,
       userId: req.session.userId,
       files: filePaths,
-      file: filePaths[0] || null
+      file: filePaths[0] || null,
+      assignedUnits: assignedUnits,
+      originalAssignedUnits: autoAssignedUnit // Store original auto-assignment
     });
 
     await newRequest.save();
     console.log('Service request saved with organization:', actualOrganization);
     console.log('Service request saved with specific type:', specificRequestType);
+    console.log('Service request auto-assigned to unit:', assignedUnits);
     console.log('Service request saved with files:', filePaths);
+
+    // Handle custom request type submission for admin review
+    if (isCustomType === 'true') {
+      try {
+        const RequestType = require('../models/RequestType');
+
+        // Check if this custom type already exists (pending or approved)
+        const existingType = await RequestType.findOne({
+          name: specificRequestType,
+          category: 'service'
+        });
+
+        if (!existingType) {
+          // Create new custom request type for admin review
+          const customType = new RequestType({
+            name: specificRequestType,
+            category: 'service',
+            assignedUnit: autoAssignedUnit || 'Not yet assigned', // Suggest unit based on mapping
+            submittedBy: req.session.userId,
+            status: 'pending'
+          });
+
+          await customType.save();
+          console.log('Custom request type submitted for admin review:', specificRequestType);
+
+          // Notify admins about new custom type
+          try {
+            const admins = await User.find({ role: 'admin' });
+            const adminIds = admins.map(admin => admin._id);
+            // You could add a specific notification for custom types here
+          } catch (notifError) {
+            console.error('Error sending custom type notifications:', notifError);
+          }
+        } else {
+          console.log('Custom request type already exists:', specificRequestType);
+        }
+      } catch (customTypeError) {
+        console.error('Error handling custom request type:', customTypeError);
+        // Don't fail the request submission for this
+      }
+    }
 
     // Send notifications to admins
     try {
@@ -963,6 +1084,22 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
       await notificationService.notifyServiceCreated(newRequest._id, req.session.userId, adminIds);
     } catch (notifError) {
       console.error('Error sending service creation notifications:', notifError);
+    }
+
+    // Notify assigned unit members if auto-assigned
+    if (autoAssignedUnit && autoAssignedUnit !== '') {
+      try {
+        console.log(`🚀 USER ROUTE: Attempting to notify unit members`);
+        console.log(`🚀 USER ROUTE: autoAssignedUnit =`, autoAssignedUnit);
+        console.log(`🚀 USER ROUTE: Request ID =`, newRequest._id);
+        await notificationService.notifyUnitTaskAssigned(newRequest._id, 'service', autoAssignedUnit, null);
+        console.log('✅ USER ROUTE: Unit notification sent for auto-assigned service request to:', autoAssignedUnit);
+      } catch (unitNotifError) {
+        console.error('❌ USER ROUTE: Error sending unit notification:', unitNotifError);
+        console.error('❌ USER ROUTE: Error stack:', unitNotifError.stack);
+      }
+    } else {
+      console.log('⚠️ USER ROUTE: No unit auto-assigned or empty unit:', autoAssignedUnit);
     }
 
     res.redirect('/service-requests');

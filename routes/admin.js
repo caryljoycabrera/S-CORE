@@ -933,11 +933,11 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
     // Send appropriate notifications based on status and request type
     try {
       const statusLower = status?.toLowerCase();
-      
+
       if (requestType === 'Request Approval') {
         // Populate userId if it's not already populated
         const approval = await RequestApproval.findById(requestId).populate('userId');
-        
+
         if (approval && approval.userId) {
           if (statusLower === 'approved') {
             await notificationService.notifyApprovalApproved(requestId, approval.userId._id, req.user._id);
@@ -950,7 +950,7 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
       } else if (requestType === 'Service Request') {
         // Populate userId if it's not already populated
         const service = await ServiceRequest.findById(requestId).populate('userId');
-        
+
         if (service && service.userId) {
           if (statusLower === 'approved') {
             await notificationService.notifyServiceApproved(requestId, service.userId._id, req.user._id, assignedUnits);
@@ -958,6 +958,15 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             await notificationService.notifyServiceRejected(requestId, service.userId._id, req.user._id);
           } else if (statusLower === 'completed') {
             await notificationService.notifyServiceCompleted(requestId, service.userId._id, req.user._id);
+          }
+        }
+
+        // Notify assigned unit if assignedUnits was changed
+        if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+          try {
+            await notificationService.notifyUnitTaskAssigned(requestId, assignedUnits, req.user._id);
+          } catch (unitNotifError) {
+            console.error('Error sending unit assignment notification:', unitNotifError);
           }
         }
       }
@@ -1241,6 +1250,17 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
     }
 
     console.log(`[SUCCESS] User ${result.username} (${result.email}) role changed from ${previousRole} to ${role} (Unit: ${previousUnitTeam} → ${result.unitTeam}) by admin ${req.user?.username || req.session.userId}`);
+
+    // Send unit onboarding notification if role changed to unit
+    if (role === 'unit' && previousRole !== 'unit') {
+      try {
+        await notificationService.notifyUnitApproved(userId, req.user?._id || req.session.userId);
+        console.log(`[NOTIFICATION] Unit onboarding notification sent to ${result.username}`);
+      } catch (notifError) {
+        console.error('[ERROR] Failed to send unit onboarding notification:', notifError);
+        // Don't fail the role update if notification fails
+      }
+    }
 
     res.json({
       success: true,
@@ -2374,5 +2394,281 @@ function buildFilterInfoText(queryParams) {
   
   return parts.join(' | ');
 }
+
+/**
+ * GET /admin/request-types
+ * Admin interface for managing custom request types
+ */
+router.get('/admin/request-types', requireAdmin, async (req, res) => {
+  try {
+    const RequestType = require('../models/RequestType');
+
+    // Get all request types with populated user data
+    const requestTypes = await RequestType.find()
+      .populate('submittedBy', 'fName lName')
+      .populate('reviewedBy', 'fName lName')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Get statistics
+    const stats = {
+      total: requestTypes.length,
+      pending: requestTypes.filter(rt => rt.status === 'pending').length,
+      approved: requestTypes.filter(rt => rt.status === 'approved').length,
+      rejected: requestTypes.filter(rt => rt.status === 'rejected').length
+    };
+
+    res.render('Admin/request-types', {
+      user: req.user,
+      requestTypes,
+      stats
+    });
+  } catch (err) {
+    console.error('Error loading request types page:', err);
+    res.status(500).render('error', { message: 'Failed to load request types page.' });
+  }
+});
+
+/**
+ * POST /admin/request-types/:id/approve
+ * Approve a custom request type
+ */
+router.post('/admin/request-types/:id/approve', requireAdmin, async (req, res) => {
+  try {
+    const RequestType = require('../models/RequestType');
+    const { assignedUnit } = req.body;
+
+    if (!assignedUnit) {
+      return res.status(400).json({ success: false, message: 'Assigned unit is required' });
+    }
+
+    const requestType = await RequestType.findByIdAndUpdate(
+      req.params.id,
+      {
+        status: 'approved',
+        assignedUnit: assignedUnit,
+        reviewedBy: req.user._id,
+        reviewedAt: new Date()
+      },
+      { new: true }
+    ).populate('submittedBy', 'fName lName');
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    // Increment usage count
+    await RequestType.findByIdAndUpdate(req.params.id, { $inc: { usageCount: 1 } });
+
+    res.json({
+      success: true,
+      message: 'Request type approved successfully',
+      requestType
+    });
+  } catch (err) {
+    console.error('Error approving request type:', err);
+    res.status(500).json({ success: false, message: 'Failed to approve request type' });
+  }
+});
+
+/**
+ * POST /admin/request-types/:id/reject
+ * Reject a custom request type
+ */
+router.post('/admin/request-types/:id/reject', requireAdmin, async (req, res) => {
+  try {
+    const RequestType = require('../models/RequestType');
+    const { reviewNotes } = req.body;
+
+    const requestType = await RequestType.findByIdAndUpdate(
+      req.params.id,
+      {
+        status: 'rejected',
+        reviewedBy: req.user._id,
+        reviewedAt: new Date(),
+        reviewNotes: reviewNotes || ''
+      },
+      { new: true }
+    );
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Request type rejected',
+      requestType
+    });
+  } catch (err) {
+    console.error('Error rejecting request type:', err);
+    res.status(500).json({ success: false, message: 'Failed to reject request type' });
+  }
+});
+
+/**
+ * POST /admin/request-types/:id/edit
+ * Edit an existing request type
+ */
+router.post('/admin/request-types/:id/edit', requireAdmin, async (req, res) => {
+  try {
+    const RequestType = require('../models/RequestType');
+    const { name, assignedUnit } = req.body;
+
+    if (!name || !assignedUnit) {
+      return res.status(400).json({ success: false, message: 'Name and assigned unit are required' });
+    }
+
+    const requestType = await RequestType.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: name.trim(),
+        assignedUnit: assignedUnit.trim()
+      },
+      { new: true }
+    );
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Request type updated successfully',
+      requestType
+    });
+  } catch (err) {
+    console.error('Error editing request type:', err);
+    res.status(500).json({ success: false, message: 'Failed to edit request type' });
+  }
+});
+
+/**
+ * DELETE /admin/request-types/:id
+ * Delete a request type
+ */
+router.delete('/admin/request-types/:id', requireAdmin, async (req, res) => {
+  try {
+    const RequestType = require('../models/RequestType');
+
+    const requestType = await RequestType.findByIdAndDelete(req.params.id);
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Request type deleted successfully'
+    });
+  } catch (err) {
+    console.error('Error deleting request type:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete request type' });
+  }
+});
+
+/**
+ * GET /api/admin/request-types
+ * API endpoint to get request types with pagination and filtering
+ */
+router.get('/api/admin/request-types', requireAdmin, async (req, res) => {
+  try {
+    const RequestType = require('../models/RequestType');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Build query
+    let query = {};
+    if (req.query.status && req.query.status !== 'all') {
+      query.status = req.query.status;
+    }
+    if (req.query.category && req.query.category !== 'all') {
+      query.category = req.query.category;
+    }
+    if (req.query.search) {
+      query.name = { $regex: req.query.search, $options: 'i' };
+    }
+
+    // Get request types with populated user data
+    const requestTypes = await RequestType.find(query)
+      .populate('submittedBy', 'fName lName')
+      .populate('reviewedBy', 'fName lName')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await RequestType.countDocuments(query);
+    const totalPages = Math.ceil(total / limit);
+
+    // Get statistics
+    const stats = {
+      total: await RequestType.countDocuments(),
+      approved: await RequestType.countDocuments({ status: 'approved' }),
+      pending: await RequestType.countDocuments({ status: 'pending' }),
+      rejected: await RequestType.countDocuments({ status: 'rejected' })
+    };
+
+    res.json({
+      success: true,
+      data: {
+        types: requestTypes,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems: total,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        },
+        stats
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching request types:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch request types' });
+  }
+});
+
+/**
+ * GET /api/request-types/approved
+ * Public API endpoint to get approved request types for form population
+ */
+router.get('/api/request-types/approved', async (req, res) => {
+  try {
+    const RequestType = require('../models/RequestType');
+
+    const approvedTypes = await RequestType.find({ status: 'approved' })
+      .sort({ category: 1, name: 1 })
+      .lean();
+
+    // Group by category
+    const grouped = {};
+    approvedTypes.forEach(type => {
+      if (!grouped[type.category]) {
+        grouped[type.category] = [];
+      }
+      grouped[type.category].push({
+        id: type._id,
+        name: type.name,
+        category: type.category,
+        assignedUnit: type.assignedUnit
+      });
+    });
+
+    res.json({
+      success: true,
+      requestTypes: approvedTypes.map(type => ({
+        id: type._id,
+        name: type.name,
+        category: type.category,
+        assignedUnit: type.assignedUnit
+      }))
+    });
+  } catch (err) {
+    console.error('Error fetching approved request types:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch request types' });
+  }
+});
 
 module.exports = router;

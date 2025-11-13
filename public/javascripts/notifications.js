@@ -643,11 +643,44 @@ class NotificationSystem {
       console.log('🗺️ Current path:', window.location.pathname, 'Target path:', urlObj.pathname);
       
       // Check if this is an onboarding/welcome notification
-      if (url.includes('/onboarding') || urlObj.pathname === '/onboarding') {
-        console.log('🎓 Onboarding notification clicked');
+      if (url.includes('/onboarding') || urlObj.pathname === '/onboarding' || type === 'unit_approved' || type === 'user_approved' ||
+          (this.userRole === 'unit' && (url.includes('/guide') || urlObj.pathname.includes('/guide')))) {
+        console.log('🎓 Onboarding/guide notification clicked:', { type, url, userRole: this.userRole });
         this.closeDropdown();
-        this.showOnboardingModal();
-        return;
+
+        // Handle unit onboarding/guide notifications specially
+        if (type === 'unit_approved' || (this.userRole === 'unit' && (url.includes('/guide') || urlObj.pathname.includes('/guide')))) {
+          console.log('🏢 Unit onboarding/guide notification detected');
+          if (window.unitNotificationSystem && typeof window.unitNotificationSystem.showOnboardingModal === 'function') {
+            console.log('✅ Using unit notification system for onboarding modal');
+            window.unitNotificationSystem.showOnboardingModal();
+          } else {
+            console.log('⚠️ Unit notification system not available, using shared modal');
+            this.showOnboardingModal();
+          }
+          return; // Always prevent navigation for unit onboarding/guide
+        }
+
+        // Handle user onboarding notifications
+        if (type === 'user_approved') {
+          console.log('👤 User onboarding notification detected');
+          this.showOnboardingModal();
+          return;
+        }
+
+        // Handle generic onboarding URLs
+        if (url.includes('/onboarding') || urlObj.pathname === '/onboarding') {
+          console.log('🔗 Generic onboarding URL detected');
+          // Check if this is a unit user
+          if (this.userRole === 'unit' && window.unitNotificationSystem) {
+            console.log('🏢 Unit user with onboarding URL - using unit modal');
+            window.unitNotificationSystem.showOnboardingModal();
+          } else {
+            console.log('👤 User onboarding URL - using shared modal');
+            this.showOnboardingModal();
+          }
+          return;
+        }
       }
       
       // Check if this is a user registration notification (system type with User relatedModel)
@@ -847,13 +880,27 @@ class NotificationSystem {
    */
   showOnboardingModal() {
     console.log('🎓 Showing onboarding modal');
-    
-    // Create modal HTML
+
+    // Get user role from the user data script
+    const userDataElement = document.querySelector('#user-data');
+    let userRole = 'user'; // default
+    if (userDataElement) {
+      try {
+        const userData = JSON.parse(userDataElement.textContent);
+        userRole = userData.role || 'user';
+      } catch (e) {
+        console.error('Error parsing user data for onboarding:', e);
+      }
+    }
+
+    const isUnitUser = userRole === 'unit';
+
+    // Create modal HTML based on user role
     const modalHTML = `
       <div id="onboarding-modal" class="onboarding-modal-overlay">
         <div class="onboarding-modal-content">
           <button class="onboarding-close-btn" id="onboarding-close-btn">&times;</button>
-          
+
           <div class="onboarding-header">
             <div class="onboarding-icon">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -861,11 +908,66 @@ class NotificationSystem {
                 <polyline points="22,4 12,14.01 9,11.01"></polyline>
               </svg>
             </div>
-            <h1>Welcome to S-CORE!</h1>
-            <p>Your account has been approved. Let's get you started!</p>
+            <h1>${isUnitUser ? 'Welcome to S-CORE Unit Team!' : 'Welcome to S-CORE!'}</h1>
+            <p>${isUnitUser ? 'Your unit account has been approved. Let\'s get you started!' : 'Your account has been approved. Let\'s get you started!'}</p>
           </div>
-          
+
           <div class="onboarding-body">
+            ${isUnitUser ? `
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Unit Dashboard Overview</h3>
+                <p>Your dashboard provides a comprehensive view of your unit's tasks, deadlines, analytics, and team performance metrics.</p>
+              </div>
+            </div>
+
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Process Tasks</h3>
+                <p>Review approval requests and complete service requests assigned to your unit. Use the task management tools to stay organized.</p>
+              </div>
+            </div>
+
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12,6 12,12 16,14"></polyline>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Manage Deadlines</h3>
+                <p>Monitor task deadlines using the calendar and urgent tasks panel. Communicate with requestors to meet timelines.</p>
+              </div>
+            </div>
+
+            <div class="onboarding-step">
+              <div class="step-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </div>
+              <div class="step-content">
+                <h3>Stay Connected</h3>
+                <p>Use the conversation feature for all task-related communication. You'll receive notifications for new assignments and updates.</p>
+              </div>
+            </div>
+            ` : `
             <div class="onboarding-step">
               <div class="step-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -879,7 +981,7 @@ class NotificationSystem {
                 <p>Your dashboard provides a quick overview of your service requests, approval requests, and important notifications.</p>
               </div>
             </div>
-            
+
             <div class="onboarding-step">
               <div class="step-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -892,7 +994,7 @@ class NotificationSystem {
                 <p>You can submit service requests and approval requests through the navigation menu. Fill out the forms carefully and attach any required files.</p>
               </div>
             </div>
-            
+
             <div class="onboarding-step">
               <div class="step-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -905,7 +1007,7 @@ class NotificationSystem {
                 <p>You'll receive notifications when your requests are reviewed, approved, or require revisions. Check the bell icon regularly.</p>
               </div>
             </div>
-            
+
             <div class="onboarding-step">
               <div class="step-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -919,10 +1021,11 @@ class NotificationSystem {
                 <p>Access the complete user guide anytime from the sidebar menu. It contains detailed instructions on all system features.</p>
               </div>
             </div>
+            `}
           </div>
-          
+
           <div class="onboarding-footer">
-            <a href="/user-guide" class="btn-secondary">View Full Guide</a>
+            <a href="${isUnitUser ? '/unit/guide' : '/user-guide'}" class="btn-secondary">View Full Guide</a>
             <button class="btn-primary" id="onboarding-got-it">Got it, Let's Start!</button>
           </div>
         </div>

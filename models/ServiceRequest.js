@@ -60,6 +60,12 @@ const serviceRequestSchema = new mongoose.Schema({
     default: 'Not yet assigned'
   },
 
+  // Track original auto-assignment for view permissions
+  originalAssignedUnits: {
+    type: String,
+    default: ''
+  },
+
   // File attachments (legacy single file field)
   file: {
     type: String // Keep for backward compatibility
@@ -67,6 +73,11 @@ const serviceRequestSchema = new mongoose.Schema({
 
   // Multiple file attachments (new field supporting multiple files)
   files: [{
+    type: String
+  }],
+
+  // Deliverables uploaded by unit team (completed work)
+  deliverables: [{
     type: String
   }],
 

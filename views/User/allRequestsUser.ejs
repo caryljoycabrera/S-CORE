@@ -8,10 +8,12 @@
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 <script src="/javascripts/alert-handler.js"></script>
+<script src="/javascripts/ejs/User/user-conversation.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <style>
@@ -1379,9 +1381,23 @@
 
         <!-- Chat Section -->
         <div class="chat-section" id="chatButtonSection" style="display: none;">
-          <h4 style="margin: 0 0 1rem 0; color: var(--primary-green); font-weight: 600;">Need to discuss this request?</h4>
-          <button id="openChatFromDetailsModal" class="chat-btn-enhanced">
-            Start Conversation with Admin
+          <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </div>
+                <div style="text-align: left;">
+                  <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
+                  <div style="font-size: 0.875rem; color: #047857;">Collaborate with your team members</div>
+                </div>
+              </div>
+              <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
           </button>
         </div>
       </div>
@@ -1389,67 +1405,153 @@
   </div>
 </div>
 
-      <!-- Conversation Modal - ADD THIS ENTIRE BLOCK -->
-  <div id="conversationModal" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 800px; width: 90%; height: 100vh; overflow: hidden;">
-      <header class="modal-header">
-        <span class="modal-title">Conversation</span>
-        <span class="close" id="closeConversationModal">&times;</span>
-      </header>
-      <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 60px); padding: 0; overflow: hidden;">
-        <div id="messagesContainer" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f9f9f9; min-height: 400px;">
+  <!-- Team Conversation Modal -->
+  <div id="teamConversationModal" class="modal" style="display: none;">
+    <div class="modal-content unit-conversation-modal">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <h2>Request Discussion</h2>
+          <span class="unit-conversation-subtitle">Discuss your request with admin and unit teams</span>
         </div>
-        <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: white; flex-shrink: 0;">
-          <!-- Message Formatting Toolbar -->
-          <div id="formattingToolbar" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
-            <button type="button" id="boldBtn" class="format-btn" title="Bold" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-weight: bold; font-size: 0.875rem; transition: all 0.2s;">
-              <strong>B</strong>
-            </button>
-            <button type="button" id="italicBtn" class="format-btn" title="Italic" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-style: italic; font-size: 0.875rem; transition: all 0.2s;">
-              <em>I</em>
-            </button>
-            <button type="button" id="underlineBtn" class="format-btn" title="Underline" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; text-decoration: underline; font-size: 0.875rem; transition: all 0.2s;">
-              U
-            </button>
-            <div style="width: 1px; height: 1.5rem; background: #d1d5db; align-self: center; margin: 0 0.25rem;"></div>
-            <button type="button" id="imageBtn" class="format-btn" title="Upload Image" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
-              📷
-            </button>
-            <button type="button" id="fileBtn" class="format-btn" title="Upload File" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
-              📎
-            </button>
-            <div style="flex: 1;"></div>
-            <span style="font-size: 0.75rem; color: #6b7280; align-self: center;">Format your text</span>
+        <button class="close-modal-btn" onclick="closeTeamConversationModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="unit-conversation-body">
+        <!-- Messages Container -->
+        <div id="teamMessagesContainer" class="unit-messages-container">
+          <div class="unit-messages-empty">
+            <div class="empty-icon">
+              <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <p>No discussion yet</p>
+            <small>Start the conversation below</small>
           </div>
-          
-          <!-- Hidden file inputs -->
-          <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-          <input type="file" id="fileUpload" style="display: none;">
-          
-          <!-- Attachment preview area -->
-          <div id="attachmentPreview" style="display: none; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; max-height: 80px; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
-              <div id="attachmentInfo" style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
-                <span id="attachmentIcon" style="flex-shrink: 0;">📷</span>
-                <span id="attachmentName" style="font-size: 0.875rem; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
-              </div>
-              <button type="button" id="removeAttachment" style="padding: 0.25rem; border: none; background: none; cursor: pointer; color: #ef4444; font-size: 1rem; flex-shrink: 0;" title="Remove attachment">
-                ✕
+        </div>
+
+        <!-- Message Input Area -->
+        <div class="unit-message-input-area">
+          <!-- Formatting Toolbar -->
+          <div class="unit-format-toolbar">
+            <button type="button" class="format-btn" data-chat-format="bold" title="Bold">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="italic" title="Italic">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="19" y1="4" x2="10" y2="4"/>
+                <line x1="14" y1="20" x2="5" y2="20"/>
+                <line x1="15" y1="4" x2="9" y2="20"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="underline" title="Underline">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                <line x1="4" y1="21" x2="20" y2="21"/>
+              </svg>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+            <span class="toolbar-hint">Format your message</span>
+          </div>
+
+          <!-- Attached Files Preview -->
+          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
+            <div class="files-preview-header">
+              <span class="files-count">0 file(s) attached</span>
+              <button type="button" id="clearChatFiles" class="clear-files-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Clear all
               </button>
             </div>
-            <div id="imagePreviewContainer" style="margin-top: 0.25rem; display: none; max-height: 40px; overflow: hidden;">
-              <img id="imagePreview" style="max-width: 80px; max-height: 40px; border-radius: 0.25rem; cursor: pointer; object-fit: cover;" onclick="openImageModal(this.src)">
-            </div>
+            <div id="chatFilesContainer" class="files-container"></div>
           </div>
-          
-          <div style="display: flex; gap: 0.5rem;">
-            <input type="text" id="messageInput" placeholder="Type your message..." 
-                   style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-family: 'Inter', sans-serif;">
-            <button id="sendMessageBtn" class="view-all-btn" style="background: var(--primary-green); color: white;">
-              Send
+
+          <!-- Message Input -->
+          <div class="unit-message-input-wrapper">
+            <textarea id="teamMessageInput" placeholder="Type your message..." rows="3" class="unit-message-input"></textarea>
+            <button id="sendTeamMessageBtn" class="unit-send-btn">
+              <span>Send</span>
+              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Define current user role for conversation
+    window.currentUserRole = 'user';
+  </script>
+
+  <!-- PDF Viewer Modal -->
+  <div id="pdfViewerModal" class="modal" style="display: none;">
+    <div class="modal-content pdf-viewer-modal">
+      <div class="modal-header pdf-viewer-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <path d="M8 6h8M8 10h8M8 14h4"/>
+          </svg>
+          <h2 id="pdfViewerTitle">PDF Document</h2>
+        </div>
+        <button class="close-modal-btn" onclick="closePdfViewer()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="pdf-viewer-body">
+        <iframe id="pdfViewerFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Viewer Modal -->
+  <div id="imageViewerModal" class="modal" style="display: none;">
+    <div class="modal-content image-viewer-modal">
+      <div class="modal-header image-viewer-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <h2 id="imageViewerTitle">Image</h2>
+        </div>
+        <button class="close-modal-btn" onclick="closeImageViewer()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="image-viewer-body">
+        <img id="imageViewerImg" src="" alt="Full size image">
       </div>
     </div>
   </div>
@@ -3144,6 +3246,380 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initMobileNavigation();
 });
+
+// ==========================================
+// TEAM CONVERSATION FUNCTIONS
+// ==========================================
+
+let currentConversationRequestId = null;
+
+// Open team conversation modal
+window.openTeamConversationModal = function(requestId) {
+    currentConversationRequestId = requestId;
+    const modal = document.getElementById('teamConversationModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        loadTeamConversation(requestId);
+    }
+};
+
+// Create alias for notification system
+window.openConversationModal = window.openTeamConversationModal;
+
+// Close team conversation modal
+window.closeTeamConversationModal = function() {
+    const modal = document.getElementById('teamConversationModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    currentConversationRequestId = null;
+};
+
+// Load conversation messages
+function loadTeamConversation(requestId) {
+    const container = document.getElementById('teamMessagesContainer');
+    if (!container) return;
+
+    fetch(`/api/conversation/${requestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.conversation && data.conversation.length > 0) {
+                container.innerHTML = '';
+                data.conversation.forEach(msg => {
+                    const messageDiv = createMessageElement(msg);
+                    container.appendChild(messageDiv);
+                });
+                container.scrollTop = container.scrollHeight;
+            } else {
+                container.innerHTML = `
+                    <div class="unit-messages-empty">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                        </div>
+                        <p>No discussion yet</p>
+                        <small>Start the conversation below</small>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading conversation:', error);
+            alert('Failed to load conversation');
+        });
+}
+
+// Create message element
+function createMessageElement(msg) {
+    const div = document.createElement('div');
+    
+    // Determine if this is the current user's message
+    const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
+    
+    // Role-based styling
+    let roleClass = 'user-message';
+    let roleColor = '#e0f2fe'; // Light blue for users
+    
+    if (isOwnMessage) {
+        roleClass = 'own-message';
+        roleColor = '#ffffff'; // White for own messages
+    } else if (msg.senderRole === 'admin') {
+        roleClass = 'admin-message';
+        roleColor = '#fecaca'; // Light red for admin
+    } else if (msg.senderRole === 'unit') {
+        roleClass = 'unit-message';
+        roleColor = '#bbf7d0'; // Light green for unit
+    }
+    
+    // Add alignment class
+    div.className = `unit-message-item ${isOwnMessage ? 'message-right' : 'message-left'}`;
+    
+    const time = new Date(msg.timestamp).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let attachmentsHTML = '';
+    if (msg.attachments && msg.attachments.length > 0) {
+        attachmentsHTML = msg.attachments.map(file => {
+            const ext = file.filename.split('.').pop().toLowerCase();
+            const isPdf = ext === 'pdf';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+            
+            let iconColor = '#64748b';
+            if (isImage) iconColor = '#059669';
+            else if (isPdf) iconColor = '#dc2626';
+            else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+            
+            return `
+                <div class="message-attachment">
+                    <div class="message-attachment-icon" style="color: ${iconColor};">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                            <line x1="8" y1="8" x2="16" y2="8"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                            <line x1="8" y1="16" x2="12" y2="16"/>
+                        </svg>
+                    </div>
+                    <div class="message-attachment-info">
+                        <div class="message-attachment-name">${escapeHtml(file.originalname || file.filename)}</div>
+                        <div class="message-attachment-size">${ext.toUpperCase()}</div>
+                    </div>
+                    <div class="message-attachment-actions">
+                        ${isImage ? `
+                            <button class="attachment-action-btn" onclick="viewImage('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View Image">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        ${isPdf ? `
+                            <button class="attachment-action-btn pdf-view" onclick="viewPdf('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View PDF">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="attachment-action-btn" title="Download">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    div.innerHTML = `
+        <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+            <div class="message-header">
+                <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
+                <span class="message-time">${time}</span>
+            </div>
+            <div class="message-content">${escapeHtml(msg.content || '')}</div>
+            ${attachmentsHTML}
+        </div>
+    `;
+    
+    return div;
+}
+
+// Send message
+window.sendTeamMessage = function() {
+    console.log('[AllRequestsUser] Send team message triggered');
+    const input = document.getElementById('teamMessageInput');
+    const fileInput = document.getElementById('chatFileInput');
+    if (!input || !currentConversationRequestId) {
+        console.error('[AllRequestsUser] Missing input or request ID:', {
+            input: !!input,
+            currentConversationRequestId
+        });
+        return;
+    }
+
+    const content = input.value.trim();
+    console.log('[AllRequestsUser] Message content:', content || '(empty)');
+    console.log('[AllRequestsUser] Files selected:', fileInput ? fileInput.files.length : 0);
+    
+    if (!content && (!fileInput || fileInput.files.length === 0)) {
+        console.warn('[AllRequestsUser] No content or files');
+        alert('Please enter a message or attach files');
+        return;
+    }
+
+    const formData = new FormData();
+    if (content) {
+        formData.append('content', content);
+    }
+
+    if (fileInput && fileInput.files.length > 0) {
+        console.log('[AllRequestsUser] Appending files...');
+        for (let i = 0; i < fileInput.files.length; i++) {
+            console.log(`[AllRequestsUser] File ${i + 1}:`, fileInput.files[i].name);
+            formData.append('chatFiles', fileInput.files[i]);
+        }
+    }
+
+    console.log('[AllRequestsUser] Sending to:', `/api/conversation/${currentConversationRequestId}/message`);
+    fetch(`/api/conversation/${currentConversationRequestId}/message`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('[AllRequestsUser] Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('[AllRequestsUser] Response data:', data);
+        if (data.success) {
+            console.log('[AllRequestsUser] Message sent successfully');
+            input.value = '';
+            if (fileInput) {
+                fileInput.value = '';
+                const preview = document.getElementById('chatFilesPreview');
+                if (preview) preview.style.display = 'none';
+            }
+            loadTeamConversation(currentConversationRequestId);
+        } else {
+            console.error('[AllRequestsUser] Server error:', data);
+            alert('Failed to send message');
+        }
+    })
+    .catch(error => {
+        console.error('[AllRequestsUser] Error sending message:', error);
+        console.error('[AllRequestsUser] Error stack:', error.stack);
+        alert('Error sending message');
+    });
+};
+
+// Helper function to escape HTML
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// PDF Viewer functions
+window.viewPdf = function(url, name) {
+    const modal = document.getElementById('pdfViewerModal');
+    const frame = document.getElementById('pdfViewerFrame');
+    const title = document.getElementById('pdfViewerTitle');
+    if (modal && frame) {
+        frame.src = url;
+        if (title) title.textContent = name || 'PDF Document';
+        modal.style.display = 'flex';
+    }
+};
+
+window.closePdfViewer = function() {
+    const modal = document.getElementById('pdfViewerModal');
+    const frame = document.getElementById('pdfViewerFrame');
+    if (modal) {
+        modal.style.display = 'none';
+        if (frame) frame.src = '';
+    }
+};
+
+// Image Viewer functions
+window.viewImage = function(url, name) {
+    const modal = document.getElementById('imageViewerModal');
+    const img = document.getElementById('imageViewerImg');
+    const title = document.getElementById('imageViewerTitle');
+    if (modal && img) {
+        img.src = url;
+        if (title) title.textContent = name || 'Image';
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeImageViewer = function() {
+    const modal = document.getElementById('imageViewerModal');
+    const img = document.getElementById('imageViewerImg');
+    if (modal) {
+        modal.style.display = 'none';
+        if (img) img.src = '';
+    }
+};
+
+// Initialize file upload features
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[AllRequestsUser] Initializing file upload features...');
+    const chatAttachBtn = document.getElementById('chatAttachBtn');
+    const chatFileInput = document.getElementById('chatFileInput');
+    const chatFilesPreview = document.getElementById('chatFilesPreview');
+    const clearChatFiles = document.getElementById('clearChatFiles');
+    const chatFilesContainer = document.getElementById('chatFilesContainer');
+    const sendBtn = document.getElementById('sendTeamMessageBtn');
+    const teamInput = document.getElementById('teamMessageInput');
+    
+    console.log('[AllRequestsUser] Elements found:', {
+        chatAttachBtn: !!chatAttachBtn,
+        chatFileInput: !!chatFileInput,
+        chatFilesPreview: !!chatFilesPreview,
+        clearChatFiles: !!clearChatFiles,
+        chatFilesContainer: !!chatFilesContainer,
+        sendBtn: !!sendBtn,
+        teamInput: !!teamInput
+    });
+    
+    // File attach button
+    if (chatAttachBtn && chatFileInput) {
+        chatAttachBtn.addEventListener('click', () => {
+            console.log('[AllRequestsUser] Attach button clicked');
+            chatFileInput.click();
+        });
+    } else {
+        console.warn('[AllRequestsUser] Attach button or file input not found');
+    }
+    
+    // File selection
+    if (chatFileInput && chatFilesPreview && chatFilesContainer) {
+        chatFileInput.addEventListener('change', function() {
+            console.log('[AllRequestsUser] Files selected:', this.files.length);
+            if (this.files.length > 0) {
+                chatFilesPreview.style.display = 'block';
+                displayChatFiles(this.files, chatFilesContainer);
+            }
+        });
+    } else {
+        console.warn('[AllRequestsUser] File selection elements not found');
+    }
+    
+    // Clear files
+    if (clearChatFiles && chatFileInput && chatFilesPreview) {
+        clearChatFiles.addEventListener('click', function() {
+            chatFileInput.value = '';
+            chatFilesPreview.style.display = 'none';
+            if (chatFilesContainer) chatFilesContainer.innerHTML = '';
+        });
+    }
+    
+    // Send button
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendTeamMessage);
+    }
+    
+    // Enter key to send (Shift+Enter for new line)
+    if (teamInput) {
+        teamInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendTeamMessage();
+            }
+        });
+    }
+});
+
+function displayChatFiles(files, container) {
+    container.innerHTML = '';
+    const filesCount = document.querySelector('.files-count');
+    if (filesCount) filesCount.textContent = `${files.length} file(s) attached`;
+    
+    Array.from(files).forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <div class="file-icon">📎</div>
+            <div class="file-name">${escapeHtml(file.name)}</div>
+            <div class="file-size">${(file.size / 1024).toFixed(1)} KB</div>
+        `;
+        container.appendChild(fileItem);
+    });
+}
+
 </script>
 </div>
 </div>

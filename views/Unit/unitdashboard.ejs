@@ -121,30 +121,66 @@
         </div>
 
         <div class="guidelines-content" id="guidelinesContent" style="display: none;">
+          
+          <!-- Approval Requests -->
           <div class="guidelines-section">
             <h5 class="section-title">
-              <span class="section-icon">⚡</span>
-              Priority Management
+              <span class="section-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </span>
+              Approval Requests
             </h5>
-            <ul class="guidelines-list">
-              <li><strong>Urgent:</strong> Tasks with deadlines within 3 days</li>
-              <li><strong>High Priority:</strong> Tasks requiring immediate attention</li>
-              <li><strong>Regular:</strong> Tasks with standard processing time</li>
-            </ul>
+            <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 12px; font-style: italic;">Your Goal: Review a file submitted by a requestor</p>
+            
+            <div style="margin: 16px 0;">
+              <p style="margin: 0 0 8px;"><strong>Your Action:</strong> Use the "Approve" or "For Revision" buttons in the task modal.</p>
+              <p style="margin: 0; padding: 12px; background: #fef3c7; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.875rem;">
+                <strong>Tip:</strong> If you click "For Revision," you MUST use the Conversation tab to explain what changes are needed.
+              </p>
+            </div>
           </div>
 
+          <!-- Service Requests -->
           <div class="guidelines-section">
             <h5 class="section-title">
-              <span class="section-icon">✓</span>
-              Best Practices
+              <span class="section-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+              </span>
+              Service Requests
             </h5>
-            <ul class="guidelines-list">
-              <li>Review task details thoroughly before approval</li>
-              <li>Communicate clearly with requesters when revisions are needed</li>
-              <li>Update task status promptly to maintain transparency</li>
-              <li>Monitor deadlines regularly and plan work accordingly</li>
-            </ul>
+            <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 12px; font-style: italic;">Your Goal: Create a new file for the requestor</p>
+            
+            <div style="margin: 16px 0;">
+              <p style="margin: 0 0 8px;"><strong>Your Action:</strong> Use the "Upload Deliverable" button to attach your final file, then click "Mark as Completed."</p>
+              <p style="margin: 0; padding: 12px; background: #fef3c7; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.875rem;">
+                <strong>Tip:</strong> Use the Conversation tab to share drafts with the requestor before uploading the final deliverable.
+              </p>
+            </div>
           </div>
+
+          <!-- Need More Detail -->
+          <div class="guidelines-section" style="background: #f3f4f6; border-left: 4px solid #6b7280; padding: 16px; margin-top: 24px;">
+            <p style="margin: 0 0 12px; font-size: 0.9rem; color: #374151;">
+              <strong>Need more detail?</strong> This is just a quick reference. For the full workflow, rules, and best practices, check the complete Unit Guide.
+            </p>
+            <a href="/unit/guide" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #2d7a4a 0%, #1e3a5f 100%); color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.875rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+              View Full Guide
+            </a>
+          </div>
+
         </div>
       </div>
 
@@ -164,11 +200,26 @@
               <h3 class="calendar-title">My Unit Calendar</h3>
             </div>
             <div class="calendar-controls">
-              <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">⛶</button>
+              <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </button>
               <div class="calendar-month-controls">
-                <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">❮</button>
+                <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
                 <span class="calendar-month-year" id="calendar-month-year"></span>
-                <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">❯</button>
+                <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -236,7 +287,7 @@
                 <% if (hasApprovals) { %>
                   <div class="urgent-tasks-list">
                     <% approvalTasks.forEach(function(task) { %>
-                      <div class="task-item-compact approval-task" data-task-id="<%= task._id %>" data-task-type="approval">
+                      <div class="task-item-compact approval-task" data-task-id="<%= task._id %>" data-task-type="approval" onclick="viewTaskDetails('<%= task._id %>', 'approval')" style="cursor: pointer;">
                         <div class="task-compact-header">
                           <h5 class="task-compact-title"><%= task.title || 'Untitled Task' %></h5>
                           <span class="task-badge approval">APPROVAL</span>
@@ -255,9 +306,6 @@
                           </svg>
                           <span><%= new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
                         </div>
-                        <button class="view-task-btn-compact approval" onclick="viewTaskDetails('<%= task._id %>', 'approval')">
-                          View
-                        </button>
                       </div>
                     <% }); %>
                   </div>
@@ -277,7 +325,7 @@
                 <% if (hasServices) { %>
                   <div class="urgent-tasks-list">
                     <% serviceTasks.forEach(function(task) { %>
-                      <div class="task-item-compact service-task" data-task-id="<%= task._id %>" data-task-type="service">
+                      <div class="task-item-compact service-task" data-task-id="<%= task._id %>" data-task-type="service" onclick="viewTaskDetails('<%= task._id %>', 'service')" style="cursor: pointer;">
                         <div class="task-compact-header">
                           <h5 class="task-compact-title"><%= task.title || task.serviceType || 'Untitled Task' %></h5>
                           <span class="task-badge service">SERVICE</span>
@@ -296,9 +344,6 @@
                           </svg>
                           <span><%= new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
                         </div>
-                        <button class="view-task-btn-compact service" onclick="viewTaskDetails('<%= task._id %>', 'service')">
-                          View
-                        </button>
                       </div>
                     <% }); %>
                   </div>
@@ -324,6 +369,10 @@
               </div>
             </div>
           <% } %>
+          
+          <p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin: 12px 0 0; padding: 12px;">
+            Click on any task card to view details
+          </p>
         </div>
 
         <!-- Row 2: Announcements (Left) -->
@@ -500,87 +549,6 @@
       }
       %>
       
-      <!-- NEW ANALYTICS SECTIONS -->
-      
-      <!-- Performance Metrics Cards -->
-      <div class="metrics-cards-grid" style="margin-top: 2rem;">
-        <div class="metric-card">
-          <div class="metric-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-            </svg>
-            <h4>Response Time</h4>
-          </div>
-          <div class="metric-value">24hrs</div>
-          <div class="metric-label">Avg. First Response</div>
-          <div class="metric-trend positive">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-            </svg>
-            <span>12% faster this week</span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            <h4>Completion Rate</h4>
-          </div>
-          <div class="metric-value"><%= taskBreakdown.completionRate || 0 %>%</div>
-          <div class="metric-label">Tasks Completed On Time</div>
-          <div class="metric-trend positive">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-            </svg>
-            <span>Excellent performance</span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 010 7.75"></path>
-            </svg>
-            <h4>Team Workload</h4>
-          </div>
-          <div class="metric-value"><%= totalRequests || 0 %></div>
-          <div class="metric-label">Active Tasks</div>
-          <div class="metric-trend <%= (totalRequests || 0) > 20 ? 'warning' : 'neutral' %>">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <span><%= (totalRequests || 0) > 20 ? 'High workload' : 'Manageable load' %></span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
-            </svg>
-            <h4>Revision Rate</h4>
-          </div>
-          <div class="metric-value"><%= Math.round(((inReviewRequests || 0) / Math.max(totalRequests || 1, 1)) * 100) %>%</div>
-          <div class="metric-label">Tasks Needing Revision</div>
-          <div class="metric-trend <%= ((inReviewRequests || 0) / Math.max(totalRequests || 1, 1)) > 0.2 ? 'warning' : 'positive' %>">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            <span><%= ((inReviewRequests || 0) / Math.max(totalRequests || 1, 1)) > 0.2 ? 'Review needed' : 'Good quality' %></span>
-          </div>
-        </div>
-      </div>
-
       <!-- Task Timeline - Line Chart -->
       <div class="timeline-chart-card" style="margin-top: 2rem;">
         <div class="chart-header">
@@ -640,6 +608,84 @@
         </div>
       </div>
 
+      <!-- Performance Metrics Cards -->
+      <div class="performance-metrics-section">
+        <div class="metric-card">
+          <div class="metric-header">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span class="metric-label">RESPONSE TIME</span>
+          </div>
+          <div class="metric-value">24hrs</div>
+          <div class="metric-subtitle">Avg. First Response</div>
+          <div class="metric-status positive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+            <span>12% faster this week</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span class="metric-label">COMPLETION RATE</span>
+          </div>
+          <div class="metric-value">33%</div>
+          <div class="metric-subtitle">Tasks Completed On Time</div>
+          <div class="metric-status positive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Excellent performance</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span class="metric-label">TEAM WORKLOAD</span>
+          </div>
+          <div class="metric-value">3</div>
+          <div class="metric-subtitle">Active Tasks</div>
+          <div class="metric-status neutral">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            <span>Manageable load</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span class="metric-label">REVISION RATE</span>
+          </div>
+          <div class="metric-value">0%</div>
+          <div class="metric-subtitle">Tasks Needing Revision</div>
+          <div class="metric-status positive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Good quality</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Help & Guide Card -->
       <div class="guide-card-container" style="margin-top: 24px;">
         <a href="/unit/guide" class="dashboard-guide-card">
@@ -679,15 +725,22 @@
         </div>
         <div class="calendar-controls">
           <button class="calendar-maximize-btn" id="calendar-minimize" aria-label="Minimize Calendar" title="Minimize Calendar">
-            ✕
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
           <div class="calendar-month-controls">
             <button class="calendar-nav-btn" id="calendar-modal-prev-month" aria-label="Previous Month" title="Previous Month">
-              ❮
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
             </button>
             <span class="calendar-month-year" id="calendar-modal-month-year"></span>
             <button class="calendar-nav-btn" id="calendar-modal-next-month" aria-label="Next Month" title="Next Month">
-              ❯
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
         </div>

@@ -999,6 +999,14 @@ function populateModalData(rowData) {
 
   populateAdminForm(rowData);
   populateFilePreview(rowData);
+  
+  // Setup chat button click handler
+  const chatButton = document.getElementById('openChatFromModal');
+  if (chatButton) {
+    chatButton.onclick = function() {
+      openTeamConversationModal(currentRequestId);
+    };
+  }
 }
 
 function setDetailText(id, value) {
@@ -1880,3 +1888,612 @@ document.addEventListener("click", function(event) {
 });
 
 console.log('✅ AllRequestsAdmin script loaded and initialized successfully');
+
+// ==========================================
+// CONVERSATION MODAL FUNCTIONALITY
+// ==========================================
+let chatFiles = [];
+
+function initializeChatFileFeatures() {
+    console.log('[AllRequestsAdmin] Initializing chat file features...');
+    // Attach files button
+    const attachBtn = document.getElementById('chatAttachBtn');
+    const fileInput = document.getElementById('chatFileInput');
+    
+    if (attachBtn && fileInput) {
+        console.log('[AllRequestsAdmin] Chat file elements found');
+        attachBtn.addEventListener('click', () => {
+            console.log('[AllRequestsAdmin] Attach button clicked');
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', handleChatFileSelect);
+    } else {
+        console.warn('[AllRequestsAdmin] Chat file elements not found:', { attachBtn: !!attachBtn, fileInput: !!fileInput });
+    }
+
+    // Clear all files button
+    const clearFilesBtn = document.getElementById('clearChatFiles');
+    if (clearFilesBtn) {
+        clearFilesBtn.addEventListener('click', clearAllChatFiles);
+    }
+    
+    // Text formatting for chat
+    const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
+    chatFormatBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const format = this.getAttribute('data-chat-format');
+            applyChatFormat(format);
+        });
+    });
+}
+
+function handleChatFileSelect(event) {
+    console.log('[AllRequestsAdmin] File selection triggered');
+    const files = Array.from(event.target.files);
+    console.log('[AllRequestsAdmin] Selected files:', files.length);
+    
+    files.forEach(file => {
+        // Check if file already exists
+        const exists = chatFiles.some(f => f.name === file.name && f.size === file.size);
+        if (!exists) {
+            chatFiles.push(file);
+            console.log('[AllRequestsAdmin] Added file:', file.name);
+        } else {
+            console.log('[AllRequestsAdmin] Duplicate file skipped:', file.name);
+        }
+    });
+    
+    console.log('[AllRequestsAdmin] Total files:', chatFiles.length);
+    updateChatFilesPreview();
+}
+
+function updateChatFilesPreview() {
+    const preview = document.getElementById('chatFilesPreview');
+    const container = document.getElementById('chatFilesContainer');
+    const filesCount = preview.querySelector('.files-count');
+    
+    if (!preview || !container) return;
+    
+    if (chatFiles.length > 0) {
+        preview.style.display = 'block';
+        filesCount.textContent = `${chatFiles.length} file(s) attached`;
+        
+        container.innerHTML = '';
+        chatFiles.forEach((file, index) => {
+            const fileItem = createChatFileItem(file, index);
+            container.appendChild(fileItem);
+        });
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function createChatFileItem(file, index) {
+    const item = document.createElement('div');
+    item.className = 'chat-file-item';
+    
+    const fileSizeKB = (file.size / 1024).toFixed(1);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize = file.size > 1024 * 1024 ? `${fileSizeMB} MB` : `${fileSizeKB} KB`;
+    
+    const ext = file.name.split('.').pop().toLowerCase();
+    let iconColor = '#64748b';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
+    else if (ext === 'pdf') iconColor = '#dc2626';
+    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+    
+    item.innerHTML = `
+        <div class="chat-file-info">
+            <div class="chat-file-icon" style="color: ${iconColor};">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <line x1="8" y1="8" x2="16" y2="8"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                    <line x1="8" y1="16" x2="12" y2="16"/>
+                </svg>
+            </div>
+            <div class="chat-file-name" title="${file.name}">${file.name}</div>
+        </div>
+        <button type="button" class="chat-file-remove" onclick="removeChatFile(${index})" title="Remove file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    
+    return item;
+}
+
+window.removeChatFile = function(index) {
+    chatFiles.splice(index, 1);
+    updateChatFilesPreview();
+    
+    // Update file input
+    const fileInput = document.getElementById('chatFileInput');
+    if (fileInput) {
+        const dt = new DataTransfer();
+        chatFiles.forEach(file => dt.items.add(file));
+        fileInput.files = dt.files;
+    }
+};
+
+function clearAllChatFiles() {
+    chatFiles = [];
+    updateChatFilesPreview();
+    
+    const fileInput = document.getElementById('chatFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+}
+
+function applyChatFormat(format) {
+    const textarea = document.getElementById('teamMessageInput');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    let formattedText = selectedText;
+    let newCursorPos = end;
+
+    switch(format) {
+        case 'bold':
+            formattedText = `**${selectedText}**`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'italic':
+            formattedText = `*${selectedText}*`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'underline':
+            formattedText = `__${selectedText}__`;
+            newCursorPos = start + formattedText.length;
+            break;
+    }
+
+    textarea.value = beforeText + formattedText + afterText;
+    textarea.focus();
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+}
+
+// PDF Viewer Functions
+window.viewPdf = function(pdfUrl, fileName) {
+    const modal = document.getElementById('pdfViewerModal');
+    const title = document.getElementById('pdfViewerTitle');
+    const iframe = document.getElementById('pdfViewerFrame');
+    
+    if (modal && iframe) {
+        title.textContent = fileName;
+        iframe.src = pdfUrl;
+        modal.style.display = 'flex';
+    }
+};
+
+window.closePdfViewer = function() {
+    const modal = document.getElementById('pdfViewerModal');
+    const iframe = document.getElementById('pdfViewerFrame');
+    
+    if (modal) {
+        modal.style.display = 'none';
+        if (iframe) {
+            iframe.src = '';
+        }
+    }
+};
+
+// Close team conversation modal
+window.closeTeamConversationModal = function() {
+    const modal = document.getElementById('teamConversationModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Initialize chat file features when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChatFileFeatures();
+});
+
+// ==========================================
+// CONVERSATION LOADING AND SENDING
+// ==========================================
+let currentConversationRequestId = null;
+
+window.openTeamConversationModal = function(requestId) {
+    currentConversationRequestId = requestId;
+    const modal = document.getElementById('teamConversationModal');
+    if (modal && requestId) {
+        loadTeamConversation(requestId);
+        modal.style.display = 'flex';
+    }
+};
+
+function loadTeamConversation(requestId) {
+    const container = document.getElementById('teamMessagesContainer');
+    if (!container) return;
+
+    fetch(`/api/conversation/${requestId}`)
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Server error response:', text);
+                    let errorMsg = 'Failed to load conversation';
+                    if (response.status === 401) errorMsg = 'Session expired. Please log in again.';
+                    else if (response.status === 403) errorMsg = 'Access denied.';
+                    throw new Error(errorMsg);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.conversation && data.conversation.length > 0) {
+                container.innerHTML = '';
+                data.conversation.forEach(msg => {
+                    const messageDiv = createMessageElement(msg);
+                    container.appendChild(messageDiv);
+                });
+                container.scrollTop = container.scrollHeight;
+            } else {
+                container.innerHTML = `
+                    <div class="unit-messages-empty">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                        </div>
+                        <p>No discussion yet</p>
+                        <small>Start the conversation below</small>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading conversation:', error);
+            alert('Failed to load conversation');
+        });
+}
+
+function createMessageElement(msg) {
+    const div = document.createElement('div');
+    
+    // Determine if this is the current user's message
+    const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
+    
+    // Role-based styling
+    let roleClass = 'user-message';
+    let roleColor = '#e0f2fe'; // Light blue for users
+    
+    if (isOwnMessage) {
+        roleClass = 'own-message';
+        roleColor = '#ffffff'; // White for own messages
+    } else if (msg.senderRole === 'admin') {
+        roleClass = 'admin-message';
+        roleColor = '#fecaca'; // Light red for admin
+    } else if (msg.senderRole === 'unit') {
+        roleClass = 'unit-message';
+        roleColor = '#bbf7d0'; // Light green for unit
+    }
+    
+    // Add alignment class
+    div.className = `unit-message-item ${isOwnMessage ? 'message-right' : 'message-left'}`;
+    
+    const time = new Date(msg.timestamp).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let attachmentsHTML = '';
+    if (msg.attachments && msg.attachments.length > 0) {
+        attachmentsHTML = msg.attachments.map(file => {
+            const ext = file.filename.split('.').pop().toLowerCase();
+            const isPdf = ext === 'pdf';
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+            
+            let iconColor = '#64748b';
+            if (isImage) iconColor = '#059669';
+            else if (isPdf) iconColor = '#dc2626';
+            else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+            
+            return `
+                <div class="message-attachment">
+                    <div class="message-attachment-icon" style="color: ${iconColor};">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="4" width="16" height="16" rx="2"/>
+                            <line x1="8" y1="8" x2="16" y2="8"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                            <line x1="8" y1="16" x2="12" y2="16"/>
+                        </svg>
+                    </div>
+                    <div class="message-attachment-info">
+                        <div class="message-attachment-name">${escapeHtml(file.originalname || file.filename)}</div>
+                        <div class="message-attachment-size">${ext.toUpperCase()}</div>
+                    </div>
+                    <div class="message-attachment-actions">
+                        ${isImage ? `
+                            <button class="attachment-action-btn" onclick="viewImage('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View Image">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        ${isPdf ? `
+                            <button class="attachment-action-btn pdf-view" onclick="viewPdf('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View PDF">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="attachment-action-btn" title="Download">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // Create read receipts HTML
+    let readReceiptsHTML = '';
+    if (msg.readBy && msg.readBy.length > 0) {
+        const readByList = msg.readBy.map(reader => {
+            const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            return `<div style="font-size: 0.7rem; color: #6b7280; margin-top: 0.15rem;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-right: 2px;">
+                    <polyline points="20 6 9 17 4 12"/>
+                    <polyline points="20 6 9 17" style="opacity: 0.5;"/>
+                </svg>
+                Read by ${escapeHtml(reader.userName)} at ${readTime}
+            </div>`;
+        }).join('');
+        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.25rem;">${readByList}</div>`;
+    }
+    
+    div.innerHTML = `
+        <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+            <div class="message-header">
+                <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
+                <span class="message-time">${time}</span>
+            </div>
+            <div class="message-content">${formatText(msg.content || '')}</div>
+            ${attachmentsHTML}
+            ${readReceiptsHTML}
+        </div>
+    `;
+    
+    return div;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Helper function to format text with markdown-style syntax
+function formatText(text) {
+    if (!text) return '';
+    
+    // Escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+}
+
+// Send team message
+window.sendTeamMessage = function() {
+    console.log('[AllRequestsAdmin] Send team message triggered');
+    const input = document.getElementById('teamMessageInput');
+    if (!input || !currentConversationRequestId) {
+        console.error('[AllRequestsAdmin] Missing input or request ID:', {
+            input: !!input,
+            currentConversationRequestId
+        });
+        return;
+    }
+
+    const content = input.value.trim();
+    console.log('[AllRequestsAdmin] Message content:', content || '(empty)');
+    console.log('[AllRequestsAdmin] Files to send:', chatFiles.length);
+    
+    if (!content && chatFiles.length === 0) {
+        console.warn('[AllRequestsAdmin] No content or files');
+        alert('Please enter a message or attach files');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('content', content);
+    
+    // Add files if any
+    chatFiles.forEach((file, index) => {
+        console.log(`[AllRequestsAdmin] Appending file ${index + 1}:`, file.name);
+        formData.append('chatFiles', file);
+    });
+
+    console.log('[AllRequestsAdmin] Sending to:', `/api/conversation/${currentConversationRequestId}/message`);
+    fetch(`/api/conversation/${currentConversationRequestId}/message`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('[AllRequestsAdmin] Response status:', response.status);
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('[AllRequestsAdmin] Server error:', text);
+                let errorMsg = 'Failed to send message';
+                if (response.status === 401) errorMsg = 'Session expired. Please log in again.';
+                else if (response.status === 403) errorMsg = 'Access denied.';
+                throw new Error(errorMsg);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('[AllRequestsAdmin] Response data:', data);
+        if (data.success) {
+            console.log('[AllRequestsAdmin] Message sent successfully');
+            input.value = '';
+            clearAllChatFiles();
+            loadTeamConversation(currentConversationRequestId);
+        } else {
+            console.error('[AllRequestsAdmin] Server error:', data);
+            alert(data.message || 'Failed to send message');
+        }
+    })
+    .catch(error => {
+        console.error('[AllRequestsAdmin] Error sending message:', error);
+        console.error('[AllRequestsAdmin] Error stack:', error.stack);
+        alert('Failed to send message');
+    });
+};
+
+// Image viewer modal
+window.viewImage = function(imageUrl, fileName) {
+    const modal = document.getElementById('imageViewerModal');
+    if (!modal) {
+        // Create image viewer modal if it doesn't exist
+        const modalHTML = `
+            <div id="imageViewerModal" class="modal" style="display: flex; z-index: 1000000;">
+                <div class="modal-content" style="max-width: 90vw; width: auto; max-height: 90vh; padding: 0; background: #1f2937;">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 1.5rem;">
+                        <div class="modal-title-section">
+                            <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: white;">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <h2 id="imageViewerTitle" style="margin: 0; color: white;">Image</h2>
+                        </div>
+                        <button class="close-modal-btn" onclick="closeImageViewer()" aria-label="Close">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div style="padding: 1rem; display: flex; justify-content: center; align-items: center; background: #111827;">
+                        <img id="imageViewerImg" style="max-width: 100%; max-height: 75vh; object-fit: contain;" />
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    const viewerModal = document.getElementById('imageViewerModal');
+    const title = document.getElementById('imageViewerTitle');
+    const img = document.getElementById('imageViewerImg');
+    
+    if (viewerModal && img) {
+        title.textContent = fileName;
+        img.src = imageUrl;
+        viewerModal.style.display = 'flex';
+    }
+};
+
+window.closeImageViewer = function() {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Create global alias for notification system
+window.openConversationModal = openTeamConversationModal;
+
+// Setup event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Team conversation modal button
+    const openChatBtn = document.getElementById('openTeamChatBtn');
+    if (openChatBtn) {
+        openChatBtn.addEventListener('click', function() {
+            const requestId = document.getElementById('detailsModalRequestId')?.value;
+            if (requestId) {
+                openTeamConversationModal(requestId);
+            }
+        });
+    }
+    
+    const sendBtn = document.getElementById('sendTeamMessageBtn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendTeamMessage);
+    }
+    
+    const messageInput = document.getElementById('teamMessageInput');
+    if (messageInput) {
+        console.log('[AllRequestsAdmin] Message input found, attaching event listeners');
+        
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendTeamMessage();
+            }
+        });
+        
+        // Add keyboard shortcuts for formatting
+        messageInput.addEventListener('keydown', function(e) {
+            console.log('[AllRequestsAdmin] Keydown event:', {
+                key: e.key,
+                ctrlKey: e.ctrlKey,
+                metaKey: e.metaKey,
+                shiftKey: e.shiftKey
+            });
+            
+            // Ctrl+B or Cmd+B for bold
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                console.log('[AllRequestsAdmin] Keyboard shortcut: Bold (Ctrl+B)');
+                applyChatFormat('bold');
+                return false;
+            }
+            // Ctrl+I or Cmd+I for italic
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                console.log('[AllRequestsAdmin] Keyboard shortcut: Italic (Ctrl+I)');
+                applyChatFormat('italic');
+                return false;
+            }
+            // Ctrl+U or Cmd+U for underline
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                console.log('[AllRequestsAdmin] Keyboard shortcut: Underline (Ctrl+U)');
+                applyChatFormat('underline');
+                return false;
+            }
+        });
+    } else {
+        console.error('[AllRequestsAdmin] Message input element not found!');
+    }
+});

@@ -38,7 +38,7 @@ const conversationSchema = new mongoose.Schema({
     // Sender's role (determines permissions and UI display)
     senderRole: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'admin', 'unit'],
       required: true
     },
     // Message content
@@ -46,7 +46,7 @@ const conversationSchema = new mongoose.Schema({
       type: String,
       required: false // Allow empty content if there's a file attachment
     },
-    // File attachment information
+    // Legacy single file attachment (kept for backward compatibility)
     file_path: {
       type: String,
       required: false
@@ -63,6 +63,14 @@ const conversationSchema = new mongoose.Schema({
       type: Number,
       required: false
     },
+    // New multiple file attachments array
+    attachments: [{
+      filename: String,
+      originalname: String,
+      mimetype: String,
+      size: Number,
+      path: String
+    }],
     // Timestamp of when message was sent
     timestamp: {
       type: Date,
@@ -72,7 +80,18 @@ const conversationSchema = new mongoose.Schema({
     isRead: {
       type: Boolean,
       default: false
-    }
+    },
+    // Read receipts - track who read the message and when
+    readBy: [{
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      readAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   }]
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

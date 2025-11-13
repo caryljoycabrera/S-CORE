@@ -2457,6 +2457,90 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// Unit Member Action Handlers
+// Approve Button
+const approveBtn = document.getElementById('approveBtn');
+if (approveBtn) {
+  approveBtn.addEventListener('click', async function() {
+    if (!currentConversationId) return;
+    
+    if (confirm('Are you sure you want to approve this request?')) {
+      try {
+        const response = await fetch(`/unit/task/approve/${currentConversationId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+          alert('Request approved successfully!');
+          location.reload();
+        } else {
+          const error = await response.json();
+          alert('Error: ' + (error.message || 'Failed to approve request'));
+        }
+      } catch (error) {
+        console.error('Error approving request:', error);
+        alert('An error occurred while approving the request');
+      }
+    }
+  });
+}
+
+// Revise Button
+const reviseBtn = document.getElementById('reviseBtn');
+const revisionCommentSection = document.getElementById('revisionCommentSection');
+const cancelRevisionBtn = document.getElementById('cancelRevisionBtn');
+const submitRevisionBtn = document.getElementById('submitRevisionBtn');
+const revisionComment = document.getElementById('revisionComment');
+
+if (reviseBtn) {
+  reviseBtn.addEventListener('click', function() {
+    if (revisionCommentSection) {
+      revisionCommentSection.style.display = 'block';
+    }
+  });
+}
+
+if (cancelRevisionBtn) {
+  cancelRevisionBtn.addEventListener('click', function() {
+    if (revisionCommentSection) {
+      revisionCommentSection.style.display = 'none';
+      if (revisionComment) revisionComment.value = '';
+    }
+  });
+}
+
+if (submitRevisionBtn) {
+  submitRevisionBtn.addEventListener('click', async function() {
+    if (!currentConversationId) return;
+    
+    const comment = revisionComment ? revisionComment.value.trim() : '';
+    if (!comment) {
+      alert('Please provide a comment explaining what needs to be fixed');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/unit/task/revise/${currentConversationId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revisionNotes: comment })
+      });
+      
+      if (response.ok) {
+        alert('Revision request sent successfully!');
+        location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + (error.message || 'Failed to request revision'));
+      }
+    } catch (error) {
+      console.error('Error requesting revision:', error);
+      alert('An error occurred while requesting revision');
+    }
+  });
+}
+
 // Sidebar hover effect for desktop
 const sidebar = document.getElementById('userSidebar');
 if (sidebar) {

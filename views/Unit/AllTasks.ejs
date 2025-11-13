@@ -3,15 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>All Tasks - <%= unitTeam %> Unit</title>
-
-  <!-- ==========================================
-       ** EXTERNAL STYLESHEET & JAVASCRIPT LINKS
-       ** ==========================================
-       ** Unit all tasks page styles are now managed in: public/stylesheets/ejs/Unit/alltasks.css
-       ** All tasks page functionality is handled by: public/javascripts/ejs/Unit/alltasks.js
-       ** This improves code organization and maintainability
-       * ========================================== -->
+  <title>All Assigned Tasks - <%= unitTeam %> Unit</title>
 
   <!-- Base Stylesheet and Google Fonts -->
   <link rel="stylesheet" href="/style.css" />
@@ -19,19 +11,15 @@
   <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/conversation-modal.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
   <script src="/javascripts/unit-navbar.js"></script>
-
-  <!-- Unit All Tasks Page Specific Stylesheet -->
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css" />
-
-  <!-- Unit All Tasks Page Specific JavaScript -->
-  <script src="/javascripts/ejs/Unit/alltasks.js"></script>
-
 </head>
 <body>
-  <!-- Unit Sidebar Navigation (using partials) -->
+  <!-- Unit Sidebar Navigation -->
   <%- include('../partials/unit-navbar', { user: user, activePage: 'all-tasks' }) %>
 
   <!-- MAIN CONTENT WITH SIDEBAR -->
@@ -55,7 +43,7 @@
         <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
       </div>
       
-      <span class="text-wrapper-2">All Tasks</span>
+      <span class="text-wrapper-2">All Assigned Tasks</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
@@ -78,536 +66,681 @@
     <!-- MAIN CONTENT -->
     <div class="student-side">
       <div class="div">
-
-      <!-- Section -->
-      <section class="activity-section">
-        <div class="page-header-container">
-          <div class="user-info-section">
-            <h1 style="margin: 0; font-size: 1.75rem; color: #1e293b; font-weight: 700;">
-              <%= unitTeam %> Unit - All Assigned Tasks
-            </h1>
-            <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 0.95rem;">
-              View and manage all tasks assigned to your unit team
-            </p>
+        <!-- Section -->
+        <section class="activity-section">
+          <div class="section-header" style="padding: 2rem 3rem 0 3rem;">
+            <h1><%= unitTeam %> Team - All Assigned Tasks</h1>
+            <p>Process and collaborate on tasks assigned to your unit</p>
           </div>
-        </div>
-        
-        <nav class="nav-tabs tabs">
-          <a href="/unit/all-tasks" class="tab-btn active">All Tasks</a>
-          <a href="/unit/task-approvals" class="tab-btn">Approval Tasks</a>
-          <a href="/unit/task-services" class="tab-btn">Service Tasks</a>
-        </nav>
-        
-        <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
+          
+          <nav class="nav-tabs tabs" style="padding: 0 3rem; margin-bottom: 1.5rem;">
+            <a href="/unit/all-tasks" class="tab-btn active">All Tasks</a>
+            <a href="/unit/task-approvals" class="tab-btn">Approvals</a>
+            <a href="/unit/task-services" class="tab-btn">Services</a>
+          </nav>
+          
+          <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
 
-        <!-- Filter Options -->
-        <div class="filter-section">
-          <div class="filter-container">
-            <div class="filter-group">
-              <label class="filter-label">Filter by:</label>
+          <!-- Filter Options -->
+          <div class="filter-section">
+            <div class="filter-container">
+              <div class="filter-group">
+                <label class="filter-label">Filter by:</label>
 
-              <!-- First Row: Title, Type, Status, Requestor -->
-              <div class="filter-controls">
-                <div class="filter-item">
-                  <label for="titleFilter" class="filter-sublabel">Task Title</label>
-                  <input type="text" id="titleFilter" class="filter-input" placeholder="Search task title...">
-                </div>
-                <div class="filter-item">
-                  <label class="filter-sublabel">Type</label>
-                  <div class="custom-select-wrapper">
-                    <div class="custom-select" id="typeFilter">
-                      <div class="select-display" data-placeholder="Select Type">
-                        <span class="selected-text">All Types</span>
-                        <span class="dropdown-arrow">▼</span>
-                      </div>
-                      <div class="select-dropdown" id="typeDropdown">
-                        <div class="options-container">
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="all" checked> All Types
-                            <span class="checkbox-custom"></span>
-                          </label>
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="approval"> Approval Request
-                            <span class="checkbox-custom"></span>
-                          </label>
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="service"> Service Request
-                            <span class="checkbox-custom"></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
+                <!-- Filter Controls -->
+                <div class="filter-controls">
+                  <div class="filter-item">
+                    <label for="titleFilter" class="filter-sublabel">Title</label>
+                    <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
+                  </div>
+                  
+                  <div class="filter-item">
+                    <label for="typeFilter" class="filter-sublabel">Type</label>
+                    <select id="typeFilter" class="filter-select">
+                      <option value="all">All Types</option>
+                      <option value="approval">Approval Requests</option>
+                      <option value="service">Service Requests</option>
+                    </select>
+                  </div>
+
+                  <div class="filter-item">
+                    <label for="statusFilter" class="filter-sublabel">Status</label>
+                    <select id="statusFilter" class="filter-select">
+                      <option value="all">All Statuses</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="For Revision">For Revision</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div class="filter-item">
+                    <label for="requestorFilter" class="filter-sublabel">Requestor</label>
+                    <input type="text" id="requestorFilter" class="filter-input" placeholder="Search requestor...">
+                  </div>
+
+                  <div class="filter-item">
+                    <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                    <input type="date" id="dateFromFilter" class="filter-input">
+                  </div>
+
+                  <div class="filter-item">
+                    <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                    <input type="date" id="dateToFilter" class="filter-input">
                   </div>
                 </div>
-                <div class="filter-item">
-                  <label class="filter-sublabel">Status</label>
-                  <div class="custom-select-wrapper">
-                    <div class="custom-select" id="statusFilter">
-                      <div class="select-display" data-placeholder="Select Status">
-                        <span class="selected-text">All Status</span>
-                        <span class="dropdown-arrow">▼</span>
-                      </div>
-                      <div class="select-dropdown" id="statusDropdown">
-                        <div class="options-container">
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="all" checked> All Status
-                            <span class="checkbox-custom"></span>
-                          </label>
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="pending"> Pending
-                            <span class="checkbox-custom"></span>
-                          </label>
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="in progress"> In Progress
-                            <span class="checkbox-custom"></span>
-                          </label>
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="for revision"> For Revision
-                            <span class="checkbox-custom"></span>
-                          </label>
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="approved"> Approved
-                            <span class="checkbox-custom"></span>
-                          </label>
-                          <label class="dropdown-option">
-                            <input type="checkbox" value="completed"> Completed
-                            <span class="checkbox-custom"></span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="filter-item">
-                  <label for="requestorFilter" class="filter-sublabel">Requestor</label>
-                  <input type="text" id="requestorFilter" class="filter-input" placeholder="Search requestor name...">
-                </div>
-              </div>
 
-              <!-- Second Row: Organization and Date Filters -->
-              <div class="filter-controls dropdown-row">
-                <div class="filter-item">
-                  <label for="organizationFilter" class="filter-sublabel">Requestor Organization</label>
-                  <div class="enhanced-multi-select-wrapper">
-                    <div class="enhanced-multi-select" id="organizationFilter">
-                      <div class="select-display" data-placeholder="Select Organizations">
-                        <span class="selected-text">All Organizations</span>
-                        <span class="dropdown-arrow">▼</span>
-                      </div>
-                      <div class="select-dropdown" id="organizationDropdown">
-                        <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search organizations...">
-                        </div>
-                        <div class="options-container"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="filter-item">
-                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
-                  <input type="date" id="dateFromFilter" class="filter-input">
-                </div>
-                <div class="filter-item">
-                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
-                  <input type="date" id="dateToFilter" class="filter-input">
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-actions">
-              <button id="clearFilters" class="clear-filters-btn">
-                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="6" width="18" height="14" rx="2"/>
-                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  <line x1="1" y1="6" x2="23" y2="6"/>
-                  <line x1="10" y1="11" x2="10" y2="17"/>
-                  <line x1="14" y1="11" x2="14" y2="17"/>
-                </svg>
-                Clear All
-              </button>
-              <div class="results-count">
-                <span id="resultsCount">Showing all requests</span>
+                <button id="clearFilters" class="clear-filters-btn">Clear All Filters</button>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Table -->
-        <section class="table-section" style="overflow-x: auto;">
-          <table class="requests-table" style="width: 100%; border-collapse: collapse; background: white;">
-            <thead style="background: var(--light-green); color: var(--primary-green);">
-              <tr>
-                <th>Task ID</th>
-                <th>Type</th>
-                <th>Title</th>
-                <th>Requestor</th>
-                <th>Organization</th>
-                <th>Status</th>
-                <th>Deadline</th>
-                <th>Date Submitted</th>
-              </tr>
-            </thead>
-            <tbody id="requestsTableBody">
-              <!-- Approval Requests -->
-              <% if (approvalRequests && approvalRequests.length > 0) { %>
-                <% approvalRequests.forEach(request => {
-                  // Calculate local deadline
-                  let localDeadline = '';
-                  let formattedDeadline = 'N/A';
-                  if (request.deadline) {
-                    const d = new Date(request.deadline);
-                    localDeadline = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                    formattedDeadline = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
-                  }
-
-                  // Get requestor name
-                  let displayUserName = 'Unknown User';
-                  if (request.userId && request.userId.fName) {
-                    displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
-                  }
-
-                  // Get organization from request directly
-                  let organization = request.organization || 'N/A';
-                %>
-                <tr class="request-row"
-                  data-id="<%= request._id %>"
-                  data-type="approval"
-                  data-title="<%= request.title %>"
-                  data-status="<%= request.status %>"
-                  data-organization="<%= organization %>"
-                  data-deadline="<%= localDeadline %>"
-                  data-formatted-deadline="<%= formattedDeadline %>"
-                  data-datetime="<%= new Date(request.createdAt).toLocaleString() %>"
-                  data-date="<%= new Date(request.createdAt).toISOString().split('T')[0] %>"
-                  data-description="<%= request.description %>"
-                  data-files="<%= request.files ? request.files.join(',') : '' %>"
-                  data-requestor="<%= displayUserName %>">
-                  <td><%= request._id.toString().slice(-6) %></td>
-                  <td>
-                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #dbeafe; color: #1e40af;">
-                      Approval
-                    </span>
-                  </td>
-                  <td><%= request.title %></td>
-                  <td><%= displayUserName %></td>
-                  <td><%= organization %></td>
-                  <td>
-                    <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
-                      <%= request.status %>
-                    </span>
-                  </td>
-                  <td><%= formattedDeadline %></td>
-                  <td><%= new Date(request.createdAt).toLocaleString() %></td>
+          <!-- Requests Table -->
+          <div class="table-section" style="background: white; padding: 1.5rem; margin: 0 3rem 2rem 3rem;">
+            <table class="requests-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th>Requestor</th>
+                  <th>Organization</th>
+                  <th>Date Submitted</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-                <% }); %>
-              <% } %>
-
-              <!-- Service Requests -->
-              <% if (serviceRequests && serviceRequests.length > 0) { %>
-                <% serviceRequests.forEach(request => {
-                  // Calculate local deadline
-                  let localDeadline = '';
-                  let formattedDeadline = 'N/A';
-                  if (request.deadline) {
-                    const d = new Date(request.deadline);
-                    localDeadline = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                    formattedDeadline = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
-                  }
-
-                  // Get requestor name
-                  let displayUserName = 'Unknown User';
-                  if (request.userId && request.userId.fName) {
-                    displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
-                  }
-
-                  // Get organization from request directly
-                  let organization = request.organization || 'N/A';
+              </thead>
+              <tbody id="requestsTableBody">
+                <% 
+                // Combine approval and service requests
+                const allRequests = [
+                  ...(approvalRequests || []).map(r => ({...r, requestType: 'approval'})),
+                  ...(serviceRequests || []).map(r => ({...r, requestType: 'service'}))
+                ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 %>
-                <tr class="request-row"
-                  data-id="<%= request._id %>"
-                  data-type="service"
-                  data-servicetype="<%= request.serviceType %>"
-                  data-title="<%= request.serviceType %>"
-                  data-status="<%= request.status %>"
-                  data-organization="<%= organization %>"
-                  data-deadline="<%= localDeadline %>"
-                  data-formatted-deadline="<%= formattedDeadline %>"
-                  data-datetime="<%= new Date(request.createdAt).toLocaleString() %>"
-                  data-date="<%= new Date(request.createdAt).toISOString().split('T')[0] %>"
-                  data-description="<%= request.details %>"
-                  data-files="<%= request.files ? request.files.join(',') : '' %>"
-                  data-requestor="<%= displayUserName %>">
-                  <td><%= request._id.toString().slice(-6) %></td>
-                  <td>
-                    <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #fef3c7; color: #92400e;">
-                      Service
-                    </span>
-                  </td>
-                  <td><%= request.serviceType %></td>
-                  <td><%= displayUserName %></td>
-                  <td><%= organization %></td>
-                  <td>
-                    <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
-                      <%= request.status %>
-                    </span>
-                  </td>
-                  <td><%= formattedDeadline %></td>
-                  <td><%= new Date(request.createdAt).toLocaleString() %></td>
-                </tr>
-                <% }); %>
-              <% } %>
-            </tbody>
-          </table>
-
-          <% if ((!approvalRequests || approvalRequests.length === 0) && (!serviceRequests || serviceRequests.length === 0)) { %>
-          <div style="text-align: center; padding: 2rem; color: #6b7280;">
-            <p>No tasks assigned to your unit yet.</p>
+                
+                <% if (allRequests && allRequests.length > 0) { %>
+                  <% allRequests.forEach(request => { %>
+                    <% 
+                      const isApproval = request.requestType === 'approval';
+                      const type = request.requestType;
+                      const title = isApproval ? (request.title || request.projectTitle || 'Untitled') : (request.title || request.serviceType || 'Untitled');
+                      const requestor = request.userId ? `${request.userId.fName} ${request.userId.lName}` : 'Unknown';
+                      
+                      // Get organization/office/department - prioritize in this order
+                      let organization = 'N/A';
+                      if (request.userId) {
+                        if (request.userId.studentOrganization && Array.isArray(request.userId.studentOrganization) && request.userId.studentOrganization.length > 0) {
+                          organization = request.userId.studentOrganization[0];
+                        } else if (request.userId.office && request.userId.office.trim()) {
+                          organization = request.userId.office;
+                        } else if (request.userId.department && request.userId.department.trim()) {
+                          organization = request.userId.department;
+                        } else if (request.userId.affiliation && Array.isArray(request.userId.affiliation) && request.userId.affiliation.length > 0) {
+                          organization = request.userId.affiliation[0];
+                        }
+                      }
+                      
+                      const dateSubmitted = new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                      const status = request.status || 'Pending';
+                      const files = request.files || [];
+                      const deliverables = request.deliverables || [];
+                      const deadline = request.deadline || '';
+                      const serviceType = isApproval ? '' : (request.serviceType || request.specificRequestType || '');
+                      const description = request.description || '';
+                      const specificRequestType = request.specificRequestType || '';
+                      const requestorEmail = request.userId ? request.userId.email : '';
+                    %>
+                    <tr class="request-row clickable" 
+                        data-request-id="<%= request._id %>"
+                        data-request-type="<%= type %>"
+                        data-title="<%= title.replace(/"/g, '&quot;') %>"
+                        data-requestor="<%= requestor.replace(/"/g, '&quot;') %>"
+                        data-requestor-email="<%= requestorEmail.replace(/"/g, '&quot;') %>"
+                        data-organization="<%= organization.replace(/"/g, '&quot;') %>"
+                        data-description="<%= description.replace(/"/g, '&quot;') %>"
+                        data-date-submitted="<%= dateSubmitted %>"
+                        data-status="<%= status %>"
+                        data-files='<%= JSON.stringify(files) %>'
+                        data-deliverables='<%= JSON.stringify(deliverables) %>'
+                        data-deadline="<%= deadline %>"
+                        data-service-type="<%= serviceType.replace(/"/g, '&quot;') %>"
+                        data-specific-request-type="<%= specificRequestType.replace(/"/g, '&quot;') %>">
+                      <td>
+                        <span class="type-badge <%= type %>">
+                          <%= isApproval ? 'Approval' : 'Service' %>
+                        </span>
+                      </td>
+                      <td class="title-cell"><%= title %></td>
+                      <td><%= requestor %></td>
+                      <td><%= organization %></td>
+                      <td><%= dateSubmitted %></td>
+                      <td>
+                        <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>
+                      </td>
+                      <td>
+                        <button class="view-btn">
+                          <svg class="view-btn-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                          <span class="view-btn-text">View Details</span>
+                        </button>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 3rem; color: #64748b;">
+                      <div style="font-size: 3rem; margin-bottom: 1rem;">
+                        <svg width="64" height="64" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block;">
+                          <rect x="4" y="4" width="16" height="16" rx="2"/>
+                          <line x1="8" y1="8" x2="16" y2="8"/>
+                          <line x1="8" y1="12" x2="16" y2="12"/>
+                          <line x1="8" y1="16" x2="12" y2="16"/>
+                        </svg>
+                      </div>
+                      <p>No tasks assigned to your unit yet</p>
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
           </div>
-          <% } %>
         </section>
-
-        <!-- Back to Dashboard Button -->
-        <div class="back-to-dashboard-container">
-          <a href="/unit/dashboard" class="back-to-dashboard-btn">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Back to Dashboard
-          </a>
-        </div>
-      </section>
       </div>
     </div>
   </div>
 
-  <!-- Enhanced Request Details Modal -->
-  <div id="detailsModal" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 1000px;">
-      <header class="modal-header">
-        <span class="modal-title">Request Details</span>
-        <span class="close" id="closeDetailsModal">&times;</span>
-      </header>
-      <div class="modal-body details-modal-body">
-        <div class="details-content">
+  <!-- Request Details Modal - Two Column Layout -->
+  <div id="requestDetailsModal" class="modal" style="display: none;">
+    <div class="modal-content unit-modal-wide">
+      <!-- Modal Header -->
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+          <h2 id="modalTitle">Request Details</h2>
+          <span class="type-badge" id="modalTypeBadge">APPROVAL</span>
+        </div>
+        <button class="close-modal-btn" onclick="closeRequestModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
 
-          <!-- General Information Section -->
-          <div class="general-info-section">
-            <h3>General Information</h3>
-            <div class="general-info-row">
-              <div class="info-item">
-                <span class="info-label">Project Title:</span>
-                <span class="info-value" id="detailTitle"></span>
+      <!-- Two Column Layout -->
+      <div class="modal-body unit-modal-body">
+        <!-- LEFT COLUMN: Request Details -->
+        <div class="unit-left-column">
+          <!-- Request Information Card -->
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                  <rect x="4" y="4" width="16" height="16" rx="2"/>
+                  <line x1="8" y1="8" x2="16" y2="8"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                  <line x1="8" y1="16" x2="12" y2="16"/>
+                </svg>
+                Request Information
+              </h3>
+              <p class="unit-card-subtitle">Complete details about this request</p>
+            </div>
+            <div class="unit-info-grid">
+              <div class="unit-info-item">
+                <span class="unit-info-label">Requestor</span>
+                <span class="unit-info-value" id="modalRequestor">Loading...</span>
               </div>
-              <div class="info-item">
-                <span class="info-label">Requested By:</span>
-                <span class="info-value" id="detailStudent"></span>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Email</span>
+                <span class="unit-info-value" id="modalRequestorEmail">Loading...</span>
               </div>
-              <div class="info-item">
-                <span class="info-label">Request Type:</span>
-                <span class="info-value" id="detailType"></span>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Organization/Office/Dept</span>
+                <span class="unit-info-value" id="modalOrganization">Loading...</span>
               </div>
-              <div class="info-item">
-                <span class="info-label">Specific Request Type:</span>
-                <span class="info-value" id="detailSpecificRequest" style="color: var(--primary-green); font-weight: 600;">Not specified</span>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Date Submitted</span>
+                <span class="unit-info-value" id="modalDate">Loading...</span>
               </div>
-              <div class="info-item">
-                <span class="info-label">Organization:</span>
-                <span class="info-value" id="detailOrganization"></span>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Current Status</span>
+                <span class="status-badge" id="modalStatus">Pending</span>
               </div>
-              <div class="info-item">
-                <span class="info-label">Date Submitted:</span>
-                <span class="info-value" id="detailDatetime"></span>
+              <div class="unit-info-item" id="deadlineField" style="display: none;">
+                <span class="unit-info-label">Deadline</span>
+                <span class="unit-info-value" id="modalDeadline">N/A</span>
               </div>
-              <div class="info-item" id="deadlineInfo" style="display: none;">
-                <span class="info-label">Deadline:</span>
-                <span class="info-value" id="detailDeadlineInfo"></span>
+              <div class="unit-info-item" id="serviceTypeField" style="display: none;">
+                <span class="unit-info-label">Service Type</span>
+                <span class="unit-info-value" id="modalServiceType">N/A</span>
               </div>
             </div>
           </div>
 
-          <!-- Unit Member Actions Section (Replaces Admin Controls) -->
-          <div class="admin-form-section" id="approvalActionsSection" style="display: none;">
-            <h3>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-              </svg>
-              Approval Request Actions
-              <span class="admin-badge">REVIEW & RESPOND</span>
-            </h3>
-
-            <div class="admin-form-grid">
-              <!-- Current Status Display -->
-              <div class="form-field">
-                <label>Current Status</label>
-                <div class="current-value">
-                  <span id="currentStatusValue" class="status-badge">Loading...</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="admin-form-actions">
-              <button type="button" class="admin-btn admin-btn-success" id="approveBtn" style="background: linear-gradient(135deg, #10b981, #059669);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                Approve Request
-              </button>
-              <button type="button" class="admin-btn admin-btn-warning" id="reviseBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/>
+          <!-- Description Card -->
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
-                Request Revision
-              </button>
+                Description
+              </h3>
+              <p class="unit-card-subtitle">Request details and requirements</p>
             </div>
-
-            <!-- Revision Comment Section (Hidden by default) -->
-            <div id="revisionCommentSection" style="display: none; margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
-              <label for="revisionComment" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #92400e;">
-                What needs to be fixed? (Required)
-              </label>
-              <textarea id="revisionComment" rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #f59e0b; border-radius: 6px; font-size: 0.9rem; resize: vertical;" placeholder="Explain what changes are needed..."></textarea>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: flex-end;">
-                <button type="button" class="admin-btn admin-btn-secondary" id="cancelRevisionBtn" style="padding: 0.5rem 1rem;">
-                  Cancel
-                </button>
-                <button type="button" class="admin-btn admin-btn-primary" id="submitRevisionBtn" style="padding: 0.5rem 1rem;">
-                  Submit Revision Request
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Service Request Actions Section -->
-          <div class="admin-form-section" id="serviceActionsSection" style="display: none;">
-            <h3>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-              </svg>
-              Service Request Actions
-              <span class="admin-badge">DELIVER & COMPLETE</span>
-            </h3>
-
-            <div class="admin-form-grid">
-              <!-- Current Status Display -->
-              <div class="form-field">
-                <label>Current Status</label>
-                <div class="current-value">
-                  <span id="serviceStatusValue" class="status-badge">Loading...</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Deliverable Upload Section -->
-            <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 1rem;">
-              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #166534;">
-                Upload Deliverable (Your Completed Work)
-              </label>
-              <input type="file" id="deliverableUpload" multiple style="width: 100%; padding: 0.75rem; border: 1px solid #86efac; border-radius: 6px; background: white;">
-              <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem;">
-                Upload the finished file(s) for the requestor to download
-              </div>
-              <div id="deliverablePreview" style="margin-top: 0.75rem;"></div>
-            </div>
-
-            <div class="admin-form-actions">
-              <button type="button" class="admin-btn admin-btn-success" id="uploadDeliverableBtn" style="background: linear-gradient(135deg, #10b981, #059669);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                Upload Deliverable
-              </button>
-              <button type="button" class="admin-btn admin-btn-primary" id="markDoneBtn" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                Mark as Completed
-              </button>
-            </div>
-          </div>
-
-          <!-- Description Section -->
-          <div class="description-section">
-            <h3>Project Description</h3>
-            <div class="description-content" id="detailDescription"></div>
+            <div class="unit-description-content" id="modalDescription">Loading description...</div>
           </div>
 
           <!-- Files Section -->
-          <div id="file-preview"></div>
-
-          <!-- Quick Actions -->
-          <div class="quick-action-buttons">
-            <button class="quick-action-btn chat" id="openChatFromModal">
-              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>Start Conversation
-            </button>
+          <div id="filesSection" class="unit-info-card" style="display: none;">
+            <div class="unit-card-header">
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                Attached Files
+              </h3>
+              <p class="unit-card-subtitle">Files submitted with this request</p>
+            </div>
+            <div id="modalFiles"></div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Conversation Modal -->
-  <div id="conversationModal" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width: 800px; width: 90%; height: 100vh; overflow: hidden;">
-      <header class="modal-header">
-        <span class="modal-title">Conversation</span>
-        <span class="close" id="closeConversationModal">&times;</span>
-      </header>
-      <div class="modal-body" style="display: flex; flex-direction: column; height: calc(100% - 60px); padding: 0; overflow: hidden;">
-        <div id="messagesContainer" style="flex: 1; overflow-y: auto; padding: 1rem; background: #f9f9f9; min-height: 400px;">
-        </div>
-        <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: white; flex-shrink: 0;">
-          <!-- Message Formatting Toolbar -->
-          <div id="formattingToolbar" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border-radius: 0.375rem; border: 1px solid #e2e8f0;">
-            <button type="button" id="boldBtn" class="format-btn" title="Bold" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-weight: bold; font-size: 0.875rem; transition: all 0.2s;">
-              <strong>B</strong>
-            </button>
-            <button type="button" id="italicBtn" class="format-btn" title="Italic" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-style: italic; font-size: 0.875rem; transition: all 0.2s;">
-              <em>I</em>
-            </button>
-            <button type="button" id="underlineBtn" class="format-btn" title="Underline" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; text-decoration: underline; font-size: 0.875rem; transition: all 0.2s;">
-              U
-            </button>
-            <div style="width: 1px; height: 1.5rem; background: #d1d5db; align-self: center; margin: 0 0.25rem;"></div>
-            <button type="button" id="imageBtn" class="format-btn" title="Upload Image" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
-              📷
-            </button>
-            <button type="button" id="fileBtn" class="format-btn" title="Upload File" style="padding: 0.375rem 0.5rem; border: 1px solid #d1d5db; background: white; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
-              📎
-            </button>
-            <div style="flex: 1;"></div>
-            <span style="font-size: 0.75rem; color: #6b7280; align-self: center;">Format your text</span>
+          <!-- Deliverables Section -->
+          <div id="deliverablesSection" class="unit-info-card" style="display: none;">
+            <div class="unit-card-header">
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                  <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+                Deliverables
+              </h3>
+              <p class="unit-card-subtitle">Files uploaded by unit team</p>
+            </div>
+            <div id="modalDeliverables"></div>
           </div>
-          
-          <!-- Hidden file inputs -->
-          <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-          <input type="file" id="fileUpload" style="display: none;">
-          
-          <!-- Attachment preview area -->
-          <div id="attachmentPreview" style="display: none; margin-bottom: 0.75rem; padding: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.375rem; max-height: 80px; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
-              <div id="attachmentInfo" style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
-                <span id="attachmentIcon" style="flex-shrink: 0;">📷</span>
-                <span id="attachmentName" style="font-size: 0.875rem; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+
+          <!-- Team Conversation Button -->
+          <div class="unit-info-card unit-conversation-trigger">
+            <button id="openTeamChatBtn" class="unit-chat-button">
+              <span class="unit-chat-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
+              <div class="unit-chat-text">
+                <strong>Open Team Discussion</strong>
+                <small>Collaborate with your team members</small>
               </div>
-              <button type="button" id="removeAttachment" style="padding: 0.25rem; border: none; background: none; cursor: pointer; color: #ef4444; font-size: 1rem; flex-shrink: 0;" title="Remove attachment">
-                ✕
+              <span class="unit-chat-arrow">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Processing Actions -->
+        <div class="unit-right-column">
+          <!-- Approval Actions Panel -->
+          <div id="approvalActionsPanel" class="unit-action-panel approval-panel" style="display: none;">
+            <div class="unit-panel-header approval-header">
+              <h3>Process Approval Request</h3>
+              <p>Review the request and take appropriate action</p>
+            </div>
+            
+            <div class="unit-action-guide">
+              <div class="guide-item">
+                <span class="guide-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </span>
+                <span>Review all details carefully before approving</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span>Approve if all requirements are met</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </span>
+                <span>Request revision if changes are needed</span>
+              </div>
+            </div>
+
+            <div class="unit-action-buttons">
+              <button id="approveBtn" class="unit-btn unit-btn-approve">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span>Approve Request</span>
+              </button>
+              <button id="requestRevisionBtn" class="unit-btn unit-btn-revision">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </span>
+                <span>Request Revision</span>
               </button>
             </div>
-            <div id="imagePreviewContainer" style="margin-top: 0.25rem; display: none; max-height: 40px; overflow: hidden;">
-              <img id="imagePreview" style="max-width: 80px; max-height: 40px; border-radius: 0.25rem; cursor: pointer; object-fit: cover;" onclick="openImageModal(this.src)">
+
+            <!-- Revision Form -->
+            <div id="revisionForm" class="unit-revision-form" style="display: none;">
+              <label for="revisionComments" class="unit-form-label">
+                <strong>Revision Feedback</strong>
+                <small>Clearly explain what needs to be revised</small>
+              </label>
+              
+              <!-- Text Formatting Toolbar -->
+              <div class="revision-format-toolbar">
+                <button type="button" class="format-btn" data-format="bold" title="Bold">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                  </svg>
+                </button>
+                <button type="button" class="format-btn" data-format="italic" title="Italic">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="19" y1="4" x2="10" y2="4"/>
+                    <line x1="14" y1="20" x2="5" y2="20"/>
+                    <line x1="15" y1="4" x2="9" y2="20"/>
+                  </svg>
+                </button>
+                <button type="button" class="format-btn" data-format="underline" title="Underline">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                    <line x1="4" y1="21" x2="20" y2="21"/>
+                  </svg>
+                </button>
+                <div class="toolbar-divider"></div>
+                <button type="button" class="format-btn" data-format="bullet" title="Bullet List">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"/>
+                    <line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/>
+                    <circle cx="4" cy="6" r="1" fill="currentColor"/>
+                    <circle cx="4" cy="12" r="1" fill="currentColor"/>
+                    <circle cx="4" cy="18" r="1" fill="currentColor"/>
+                  </svg>
+                </button>
+                <div class="toolbar-divider"></div>
+                <button type="button" id="revisionAttachBtn" class="format-btn" title="Attach Files">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+                <input type="file" id="revisionFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+                <span class="toolbar-hint">Format your feedback</span>
+              </div>
+
+              <!-- Attached Files Preview -->
+              <div id="revisionFilesPreview" class="revision-files-preview" style="display: none;">
+                <div class="files-preview-header">
+                  <span class="files-count">0 file(s) attached</span>
+                  <button type="button" id="clearRevisionFiles" class="clear-files-btn">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Clear all
+                  </button>
+                </div>
+                <div id="revisionFilesContainer" class="files-container"></div>
+              </div>
+
+              <textarea id="revisionComments" rows="5" class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..."></textarea>
+              
+              <div class="unit-form-actions">
+                <button id="submitRevisionBtn" class="unit-btn unit-btn-submit">Submit Revision Request</button>
+                <button id="cancelRevisionBtn" class="unit-btn unit-btn-cancel">Cancel</button>
+              </div>
             </div>
           </div>
-          
-          <div style="display: flex; gap: 0.5rem;">
-            <input type="text" id="messageInput" placeholder="Type your message..." 
-                   style="flex: 1; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-family: 'Inter', sans-serif;">
-            <button id="sendMessageBtn" class="view-all-btn" style="background: var(--primary-green); color: white;">
-              Send
+
+          <!-- Service Actions Panel -->
+          <div id="serviceActionsPanel" class="unit-action-panel service-panel" style="display: none;">
+            <div class="unit-panel-header service-header">
+              <h3>Process Service Request</h3>
+              <p>Upload deliverables and complete the service</p>
+            </div>
+
+            <div class="unit-action-guide">
+              <div class="guide-item">
+                <span class="guide-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </span>
+                <span>Upload all required deliverables</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <line x1="8" y1="8" x2="16" y2="8"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                    <line x1="8" y1="16" x2="12" y2="16"/>
+                  </svg>
+                </span>
+                <span>Verify all files are correct before uploading</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span>Mark as complete when all work is done</span>
+              </div>
+            </div>
+
+            <div class="unit-upload-section">
+              <label class="unit-form-label">
+                <strong>Upload Deliverables</strong>
+                <small>Select one or more files to upload (Max 10MB per file)</small>
+              </label>
+              <div class="unit-file-upload-group" id="unitFileUploadGroup">
+                <svg class="unit-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17,8 12,3 7,8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <p class="unit-upload-text">Drop your files here</p>
+                <p class="unit-upload-subtext">or click to browse from your device</p>
+                <input type="file" id="deliverablesFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" class="unit-file-input-hidden">
+                <button type="button" class="unit-browse-file-btn" onclick="event.stopPropagation(); document.getElementById('deliverablesFileInput').click()">
+                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                  </svg>
+                  Choose Files
+                </button>
+                
+                <!-- Upload Progress -->
+                <div class="unit-upload-progress" id="unitUploadProgress">
+                  <div class="unit-progress-bar">
+                    <div class="unit-progress-fill" id="unitProgressFill"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- File Management Section -->
+              <div class="unit-file-management" id="unitFileManagement" style="display: none;">
+                <div class="unit-file-actions">
+                  <span id="unitFilesCount">0 files selected</span>
+                  <button type="button" class="unit-clear-all-btn" id="unitClearAllBtn">
+                    <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                      <rect x="3" y="6" width="18" height="14" rx="2"/>
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <line x1="1" y1="6" x2="23" y2="6"/>
+                      <line x1="10" y1="11" x2="10" y2="17"/>
+                      <line x1="14" y1="11" x2="14" y2="17"/>
+                    </svg>
+                    Clear All Files
+                  </button>
+                </div>
+                
+                <!-- Selected Files Container -->
+                <div class="unit-selected-files-container" id="unitSelectedFiles">
+                  <!-- Files will be added here dynamically -->
+                </div>
+                
+                <div class="unit-files-summary" id="unitFilesSummary">
+                  Total size: 0 MB
+                </div>
+              </div>
+              
+              <button id="uploadDeliverablesBtn" disabled class="unit-btn unit-btn-upload" style="margin-top: 1rem;">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                </span>
+                <span>Submit Deliverables for Review</span>
+              </button>
+            </div>
+
+            <div class="unit-info-notice">
+              <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: top; margin-right: 0.5rem; flex-shrink: 0;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <div>
+                <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #1e293b;">About Service Completion</p>
+                <p style="margin: 0; font-size: 0.875rem; color: #64748b; line-height: 1.5;">
+                  After uploading deliverables, the request status will change to <strong style="color: #2563eb;">"For Checking"</strong>. 
+                  The requestor will review your work and may request revisions. Only the requestor can mark the request as completed.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Conversation Modal -->
+  <div id="teamConversationModal" class="modal" style="display: none;">
+    <div class="modal-content unit-conversation-modal">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <h2>Team Discussion</h2>
+          <span class="unit-conversation-subtitle">Collaborate on this request</span>
+        </div>
+        <button class="close-modal-btn" onclick="closeTeamConversationModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="unit-conversation-body">
+        <!-- Messages Container -->
+        <div id="teamMessagesContainer" class="unit-messages-container">
+          <div class="unit-messages-empty">
+            <div class="empty-icon">
+              <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <p>No team discussion yet</p>
+            <small>Start the conversation below</small>
+          </div>
+        </div>
+
+        <!-- Message Input Area -->
+        <div class="unit-message-input-area">
+          <!-- Attached Files Preview (Above Toolbar) -->
+          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
+            <div class="files-preview-header">
+              <span class="files-count">0 file(s) attached</span>
+              <button type="button" id="clearChatFiles" class="clear-files-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Clear all
+              </button>
+            </div>
+            <div id="chatFilesContainer" class="files-container"></div>
+          </div>
+
+          <!-- Formatting Toolbar -->
+          <div class="unit-format-toolbar">
+            <button type="button" class="format-btn" data-chat-format="bold" title="Bold">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="italic" title="Italic">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="19" y1="4" x2="10" y2="4"/>
+                <line x1="14" y1="20" x2="5" y2="20"/>
+                <line x1="15" y1="4" x2="9" y2="20"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="underline" title="Underline">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                <line x1="4" y1="21" x2="20" y2="21"/>
+              </svg>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+            <span class="toolbar-hint">Format your message</span>
+          </div>
+
+          <!-- Message Input -->
+          <div class="unit-message-input-wrapper">
+            <textarea id="teamMessageInput" placeholder="Type your message to team members..." rows="3" class="unit-message-input"></textarea>
+            <button id="sendTeamMessageBtn" class="unit-send-btn">
+              <span>Send</span>
+              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -615,513 +748,36 @@
     </div>
   </div>
 
-  <!-- Organization Data for Filtering -->
-  <script id="userOrgData" type="application/json">
-  <%
-    // Collect all unique organizations from both approval and service requests
-    const organizations = new Set();
-    
-    if (approvalRequests && approvalRequests.length > 0) {
-      approvalRequests.forEach(request => {
-        if (request.organization && request.organization !== 'N/A') {
-          organizations.add(request.organization);
-        }
-      });
-    }
-    
-    if (serviceRequests && serviceRequests.length > 0) {
-      serviceRequests.forEach(request => {
-        if (request.organization && request.organization !== 'N/A') {
-          organizations.add(request.organization);
-        }
-      });
-    }
-  %>
-  {
-    "userType": "<%= user.userType %>",
-    "organizations": <%= JSON.stringify(Array.from(organizations).sort()) %>
-  }
+  <script>
+    // Define current user role for conversation
+    window.currentUserRole = 'unit';
   </script>
 
-<script>
-// Enhanced Conversation Modal Functionality
-document.addEventListener('DOMContentLoaded', function() {
-  const conversationModal = document.getElementById("conversationModal");
-  const closeConversationModal = document.getElementById("closeConversationModal");
-  const messagesContainer = document.getElementById("messagesContainer");
-  const messageInput = document.getElementById("messageInput");
-  const sendMessageBtn = document.getElementById("sendMessageBtn");
-  
-  // Formatting buttons
-  const boldBtn = document.getElementById("boldBtn");
-  const italicBtn = document.getElementById("italicBtn");
-  const underlineBtn = document.getElementById("underlineBtn");
-  
-  let currentConversationId = null;
-  let uploadedFile = null;
-
-  // Close modal handlers
-  if (closeConversationModal) {
-    closeConversationModal.onclick = () => conversationModal.style.display = 'none';
-  }
-
-  // Click outside to close
-  window.addEventListener('click', function(event) {
-    if (event.target === conversationModal) conversationModal.style.display = 'none';
-  });
-
-  // Formatting button handlers
-  if (boldBtn) {
-    boldBtn.addEventListener('click', function() {
-      insertFormatting('**', '**');
-    });
-  }
-
-  if (italicBtn) {
-    italicBtn.addEventListener('click', function() {
-      insertFormatting('*', '*');
-    });
-  }
-
-  if (underlineBtn) {
-    underlineBtn.addEventListener('click', function() {
-      insertFormatting('<u>', '</u>');
-    });
-  }
-
-  function insertFormatting(startTag, endTag) {
-    const input = messageInput;
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const text = input.value;
-    const before = text.substring(0, start);
-    const selected = text.substring(start, end);
-    const after = text.substring(end);
-    
-    if (selected) {
-      input.value = before + startTag + selected + endTag + after;
-      input.setSelectionRange(start, end + startTag.length + endTag.length);
-    } else {
-      input.value = before + startTag + endTag + after;
-      input.setSelectionRange(start + startTag.length, start + startTag.length);
-    }
-    input.focus();
-  }
-  
-  // Upload functionality
-  const imageBtn = document.getElementById('imageBtn');
-  const fileBtn = document.getElementById('fileBtn');
-  const imageUpload = document.getElementById('imageUpload');
-  const fileUpload = document.getElementById('fileUpload');
-  const attachmentPreview = document.getElementById('attachmentPreview');
-  const attachmentInfo = document.getElementById('attachmentInfo');
-  const attachmentIcon = document.getElementById('attachmentIcon');
-  const attachmentName = document.getElementById('attachmentName');
-  const removeAttachment = document.getElementById('removeAttachment');
-  const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-  const imagePreview = document.getElementById('imagePreview');
-  
-  let currentAttachment = null;
-  
-  // Image upload button click
-  if (imageBtn && imageUpload) {
-    imageBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      imageUpload.click();
-    });
-  }
-  
-  // File upload button click
-  if (fileBtn && fileUpload) {
-    fileBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      fileUpload.click();
-    });
-  }
-  
-  // Handle image upload
-  if (imageUpload) {
-    imageUpload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        currentAttachment = { type: 'image', file: file };
-        uploadedFile = file;
-        showAttachmentPreview(file, 'image');
-      }
-    });
-  }
-  
-  // Handle file upload
-  if (fileUpload) {
-    fileUpload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        currentAttachment = { type: 'file', file: file };
-        uploadedFile = file;
-        showAttachmentPreview(file, 'file');
-      }
-    });
-  }
-  
-  // Show attachment preview
-  function showAttachmentPreview(file, type) {
-    if (attachmentPreview && attachmentIcon && attachmentName) {
-      attachmentPreview.style.display = 'block';
-      attachmentIcon.textContent = type === 'image' ? '📷' : '📎';
-      attachmentName.textContent = file.name;
-      
-      if (type === 'image' && imagePreviewContainer && imagePreview) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          imagePreview.src = e.target.result;
-          imagePreviewContainer.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      } else if (imagePreviewContainer) {
-        imagePreviewContainer.style.display = 'none';
-      }
-    }
-  }
-  
-  // Remove attachment
-  if (removeAttachment) {
-    removeAttachment.addEventListener('click', function(e) {
-      e.preventDefault();
-      clearAttachment();
-    });
-  }
-
-  // Clear attachment function
-  function clearAttachment() {
-    uploadedFile = null;
-    currentAttachment = null;
-    const attachmentPreview = document.getElementById('attachmentPreview');
-    const imageUpload = document.getElementById('imageUpload');
-    const fileUpload = document.getElementById('fileUpload');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    
-    if (attachmentPreview) {
-      attachmentPreview.style.display = 'none';
-    }
-    if (imageUpload) imageUpload.value = '';
-    if (fileUpload) fileUpload.value = '';
-    if (imagePreviewContainer) {
-      imagePreviewContainer.style.display = 'none';
-    }
-  }
-
-  // Global function to open conversation (updated to match /api/conversation response)
-  window.openConversation = async function(requestId) {
-    currentConversationId = requestId;
-    messagesContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem;">Loading conversation...</p>';
-    conversationModal.style.display = 'flex';
-
-    try {
-      const response = await fetch(`/api/conversation/${requestId}`);
-      const data = await response.json();
-
-      if (response.ok && data) {
-        // API returns the conversation document directly (with .messages array)
-        loadConversation(data);
-        // mark messages as read for the admin view
-        await fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' });
-      } else {
-        throw new Error(data && data.error ? data.error : 'Failed to load conversation');
-      }
-    } catch (error) {
-      console.error('Error loading conversation:', error);
-      messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
-    }
-  };
-
-  function loadConversation(conversation) {
-    messagesContainer.innerHTML = '';
-    
-    if (!conversation || !conversation.messages || conversation.messages.length === 0) {
-      messagesContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem;">No messages yet. Start the conversation!</p>';
-      return;
-    }
-    
-    conversation.messages.forEach(message => {
-      addMessageToUI(message);
-    });
-  }
-
-  function addMessageToUI(message) {
-    // Clear empty state message if it exists
-    const emptyStateMessage = messagesContainer.querySelector('p');
-    if (emptyStateMessage && (emptyStateMessage.textContent.includes('No messages yet') || emptyStateMessage.textContent.includes('No messages yet. Start the conversation!'))) {
-      messagesContainer.innerHTML = '';
-    }
-    
-    const messageDiv = document.createElement('div');
-    const isUser = message.senderRole === 'user';
-    const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
-    
-    // Create user avatar (profile picture or default icon)
-    const userAvatar = `
-      <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? '#d1d5db' : 'var(--primary-green)'};">
-        ${message.senderId && message.senderId.profilePicture ? 
-          `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-           <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
-             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-             <circle cx="12" cy="7" r="4"/>
-           </svg>` :
-          `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-             <circle cx="12" cy="7" r="4"/>
-           </svg>`
-        }
-      </div>
-    `;
-    
-    messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
-    messageDiv.innerHTML = `
-      <div class="message-content">
-        <div style="display: flex; align-items: flex-start;">
-          ${userAvatar}
-          <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
-            <div class="message-header">
-              <strong>${senderName}</strong>
-              <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
-            </div>
-            <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;"></div>
-            <div class="message-attachment" style="margin-top: 0.5rem;"></div>
-          </div>
+  <!-- PDF Viewer Modal -->
+  <div id="pdfViewerModal" class="modal" style="display: none;">
+    <div class="modal-content pdf-viewer-modal">
+      <div class="modal-header pdf-viewer-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <path d="M8 6h8M8 10h8M8 14h4"/>
+          </svg>
+          <h2 id="pdfViewerTitle">PDF Document</h2>
         </div>
+        <button class="close-modal-btn" onclick="closePdfViewer()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
-    `;
-    
-    // Set the message content as HTML to support formatting
-    const messageTextDiv = messageDiv.querySelector('.message-text');
-    if (messageTextDiv && message.content) {
-      // Convert markdown-style formatting to HTML
-      let formattedContent = message.content
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
-        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');           // <u>underline</u> stays the same
-      
-      messageTextDiv.innerHTML = formattedContent;
-    }
-    
-    // Handle attachments
-    const attachmentDiv = messageDiv.querySelector('.message-attachment');
-    if (attachmentDiv && message.file_path) {
-      const isImage = message.file_type && message.file_type.startsWith('image/');
-      
-      if (isImage) {
-        attachmentDiv.innerHTML = `
-          <div style="margin-top: 0.5rem;">
-            <img src="${message.file_path}" 
-                 style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
-                 onclick="openImageModal('${message.file_path}')"
-                 alt="${message.original_filename || 'Attached image'}">
-          </div>
-        `;
-      } else {
-        const fileName = message.original_filename || 'File';
-        attachmentDiv.innerHTML = `
-          <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 1.2rem;">📎</span>
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
-                <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
-              </div>
-              <a href="${message.file_path}" download="${fileName}" 
-                 style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
-                Download
-              </a>
-            </div>
-          </div>
-        `;
-      }
-    }
-    
-    messagesContainer.appendChild(messageDiv);
-  }
+      <div class="pdf-viewer-body">
+        <iframe id="pdfViewerFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+      </div>
+    </div>
+  </div>
 
-  // Send message functionality
-  if (sendMessageBtn) {
-    sendMessageBtn.onclick = async function() {
-      const content = messageInput.value.trim();
-      if (!content && !currentAttachment && !uploadedFile) return;
-      if (!currentConversationId) return;
-
-      try {
-        let response;
-        
-        if (currentAttachment || uploadedFile) {
-          // Send with file attachment using FormData
-          const formData = new FormData();
-          formData.append('content', content || ''); // Always include content field
-          formData.append('file', currentAttachment?.file || uploadedFile);
-          
-          response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-            method: 'POST',
-            body: formData
-          });
-        } else {
-          // Send text only using JSON
-          response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ content })
-          });
-        }
-
-        const result = await response.json();
-        if (result.success) {
-          addMessageToUI(result.message);
-          messageInput.value = '';
-          
-          // Clear attachment
-          clearAttachment();
-        } else {
-          throw new Error(result.error || 'Failed to send message');
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Failed to send message: ' + error.message);
-      }
-    };
-  }
-
-  // Enter key to send message
-  if (messageInput) {
-    messageInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessageBtn.click();
-      }
-    });
-  }
-  
-  // Image modal function for message previews
-  window.openImageModal = function(imageSrc) {
-    // Create modal overlay
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
-    
-    // Create modal container
-    const container = document.createElement('div');
-    container.style.cssText = `
-      position: relative;
-      max-width: 90%;
-      max-height: 90%;
-      background: white;
-      border-radius: 8px;
-      padding: 1rem;
-    `;
-    
-    // Create image
-    const img = document.createElement('img');
-    img.src = imageSrc;
-    img.style.cssText = `
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 4px;
-    `;
-    
-    // Create close button
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '✕';
-    closeBtn.style.cssText = `
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      width: 30px;
-      height: 30px;
-      background: #ef4444;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-    `;
-    
-    // Assemble modal
-    container.appendChild(img);
-    container.appendChild(closeBtn);
-    overlay.appendChild(container);
-    document.body.appendChild(overlay);
-    
-    // Close handlers
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        document.body.removeChild(overlay);
-        document.body.style.overflow = '';
-      }
-    });
-    
-    closeBtn.addEventListener('click', () => {
-      document.body.removeChild(overlay);
-      document.body.style.overflow = '';
-    });
-    
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
-  };
-});
-
-// Sidebar hover effect
-const sidebar = document.getElementById('adminSidebar');
-if (sidebar) {
-  sidebar.addEventListener('mouseenter', function() {
-    this.classList.add('expanded');
-  });
-  sidebar.addEventListener('mouseleave', function() {
-    this.classList.remove('expanded');
-  });
-}
-
-// Mobile hamburger menu toggle
-document.addEventListener('DOMContentLoaded', () => {
-  const menuToggle = document.getElementById('adminMenuToggle');
-  const sidebarEl = document.getElementById('adminSidebar');
-
-  console.log('Menu Toggle:', menuToggle); // Debug
-  console.log('Sidebar:', sidebarEl); // Debug
-  console.log('Window width:', window.innerWidth); // Debug
-
-  if (menuToggle && sidebarEl) {
-    menuToggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('Menu button clicked!'); // Debug
-      const isActive = sidebarEl.classList.toggle('mobile-active');
-      console.log('Sidebar is now:', isActive ? 'OPEN' : 'CLOSED'); // Debug
-      console.log('Sidebar classes:', sidebarEl.className); // Debug
-      console.log('Computed left position:', window.getComputedStyle(sidebarEl).left); // Debug
-    });
-  }
-
-  // Close sidebar when clicking outside of it on mobile
-  document.addEventListener('click', (e) => {
-    if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
-      if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
-        console.log('Clicking outside - closing sidebar'); // Debug
-        sidebarEl.classList.remove('mobile-active');
-      }
-    }
-  });
-});
-</script>
-
+  <!-- JavaScript -->
+  <script src="/javascripts/ejs/Unit/alltasks.js"></script>
 </body>
 </html>

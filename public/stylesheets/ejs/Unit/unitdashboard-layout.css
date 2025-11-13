@@ -1,3 +1,42 @@
+.legend-dot.approval {
+  background: #fbbf24;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  margin-right: 8px;
+}
+.legend-dot.service {
+  background: #10b981;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  margin-right: 8px;
+}
+.calendar-day.approval {
+  background: #74a7fb !important; /* Orange to match legend */
+}
+.calendar-day.service {
+  background: #fde047 !important; /* Green to match legend */
+}
+.calendar-date-badge.approval {
+  --badge-color: #1d417a !important; /* Darker orange for indicator */
+}
+.calendar-date-badge.service {
+  --badge-color: #a18700 !important; 
+}
+.calendar-date-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #042f3a;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
 /* ==========================================
    UNIT DASHBOARD LAYOUT - DEDICATED CSS
    Consistent with Admin/User pages
@@ -20,6 +59,36 @@
   margin-left: 0;
   margin-right: 0;
   width: 100%;
+}
+
+/* Calendar Notification Badge Styles */
+.calendar-date-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 50%;
+  background: var(--badge-color, #e5e7eb);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  z-index: 10;
+  pointer-events: none;
+}
+.calendar-date-badge.approval {
+  --badge-color: #3b82f6;
+}
+.calendar-date-badge.service {
+  --badge-color: #10b981;
+}
+.calendar-day {
+  position: relative;
 }
 
 /* ==========================================
@@ -795,11 +864,11 @@
 }
 
 .task-item-compact.approval-task {
-  border-left-color: #3b82f6;
+  border-left-color: #60a5fa;
 }
 
 .task-item-compact.service-task {
-  border-left-color: #eab308;
+  border-left-color: #fbbf24;
 }
 
 .task-item-compact:hover {
@@ -841,12 +910,12 @@
 
 .task-badge.approval {
   background: #dbeafe;
-  color: #1e40af;
+  color: #1e3a8a;
 }
 
 .task-badge.service {
-  background: #fef9c3;
-  color: #854d0e;
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .task-compact-info {
@@ -895,21 +964,21 @@
 }
 
 .view-task-btn-compact.approval {
-  background: #3b82f6;
+  background: #60a5fa;
   color: white;
 }
 
 .view-task-btn-compact.approval:hover {
-  background: #2563eb;
+  background: #3b82f6;
 }
 
 .view-task-btn-compact.service {
-  background: #eab308;
+  background: #fbbf24;
   color: white;
 }
 
 .view-task-btn-compact.service:hover {
-  background: #ca9a04;
+  background: #f59e0b;
 }
 
 .no-tasks-column {
@@ -982,6 +1051,28 @@
   background: transparent;
 }
 
+/* Specific colors for Approval tab */
+.urgent-tab-btn[data-tab="approvals"].active {
+  color: #3b82f6;
+  border-bottom-color: #60a5fa;
+}
+
+.urgent-tab-btn[data-tab="approvals"]:hover {
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+/* Specific colors for Service tab */
+.urgent-tab-btn[data-tab="services"].active {
+  color: #d97706;
+  border-bottom-color: #fbbf24;
+}
+
+.urgent-tab-btn[data-tab="services"]:hover {
+  color: #d97706;
+  background: #fffbeb;
+}
+
 .urgent-tab-btn .tab-count {
   display: inline-flex;
   align-items: center;
@@ -999,6 +1090,18 @@
 .urgent-tab-btn.active .tab-count {
   background: #dbeafe;
   color: #1d4ed8;
+}
+
+/* Specific count colors for Approval tab */
+.urgent-tab-btn[data-tab="approvals"].active .tab-count {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+/* Specific count colors for Service tab */
+.urgent-tab-btn[data-tab="services"].active .tab-count {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .urgent-tasks-tab-content {
@@ -1750,9 +1853,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(to right, #f0fdf4, #dcfce7);
+  background: #e0e9e1;
   border-radius: 12px 12px 0 0;
   flex-shrink: 0; /* Don't shrink header */
+  min-height: 60px; /* Fixed minimum height */
 }
 
 .calendar-header > div {
@@ -1823,11 +1927,11 @@
 }
 
 .calendar-month-year {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #111827;
-  min-width: 120px;
-  text-align: center;
+    font-size: 1.3rem;
+    font-weight: 650;
+    color: #1a385d;
+    min-width: 120px;
+    text-align: center;
 }
 
 .calendar-legend {
@@ -1836,6 +1940,8 @@
   gap: 1.5rem;
   border-bottom: 1px solid #f3f4f6;
   background: #fafafa;
+  flex-shrink: 0; /* Don't shrink legend */
+  min-height: 40px; /* Fixed minimum height */
 }
 
 .legend-item {
@@ -1865,163 +1971,173 @@
 }
 
 .calendar-content {
-  padding: 0.75rem;
-  overflow-y: auto;
-  flex: 1; /* Take remaining space */
+  padding: 0.5rem;
+  overflow: hidden; /* No scrolling - display as is */
+  flex: 1 1 auto; /* Allow flex grow and shrink */
   min-height: 0; /* Allow flex shrinking */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center the calendar grid */
+  position: relative; /* Create positioning context */
 }
 
 .calendar-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.calendar-content::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 3px;
-}
-
-.calendar-content::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
-}
-
-.calendar-content::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  display: none; /* Hide scrollbar */
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  font-size: 0.85rem;
+  gap: 0.35rem;
+  font-size: 0.7rem;
   font-family: 'Inter', sans-serif;
   width: 100%;
-  padding-right: 2px;
-  grid-auto-rows: minmax(28px, auto); /* Start at 28px, grow as needed */
+  flex: 1; /* Take all available space in flex container */
+  grid-template-rows: repeat(7, 1fr); /* 7 rows: 1 header + 6 weeks */
 }
 
 .calendar-day-header {
-  font-weight: 700;
+  font-weight: 800;
   text-align: center;
-  padding: 4px 2px;
-  color: #2d7a4a;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid #e8f5e9;
-  margin-bottom: 4px;
-}
-
-.calendar-day {
+  padding: 0.25rem 0.1rem;
+  color: #2d487a;
   font-size: 0.8rem;
-  padding: 0.5rem 0.25rem;
-  border-radius: 6px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #374151;
-  font-weight: 600;
-  min-height: 28px;
-  aspect-ratio: 1 / 1; /* Maintain square shape */
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #e8f5e9;
+  margin-bottom: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Calendar Day Cell - Base styles with high specificity */
+
+.calendar-standalone .calendar-content .calendar-grid .calendar-day,
+.calendar-modal .calendar-content .calendar-grid .calendar-day {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: #111827 !important;
+  background: transparent;
+  border-radius: 10px;
+  padding: 0.3rem 0.2rem !important;
+  min-width: 38px;
+  min-height: 38px;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
+  overflow: visible;
+  line-height: 1.1 !important;
+  box-sizing: border-box;
 }
 
-.calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
-  background-color: #e8f5e9;
-  transform: scale(1.05);
-  color: #2d7a4a;
+/* Hover state for calendar days */
+
+.calendar-standalone .calendar-content .calendar-grid .calendar-day:hover:not(.calendar-today):not(.calendar-empty),
+.calendar-modal .calendar-content .calendar-grid .calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
+  background-color: #e8f5e9 !important;
+  color: #2d7a4a !important;
 }
 
-.calendar-today {
-  background: linear-gradient(135deg, #2d7a4a, #3d8f5a) !important;
+/* Today's date - highly visible */
+
+.calendar-standalone .calendar-content .calendar-grid .calendar-day.calendar-today,
+.calendar-modal .calendar-content .calendar-grid .calendar-day.calendar-today .calendar-day,.calendar-day.calendar-today.calendar-date-number {
+  background: linear-gradient(135deg, #6ac78d, #3d8f5a) !important;
   color: #fff !important;
-  font-weight: 700;
-  border: 2px solid #256d3f;
-  box-shadow: 0 2px 6px rgba(45, 122, 74, 0.3);
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  box-shadow: 0 2px 8px rgba(89, 165, 118, 0.4) !important;
   position: relative;
-}
-
-.calendar-today::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border: 2px solid #c8e6c9;
-  border-radius: 8px;
-  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
 .calendar-today.has-approval-deadline,
 .calendar-today.has-service-deadline,
 .calendar-today.has-mixed-deadlines {
   background: linear-gradient(135deg, #2d7a4a, #3d8f5a) !important;
-  color: #fff !important;
+  color: #ffffff !important;
 }
 
-.calendar-empty {
+/* Empty calendar cells */
+.calendar-standalone .calendar-content .calendar-grid .calendar-day.calendar-empty,
+.calendar-modal .calendar-content .calendar-grid .calendar-day.calendar-empty {
   opacity: 0.3;
   cursor: default;
+  color: #9ca3af !important;
 }
 
 .calendar-empty:hover {
-  background: transparent;
-  border-color: transparent;
-  transform: none;
+  background: transparent !important;
+  transform: none !important;
 }
 
-/* Calendar Deadline Indicators */
-.calendar-day.has-approval-deadline {
-  background: #bfdbfe; /* Blue background for Request Approvals */
-  border-radius: 6px;
-}
+/* Calendar Deadline Indicators - Updated for dual indicators */
 
-.calendar-day.has-service-deadline {
-  background: #fde68a; /* Light yellow background for Service Requests */
-  border-radius: 6px;
-}
 
+.calendar-day.has-approval-deadline,
+.calendar-day.has-service-deadline,
 .calendar-day.has-mixed-deadlines {
-  background: #a7f3d0; /* Light green for both types */
-  border-radius: 6px;
-  position: relative;
+  background: none !important;
 }
 
-.deadline-indicators {
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  display: flex;
-  gap: 2px;
-  z-index: 10;
-}
 
-.deadline-badge {
-  color: white;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  display: flex;
+/* Calendar Day Cell - Base styles */
+.calendar-day {
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  background: transparent;
+  border-radius: 10px;
+  padding: 0.3rem 0.2rem !important;
+  min-width: 38px;
+  min-height: 38px;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  border: 2px solid #fff;
-  line-height: 1;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: visible;
+  line-height: 1.1 !important;
+  box-sizing: border-box;
+  transition: background 0.2s;
 }
 
-.deadline-badge.approval {
-  background: linear-gradient(135deg, #3b82f6, #2563eb); /* Blue for Request Approvals */
+.calendar-day.has-approval-deadline {
+  background: #3b82f6 !important;
+  color: #fff !important;
+}
+.calendar-day.has-service-deadline {
+  background: #f3c87f !important;
+  color: #fff !important;
+}
+.calendar-day.has-mixed-deadlines {
+  background: linear-gradient(135deg, #3b82f6 50%, #f59e0b 50%) !important;
+  color: #fff !important;
+}
+.calendar-day.calendar-today {
+  background: linear-gradient(135deg, #2d7a4a, #3d8f5a) !important;
+  color: #fff !important;
+  font-weight: 900 !important;
+  font-size: 1.05rem !important;
+  box-shadow: 0 2px 8px rgba(45, 122, 74, 0.4) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+.calendar-day:hover:not(.calendar-today):not(.calendar-empty) {
+  background-color: #e8f5e9 !important;
+  color: #2d7a4a !important;
+}
+.calendar-day.calendar-empty {
+  opacity: 0.3;
+  cursor: default;
+  color: #9ca3af !important;
 }
 
-.deadline-badge.service {
-  background: linear-gradient(135deg, #fde047, #fbbf24); /* Light yellow for Service Requests */
-}
+/* Deadline indicator dots - positioned at top-right corner */
+
+
+/* Remove dot indicators, use only the circle for the number */
 
 .deadline-badge.total {
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
@@ -2326,9 +2442,15 @@
 /* Small Laptop (900px - 1023px) */
 @media (max-width: 1023px) {
   .calendar-day {
-    font-size: 0.725rem;
+    font-size: 0.8rem; /* Increased for clarity */
     padding: 0.425rem 0.22rem;
     min-height: 25px;
+    font-weight: 700;
+  }
+  
+  .calendar-today {
+    font-size: 0.85rem;
+    font-weight: 800;
   }
   
   .calendar-grid {
@@ -2351,9 +2473,15 @@
 /* Tablet Landscape (768px - 899px) */
 @media (max-width: 899px) {
   .calendar-day {
-    font-size: 0.7rem;
+    font-size: 0.75rem; /* Increased for clarity */
     padding: 0.4rem 0.2rem;
     min-height: 24px;
+    font-weight: 700;
+  }
+  
+  .calendar-today {
+    font-size: 0.8rem;
+    font-weight: 800;
   }
   
   .calendar-day-header {
@@ -2374,9 +2502,15 @@
 /* Tablet Portrait (600px - 767px) */
 @media (max-width: 767px) {
   .calendar-day {
-    font-size: 0.7rem;
+    font-size: 0.75rem; /* Increased for clarity */
     padding: 0.4rem 0.2rem;
     min-height: 24px;
+    font-weight: 700;
+  }
+  
+  .calendar-today {
+    font-size: 0.8rem;
+    font-weight: 800;
   }
   
   .calendar-grid {
@@ -2404,9 +2538,15 @@
 /* Large Mobile (480px - 599px) */
 @media (max-width: 599px) {
   .calendar-day {
-    font-size: 0.675rem;
+    font-size: 0.7rem; /* Increased for clarity */
     padding: 0.375rem 0.19rem;
     min-height: 23px;
+    font-weight: 700;
+  }
+  
+  .calendar-today {
+    font-size: 0.75rem;
+    font-weight: 800;
   }
   
   .calendar-day-header {
@@ -2510,7 +2650,7 @@
    ========================================== */
 .dashboard-unified-grid {
   display: grid;
-  grid-template-columns: 1fr 1.5fr; /* First column narrower, Second column wider */
+  grid-template-columns: repeat(20, 1fr); /* 20 column grid for fine control */
   grid-template-rows: auto auto auto; /* Auto height rows based on content */
   gap: 1.5rem;
   margin-bottom: 2rem; /* Fixed bottom margin */
@@ -2519,28 +2659,29 @@
 
 /* Grid Item Positioning - NEW ORDER */
 
-/* ROW 1: Calendar (Left), Urgent Tasks (Right) */
+/* ROW 1: Calendar (Left - 12 cols, 60%), Urgent Tasks (Right - 8 cols, 40%) */
 .dashboard-unified-grid .calendar-standalone {
-  grid-column: 1;
+  grid-column: 1 / 13; /* Spans 12 columns (60%) */
   grid-row: 1;
   display: flex;
   flex-direction: column;
-  min-height: 450px; /* Minimum height */
-  height: 100%; /* Match height with adjacent panel */
+  height: 450px; /* Fixed height for calendar only */
+  contain: layout; /* Optimize layout performance */
 }
 
 .dashboard-unified-grid .urgent-tasks-panel {
-  grid-column: 2;
+  grid-column: 13 / 21; /* Spans 8 columns (40%) */
   grid-row: 1;
   display: flex;
   flex-direction: column;
-  min-height: 450px; /* Minimum height */
-  height: 100%; /* Match height with adjacent panel */
+  height: 450px; /* Fixed height for urgent tasks only */
+  overflow: hidden; /* Enable scrolling for content */
+  contain: layout; /* Optimize layout performance */
 }
 
-/* ROW 2: Announcements (Left), Task Breakdown (Right) */
+/* ROW 2: Announcements (Left - 11 cols, 55%), Task Breakdown (Right - 9 cols, 45%) */
 .dashboard-unified-grid .announcements-panel {
-  grid-column: 1;
+  grid-column: 1 / 12; /* Spans 11 columns (55%) */
   grid-row: 2;
   display: flex;
   flex-direction: column;
@@ -2549,7 +2690,7 @@
 }
 
 .dashboard-unified-grid .chart-card {
-  grid-column: 2;
+  grid-column: 12 / 21; /* Spans 9 columns (45%) */
   grid-row: 2;
   display: flex;
   flex-direction: column;
@@ -2557,9 +2698,9 @@
   max-height: 600px; /* Maximum height */
 }
 
-/* ROW 3: Organizations (Left), Workload Snapshot (Right) */
-.dashboard-unified-grid .requester-chart-panel {
-  grid-column: 1;
+/* ROW 3: Workload Snapshot (Left - 5 cols), Organizations (Right - 5 cols) - Equal */
+.dashboard-unified-grid .workload-snapshot-card {
+  grid-column: 1 / 6; /* Spans 5 columns (50%) */
   grid-row: 3;
   display: flex;
   flex-direction: column;
@@ -2568,7 +2709,16 @@
 }
 
 .dashboard-unified-grid .workload-snapshot-card {
-  grid-column: 2;
+  grid-column: 1 / 11; /* Spans 10 columns (50%) */
+  grid-row: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px; /* Minimum height */
+  max-height: 600px; /* Maximum height */
+}
+
+.dashboard-unified-grid .requester-chart-panel {
+  grid-column: 11 / 21; /* Spans 10 columns (50%) */
   grid-row: 3;
   display: flex;
   flex-direction: column;
@@ -2637,6 +2787,23 @@
 /* ==========================================
    RESPONSIVE LAYOUT
    ========================================== */
+   
+/* Desktop - Optimal calendar spacing */
+@media (min-width: 1101px) {
+  .calendar-grid {
+    gap: 0.4rem;
+    grid-template-rows: repeat(7, 1fr); /* Explicit 7 rows */
+  }
+  
+  .calendar-day {
+    font-size: 0.75rem;
+  }
+  
+  .calendar-day-header {
+    font-size: 0.7rem;
+  }
+}
+
 /* Large screens */
 @media (max-width: 1400px) {
   /* Legacy grid adjustments - only for old layout */
@@ -2669,58 +2836,60 @@
     grid-column: 1;
     grid-row: auto;
     order: 1; /* First */
-    min-height: auto;
-    max-height: none;
+    height: 450px; /* Fixed height for calendar */
   }
   
   .dashboard-unified-grid .urgent-tasks-panel {
     grid-column: 1;
     grid-row: auto;
     order: 2; /* Second */
-    min-height: auto;
-    max-height: none;
+    height: 450px; /* Fixed height for urgent tasks */
   }
   
   .dashboard-unified-grid .announcements-panel {
     grid-column: 1;
     grid-row: auto;
     order: 3; /* Third */
-    min-height: auto;
-    max-height: none;
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
   .dashboard-unified-grid .chart-card {
     grid-column: 1;
     grid-row: auto;
     order: 4; /* Fourth */
-    min-height: auto;
-    max-height: none;
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
   .dashboard-unified-grid .requester-chart-panel {
     grid-column: 1;
     grid-row: auto;
     order: 5; /* Fifth */
-    min-height: auto;
-    max-height: none;
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
   .dashboard-unified-grid .workload-snapshot-card {
     grid-column: 1;
     grid-row: auto;
     order: 6; /* Sixth */
-    min-height: auto;
-    max-height: none;
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
-  /* Content areas adjust for stacked layout */
+  /* Content areas adjust for stacked layout - SEPARATE RULES */
   .workload-table-wrapper,
-  .calendar-content,
   .chart-content,
   .announcements-content,
   .panel-content,
   .chart-wrapper {
     max-height: none; /* Allow content to determine height */
+  }
+  
+  /* Calendar content - NO max-height override */
+  .calendar-content {
+    overflow: hidden; /* No scrolling */
   }
   
   /* Action cards: Stack to 2 columns on tablets */
@@ -2848,21 +3017,37 @@
   }
   
   .dashboard-unified-grid {
-    grid-template-columns: 1fr 1.3fr; /* Adjust proportions for smaller screens */
+    grid-template-columns: repeat(20, 1fr); /* Keep 20 column grid */
     grid-template-rows: auto auto auto; /* Auto height rows */
     gap: 1.5rem;
     margin-bottom: 2rem;
   }
   
-  /* Adjust panel heights for medium screens */
-  .dashboard-unified-grid .workload-snapshot-card,
-  .dashboard-unified-grid .calendar-standalone,
-  .dashboard-unified-grid .chart-card,
-  .dashboard-unified-grid .announcements-panel,
-  .dashboard-unified-grid .requester-chart-panel,
+  /* Adjust panel heights for medium screens - SEPARATE RULES */
+  .dashboard-unified-grid .calendar-standalone {
+    grid-column: 1 / 13; /* 12 columns (60%) */
+    height: 450px; /* Fixed height for calendar */
+  }
+  
   .dashboard-unified-grid .urgent-tasks-panel {
-    min-height: 380px; /* Slightly reduced for medium screens */
-    max-height: 550px;
+    grid-column: 13 / 21; /* 8 columns (40%) */
+    height: 450px; /* Fixed height for urgent tasks */
+  }
+  
+  .dashboard-unified-grid .announcements-panel {
+    grid-column: 1 / 12; /* 11 columns (55%) */
+  }
+  
+  .dashboard-unified-grid .chart-card {
+    grid-column: 12 / 21; /* 9 columns (45%) */
+  }
+  
+  .dashboard-unified-grid .workload-snapshot-card {
+    grid-column: 1 / 11; /* 10 columns (50%) */
+  }
+  
+  .dashboard-unified-grid .requester-chart-panel {
+    grid-column: 11 / 21; /* 10 columns (50%) */
   }
   
   .action-cards-section {
@@ -2889,51 +3074,49 @@
     grid-column: 1;
     grid-row: auto;
     order: 1; /* First */
-    min-height: 350px;
-    max-height: none; /* Remove max height restriction on mobile */
+    height: 450px; /* Fixed height for calendar */
   }
   
   .dashboard-unified-grid .urgent-tasks-panel {
     grid-column: 1;
     grid-row: auto;
     order: 2; /* Second */
-    min-height: 350px;
-    max-height: none; /* Remove max height restriction on mobile */
+    height: 450px; /* Fixed height for urgent tasks */
   }
   
   .dashboard-unified-grid .announcements-panel {
     grid-column: 1;
     grid-row: auto;
     order: 3; /* Third */
-    min-height: 300px;
-    max-height: none; /* Remove max height restriction on mobile */
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
   .dashboard-unified-grid .chart-card {
     grid-column: 1;
     grid-row: auto;
     order: 4; /* Fourth */
-    min-height: auto;
-    max-height: none;
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
   .dashboard-unified-grid .requester-chart-panel {
     grid-column: 1;
     grid-row: auto;
     order: 5; /* Fifth */
-    min-height: auto;
-    max-height: none;
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
   .dashboard-unified-grid .workload-snapshot-card {
     grid-column: 1;
     grid-row: auto;
     order: 6; /* Sixth */
-    min-height: auto;
-    max-height: none;
+    min-height: 400px; /* Match with other panels */
+    max-height: 600px; /* Match with other panels */
   }
   
-  /* Allow content to determine heights on mobile */
+  /* Allow content to determine heights on mobile - SEPARATE RULES */
   .workload-table-wrapper,
   .chart-content,
   .chart-wrapper {
@@ -2941,7 +3124,26 @@
     min-height: auto;
   }
   
-  .calendar-content,
+  /* Calendar content - NO scrolling, NO max-height override */
+  .calendar-content {
+    overflow: hidden;
+    padding: 0.5rem;
+  }
+  
+  /* Tablet calendar adjustments - ensure dates fill panel */
+  .calendar-grid {
+    gap: 0.3rem;
+    grid-template-rows: repeat(7, 1fr); /* Explicit 7 rows */
+  }
+  
+  .calendar-day {
+    font-size: 0.7rem;
+  }
+  
+  .calendar-day-header {
+    font-size: 0.65rem;
+  }
+  
   .panel-content,
   .announcements-content {
     max-height: none;
@@ -3161,6 +3363,28 @@
   
   .workload-table-wrapper {
     padding: 0.5rem 0;
+  }
+  
+  /* Mobile calendar adjustments - ensure dates fill panel */
+  .calendar-grid {
+    gap: 0.25rem;
+    grid-template-rows: repeat(7, 1fr); /* Explicit 7 rows */
+  }
+  
+  .calendar-day {
+    font-size: 0.7rem;
+    padding: 0.25rem;
+  }
+  
+  .calendar-day-header {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.1rem;
+  }
+  
+  .deadline-badge {
+    width: 12px;
+    height: 12px;
+    font-size: 0.55rem;
   }
   
   /* Reduce font sizes slightly */
@@ -3729,3 +3953,128 @@
   font-size: 0.875rem;
   color: #d1d5db;
 }
+
+/* ==========================================
+   PERFORMANCE METRICS SECTION
+   ========================================== */
+.performance-metrics-section {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.metric-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metric-icon {
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+  stroke-width: 2;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.metric-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+  margin: 0.25rem 0;
+}
+
+.metric-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.metric-status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin-top: auto;
+}
+
+.metric-status.positive {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.metric-status.positive svg {
+  color: #059669;
+}
+
+.metric-status.neutral {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.metric-status.neutral svg {
+  color: #6b7280;
+}
+
+.metric-status.negative {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.metric-status.negative svg {
+  color: #dc2626;
+}
+
+/* Responsive - Performance Metrics */
+@media (max-width: 1400px) {
+  .performance-metrics-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .performance-metrics-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  
+  .metric-card {
+    padding: 1.25rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+  }
+}
+

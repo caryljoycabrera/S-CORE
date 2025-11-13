@@ -252,24 +252,24 @@
 }
 
 .quick-tip {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-left: 4px solid #22c55e;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin-top: 1.5rem;
-  text-align: left;
-  max-width: 100%; /* Full width within container */
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
-  transition: all 0.2s ease;
+    background: linear-gradient(135deg, #fdfdf0 0%, #fcfbdc 100%);
+    border-left: 4px solid #ba7808;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-top: 1.5rem;
+    text-align: left;
+    max-width: 100%;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
+    transition: all 0.2s ease;
 }
 
 .quick-tip:hover {
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+  box-shadow: 0 4px 12px rgba(197, 186, 34, 0.15);
   transform: translateX(2px);
 }
 
 .quick-tip strong {
-  color: #16a34a;
+  color: #5b591b;
   font-size: 0.875rem;
   font-weight: 700;
   display: block;
@@ -278,10 +278,10 @@
 }
 
 .quick-tip {
-  font-size: 0.8125rem;
-  color: #166534;
-  line-height: 1.6;
-  font-weight: 500;
+    font-size: 0.8125rem;
+    color: #41391e;
+    line-height: 1.6;
+    font-weight: 500;
 }
 
 /* Loading State */

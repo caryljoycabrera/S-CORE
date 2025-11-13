@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentRequestType = 'Service Request';
   let originalValues = {};
   let allRequestsData = [];
-  let uploadedFile = null;
+  let chatFiles = [];
   
   console.log('🔍 DOM Elements Check:', {
     detailModal: !!detailModal,
@@ -869,17 +869,56 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
     
+    // Initialize chat file features
+    initializeChatFileFeatures();
+    
     if (sendMessageBtn) {
       sendMessageBtn.addEventListener('click', sendMessage);
     }
     
     if (messageInput) {
+      console.log('[Services] Message input found, attaching event listeners');
+      
       messageInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           sendMessage();
         }
       });
+      
+      // Add keyboard shortcuts for formatting
+      messageInput.addEventListener('keydown', function(e) {
+        console.log('[Services] Keydown event:', {
+          key: e.key,
+          ctrlKey: e.ctrlKey,
+          metaKey: e.metaKey,
+          shiftKey: e.shiftKey
+        });
+        
+        // Ctrl+B or Cmd+B for bold
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+          e.preventDefault();
+          console.log('[Services] Keyboard shortcut: Bold (Ctrl+B)');
+          applyChatFormat('bold');
+          return false;
+        }
+        // Ctrl+I or Cmd+I for italic
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+          e.preventDefault();
+          console.log('[Services] Keyboard shortcut: Italic (Ctrl+I)');
+          applyChatFormat('italic');
+          return false;
+        }
+        // Ctrl+U or Cmd+U for underline
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+          e.preventDefault();
+          console.log('[Services] Keyboard shortcut: Underline (Ctrl+U)');
+          applyChatFormat('underline');
+          return false;
+        }
+      });
+    } else {
+      console.error('[Services] Message input element not found!');
     }
     
     // Close modal when clicking outside
@@ -894,11 +933,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Open conversation function
   async function openConversation(requestId) {
+    console.log('[Services] ========== OPENING CONVERSATION ==========');
+    console.log('[Services] Request ID:', requestId);
+    console.log('[Services] Current user role:', window.currentUserRole);
+    
     const conversationModal = document.getElementById('conversationModal');
     const messagesContainer = document.getElementById('messagesContainer');
     
+    console.log('[Services] Modal elements check:', {
+      conversationModal: !!conversationModal,
+      messagesContainer: !!messagesContainer
+    });
+    
     if (!conversationModal || !messagesContainer) {
-      console.error('Conversation modal elements not found');
+      console.error('[Services] ERROR: Conversation modal elements not found!');
       return;
     }
     
@@ -916,19 +964,29 @@ document.addEventListener('DOMContentLoaded', function() {
       conversationModal.style.display = 'flex';
       
       // Fetch conversation
+      console.log('[Services] Fetching conversation from:', `/api/conversation/${requestId}`);
       const response = await fetch(`/api/conversation/${requestId}`);
+      console.log('[Services] Conversation fetch status:', response.status);
       const data = await response.json();
+      console.log('[Services] Conversation data received:', data);
+      console.log('[Services] Raw data structure:', JSON.stringify(Object.keys(data)));
       
       if (response.ok && data) {
-        // API returns the conversation document directly (with .messages array)
-        displayMessages(data.messages || []);
+        // Extract messages from response - check both data.conversation and data.messages
+        const messages = data.conversation || data.messages || [];
+        console.log('[Services] Extracted messages array:', messages);
+        console.log('[Services] Displaying', messages.length, 'messages');
+        displayMessages(messages);
         // Mark messages as read
+        console.log('[Services] Marking messages as read');
         await fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' });
       } else {
+        console.error('[Services] Failed to load conversation:', data);
         throw new Error(data && data.error ? data.error : 'Failed to load conversation');
       }
     } catch (error) {
-      console.error('Error loading conversation:', error);
+      console.error('[Services] Error loading conversation:', error);
+      console.error('[Services] Error stack:', error.stack);
       messagesContainer.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #dc2626;">
           <div style="text-align: center;">
@@ -942,75 +1000,282 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Clear attachment function
-  function clearAttachment() {
-    uploadedFile = null;
-    const attachmentPreview = document.getElementById('attachmentPreview');
-    const imageUpload = document.getElementById('imageUpload');
-    const fileUpload = document.getElementById('fileUpload');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+  // Chat file management functions
+  function initializeChatFileFeatures() {
+    console.log('[Services] Initializing chat file features...');
+    const attachBtn = document.getElementById('chatAttachBtn');
+    const fileInput = document.getElementById('chatFileInput');
     
-    if (attachmentPreview) {
-      attachmentPreview.style.display = 'none';
+    if (attachBtn && fileInput) {
+      console.log('[Services] Attach button and file input found');
+      attachBtn.addEventListener('click', () => {
+        console.log('[Services] Attach button clicked');
+        fileInput.click();
+      });
+      
+      fileInput.addEventListener('change', handleChatFileSelect);
+    } else {
+      console.warn('[Services] Chat file elements not found:', { attachBtn: !!attachBtn, fileInput: !!fileInput });
     }
-    if (imageUpload) imageUpload.value = '';
-    if (fileUpload) fileUpload.value = '';
-    if (imagePreviewContainer) {
-      imagePreviewContainer.style.display = 'none';
+
+    const clearFilesBtn = document.getElementById('clearChatFiles');
+    if (clearFilesBtn) {
+      clearFilesBtn.addEventListener('click', clearAllChatFiles);
     }
+    
+    const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
+    chatFormatBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const format = this.getAttribute('data-chat-format');
+        applyChatFormat(format);
+      });
+    });
+  }
+
+  function handleChatFileSelect(event) {
+    console.log('[Services] File selection event triggered');
+    const files = Array.from(event.target.files);
+    console.log('[Services] Files selected:', files.length);
+    
+    files.forEach(file => {
+      const exists = chatFiles.some(f => f.name === file.name && f.size === file.size);
+      if (!exists) {
+        chatFiles.push(file);
+        console.log('[Services] Added file:', file.name, `(${(file.size / 1024).toFixed(2)} KB)`);
+      } else {
+        console.log('[Services] File already exists, skipping:', file.name);
+      }
+    });
+    
+    console.log('[Services] Total files in chatFiles array:', chatFiles.length);
+    updateChatFilesPreview();
+  }
+
+  function updateChatFilesPreview() {
+    console.log('[Services] Updating chat files preview...');
+    const preview = document.getElementById('chatFilesPreview');
+    const container = document.getElementById('chatFilesContainer');
+    const filesCount = preview ? preview.querySelector('.files-count') : null;
+    
+    if (!preview || !container) {
+      console.error('[Services] Preview elements not found:', { preview: !!preview, container: !!container });
+      return;
+    }
+    
+    if (chatFiles.length > 0) {
+      preview.style.display = 'block';
+      if (filesCount) {
+        filesCount.textContent = `${chatFiles.length} file(s) attached`;
+      }
+      
+      container.innerHTML = '';
+      chatFiles.forEach((file, index) => {
+        const fileItem = createChatFileItem(file, index);
+        container.appendChild(fileItem);
+      });
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  function createChatFileItem(file, index) {
+    const item = document.createElement('div');
+    item.className = 'revision-file-item';
+    
+    const fileSizeKB = (file.size / 1024).toFixed(1);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize = file.size > 1024 * 1024 ? `${fileSizeMB} MB` : `${fileSizeKB} KB`;
+    
+    const ext = file.name.split('.').pop().toLowerCase();
+    let iconColor = '#64748b';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
+    else if (ext === 'pdf') iconColor = '#dc2626';
+    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+    
+    item.innerHTML = `
+      <div class="file-item-info">
+        <div class="file-item-icon" style="color: ${iconColor};">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+        </div>
+        <div class="file-item-details">
+          <div class="file-item-name" title="${file.name}">${file.name}</div>
+          <div class="file-item-size">${displaySize}</div>
+        </div>
+      </div>
+      <button type="button" class="remove-file-btn" onclick="removeChatFile(${index})" title="Remove file">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    `;
+    
+    return item;
+  }
+
+  window.removeChatFile = function(index) {
+    chatFiles.splice(index, 1);
+    updateChatFilesPreview();
+    
+    const fileInput = document.getElementById('chatFileInput');
+    if (fileInput) {
+      const dt = new DataTransfer();
+      chatFiles.forEach(file => dt.items.add(file));
+      fileInput.files = dt.files;
+    }
+  };
+
+  function clearAllChatFiles() {
+    console.log('[Services] Clearing all chat files');
+    chatFiles = [];
+    updateChatFilesPreview();
+    
+    const fileInput = document.getElementById('chatFileInput');
+    if (fileInput) {
+      fileInput.value = '';
+      console.log('[Services] File input cleared');
+    } else {
+      console.warn('[Services] File input element not found');
+    }
+  }
+
+  function applyChatFormat(format) {
+    console.log('[Services] Apply format:', format);
+    const textarea = document.getElementById('messageInput');
+    if (!textarea) {
+      console.error('[Services] Message input not found');
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    console.log('[Services] Selection:', { start, end, selectedText });
+
+    let prefix = '';
+    let suffix = '';
+    let cursorOffset = 0;
+
+    switch(format) {
+      case 'bold':
+        prefix = '**';
+        suffix = '**';
+        cursorOffset = 2;
+        break;
+      case 'italic':
+        prefix = '*';
+        suffix = '*';
+        cursorOffset = 1;
+        break;
+      case 'underline':
+        prefix = '__';
+        suffix = '__';
+        cursorOffset = 2;
+        break;
+    }
+
+    const newText = beforeText + prefix + selectedText + suffix + afterText;
+    textarea.value = newText;
+    
+    // Set cursor position
+    if (selectedText) {
+      // If text was selected, place cursor after the formatted text
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    } else {
+      // If no text selected, place cursor between the markers
+      textarea.setSelectionRange(start + cursorOffset, start + cursorOffset);
+    }
+    
+    textarea.focus();
+    console.log('[Services] Format applied, new text length:', newText.length);
+  }
+
+  // Clear attachment function (deprecated but kept for compatibility)
+  function clearAttachment() {
+    clearAllChatFiles();
   }
 
   // Send message function
   async function sendMessage() {
+    console.log('[Services] Send message triggered');
     const messageInput = document.getElementById('messageInput');
     const content = messageInput.value.trim();
+    console.log('[Services] Message content:', content || '(empty)');
+    console.log('[Services] Files to send:', chatFiles.length);
     
-    if (!content && !uploadedFile) {
-      showNotification('Please enter a message or select a file', 'error');
+    if (!content && chatFiles.length === 0) {
+      console.warn('[Services] No content or files to send');
+      showNotification('Please enter a message or attach files', 'error');
       return;
     }
     
     if (!currentRequestId) {
+      console.error('[Services] No request ID available');
       showNotification('No request selected', 'error');
       return;
     }
     
+    console.log('[Services] Sending message to request:', currentRequestId);
     try {
-      let response;
+      const formData = new FormData();
+      formData.append('content', content || '');
+      formData.append('senderRole', 'admin');
       
-      if (uploadedFile) {
-        // Send with file attachment using FormData
-        const formData = new FormData();
-        formData.append('content', content || ''); // Always include content field
-        formData.append('file', uploadedFile);
-        
-        response = await fetch(`/api/conversation/${currentRequestId}/message`, {
-          method: 'POST',
-          body: formData
-        });
-      } else {
-        // Send text only using JSON
-        response = await fetch(`/api/conversation/${currentRequestId}/message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ content })
-        });
+      // Add files if any
+      chatFiles.forEach((file, index) => {
+        console.log(`[Services] Appending file ${index + 1}:`, file.name, 'as chatFiles field');
+        formData.append('chatFiles', file);
+      });
+
+      console.log('[Services] Sending POST request to:', `/api/conversation/${currentRequestId}/message`);
+      const response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      console.log('[Services] Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        // Try to get error message from response
+        let errorMessage = 'Failed to send message';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // If JSON parsing fails, try to get text
+          const errorText = await response.text();
+          console.error('[Services] Server error response:', errorText);
+          if (response.status === 401) {
+            errorMessage = 'Session expired. Please log in again.';
+          } else if (response.status === 403) {
+            errorMessage = 'You do not have permission to send messages.';
+          } else {
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
+      console.log('[Services] Response data:', data);
       
-      if (response.ok) {
-        messageInput.value = '';
-        clearAttachment();
-        // Reload conversation to show new message
-        openConversation(currentRequestId);
-      } else {
-        throw new Error(data.error || 'Failed to send message');
-      }
+      console.log('[Services] Message sent successfully');
+      messageInput.value = '';
+      clearAllChatFiles();
+      // Reload conversation to show new message
+      openConversation(currentRequestId);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[Services] Error sending message:', error);
+      console.error('[Services] Error stack:', error.stack);
       showNotification('Failed to send message: ' + error.message, 'error');
     }
   }
@@ -2221,97 +2486,288 @@ console.log('✅ Services Admin script loaded successfully');
   }
 
   // Update displayMessages function to handle attachments
+  // Helper function to escape HTML
+  window.escapeHtml = function(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Helper function to format text with markdown-style syntax
+  window.formatText = function(text) {
+    if (!text) return '';
+    
+    // Escape HTML first
+    let formatted = window.escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+  }
+
+  // PDF viewer modal functions
+  window.viewPdf = function(pdfUrl, fileName) {
+    const modal = document.getElementById('pdfViewerModal');
+    const title = document.getElementById('pdfViewerTitle');
+    const iframe = document.getElementById('pdfViewerFrame');
+    
+    if (modal && iframe) {
+      title.textContent = fileName;
+      iframe.src = pdfUrl;
+      modal.style.display = 'flex';
+    }
+  };
+
+  window.closePdfViewer = function() {
+    const modal = document.getElementById('pdfViewerModal');
+    const iframe = document.getElementById('pdfViewerFrame');
+    
+    if (modal) {
+      modal.style.display = 'none';
+      if (iframe) {
+        iframe.src = '';
+      }
+    }
+  };
+
+  // Image viewer modal functions
+  window.viewImage = function(imageUrl, fileName) {
+    const modal = document.getElementById('imageViewerModal');
+    if (!modal) {
+      // Create image viewer modal if it doesn't exist
+      const modalHTML = `
+        <div id="imageViewerModal" class="modal" style="display: flex; z-index: 1000000;">
+          <div class="modal-content" style="max-width: 90vw; width: auto; max-height: 90vh; padding: 0; background: #1f2937;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 1.5rem;">
+              <div class="modal-title-section">
+                <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: white;">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <h2 id="imageViewerTitle" style="margin: 0; color: white;">Image</h2>
+              </div>
+              <button class="close-modal-btn" onclick="closeImageViewer()" aria-label="Close">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div style="padding: 1rem; display: flex; justify-content: center; align-items: center; background: #111827;">
+              <img id="imageViewerImg" style="max-width: 100%; max-height: 75vh; object-fit: contain;" />
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    const viewerModal = document.getElementById('imageViewerModal');
+    const title = document.getElementById('imageViewerTitle');
+    const img = document.getElementById('imageViewerImg');
+    
+    if (viewerModal && img) {
+      title.textContent = fileName;
+      img.src = imageUrl;
+      viewerModal.style.display = 'flex';
+    }
+  };
+
+  window.closeImageViewer = function() {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  };
+
+  // Create message element function
+  function createMessageElement(msg) {
+    console.log('[Services] Creating message element:', msg);
+    const div = document.createElement('div');
+    
+    // Determine if this is the current user's message
+    const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
+    console.log('[Services] Message alignment:', { isOwnMessage, currentUserRole: window.currentUserRole, senderRole: msg.senderRole });
+    
+    // Role-based styling
+    let roleClass = 'user-message';
+    let roleColor = '#e0f2fe'; // Light blue for users
+    
+    if (isOwnMessage) {
+      roleClass = 'own-message';
+      roleColor = '#ffffff'; // White for own messages
+    } else if (msg.senderRole === 'admin') {
+      roleClass = 'admin-message';
+      roleColor = '#fecaca'; // Light red for admin
+    } else if (msg.senderRole === 'unit') {
+      roleClass = 'unit-message';
+      roleColor = '#bbf7d0'; // Light green for unit
+    } else if (msg.senderRole === 'user') {
+      roleClass = 'user-message';
+      roleColor = '#e0f2fe'; // Light blue for users
+    }
+    
+    // Add alignment class
+    div.className = `unit-message-item ${isOwnMessage ? 'message-right' : 'message-left'}`;
+    
+    const time = new Date(msg.timestamp).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    let attachmentsHTML = '';
+    if (msg.attachments && msg.attachments.length > 0) {
+      console.log('[Services] Message has attachments:', msg.attachments.length);
+      attachmentsHTML = msg.attachments.map(file => {
+        const ext = file.filename.split('.').pop().toLowerCase();
+        const isPdf = ext === 'pdf';
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+        
+        let iconColor = '#64748b';
+        if (isImage) iconColor = '#059669';
+        else if (isPdf) iconColor = '#dc2626';
+        else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+        
+        return `
+          <div class="message-attachment">
+            <div class="message-attachment-icon" style="color: ${iconColor};">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="4" y="4" width="16" height="16" rx="2"/>
+                <line x1="8" y1="8" x2="16" y2="8"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+                <line x1="8" y1="16" x2="12" y2="16"/>
+              </svg>
+            </div>
+            <div class="message-attachment-info">
+              <div class="message-attachment-name">${window.escapeHtml(file.originalname || file.filename)}</div>
+              <div class="message-attachment-size">${ext.toUpperCase()}</div>
+            </div>
+            <div class="message-attachment-actions">
+              ${isImage ? `
+                <button class="attachment-action-btn" onclick="viewImage('/uploads/${file.filename}', '${window.escapeHtml(file.originalname || file.filename)}')" title="View Image">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              ` : ''}
+              ${isPdf ? `
+                <button class="attachment-action-btn pdf-view" onclick="viewPdf('/uploads/${file.filename}', '${window.escapeHtml(file.originalname || file.filename)}')" title="View PDF">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              ` : ''}
+              <a href="/uploads/${file.filename}" download="${window.escapeHtml(file.originalname || file.filename)}" class="attachment-action-btn" title="Download">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Build read receipts HTML
+    let readReceiptsHTML = '';
+    if (msg.readBy && msg.readBy.length > 0) {
+      const readByList = msg.readBy.map(reader => {
+        const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        return `
+          <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M1 12l5 5L23 3"></path>
+              <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+            </svg>
+            <span>Read by ${window.escapeHtml(reader.userName)} at ${readTime}</span>
+          </div>
+        `;
+      }).join('');
+      readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
+    }
+    
+    div.innerHTML = `
+      <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+        <div class="message-header">
+          <strong>${window.escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
+          <span class="message-time">${time}</span>
+        </div>
+        <div class="message-content">${window.formatText(msg.content || '')}</div>
+        ${attachmentsHTML}
+        ${readReceiptsHTML}
+      </div>
+    `;
+    
+    return div;
+  }
+
+  // Display messages function
   function displayMessages(messages) {
+    console.log('[Services] Displaying messages:', messages);
     const messagesContainer = document.getElementById('messagesContainer');
-    if (!messagesContainer) return;
+    if (!messagesContainer) {
+      console.error('[Services] Messages container not found');
+      return;
+    }
+    
+    // Clear container
+    messagesContainer.innerHTML = '';
     
     if (!messages || messages.length === 0) {
+      console.log('[Services] No messages to display');
       messagesContainer.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
-          <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
-            <p>No messages yet. Start the conversation!</p>
+        <div class="unit-messages-empty">
+          <div class="empty-icon">
+            <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
           </div>
+          <p>No discussion yet</p>
+          <small>Start the conversation below</small>
         </div>
       `;
       return;
     }
     
-    messagesContainer.innerHTML = messages.map(message => {
-      const isUser = message.senderRole === 'user';
-      const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
-      
-      // Create user avatar (profile picture or default icon)
-      const userAvatar = `
-        <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? '#d1d5db' : 'var(--primary-green)'};">
-          ${message.senderId && message.senderId.profilePicture ? 
-            `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-             <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
-               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-               <circle cx="12" cy="7" r="4"/>
-             </svg>` :
-            `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-               <circle cx="12" cy="7" r="4"/>
-             </svg>`
-          }
-        </div>
-      `;
-      
-      let attachmentHtml = '';
-      if (message.file_path) {
-        const fileName = message.original_filename || 'File';
-        const isImage = message.file_type && message.file_type.startsWith('image/');
-        
-        if (isImage) {
-          attachmentHtml = `
-            <div style="margin-top: 0.5rem;">
-              <img src="${message.file_path}" 
-                   style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
-                   onclick="openImageModal('${message.file_path}')"
-                   alt="${fileName}">
-            </div>
-          `;
-        } else {
-          attachmentHtml = `
-            <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 1.2rem;">📎</span>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
-                  <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
-                </div>
-                <a href="${message.file_path}" download="${fileName}" 
-                   style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
-                  Download
-                </a>
-              </div>
-            </div>
-          `;
-        }
-      }
-      
-      return `
-        <div class="message ${isUser ? 'user-message' : 'admin-message'}">
-          <div class="message-content">
-            <div style="display: flex; align-items: flex-start;">
-              ${userAvatar}
-              <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
-                <div class="message-header">
-                  <strong>${senderName}</strong>
-                  <span class="message-time">${new Date(message.timestamp || message.created_at).toLocaleString()}</span>
-                </div>
-                <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;">${message.content}</div>
-                <div class="message-attachment">${attachmentHtml}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+    console.log('[Services] Rendering', messages.length, 'messages');
+    messages.forEach((msg, index) => {
+      console.log(`[Services] Creating message ${index + 1}/${messages.length}:`, {
+        senderName: msg.senderName,
+        senderRole: msg.senderRole,
+        content: msg.content ? msg.content.substring(0, 50) : 'empty',
+        hasAttachments: !!(msg.attachments && msg.attachments.length > 0)
+      });
+      const messageElement = createMessageElement(msg);
+      messagesContainer.appendChild(messageElement);
+      console.log(`[Services] Message ${index + 1} appended to container`);
+    });
     
     // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    console.log('[Services] Messages rendered and scrolled to bottom');
   }
 
 // Auto-open modal if openModalId is in URL

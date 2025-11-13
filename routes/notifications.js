@@ -13,24 +13,41 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
  */
 router.get('/notifications', requireAuth, async (req, res) => {
   try {
+    console.log('🔔 Notifications route called for user:', {
+      id: req.user._id,
+      role: req.user.role,
+      name: `${req.user.fName} ${req.user.lName}`,
+      showOnboarding: req.query.showOnboarding
+    });
+
     // Render different templates based on user role
     if (req.user.role === 'admin') {
-      res.render('Admin/notifications', { 
+      console.log('👑 Rendering admin notifications template');
+      res.render('Admin/notifications', {
         user: req.user,
         title: 'Notifications - Admin',
         name: `${req.user.fName} ${req.user.lName}`
       });
+    } else if (req.user.role === 'unit') {
+      console.log('🏢 Rendering unit notifications template');
+      res.render('Unit/notifications', {
+        user: req.user,
+        title: 'Notifications - Unit',
+        name: `${req.user.fName} ${req.user.lName}`,
+        showOnboarding: req.query.showOnboarding === 'true'
+      });
     } else {
-      res.render('notifications', { 
+      console.log('👤 Rendering user notifications template');
+      res.render('notifications', {
         user: req.user,
         title: 'Notifications'
       });
     }
   } catch (error) {
     console.error('Error loading notifications page:', error);
-    res.status(500).render('error', { 
+    res.status(500).render('error', {
       message: 'Failed to load notifications page',
-      error: error.message 
+      error: error.message
     });
   }
 });

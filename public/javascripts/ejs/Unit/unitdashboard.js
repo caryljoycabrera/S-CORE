@@ -219,22 +219,14 @@ document.querySelectorAll('.action-card').forEach(card => {
     const hasApprovals = deadlines.approvals > 0;
     const hasServices = deadlines.services > 0;
     
-    if (hasApprovals && hasServices) {
       let badges = '';
-      if (deadlines.approvals > 0) {
-        badges += `<span class="deadline-badge approval">${deadlines.approvals}</span>`;
+      if (hasApprovals) {
+        badges += `<span class='calendar-date-badge approval'>${deadlines.approvals}</span>`;
       }
-      if (deadlines.services > 0) {
-        badges += `<span class="deadline-badge service">${deadlines.services}</span>`;
+      if (hasServices) {
+        badges += `<span class='calendar-date-badge service'>${deadlines.services}</span>`;
       }
-      return `<div class="deadline-indicators">${badges}</div>`;
-    } else if (hasApprovals) {
-      return `<div class="deadline-indicators"><span class="deadline-badge approval">${deadlines.approvals}</span></div>`;
-    } else if (hasServices) {
-      return `<div class="deadline-indicators"><span class="deadline-badge service">${deadlines.services}</span></div>`;
-    }
-    
-    return '';
+      return badges;
   }
 
   function renderCalendar(date, targetElement, targetMonthYear) {
@@ -278,7 +270,10 @@ document.querySelectorAll('.action-card').forEach(card => {
       if (deadlineClasses) className += ' ' + deadlineClasses;
       
       // Make ALL dates clickable
-      html += `<div class="${className}" data-date="${dateStr}" style="cursor: pointer;">${day}${deadlineIndicators}</div>`;
+      html += `<div class="${className}" data-date="${dateStr}" style="cursor: pointer;">
+        <span class="calendar-date-number">${day}</span>
+        ${deadlineIndicators}
+      </div>`;
     }
 
     targetElement.innerHTML = html;
