@@ -121,6 +121,12 @@
   width: 85% !important;
 }
 
+/* Conversation modals - even wider for better chat experience */
+.unit-conversation-modal {
+  max-width: min(1400px, calc(100vw - 150px)) !important;
+  width: 95% !important;
+}
+
 /* Full-height modals (request details) */
 .modal-content[style*="height: 100vh"] {
   max-width: min(900px, calc(100vw - 150px)) !important;
@@ -285,4 +291,249 @@ body > .select2-container,
 .modal ~ .select2-container,
 #updateProfileModal ~ .select2-container {
   z-index: 999999 !important;
+}
+
+/* ========================================
+   REVISION HISTORY TIMELINE STYLES
+   Consistent visual timeline for all modals
+   ======================================== */
+
+.revision-history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  padding-left: 0;
+}
+
+.revision-entry {
+  position: relative;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.revision-entry:hover {
+  background: #f1f5f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.revision-entry.revoked {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+
+.revision-entry.revoked:hover {
+  background: #fee2e2;
+}
+
+.revision-entry.resubmitted {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.revision-entry.resubmitted:hover {
+  background: #dcfce7;
+}
+
+.revision-entry.initial {
+  border-left-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.revision-entry.initial:hover {
+  background: #dbeafe;
+}
+
+.revision-icon {
+  position: absolute;
+  left: -14px;
+  top: 1.25rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 3px solid currentColor;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.revision-entry.revoked .revision-icon {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.revision-entry.resubmitted .revision-icon {
+  color: #10b981;
+  background: #dcfce7;
+}
+
+.revision-entry.initial .revision-icon {
+  color: #3b82f6;
+  background: #dbeafe;
+}
+
+.revision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.revision-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.revision-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.revision-timestamp,
+.revision-by {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.revision-timestamp svg,
+.revision-by svg {
+  flex-shrink: 0;
+}
+
+.revision-description {
+  font-size: 0.9375rem;
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.revision-files {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.revision-files-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.75rem;
+}
+
+.revision-files-header svg {
+  color: #64748b;
+}
+
+.revision-files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.revision-file-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.revision-file-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.revision-file-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.revision-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.revision-file-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.revision-file-size {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.125rem;
+}
+
+.revision-file-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.revision-file-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.revision-file-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.revision-file-btn svg {
+  color: #64748b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .revision-files-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .revision-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .revision-entry {
+    padding: 1rem;
+  }
 }

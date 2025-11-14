@@ -93,6 +93,48 @@ const requestApprovalSchema = new mongoose.Schema({
   viewedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+
+  // Revision thread system
+  revisionHistory: [{
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    revisionNotes: {
+      type: String
+    },
+    revisionFiles: [{
+      type: String
+    }],
+    respondedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    respondedAt: {
+      type: Date
+    },
+    responseNotes: {
+      type: String
+    },
+    responseFiles: [{
+      type: String
+    }],
+    status: {
+      type: String,
+      enum: ['pending', 'responded', 'resolved'],
+      default: 'pending'
+    }
+  }],
+
+  // Track if request is awaiting requestor resubmission
+  awaitingResubmission: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

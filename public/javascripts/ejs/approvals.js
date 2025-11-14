@@ -2650,7 +2650,7 @@ console.log('✅ Approvals Admin script loaded successfully');
     }
     
     div.innerHTML = `
-      <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+      <div class="unit-message-bubble ${roleClass}">
         <div class="message-header">
           <strong>${window.escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
           <span class="message-time">${time}</span>

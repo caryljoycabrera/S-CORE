@@ -1109,4 +1109,105 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
   }
 });
 
+/**
+ * POST /resubmit-approval-request/:id
+ * Resubmit an approval request after addressing revision feedback
+ */
+router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20), async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const requestId = req.params.id;
+  const { resubmissionNotes } = req.body;
+
+  try {
+    const request = await RequestApproval.findById(requestId);
+    
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Verify user owns this request
+    if (request.userId.toString() !== req.session.userId) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to resubmit this request' });
+    }
+
+    // Verify request is awaiting resubmission
+    if (!request.awaitingResubmission) {
+      return res.status(400).json({ success: false, message: 'This request is not awaiting resubmission' });
+    }
+
+    // Handle additional files
+    let additionalFilePaths = [];
+    if (req.files && req.files.length > 0) {
+      additionalFilePaths = req.files.map(file => file.filename);
+      // Add new files to existing files array
+      request.files = [...(request.files || []), ...additionalFilePaths];
+    }
+
+    // Update the most recent revision history entry
+    if (request.revisionHistory && request.revisionHistory.length > 0) {
+      const latestRevision = request.revisionHistory[request.revisionHistory.length - 1];
+      latestRevision.respondedBy = req.session.userId;
+      latestRevision.respondedAt = new Date();
+      latestRevision.responseNotes = resubmissionNotes || 'Resubmitted with updates';
+      latestRevision.responseFiles = additionalFilePaths;
+      latestRevision.status = 'responded';
+    }
+
+    // Change status back to Pending for unit to review again
+    request.status = 'Pending';
+    request.awaitingResubmission = false;
+    await request.save();
+
+    // Add message to conversation
+    const Conversation = require('../models/Conversation');
+    let conversation = await Conversation.findOne({ approvalRequestId: requestId });
+    
+    if (!conversation) {
+      conversation = new Conversation({
+        approvalRequestId: requestId,
+        requestType: 'approval',
+        messages: []
+      });
+    }
+
+    // Add resubmission message with attachments
+    const attachments = additionalFilePaths.map(filename => ({
+      filename: filename,
+      originalname: filename,
+      mimetype: 'application/octet-stream',
+      size: 0,
+      path: `/uploads/${filename}`
+    }));
+
+    conversation.messages.push({
+      senderId: req.session.userId,
+      senderRole: 'user',
+      content: `✅ **Revision Response**\n\nI have addressed the revision feedback and resubmitted the request.\n\n${resubmissionNotes || 'No additional notes provided.'}`,
+      attachments: attachments,
+      timestamp: new Date()
+    });
+
+    await conversation.save();
+
+    // Notify unit members and admins
+    try {
+      await notificationService.notifyRequestorResubmission(request._id, req.session.userId, request.assignedUnits);
+    } catch (notifError) {
+      console.error('Error sending resubmission notifications:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Request resubmitted successfully. The unit team has been notified.',
+      filesUploaded: additionalFilePaths.length
+    });
+  } catch (error) {
+    console.error('Error resubmitting approval request:', error);
+    res.status(500).json({ success: false, message: 'Error resubmitting request: ' + error.message });
+  }
+});
+
 module.exports = router;

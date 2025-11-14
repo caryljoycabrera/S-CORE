@@ -1018,6 +1018,15 @@ hr {
   justify-content: center;
 }
 
+/* Modal z-index hierarchy */
+#detailsModal {
+  z-index: 50000 !important;
+}
+
+#teamConversationModal {
+  z-index: 100000 !important; /* Higher than details modal */
+}
+
 .modal.show,
 .modal[style*="flex"] {
   display: flex !important;

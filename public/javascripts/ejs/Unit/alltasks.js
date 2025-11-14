@@ -93,6 +93,37 @@ function initializeEventListeners() {
         submitRevisionBtn.addEventListener('click', submitRevision);
     }
 
+    const revokeApprovalBtn = document.getElementById('revokeApprovalBtn');
+    if (revokeApprovalBtn) {
+        revokeApprovalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[DEBUG] Revoke button clicked');
+            revokeApproval();
+        });
+    }
+
+    const confirmRevokeBtn = document.getElementById('confirmRevokeBtn');
+    if (confirmRevokeBtn) {
+        confirmRevokeBtn.addEventListener('click', submitRevokeApproval);
+    }
+
+    const cancelRevokeBtn = document.getElementById('cancelRevokeBtn');
+    if (cancelRevokeBtn) {
+        cancelRevokeBtn.addEventListener('click', hideRevokeForm);
+    }
+
+    // Revision history integrated action buttons
+    const approveAfterRevisionBtn = document.getElementById('approveAfterRevisionBtn');
+    if (approveAfterRevisionBtn) {
+        approveAfterRevisionBtn.addEventListener('click', approveRequest);
+    }
+
+    const requestAnotherRevisionBtn = document.getElementById('requestAnotherRevisionBtn');
+    if (requestAnotherRevisionBtn) {
+        requestAnotherRevisionBtn.addEventListener('click', showRevisionForm);
+    }
+
     // Service actions
     const deliverablesFileInput = document.getElementById('deliverablesFileInput');
     if (deliverablesFileInput) {
@@ -102,11 +133,6 @@ function initializeEventListeners() {
     const uploadDeliverablesBtn = document.getElementById('uploadDeliverablesBtn');
     if (uploadDeliverablesBtn) {
         uploadDeliverablesBtn.addEventListener('click', uploadDeliverables);
-    }
-
-    const completeServiceBtn = document.getElementById('completeServiceBtn');
-    if (completeServiceBtn) {
-        completeServiceBtn.addEventListener('click', completeServiceRequest);
     }
 
     // Message sending
@@ -304,6 +330,8 @@ function openRequestDetails(requestId, requestType) {
     // Show appropriate action panels
     const approvalActionsPanel = document.getElementById('approvalActionsPanel');
     const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+    const approvalStatusIndicator = document.getElementById('approvalStatusIndicator');
+    const approvalActionButtons = document.getElementById('approvalActionButtons');
     
     // Update modal header color based on request type
     const modalHeader = document.querySelector('.unit-modal-header');
@@ -319,6 +347,30 @@ function openRequestDetails(requestId, requestType) {
     if (requestType === 'approval') {
         if (approvalActionsPanel) approvalActionsPanel.style.display = 'block';
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+        
+        // Check if request is already approved
+        if (status.toLowerCase() === 'approved') {
+            if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'block';
+            if (approvalActionButtons) approvalActionButtons.style.display = 'none';
+            
+            // Re-attach revoke button event listener to ensure it works
+            const revokeBtn = document.getElementById('revokeApprovalBtn');
+            if (revokeBtn) {
+                // Remove any existing listeners by cloning
+                const newRevokeBtn = revokeBtn.cloneNode(true);
+                revokeBtn.parentNode.replaceChild(newRevokeBtn, revokeBtn);
+                // Add fresh listener
+                newRevokeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('[DEBUG] Revoke button clicked (re-attached)');
+                    revokeApproval();
+                });
+            }
+        } else {
+            if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'none';
+            if (approvalActionButtons) approvalActionButtons.style.display = 'flex';
+        }
     } else if (requestType === 'service') {
         if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
@@ -327,11 +379,347 @@ function openRequestDetails(requestId, requestType) {
     // Load team conversation messages
     loadConversation(requestId);
 
+    // Load revision history
+    loadRevisionHistory(requestId);
+
     // Display modal
     const modal = document.getElementById('requestDetailsModal');
     if (modal) {
         modal.style.display = 'flex';
     }
+}
+
+// Function: loadRevisionHistory
+async function loadRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    console.log('[Revision History] Loading for request:', requestId);
+    console.log('[Revision History] Section element:', historySection);
+    console.log('[Revision History] Container element:', historyContainer);
+    
+    if (!historyContainer) {
+        console.warn('[Revision History] Container not found!');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/revision-history/${requestId}`);
+        console.log('[Revision History] Response status:', response.status);
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('[Revision History] API returned non-JSON response');
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('[Revision History] API Response:', result);
+        console.log('[Revision History] Revisions count:', result.revisions?.length || 0);
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            console.log('[Revision History] Showing section with', result.revisions.length, 'revisions');
+            
+            // Show the revision history section
+            if (historySection) {
+                historySection.style.display = 'block';
+                console.log('[Revision History] Section display set to block');
+            }
+            
+            // Clear container
+            historyContainer.innerHTML = '';
+            
+            // Render each revision entry with enumeration
+            result.revisions.forEach((revision, index) => {
+                console.log('[Revision History] Rendering revision', index, ':', revision.type);
+                const entry = createRevisionEntry(revision, index, result.revisions.length);
+                historyContainer.appendChild(entry);
+            });
+            
+            console.log('[Revision History] All revisions rendered');
+            
+            // Show action buttons within revision history
+            const revisionHistoryActions = document.getElementById('revisionHistoryActions');
+            if (revisionHistoryActions) {
+                revisionHistoryActions.style.display = 'flex';
+            }
+            
+            // Hide the regular approval actions panel since we have revision history
+            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
+            if (approvalActionsPanel) {
+                approvalActionsPanel.style.display = 'none';
+            }
+        } else {
+            console.log('[Revision History] No revisions to display');
+            // Hide section if no revisions or not an approval request
+            if (historySection) historySection.style.display = 'none';
+            
+            // Show the regular approval actions panel
+            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
+            if (approvalActionsPanel) {
+                approvalActionsPanel.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('[Revision History] Error loading:', error);
+        // Silently hide section on error (common for service requests)
+        if (historySection) historySection.style.display = 'none';
+    }
+}
+
+// Function: createRevisionEntry
+function createRevisionEntry(revision, index, total) {
+    const entry = document.createElement('div');
+    
+    // Determine if this is a unit action (revision/revoke) or requestor action (initial/resubmit)
+    const isUnitAction = revision.type === 'revision' || revision.type === 'revoked';
+    const isRequestorAction = revision.type === 'initial' || revision.type === 'resubmitted';
+    
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-message' : 'requestor-message'}`;
+    
+    // Format detailed timestamp
+    const date = new Date(revision.timestamp);
+    const fullTimestamp = date.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    const shortTimestamp = date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Get relative time
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let relativeTime;
+    if (diffMins < 1) relativeTime = 'Just now';
+    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    else if (diffDays < 7) relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    else relativeTime = shortTimestamp;
+    
+    // Determine message type and styling
+    let typeLabel, badgeClass;
+    
+    if (revision.type === 'initial') {
+        typeLabel = 'Initial Submission';
+        badgeClass = 'badge-initial';
+    } else if (revision.type === 'revoked') {
+        typeLabel = 'Approval Revoked - Revision Required';
+        badgeClass = 'badge-revoked';
+    } else if (revision.type === 'resubmitted') {
+        typeLabel = 'Resubmitted for Review';
+        badgeClass = 'badge-resubmitted';
+    } else {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    }
+    
+    const isLast = index === total - 1;
+    
+    // Calculate revision/resubmission numbers
+    let revisionNumber = 0;
+    let resubmissionNumber = 0;
+    for (let i = 0; i <= index; i++) {
+        // This would need the full array, so we'll use index + 1 as approximation
+        if (revision.type === 'revision' || revision.type === 'revoked') {
+            revisionNumber = index; // Will be corrected in next iteration
+        } else if (revision.type === 'resubmitted') {
+            resubmissionNumber = index;
+        }
+    }
+    
+    // Determine status indicator for unit messages
+    let statusIndicator = '';
+    if (isUnitAction && isLast) {
+        statusIndicator = `
+            <div class="status-indicator waiting">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Waiting for Requestor Response</span>
+            </div>
+        `;
+    } else if (isRequestorAction && isLast) {
+        statusIndicator = `
+            <div class="status-indicator review">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>Under Unit Review</span>
+            </div>
+        `;
+    }
+    
+    entry.innerHTML = `
+        <div class="conversation-timeline-line ${isLast ? 'last-item' : ''}"></div>
+        <div class="revision-number-badge ${isUnitAction ? 'unit-number' : 'requestor-number'}">
+            #${index + 1}
+        </div>
+        <div class="conversation-message-bubble ${isUnitAction ? 'unit-bubble' : 'requestor-bubble'}">
+            <div class="message-header-row">
+                <div class="message-sender-info">
+                    <div class="sender-details">
+                        <span class="sender-name">${revision.by || 'Unknown'}</span>
+                        <span class="sender-role">${isUnitAction ? 'Unit Team' : 'Requestor'}</span>
+                    </div>
+                </div>
+                <span class="message-badge ${badgeClass}">${typeLabel}</span>
+            </div>
+            
+            <div class="message-timestamp-row">
+                <span class="timestamp-full" title="${fullTimestamp}">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    ${fullTimestamp}
+                </span>
+                <span class="timestamp-relative">${relativeTime}</span>
+            </div>
+            
+            ${revision.description ? `
+                <div class="message-content-section">
+                    <div class="content-label">${isUnitAction ? 'Unit Feedback:' : 'Submission Details:'}</div>
+                    <div class="content-text">${escapeHtml(revision.description)}</div>
+                </div>
+            ` : ''}
+            
+            ${revision.files && revision.files.length > 0 ? `
+                <div class="message-attachments-section">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        <span class="attachments-count">${revision.files.length} file${revision.files.length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div class="attachments-grid">
+                        ${revision.files.map(file => createRevisionFileCard(file)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${statusIndicator}
+        </div>
+    `;
+    
+    return entry;
+}
+
+// Function: createRevisionFileCard
+function createRevisionFileCard(file) {
+    // Handle different file object formats
+    const filename = file.filename || file.path || file.name || file;
+    
+    // If file is just a string (simple filename), use it directly
+    if (typeof file === 'string') {
+        const ext = file.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+        const isPDF = ext === 'pdf';
+        
+        let iconColor = '#64748b';
+        if (isImage) iconColor = '#059669';
+        else if (isPDF) iconColor = '#dc2626';
+        else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+        else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+        
+        return `
+            <div class="revision-file-card">
+                <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <line x1="8" y1="8" x2="16" y2="8"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                </div>
+                <div class="revision-file-info">
+                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(file)}</div>
+                    <div class="revision-file-size">${ext.toUpperCase()}</div>
+                </div>
+                <div class="revision-file-actions">
+                    <a href="/uploads/${file}" download="${escapeHtml(file)}" class="revision-file-btn" title="Download">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Handle file objects
+    const ext = filename.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+    const isPDF = ext === 'pdf';
+    
+    let iconColor = '#64748b';
+    if (isImage) iconColor = '#059669';
+    else if (isPDF) iconColor = '#dc2626';
+    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+    
+    const displayName = file.originalname || file.name || filename;
+    
+    return `
+        <div class="revision-file-card">
+            <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <line x1="8" y1="8" x2="16" y2="8"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+            </div>
+            <div class="revision-file-info">
+                <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
+                <div class="revision-file-size">${ext.toUpperCase()}</div>
+            </div>
+            <div class="revision-file-actions">
+                ${isPDF ? `
+                    <button class="revision-file-btn" onclick="viewPdf('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View PDF">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                ` : ''}
+                ${isImage ? `
+                    <button class="revision-file-btn" onclick="viewImage('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View Image">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                ` : ''}
+                <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="revision-file-btn" title="Download">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    `;
 }
 
 // Function: closeRequestModal
@@ -385,16 +773,72 @@ function closeRequestModal() {
 }
 
 // Function: approveRequest
-async function approveRequest() {
+function approveRequest() {
     if (!currentRequestId) {
         showErrorMessage('No request selected');
         return;
     }
 
-    if (!confirm('Are you sure you want to approve this request?')) {
-        return;
-    }
+    // Show approval confirmation modal
+    showApprovalConfirmationModal();
+}
 
+function showApprovalConfirmationModal() {
+    console.log('[DEBUG] Creating approval confirmation modal');
+    
+    // Remove any existing modal first
+    const existingModal = document.querySelector('.confirmation-modal-overlay');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'confirmation-modal-overlay';
+    modal.setAttribute('id', 'approvalConfirmationModal');
+    modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0, 0, 0, 0.6) !important; display: flex !important; align-items: center !important; justify-content: center !important; z-index: 1000000 !important;';
+    
+    modal.innerHTML = `
+        <div class="confirmation-modal" style="background: white !important; border-radius: 12px !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important; max-width: 450px !important; width: 90% !important; overflow: visible !important; position: relative !important; z-index: 1000001 !important; max-height: auto !important;">
+            <div class="confirmation-header" style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 1rem 1.25rem; text-align: center; color: white;">
+                <svg width="32" height="32" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24" style="margin-bottom: 0.25rem;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <h2 style="margin: 0; font-size: 1.125rem; font-weight: 700;">Approve Request</h2>
+            </div>
+            <div class="confirmation-body" style="padding: 1.25rem;">
+                <p style="margin: 0 0 0.375rem 0; font-size: 0.875rem; color: #334155; line-height: 1.4;">Are you sure you want to approve this request?</p>
+                <p class="confirmation-note" style="font-size: 0.75rem; color: #64748b; font-style: italic; margin: 0;">This action will notify the requestor and all administrators.</p>
+            </div>
+            <div class="confirmation-actions" style="padding: 0.875rem 1.25rem; background: #f8fafc; display: flex; gap: 0.625rem; justify-content: flex-end; border-top: 1px solid #e2e8f0;">
+                <button class="confirmation-btn confirmation-btn-cancel" onclick="window.closeConfirmationModal()" style="padding: 0.5rem 1rem; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8125rem; cursor: pointer; background: #e2e8f0; color: #475569;">Cancel</button>
+                <button class="confirmation-btn confirmation-btn-confirm" onclick="window.confirmApproveRequest()" style="padding: 0.5rem 1rem; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8125rem; cursor: pointer; background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); color: white; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">Approve Request</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    console.log('[DEBUG] Modal appended to body, element:', modal);
+    
+    // Force reflow to ensure styles are applied
+    modal.offsetHeight;
+    
+    // Debug computed styles
+    const computedStyles = window.getComputedStyle(modal);
+    console.log('[DEBUG] Approval modal computed styles:', {
+        display: computedStyles.display,
+        position: computedStyles.position,
+        zIndex: computedStyles.zIndex,
+        visibility: computedStyles.visibility,
+        opacity: computedStyles.opacity,
+        pointerEvents: computedStyles.pointerEvents
+    });
+}
+
+async function confirmApproveRequest() {
+    console.log('[DEBUG] Confirming approval');
+    window.closeConfirmationModal();
+    
     try {
         const response = await fetch(`/unit/task/approve/${currentRequestId}`, {
             method: 'POST',
@@ -407,9 +851,32 @@ async function approveRequest() {
 
         if (response.ok && result.success) {
             showSuccessMessage('Request approved successfully');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            
+            // Update modal UI immediately
+            const approvalStatusIndicator = document.getElementById('approvalStatusIndicator');
+            const approvalActionButtons = document.getElementById('approvalActionButtons');
+            const revisionHistorySection = document.getElementById('revisionHistorySection');
+            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
+            const modalStatus = document.getElementById('modalStatus');
+            
+            if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'block';
+            if (approvalActionButtons) approvalActionButtons.style.display = 'none';
+            if (revisionHistorySection) revisionHistorySection.style.display = 'none';
+            if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
+            if (modalStatus) {
+                modalStatus.textContent = 'APPROVED';
+                modalStatus.className = 'status-badge approved';
+            }
+            
+            // Update table row status in background without reload
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status');
+                if (statusCell) {
+                    statusCell.textContent = 'APPROVED';
+                    statusCell.className = 'status approved';
+                }
+            }
         } else {
             showErrorMessage(result.message || 'Failed to approve request');
         }
@@ -419,11 +886,127 @@ async function approveRequest() {
     }
 }
 
+// Function: revokeApproval
+function revokeApproval() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    // Show revoke approval form
+    const revokeForm = document.getElementById('revokeApprovalForm');
+    if (revokeForm) {
+        revokeForm.style.display = 'block';
+    }
+}
+
+// Function: hideRevokeForm
+function hideRevokeForm() {
+    const revokeForm = document.getElementById('revokeApprovalForm');
+    if (revokeForm) {
+        revokeForm.style.display = 'none';
+    }
+
+    const revokeReasonText = document.getElementById('revokeReasonText');
+    if (revokeReasonText) {
+        revokeReasonText.value = '';
+    }
+}
+
+// Function: submitRevokeApproval
+async function submitRevokeApproval() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    const reasonText = document.getElementById('revokeReasonText');
+    const reason = reasonText ? reasonText.value.trim() : '';
+    
+    try {
+        const response = await fetch(`/unit/task/revoke-approval/${currentRequestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason || '' })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Approval revoked. Status changed to For Revision.');
+            
+            // Hide revoke form and approval indicator
+            hideRevokeForm();
+            
+            // Update modal UI immediately
+            const approvalStatusIndicator = document.getElementById('approvalStatusIndicator');
+            const revisionHistorySection = document.getElementById('revisionHistorySection');
+            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
+            const modalStatus = document.getElementById('modalStatus');
+            const revokeApprovalForm = document.getElementById('revokeApprovalForm');
+            
+            if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'none';
+            if (revokeApprovalForm) revokeApprovalForm.style.display = 'none';
+            if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
+            if (modalStatus) {
+                modalStatus.textContent = 'FOR REVISION';
+                modalStatus.className = 'status-badge for-revision';
+            }
+            
+            // Reload revision history to show the revocation
+            if (currentRequestId) {
+                loadRevisionHistory(currentRequestId);
+            }
+            
+            // Update table row status in background without reload
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status');
+                if (statusCell) {
+                    statusCell.textContent = 'FOR REVISION';
+                    statusCell.className = 'status for-revision';
+                }
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to revoke approval');
+        }
+    } catch (error) {
+        console.error('Error revoking approval:', error);
+        showErrorMessage('An error occurred while revoking the approval');
+    }
+}
+
+// Global function to close confirmation modal
+window.closeConfirmationModal = function() {
+    const modal = document.querySelector('.confirmation-modal-overlay');
+    if (modal) {
+        modal.remove();
+    }
+};
+
+window.confirmApproveRequest = confirmApproveRequest;
+
 // Function: showRevisionForm
 function showRevisionForm() {
     const revisionForm = document.getElementById('revisionForm');
     if (revisionForm) {
         revisionForm.style.display = 'block';
+        
+        // Scroll the form into view smoothly
+        setTimeout(() => {
+            revisionForm.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest' 
+            });
+            
+            // Focus on the textarea
+            const revisionComments = document.getElementById('revisionComments');
+            if (revisionComments) {
+                revisionComments.focus();
+            }
+        }, 100);
     }
 }
 
@@ -474,13 +1057,30 @@ async function submitRevision() {
         if (response.ok && result.success) {
             showSuccessMessage('Revision request submitted successfully');
             
-            // Clear revision form
+            // Clear and hide revision form
             document.getElementById('revisionComments').value = '';
             clearAllRevisionFiles();
+            hideRevisionForm();
             
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            // Reload revision history to show the new revision
+            await loadRevisionHistory(currentRequestId);
+            
+            // Update modal status
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'FOR REVISION';
+                modalStatus.className = 'status-badge for-revision';
+            }
+            
+            // Update table row status in background without reload
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status');
+                if (statusCell) {
+                    statusCell.textContent = 'FOR REVISION';
+                    statusCell.className = 'status for-revision';
+                }
+            }
         } else {
             showErrorMessage(result.message || 'Failed to submit revision request');
         }
@@ -635,10 +1235,22 @@ async function uploadDeliverables() {
             clearAllUnitFiles();
             document.getElementById('uploadDeliverablesBtn').disabled = true;
 
-            // Reload deliverables section
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            // Update modal status
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'FOR CHECKING';
+                modalStatus.className = 'status-badge for-checking';
+            }
+            
+            // Update table row status in background without reload
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status');
+                if (statusCell) {
+                    statusCell.textContent = 'FOR CHECKING';
+                    statusCell.className = 'status for-checking';
+                }
+            }
         } else {
             showErrorMessage(result.message || 'Failed to upload deliverables');
         }
@@ -671,9 +1283,23 @@ async function completeServiceRequest() {
 
         if (response.ok && result.success) {
             showSuccessMessage('Service request marked as completed');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            
+            // Update modal status
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'COMPLETED';
+                modalStatus.className = 'status-badge completed';
+            }
+            
+            // Update table row status in background without reload
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status');
+                if (statusCell) {
+                    statusCell.textContent = 'COMPLETED';
+                    statusCell.className = 'status completed';
+                }
+            }
         } else {
             showErrorMessage(result.message || 'Failed to complete service request');
         }
@@ -701,6 +1327,17 @@ async function loadConversation(requestId) {
             }
 
             result.messages.forEach(message => {
+                // Skip revision-related messages (they appear in revision history instead)
+                const content = message.content || '';
+                if (content.includes('Revision Request') || 
+                    content.includes('REVISION REQUEST') ||
+                    content.includes('Approval Revoked') || 
+                    content.includes('APPROVAL REVOKED') ||
+                    content.includes('RESUBMITTED') ||
+                    content.includes('Revision Required')) {
+                    return; // Skip this message
+                }
+                
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${message.senderRole === 'unit' ? 'message-unit' : 'message-user'}`;
                 
@@ -762,32 +1399,8 @@ async function sendMessage() {
         const result = await response.json();
 
         if (response.ok && result.success) {
-            // Append message to UI
-            const messagesContainer = document.getElementById('conversationMessages');
-            if (messagesContainer) {
-                // Remove "no messages" placeholder if it exists
-                const noMessages = messagesContainer.querySelector('.no-messages');
-                if (noMessages) {
-                    noMessages.remove();
-                }
-
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message message-unit';
-                
-                const senderName = result.message.senderName || 'Unit Member';
-                const timestamp = formatDate(result.message.timestamp);
-                
-                messageDiv.innerHTML = `
-                    <div class="message-header">
-                        <span class="message-sender">${senderName}</span>
-                        <span class="message-time">${timestamp}</span>
-                    </div>
-                    <div class="message-content">${escapeHtml(messageText)}</div>
-                `;
-                
-                messagesContainer.appendChild(messageDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
+            // Reload conversation to show the new message
+            loadTeamConversation(currentRequestId);
 
             // Clear input
             messageInput.value = '';
@@ -871,6 +1484,10 @@ function formatText(text) {
     return formatted;
 }
 
+// Expose helper functions globally for createMessageElement
+window.escapeHtml = escapeHtml;
+window.formatText = formatText;
+
 function showSuccessMessage(message) {
     // Check if alert handler exists
     if (typeof window.showAlert === 'function') {
@@ -943,32 +1560,15 @@ function createMessageElement(msg) {
     const div = document.createElement('div');
     
     // Determine if this is the current user's message
-    console.log('[AllTasks] Message comparison details:', {
-        'msg.senderRole': msg.senderRole,
-        'typeof msg.senderRole': typeof msg.senderRole,
-        'window.currentUserRole': window.currentUserRole,
-        'typeof window.currentUserRole': typeof window.currentUserRole,
-        'strict comparison (===)': msg.senderRole === window.currentUserRole,
-        'loose comparison (==)': msg.senderRole == window.currentUserRole
-    });
-    
     const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
     
-    console.log('[AllTasks] Creating message:', {
-        senderRole: msg.senderRole,
-        currentUserRole: window.currentUserRole,
-        isOwnMessage: isOwnMessage,
-        alignment: isOwnMessage ? 'RIGHT' : 'LEFT',
-        willAddClass: isOwnMessage ? 'message-right' : 'message-left'
-    });
-    
-    // Role-based styling
+    // Role-based styling (matching Admin)
     let roleClass = 'user-message';
     let roleColor = '#e0f2fe'; // Light blue for users
     
     if (isOwnMessage) {
         roleClass = 'own-message';
-        roleColor = '#ffffff'; // White for own messages
+        roleColor = '#ffffff'; // White for own messages (matches Admin)
     } else if (msg.senderRole === 'admin') {
         roleClass = 'admin-message';
         roleColor = '#fecaca'; // Light red for admin
@@ -1013,12 +1613,12 @@ function createMessageElement(msg) {
                         </svg>
                     </div>
                     <div class="message-attachment-info">
-                        <div class="message-attachment-name">${escapeHtml(file.originalname || file.filename)}</div>
+                        <div class="message-attachment-name">${window.escapeHtml(file.originalname || file.filename)}</div>
                         <div class="message-attachment-size">${ext.toUpperCase()}</div>
                     </div>
                     <div class="message-attachment-actions">
                         ${isImage ? `
-                            <button class="attachment-action-btn" onclick="viewImage('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View Image">
+                            <button class="attachment-action-btn" onclick="viewImage('/uploads/${file.filename}', '${window.escapeHtml(file.originalname || file.filename)}')" title="View Image">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                     <circle cx="12" cy="12" r="3"/>
@@ -1026,14 +1626,14 @@ function createMessageElement(msg) {
                             </button>
                         ` : ''}
                         ${isPdf ? `
-                            <button class="attachment-action-btn pdf-view" onclick="viewPdf('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View PDF">
+                            <button class="attachment-action-btn pdf-view" onclick="viewPdf('/uploads/${file.filename}', '${window.escapeHtml(file.originalname || file.filename)}')" title="View PDF">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                     <circle cx="12" cy="12" r="3"/>
                                 </svg>
                             </button>
                         ` : ''}
-                        <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="attachment-action-btn" title="Download">
+                        <a href="/uploads/${file.filename}" download="${window.escapeHtml(file.originalname || file.filename)}" class="attachment-action-btn" title="Download">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                 <polyline points="7 10 12 15 17 10"/>
@@ -1046,51 +1646,109 @@ function createMessageElement(msg) {
         }).join('');
     }
     
+    // Build read receipts display
+    let readReceiptsHTML = '';
+    if (msg.readBy && msg.readBy.length > 0 && isOwnMessage) {
+        const readers = msg.readBy
+            .filter(r => r.userId && r.userId.fName)
+            .map(r => `${r.userId.fName} ${r.userId.lName}`)
+            .join(', ');
+        if (readers) {
+            readReceiptsHTML = `
+                <div class="message-read-receipt">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Seen by ${readers}</span>
+                </div>
+            `;
+        }
+    }
+    
     div.innerHTML = `
-        <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+        <div class="unit-message-bubble ${roleClass}">
             <div class="message-header">
-                <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
+                <strong>${window.escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
                 <span class="message-time">${time}</span>
             </div>
-            <div class="message-content">${formatText(msg.content || '')}</div>
+            <div class="message-text">${window.formatText(msg.content || '')}</div>
             ${attachmentsHTML}
+            ${readReceiptsHTML}
         </div>
     `;
     
     return div;
 }
 
-function sendTeamMessage() {
+async function sendTeamMessage() {
     const input = document.getElementById('teamMessageInput');
-    if (!input || !currentRequestId) return;
-
-    const content = input.value.trim();
-    if (!content) {
-        showErrorMessage('Please enter a message');
+    const content = input ? input.value.trim() : '';
+    
+    if (!content && chatFiles.length === 0) {
+        showErrorMessage('Please enter a message or select a file');
         return;
     }
-
-    fetch(`/api/conversation/${currentRequestId}/message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            content: content,
-            senderRole: 'unit'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            input.value = '';
-            loadTeamConversation(currentRequestId);
+    
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+    
+    try {
+        console.log('[AllTasks] Sending message with', chatFiles.length, 'files');
+        let response;
+        
+        if (chatFiles.length > 0) {
+            // Send with file attachments using FormData
+            const formData = new FormData();
+            formData.append('content', content || '');
+            
+            // Append all files with 'chatFiles' field name
+            chatFiles.forEach(file => {
+                formData.append('chatFiles', file);
+            });
+            
+            console.log('[AllTasks] FormData prepared with chatFiles field');
+            
+            response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+                method: 'POST',
+                body: formData
+            });
         } else {
-            showErrorMessage(data.message || 'Failed to send message');
+            // Send text only using JSON
+            response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ content })
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error sending message:', error);
-        showErrorMessage('Failed to send message');
-    });
+        
+        if (!response.ok) {
+            let errorMessage = 'Failed to send message';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch (e) {
+                if (response.status === 401) errorMessage = 'Session expired. Please log in again.';
+                else if (response.status === 403) errorMessage = 'Access denied.';
+                else errorMessage = `Server error: ${response.status}`;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const data = await response.json();
+        console.log('[AllTasks] Message sent successfully');
+        if (input) input.value = '';
+        clearAllChatFiles();
+        // Reload conversation to show new message
+        await loadTeamConversation(currentRequestId);
+        console.log('[AllTasks] Conversation reloaded');
+    } catch (error) {
+        console.error('[AllTasks] Error sending message:', error);
+        showErrorMessage('Failed to send message: ' + error.message);
+    }
 }
 
 function clearConversationInput() {
@@ -1565,12 +2223,21 @@ function setupEnhancedFileUpload() {
 // ==========================================
 
 function initializeRevisionFeatures() {
-    // Text formatting buttons
+    // Text formatting buttons for revision
     const formatBtns = document.querySelectorAll('.revision-format-toolbar .format-btn[data-format]');
     formatBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const format = this.getAttribute('data-format');
             applyRevisionFormat(format);
+        });
+    });
+
+    // Text formatting buttons for revoke approval
+    const revokeFormatBtns = document.querySelectorAll('.revision-format-toolbar .format-btn[data-revoke-format]');
+    revokeFormatBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const format = this.getAttribute('data-revoke-format');
+            applyRevokeFormat(format);
         });
     });
 
@@ -1593,13 +2260,20 @@ function initializeRevisionFeatures() {
     }
 }
 
-function applyRevisionFormat(format) {
+// Define globally so it can be accessed from EJS keyboard shortcuts
+window.applyRevisionFormat = function(format) {
     const textarea = document.getElementById('revisionComments');
     if (!textarea) return;
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
+    
+    if (!selectedText) {
+        alert('Please select text to format');
+        return;
+    }
+    
     const beforeText = textarea.value.substring(0, start);
     const afterText = textarea.value.substring(end);
 
@@ -1629,7 +2303,58 @@ function applyRevisionFormat(format) {
     textarea.value = beforeText + formattedText + afterText;
     textarea.focus();
     textarea.setSelectionRange(newCursorPos, newCursorPos);
+};
+
+// Create local alias for consistency
+function applyRevisionFormat(format) {
+    window.applyRevisionFormat(format);
 }
+
+// Apply formatting to revoke reason textarea
+window.applyRevokeFormat = function(format) {
+    const textarea = document.getElementById('revokeReasonText');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    
+    if (!selectedText) {
+        // If no text selected, just focus the textarea
+        textarea.focus();
+        return;
+    }
+    
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    let formattedText = selectedText;
+    let newCursorPos = end;
+
+    switch(format) {
+        case 'bold':
+            formattedText = `**${selectedText}**`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'italic':
+            formattedText = `*${selectedText}*`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'underline':
+            formattedText = `__${selectedText}__`;
+            newCursorPos = start + formattedText.length;
+            break;
+        case 'bullet':
+            const lines = selectedText.split('\n');
+            formattedText = lines.map(line => line.trim() ? `• ${line.trim()}` : line).join('\n');
+            newCursorPos = start + formattedText.length;
+            break;
+    }
+
+    textarea.value = beforeText + formattedText + afterText;
+    textarea.focus();
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+};
 
 function handleRevisionFileSelect(event) {
     const files = Array.from(event.target.files);
@@ -1907,68 +2632,6 @@ function applyChatFormat(format) {
     textarea.focus();
     textarea.setSelectionRange(newCursorPos, newCursorPos);
 }
-
-// Update sendTeamMessage to include files
-function sendTeamMessage() {
-    console.log('[AllTasks] Send team message triggered');
-    const input = document.getElementById('teamMessageInput');
-    if (!input || !currentRequestId) {
-        console.error('[AllTasks] Missing input or request ID:', {
-            input: !!input,
-            currentRequestId
-        });
-        return;
-    }
-
-    const content = input.value.trim();
-    console.log('[AllTasks] Message content:', content || '(empty)');
-    console.log('[AllTasks] Files to send:', chatFiles.length);
-    
-    if (!content && chatFiles.length === 0) {
-        console.warn('[AllTasks] No content or files');
-        showErrorMessage('Please enter a message or attach files');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('content', content);
-    formData.append('senderRole', 'unit');
-    
-    // Add files if any
-    chatFiles.forEach((file, index) => {
-        console.log(`[AllTasks] Appending file ${index + 1}:`, file.name);
-        formData.append('chatFiles', file);
-    });
-
-    console.log('[AllTasks] Sending to:', `/api/conversation/${currentRequestId}/message`);
-    fetch(`/api/conversation/${currentRequestId}/message`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        console.log('[AllTasks] Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('[AllTasks] Response data:', data);
-        if (data.success) {
-            console.log('[AllTasks] Message sent successfully');
-            input.value = '';
-            clearAllChatFiles();
-            loadTeamConversation(currentRequestId);
-        } else {
-            console.error('[AllTasks] Server error:', data);
-            showErrorMessage(data.message || 'Failed to send message');
-        }
-    })
-    .catch(error => {
-        console.error('[AllTasks] Error sending message:', error);
-        console.error('[AllTasks] Error stack:', error.stack);
-        showErrorMessage('Failed to send message');
-    });
-}
-
-// This duplicate function has been removed - the correct createMessageElement function is already defined earlier in the file at line 920
 
 // PDF Viewer Functions
 window.viewPdf = function(pdfUrl, fileName) {

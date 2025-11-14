@@ -945,6 +945,75 @@ class NotificationService {
     }
   }
 
+  // Notify unit and admins when requestor resubmits after revision
+  async notifyRequestorResubmission(approvalId, requestorId, assignedUnits) {
+    try {
+      // Notify unit members
+      const unitsArray = typeof assignedUnits === 'string' 
+        ? assignedUnits.split(',').map(u => u.trim()).filter(u => u && u !== 'Not yet assigned')
+        : Array.isArray(assignedUnits)
+          ? assignedUnits.filter(u => u && u !== 'Not yet assigned')
+          : [assignedUnits].filter(u => u && u !== 'Not yet assigned');
+
+      if (unitsArray.length > 0) {
+        const unitMembers = await User.find({
+          role: 'unit',
+          unitTeam: { $in: unitsArray }
+        });
+
+        const requestor = await User.findById(requestorId);
+        const approval = await require('../models/RequestApproval').findById(approvalId);
+        
+        if (unitMembers.length > 0 && approval) {
+          const unitNotificationData = {
+            title: 'Revision Resubmitted',
+            message: `${requestor.fName} ${requestor.lName} resubmitted their approval request after addressing your revision feedback: "${approval.title}"`,
+            type: 'approval_updated',
+            relatedId: approvalId,
+            relatedModel: 'RequestApproval',
+            sender: requestorId,
+            priority: 'high',
+            actionUrl: `/unit/all-tasks?modal=true&requestId=${approvalId}&type=approval`
+          };
+
+          const unitNotifications = unitMembers.map(member => 
+            this.createNotification({ ...unitNotificationData, recipient: member._id })
+          );
+          
+          await Promise.all(unitNotifications);
+          console.log(`✅ Requestor resubmission notification sent to ${unitMembers.length} unit members`);
+        }
+      }
+
+      // Notify admins
+      const admins = await User.find({ role: 'admin', status: 'approved' });
+      if (admins.length > 0) {
+        const requestor = await User.findById(requestorId);
+        const approval = await require('../models/RequestApproval').findById(approvalId);
+
+        const adminNotificationData = {
+          title: 'Request Resubmitted After Revision',
+          message: `${requestor.fName} ${requestor.lName} resubmitted: "${approval.title}"`,
+          type: 'approval_updated',
+          relatedId: approvalId,
+          relatedModel: 'RequestApproval',
+          sender: requestorId,
+          priority: 'medium',
+          actionUrl: `/admin/approvals?highlight=${approvalId}`
+        };
+
+        const adminNotifications = admins.map(admin => 
+          this.createNotification({ ...adminNotificationData, recipient: admin._id })
+        );
+        
+        await Promise.all(adminNotifications);
+        console.log(`✅ Requestor resubmission notification sent to ${admins.length} admins`);
+      }
+    } catch (error) {
+      console.error('Error notifying requestor resubmission:', error);
+    }
+  }
+
   // Notify admins when unit uploads deliverable
   async notifyAdminUnitDeliverable(serviceId, unitMemberId, serviceData, filesCount) {
     try {

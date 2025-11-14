@@ -16,7 +16,7 @@
    =========================================== -->
   <link rel="stylesheet" href="/stylesheets/ejs/approvals.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Admin/conversation-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Admin/approvals-conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
@@ -513,6 +513,16 @@
 
         <!-- Files Section -->
         <div id="file-preview"></div>
+
+        <!-- Revision History Section -->
+        <div id="revisionHistorySection" class="details-section" style="display: none;">
+          <h3>📋 Revision History</h3>
+          <div class="details-content">
+            <div id="revisionHistoryContainer" class="revision-history-timeline">
+              <!-- Dynamically populated by JavaScript -->
+            </div>
+          </div>
+        </div>
 
         <!-- Additional File Upload Toggle -->
         <div id="additionalFileToggleSection" style="display: none;">

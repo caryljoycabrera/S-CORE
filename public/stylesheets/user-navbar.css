@@ -19,7 +19,7 @@
   width: 64px;
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
   box-shadow: none; /* Remove shadow for seamless blend */
-  z-index: 999; /* Below header (header is 1000) */
+  z-index: 100 !important; /* LOW - Below ALL modals (modals start at 10000+) */
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   display: flex;
@@ -521,6 +521,20 @@
   display: block;
 }
 
+/* Force sidebar below modals when modal is visible AND disable interaction */
+body:has(.modal[style*="display: flex"]) .user-sidebar,
+body:has(.modal[style*="display: flex"]) .sidebar,
+body:has(.modal[style*="display:flex"]) .user-sidebar,
+body:has(.modal[style*="display:flex"]) .sidebar,
+body:has(.modal[style*="display: block"]) .user-sidebar,
+body:has(.modal[style*="display: block"]) .sidebar,
+body:has(.modal[style*="display:block"]) .user-sidebar,
+body:has(.modal[style*="display:block"]) .sidebar {
+  z-index: 1 !important; /* VERY LOW - Below modal backdrop */
+  pointer-events: none !important; /* Disable ALL interactions including hover */
+  /* Remove opacity - modal backdrop will darken it naturally */
+}
+
 /* ==========================================
    RESPONSIVE DESIGN
    ========================================== */
@@ -534,7 +548,7 @@
     left: -250px; /* Hide off-screen to the left */
     top: 80px; /* Start below the header */
     height: calc(100% - 80px); /* Full height minus header */
-    z-index: 9999; /* Extremely high z-index to ensure it's on top of everything except header */
+    z-index: 500 !important; /* VERY LOW - Below ALL modals */
     width: 250px !important; /* Give it a fixed width on mobile - force to always be expanded width */
     padding-top: 0;
     box-shadow: 2px 0 10px rgba(0,0,0,0.3);

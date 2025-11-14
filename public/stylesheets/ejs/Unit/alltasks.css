@@ -1,11 +1,15 @@
 /* ========================================
-     USER PAGE LAYOUT - STANDARDIZED
-     Matches admin page spacing and structure
+     ALLTASKS PAGE LAYOUT - STANDARDIZED
+     Matches other unit pages spacing and structure
+     Note: unit-navbar.css handles sidebar and header positioning
      ======================================== */
   
-  /* Main container - proper padding from header and edges */
+  /* Main container - remove conflicting padding from style.css */
   .student-side {
-    padding: 0 !important;
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
     background: #f8f9fa !important;
     box-sizing: border-box;
   }

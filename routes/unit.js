@@ -10,6 +10,7 @@ const ServiceRequest = require('../models/ServiceRequest');
 const BroadcastMessage = require('../models/BroadcastMessage');
 const { requireUnit } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
+const uploadConfig = require('../config/upload');
 
 /**
  * GET /unit/dashboard
@@ -1046,6 +1047,7 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
 
     // Update task status to Approved
     task.status = 'Approved';
+    task.awaitingResubmission = false; // Clear resubmission flag
     await task.save();
 
     // Send notification to the requestor
@@ -1070,10 +1072,113 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
 });
 
 /**
- * POST /unit/task/revise/:id
- * Request revision for an approval request task
+ * POST /unit/task/revoke-approval/:id
+ * Revoke approval for an already-approved request
  */
-router.post('/unit/task/revise/:id', requireUnit, async (req, res) => {
+router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+    const { reason } = req.body;
+
+    // Find the approval request
+    const task = await RequestApproval.findById(taskId).populate('userId');
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Verify task is currently approved
+    if (task.status !== 'Approved') {
+      return res.status(400).json({ success: false, message: 'Task is not currently approved' });
+    }
+
+    // Change status to "For Revision" instead of Pending
+    const previousStatus = task.status;
+    task.status = 'For Revision';
+    
+    // Add revocation to revision history
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
+    }
+    
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: reason || 'Approval revoked - revision required',
+      revisionFiles: [],
+      status: 'revoked'
+    });
+    
+    await task.save();
+
+    // Note: Revocation details are stored in revisionHistory only, not in conversation
+    // This keeps the chat clean and focuses revision details in the revision history section
+
+    // Send notification to the requestor
+    try {
+      const notificationMessage = reason 
+        ? `Approval revoked by ${user.unitTeam || 'unit'} team. Revision required. Reason: ${reason}`
+        : `Approval revoked by ${user.unitTeam || 'unit'} team. Please review and make necessary revisions.`;
+      
+      await notificationService.createNotification({
+        recipient: task.userId._id,
+        sender: user._id,
+        title: '⚠️ Approval Revoked - Revision Required',
+        message: notificationMessage,
+        type: 'revision_required',
+        relatedId: task._id,
+        relatedModel: 'RequestApproval',
+        priority: 'high',
+        actionUrl: `/request-approvals?modal=true&requestId=${task._id}&type=approval`
+      });
+    } catch (notifError) {
+      console.error('Error sending revocation notification:', notifError);
+    }
+
+    // Notify admins that unit revoked approval
+    try {
+      const admins = await User.find({ role: 'admin', status: 'approved' });
+      const unitName = user.unitTeam || 'Unit';
+      
+      for (const admin of admins) {
+        await notificationService.createNotification({
+          recipient: admin._id,
+          sender: user._id,
+          title: 'Approval Revoked - Revision Required',
+          message: `${unitName} team revoked approval for: "${task.title}". Status changed to For Revision.`,
+          type: 'approval_revoked',
+          relatedId: task._id,
+          relatedModel: 'RequestApproval',
+          priority: 'high',
+          actionUrl: `/admin/approvals?highlight=${task._id}`
+        });
+      }
+    } catch (notifError) {
+      console.error('Error sending admin notification:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Approval revoked successfully. Status changed to For Revision.',
+      newStatus: 'For Revision'
+    });
+  } catch (error) {
+    console.error('Error revoking approval:', error);
+    res.status(500).json({ success: false, message: 'Error revoking approval: ' + error.message });
+  }
+});
+
+/**
+ * POST /unit/task/revise/:id
+ * Request revision for an approval request task (with file upload support)
+ */
+router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('revisionFiles', 10), async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     const taskId = req.params.id;
@@ -1095,30 +1200,29 @@ router.post('/unit/task/revise/:id', requireUnit, async (req, res) => {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
-    // Update task status to For Revision
-    task.status = 'For Revision';
-    await task.save();
+    // Get uploaded file names
+    const revisionFiles = req.files ? req.files.map(file => file.filename) : [];
 
-    // Add revision notes to conversation
-    const Conversation = require('../models/Conversation');
-    let conversation = await Conversation.findOne({ approvalRequestId: taskId });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        approvalRequestId: taskId,
-        requestType: 'approval',
-        messages: []
-      });
+    // Add revision to history
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
     }
 
-    conversation.messages.push({
-      senderId: user._id,
-      senderRole: 'unit',
-      content: revisionNotes,
-      timestamp: new Date()
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: revisionNotes,
+      revisionFiles: revisionFiles,
+      status: 'pending'
     });
 
-    await conversation.save();
+    // Update task status to For Revision and set awaiting resubmission flag
+    task.status = 'For Revision';
+    task.awaitingResubmission = true;
+    await task.save();
+
+    // Note: Revision notes are stored in revisionHistory only, not in conversation
+    // This keeps the chat clean and focuses revision details in the revision history section
 
     // Send notification to the requestor
     try {
@@ -1134,7 +1238,11 @@ router.post('/unit/task/revise/:id', requireUnit, async (req, res) => {
       console.error('Error sending admin notification:', notifError);
     }
 
-    res.json({ success: true, message: 'Revision request sent successfully' });
+    res.json({ 
+      success: true, 
+      message: 'Revision request sent successfully. A thread has been created for the requestor to respond.',
+      filesUploaded: revisionFiles.length
+    });
   } catch (error) {
     console.error('Error requesting revision:', error);
     res.status(500).json({ success: false, message: 'Error requesting revision: ' + error.message });
@@ -1145,7 +1253,6 @@ router.post('/unit/task/revise/:id', requireUnit, async (req, res) => {
  * POST /unit/task/upload/:id
  * Upload deliverable files for a service request
  */
-const uploadConfig = require('../config/upload');
 router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('deliverables', 20), async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);

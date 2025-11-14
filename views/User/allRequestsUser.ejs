@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>All Requests</title>
-  <link rel="stylesheet" href="/style.css" />
-  <link rel="stylesheet" href="/stylesheets/notifications.css" />
-  <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
-  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css" />
+  <link rel="stylesheet" href="/style.css?v=20251114101500" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css?v=20251114101500" />
+  <link rel="stylesheet" href="/stylesheets/user-navbar.css?v=20251114101500" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css?v=20251114101500" />
+  <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css?v=20251114101500" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -1302,8 +1302,8 @@
     </div>
   </div>
 
-<div id="detailsModal" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width: 1000px;">
+<div id="detailsModal" class="modal" style="display:none; z-index: 50000 !important;">
+  <div class="modal-content" style="max-width: 1000px; z-index: 50001 !important;">
     <header class="modal-header">
       <span class="modal-title">Request Details</span>
       <span class="close" id="closeDetailsModal">&times;</span>
@@ -1379,6 +1379,16 @@
         <!-- Files Section -->
         <div id="file-preview"></div>
 
+        <!-- Revision History Section -->
+        <div id="revisionHistorySection" class="details-section" style="display: none;">
+          <h3>📋 Revision History</h3>
+          <div class="details-content">
+            <div id="revisionHistoryContainer" class="revision-history-timeline">
+              <!-- Dynamically populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
         <!-- Chat Section -->
         <div class="chat-section" id="chatButtonSection" style="display: none;">
           <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
@@ -1406,8 +1416,8 @@
 </div>
 
   <!-- Team Conversation Modal -->
-  <div id="teamConversationModal" class="modal" style="display: none;">
-    <div class="modal-content unit-conversation-modal">
+  <div id="teamConversationModal" class="modal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important;">
+    <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;">
       <div class="modal-header unit-modal-header">
         <div class="modal-title-section">
           <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1442,20 +1452,20 @@
         <div class="unit-message-input-area">
           <!-- Formatting Toolbar -->
           <div class="unit-format-toolbar">
-            <button type="button" class="format-btn" data-chat-format="bold" title="Bold">
+            <button type="button" class="format-btn" data-chat-format="bold" title="Bold" onclick="console.log('[✅ Click] Bold button clicked'); applyFormatting('bold'); return false;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
                 <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
               </svg>
             </button>
-            <button type="button" class="format-btn" data-chat-format="italic" title="Italic">
+            <button type="button" class="format-btn" data-chat-format="italic" title="Italic" onclick="console.log('[✅ Click] Italic button clicked'); applyFormatting('italic'); return false;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="19" y1="4" x2="10" y2="4"/>
                 <line x1="14" y1="20" x2="5" y2="20"/>
                 <line x1="15" y1="4" x2="9" y2="20"/>
               </svg>
             </button>
-            <button type="button" class="format-btn" data-chat-format="underline" title="Underline">
+            <button type="button" class="format-btn" data-chat-format="underline" title="Underline" onclick="console.log('[✅ Click] Underline button clicked'); applyFormatting('underline'); return false;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
                 <line x1="4" y1="21" x2="20" y2="21"/>
@@ -1562,6 +1572,19 @@
   "userType": "<%= user.userType %>",
   "organizations": <%- JSON.stringify(user.userType === 'student' ? (user.studentOrganization || []) : (user.affiliation || [])) %>
 }
+</script>
+
+<!-- Store logged-in user info globally for message alignment -->
+<script>
+  // ⚠️ VERSION: 2025-11-14 10:15:00 - CSS COLOR FIX + REMOVED INLINE STYLES
+  console.log('🔄 [PAGE LOAD] ✅ VERSION 10:15:00 - CSS Colors Fixed with !important');
+  console.log('🔧 [FIXES] Admin=RED, Unit=GREEN, Own=LIGHT-GREEN, Sidebar z-index=500');
+  console.log('🔧 [REMOVED] Inline style forcing - CSS classes only now');
+  
+  // Set current user data IMMEDIATELY when page loads
+  window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
+  window.currentUserRole = '<%= user.role || "user" %>';
+  console.log('✅ [User Data] Logged-in user:', window.currentUserFullName, '| Role:', window.currentUserRole);
 </script>
 
 <script>
@@ -1818,16 +1841,11 @@ const closeDetailsModal = document.getElementById("closeDetailsModal");
 const clearFiltersBtn = document.getElementById("clearFilters");
 const tableBody = document.getElementById("requestsTableBody");
 const allRows = Array.from(document.querySelectorAll('.request-row'));
-const conversationModal = document.getElementById("conversationModal");
-const closeConversationModal = document.getElementById("closeConversationModal");
-const messagesContainer = document.getElementById("messagesContainer");
-const messageInput = document.getElementById("messageInput");
-const sendMessageBtn = document.getElementById("sendMessageBtn");
 const openChatFromDetailsModal = document.getElementById("openChatFromDetailsModal");
-let currentConversationId = null;
 
 // Filter variables
 let organizationFilter;
+let currentConversationId = null;
 
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -1852,16 +1870,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Modal close handlers
 closeDetailsModal.onclick = () => detailModal.style.display = 'none';
-closeConversationModal.onclick = () => conversationModal.style.display = 'none';
 
 openChatFromDetailsModal.onclick = function() {
-  detailModal.style.display = 'none';
-  openChat(currentConversationId);
+  // Use the currentConversationId that was set when the modal was opened
+  if (currentConversationId) {
+    detailModal.style.display = 'none';
+    window.openTeamConversationModal(currentConversationId);
+  }
 };
 
 window.onclick = function(event) {
   if (event.target === detailModal) detailModal.style.display = 'none';
-  if (event.target === conversationModal) conversationModal.style.display = 'none';
 }
 
 function filterRequests() {
@@ -2055,9 +2074,14 @@ document.querySelectorAll('.request-row').forEach(row => {
     currentConversationId = row.dataset.id;
     const chatButtonSection = document.getElementById("chatButtonSection");
     if (chatButtonSection) {
-      const requestType = row.dataset.type;
-      if (requestType === "Service Request" || requestType === "Request Approval") {
+      const reqType = row.dataset.type;
+      if (reqType === "Service Request" || reqType === "Request Approval") {
         chatButtonSection.style.display = 'block';
+        
+        // Load revision history (for Request Approval only)
+        if (reqType === "Request Approval") {
+          loadRevisionHistory(currentConversationId);
+        }
       } else {
         chatButtonSection.style.display = 'none';
       }
@@ -2367,201 +2391,6 @@ function getSelectedStatuses() {
   return checkedBoxes.map(cb => cb.value.toLowerCase());
 }
 
-// Chat functions
-function openChat(requestId) {
-  currentConversationId = requestId;
-  loadConversation(requestId);
-  conversationModal.style.display = 'flex';
-}
-
-async function loadConversation(requestId) {
-  try {
-    const response = await fetch(`/api/conversation/${requestId}`);
-    const conversation = await response.json();
-    
-    messagesContainer.innerHTML = '';
-    
-    if (conversation.messages && conversation.messages.length > 0) {
-      conversation.messages.forEach(message => {
-        addMessageToUI(message);
-      });
-      
-      await fetch(`/api/conversation/${requestId}/mark-read`, {
-        method: 'POST'
-      });
-    } else {
-      messagesContainer.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
-          <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">💭</div>
-            <p>No messages yet</p>
-            <small>Start the conversation by sending a message below</small>
-          </div>
-        </div>
-      `;
-    }
-    
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  } catch (error) {
-    console.error('Error loading conversation:', error);
-    messagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
-  }
-}
-
-function addMessageToUI(message) {
-  // Clear empty state message if it exists
-  const emptyStateMessage = messagesContainer.querySelector('p');
-  if (emptyStateMessage && (emptyStateMessage.textContent.includes('No messages yet') || emptyStateMessage.textContent.includes('No messages yet. Start the conversation!'))) {
-    messagesContainer.innerHTML = '';
-  }
-  
-  const messageDiv = document.createElement('div');
-  const isUser = message.senderRole === 'user';
-  const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
-  
-  // Create user avatar (profile picture or default icon)
-  const userAvatar = `
-    <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? 'var(--primary-green)' : '#d1d5db'};">
-      ${message.senderId && message.senderId.profilePicture ? 
-        `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-         <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
-           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-           <circle cx="12" cy="7" r="4"/>
-         </svg>` :
-        `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-           <circle cx="12" cy="7" r="4"/>
-         </svg>`
-      }
-    </div>
-  `;
-  
-  messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
-  messageDiv.innerHTML = `
-    <div class="message-content">
-      <div style="display: flex; align-items: flex-start;">
-        ${userAvatar}
-        <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
-          <div class="message-header">
-            <strong>${senderName}</strong>
-            <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
-          </div>
-          <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;"></div>
-          <div class="message-attachment" style="margin-top: 0.5rem;"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // Set the message content as HTML to support formatting
-  const messageTextDiv = messageDiv.querySelector('.message-text');
-  if (messageTextDiv && message.content) {
-    // Convert markdown-style formatting to HTML
-    let formattedContent = message.content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
-      .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');           // <u>underline</u> stays the same
-    
-    messageTextDiv.innerHTML = formattedContent;
-  }
-  
-  // Handle attachments
-  const attachmentDiv = messageDiv.querySelector('.message-attachment');
-  if (attachmentDiv && message.file_path) {
-    const isImage = message.file_type && message.file_type.startsWith('image/');
-    
-    if (isImage) {
-      attachmentDiv.innerHTML = `
-        <div style="margin-top: 0.5rem;">
-          <img src="${message.file_path}" 
-               style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
-               onclick="openImageModal('${message.file_path}')"
-               alt="${message.original_filename || 'Attached image'}">
-        </div>
-      `;
-    } else {
-      const fileName = message.original_filename || 'File';
-      attachmentDiv.innerHTML = `
-        <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 1.2rem;">📎</span>
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
-              <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
-            </div>
-            <a href="${message.file_path}" download="${fileName}" 
-               style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
-              Download
-            </a>
-          </div>
-        </div>
-      `;
-    }
-  }
-  
-  messagesContainer.appendChild(messageDiv);
-}
-
-sendMessageBtn.onclick = async function() {
-  const content = messageInput.value.trim();
-  if (!content && !currentAttachment) return;
-  if (!currentConversationId) return;
-
-  try {
-    let response;
-    
-    if (currentAttachment) {
-      // Send with file attachment using FormData
-      const formData = new FormData();
-      formData.append('content', content || ''); // Always include content field
-      formData.append('file', currentAttachment.file);
-      
-      response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-        method: 'POST',
-        body: formData
-      });
-    } else {
-      // Send text only using JSON
-      response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content })
-      });
-    }
-
-    const result = await response.json();
-    
-    if (result.success) {
-      addMessageToUI(result.message);
-      messageInput.value = '';
-      
-      // Clear attachment
-      if (currentAttachment) {
-        currentAttachment = null;
-        if (attachmentPreview) attachmentPreview.style.display = 'none';
-        if (imageUpload) imageUpload.value = '';
-        if (fileUpload) fileUpload.value = '';
-        if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
-      }
-      
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    } else {
-      throw new Error(result.error || 'Failed to send message');
-    }
-  } catch (error) {
-    console.error('Error sending message:', error);
-    alert('Failed to send message: ' + error.message);
-  }
-};
-
-messageInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') {
-    sendMessageBtn.click();
-  }
-});
-
 // Enhanced file preview function
 function createEnhancedFilePreview(allFiles, previewContainer) {
   if (!previewContainer) return;
@@ -2856,171 +2685,104 @@ window.openImagePreview = function(imageUrl, fileName) {
   document.body.style.overflow = 'hidden';
 };
 
-// Formatting toolbar functionality
+// Simple global formatting function - works immediately
+window.applyFormatting = function(format) {
+  console.log('[Formatting] ✅ applyFormatting called with format:', format);
+  
+  const input = document.getElementById('teamMessageInput');
+  if (!input) {
+    console.error('[Formatting] ❌ teamMessageInput not found!');
+    console.log('[Formatting] Available inputs:', {
+      byId: document.getElementById('teamMessageInput'),
+      byQuery: document.querySelector('#teamMessageInput'),
+      allTextareas: document.querySelectorAll('textarea').length
+    });
+    return;
+  }
+  
+  console.log('[Formatting] ✅ Input found, applying format');
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const selectedText = input.value.substring(start, end);
+  console.log('[Formatting] Selection:', { start, end, selectedText });
+  
+  // Prevent default if this was triggered by a keyboard shortcut
+  if (window.event) {
+    window.event.preventDefault();
+  }
+  
+  let startTag = '';
+  let endTag = '';
+  
+  switch(format) {
+    case 'bold':
+      startTag = '**';
+      endTag = '**';
+      break;
+    case 'italic':
+      startTag = '*';
+      endTag = '*';
+      break;
+    case 'underline':
+      startTag = '<u>';
+      endTag = '</u>';
+      break;
+  }
+  
+  if (selectedText) {
+    const formattedText = `${startTag}${selectedText}${endTag}`;
+    const beforeText = input.value.substring(0, start);
+    const afterText = input.value.substring(end);
+    
+    input.value = beforeText + formattedText + afterText;
+    
+    // Set cursor position after formatted text
+    const newPosition = start + formattedText.length;
+    input.setSelectionRange(newPosition, newPosition);
+  } else {
+    // If no text selected, insert tags where cursor is
+    const cursorPos = input.selectionStart;
+    const beforeText = input.value.substring(0, cursorPos);
+    const afterText = input.value.substring(cursorPos);
+    
+    input.value = beforeText + startTag + endTag + afterText;
+    
+    // Position cursor between tags
+    const newPosition = cursorPos + startTag.length;
+    input.setSelectionRange(newPosition, newPosition);
+  }
+  
+  input.focus();
+  console.log('[Formatting] ✓ Applied:', format);
+};
+
+// Add keyboard shortcut support
 document.addEventListener('DOMContentLoaded', function() {
-  const messageInput = document.getElementById('messageInput');
-  const boldBtn = document.getElementById('boldBtn');
-  const italicBtn = document.getElementById('italicBtn');
-  const underlineBtn = document.getElementById('underlineBtn');
-  
-  // Style format buttons on hover
-  const formatBtns = document.querySelectorAll('.format-btn');
-  formatBtns.forEach(btn => {
-    btn.addEventListener('mouseenter', function() {
-      this.style.background = '#f3f4f6';
-      this.style.borderColor = 'var(--primary-green)';
-    });
+  document.addEventListener('keydown', function(e) {
+    // Check if user is typing in the message input
+    const input = document.getElementById('teamMessageInput');
+    if (!input || document.activeElement !== input) return;
     
-    btn.addEventListener('mouseleave', function() {
-      this.style.background = 'white';
-      this.style.borderColor = '#d1d5db';
-    });
+    // Ctrl+B for bold
+    if (e.ctrlKey && e.key === 'b') {
+      e.preventDefault();
+      console.log('[Keyboard] Ctrl+B pressed');
+      applyFormatting('bold');
+    }
+    // Ctrl+I for italic
+    else if (e.ctrlKey && e.key === 'i') {
+      e.preventDefault();
+      console.log('[Keyboard] Ctrl+I pressed');
+      applyFormatting('italic');
+    }
+    // Ctrl+U for underline
+    else if (e.ctrlKey && e.key === 'u') {
+      e.preventDefault();
+      console.log('[Keyboard] Ctrl+U pressed');
+      applyFormatting('underline');
+    }
   });
-  
-  // Format text function
-  function formatText(startTag, endTag) {
-    if (!messageInput) return;
-    
-    const start = messageInput.selectionStart;
-    const end = messageInput.selectionEnd;
-    const selectedText = messageInput.value.substring(start, end);
-    
-    if (selectedText) {
-      const formattedText = `${startTag}${selectedText}${endTag}`;
-      const beforeText = messageInput.value.substring(0, start);
-      const afterText = messageInput.value.substring(end);
-      
-      messageInput.value = beforeText + formattedText + afterText;
-      
-      // Set cursor position after formatted text
-      const newPosition = start + formattedText.length;
-      messageInput.setSelectionRange(newPosition, newPosition);
-    } else {
-      // If no text selected, insert tags where cursor is
-      const cursorPos = messageInput.selectionStart;
-      const beforeText = messageInput.value.substring(0, cursorPos);
-      const afterText = messageInput.value.substring(cursorPos);
-      
-      messageInput.value = beforeText + startTag + endTag + afterText;
-      
-      // Position cursor between tags
-      const newPosition = cursorPos + startTag.length;
-      messageInput.setSelectionRange(newPosition, newPosition);
-    }
-    
-    messageInput.focus();
-  }
-  
-  // Format button event listeners
-  if (boldBtn) {
-    boldBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      formatText('**', '**');
-    });
-  }
-  
-  if (italicBtn) {
-    italicBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      formatText('*', '*');
-    });
-  }
-  
-  if (underlineBtn) {
-    underlineBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      formatText('<u>', '</u>');
-    });
-  }
-  
-  // Upload functionality
-  const imageBtn = document.getElementById('imageBtn');
-  const fileBtn = document.getElementById('fileBtn');
-  const imageUpload = document.getElementById('imageUpload');
-  const fileUpload = document.getElementById('fileUpload');
-  const attachmentPreview = document.getElementById('attachmentPreview');
-  const attachmentInfo = document.getElementById('attachmentInfo');
-  const attachmentIcon = document.getElementById('attachmentIcon');
-  const attachmentName = document.getElementById('attachmentName');
-  const removeAttachment = document.getElementById('removeAttachment');
-  const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-  const imagePreview = document.getElementById('imagePreview');
-  
-  let currentAttachment = null;
-  
-  // Image upload button click
-  if (imageBtn && imageUpload) {
-    imageBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      imageUpload.click();
-    });
-  }
-  
-  // File upload button click
-  if (fileBtn && fileUpload) {
-    fileBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      fileUpload.click();
-    });
-  }
-  
-  // Handle image upload
-  if (imageUpload) {
-    imageUpload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        currentAttachment = { type: 'image', file: file };
-        showAttachmentPreview(file, 'image');
-      }
-    });
-  }
-  
-  // Handle file upload
-  if (fileUpload) {
-    fileUpload.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        currentAttachment = { type: 'file', file: file };
-        showAttachmentPreview(file, 'file');
-      }
-    });
-  }
-  
-  // Show attachment preview
-  function showAttachmentPreview(file, type) {
-    if (attachmentPreview && attachmentIcon && attachmentName) {
-      attachmentPreview.style.display = 'block';
-      attachmentIcon.textContent = type === 'image' ? '📷' : '📎';
-      attachmentName.textContent = file.name;
-      
-      if (type === 'image' && imagePreviewContainer && imagePreview) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          imagePreview.src = e.target.result;
-          imagePreviewContainer.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      } else if (imagePreviewContainer) {
-        imagePreviewContainer.style.display = 'none';
-      }
-    }
-  }
-  
-  // Remove attachment
-  if (removeAttachment) {
-    removeAttachment.addEventListener('click', function(e) {
-      e.preventDefault();
-      currentAttachment = null;
-      if (attachmentPreview) {
-        attachmentPreview.style.display = 'none';
-      }
-      if (imageUpload) imageUpload.value = '';
-      if (fileUpload) fileUpload.value = '';
-      if (imagePreviewContainer) {
-        imagePreviewContainer.style.display = 'none';
-      }
-    });
-  }
+  console.log('[Keyboard] Shortcuts registered: Ctrl+B, Ctrl+I, Ctrl+U');
 });
 
 // Image modal function for message previews
@@ -3255,6 +3017,7 @@ let currentConversationRequestId = null;
 
 // Open team conversation modal
 window.openTeamConversationModal = function(requestId) {
+  console.log('🔓 [Modal] Opening conversation modal - sidebar should drop to z-index: 50');
     currentConversationRequestId = requestId;
     const modal = document.getElementById('teamConversationModal');
     if (modal) {
@@ -3268,6 +3031,7 @@ window.openConversationModal = window.openTeamConversationModal;
 
 // Close team conversation modal
 window.closeTeamConversationModal = function() {
+  console.log('🔒 [Modal] Closing conversation modal - sidebar should return to z-index: 100');
     const modal = document.getElementById('teamConversationModal');
     if (modal) {
         modal.style.display = 'none';
@@ -3275,17 +3039,59 @@ window.closeTeamConversationModal = function() {
     currentConversationRequestId = null;
 };
 
-// Load conversation messages
-function loadTeamConversation(requestId) {
+// Add MutationObserver to monitor for unwanted style changes
+function setupMessageAlignmentProtection() {
     const container = document.getElementById('teamMessagesContainer');
     if (!container) return;
+    
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.classList && node.classList.contains('unit-message-item')) {
+                        // Remove any inline styles that might override CSS
+                        if (node.getAttribute('style')) {
+                            console.warn('⚠️ [Protection] Removing inline style from message:', node.className);
+                            node.removeAttribute('style');
+                        }
+                    }
+                });
+            }
+        });
+    });
+    
+    observer.observe(container, {
+        childList: true,
+        subtree: false,
+        attributes: false
+    });
+    
+    console.log('✅ [Protection] Message alignment observer active');
+}
+
+// Load conversation messages
+function loadTeamConversation(requestId) {
+    setupMessageAlignmentProtection();
+    const container = document.getElementById('teamMessagesContainer');
+    if (!container) return;
+
+    console.log('[LoadConversation] 🚀 Starting to load conversation for request:', requestId);
+    console.log('[LoadConversation] 📋 Current user role from window:', window.currentUserRole);
 
     fetch(`/api/conversation/${requestId}`)
         .then(response => response.json())
         .then(data => {
+            console.log('[LoadConversation] 📦 RAW API RESPONSE:', data);
+            console.log('[LoadConversation] 📨 Message count:', data.conversation?.length || 0);
+            
             if (data.conversation && data.conversation.length > 0) {
+                console.log('[LoadConversation] 🔍 First message sample:', JSON.stringify(data.conversation[0], null, 2));
                 container.innerHTML = '';
-                data.conversation.forEach(msg => {
+                data.conversation.forEach((msg, index) => {
+                    console.log(`[LoadConversation] ✉️ Message ${index + 1}:`);
+                    console.log(`   Name: "${msg.senderName}"`);
+                    console.log(`   Role: "${msg.senderRole}"`);
+                    console.log(`   Content: ${msg.content?.substring(0, 30)}`);
                     const messageDiv = createMessageElement(msg);
                     container.appendChild(messageDiv);
                 });
@@ -3314,26 +3120,52 @@ function loadTeamConversation(requestId) {
 function createMessageElement(msg) {
     const div = document.createElement('div');
     
-    // Determine if this is the current user's message
-    const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
+    // Get message sender info
+    const messageSenderName = msg.senderName ? String(msg.senderName).trim() : '';
+    const messageSenderRole = msg.senderRole ? String(msg.senderRole).toLowerCase().trim() : '';
     
-    // Role-based styling
+    // Compare sender name with logged-in user's name
+    // Use the globally set currentUserFullName
+    const loggedInUserName = window.currentUserFullName || '';
+    const isOwnMessage = messageSenderName === loggedInUserName;
+    
+    console.log('[CreateMessage] 🔍 ALIGNMENT DECISION:');
+    console.log('  ✅ Logged-in user:', loggedInUserName);
+    console.log('  📨 Message sender:', messageSenderName);
+    console.log('  🎭 Sender role:', messageSenderRole);
+    console.log('  ❓ Exact match?:', messageSenderName === loggedInUserName);
+    console.log('  ✅ Is own message?:', isOwnMessage);
+    console.log('  ➡️ WILL ALIGN:', isOwnMessage ? '→→→ RIGHT' : '←←← LEFT');
+    console.log('  📦 Full message:', JSON.stringify(msg, null, 2));
+    
+    // Role-based styling - NO inline styles, CSS classes only
     let roleClass = 'user-message';
-    let roleColor = '#e0f2fe'; // Light blue for users
     
     if (isOwnMessage) {
+        // This is the logged-in user's OWN message - RIGHT side
         roleClass = 'own-message';
-        roleColor = '#ffffff'; // White for own messages
-    } else if (msg.senderRole === 'admin') {
+    } else if (messageSenderRole === 'admin') {
+        // Admin messages - LEFT side
         roleClass = 'admin-message';
-        roleColor = '#fecaca'; // Light red for admin
-    } else if (msg.senderRole === 'unit') {
+    } else if (messageSenderRole === 'unit') {
+        // Unit messages - LEFT side
         roleClass = 'unit-message';
-        roleColor = '#bbf7d0'; // Light green for unit
+    } else {
+        // Other users - LEFT side
+        roleClass = 'user-message';
     }
     
-    // Add alignment class
-    div.className = `unit-message-item ${isOwnMessage ? 'message-right' : 'message-left'}`;
+    // Apply alignment class - OWN messages go RIGHT, ALL others go LEFT
+    const alignmentClass = isOwnMessage ? 'message-right' : 'message-left';
+    div.className = `unit-message-item ${alignmentClass}`;
+    
+    // FORCE remove any inline styles that might override CSS
+    div.removeAttribute('style');
+    
+    // Log final class for debugging
+    console.log('  🎨 CSS Classes:', div.className);
+    console.log('  🎨 Role Class:', roleClass);
+    console.log('  🎨 Inline Style:', div.getAttribute('style') || 'NONE (correct!)');
     
     const time = new Date(msg.timestamp).toLocaleString('en-US', {
         month: 'short',
@@ -3398,14 +3230,41 @@ function createMessageElement(msg) {
         }).join('');
     }
     
+    // Format message content (convert markdown-style formatting to HTML)
+    let formattedContent = escapeHtml(msg.content || '');
+    formattedContent = formattedContent
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
+        .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>'); // escaped <u>underline</u> -> <u>underline</u>
+    
+    // Build read receipts display
+    let readReceiptsHTML = '';
+    if (msg.readBy && msg.readBy.length > 0 && isOwnMessage) {
+        const readers = msg.readBy
+            .filter(r => r.userId && r.userId.fName) // Only valid readers with names
+            .map(r => `${r.userId.fName} ${r.userId.lName}`)
+            .join(', ');
+        if (readers) {
+            readReceiptsHTML = `
+                <div class="message-read-receipt">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Seen by ${readers}</span>
+                </div>
+            `;
+        }
+    }
+    
     div.innerHTML = `
-        <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+        <div class="unit-message-bubble ${roleClass}">
             <div class="message-header">
                 <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
                 <span class="message-time">${time}</span>
             </div>
-            <div class="message-content">${escapeHtml(msg.content || '')}</div>
+            <div class="message-content">${formattedContent}</div>
             ${attachmentsHTML}
+            ${readReceiptsHTML}
         </div>
     `;
     
@@ -3618,6 +3477,110 @@ function displayChatFiles(files, container) {
         `;
         container.appendChild(fileItem);
     });
+}
+
+// ========== REVISION HISTORY FUNCTIONS ==========
+async function loadRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    if (!historyContainer) return;
+    
+    try {
+        const response = await fetch(`/api/revision-history/${requestId}`);
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '';
+            
+            result.revisions.forEach((revision, index) => {
+                const entry = createRevisionEntry(revision, index, result.revisions.length);
+                historyContainer.appendChild(entry);
+            });
+        } else {
+            if (historySection) historySection.style.display = 'none';
+        }
+    } catch (error) {
+        if (historySection) historySection.style.display = 'none';
+    }
+}
+
+function createRevisionEntry(revision, index, total) {
+    const entry = document.createElement('div');
+    entry.className = `revision-entry ${revision.type}`;
+    
+    let iconSvg = '';
+    let typeLabel = '';
+    
+    if (revision.type === 'initial') {
+        typeLabel = 'Initial Submission';
+        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+    } else if (revision.type === 'revoked') {
+        typeLabel = 'Approval Revoked';
+        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+    } else if (revision.type === 'resubmitted') {
+        typeLabel = 'Resubmission';
+        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>`;
+    }
+    
+    const timestamp = new Date(revision.timestamp).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    
+    entry.innerHTML = `
+        <div class="revision-icon">${iconSvg}</div>
+        <div class="revision-header">
+            <div>
+                <h4 class="revision-title">${typeLabel}</h4>
+                <div class="revision-meta">
+                    <span class="revision-timestamp"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${timestamp}</span>
+                    ${revision.by ? `<span class="revision-by"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(revision.by)}</span>` : ''}
+                </div>
+            </div>
+        </div>
+        ${revision.description ? `<div class="revision-description">${escapeHtml(revision.description)}</div>` : ''}
+        ${revision.files && revision.files.length > 0 ? `
+            <div class="revision-files">
+                <div class="revision-files-header"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${revision.files.length} file(s) attached</div>
+                <div class="revision-files-grid">${revision.files.map(file => createRevisionFileCard(file)).join('')}</div>
+            </div>
+        ` : ''}
+    `;
+    
+    return entry;
+}
+
+function createRevisionFileCard(file) {
+    const ext = file.filename.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+    const isPDF = ext === 'pdf';
+    
+    let iconColor = '#64748b';
+    if (isImage) iconColor = '#059669';
+    else if (isPDF) iconColor = '#dc2626';
+    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+    
+    return `
+        <div class="revision-file-card">
+            <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+            <div class="revision-file-info">
+                <div class="revision-file-name" title="${escapeHtml(file.originalname || file.filename)}">${escapeHtml(file.originalname || file.filename)}</div>
+                <div class="revision-file-size">${ext.toUpperCase()}</div>
+            </div>
+            <div class="revision-file-actions">
+                <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="revision-file-btn" title="Download"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+            </div>
+        </div>
+    `;
 }
 
 </script>

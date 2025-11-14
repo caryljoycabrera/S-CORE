@@ -17,13 +17,27 @@
   width: 64px;
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
   box-shadow: none; /* Remove shadow for seamless blend */
-  z-index: 999; /* Below header (header is 1000) */
+  z-index: 100 !important; /* Below modals */
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   border-top: none; /* Remove border to blend with header */
   padding-top: 0; /* No padding at top for profile section */
+}
+
+/* Force sidebar below modals when modal is open AND disable interaction */
+body:has(.modal[style*="display: flex"]) .admin-sidebar,
+body:has(.modal[style*="display: flex"]) #adminSidebar,
+body:has(.modal[style*="display:flex"]) .admin-sidebar,
+body:has(.modal[style*="display:flex"]) #adminSidebar,
+body:has(.modal[style*="display: block"]) .admin-sidebar,
+body:has(.modal[style*="display: block"]) #adminSidebar,
+body:has(.modal[style*="display:block"]) .admin-sidebar,
+body:has(.modal[style*="display:block"]) #adminSidebar {
+  z-index: 50 !important;
+  pointer-events: none !important;
+  /* Remove opacity - modal backdrop will darken it naturally */
 }
 
 /* ==========================================

@@ -2000,6 +2000,16 @@ option:hover {
           <!-- Files Section -->
           <div id="file-preview"></div>
 
+          <!-- Revision History Section -->
+          <div id="revisionHistorySection" class="details-section" style="display: none;">
+            <h3>📋 Revision History</h3>
+            <div class="details-content">
+              <div id="revisionHistoryContainer" class="revision-history-timeline">
+                <!-- Dynamically populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+
           <!-- Additional Files Upload Section (For Revision requests only) -->
           <div id="additional-files-section" style="display: none;">
             <div class="details-section">
@@ -2617,6 +2627,73 @@ document.addEventListener('DOMContentLoaded', function() {
   // Filter variables
   let organizationFilter;
 
+  // Set current user name for message alignment
+  window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
+  window.currentUserRole = 'user';
+
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Helper function to format text with markdown-style syntax
+  function formatText(text) {
+    if (!text) return '';
+    
+    // Escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+  }
+
+  // Function to apply text formatting to message input
+  function applyUserFormatting(format) {
+    const textarea = document.getElementById('messageInput');
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    let formattedText = selectedText;
+    let newCursorPos = end;
+
+    switch(format) {
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        newCursorPos = start + formattedText.length;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        newCursorPos = start + formattedText.length;
+        break;
+      case 'underline':
+        formattedText = `__${selectedText}__`;
+        newCursorPos = start + formattedText.length;
+        break;
+    }
+
+    textarea.value = beforeText + formattedText + afterText;
+    textarea.focus();
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+  }
+
   // Initialize when DOM loads
   document.addEventListener('DOMContentLoaded', function() {
     // Initialize organization filter based on user's organizations
@@ -2815,97 +2892,114 @@ async function submitFormData() {
     }
     
     const messageDiv = document.createElement('div');
-    const isUser = message.senderRole === 'user';
     const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
     
-    // Create user avatar (profile picture or default icon)
-    const userAvatar = `
-      <div style="width: 40px; height: 40px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 0.75rem; overflow: hidden; border: 2px solid ${isUser ? 'var(--primary-green)' : '#d1d5db'};">
-        ${message.senderId && message.senderId.profilePicture ? 
-          `<img src="/uploads/${message.senderId.profilePicture}" alt="${senderName}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-           <svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
-             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-             <circle cx="12" cy="7" r="4"/>
-           </svg>` :
-          `<svg width="20" height="20" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
-             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-             <circle cx="12" cy="7" r="4"/>
-           </svg>`
-        }
-      </div>
-    `;
+    // Determine if this is the current user's message (name-based comparison)
+    const isOwnMessage = window.currentUserFullName && senderName === window.currentUserFullName;
     
-    messageDiv.className = `message ${isUser ? 'user-message' : 'admin-message'}`;
-    messageDiv.style.marginBottom = '1.5rem';
-    messageDiv.style.maxWidth = '80%';
-    // User messages align to the left, admin messages align to the right
-    if (isUser) {
-      messageDiv.style.marginRight = 'auto';
-    } else {
-      messageDiv.style.marginLeft = 'auto';
+    // Role-based styling
+    let roleClass = 'user-message';
+    let roleColor = '#e0f2fe'; // Light blue for users
+    
+    if (isOwnMessage) {
+      roleClass = 'own-message';
+      roleColor = '#ffffff'; // White for own messages
+    } else if (message.senderRole === 'admin') {
+      roleClass = 'admin-message';
+      roleColor = '#fecaca'; // Light red for admin
+    } else if (message.senderRole === 'unit') {
+      roleClass = 'unit-message';
+      roleColor = '#bbf7d0'; // Light green for unit
+    } else if (message.senderRole === 'user') {
+      roleClass = 'user-message';
+      roleColor = '#e0f2fe'; // Light blue for users
+    }
+    
+    // Add alignment class
+    messageDiv.className = `unit-message-item ${isOwnMessage ? 'message-right' : 'message-left'}`;
+    
+    const time = new Date(message.timestamp).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Handle attachments
+    let attachmentsHTML = '';
+    if (message.file_path) {
+      const isImage = message.file_type && message.file_type.startsWith('image/');
+      const fileName = message.original_filename || 'File';
+      
+      if (isImage) {
+        attachmentsHTML = `
+          <div class="message-attachment">
+            <img src="${message.file_path}" 
+                 style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
+                 onclick="openImageModal('${message.file_path}')"
+                 alt="${fileName}">
+          </div>
+        `;
+      } else {
+        attachmentsHTML = `
+          <div class="message-attachment">
+            <div class="message-attachment-icon" style="color: #64748b;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="4" y="4" width="16" height="16" rx="2"/>
+                <line x1="8" y1="8" x2="16" y2="8"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+                <line x1="8" y1="16" x2="12" y2="16"/>
+              </svg>
+            </div>
+            <div class="message-attachment-info">
+              <div class="message-attachment-name">${escapeHtml(fileName)}</div>
+            </div>
+            <div class="message-attachment-actions">
+              <a href="${message.file_path}" download="${fileName}" class="attachment-action-btn" title="Download">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // Build read receipts display
+    let readReceiptsHTML = '';
+    if (message.readBy && message.readBy.length > 0 && isOwnMessage) {
+      const readers = message.readBy
+        .filter(r => r.userId && r.userId.fName)
+        .map(r => `${r.userId.fName} ${r.userId.lName}`)
+        .join(', ');
+      if (readers) {
+        readReceiptsHTML = `
+          <div class="message-read-receipt">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Seen by ${readers}</span>
+          </div>
+        `;
+      }
     }
     
     messageDiv.innerHTML = `
-      <div class="message-content" style="padding: 0.75rem; border-radius: 0.5rem; background: ${isUser ? 'var(--primary-green)' : 'white'}; color: ${isUser ? 'white' : 'inherit'}; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">
-        <div style="display: flex; align-items: flex-start;">
-          ${userAvatar}
-          <div style="flex: 1; min-width: 0; overflow-wrap: break-word;">
-            <div class="message-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.875rem;">
-              <strong>${senderName}</strong>
-              <span class="message-time" style="opacity: 0.7; font-size: 0.75rem;">${new Date(message.timestamp).toLocaleString()}</span>
-            </div>
-            <div class="message-text" style="word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; hyphens: auto; white-space: pre-wrap;"></div>
-            <div class="message-attachment" style="margin-top: 0.5rem;"></div>
-          </div>
+      <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+        <div class="message-header">
+          <strong>${escapeHtml(senderName)} <span style="font-size: 0.75rem; opacity: 0.7;">(${message.senderRole})</span></strong>
+          <span class="message-time">${time}</span>
         </div>
+        <div class="message-content">${formatText(message.content || '')}</div>
+        ${attachmentsHTML}
+        ${readReceiptsHTML}
       </div>
     `;
     
-    // Set the message content as HTML to support formatting
-    const messageTextDiv = messageDiv.querySelector('.message-text');
-    if (messageTextDiv && message.content) {
-      // Convert markdown-style formatting to HTML
-      let formattedContent = message.content
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
-        .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>');           // <u>underline</u> stays the same
-      
-      messageTextDiv.innerHTML = formattedContent;
-    }
-    
-    // Handle attachments
-  const attachmentDiv = messageDiv.querySelector('.message-attachment');
-  if (attachmentDiv && message.file_path) {
-    const isImage = message.file_type && message.file_type.startsWith('image/');
-    
-    if (isImage) {
-      attachmentDiv.innerHTML = `
-        <div style="margin-top: 0.5rem;">
-          <img src="${message.file_path}" 
-               style="max-width: 200px; max-height: 150px; border-radius: 0.375rem; cursor: pointer; border: 1px solid #e5e7eb;" 
-               onclick="openImageModal('${message.file_path}')"
-               alt="${message.original_filename || 'Attached image'}">
-        </div>
-      `;
-    } else {
-      const fileName = message.original_filename || 'File';
-      attachmentDiv.innerHTML = `
-        <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f3f4f6; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 1.2rem;">📎</span>
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-size: 0.875rem; font-weight: 500; color: #374151; truncate;">${fileName}</div>
-              <div style="font-size: 0.75rem; color: #6b7280;">File attachment</div>
-            </div>
-            <a href="${message.file_path}" download="${fileName}" 
-               style="padding: 0.25rem 0.5rem; background: var(--primary-green); color: white; text-decoration: none; border-radius: 0.25rem; font-size: 0.75rem;">
-              Download
-            </a>
-          </div>
-        </div>
-      `;
-    }
-  }    messagesContainer.appendChild(messageDiv);
+    messagesContainer.appendChild(messageDiv);
   }
 
   if (sendMessageBtn) {
@@ -3383,6 +3477,12 @@ document.querySelectorAll('.request-row').forEach(row => {
         const requestType = row.dataset.type;
         if (requestType === "Service Request" || requestType === "Request Approval") {
           chatButtonSection.style.display = 'block';
+          
+          // Load revision history
+          const requestId = row.dataset.id;
+          if (requestId) {
+            loadRevisionHistory(requestId);
+          }
         } else {
           chatButtonSection.style.display = 'none';
         }
@@ -4831,6 +4931,171 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initMobileNavigation();
 });
+
+// Add keyboard shortcuts for message formatting (Ctrl+B, Ctrl+I, Ctrl+U)
+document.addEventListener('DOMContentLoaded', function() {
+  const messageInput = document.getElementById('messageInput');
+  if (messageInput) {
+    console.log('[Requestapproval] Message input found, attaching keyboard shortcuts');
+    
+    messageInput.addEventListener('keydown', function(e) {
+      // Ctrl+B or Cmd+B for bold
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        console.log('[Requestapproval] Keyboard shortcut: Bold (Ctrl+B)');
+        applyUserFormatting('bold');
+        return false;
+      }
+      // Ctrl+I or Cmd+I for italic
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        console.log('[Requestapproval] Keyboard shortcut: Italic (Ctrl+I)');
+        applyUserFormatting('italic');
+        return false;
+      }
+      // Ctrl+U or Cmd+U for underline
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+        e.preventDefault();
+        console.log('[Requestapproval] Keyboard shortcut: Underline (Ctrl+U)');
+        applyUserFormatting('underline');
+        return false;
+      }
+    });
+  } else {
+    console.error('[Requestapproval] Message input element not found!');
+  }
+  
+  // Wire up formatting toolbar buttons
+  const boldBtn = document.getElementById('boldBtn');
+  const italicBtn = document.getElementById('italicBtn');
+  const underlineBtn = document.getElementById('underlineBtn');
+  
+  if (boldBtn) {
+    boldBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      applyUserFormatting('bold');
+    });
+  }
+  
+  if (italicBtn) {
+    italicBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      applyUserFormatting('italic');
+    });
+  }
+  
+  if (underlineBtn) {
+    underlineBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      applyUserFormatting('underline');
+    });
+  }
+});
+
+// ========== REVISION HISTORY FUNCTIONS ==========
+async function loadRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    if (!historyContainer) return;
+    
+    try {
+        const response = await fetch(`/api/revision-history/${requestId}`);
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '';
+            
+            result.revisions.forEach((revision, index) => {
+                const entry = createRevisionEntry(revision, index, result.revisions.length);
+                historyContainer.appendChild(entry);
+            });
+        } else {
+            if (historySection) historySection.style.display = 'none';
+        }
+    } catch (error) {
+        if (historySection) historySection.style.display = 'none';
+    }
+}
+
+function createRevisionEntry(revision, index, total) {
+    const entry = document.createElement('div');
+    entry.className = `revision-entry ${revision.type}`;
+    
+    let iconSvg = '';
+    let typeLabel = '';
+    
+    if (revision.type === 'initial') {
+        typeLabel = 'Initial Submission';
+        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+    } else if (revision.type === 'revoked') {
+        typeLabel = 'Approval Revoked';
+        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+    } else if (revision.type === 'resubmitted') {
+        typeLabel = 'Resubmission';
+        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>`;
+    }
+    
+    const timestamp = new Date(revision.timestamp).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    
+    entry.innerHTML = `
+        <div class="revision-icon">${iconSvg}</div>
+        <div class="revision-header">
+            <div>
+                <h4 class="revision-title">${typeLabel}</h4>
+                <div class="revision-meta">
+                    <span class="revision-timestamp"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${timestamp}</span>
+                    ${revision.by ? `<span class="revision-by"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(revision.by)}</span>` : ''}
+                </div>
+            </div>
+        </div>
+        ${revision.description ? `<div class="revision-description">${escapeHtml(revision.description)}</div>` : ''}
+        ${revision.files && revision.files.length > 0 ? `
+            <div class="revision-files">
+                <div class="revision-files-header"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${revision.files.length} file(s) attached</div>
+                <div class="revision-files-grid">${revision.files.map(file => createRevisionFileCard(file)).join('')}</div>
+            </div>
+        ` : ''}
+    `;
+    
+    return entry;
+}
+
+function createRevisionFileCard(file) {
+    const ext = file.filename.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+    const isPDF = ext === 'pdf';
+    
+    let iconColor = '#64748b';
+    if (isImage) iconColor = '#059669';
+    else if (isPDF) iconColor = '#dc2626';
+    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+    
+    return `
+        <div class="revision-file-card">
+            <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+            <div class="revision-file-info">
+                <div class="revision-file-name" title="${escapeHtml(file.originalname || file.filename)}">${escapeHtml(file.originalname || file.filename)}</div>
+                <div class="revision-file-size">${ext.toUpperCase()}</div>
+            </div>
+            <div class="revision-file-actions">
+                <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="revision-file-btn" title="Download"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+            </div>
+        </div>
+    `;
+}
+
 </script>
 </div>
 </div>

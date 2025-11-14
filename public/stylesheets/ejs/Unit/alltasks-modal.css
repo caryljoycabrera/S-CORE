@@ -609,6 +609,19 @@
   color: white;
 }
 
+.unit-btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: 2px solid #f59e0b;
+}
+
+.unit-btn-warning:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
 .unit-btn-upload {
   background: linear-gradient(135deg, #c08f42 0%, #b78333 100%);
   color: white;
@@ -1692,6 +1705,190 @@
   border: none;
 }
 
+/* ==========================================
+   APPROVAL STATUS INDICATOR
+   ========================================== */
+.approval-status-indicator {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #86efac;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.status-indicator-content svg {
+  animation: checkmark-bounce 0.6s ease-out;
+}
+
+@keyframes checkmark-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.status-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* ==========================================
+   CONFIRMATION MODALS
+   ========================================== */
+.confirmation-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000000 !important;
+  animation: fadeIn 0.2s ease;
+  pointer-events: auto !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.confirmation-modal-overlay .confirmation-modal {
+  background: white !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  max-width: 500px !important;
+  width: 90% !important;
+  animation: slideUp 0.3s ease;
+  overflow: hidden !important;
+  position: relative !important;
+  z-index: 1000001 !important;
+  display: block !important;
+  pointer-events: auto !important;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirmation-header {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+  padding: 2rem;
+  text-align: center;
+  color: white;
+}
+
+.confirmation-header.revoke-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.confirmation-header svg {
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.confirmation-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.confirmation-body {
+  padding: 2rem;
+}
+
+.confirmation-body p {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.confirmation-note {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.confirmation-actions {
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  border-top: 1px solid #e2e8f0;
+}
+
+.confirmation-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confirmation-btn-cancel {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.confirmation-btn-cancel:hover {
+  background: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.confirmation-btn-confirm {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.confirmation-btn-confirm:hover {
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+}
+
+.confirmation-btn-revoke {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.confirmation-btn-revoke:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+.confirmation-btn:active {
+  transform: translateY(0);
+}
+
 /* Conversation modal base z-index */
 .modal {
   z-index: 10000;
@@ -1701,6 +1898,416 @@
 #pdfViewerModal,
 #imageViewerModal {
   z-index: 1000000 !important;
+}
+
+/* ==========================================
+   REVISION HISTORY TIMELINE
+   ========================================== */
+.revision-history-timeline {
+  position: relative;
+  padding: 1rem 0.5rem;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Revision summary header */
+.revision-summary-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.summary-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 2.5rem;
+  background: linear-gradient(180deg, transparent 0%, #cbd5e1 50%, transparent 100%);
+}
+
+/* Conversation-style revision items */
+.revision-conversation-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding-left: 4rem;
+}
+
+.revision-conversation-item.requestor-message {
+  padding-left: 0;
+  padding-right: 4rem;
+}
+
+/* Revision number badge */
+.revision-number-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: white;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.revision-number-badge.unit-number {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.revision-number-badge.requestor-number {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.revision-conversation-item.requestor-message .revision-number-badge {
+  left: auto;
+  right: 0;
+}
+
+/* Timeline connector line */
+.conversation-timeline-line {
+  position: absolute;
+  left: 1.5rem;
+  top: 3rem;
+  bottom: -1.5rem;
+  width: 2px;
+  background: linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 100%);
+}
+
+.revision-conversation-item.requestor-message .conversation-timeline-line {
+  left: auto;
+  right: 1.5rem;
+}
+
+.conversation-timeline-line.last-item {
+  display: none;
+}
+
+/* Message bubble */
+.conversation-message-bubble {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.conversation-message-bubble:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.unit-bubble {
+  border-left: 4px solid #3b82f6;
+  margin-left: 0;
+}
+
+.requestor-bubble {
+  border-right: 4px solid #10b981;
+  margin-right: 0;
+}
+
+/* Message header */
+.message-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.message-sender-info {
+  display: flex;
+  align-items: center;
+}
+
+.sender-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sender-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.sender-role {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.message-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.message-badge.badge-initial {
+  background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+  color: #4f46e5;
+}
+
+.message-badge.badge-revoked {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+}
+
+.message-badge.badge-resubmitted {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #059669;
+}
+
+.message-badge.badge-revision {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+/* Timestamp row */
+.message-timestamp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+}
+
+.timestamp-full {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.timestamp-relative {
+  color: #64748b;
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* Message content */
+.message-content-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.content-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.625rem;
+}
+
+.content-text {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+/* Message attachments */
+.message-attachments-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fafbfc;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+}
+
+.attachments-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.attachments-count {
+  color: #3b82f6;
+}
+
+.attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Status indicators */
+.status-indicator {
+  margin-top: 1rem;
+  padding: 0.875rem 1.125rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-indicator.waiting {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  color: #92400e;
+}
+
+.status-indicator.review {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  color: #1e3a8a;
+}
+
+.status-indicator svg {
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.01);
+  }
+}
+
+.revision-file-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.revision-file-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.revision-file-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.revision-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.revision-file-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.revision-file-size {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.revision-file-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.revision-file-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.revision-file-btn:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.no-revisions {
+  text-align: center;
+  padding: 2rem;
+  color: #94a3b8;
+}
+
+.no-revisions svg {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
 }
 
 /* ==========================================

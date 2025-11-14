@@ -12,22 +12,77 @@
 
   // Wait for DOM to be fully loaded
   document.addEventListener('DOMContentLoaded', function() {
+    console.log('[UNIT-NAVBAR] DOM Content Loaded');
     
     // Get elements
     const sidebar = document.getElementById('unitSidebar');
     const menuToggle = document.getElementById('unitMenuToggle');
     const backdrop = document.getElementById('unitSidebarBackdrop');
     
+    console.log('[UNIT-NAVBAR] Elements found:', {
+      sidebar: !!sidebar,
+      menuToggle: !!menuToggle,
+      backdrop: !!backdrop
+    });
+    
+    if (sidebar) {
+      const computedStyle = window.getComputedStyle(sidebar);
+      console.log('[UNIT-NAVBAR] Sidebar computed styles:', {
+        position: computedStyle.position,
+        top: computedStyle.top,
+        left: computedStyle.left,
+        width: computedStyle.width,
+        zIndex: computedStyle.zIndex,
+        display: computedStyle.display
+      });
+    }
+    
     // Check if elements exist before proceeding
     if (!sidebar || !menuToggle) {
-      console.warn('Unit sidebar elements not found');
+      console.warn('[UNIT-NAVBAR] Unit sidebar elements not found');
       return;
+    }
+
+    // Debug CSS variables
+    const rootStyles = window.getComputedStyle(document.documentElement);
+    const headerHeight = rootStyles.getPropertyValue('--header-height-desktop');
+    const sidebarCollapsed = rootStyles.getPropertyValue('--sidebar-width-collapsed');
+    const sidebarExpanded = rootStyles.getPropertyValue('--sidebar-width-expanded');
+    
+    console.log('[UNIT-NAVBAR] CSS Variables:', {
+      headerHeight: headerHeight,
+      sidebarCollapsed: sidebarCollapsed,
+      sidebarExpanded: sidebarExpanded
+    });
+    
+    // Check main content positioning
+    const mainContent = document.querySelector('.unit-main-content');
+    if (mainContent) {
+      const mainStyle = window.getComputedStyle(mainContent);
+      console.log('[UNIT-NAVBAR] Main content styles:', {
+        marginLeft: mainStyle.marginLeft,
+        paddingTop: mainStyle.paddingTop,
+        position: mainStyle.position
+      });
+    }
+    
+    // Check header positioning
+    const header = document.querySelector('.unit-main-content .overlap');
+    if (header) {
+      const headerStyle = window.getComputedStyle(header);
+      console.log('[UNIT-NAVBAR] Header styles:', {
+        position: headerStyle.position,
+        top: headerStyle.top,
+        height: headerStyle.height,
+        zIndex: headerStyle.zIndex
+      });
     }
 
     /**
      * Toggle sidebar on mobile
      */
     function toggleSidebar() {
+      console.log('[UNIT-NAVBAR] Toggle sidebar');
       sidebar.classList.toggle('mobile-active');
       
       // Toggle backdrop if it exists

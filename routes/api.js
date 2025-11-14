@@ -508,6 +508,81 @@ router.post('/api/conversation/:requestId/message', requireLogin, upload.array('
 });
 
 /**
+ * GET /api/revision-history/:requestId
+ * API endpoint to get revision history for a request approval
+ */
+router.get('/api/revision-history/:requestId', requireLogin, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const user = await User.findById(req.session.userId);
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'User not authenticated', revisions: [] });
+    }
+
+    // Find the approval request (revision history only for approval requests)
+    const approvalRequest = await RequestApproval.findById(requestId)
+      .populate('userId', 'fName lName');
+
+    if (!approvalRequest) {
+      // Not an approval request - return empty revisions instead of 404
+      return res.json({ success: true, revisions: [], message: 'Not an approval request or request not found' });
+    }
+
+    // Check access permissions
+    if (user.role !== 'admin' && user.role !== 'unit' && approvalRequest.userId._id.toString() !== req.session.userId) {
+      return res.status(403).json({ success: false, error: 'Access denied', revisions: [] });
+    }
+
+    // Build revision history from revisionHistory field in the request
+    const revisions = [];
+
+    // Add initial submission
+    revisions.push({
+      type: 'initial',
+      timestamp: approvalRequest.createdAt,
+      by: approvalRequest.userId ? `${approvalRequest.userId.fName} ${approvalRequest.userId.lName}` : 'Unknown',
+      description: approvalRequest.description || '',
+      files: approvalRequest.files || []
+    });
+
+    // Add all revisions from revisionHistory array
+    if (approvalRequest.revisionHistory && approvalRequest.revisionHistory.length > 0) {
+      for (const revision of approvalRequest.revisionHistory) {
+        // Populate the requestedBy user
+        let requestedByUser = null;
+        if (revision.requestedBy) {
+          requestedByUser = await User.findById(revision.requestedBy).select('fName lName');
+        }
+        
+        const revisionType = revision.status === 'revoked' ? 'revoked' : 
+                            revision.status === 'resubmitted' ? 'resubmitted' : 
+                            'revision';
+        
+        revisions.push({
+          type: revisionType,
+          timestamp: revision.requestedAt,
+          by: requestedByUser ? `${requestedByUser.fName} ${requestedByUser.lName}` : 'Unit Team',
+          description: revision.revisionNotes || '',
+          files: revision.revisionFiles || []
+        });
+      }
+    }
+
+    // Sort by timestamp
+    revisions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    res.json({
+      success: true,
+      revisions: revisions
+    });
+  } catch (err) {
+    console.error('Error fetching revision history:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch revision history', details: err.message, revisions: [] });
+  }
+});
+
+/**
  * POST /api/conversation/:requestId/mark-read
  * API endpoint to mark conversation messages as read
  */

@@ -210,6 +210,7 @@ body .modal .message.message-right,
 .unit-message-bubble,
 body .unit-message-bubble,
 #conversationModal .unit-message-bubble,
+#teamConversationModal .unit-message-bubble,
 .modal .unit-message-bubble {
   background: white !important;
   border-radius: 12px !important;
@@ -227,6 +228,7 @@ body .unit-message-bubble,
 /* Role-based message colors - FORCE with !important and higher specificity */
 body .unit-message-bubble.user-message,
 #conversationModal .unit-message-bubble.user-message,
+#teamConversationModal .unit-message-bubble.user-message,
 .modal .unit-message-bubble.user-message,
 .unit-message-bubble.user-message {
   background: #e0f2fe !important;
@@ -235,6 +237,7 @@ body .unit-message-bubble.user-message,
 
 body .unit-message-bubble.admin-message,
 #conversationModal .unit-message-bubble.admin-message,
+#teamConversationModal .unit-message-bubble.admin-message,
 .modal .unit-message-bubble.admin-message,
 .unit-message-bubble.admin-message {
   background: #fecaca !important;
@@ -243,6 +246,7 @@ body .unit-message-bubble.admin-message,
 
 body .unit-message-bubble.unit-message,
 #conversationModal .unit-message-bubble.unit-message,
+#teamConversationModal .unit-message-bubble.unit-message,
 .modal .unit-message-bubble.unit-message,
 .unit-message-bubble.unit-message {
   background: #bbf7d0 !important;
@@ -251,6 +255,7 @@ body .unit-message-bubble.unit-message,
 
 body .unit-message-bubble.own-message,
 #conversationModal .unit-message-bubble.own-message,
+#teamConversationModal .unit-message-bubble.own-message,
 .modal .unit-message-bubble.own-message,
 .unit-message-bubble.own-message {
   background: #f1f5f9 !important;
@@ -258,8 +263,8 @@ body .unit-message-bubble.own-message,
 }
 
 .unit-message-bubble:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  transform: translateX(2px) !important;
 }
 
 /* ==========================================
@@ -324,7 +329,7 @@ body .unit-message-bubble.own-message,
 .message-text {
   font-size: 0.9375rem;
   line-height: 1.6;
-  color: #334155;
+  color: inherit;
   word-wrap: break-word !important;
   word-break: break-word !important;
   overflow-wrap: break-word !important;
