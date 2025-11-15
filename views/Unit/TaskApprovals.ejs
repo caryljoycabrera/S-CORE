@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Approval Requests - <%= unitTeam %> Unit</title>
+
+  <!-- Base Stylesheet and Google Fonts (same as AllTasks) -->
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=3" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=3" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-conversation-modal.css?v=3" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+  <script src="/javascripts/unit-navbar.js"></script>
+</head>
+<body>
+  <!-- Unit Sidebar Navigation -->
+  <%- include('../partials/unit-navbar', { user: user, activePage: 'task-approvals' }) %>
+
+  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <div class="unit-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <div class="header-left-group">
+        <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
+      </div>
+      
+      <span class="text-wrapper-2">Approval Requests</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/unit/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="student-side">
+      <div class="div">
+        <section class="activity-section">
+          <div class="section-header" style="padding: 2rem 3rem 0 3rem;">
+            <h1><%= unitTeam %> Team - Approval Requests</h1>
+            <p>Process and collaborate on approval requests assigned to your unit</p>
+          </div>
+          
+          <nav class="nav-tabs tabs" style="padding: 0 3rem; margin-bottom: 1.5rem;">
+            <a href="/unit/all-tasks" class="tab-btn">All Tasks</a>
+            <a href="/unit/task-approvals" class="tab-btn active">Approvals</a>
+            <a href="/unit/task-services" class="tab-btn">Services</a>
+          </nav>
+          
+          <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
+
+          <!-- Filter Options -->
+          <div class="filter-section">
+            <div class="filter-container">
+              <div class="filter-group">
+                <label class="filter-label">Filter by:</label>
+
+                <!-- Filter Controls -->
+                <div class="filter-controls">
+                  <div class="filter-item">
+                    <label for="titleFilter" class="filter-sublabel">Title</label>
+                    <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
+                  </div>
+                  
+                  <div class="filter-item">
+                    <label for="statusFilter" class="filter-sublabel">Status</label>
+                    <select id="statusFilter" class="filter-select">
+                      <option value="all">All Statuses</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="For Revision">For Revision</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div class="filter-item">
+                    <label for="requestorFilter" class="filter-sublabel">Requestor</label>
+                    <input type="text" id="requestorFilter" class="filter-input" placeholder="Search requestor...">
+                  </div>
+
+                  <div class="filter-item">
+                    <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                    <input type="date" id="dateFromFilter" class="filter-input">
+                  </div>
+
+                  <div class="filter-item">
+                    <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                    <input type="date" id="dateToFilter" class="filter-input">
+                  </div>
+                </div>
+
+                <button id="clearFilters" class="clear-filters-btn">Clear All Filters</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requests Table -->
+          <div class="table-section" style="background: white; padding: 1.5rem; margin: 0 3rem 2rem 3rem;">
+            <table class="requests-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th>Requestor</th>
+                  <th>Organization</th>
+                  <th>Date Submitted</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="requestsTableBody">
+                <% 
+                // Only approval requests (no services)
+                const allRequests = (approvalRequests || []).map(r => ({...r, requestType: 'approval'}))
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                %>
+                
+                <% if (allRequests && allRequests.length > 0) { %>
+                  <% allRequests.forEach(request => { %>
+                    <% 
+                      const isApproval = true; // only approvals on this page
+                      const type = 'approval';
+                      const title = request.title || request.projectTitle || 'Untitled';
+                      const requestor = request.userId ? `${request.userId.fName} ${request.userId.lName}` : 'Unknown';
+                      
+                      // Get organization/office/department - prioritize in this order
+                      let organization = 'N/A';
+                      if (request.userId) {
+                        if (request.userId.studentOrganization && Array.isArray(request.userId.studentOrganization) && request.userId.studentOrganization.length > 0) {
+                          organization = request.userId.studentOrganization[0];
+                        } else if (request.userId.office && request.userId.office.trim()) {
+                          organization = request.userId.office;
+                        } else if (request.userId.department && request.userId.department.trim()) {
+                          organization = request.userId.department;
+                        } else if (request.userId.affiliation && Array.isArray(request.userId.affiliation) && request.userId.affiliation.length > 0) {
+                          organization = request.userId.affiliation[0];
+                        }
+                      }
+                      
+                      const dateSubmitted = new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                      const status = request.status || 'Pending';
+                      const files = request.files || [];
+                      const deadline = request.deadline || '';
+                      const description = request.description || '';
+                      const requestorEmail = request.userId ? request.userId.email : '';
+                    %>
+                    <tr class="request-row clickable" 
+                        data-request-id="<%= request._id %>"
+                        data-request-type="<%= type %>"
+                        data-title="<%= title.replace(/"/g, '&quot;') %>"
+                        data-requestor="<%= requestor.replace(/"/g, '&quot;') %>"
+                        data-requestor-email="<%= requestorEmail.replace(/"/g, '&quot;') %>"
+                        data-organization="<%= organization.replace(/"/g, '&quot;') %>"
+                        data-description="<%= description.replace(/"/g, '&quot;') %>"
+                        data-date-submitted="<%= dateSubmitted %>"
+                        data-status="<%= status %>"
+                        data-files='<%= JSON.stringify(files) %>'
+                        data-deadline="<%= deadline %>">
+                      <td>
+                        <span class="type-badge <%= type %>">
+                          Approval
+                        </span>
+                      </td>
+                      <td class="title-cell"><%= title %></td>
+                      <td><%= requestor %></td>
+                      <td><%= organization %></td>
+                      <td><%= dateSubmitted %></td>
+                      <td>
+                        <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>
+                      </td>
+                      <td>
+                        <button class="view-btn">
+                          <svg class="view-btn-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                          <span class="view-btn-text">View Details</span>
+                        </button>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 3rem; color: #64748b;">
+                      <div style="font-size: 3rem; margin-bottom: 1rem;">
+                        <svg width="64" height="64" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block;">
+                          <rect x="4" y="4" width="16" height="16" rx="2"/>
+                          <line x1="8" y1="8" x2="16" y2="8"/>
+                          <line x1="8" y1="12" x2="16" y2="12"/>
+                          <line x1="8" y1="16" x2="12" y2="16"/>
+                        </svg>
+                      </div>
+                      <p>No approval requests assigned to your unit yet</p>
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Details Modal - reuse same modals and scripts as AllTasks for identical functionality -->
+  <div id="requestDetailsModal" class="modal" style="display: none;">
+    <div class="modal-content unit-modal-wide">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+          <h2 id="modalTitle">Request Details</h2>
+          <span class="type-badge" id="modalTypeBadge">APPROVAL</span>
+        </div>
+        <button class="close-modal-btn" onclick="closeRequestModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body unit-modal-body">
+        <div class="unit-left-column">
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>Request Information</h3>
+              <p class="unit-card-subtitle">Complete details about this request</p>
+            </div>
+            <div class="unit-info-grid">
+              <div class="unit-info-item">
+                <span class="unit-info-label">Requestor</span>
+                <span class="unit-info-value" id="modalRequestor">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Email</span>
+                <span class="unit-info-value" id="modalRequestorEmail">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Organization/Office/Dept</span>
+                <span class="unit-info-value" id="modalOrganization">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Date Submitted</span>
+                <span class="unit-info-value" id="modalDate">Loading...</span>
+              </div>
+              <div class="unit-info-item">
+                <span class="unit-info-label">Current Status</span>
+                <span class="status-badge" id="modalStatus">Pending</span>
+              </div>
+              <div class="unit-info-item" id="deadlineField" style="display: none;">
+                <span class="unit-info-label">Deadline</span>
+                <span class="unit-info-value" id="modalDeadline">N/A</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>Description</h3>
+              <p class="unit-card-subtitle">Request details and requirements</p>
+            </div>
+            <div class="unit-description-content" id="modalDescription">Loading description...</div>
+          </div>
+
+          <div id="filesSection" class="unit-info-card" style="display: none;">
+            <div class="unit-card-header">
+              <h3>Attached Files</h3>
+              <p class="unit-card-subtitle">Files submitted with this request</p>
+            </div>
+            <div id="modalFiles"></div>
+          </div>
+
+          <div class="unit-info-card unit-conversation-trigger">
+            <button id="openTeamChatBtn" class="unit-chat-button">
+              <span class="unit-chat-icon">...</span>
+              <div class="unit-chat-text">
+                <strong>Open Team Discussion</strong>
+                <small>Collaborate with your team members</small>
+              </div>
+              <span class="unit-chat-arrow">...</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="unit-right-column">
+          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
+            <div class="unit-panel-header revision-header">
+              <h3>Revision History</h3>
+              <p>Complete timeline of all revisions and resubmissions</p>
+            </div>
+            <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
+
+            <!-- Action buttons within revision history -->
+            <div id="revisionHistoryActions" class="unit-action-buttons" style="margin-top: 1.5rem; display: none;">
+              <button id="approveAfterRevisionBtn" class="unit-btn unit-btn-approve">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span>Approve Request</span>
+              </button>
+              <button id="requestAnotherRevisionBtn" class="unit-btn unit-btn-revision">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </span>
+                <span>Request Another Revision</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="approvalActionsPanel" class="unit-action-panel approval-panel" style="display: none;">
+            <div class="unit-panel-header approval-header">
+              <h3>Process Approval Request</h3>
+              <p>Review the request and take appropriate action</p>
+            </div>
+
+            <div class="unit-action-guide">
+              <div class="guide-item">
+                <span class="guide-icon">✓</span>
+                <span>Review all details carefully before approving</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">✔</span>
+                <span>Approve if all requirements are met</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">📝</span>
+                <span>Request revision if changes are needed</span>
+              </div>
+            </div>
+
+            <!-- Approval Status Indicator -->
+            <div id="approvalStatusIndicator" class="approval-status-indicator" style="display: none;">
+              <div class="status-indicator-content">
+                <svg width="48" height="48" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <h3 style="color: #10b981; margin: 1rem 0 0.5rem 0;">✅ Request Approved</h3>
+                <p style="color: #64748b; margin: 0 0 1rem 0;">This request has been approved by your unit team.</p>
+              </div>
+              <div class="status-actions">
+                <button id="revokeApprovalBtn" class="unit-btn unit-btn-warning">
+                  <span class="btn-icon">✖</span>
+                  <span>Revoke Approval</span>
+                </button>
+              </div>
+              <p style="color: #94a3b8; font-size: 0.875rem; margin: 1rem 0 0 0; text-align: center;">
+                <em>You can still change your mind and revoke this approval if needed.</em>
+              </p>
+            </div>
+
+            <!-- Revoke Approval Form -->
+            <div id="revokeApprovalForm" class="unit-revision-form" style="display: none;">
+              <div class="alert alert-info" style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+                <p style="margin: 0; color: #0c4a6e; font-size: 0.875rem;">
+                  <strong>📝 Note:</strong> Revoking approval will change the request status to <strong>"For Revision"</strong> and notify the user and admins.
+                </p>
+              </div>
+              <label for="revokeReasonText" class="unit-form-label">
+                <strong>Reason for Revoking Approval</strong>
+                <small>Explain why this approval needs to be revoked (optional)</small>
+              </label>
+              <div id="revokeReasonEditor" style="background: white; min-height: 120px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
+              <div class="unit-form-actions">
+                <button id="confirmRevokeBtn" class="unit-btn unit-btn-warning">Revoke Approval</button>
+                <button id="cancelRevokeBtn" class="unit-btn unit-btn-cancel">Cancel</button>
+              </div>
+            </div>
+
+            <div id="approvalActionButtons" class="unit-action-buttons">
+              <button id="approveBtn" class="unit-btn unit-btn-approve">
+                <span class="btn-icon">✔</span>
+                <span>Approve Request</span>
+              </button>
+              <button id="requestRevisionBtn" class="unit-btn unit-btn-revision">
+                <span class="btn-icon">📝</span>
+                <span>Request Revision</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Revision Form (shared across all panels) -->
+          <div id="revisionForm" class="unit-revision-form" style="display: none;">
+            <label for="revisionComments" class="unit-form-label">
+              <strong>Revision Feedback</strong>
+              <small>Clearly explain what needs to be revised</small>
+            </label>
+
+            <div id="revisionFilesPreview" class="revision-files-preview" style="display: none;">
+              <div class="files-preview-header">
+                <span class="files-count">0 file(s) attached</span>
+                <button type="button" id="clearRevisionFiles" class="clear-files-btn">Clear all</button>
+              </div>
+              <div id="revisionFilesContainer" class="files-container"></div>
+            </div>
+
+            <div class="unit-format-toolbar" style="margin-top: 0.5rem;">
+              <button type="button" class="format-btn" data-revision-format="bold" title="Bold (Ctrl+B)">B</button>
+              <button type="button" class="format-btn" data-revision-format="italic" title="Italic (Ctrl+I)">I</button>
+              <button type="button" class="format-btn" data-revision-format="underline" title="Underline (Ctrl+U)">U</button>
+              <div class="toolbar-divider"></div>
+              <button type="button" id="revisionAttachBtn" class="format-btn" title="Attach Files">📎</button>
+              <input type="file" id="revisionFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+              <span class="toolbar-hint">Format your feedback</span>
+            </div>
+
+            <textarea id="revisionComments" class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..." rows="6" style="margin-top: 0;"></textarea>
+            <div class="unit-form-actions">
+              <button id="submitRevisionBtn" class="unit-btn unit-btn-submit">Submit Revision Request</button>
+              <button id="cancelRevisionBtn" class="unit-btn unit-btn-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Conversation Modal (same as AllTasks) -->
+  <div id="teamConversationModal" class="modal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important;">
+    <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <h2>Team Discussion</h2>
+          <span class="unit-conversation-subtitle">Collaborate with your team members</span>
+        </div>
+        <button class="close-modal-btn" onclick="closeTeamConversationModal()" aria-label="Close">×</button>
+      </div>
+      <div class="unit-conversation-body">
+        <div id="teamMessagesContainer" class="unit-messages-container"></div>
+        <div class="unit-message-input-area">
+          <div class="unit-format-toolbar">...</div>
+          <div class="unit-message-input-wrapper">
+            <textarea id="teamMessageInput" class="unit-message-input" placeholder="Type your message to team members..." rows="3"></textarea>
+            <button id="sendTeamMessageBtn" class="unit-send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Define current user role for conversation
+    window.currentUserRole = 'unit';
+  </script>
+
+  <!-- PDF Viewer Modal -->
+  <div id="pdfViewerModal" class="modal" style="display: none;">
+    <div class="modal-content pdf-viewer-modal">
+      <div class="modal-header pdf-viewer-header">
+        <div class="modal-title-section">
+          <h2 id="pdfViewerTitle">PDF Document</h2>
+        </div>
+        <button class="close-modal-btn" onclick="closePdfViewer()" aria-label="Close">×</button>
+      </div>
+      <div class="pdf-viewer-body">
+        <iframe id="pdfViewerFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript: reuse the same client script as AllTasks to preserve functionality -->
+  <script src="/javascripts/ejs/Unit/alltasks.js"></script>
+  <script>
+    // Small helper: ensure filtering only shows approvals since this page has only approvals
+    document.addEventListener('DOMContentLoaded', function(){
+      // No extra initialization required; `alltasks.js` works on the table rows and will function normally.
+    });
+  </script>
+  </body>
+  </html>
