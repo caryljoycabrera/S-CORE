@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Service Requests - <%= unitTeam %> Unit</title>
+
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=3" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=3" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-conversation-modal.css?v=3" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+  <script src="/javascripts/unit-navbar.js"></script>
+</head>
+<body>
+  <%- include('../partials/unit-navbar', { user: user, activePage: 'task-services' }) %>
+
+  <div class="unit-main-content">
+    <div class="overlap">
+      <div class="header-left-group">
+        <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">☰</button>
+        <div class="group"><img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;"></div>
+        <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
+      </div>
+      <span class="text-wrapper-2">Service Requests</span>
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user"><img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" /></div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/unit/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="student-side">
+      <div class="div">
+        <section class="activity-section">
+          <div class="section-header" style="padding: 2rem 3rem 0 3rem;">
+            <h1><%= unitTeam %> Team - Service Requests</h1>
+            <p>Process service requests assigned to your unit</p>
+          </div>
+
+          <nav class="nav-tabs tabs" style="padding: 0 3rem; margin-bottom: 1.5rem;">
+            <a href="/unit/all-tasks" class="tab-btn">All Tasks</a>
+            <a href="/unit/task-approvals" class="tab-btn">Approvals</a>
+            <a href="/unit/task-services" class="tab-btn active">Services</a>
+          </nav>
+
+          <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
+
+          <!-- Filters (same layout as others) -->
+          <div class="filter-section">
+            <div class="filter-container">
+              <div class="filter-group">
+                <label class="filter-label">Filter by:</label>
+                <div class="filter-controls">
+                  <div class="filter-item">
+                    <label for="titleFilter" class="filter-sublabel">Title</label>
+                    <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
+                  </div>
+                  <div class="filter-item">
+                    <label for="statusFilter" class="filter-sublabel">Status</label>
+                    <select id="statusFilter" class="filter-select">
+                      <option value="all">All Statuses</option>
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="For Revision">For Revision</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div class="filter-item">
+                    <label for="requestorFilter" class="filter-sublabel">Requestor</label>
+                    <input type="text" id="requestorFilter" class="filter-input" placeholder="Search requestor...">
+                  </div>
+                </div>
+                <button id="clearFilters" class="clear-filters-btn">Clear All Filters</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-section" style="background: white; padding: 1.5rem; margin: 0 3rem 2rem 3rem;">
+            <table class="requests-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Title</th>
+                  <th>Requestor</th>
+                  <th>Organization</th>
+                  <th>Date Submitted</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="requestsTableBody">
+                <% 
+                const allRequests = (serviceRequests || []).map(r => ({...r, requestType: 'service'}))
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                %>
+
+                <% if (allRequests && allRequests.length > 0) { %>
+                  <% allRequests.forEach(request => { %>
+                    <% 
+                      const type = 'service';
+                      const title = request.title || request.serviceType || request.specificRequestType || 'Untitled';
+                      const requestor = request.userId ? `${request.userId.fName} ${request.userId.lName}` : 'Unknown';
+                      let organization = 'N/A';
+                      if (request.userId) {
+                        if (request.userId.studentOrganization && Array.isArray(request.userId.studentOrganization) && request.userId.studentOrganization.length > 0) {
+                          organization = request.userId.studentOrganization[0];
+                        } else if (request.userId.office && request.userId.office.trim()) {
+                          organization = request.userId.office;
+                        } else if (request.userId.department && request.userId.department.trim()) {
+                          organization = request.userId.department;
+                        } else if (request.userId.affiliation && Array.isArray(request.userId.affiliation) && request.userId.affiliation.length > 0) {
+                          organization = request.userId.affiliation[0];
+                        }
+                      }
+                      const dateSubmitted = new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                      const status = request.status || 'Pending';
+                      const files = request.files || [];
+                      const deliverables = request.deliverables || [];
+                      const deadline = request.deadline || '';
+                      const serviceType = request.serviceType || request.specificRequestType || '';
+                      const description = request.description || '';
+                      const requestorEmail = request.userId ? request.userId.email : '';
+                    %>
+                    <tr class="request-row clickable" 
+                        data-request-id="<%= request._id %>"
+                        data-request-type="<%= type %>"
+                        data-title="<%= title.replace(/"/g, '&quot;') %>"
+                        data-requestor="<%= requestor.replace(/"/g, '&quot;') %>"
+                        data-requestor-email="<%= requestorEmail.replace(/"/g, '&quot;') %>"
+                        data-organization="<%= organization.replace(/"/g, '&quot;') %>"
+                        data-description="<%= description.replace(/"/g, '&quot;') %>"
+                        data-date-submitted="<%= dateSubmitted %>"
+                        data-status="<%= status %>"
+                        data-files='<%= JSON.stringify(files) %>'
+                        data-deliverables='<%= JSON.stringify(deliverables) %>'
+                        data-deadline="<%= deadline %>"
+                        data-service-type="<%= serviceType.replace(/"/g, '&quot;') %>">
+                      <td>
+                        <span class="type-badge service">Service</span>
+                      </td>
+                      <td class="title-cell"><%= title %></td>
+                      <td><%= requestor %></td>
+                      <td><%= organization %></td>
+                      <td><%= dateSubmitted %></td>
+                      <td>
+                        <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>
+                      </td>
+                      <td>
+                        <button class="view-btn">
+                          <svg class="view-btn-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                          <span class="view-btn-text">View Details</span>
+                        </button>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 3rem; color: #64748b;">
+                      <div style="font-size: 3rem; margin-bottom: 1rem;">
+                        <svg width="64" height="64" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block;">
+                          <rect x="4" y="4" width="16" height="16" rx="2"/>
+                          <line x1="8" y1="8" x2="16" y2="8"/>
+                          <line x1="8" y1="12" x2="16" y2="12"/>
+                          <line x1="8" y1="16" x2="12" y2="16"/>
+                        </svg>
+                      </div>
+                      <p>No service requests assigned to your unit yet</p>
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Details Modal (reuse same modal as AllTasks) -->
+  <div id="requestDetailsModal" class="modal" style="display: none;">
+    <div class="modal-content unit-modal-wide">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <h2 id="modalTitle">Request Details</h2>
+          <span class="type-badge" id="modalTypeBadge">SERVICE</span>
+        </div>
+        <button class="close-modal-btn" onclick="closeRequestModal()" aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body unit-modal-body">
+        <div class="unit-left-column">
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>Request Information</h3>
+              <p class="unit-card-subtitle">Complete details about this request</p>
+            </div>
+            <div class="unit-info-grid">
+              <div class="unit-info-item"><span class="unit-info-label">Requestor</span><span class="unit-info-value" id="modalRequestor">Loading...</span></div>
+              <div class="unit-info-item"><span class="unit-info-label">Email</span><span class="unit-info-value" id="modalRequestorEmail">Loading...</span></div>
+              <div class="unit-info-item"><span class="unit-info-label">Organization/Office/Dept</span><span class="unit-info-value" id="modalOrganization">Loading...</span></div>
+              <div class="unit-info-item"><span class="unit-info-label">Date Submitted</span><span class="unit-info-value" id="modalDate">Loading...</span></div>
+              <div class="unit-info-item"><span class="unit-info-label">Current Status</span><span class="status-badge" id="modalStatus">Pending</span></div>
+              <div class="unit-info-item" id="serviceTypeField" style="display: none;"><span class="unit-info-label">Service Type</span><span class="unit-info-value" id="modalServiceType">N/A</span></div>
+            </div>
+          </div>
+
+          <div class="unit-info-card"><div class="unit-card-header"><h3>Description</h3><p class="unit-card-subtitle">Request details and requirements</p></div><div class="unit-description-content" id="modalDescription">Loading description...</div></div>
+
+          <div id="filesSection" class="unit-info-card" style="display: none;"><div class="unit-card-header"><h3>Attached Files</h3><p class="unit-card-subtitle">Files submitted with this request</p></div><div id="modalFiles"></div></div>
+
+          <div id="deliverablesSection" class="unit-info-card" style="display: none;"><div class="unit-card-header"><h3>Deliverables</h3><p class="unit-card-subtitle">Files uploaded by unit team</p></div><div id="modalDeliverables"></div></div>
+
+          <div class="unit-info-card unit-conversation-trigger"><button id="openTeamChatBtn" class="unit-chat-button">Open Team Discussion</button></div>
+        </div>
+
+        <div class="unit-right-column">
+          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;"><div class="unit-panel-header revision-header"><h3>Revision History</h3><p>Complete timeline of all revisions and resubmissions</p></div><div id="revisionHistoryContainer" class="revision-history-timeline"></div><div id="revisionHistoryActions" class="unit-action-buttons" style="margin-top:1.5rem; display:none;"><button id="approveAfterRevisionBtn" class="unit-btn unit-btn-approve">Approve Request</button><button id="requestAnotherRevisionBtn" class="unit-btn unit-btn-revision">Request Another Revision</button></div></div>
+
+          <div id="serviceActionsPanel" class="unit-action-panel service-panel" style="display: none;">
+            <div class="unit-panel-header service-header"><h3>Process Service Request</h3><p>Upload deliverables and complete the service</p></div>
+            <div class="unit-action-guide"><div class="guide-item"><span class="guide-icon">⇪</span><span>Upload all required deliverables</span></div><div class="guide-item"><span class="guide-icon">📁</span><span>Verify files before uploading</span></div><div class="guide-item"><span class="guide-icon">✔</span><span>Mark as complete when work is done</span></div></div>
+
+            <div class="unit-upload-section">
+              <label class="unit-form-label"><strong>Upload Deliverables</strong><small>Select one or more files to upload</small></label>
+              <div class="unit-file-upload-group" id="unitFileUploadGroup">
+                <input type="file" id="deliverablesFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" class="unit-file-input-hidden">
+                <button type="button" class="unit-browse-file-btn" onclick="event.stopPropagation(); document.getElementById('deliverablesFileInput').click()">Choose Files</button>
+                <div class="unit-upload-progress" id="unitUploadProgress"><div class="unit-progress-bar"><div class="unit-progress-fill" id="unitProgressFill"></div></div></div>
+              </div>
+              <div class="unit-file-management" id="unitFileManagement" style="display: none;"><div class="unit-file-actions"><span id="unitFilesCount">0 files selected</span><button type="button" class="unit-clear-all-btn" id="unitClearAllBtn">Clear All Files</button></div><div class="unit-selected-files-container" id="unitSelectedFiles"></div><div class="unit-files-summary" id="unitFilesSummary">Total size: 0 MB</div></div>
+              <button id="uploadDeliverablesBtn" disabled class="unit-btn unit-btn-upload" style="margin-top: 1rem;">Submit Deliverables for Review</button>
+            </div>
+
+            <div class="unit-info-notice"><div><p style="margin:0; font-weight:600; color:#1e293b;">Service Request Workflow</p><p style="margin:0; font-size:0.875rem; color:#64748b;">Upload files and submit for requestor review. Only requestor can mark complete.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minimal placeholders for modals reused by alltasks.js -->
+  <div id="teamConversationModal" class="modal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important;">
+    <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;"> </div>
+  </div>
+
+  <script>window.currentUserRole = 'unit';</script>
+  <div id="pdfViewerModal" class="modal" style="display:none;"></div>
+
+  <script src="/javascripts/ejs/Unit/alltasks.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function(){ /* alltasks.js will wire the service UI */ });</script>
+</body>
+</html>
