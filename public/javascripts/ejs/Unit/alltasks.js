@@ -298,7 +298,7 @@ function openRequestDetails(requestId, requestType) {
         const filesContainer = document.getElementById('modalFiles');
         if (files && files.length > 0) {
             filesContainer.innerHTML = '';
-            createEnhancedFilePreview(files, filesContainer);
+            createEnhancedFilePreview(files, filesContainer, dateSubmitted);
             if (filesSection) filesSection.style.display = 'block';
         } else {
             if (filesSection) filesSection.style.display = 'none';
@@ -316,7 +316,7 @@ function openRequestDetails(requestId, requestType) {
         const deliverablesContainer = document.getElementById('modalDeliverables');
         if (deliverables && deliverables.length > 0) {
             deliverablesContainer.innerHTML = '';
-            createEnhancedFilePreview(deliverables, deliverablesContainer);
+            createEnhancedFilePreview(deliverables, deliverablesContainer, dateSubmitted);
             if (deliverablesSection) deliverablesSection.style.display = 'block';
         } else {
             if (deliverablesSection) deliverablesSection.style.display = 'none';
@@ -431,10 +431,13 @@ async function loadRevisionHistory(requestId) {
             // Clear container
             historyContainer.innerHTML = '';
             
+            // Filter out initial submission and render only unit feedback/revisions
+            const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+            
             // Render each revision entry with enumeration
-            result.revisions.forEach((revision, index) => {
+            revisionsToShow.forEach((revision, index) => {
                 console.log('[Revision History] Rendering revision', index, ':', revision.type);
-                const entry = createRevisionEntry(revision, index, result.revisions.length);
+                const entry = createRevisionEntry(revision, index, revisionsToShow.length);
                 historyContainer.appendChild(entry);
             });
             
@@ -612,7 +615,7 @@ function createRevisionEntry(revision, index, total) {
                         <span class="attachments-count">${revision.files.length} file${revision.files.length > 1 ? 's' : ''} attached</span>
                     </div>
                     <div class="attachments-grid">
-                        ${revision.files.map(file => createRevisionFileCard(file)).join('')}
+                        ${revision.files.map(file => createRevisionFileCard(file, revision.timestamp)).join('')}
                     </div>
                 </div>
             ` : ''}
@@ -625,7 +628,7 @@ function createRevisionEntry(revision, index, total) {
 }
 
 // Function: createRevisionFileCard
-function createRevisionFileCard(file) {
+function createRevisionFileCard(file, revisionTimestamp) {
     // Handle different file object formats
     const filename = file.filename || file.path || file.name || file;
     
@@ -907,9 +910,14 @@ function hideRevokeForm() {
         revokeForm.style.display = 'none';
     }
 
-    const revokeReasonText = document.getElementById('revokeReasonText');
-    if (revokeReasonText) {
-        revokeReasonText.value = '';
+    // Clear revoke reason (Quill or textarea)
+    if (window.revokeReasonQuill) {
+        window.revokeReasonQuill.setText('');
+    } else {
+        const revokeReasonText = document.getElementById('revokeReasonText');
+        if (revokeReasonText) {
+            revokeReasonText.value = '';
+        }
     }
 }
 
@@ -920,8 +928,14 @@ async function submitRevokeApproval() {
         return;
     }
 
-    const reasonText = document.getElementById('revokeReasonText');
-    const reason = reasonText ? reasonText.value.trim() : '';
+    // Get content from Quill editor if available, otherwise from textarea
+    let reason = '';
+    if (window.revokeReasonQuill) {
+        reason = window.revokeReasonQuill.root.innerHTML;
+    } else {
+        const reasonText = document.getElementById('revokeReasonText');
+        reason = reasonText ? reasonText.value.trim() : '';
+    }
     
     try {
         const response = await fetch(`/unit/task/revoke-approval/${currentRequestId}`, {
@@ -1030,11 +1044,23 @@ async function submitRevision() {
         return;
     }
 
-    const revisionComments = document.getElementById('revisionComments')?.value.trim();
-
-    if (!revisionComments) {
-        showErrorMessage('Please enter revision feedback');
-        return;
+    // Get content from Quill editor if available, otherwise from textarea
+    let revisionComments;
+    if (window.revisionCommentsQuill) {
+        const html = window.revisionCommentsQuill.root.innerHTML;
+        const text = window.revisionCommentsQuill.getText().trim();
+        revisionComments = html;
+        
+        if (!text) {
+            showErrorMessage('Please enter revision feedback');
+            return;
+        }
+    } else {
+        revisionComments = document.getElementById('revisionComments')?.value.trim();
+        if (!revisionComments) {
+            showErrorMessage('Please enter revision feedback');
+            return;
+        }
     }
 
     try {
@@ -1058,7 +1084,11 @@ async function submitRevision() {
             showSuccessMessage('Revision request submitted successfully');
             
             // Clear and hide revision form
-            document.getElementById('revisionComments').value = '';
+            if (window.revisionCommentsQuill) {
+                window.revisionCommentsQuill.setText('');
+            } else {
+                document.getElementById('revisionComments').value = '';
+            }
             clearAllRevisionFiles();
             hideRevisionForm();
             
@@ -1543,7 +1573,11 @@ function loadTeamConversation(requestId) {
             } else {
                 container.innerHTML = `
                     <div class="unit-messages-empty">
-                        <div class="empty-icon">💭</div>
+                        <div class="empty-icon">
+                            <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                        </div>
                         <p>No team discussion yet</p>
                         <small>Start the conversation below</small>
                     </div>
@@ -1681,10 +1715,20 @@ function createMessageElement(msg) {
 }
 
 async function sendTeamMessage() {
-    const input = document.getElementById('teamMessageInput');
-    const content = input ? input.value.trim() : '';
+    // Get content from Quill editor if available, otherwise from textarea
+    let content = '';
+    let plainText = '';
     
-    if (!content && chatFiles.length === 0) {
+    if (window.teamMessageQuill) {
+        content = window.teamMessageQuill.root.innerHTML;
+        plainText = window.teamMessageQuill.getText().trim();
+    } else {
+        const input = document.getElementById('teamMessageInput');
+        content = input ? input.value.trim() : '';
+        plainText = content;
+    }
+    
+    if (!plainText && chatFiles.length === 0) {
         showErrorMessage('Please enter a message or select a file');
         return;
     }
@@ -1740,7 +1784,15 @@ async function sendTeamMessage() {
         
         const data = await response.json();
         console.log('[AllTasks] Message sent successfully');
-        if (input) input.value = '';
+        
+        // Clear message input (Quill or textarea)
+        if (window.teamMessageQuill) {
+            window.teamMessageQuill.setText('');
+        } else {
+            const input = document.getElementById('teamMessageInput');
+            if (input) input.value = '';
+        }
+        
         clearAllChatFiles();
         // Reload conversation to show new message
         await loadTeamConversation(currentRequestId);
@@ -1752,8 +1804,13 @@ async function sendTeamMessage() {
 }
 
 function clearConversationInput() {
-    const input = document.getElementById('teamMessageInput');
-    if (input) input.value = '';
+    // Clear message input (Quill or textarea)
+    if (window.teamMessageQuill) {
+        window.teamMessageQuill.setText('');
+    } else {
+        const input = document.getElementById('teamMessageInput');
+        if (input) input.value = '';
+    }
     
     const preview = document.getElementById('attachmentPreview');
     if (preview) preview.style.display = 'none';
@@ -1868,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Enhanced file preview function (like user side)
-function createEnhancedFilePreview(allFiles, previewContainer) {
+function createEnhancedFilePreview(allFiles, previewContainer, uploadTimestamp) {
   if (!previewContainer) return;
   
   if (allFiles.length > 0) {
@@ -1895,6 +1952,20 @@ function createEnhancedFilePreview(allFiles, previewContainer) {
       const isDoc = ['doc', 'docx'].includes(ext);
       const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
       const isText = ['txt', 'rtf'].includes(ext);
+      
+      // Get upload timestamp from request creation time or file metadata
+      let uploadTimeInfo = '';
+      const timestamp = fileObj.createdAt || fileObj.uploadedAt || fileObj.timestamp || uploadTimestamp;
+      if (timestamp) {
+        const uploadDate = new Date(timestamp);
+        uploadTimeInfo = uploadDate.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
       
       // Determine file icon
       let fileIcon = `
@@ -1952,7 +2023,16 @@ function createEnhancedFilePreview(allFiles, previewContainer) {
             <div style="color: #059669;">${fileIcon}</div>
             <div class="file-info-enhanced">
               <div class="file-name-enhanced" title="${fileName}">${fileName}</div>
-              <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
+              <div class="file-type-enhanced">
+                <span>${ext.toUpperCase()} FILE</span>
+                ${uploadTimeInfo ? `<span class="file-upload-timestamp" title="Uploaded: ${uploadTimeInfo}">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 3px;">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  ${uploadTimeInfo}
+                </span>` : ''}
+              </div>
             </div>
           </div>
           
@@ -2223,23 +2303,7 @@ function setupEnhancedFileUpload() {
 // ==========================================
 
 function initializeRevisionFeatures() {
-    // Text formatting buttons for revision
-    const formatBtns = document.querySelectorAll('.revision-format-toolbar .format-btn[data-format]');
-    formatBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const format = this.getAttribute('data-format');
-            applyRevisionFormat(format);
-        });
-    });
-
-    // Text formatting buttons for revoke approval
-    const revokeFormatBtns = document.querySelectorAll('.revision-format-toolbar .format-btn[data-revoke-format]');
-    revokeFormatBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const format = this.getAttribute('data-revoke-format');
-            applyRevokeFormat(format);
-        });
-    });
+    // Text formatting buttons are now handled in AllTasks.ejs to avoid duplication
 
     // Attach files button
     const attachBtn = document.getElementById('revisionAttachBtn');
@@ -2260,52 +2324,11 @@ function initializeRevisionFeatures() {
     }
 }
 
-// Define globally so it can be accessed from EJS keyboard shortcuts
+// Revision formatting is now handled in AllTasks.ejs - keeping stub for backward compatibility
 window.applyRevisionFormat = function(format) {
-    const textarea = document.getElementById('revisionComments');
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    
-    if (!selectedText) {
-        alert('Please select text to format');
-        return;
-    }
-    
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-
-    let formattedText = selectedText;
-    let newCursorPos = end;
-
-    switch(format) {
-        case 'bold':
-            formattedText = `**${selectedText}**`;
-            newCursorPos = start + formattedText.length;
-            break;
-        case 'italic':
-            formattedText = `*${selectedText}*`;
-            newCursorPos = start + formattedText.length;
-            break;
-        case 'underline':
-            formattedText = `__${selectedText}__`;
-            newCursorPos = start + formattedText.length;
-            break;
-        case 'bullet':
-            const lines = selectedText.split('\n');
-            formattedText = lines.map(line => line.trim() ? `• ${line.trim()}` : line).join('\n');
-            newCursorPos = start + formattedText.length;
-            break;
-    }
-
-    textarea.value = beforeText + formattedText + afterText;
-    textarea.focus();
-    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    console.log('[AllTasks] applyRevisionFormat called but handled in EJS');
 };
 
-// Create local alias for consistency
 function applyRevisionFormat(format) {
     window.applyRevisionFormat(format);
 }
@@ -2713,36 +2736,6 @@ window.closeImageViewer = function() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeChatFileFeatures();
     
-    // Add keyboard shortcuts for team message input
-    const teamMessageInput = document.getElementById('teamMessageInput');
-    if (teamMessageInput) {
-        console.log('[AllTasks] Team message input found, attaching keyboard shortcuts');
-        
-        teamMessageInput.addEventListener('keydown', function(e) {
-            // Ctrl+B or Cmd+B for bold
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
-                e.preventDefault();
-                console.log('[AllTasks] Keyboard shortcut: Bold (Ctrl+B)');
-                applyChatFormat('bold');
-                return false;
-            }
-            // Ctrl+I or Cmd+I for italic
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
-                e.preventDefault();
-                console.log('[AllTasks] Keyboard shortcut: Italic (Ctrl+I)');
-                applyChatFormat('italic');
-                return false;
-            }
-            // Ctrl+U or Cmd+U for underline
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
-                e.preventDefault();
-                console.log('[AllTasks] Keyboard shortcut: Underline (Ctrl+U)');
-                applyChatFormat('underline');
-                return false;
-            }
-        });
-    } else {
-        console.error('[AllTasks] Team message input element not found!');
-    }
+    // Keyboard shortcuts are now handled in AllTasks.ejs to avoid duplication
 });
 

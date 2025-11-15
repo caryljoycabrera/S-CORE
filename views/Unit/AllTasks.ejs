@@ -543,7 +543,7 @@
                 <span class="toolbar-hint">Format your reason</span>
               </div>
 
-              <textarea id="revokeReasonText" rows="4" class="unit-textarea" placeholder="Provide a reason for revoking this approval (optional)..."></textarea>
+              <div id="revokeReasonEditor" style="background: white; min-height: 120px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
               
               <div class="unit-form-actions">
                 <button id="confirmRevokeBtn" class="unit-btn unit-btn-warning">Revoke Approval</button>
@@ -578,48 +578,6 @@
               <strong>Revision Feedback</strong>
               <small>Clearly explain what needs to be revised</small>
             </label>
-            
-            <!-- Text Formatting Toolbar -->
-            <div class="revision-format-toolbar">
-              <button type="button" class="format-btn" data-format="bold" title="Bold">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
-                  <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
-                </svg>
-              </button>
-              <button type="button" class="format-btn" data-format="italic" title="Italic">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="19" y1="4" x2="10" y2="4"/>
-                  <line x1="14" y1="20" x2="5" y2="20"/>
-                  <line x1="15" y1="4" x2="9" y2="20"/>
-                </svg>
-              </button>
-              <button type="button" class="format-btn" data-format="underline" title="Underline">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
-                  <line x1="4" y1="21" x2="20" y2="21"/>
-                </svg>
-              </button>
-              <div class="toolbar-divider"></div>
-              <button type="button" class="format-btn" data-format="bullet" title="Bullet List">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="8" y1="6" x2="21" y2="6"/>
-                  <line x1="8" y1="12" x2="21" y2="12"/>
-                  <line x1="8" y1="18" x2="21" y2="18"/>
-                  <circle cx="4" cy="6" r="1" fill="currentColor"/>
-                  <circle cx="4" cy="12" r="1" fill="currentColor"/>
-                  <circle cx="4" cy="18" r="1" fill="currentColor"/>
-                </svg>
-              </button>
-              <div class="toolbar-divider"></div>
-              <button type="button" id="revisionAttachBtn" class="format-btn" title="Attach Files">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                </svg>
-              </button>
-              <input type="file" id="revisionFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
-              <span class="toolbar-hint">Format your feedback</span>
-            </div>
 
             <!-- Attached Files Preview -->
             <div id="revisionFilesPreview" class="revision-files-preview" style="display: none;">
@@ -636,7 +594,38 @@
               <div id="revisionFilesContainer" class="files-container"></div>
             </div>
 
-            <textarea id="revisionComments" rows="5" class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..."></textarea>
+            <!-- Text Formatting Toolbar -->
+            <div class="unit-format-toolbar" style="margin-top: 0.5rem;">
+              <button type="button" class="format-btn" data-revision-format="bold" title="Bold (Ctrl+B)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                  <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                </svg>
+              </button>
+              <button type="button" class="format-btn" data-revision-format="italic" title="Italic (Ctrl+I)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="19" y1="4" x2="10" y2="4"/>
+                  <line x1="14" y1="20" x2="5" y2="20"/>
+                  <line x1="15" y1="4" x2="9" y2="20"/>
+                </svg>
+              </button>
+              <button type="button" class="format-btn" data-revision-format="underline" title="Underline (Ctrl+U)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                  <line x1="4" y1="21" x2="20" y2="21"/>
+                </svg>
+              </button>
+              <div class="toolbar-divider"></div>
+              <button type="button" id="revisionAttachBtn" class="format-btn" title="Attach Files">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+              </button>
+              <input type="file" id="revisionFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+              <span class="toolbar-hint">Format your feedback</span>
+            </div>
+
+            <textarea id="revisionComments" class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..." rows="6" style="margin-top: 0;"></textarea>
             
             <div class="unit-form-actions">
               <button id="submitRevisionBtn" class="unit-btn unit-btn-submit">Submit Revision Request</button>
@@ -825,20 +814,20 @@
 
           <!-- Text Formatting Toolbar -->
           <div class="unit-format-toolbar">
-            <button type="button" class="format-btn" data-chat-format="bold" title="Bold">
+            <button type="button" class="format-btn" data-chat-format="bold" title="Bold (Ctrl+B)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
                 <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
               </svg>
             </button>
-            <button type="button" class="format-btn" data-chat-format="italic" title="Italic">
+            <button type="button" class="format-btn" data-chat-format="italic" title="Italic (Ctrl+I)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="19" y1="4" x2="10" y2="4"/>
                 <line x1="14" y1="20" x2="5" y2="20"/>
                 <line x1="15" y1="4" x2="9" y2="20"/>
               </svg>
             </button>
-            <button type="button" class="format-btn" data-chat-format="underline" title="Underline">
+            <button type="button" class="format-btn" data-chat-format="underline" title="Underline (Ctrl+U)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
                 <line x1="4" y1="21" x2="20" y2="21"/>
@@ -856,7 +845,7 @@
 
           <!-- Message Input -->
           <div class="unit-message-input-wrapper">
-            <textarea id="teamMessageInput" placeholder="Type your message to team members..." rows="3" class="unit-message-input"></textarea>
+            <textarea id="teamMessageInput" class="unit-message-input" placeholder="Type your message to team members..." rows="3"></textarea>
             <button id="sendTeamMessageBtn" class="unit-send-btn">
               <span>Send</span>
               <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -932,48 +921,132 @@
     input.focus();
   };
   
-  // Add click handlers to formatting buttons when DOM is ready
+  // ===== QUILL RICH TEXT EDITORS =====
+  // Text formatting functions for Unit side
   document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.format-btn[data-chat-format]').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const format = this.getAttribute('data-chat-format');
-        window.applyUnitFormatting(format);
-      });
-    });
-    
-    // ==========================================
-    // KEYBOARD SHORTCUTS - Ctrl+B, Ctrl+I, Ctrl+U
-    // ==========================================
-    document.addEventListener('keydown', function(e) {
-      const input = document.getElementById('teamMessageInput');
-      const revisionInput = document.getElementById('revisionComments');
+    // Format text helper function
+    function formatText(textarea, startTag, endTag) {
+      if (!textarea) return;
       
-      // Check if focus is in team message input
-      if (input && document.activeElement === input) {
-        if (e.ctrlKey && e.key === 'b') {
-          e.preventDefault();
-          window.applyUnitFormatting('bold');
-        } else if (e.ctrlKey && e.key === 'i') {
-          e.preventDefault();
-          window.applyUnitFormatting('italic');
-        } else if (e.ctrlKey && e.key === 'u') {
-          e.preventDefault();
-          window.applyUnitFormatting('underline');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+      const beforeText = textarea.value.substring(0, start);
+      const afterText = textarea.value.substring(end);
+      
+      // Insert formatted text
+      textarea.value = beforeText + startTag + selectedText + endTag + afterText;
+      
+      // Position cursor - if no text selected, place between tags; if text selected, place after
+      let newPosition;
+      if (selectedText.length === 0) {
+        newPosition = start + startTag.length;
+      } else {
+        newPosition = start + startTag.length + selectedText.length + endTag.length;
+      }
+      textarea.setSelectionRange(newPosition, newPosition);
+      textarea.focus();
+    }
+    
+    // Team message formatting - use event delegation
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('[data-chat-format]');
+      if (target) {
+        e.preventDefault();
+        e.stopPropagation();
+        const teamMessageInput = document.getElementById('teamMessageInput');
+        if (!teamMessageInput) return;
+        
+        const format = target.getAttribute('data-chat-format');
+        if (format === 'bold') {
+          formatText(teamMessageInput, '**', '**');
+        } else if (format === 'italic') {
+          formatText(teamMessageInput, '*', '*');
+        } else if (format === 'underline') {
+          formatText(teamMessageInput, '<u>', '</u>');
         }
       }
-      
-      // Check if focus is in revision comments textarea
-      if (revisionInput && document.activeElement === revisionInput) {
-        if (e.ctrlKey && e.key === 'b') {
-          e.preventDefault();
-          if (typeof applyRevisionFormat === 'function') applyRevisionFormat('bold');
-        } else if (e.ctrlKey && e.key === 'i') {
-          e.preventDefault();
-          if (typeof applyRevisionFormat === 'function') applyRevisionFormat('italic');
-        } else if (e.ctrlKey && e.key === 'u') {
-          e.preventDefault();
-          if (typeof applyRevisionFormat === 'function') applyRevisionFormat('underline');
+    });
+    
+    // Revision comments formatting - use event delegation
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('[data-revision-format]');
+      if (target) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[AllTasks] Revision format button clicked:', target.getAttribute('data-revision-format'));
+        
+        const revisionCommentsInput = document.getElementById('revisionComments');
+        if (!revisionCommentsInput) {
+          console.error('[AllTasks] Revision comments textarea not found');
+          return;
+        }
+        
+        console.log('[AllTasks] Textarea found, applying format');
+        const format = target.getAttribute('data-revision-format');
+        if (format === 'bold') {
+          formatText(revisionCommentsInput, '**', '**');
+        } else if (format === 'italic') {
+          formatText(revisionCommentsInput, '*', '*');
+        } else if (format === 'underline') {
+          formatText(revisionCommentsInput, '<u>', '</u>');
+        }
+      }
+    });
+    
+    // Attach button handlers
+    const chatAttachBtn = document.getElementById('chatAttachBtn');
+    const chatFileInput = document.getElementById('chatFileInput');
+    if (chatAttachBtn && chatFileInput) {
+      chatAttachBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        chatFileInput.click();
+      });
+    }
+    
+    const revisionAttachBtn = document.getElementById('revisionAttachBtn');
+    const revisionFileInput = document.getElementById('revisionFileInput');
+    if (revisionAttachBtn && revisionFileInput) {
+      revisionAttachBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        revisionFileInput.click();
+      });
+    }
+    
+    // Keyboard shortcuts for team message - use event delegation
+    document.addEventListener('keydown', function(e) {
+      const teamMessageInput = document.getElementById('teamMessageInput');
+      if (teamMessageInput && document.activeElement === teamMessageInput) {
+        if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+          if (e.key === 'b' || e.key === 'B') {
+            e.preventDefault();
+            formatText(teamMessageInput, '**', '**');
+          } else if (e.key === 'i' || e.key === 'I') {
+            e.preventDefault();
+            formatText(teamMessageInput, '*', '*');
+          } else if (e.key === 'u' || e.key === 'U') {
+            e.preventDefault();
+            formatText(teamMessageInput, '<u>', '</u>');
+          }
+        }
+      }
+    });
+    
+    // Keyboard shortcuts for revision comments - use event delegation
+    document.addEventListener('keydown', function(e) {
+      const revisionCommentsInput = document.getElementById('revisionComments');
+      if (revisionCommentsInput && document.activeElement === revisionCommentsInput) {
+        if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+          if (e.key === 'b' || e.key === 'B') {
+            e.preventDefault();
+            formatText(revisionCommentsInput, '**', '**');
+          } else if (e.key === 'i' || e.key === 'I') {
+            e.preventDefault();
+            formatText(revisionCommentsInput, '*', '*');
+          } else if (e.key === 'u' || e.key === 'U') {
+            e.preventDefault();
+            formatText(revisionCommentsInput, '<u>', '</u>');
+          }
         }
       }
     });

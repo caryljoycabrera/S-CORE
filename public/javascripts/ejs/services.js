@@ -1207,12 +1207,24 @@ document.addEventListener('DOMContentLoaded', function() {
   // Send message function
   async function sendMessage() {
     console.log('[Services] Send message triggered');
-    const messageInput = document.getElementById('messageInput');
-    const content = messageInput.value.trim();
+    
+    // Get content from Quill editor if available (defined in services.ejs)
+    let content = '';
+    let plainText = '';
+    
+    if (window.messageQuill) {
+      content = window.messageQuill.root.innerHTML;
+      plainText = window.messageQuill.getText().trim();
+    } else {
+      const messageInput = document.getElementById('messageInput');
+      content = messageInput ? messageInput.value.trim() : '';
+      plainText = content;
+    }
+    
     console.log('[Services] Message content:', content || '(empty)');
     console.log('[Services] Files to send:', chatFiles.length);
     
-    if (!content && chatFiles.length === 0) {
+    if (!plainText && chatFiles.length === 0) {
       console.warn('[Services] No content or files to send');
       showNotification('Please enter a message or attach files', 'error');
       return;
@@ -1269,7 +1281,15 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('[Services] Response data:', data);
       
       console.log('[Services] Message sent successfully');
-      messageInput.value = '';
+      
+      // Clear message input (Quill or textarea)
+      if (window.messageQuill) {
+        window.messageQuill.setText('');
+      } else {
+        const messageInput = document.getElementById('messageInput');
+        if (messageInput) messageInput.value = '';
+      }
+      
       clearAllChatFiles();
       // Reload conversation to show new message
       openConversation(currentRequestId);

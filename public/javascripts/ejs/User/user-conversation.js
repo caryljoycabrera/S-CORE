@@ -254,8 +254,19 @@ window.openUserConversation = function(requestId) {
     .then(data => {
       console.log('[User Conversation] Conversation data received:', data);
       
-      const messages = data.conversation || data.messages || [];
-      console.log('[User Conversation] Displaying', messages.length, 'messages');
+      let messages = data.conversation || data.messages || [];
+      
+      // Filter out revision feedback messages from unit (they appear in revision history)
+      messages = messages.filter(msg => {
+        const content = msg.content || '';
+        const isRevisionMessage = content.includes('📝 **Revision Requested**') || 
+                                  content.includes('✅ **Request Approved**') || 
+                                  content.includes('🔄 **Approval Revoked**') ||
+                                  content.includes('✅ **Revision Response**');
+        return !isRevisionMessage;
+      });
+      
+      console.log('[User Conversation] Displaying', messages.length, 'messages (after filtering revision feedback)');
       
       // Clear container
       messagesContainer.innerHTML = '';

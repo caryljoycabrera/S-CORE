@@ -1,0 +1,270 @@
+/* ========================================
+   QUILL EDITOR CUSTOM STYLING
+   Consistent rich text editor appearance
+   ======================================== */
+
+/* Toolbar styling - clean, modern look */
+.ql-toolbar.ql-snow {
+  border: 1px solid #e2e8f0 !important;
+  border-bottom: none !important;
+  border-radius: 8px 8px 0 0 !important;
+  background: white !important;
+  padding: 8px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* Toolbar buttons */
+.ql-toolbar.ql-snow .ql-formats {
+  margin-right: 12px !important;
+}
+
+.ql-toolbar.ql-snow button {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+}
+
+.ql-toolbar.ql-snow button:hover {
+  background: #e2e8f0 !important;
+}
+
+.ql-toolbar.ql-snow button.ql-active {
+  background: #dbeafe !important;
+  color: #3b82f6 !important;
+}
+
+/* Custom attach button */
+.ql-toolbar.ql-snow button.ql-attach {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ql-toolbar.ql-snow button.ql-attach svg {
+  width: 14px !important;
+  height: 14px !important;
+  stroke: #64748b !important;
+  transition: stroke 0.2s ease !important;
+}
+
+.ql-toolbar.ql-snow button.ql-attach:hover svg {
+  stroke: #1e293b !important;
+}
+
+.ql-toolbar.ql-snow .ql-stroke {
+  stroke: #64748b !important;
+}
+
+.ql-toolbar.ql-snow button:hover .ql-stroke {
+  stroke: #1e293b !important;
+}
+
+.ql-toolbar.ql-snow button.ql-active .ql-stroke {
+  stroke: #3b82f6 !important;
+}
+
+.ql-toolbar.ql-snow .ql-fill {
+  fill: #64748b !important;
+}
+
+.ql-toolbar.ql-snow button:hover .ql-fill {
+  fill: #1e293b !important;
+}
+
+.ql-toolbar.ql-snow button.ql-active .ql-fill {
+  fill: #3b82f6 !important;
+}
+
+/* Editor container */
+.ql-container.ql-snow {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0 0 8px 8px !important;
+  background: white !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-size: 0.9375rem !important;
+}
+
+/* Editor content area */
+.ql-editor {
+  min-height: 120px !important;
+  padding: 12px 16px !important;
+  color: #1e293b !important;
+  line-height: 1.6 !important;
+}
+
+.ql-editor.ql-blank::before {
+  color: #94a3b8 !important;
+  font-style: normal !important;
+  font-size: 0.9375rem !important;
+  left: 16px !important;
+}
+
+/* Focus state */
+.ql-container.ql-snow:focus-within {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.ql-toolbar.ql-snow:has(+ .ql-container:focus-within) {
+  border-color: #3b82f6 !important;
+}
+
+/* Tooltip styling */
+.ql-tooltip.ql-snow {
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+
+.ql-tooltip.ql-snow input[type="text"] {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  font-size: 0.875rem !important;
+}
+
+.ql-tooltip.ql-snow .ql-action,
+.ql-tooltip.ql-snow .ql-remove {
+  color: #3b82f6 !important;
+  font-size: 0.875rem !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  transition: background 0.2s ease !important;
+}
+
+.ql-tooltip.ql-snow .ql-action:hover,
+.ql-tooltip.ql-snow .ql-remove:hover {
+  background: #f1f5f9 !important;
+}
+
+/* Compact editor for chat messages */
+.ql-editor.compact {
+  min-height: 80px !important;
+  padding: 10px 14px !important;
+}
+
+/* Small editor for inline edits */
+.ql-editor.small {
+  min-height: 60px !important;
+  padding: 8px 12px !important;
+  font-size: 0.875rem !important;
+}
+
+/* Large editor for descriptions */
+.ql-editor.large {
+  min-height: 180px !important;
+  padding: 16px 20px !important;
+}
+
+/* Formatted content display */
+.ql-editor p {
+  margin-bottom: 0.75em !important;
+}
+
+.ql-editor p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.ql-editor strong {
+  font-weight: 600 !important;
+}
+
+.ql-editor em {
+  font-style: italic !important;
+}
+
+.ql-editor u {
+  text-decoration: underline !important;
+}
+
+.ql-editor ol,
+.ql-editor ul {
+  padding-left: 1.5em !important;
+  margin-bottom: 0.75em !important;
+}
+
+.ql-editor ol li,
+.ql-editor ul li {
+  margin-bottom: 0.25em !important;
+}
+
+.ql-editor a {
+  color: #3b82f6 !important;
+  text-decoration: underline !important;
+}
+
+.ql-editor a:hover {
+  color: #2563eb !important;
+}
+
+/* Dropdown selectors */
+.ql-snow .ql-picker {
+  font-size: 0.875rem !important;
+}
+
+.ql-snow .ql-picker-label {
+  border: none !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+}
+
+.ql-snow .ql-picker-label:hover {
+  background: #e2e8f0 !important;
+}
+
+.ql-snow .ql-picker.ql-expanded .ql-picker-label {
+  background: #e2e8f0 !important;
+}
+
+.ql-snow .ql-picker-options {
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px !important;
+}
+
+.ql-snow .ql-picker-item {
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+}
+
+.ql-snow .ql-picker-item:hover {
+  background: #f1f5f9 !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow {
+    padding: 6px !important;
+  }
+  
+  .ql-toolbar.ql-snow button {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .ql-toolbar.ql-snow .ql-formats {
+    margin-right: 8px !important;
+  }
+  
+  .ql-editor {
+    min-height: 100px !important;
+    padding: 10px 12px !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Force white background always - no dark mode */
+.ql-toolbar.ql-snow,
+.ql-container.ql-snow,
+.ql-editor {
+  background: white !important;
+}

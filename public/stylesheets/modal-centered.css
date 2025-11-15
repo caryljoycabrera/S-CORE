@@ -121,6 +121,19 @@
   width: 85% !important;
 }
 
+/* Requestor request details modal - original size when no revisions */
+.requestor-modal-content {
+  max-width: 1000px !important;
+  width: 90% !important;
+  max-height: 95vh !important;
+}
+
+/* Requestor modal becomes wider when revision history shows (two-column) */
+.requestor-modal-content.has-revisions {
+  max-width: 1800px !important;
+  width: 98% !important;
+}
+
 /* Conversation modals - even wider for better chat experience */
 .unit-conversation-modal {
   max-width: min(1400px, calc(100vw - 150px)) !important;
