@@ -2103,6 +2103,11 @@ option:hover {
                           In Progress
                         </label>
                         <label class="dropdown-option">
+                          <input type="checkbox" value="for-checking">
+                          <span class="checkbox-custom"></span>
+                          For Checking
+                        </label>
+                        <label class="dropdown-option">
                           <input type="checkbox" value="approved">
                           <span class="checkbox-custom"></span>
                           Approved
@@ -6078,6 +6083,22 @@ function createRevisionFileCard(file) {
                 <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
             </div>
             <div class="revision-file-actions">
+                ${isImage ? `
+                <button onclick="viewImage('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                ` : ''}
+                ${isPDF ? `
+                <button onclick="viewPdf('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                ` : ''}
                 <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
                     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

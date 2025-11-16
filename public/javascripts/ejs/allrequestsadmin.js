@@ -2786,8 +2786,13 @@ function createAdminRevisionEntry(revision, index, total) {
         authorName = 'Requestor';
     }
     
+    // Show revision number for completed entries, otherwise just sequential number
+    const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) 
+        ? `REV #${revision.revisionNumber}` 
+        : `#${index + 1}`;
+    
     entry.innerHTML = `
-        <div class="revision-number-badge">#${index + 1}</div>
+        <div class="revision-number-badge">${badgeNumber}</div>
         <div class="revision-message-bubble">
             <div class="revision-bubble-header">
                 <div>

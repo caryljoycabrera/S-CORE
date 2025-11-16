@@ -565,3 +565,69 @@ body > .select2-container,
     padding: 1rem;
   }
 }
+
+/* ========================================
+   FILE PREVIEW MODALS - HIGHEST Z-INDEX
+   ======================================== */
+
+/* PDF Viewer Modal */
+#pdfViewerModal,
+#imageViewerModal,
+#imagePreviewModal {
+  z-index: 999999 !important; /* Highest z-index - above everything */
+}
+
+#pdfViewerModal .modal-content,
+#imageViewerModal .modal-content,
+#imagePreviewModal .modal-content {
+  z-index: 1000000 !important; /* Content on top of backdrop */
+  max-width: 95vw !important;
+  max-height: 95vh !important;
+  position: relative !important;
+}
+
+/* Image Preview Specific */
+#imagePreviewModal img,
+#imageViewerModal img {
+  max-width: 90vw !important;
+  max-height: 85vh !important;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+/* PDF Viewer Specific */
+#pdfViewerModal iframe {
+  width: 100% !important;
+  height: 80vh !important;
+  border: none;
+}
+
+/* Close buttons for file viewers */
+#pdfViewerModal .close,
+#imageViewerModal .close,
+#imagePreviewModal .close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.7);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000001 !important;
+  transition: all 0.2s ease;
+}
+
+#pdfViewerModal .close:hover,
+#imageViewerModal .close:hover,
+#imagePreviewModal .close:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}

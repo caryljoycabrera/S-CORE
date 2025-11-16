@@ -1328,6 +1328,20 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
     // Update status to "For Checking" instead of completed
     task.status = 'For Checking';
     
+    // Add to revision history
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
+    }
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: `Deliverables uploaded by ${user.fName} ${user.lName} (${user.unitTeam} Unit)${task.revisionCount > 0 ? ` - Revision ${task.revisionCount}` : ''}`,
+      deliverableFiles: filenames,
+      status: 'for_checking',
+      revisionType: 'deliverable_submitted',
+      revisionNumber: task.revisionCount // Track which revision cycle these deliverables belong to
+    });
+    
     await task.save();
 
     // Notify admins that unit uploaded deliverables
@@ -1379,6 +1393,19 @@ router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
     
     // Note: revisionCount is managed when user requests revisions
     // When marking as completed, we don't reset it - it tracks total revisions across all cycles
+    
+    // Add completion to revision history
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
+    }
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: `Service request completed by ${user.fName} ${user.lName} (${user.unitTeam} Unit)${task.revisionCount > 0 ? ` - Approved after ${task.revisionCount} revision${task.revisionCount > 1 ? 's' : ''}` : ''}`,
+      status: 'completed',
+      revisionType: 'completed',
+      revisionNumber: task.revisionCount // Track which revision cycle this completion belongs to
+    });
     
     await task.save();
 

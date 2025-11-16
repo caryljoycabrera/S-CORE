@@ -622,6 +622,148 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
 });
 
 /**
+ * GET /api/service-revision-history/:requestId
+ * API endpoint to get revision history for a service request
+ */
+router.get('/api/service-revision-history/:requestId', requireLogin, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const user = await User.findById(req.session.userId);
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'User not authenticated', revisions: [] });
+    }
+
+    // Find the service request
+    const serviceRequest = await ServiceRequest.findById(requestId)
+      .populate('userId', 'fName lName');
+
+    if (!serviceRequest) {
+      return res.json({ success: true, revisions: [], message: 'Service request not found' });
+    }
+
+    // SERVER-SIDE DEBUGGING
+    console.log('[API] Service Revision History Request for:', requestId);
+    console.log('[API] Service Request Status:', serviceRequest.status);
+    console.log('[API] Has deliverables:', !!(serviceRequest.deliverables && serviceRequest.deliverables.length));
+    console.log('[API] Deliverables count:', serviceRequest.deliverables ? serviceRequest.deliverables.length : 0);
+    console.log('[API] Has revisionHistory array:', !!serviceRequest.revisionHistory);
+    console.log('[API] RevisionHistory length:', serviceRequest.revisionHistory ? serviceRequest.revisionHistory.length : 0);
+    if (serviceRequest.revisionHistory && serviceRequest.revisionHistory.length > 0) {
+      serviceRequest.revisionHistory.forEach((rev, idx) => {
+        console.log(`[API] RevisionHistory[${idx}]:`, {
+          type: rev.revisionType || rev.type,
+          hasRequestedBy: !!rev.requestedBy,
+          hasRespondedBy: !!rev.respondedBy,
+          status: rev.status,
+          deliverableFiles: rev.deliverableFiles ? rev.deliverableFiles.length : 0
+        });
+      });
+    }
+
+    // Check access permissions
+    if (user.role !== 'admin' && user.role !== 'unit' && serviceRequest.userId._id.toString() !== req.session.userId) {
+      return res.status(403).json({ success: false, error: 'Access denied', revisions: [] });
+    }
+
+    // Build revision history
+    const revisions = [];
+
+    // Add initial submission
+    revisions.push({
+      type: 'initial',
+      timestamp: serviceRequest.createdAt,
+      by: serviceRequest.userId ? `${serviceRequest.userId.fName} ${serviceRequest.userId.lName}` : 'Unknown',
+      description: serviceRequest.description || '',
+      files: serviceRequest.files || []
+    });
+
+    // LEGACY SUPPORT: If deliverables exist but no revisionHistory, create a synthetic entry
+    if (serviceRequest.deliverables && serviceRequest.deliverables.length > 0 && 
+        (!serviceRequest.revisionHistory || serviceRequest.revisionHistory.length === 0)) {
+      console.log('[API] Legacy deliverables detected - creating synthetic revision entry');
+      revisions.push({
+        type: 'deliverable_submitted',
+        requestedAt: serviceRequest.updatedAt || serviceRequest.createdAt,
+        revisionNotes: 'Deliverables uploaded (legacy)',
+        deliverableFiles: serviceRequest.deliverables,
+        status: serviceRequest.status.toLowerCase().replace(/\s+/g, '_'),
+        requestedBy: {
+          fName: 'Unit',
+          lName: 'Team',
+          unitTeam: serviceRequest.assignedUnits || 'Unknown'
+        }
+      });
+    }
+
+    // Add all revisions from revisionHistory array
+    if (serviceRequest.revisionHistory && serviceRequest.revisionHistory.length > 0) {
+      for (const revision of serviceRequest.revisionHistory) {
+        // Unit actions have requestedBy field (deliverable uploads, completions)
+        // User actions have respondedBy field (revision requests)
+        const isUnitAction = revision.requestedBy !== undefined && revision.requestedBy !== null;
+        const isUserAction = revision.respondedBy !== undefined && revision.respondedBy !== null;
+        
+        if (isUnitAction) {
+          // Unit action (deliverable upload, completion, etc.)
+          let requestedByUser = null;
+          try {
+            requestedByUser = await User.findById(revision.requestedBy).select('fName lName unitTeam');
+          } catch (err) {
+            console.log('Error populating user for revision:', err);
+          }
+          
+          revisions.push({
+            requestedBy: requestedByUser ? {
+              _id: requestedByUser._id,
+              fName: requestedByUser.fName,
+              lName: requestedByUser.lName,
+              unitTeam: requestedByUser.unitTeam
+            } : null,
+            requestedAt: revision.requestedAt,
+            revisionNotes: revision.revisionNotes || '',
+            deliverableFiles: revision.deliverableFiles || [],
+            status: revision.status,
+            type: revision.revisionType || revision.type || 'deliverable_submitted',
+            revisionNumber: revision.revisionNumber || 0
+          });
+        } else if (isUserAction) {
+          // User action (revision request, resubmission)
+          let respondedByUser = null;
+          try {
+            respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
+          } catch (err) {
+            console.log('Error populating user for revision:', err);
+          }
+          
+          revisions.push({
+            respondedBy: respondedByUser ? {
+              _id: respondedByUser._id,
+              fName: respondedByUser.fName,
+              lName: respondedByUser.lName
+            } : null,
+            respondedAt: revision.respondedAt,
+            responseNotes: revision.responseNotes || revision.revisionNotes || '',
+            responseFiles: revision.responseFiles || revision.revisionFiles || [],
+            type: revision.revisionType || revision.type || 'revision_requested',
+            status: revision.status,
+            revisionNumber: revision.revisionNumber || 0
+          });
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      revisions: revisions
+    });
+  } catch (err) {
+    console.error('Error fetching service revision history:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch revision history', details: err.message, revisions: [] });
+  }
+});
+
+/**
  * POST /api/conversation/:requestId/mark-read
  * API endpoint to mark conversation messages as read
  */

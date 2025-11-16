@@ -51,7 +51,7 @@ const serviceRequestSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'Pending',
-    enum: ['Pending', 'Queued', 'In Progress', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived']
+    enum: ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived']
   },
 
   // Administrative assignment
@@ -86,6 +86,29 @@ const serviceRequestSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+
+  // Revision history tracking for service requests
+  revisionHistory: [{
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    respondedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    requestedAt: Date,
+    respondedAt: Date,
+    revisionNotes: String,
+    responseNotes: String,
+    revisionFiles: [String],
+    responseFiles: [String],
+    deliverableFiles: [String],
+    status: String,
+    revisionType: { type: String }, // Wrapped in object to avoid Mongoose keyword conflict
+    revisionNumber: Number // Which revision cycle this entry belongs to (0 = initial, 1 = first revision, etc.)
+    // Values: 'deliverable_submitted', 'revision_requested', 'resubmitted', 'completed'
+  }],
 
   // Track if additional file upload is allowed for revision requests
   allowAdditionalFileUpload: {

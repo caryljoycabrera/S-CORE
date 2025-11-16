@@ -29,6 +29,14 @@
   border: 1px solid #3b82f6;
 }
 
+/* For Checking Status - Purple (Unit submitted, awaiting requestor review) */
+.status-badge.for-checking {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #a855f7;
+  font-weight: 600;
+}
+
 /* Existing statuses - ensure consistency */
 .status-badge-warning,
 .status-badge.pending {

@@ -760,6 +760,9 @@ function openRequestDetails(requestId, requestType) {
     } else if (requestType === 'service') {
         if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+        
+        // Load service revision history
+        loadServiceRevisionHistory(requestId);
     }
 
     // Handle Queued status - show Start Task button
@@ -768,8 +771,10 @@ function openRequestDetails(requestId, requestType) {
     // Load team conversation messages
     loadConversation(requestId);
 
-    // Load revision history
-    loadRevisionHistory(requestId);
+    // Load revision history (for approval requests)
+    if (requestType === 'approval') {
+        loadRevisionHistory(requestId);
+    }
 
     // Display modal
     const modal = document.getElementById('requestDetailsModal');
@@ -876,6 +881,323 @@ async function loadRevisionHistory(requestId) {
         // Silently hide section on error (common for service requests)
         if (historySection) historySection.style.display = 'none';
     }
+}
+
+// Function: loadServiceRevisionHistory
+async function loadServiceRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+    
+    console.log('[Service Revision History] ===== STARTING LOAD =====');
+    console.log('[Service Revision History] Request ID:', requestId);
+    console.log('[Service Revision History] History section element:', !!historySection);
+    console.log('[Service Revision History] History container element:', !!historyContainer);
+    console.log('[Service Revision History] Service actions panel element:', !!serviceActionsPanel);
+    
+    if (!historyContainer) {
+        console.warn('[Service Revision History] ❌ Container not found!');
+        return;
+    }
+    
+    try {
+        console.log('[Service Revision History] Fetching from API...');
+        const response = await fetch(`/api/service-revision-history/${requestId}`);
+        console.log('[Service Revision History] Response status:', response.status);
+        console.log('[Service Revision History] Response OK:', response.ok);
+        
+        const contentType = response.headers.get('content-type');
+        console.log('[Service Revision History] Content-Type:', contentType);
+        
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('[Service Revision History] ❌ API returned non-JSON response');
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('[Service Revision History] ===== API RESPONSE =====');
+        console.log('[Service Revision History] Success:', result.success);
+        console.log('[Service Revision History] Revisions count:', result.revisions ? result.revisions.length : 0);
+        console.log('[Service Revision History] Full response:', result);
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            // Log each revision before filtering
+            result.revisions.forEach((rev, idx) => {
+                console.log(`[Service Revision History] ===== REVISION ${idx} DETAILS =====`);
+                console.log('[Service Revision History] Type:', rev.type);
+                console.log('[Service Revision History] Has requestedBy:', !!rev.requestedBy);
+                console.log('[Service Revision History] Has respondedBy:', !!rev.respondedBy);
+                console.log('[Service Revision History] Deliverable files:', rev.deliverableFiles ? rev.deliverableFiles.length : 0);
+                console.log('[Service Revision History] Response files:', rev.responseFiles ? rev.responseFiles.length : 0);
+                console.log('[Service Revision History] Timestamp:', rev.timestamp || rev.requestedAt || rev.respondedAt);
+                console.log('[Service Revision History] Full object:', rev);
+                console.log('[Service Revision History] =====================================');
+            });
+            
+            // Filter out initial submission
+            const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+            
+            console.log('[Service Revision History] Filtered revisions count:', revisionsToShow.length);
+            console.log('[Service Revision History] Revisions to show:', revisionsToShow);
+            
+            if (revisionsToShow.length > 0) {
+                console.log('[Service Revision History] ✅ Showing section with', revisionsToShow.length, 'revisions');
+                
+                // Show the revision history section
+                if (historySection) {
+                    historySection.style.display = 'block';
+                }
+                
+                // Clear container
+                historyContainer.innerHTML = '';
+                
+                // Render each revision entry
+                revisionsToShow.forEach((revision, index) => {
+                    console.log('[Service Revision History] Creating entry', index + 1, 'of', revisionsToShow.length);
+                    console.log('[Service Revision History] Revision type:', revision.type);
+                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                    historyContainer.appendChild(entry);
+                });
+                
+                // Enable two-column layout for revision history
+                const modalBody = document.querySelector('.unit-modal-body');
+                const rightColumn = document.querySelector('.unit-right-column');
+                
+                console.log('[Service Revision History] Modal body element:', !!modalBody);
+                console.log('[Service Revision History] Right column element:', !!rightColumn);
+                
+                if (modalBody) {
+                    modalBody.classList.add('two-column');
+                    console.log('[Service Revision History] ✅ Added two-column class to modal body');
+                }
+                if (rightColumn) {
+                    rightColumn.style.display = 'flex';
+                    console.log('[Service Revision History] ✅ Set right column display to flex');
+                }
+                
+                // Check if deliverables have been submitted
+                const hasDeliverable = revisionsToShow.some(rev => 
+                    rev.type === 'deliverable_submitted' || 
+                    rev.type === 'completed' ||
+                    (rev.deliverableFiles && rev.deliverableFiles.length > 0)
+                );
+                
+                console.log('[Service Revision History] Has deliverable:', hasDeliverable);
+                
+                // Hide upload panel if deliverables submitted, show revision history instead
+                if (hasDeliverable && serviceActionsPanel) {
+                    serviceActionsPanel.style.display = 'none';
+                    console.log('[Service Revision History] ✅ Hid service actions panel');
+                }
+                
+                // Show action buttons for non-completed requests
+                const isCompleted = revisionsToShow.some(rev => rev.type === 'completed');
+                const revisionHistoryActions = document.getElementById('revisionHistoryActions');
+                
+                if (!isCompleted && revisionHistoryActions) {
+                    revisionHistoryActions.style.display = 'none'; // Hide approval actions for service requests
+                }
+            } else {
+                // No revisions to show, hide history section
+                console.log('[Service Revision History] No revisions after filtering');
+                if (historySection) historySection.style.display = 'none';
+                const modalBody = document.querySelector('.unit-modal-body');
+                const rightColumn = document.querySelector('.unit-right-column');
+                if (modalBody) modalBody.classList.remove('two-column');
+                if (rightColumn) rightColumn.style.display = 'none';
+            }
+        } else {
+            console.log('[Service Revision History] No revisions to display');
+            if (historySection) historySection.style.display = 'none';
+            const modalBody = document.querySelector('.unit-modal-body');
+            const rightColumn = document.querySelector('.unit-right-column');
+            if (modalBody) modalBody.classList.remove('two-column');
+            if (rightColumn) rightColumn.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('[Service Revision History] ❌ ERROR:', error);
+        console.error('[Service Revision History] Error stack:', error.stack);
+        if (historySection) historySection.style.display = 'none';
+        const modalBody = document.querySelector('.unit-modal-body');
+        const rightColumn = document.querySelector('.unit-right-column');
+        if (modalBody) modalBody.classList.remove('two-column');
+        if (rightColumn) rightColumn.style.display = 'none';
+    }
+}
+
+// Function: createServiceRevisionEntry
+function createServiceRevisionEntry(revision, index, total) {
+    console.log('🔍 [Service Unit] Creating revision entry:', {
+        index,
+        total,
+        type: revision.type,
+        hasDeliverableFiles: !!(revision.deliverableFiles && revision.deliverableFiles.length),
+        hasResponseFiles: !!(revision.responseFiles && revision.responseFiles.length)
+    });
+    
+    const entry = document.createElement('div');
+    
+    // Determine if this is a unit action or requestor action
+    const isUnitAction = revision.requestedBy || 
+                         revision.type === 'deliverable_submitted' || 
+                         revision.type === 'completed';
+    const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+    
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
+    
+    // Format timestamp
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt);
+    const fullTimestamp = timestamp.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    // Get relative time
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let relativeTime;
+    if (diffMins < 1) relativeTime = 'Just now';
+    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    else relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    // Determine message type and styling
+    let typeLabel, badgeClass;
+    
+    if (revision.type === 'deliverable_submitted') {
+        typeLabel = 'Deliverables Uploaded';
+        badgeClass = 'badge-resubmitted';
+    } else if (revision.type === 'completed') {
+        typeLabel = '✓ Completed';
+        badgeClass = 'badge-approved';
+    } else if (revision.type === 'revision_requested') {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    } else {
+        typeLabel = 'Update';
+        badgeClass = 'badge-revision';
+    }
+    
+    // Get author name
+    let authorName = 'Unknown';
+    let authorUnit = '';
+    
+    if (revision.requestedBy) {
+        if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
+            authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
+            if (revision.requestedBy.unitTeam) {
+                authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+            }
+        }
+    } else if (revision.respondedBy) {
+        if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
+            authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+        }
+    }
+    
+    // Status indicator for last message
+    const isLast = index === total - 1;
+    let statusIndicator = '';
+    
+    if (revision.type === 'completed') {
+        statusIndicator = `
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <span style="color: #10b981; font-weight: 600;">Service Request Completed</span>
+            </div>
+        `;
+    } else if (isLast) {
+        if (isUnitAction) {
+            statusIndicator = `
+                <div class="status-indicator waiting">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 16 14"/>
+                    </svg>
+                    Awaiting Requestor Review
+                </div>
+            `;
+        } else {
+            statusIndicator = `
+                <div class="status-indicator under-review">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Under Unit Review
+                </div>
+            `;
+        }
+    }
+    
+    // Get content
+    let content = '';
+    if (isUnitAction) {
+        content = revision.revisionNotes || 'Deliverables submitted';
+    } else {
+        content = revision.responseNotes || 'Revision requested';
+    }
+    
+    // Get files
+    const files = revision.deliverableFiles || revision.responseFiles || [];
+    
+    // Show revision number for completed entries, otherwise just sequential number
+    const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) 
+        ? `REV #${revision.revisionNumber}` 
+        : `#${index + 1}`;
+    
+    entry.innerHTML = `
+        <div class="revision-number-badge">${badgeNumber}</div>
+        <div class="revision-message-bubble">
+            <div class="revision-bubble-header">
+                <div>
+                    <span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
+                <div class="revision-timestamp">
+                    <span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
+                </div>
+            </div>
+            
+            <div class="message-content-section">
+                <div class="content-label">${isUnitAction ? 'UNIT UPDATE:' : 'REQUESTOR FEEDBACK:'}</div>
+                <div class="content-text">${displayFormattedText(content)}</div>
+            </div>
+            
+            ${files && files.length > 0 ? `
+                <div class="message-attachments-section">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        <span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div class="attachments-grid">
+                        ${files.map(file => createRevisionFileCard(file, revision.requestedAt || revision.respondedAt)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${statusIndicator}
+        </div>
+    `;
+    
+    return entry;
 }
 
 // Function: createRevisionEntry
@@ -1038,8 +1360,13 @@ function createRevisionEntry(revision, index, total) {
         authorName = 'Requestor';
     }
     
+    // Show revision number for completed entries, otherwise just sequential number
+    const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) 
+        ? `REV #${revision.revisionNumber}` 
+        : `#${index + 1}`;
+    
     entry.innerHTML = `
-        <div class="revision-number-badge">#${index + 1}</div>
+        <div class="revision-number-badge">${badgeNumber}</div>
         <div class="revision-message-bubble">
             <div class="revision-bubble-header">
                 <div>
@@ -1127,6 +1454,22 @@ function createRevisionFileCard(file, revisionTimestamp) {
                     <div class="revision-file-size">${ext.toUpperCase()}</div>
                 </div>
                 <div class="revision-file-actions">
+                    ${isImage ? `
+                    <button class="revision-file-btn" onclick="viewImage('/uploads/${file}', '${escapeHtml(file)}')" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    ` : ''}
+                    ${isPDF ? `
+                    <button class="revision-file-btn" onclick="viewPdf('/uploads/${file}', '${escapeHtml(file)}')" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    ` : ''}
                     <a href="/uploads/${file}" download="${escapeHtml(file)}" class="revision-file-btn" title="Download">
                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -1166,23 +1509,23 @@ function createRevisionFileCard(file, revisionTimestamp) {
                 <div class="revision-file-size">${ext.toUpperCase()}</div>
             </div>
             <div class="revision-file-actions">
-                ${isPDF ? `
-                    <button class="revision-file-btn" onclick="viewPdf('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View PDF">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </button>
-                ` : ''}
                 ${isImage ? `
-                    <button class="revision-file-btn" onclick="viewImage('/uploads/${file.filename}', '${escapeHtml(file.originalname || file.filename)}')" title="View Image">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </button>
+                <button class="revision-file-btn" onclick="viewImage('/uploads/${filename}', '${escapeHtml(displayName)}')" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
                 ` : ''}
-                <a href="/uploads/${file.filename}" download="${escapeHtml(file.originalname || file.filename)}" class="revision-file-btn" title="Download">
+                ${isPDF ? `
+                <button class="revision-file-btn" onclick="viewPdf('/uploads/${filename}', '${escapeHtml(displayName)}')" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                ` : ''}
+                <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
                     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
@@ -1804,6 +2147,11 @@ async function uploadDeliverables() {
                     statusCell.className = 'status for-checking';
                 }
             }
+
+            // Reload service revision history if this is a service request
+            if (currentRequestType === 'Service') {
+                loadServiceRevisionHistory(currentRequestId);
+            }
         } else {
             showErrorMessage(result.message || 'Failed to upload deliverables');
         }
@@ -1852,6 +2200,11 @@ async function completeServiceRequest() {
                     statusCell.textContent = 'COMPLETED';
                     statusCell.className = 'status completed';
                 }
+            }
+
+            // Reload service revision history to show completion entry
+            if (currentRequestType === 'Service') {
+                loadServiceRevisionHistory(currentRequestId);
             }
         } else {
             showErrorMessage(result.message || 'Failed to complete service request');

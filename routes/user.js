@@ -1240,9 +1240,9 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
 /**
  * POST /user/service/request-revision/:id
  * User-initiated revision request for completed service requests
- * Allows users to request changes with specific feedback (2 revision limit)
+ * Allows users to request changes with specific feedback and file uploads (2 revision limit)
  */
-router.post('/user/service/request-revision/:id', requireLogin, async (req, res) => {
+router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 10), requireLogin, async (req, res) => {
   try {
     const { id } = req.params;
     const { revisionNotes } = req.body;
@@ -1260,9 +1260,9 @@ router.post('/user/service/request-revision/:id', requireLogin, async (req, res)
       return res.status(403).json({ success: false, message: 'Unauthorized to request revision for this request' });
     }
 
-    // Verify request is in Completed status
-    if (request.status !== 'Completed') {
-      return res.status(400).json({ success: false, message: 'Only completed requests can be sent for revision' });
+    // Verify request is in Completed or For Checking status
+    if (request.status !== 'Completed' && request.status !== 'For Checking') {
+      return res.status(400).json({ success: false, message: 'Only completed or for-checking requests can be sent for revision' });
     }
 
     // Check revision limit (2 revisions maximum)
@@ -1278,9 +1278,34 @@ router.post('/user/service/request-revision/:id', requireLogin, async (req, res)
       return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
     }
 
+    // Get uploaded file names
+    const revisionFiles = req.files ? req.files.map(file => file.filename) : [];
+
+    // Ensure revisionHistory is initialized as an array
+    if (!Array.isArray(request.revisionHistory)) {
+      request.revisionHistory = [];
+    }
+
     // Increment revision count
     request.revisionCount += 1;
     request.status = 'For Revision';
+    
+    // Create the revision entry with proper types
+    const mongoose = require('mongoose');
+    const revisionEntry = {
+      requestedBy: new mongoose.Types.ObjectId(userId),
+      requestedAt: new Date(),
+      revisionNotes: String(revisionNotes),
+      revisionFiles: revisionFiles,
+      status: 'for_revision',
+      revisionType: 'revision_requested',
+      revisionNumber: request.revisionCount // Track which revision cycle this belongs to
+    };
+    
+    // Add to revision history
+    request.revisionHistory.push(revisionEntry);
+    
+    // Save the request
     await request.save();
 
     // Add message to conversation
@@ -1320,6 +1345,53 @@ router.post('/user/service/request-revision/:id', requireLogin, async (req, res)
   } catch (error) {
     console.error('Error requesting service revision:', error);
     res.status(500).json({ success: false, message: 'Error requesting revision: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/service/mark-complete/:id
+ * User marks a service request as complete (accepts deliverables)
+ */
+router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.session.userId;
+
+    // Find the service request
+    const request = await ServiceRequest.findById(id);
+    
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Service request not found' });
+    }
+
+    // Verify user owns this request
+    if (request.userId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to complete this request' });
+    }
+
+    // Verify request is in For Checking status
+    if (request.status !== 'For Checking') {
+      return res.status(400).json({ success: false, message: 'Only requests with status "For Checking" can be marked as complete' });
+    }
+
+    // Update status to Completed
+    request.status = 'Completed';
+    await request.save();
+
+    // Notify unit team that request was marked complete
+    try {
+      await notificationService.notifyServiceCompleted(request._id, userId, request.assignedUnits);
+    } catch (notifError) {
+      console.error('Error sending completion notification:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Service request marked as complete successfully!'
+    });
+  } catch (error) {
+    console.error('Error marking service as complete:', error);
+    res.status(500).json({ success: false, message: 'Error marking service as complete: ' + error.message });
   }
 });
 

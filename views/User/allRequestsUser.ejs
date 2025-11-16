@@ -1652,9 +1652,34 @@
                 Pending
               </label>
               <label class="dropdown-option">
+                <input type="checkbox" value="queued">
+                <span class="checkbox-custom"></span>
+                Queued
+              </label>
+              <label class="dropdown-option">
+                <input type="checkbox" value="in-progress">
+                <span class="checkbox-custom"></span>
+                In Progress
+              </label>
+              <label class="dropdown-option">
+                <input type="checkbox" value="for-checking">
+                <span class="checkbox-custom"></span>
+                For Checking
+              </label>
+              <label class="dropdown-option">
                 <input type="checkbox" value="approved">
                 <span class="checkbox-custom"></span>
                 Approved
+              </label>
+              <label class="dropdown-option">
+                <input type="checkbox" value="completed">
+                <span class="checkbox-custom"></span>
+                Completed
+              </label>
+              <label class="dropdown-option">
+                <input type="checkbox" value="for-revision">
+                <span class="checkbox-custom"></span>
+                For Revision
               </label>
               <label class="dropdown-option">
                 <input type="checkbox" value="rejected">
@@ -1942,6 +1967,25 @@
           <div id="revisionHistoryContainer" class="revision-history-timeline">
             <!-- Dynamically populated by JavaScript -->
           </div>
+          
+          <!-- Action Buttons for Service Requests with "For Checking" status -->
+          <div id="serviceActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
+            <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
+                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <span id="revisionFormToggleText">Request Revision</span>
+            </button>
+            <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" 
+                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Mark as Complete
+            </button>
+          </div>
         </div>
 
         <!-- Resubmission Form -->
@@ -1981,6 +2025,71 @@
                 </svg>
                 Submit for Approval Again
               </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Service Revision Request Form -->
+        <div id="serviceRevisionFormSection" class="requestor-resubmission-section" style="display: none;">
+          <div class="requestor-section-header">
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Request Revision
+            </h3>
+            <p style="color: #64748b; font-size: 0.875rem; margin-top: 0.5rem;">
+              Describe what needs to be changed or improved in the deliverables
+            </p>
+          </div>
+          
+          <form id="serviceRevisionForm">
+            <!-- Revision Notes with Rich Text Editor -->
+            <div class="form-group">
+              <label for="serviceRevisionNotes">
+                <strong>Revision Feedback</strong>
+                <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Required)</span>
+              </label>
+              <div id="serviceRevisionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
+              <input type="hidden" id="serviceRevisionNotes" name="serviceRevisionNotes">
+            </div>
+
+            <!-- File Upload -->
+            <div class="form-group">
+              <label for="serviceRevisionFiles">
+                <strong>Attach Reference Files</strong>
+                <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional)</span>
+              </label>
+              <div class="file-upload-area" style="border: 2px dashed #e2e8f0; border-radius: 8px; padding: 2rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" 
+                   onclick="document.getElementById('serviceRevisionFiles').click()">
+                <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p style="color: #64748b; margin: 0 0 0.5rem 0;">Drop files here or click to browse</p>
+                <small style="color: #94a3b8;">PDF, DOC, DOCX, XLS, XLSX, images (Max 10MB each)</small>
+              </div>
+              <input type="file" id="serviceRevisionFiles" name="serviceRevisionFiles" multiple 
+                     accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" 
+                     style="display: none;">
+              <div id="serviceRevisionFileList" class="file-list" style="margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="resubmission-actions" style="margin-top: 2rem;">
+              <button type="button" id="submitServiceRevisionBtn" class="btn-resubmit" onclick="handleServiceRevision()" 
+                      style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 2rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Submit Revision Request
+              </button>
+              <small style="color: #64748b; display: block; margin-top: 1rem;">
+                ⚠️ <strong>Note:</strong> Maximum 2 revision requests allowed per service request
+              </small>
             </div>
           </form>
         </div>
@@ -2117,25 +2226,25 @@
 
   <!-- Image Viewer Modal -->
   <div id="imageViewerModal" class="modal" style="display: none;">
-    <div class="modal-content image-viewer-modal">
-      <div class="modal-header image-viewer-header">
+    <div class="modal-content image-viewer-modal" style="max-width: 90vw; width: auto; max-height: 90vh; padding: 0; background: #1f2937; z-index: 1000000 !important; position: relative;">
+      <div class="modal-header image-viewer-header" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 1.5rem;">
         <div class="modal-title-section">
-          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: white;">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
             <circle cx="8.5" cy="8.5" r="1.5"/>
             <polyline points="21 15 16 10 5 21"/>
           </svg>
-          <h2 id="imageViewerTitle">Image</h2>
+          <h2 id="imageViewerTitle" style="margin: 0; color: white;">Image</h2>
         </div>
-        <button class="close-modal-btn" onclick="closeImageViewer()" aria-label="Close">
+        <button class="close-modal-btn" onclick="closeImageViewer()" aria-label="Close" style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.7); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1000001 !important;">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
-      <div class="image-viewer-body">
-        <img id="imageViewerImg" src="" alt="Full size image">
+      <div class="image-viewer-body" style="padding: 1rem; display: flex; justify-content: center; align-items: center; background: #111827;">
+        <img id="imageViewerImg" src="" alt="Full size image" style="max-width: 100%; max-height: 75vh; object-fit: contain;">
       </div>
     </div>
   </div>
@@ -2420,6 +2529,9 @@ const openChatFromDetailsModal = document.getElementById("openChatFromDetailsMod
 // Filter variables
 let organizationFilter;
 let currentConversationId = null;
+let currentRequestType = null; // Track if viewing approval or service request
+let resubmissionQuill = null; // Quill editor for approval resubmissions
+let serviceRevisionQuill = null; // Quill editor for service revisions
 
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -2483,7 +2595,7 @@ function filterRequests() {
 
   allRows.forEach(row => {
     const rowType = row.dataset.type.toLowerCase();
-    const rowStatus = row.dataset.status.toLowerCase();
+    const rowStatus = row.dataset.status.toLowerCase().replace(/\s+/g, '-'); // Normalize status with hyphens
     const rowTitle = row.dataset.title.toLowerCase();
     const rowOrganization = row.dataset.organization.toLowerCase();
     const rowDate = new Date(row.dataset.date);
@@ -2660,15 +2772,18 @@ document.querySelectorAll('.request-row').forEach(row => {
     
     // Chat functionality
     currentConversationId = row.dataset.id;
+    currentRequestType = row.dataset.type; // Store request type globally
     const chatButtonSection = document.getElementById("chatButtonSection");
     if (chatButtonSection) {
       const reqType = row.dataset.type;
       if (reqType === "Service Request" || reqType === "Request Approval") {
         chatButtonSection.style.display = 'block';
         
-        // Load revision history (for Request Approval only)
+        // Load revision history based on request type
         if (reqType === "Request Approval") {
           loadRevisionHistory(currentConversationId);
+        } else if (reqType === "Service Request") {
+          loadServiceRevisionHistory(currentConversationId);
         }
       } else {
         chatButtonSection.style.display = 'none';
@@ -2742,6 +2857,42 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (submitResubmissionBtn) {
     submitResubmissionBtn.addEventListener('click', handleResubmission);
+  }
+  
+  // Initialize service revision file input handler
+  const serviceRevisionFilesInput = document.getElementById('serviceRevisionFiles');
+  if (serviceRevisionFilesInput) {
+    serviceRevisionFilesInput.addEventListener('change', function(e) {
+      const fileList = document.getElementById('serviceRevisionFileList');
+      if (!fileList) return;
+      
+      fileList.innerHTML = '';
+      
+      if (e.target.files.length > 0) {
+        const filesContainer = document.createElement('div');
+        filesContainer.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem;';
+        
+        Array.from(e.target.files).forEach((file, index) => {
+          const fileItem = document.createElement('div');
+          fileItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: #f1f5f9; border-radius: 6px;';
+          
+          const fileInfo = document.createElement('div');
+          fileInfo.style.cssText = 'display: flex; align-items: center; gap: 0.5rem;';
+          fileInfo.innerHTML = `
+            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            <span style="color: #1e293b; font-weight: 500;">${file.name}</span>
+            <small style="color: #64748b;">(${(file.size / 1024).toFixed(1)} KB)</small>
+          `;
+          
+          fileItem.appendChild(fileInfo);
+          filesContainer.appendChild(fileItem);
+        });
+        
+        fileList.appendChild(filesContainer);
+      }
+    });
   }
 });
 
@@ -3990,9 +4141,29 @@ window.viewPdf = function(url, name) {
     const frame = document.getElementById('pdfViewerFrame');
     const title = document.getElementById('pdfViewerTitle');
     if (modal && frame) {
-        frame.src = url;
-        if (title) title.textContent = name || 'PDF Document';
-        modal.style.display = 'flex';
+        // Check if PDF exists first
+        fetch(url, { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    frame.src = url;
+                    if (title) title.textContent = name || 'PDF Document';
+                    modal.style.display = 'flex';
+                    modal.style.zIndex = '999999'; // Ensure on top
+                } else {
+                    if (typeof window.showAlert === 'function') {
+                        window.showAlert('error', 'PDF file not found. It may have been moved or deleted.');
+                    } else {
+                        alert('PDF file not found. It may have been moved or deleted.');
+                    }
+                }
+            })
+            .catch(error => {
+                if (typeof window.showAlert === 'function') {
+                    window.showAlert('error', 'Error accessing PDF: ' + error.message);
+                } else {
+                    alert('Error accessing PDF: ' + error.message);
+                }
+            });
     }
 };
 
@@ -4012,8 +4183,17 @@ window.viewImage = function(url, name) {
     const title = document.getElementById('imageViewerTitle');
     if (modal && img) {
         img.src = url;
+        img.onerror = function() {
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('error', 'Image file not found. It may have been moved or deleted.');
+            } else {
+                alert('Image file not found. It may have been moved or deleted.');
+            }
+            window.closeImageViewer();
+        };
         if (title) title.textContent = name || 'Image';
         modal.style.display = 'flex';
+        modal.style.zIndex = '999999'; // Ensure on top
     }
 };
 
@@ -4022,8 +4202,35 @@ window.closeImageViewer = function() {
     const img = document.getElementById('imageViewerImg');
     if (modal) {
         modal.style.display = 'none';
-        if (img) img.src = '';
+        if (img) {
+            img.src = '';
+            img.onerror = null;
+        }
     }
+};
+
+// Generic File Viewer function (opens in new tab)
+window.viewFile = function(url, name) {
+    // Check if file exists first
+    fetch(url, { method: 'HEAD' })
+        .then(response => {
+            if (response.ok) {
+                window.open(url, '_blank');
+            } else {
+                if (typeof window.showAlert === 'function') {
+                    window.showAlert('error', 'File not found. It may have been moved or deleted.');
+                } else {
+                    alert('File not found. It may have been moved or deleted.');
+                }
+            }
+        })
+        .catch(error => {
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('error', 'Error accessing file: ' + error.message);
+            } else {
+                alert('Error accessing file: ' + error.message);
+            }
+        });
 };
 
 // Initialize file upload features
@@ -4136,7 +4343,6 @@ function displayChatFiles(files, container) {
 }
 
 // ========== REVISION HISTORY FUNCTIONS ==========
-let resubmissionQuill = null;
 
 async function loadRevisionHistory(requestId) {
     console.log('[allRequestsUser] loadRevisionHistory called for:', requestId);
@@ -4239,6 +4445,31 @@ async function loadRevisionHistory(requestId) {
                             ]
                         }
                     });
+
+                    // Add keyboard shortcuts for text formatting
+                    const resubmissionEditor = document.querySelector('#resubmissionEditor');
+                    if (resubmissionEditor) {
+                        resubmissionEditor.addEventListener('keydown', function(e) {
+                            // Ctrl+B for Bold
+                            if (e.ctrlKey && e.key === 'b') {
+                                e.preventDefault();
+                                const format = resubmissionQuill.getFormat();
+                                resubmissionQuill.format('bold', !format.bold);
+                            }
+                            // Ctrl+I for Italic
+                            else if (e.ctrlKey && e.key === 'i') {
+                                e.preventDefault();
+                                const format = resubmissionQuill.getFormat();
+                                resubmissionQuill.format('italic', !format.italic);
+                            }
+                            // Ctrl+U for Underline
+                            else if (e.ctrlKey && e.key === 'u') {
+                                e.preventDefault();
+                                const format = resubmissionQuill.getFormat();
+                                resubmissionQuill.format('underline', !format.underline);
+                            }
+                        });
+                    }
                 }
             } else if (resubmissionSection) {
                 resubmissionSection.style.display = 'none';
@@ -4465,6 +4696,28 @@ function createRevisionFileCard(file) {
                 <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
             </div>
             <div class="revision-file-actions">
+                ${isImage ? `
+                <button onclick="viewImage('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                ` : isPDF ? `
+                <button onclick="viewPdf('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                ` : `
+                <button onclick="viewFile('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View File" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                `}
                 <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
                     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -4581,6 +4834,497 @@ async function handleClarificationRequest() {
     } catch (error) {
         console.error('Error opening clarification:', error);
         showAlert('error', 'An error occurred. Please try again.');
+    }
+}
+
+// ========== SERVICE REQUEST REVISION HISTORY FUNCTIONS ==========
+
+async function loadServiceRevisionHistory(requestId) {
+    console.log('[Service] ===== STARTING LOAD =====');
+    console.log('[Service] Request ID:', requestId);
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    const rightColumn = document.getElementById('requestorRightColumn');
+    const modalBody = document.querySelector('.requestor-modal-body');
+    const modalContent = document.querySelector('.requestor-modal-content');
+    const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+    
+    console.log('[Service] Elements check:');
+    console.log('  ✓ historyContainer:', !!historyContainer);
+    console.log('  ✓ rightColumn:', !!rightColumn);
+    console.log('  ✓ modalBody:', !!modalBody);
+    
+    if (!historyContainer) {
+        console.log('[Service] ❌ History container not found!');
+        return;
+    }
+    
+    try {
+        console.log('[Service] Fetching API...');
+        const response = await fetch(`/api/service-revision-history/${requestId}`);
+        console.log('[Service] API status:', response.status);
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.log('[Service] ❌ Non-JSON response');
+            if (historySection) historySection.style.display = 'none';
+            if (rightColumn) rightColumn.style.display = 'none';
+            if (modalBody) modalBody.classList.remove('two-column');
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('[Service] ===== API RESPONSE =====');
+        console.log('[Service] Success:', result.success);
+        console.log('[Service] Revisions:', result.revisions ? result.revisions.length : 0);
+        console.log('[Service] Data:', result);
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            // Log each revision before filtering
+            result.revisions.forEach((rev, idx) => {
+                console.log(`[Service] ===== REVISION ${idx} DETAILS =====`);
+                console.log('[Service] Type:', rev.type);
+                console.log('[Service] Has requestedBy:', !!rev.requestedBy);
+                console.log('[Service] Has respondedBy:', !!rev.respondedBy);
+                console.log('[Service] Deliverable files:', rev.deliverableFiles ? rev.deliverableFiles.length : 0);
+                console.log('[Service] Response files:', rev.responseFiles ? rev.responseFiles.length : 0);
+                console.log('[Service] Timestamp:', rev.timestamp || rev.requestedAt || rev.respondedAt);
+                console.log('[Service] Full object:', rev);
+                console.log('[Service] =====================================');
+            });
+            
+            // Filter out initial submission
+            const revisionsToShow = result.revisions.filter(rev => rev.type !== 'initial');
+            
+            console.log('[Service] Filtered:', revisionsToShow.length, 'revisions');
+            
+            if (revisionsToShow.length > 0) {
+                console.log('[Service] ✅ Displaying revision history');
+                
+                // Show two-column layout
+                if (rightColumn) {
+                    rightColumn.style.display = 'flex';
+                    console.log('[Service] ✅ Right column visible');
+                }
+                if (modalBody) {
+                    modalBody.classList.add('two-column');
+                    console.log('[Service] ✅ Two-column layout activated');
+                }
+                if (modalContent) modalContent.classList.add('has-revisions');
+                if (historySection) historySection.style.display = 'block';
+                
+                historyContainer.innerHTML = '';
+                
+                revisionsToShow.forEach((revision, index) => {
+                    console.log(`[Service] Creating entry ${index + 1}: ${revision.type}`);
+                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                    historyContainer.appendChild(entry);
+                });
+                
+                // Check if request has deliverables and status
+                const row = document.querySelector(`tr[data-id="${requestId}"]`);
+                const status = row ? row.dataset.status : '';
+                const hasDeliverables = revisionsToShow.some(rev => 
+                    rev.type === 'deliverable_submitted' || 
+                    rev.type === 'completed' ||
+                    (rev.deliverableFiles && rev.deliverableFiles.length > 0)
+                );
+                
+                console.log('[Service] ===== DEBUGGING STATUS CHECK =====');
+                console.log('[Service] Request ID:', requestId);
+                console.log('[Service] Row element found:', !!row);
+                console.log('[Service] Raw status from row:', status);
+                console.log('[Service] Status length:', status ? status.length : 0);
+                console.log('[Service] Has deliverables:', hasDeliverables);
+                
+                // Show revision request form if status is Completed or For Checking (normalize status comparison)
+                const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
+                console.log('[Service] Normalized status:', normalizedStatus);
+                console.log('[Service] Checking: completed?', normalizedStatus === 'completed');
+                console.log('[Service] Checking: for-checking?', normalizedStatus === 'for-checking');
+                console.log('[Service] serviceRevisionSection exists?', !!serviceRevisionSection);
+                
+                // IMPORTANT: Keep form hidden by default - it will be shown when user clicks "Request Revision" button
+                if ((normalizedStatus === 'completed' || normalizedStatus === 'for-checking') && serviceRevisionSection) {
+                    console.log('[Service] Status allows revision - keeping form hidden until user clicks button');
+                    serviceRevisionSection.style.display = 'none';
+                    
+                    // Show the action buttons (Request Revision and Mark as Complete)
+                    const actionButtons = document.getElementById('serviceActionButtons');
+                    if (actionButtons) {
+                        actionButtons.style.display = 'flex';
+                        console.log('[Service] ✅ Action buttons displayed');
+                    }
+                    
+                    // Initialize Quill editor if not already initialized
+                    if (!serviceRevisionQuill) {
+                        serviceRevisionQuill = new Quill('#serviceRevisionEditor', {
+                            theme: 'snow',
+                            placeholder: 'Describe what needs to be revised or improved...',
+                            modules: {
+                                toolbar: [
+                                    ['bold', 'italic', 'underline'],
+                                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                    ['link'],
+                                    ['clean']
+                                ]
+                            }
+                        });
+
+                        // Add keyboard shortcuts for text formatting
+                        const serviceEditor = document.querySelector('#serviceRevisionEditor');
+                        if (serviceEditor) {
+                            serviceEditor.addEventListener('keydown', function(e) {
+                                // Ctrl+B for Bold
+                                if (e.ctrlKey && e.key === 'b') {
+                                    e.preventDefault();
+                                    const format = serviceRevisionQuill.getFormat();
+                                    serviceRevisionQuill.format('bold', !format.bold);
+                                }
+                                // Ctrl+I for Italic
+                                else if (e.ctrlKey && e.key === 'i') {
+                                    e.preventDefault();
+                                    const format = serviceRevisionQuill.getFormat();
+                                    serviceRevisionQuill.format('italic', !format.italic);
+                                }
+                                // Ctrl+U for Underline
+                                else if (e.ctrlKey && e.key === 'u') {
+                                    e.preventDefault();
+                                    const format = serviceRevisionQuill.getFormat();
+                                    serviceRevisionQuill.format('underline', !format.underline);
+                                }
+                            });
+                        }
+                    }
+                } else if (serviceRevisionSection) {
+                    serviceRevisionSection.style.display = 'none';
+                }
+            } else {
+                if (historySection) historySection.style.display = 'none';
+                if (rightColumn) rightColumn.style.display = 'none';
+                if (modalBody) modalBody.classList.remove('two-column');
+                if (modalContent) modalContent.classList.remove('has-revisions');
+            }
+        } else {
+            if (historySection) historySection.style.display = 'none';
+            if (rightColumn) rightColumn.style.display = 'none';
+            if (modalBody) modalBody.classList.remove('two-column');
+            if (modalContent) modalContent.classList.remove('has-revisions');
+        }
+    } catch (error) {
+        console.error('[Service] Error loading revision history:', error);
+        if (historySection) historySection.style.display = 'none';
+        if (rightColumn) rightColumn.style.display = 'none';
+        if (modalBody) modalBody.classList.remove('two-column');
+        if (modalContent) modalContent.classList.remove('has-revisions');
+    }
+}
+
+function createServiceRevisionEntry(revision, index, total) {
+    console.log('[Service] Creating revision entry:', revision);
+    
+    const entry = document.createElement('div');
+    
+    const isUnitAction = revision.requestedBy || 
+                         revision.type === 'deliverable_submitted' || 
+                         revision.type === 'completed';
+    const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+    
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
+    
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt);
+    const fullDate = timestamp.toLocaleString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let relativeTime = '';
+    if (diffMins < 1) relativeTime = 'Just now';
+    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    else relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    let typeLabel = '';
+    let badgeClass = '';
+    
+    if (revision.type === 'deliverable_submitted') {
+        typeLabel = 'Deliverables Uploaded';
+        badgeClass = 'badge-resubmitted';
+    } else if (revision.type === 'completed') {
+        typeLabel = '✓ Completed';
+        badgeClass = 'badge-approved';
+    } else if (revision.type === 'revision_requested') {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    } else {
+        typeLabel = 'Update';
+        badgeClass = 'badge-revision';
+    }
+    
+    let authorName = 'Unknown';
+    let authorUnit = '';
+    
+    if (revision.requestedBy) {
+        if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
+            authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
+            if (revision.requestedBy.unitTeam) {
+                authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+            }
+        }
+    } else if (revision.respondedBy) {
+        if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
+            authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+        }
+    }
+    
+    const isLast = index === total - 1;
+    let statusIndicator = '';
+    
+    if (revision.type === 'completed') {
+        statusIndicator = `
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <span style="color: #10b981; font-weight: 600;">Service Request Completed!</span>
+            </div>
+        `;
+    } else if (isLast) {
+        if (isUnitAction) {
+            statusIndicator = `
+                <div class="status-indicator waiting">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Review the deliverables below
+                </div>
+            `;
+        } else {
+            statusIndicator = `
+                <div class="status-indicator under-review">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Unit is reviewing your feedback
+                </div>
+            `;
+        }
+    }
+    
+    const content = isUnitAction ? 
+        (revision.revisionNotes || 'Deliverables submitted') : 
+        (revision.responseNotes || 'Revision requested');
+    
+    const files = revision.deliverableFiles || revision.responseFiles || [];
+    
+    entry.innerHTML = `
+        <div class="revision-number-badge">#${index + 1}</div>
+        <div class="revision-message-bubble">
+            <div class="revision-bubble-header">
+                <div>
+                    <span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
+                <div class="revision-timestamp">
+                    <span style="font-weight: 600; color: #1e293b;">${fullDate}</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
+                </div>
+            </div>
+            
+            <div class="message-content-section">
+                <div class="content-label">${isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:'}</div>
+                <div class="content-text">${displayFormattedText(content)}</div>
+            </div>
+            
+            ${files && files.length > 0 ? `
+                <div class="message-attachments-section">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        <span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div class="attachments-grid">
+                        ${files.map(file => createRevisionFileCard(file)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${statusIndicator}
+        </div>
+    `;
+    
+    return entry;
+}
+
+// Handle service revision request
+async function handleServiceRevision() {
+    if (!serviceRevisionQuill || !currentConversationId) {
+        console.error('[Service] Quill or request ID not found');
+        return;
+    }
+    
+    const revisionText = serviceRevisionQuill.root.innerHTML;
+    
+    // Validate revision text
+    if (!revisionText || revisionText.trim() === '<p><br></p>' || revisionText.trim() === '') {
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'Please describe what needs to be revised before submitting.');
+        } else {
+            alert('Please describe what needs to be revised before submitting.');
+        }
+        return;
+    }
+    
+    // Get file input
+    const filesInput = document.getElementById('serviceRevisionFiles');
+    const formData = new FormData();
+    formData.append('revisionNotes', revisionText);
+    
+    // Add files if any
+    if (filesInput && filesInput.files.length > 0) {
+        for (let i = 0; i < filesInput.files.length; i++) {
+            formData.append('revisionFiles', filesInput.files[i]);
+        }
+    }
+    
+    try {
+        const response = await fetch(`/user/service/request-revision/${currentConversationId}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('success', result.message || 'Revision request submitted successfully!');
+            } else {
+                alert(result.message || 'Revision request submitted successfully!');
+            }
+            
+            // Clear form
+            serviceRevisionQuill.setContents([]);
+            if (filesInput) filesInput.value = '';
+            
+            // Clear file display area
+            const fileDisplay = document.getElementById('serviceRevisionFileDisplay');
+            if (fileDisplay) fileDisplay.innerHTML = '';
+            
+            // Reload revision history
+            await loadServiceRevisionHistory(currentConversationId);
+            
+            // Close modal and refresh page
+            setTimeout(() => {
+                document.getElementById('detailsModal').style.display = 'none';
+                location.reload();
+            }, 1500);
+        } else {
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('error', result.message || 'Failed to submit revision request. Please try again.');
+            } else {
+                alert(result.message || 'Failed to submit revision request. Please try again.');
+            }
+        }
+    } catch (error) {
+        console.error('[Service] Error submitting revision:', error);
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'An error occurred while submitting your revision request.');
+        } else {
+            alert('An error occurred while submitting your revision request.');
+        }
+    }
+}
+
+// Toggle service revision form visibility
+function toggleServiceRevisionForm() {
+    const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+    const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
+    const toggleText = document.getElementById('revisionFormToggleText');
+    
+    console.log('[Service] Toggling revision form visibility');
+    
+    if (serviceRevisionSection) {
+        const isVisible = serviceRevisionSection.style.display === 'block';
+        
+        if (isVisible) {
+            // Hide the form
+            serviceRevisionSection.style.display = 'none';
+            if (toggleText) toggleText.textContent = 'Request Revision';
+            if (toggleBtn) {
+                toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            }
+            console.log('[Service] Revision form hidden');
+        } else {
+            // Show the form
+            serviceRevisionSection.style.display = 'block';
+            if (toggleText) toggleText.textContent = 'Hide Revision Form';
+            if (toggleBtn) {
+                toggleBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            }
+            console.log('[Service] Revision form shown');
+            
+            // Scroll to the form
+            setTimeout(() => {
+                serviceRevisionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+    } else {
+        console.error('[Service] Revision form section not found');
+    }
+}
+
+// Handle marking service as complete (accept deliverables)
+async function handleMarkServiceComplete() {
+    if (!currentConversationId) {
+        console.error('[Service] Request ID not found');
+        return;
+    }
+    
+    // Confirm action
+    if (!confirm('Are you sure you want to mark this service request as complete? This means you accept the deliverables and the request will be closed.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/user/service/mark-complete/${currentConversationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('success', result.message || 'Service request marked as complete!');
+            
+            // Close modal and refresh page
+            setTimeout(() => {
+                document.getElementById('detailsModal').style.display = 'none';
+                location.reload();
+            }, 1500);
+        } else {
+            showAlert('error', result.message || 'Failed to mark as complete. Please try again.');
+        }
+    } catch (error) {
+        console.error('[Service] Error marking as complete:', error);
+        showAlert('error', 'An error occurred while marking the service as complete.');
     }
 }
 
