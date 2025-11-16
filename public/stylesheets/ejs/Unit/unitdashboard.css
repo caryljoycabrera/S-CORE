@@ -1188,6 +1188,18 @@
   color: #92400e;
 }
 
+.status-badge.queued {
+  background: #e0f2fe;
+  color: #0c4a6e;
+  border: 1px solid #0ea5e9;
+}
+
+.status-badge.in-progress {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
 .status-badge.approved {
   background: #d1fae5;
   color: #065f46;

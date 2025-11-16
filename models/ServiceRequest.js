@@ -51,7 +51,7 @@ const serviceRequestSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'Pending',
-    enum: ['Pending', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived']
+    enum: ['Pending', 'Queued', 'In Progress', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived']
   },
 
   // Administrative assignment
@@ -80,6 +80,12 @@ const serviceRequestSchema = new mongoose.Schema({
   deliverables: [{
     type: String
   }],
+
+  // Revision tracking (2 revision limit)
+  revisionCount: {
+    type: Number,
+    default: 0
+  },
 
   // Track if additional file upload is allowed for revision requests
   allowAdditionalFileUpload: {

@@ -51,7 +51,7 @@ const requestApprovalSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'Pending',
-    enum: ['Pending', 'For Revision', 'Approved', 'Rejected', 'Archived']
+    enum: ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived']
   },
 
   // Administrative assignment
@@ -75,6 +75,12 @@ const requestApprovalSchema = new mongoose.Schema({
   files: [{
     type: String
   }],
+
+  // Revision tracking (2 revision limit)
+  revisionCount: {
+    type: Number,
+    default: 0
+  },
 
   // Track if additional file upload is allowed for revision requests
   allowAdditionalFileUpload: {

@@ -912,6 +912,14 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
       }
       result = await RequestApproval.findByIdAndUpdate(requestId, updateData, { new: true });
     } else if (requestType === 'Service Request') {
+      // Smart Status Assignment: If admin assigns a unit to a Pending request, automatically set to Queued
+      if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+        const currentRequest = await ServiceRequest.findById(requestId);
+        if (currentRequest && currentRequest.status === 'Pending') {
+          updateData.status = 'Queued';
+        }
+      }
+      
       if (assignedUnits !== undefined && status) {
         updateData.status = status;
       }
@@ -1014,6 +1022,14 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
     // Set allowAdditionalFileUpload to true when status is set to "For revision"
     if (status?.toLowerCase() === 'for revision') {
       update.allowAdditionalFileUpload = true;
+    }
+    
+    // Smart Status Assignment: If admin assigns a unit to a Pending request, automatically set to Queued
+    if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+      const currentRequest = await RequestApproval.findById(requestId);
+      if (currentRequest && currentRequest.status === 'Pending' && !status) {
+        update.status = 'Queued';
+      }
     }
 
     const result = await RequestApproval.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
@@ -1135,6 +1151,14 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
     const update = {};
     if (status) update.status = status;
     if (assignedUnits !== undefined) update.assignedUnits = assignedUnits || 'Not yet assigned';
+    
+    // Smart Status Assignment: If admin assigns a unit to a Pending request, automatically set to Queued
+    if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+      const currentRequest = await ServiceRequest.findById(requestId);
+      if (currentRequest && currentRequest.status === 'Pending' && !status) {
+        update.status = 'Queued';
+      }
+    }
 
     const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
 

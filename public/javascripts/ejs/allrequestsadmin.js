@@ -656,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize enhanced multi-select dropdowns
   statusFilter = new EnhancedMultiSelect('statusFilter',
-    ['pending', 'approved', 'for revision', 'completed', 'rejected', 'archived'],
+    ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'],
     'Select Status', false);
   
   const statusFilterContainer = document.getElementById('statusFilter');
@@ -1121,9 +1121,9 @@ function getStatusOptions(type) {
   const baseStatuses = ['approved', 'rejected', 'archived'];
 
   if (type === 'Request Approval') {
-    return ['Pending', 'For Revision', ...baseStatuses];
+    return ['Pending', 'Queued', 'In Progress', 'For Revision', ...baseStatuses];
   } else {
-    return ['Pending', 'For Revision', 'completed', ...baseStatuses];
+    return ['Pending', 'Queued', 'In Progress', 'For Revision', 'completed', ...baseStatuses];
   }
 }
 

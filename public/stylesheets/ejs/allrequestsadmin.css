@@ -337,6 +337,18 @@ hr {
   color: #d97706;
 }
 
+.status-badge.queued {
+  background-color: #e0f2fe;
+  color: #0c4a6e;
+  border: 1px solid #0ea5e9;
+}
+
+.status-badge.in-progress {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
 .status-badge.approved {
   background-color: #dcfce7;
   color: #16a34a;

@@ -1,0 +1,65 @@
+/* ==========================================
+   NEW STATUS BADGES - Queued & In Progress
+   ========================================== */
+
+/* Base status badge styling (if not already defined) */
+.status-badge {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Queued Status - Light Blue (New auto-assigned tasks) */
+.status-badge-info,
+.status-badge.queued {
+  background-color: #e0f2fe;
+  color: #0c4a6e;
+  border: 1px solid #0ea5e9;
+}
+
+/* In Progress Status - Blue (Unit actively working) */
+.status-badge-primary,
+.status-badge.in-progress {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+/* Existing statuses - ensure consistency */
+.status-badge-warning,
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.status-badge-success,
+.status-badge.approved,
+.status-badge.completed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.status-badge-danger,
+.status-badge.rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.status-badge.for-revision,
+.status-badge.revision {
+  background-color: #fed7aa;
+  color: #78350f;
+  border: 1px solid #f59e0b;
+}
+
+/* Status icons */
+.status-badge::before {
+  margin-right: 0.25rem;
+}

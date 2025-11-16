@@ -86,6 +86,11 @@ app.use('/', unitRoutes);
 app.use('/', apiRoutes);
 app.use('/', notificationRoutes);
 
+// ======= Test Route for Status Integration ========
+app.get('/test-status-integration', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'test-status-integration.html'));
+});
+
 // ======= Server Startup ========
 
 // Start the server

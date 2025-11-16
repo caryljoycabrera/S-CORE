@@ -321,12 +321,27 @@ hr {
 }
 
 .deadline-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   background-color: #f3f4f6;
   color: #374151;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.deadline-badge.overdue {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.deadline-badge.near-deadline {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
 }
 
 .deadline-badge.near-deadline {
@@ -392,34 +407,64 @@ hr {
   word-wrap: break-word;
 }
 
+/* Base Status Badge Styling */
+.status-badge {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
 .status-badge.pending {
   background-color: #fef3c7;
-  color: #d97706;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.status-badge.queued {
+  background-color: #e0f2fe;
+  color: #0c4a6e;
+  border: 1px solid #0ea5e9;
+}
+
+.status-badge.in-progress {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
 }
 
 .status-badge.approved {
-  background-color: #dcfce7;
-  color: #16a34a;
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
 }
 
 .status-badge.for-revision {
-  background-color: #fed7d7;
-  color: #e53e3e;
+  background-color: #fed7aa;
+  color: #78350f;
+  border: 1px solid #f97316;
 }
 
 .status-badge.completed {
-  background-color: #e8f5e9;
-  color: #43a047;
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
 }
 
 .status-badge.rejected {
   background-color: #fee2e2;
-  color: #dc2626;
+  color: #991b1b;
+  border: 1px solid #ef4444;
 }
 
 .status-badge.archived {
   background-color: #f3f4f6;
   color: #6b7280;
+  border: 1px solid #d1d5db;
 }
 
 /* Enhanced Request Details Modal Styles */

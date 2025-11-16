@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Status Badge Visual Test</title>
+  <link rel="stylesheet" href="/stylesheets/status-badges-new.css">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+    .test-section {
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 2px solid #e2e8f0;
+    }
+    .test-section h2 {
+      color: #334155;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .badge-label {
+      font-weight: 600;
+      color: #475569;
+      min-width: 120px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .console-output {
+      background: #1e293b;
+      color: #10b981;
+      padding: 1.5rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+    .console-output pre {
+      margin: 0;
+      white-space: pre-wrap;
+    }
+    .test-result {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 1rem;
+    }
+    .pass {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .fail {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .info-box {
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 1rem;
+    }
+    .info-box strong {
+      color: #1e40af;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    .check-icon {
+      color: #10b981;
+      font-size: 1.5rem;
+    }
+    .x-icon {
+      color: #ef4444;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Status Badge Integration Test</h1>
+    <p class="subtitle">Visual verification of Queued and In Progress statuses</p>
+
+    <!-- Test 1: Visual Display -->
+    <div class="test-section">
+      <h2>
+        <span id="test1-icon">⏳</span>
+        Test 1: Visual Display
+      </h2>
+      <div class="badge-row">
+        <span class="badge-label">Queued:</span>
+        <span class="status-badge queued">📥 Queued</span>
+        <span id="queued-result"></span>
+      </div>
+      <div class="badge-row">
+        <span class="badge-label">In Progress:</span>
+        <span class="status-badge in-progress">⚙️ In Progress</span>
+        <span id="inprogress-result"></span>
+      </div>
+      <div class="badge-row">
+        <span class="badge-label">Pending:</span>
+        <span class="status-badge pending">⏳ Pending</span>
+      </div>
+      <div class="badge-row">
+        <span class="badge-label">Approved:</span>
+        <span class="status-badge approved">✅ Approved</span>
+      </div>
+      <div class="badge-row">
+        <span class="badge-label">Completed:</span>
+        <span class="status-badge completed">✅ Completed</span>
+      </div>
+      <div class="info-box">
+        <strong>Expected:</strong> Queued should have amber/yellow background. In Progress should have blue background.
+      </div>
+    </div>
+
+    <!-- Test 2: JavaScript Functions -->
+    <div class="test-section">
+      <h2>
+        <span id="test2-icon">⏳</span>
+        Test 2: JavaScript Functions
+      </h2>
+      <button onclick="runJSTests()">Run JavaScript Tests</button>
+      <div class="console-output" id="js-output">
+        <pre>Click "Run JavaScript Tests" to check if status-handler.js is loaded...</pre>
+      </div>
+    </div>
+
+    <!-- Test 3: CSS Classes -->
+    <div class="test-section">
+      <h2>
+        <span id="test3-icon">⏳</span>
+        Test 3: CSS Classes
+      </h2>
+      <button onclick="runCSSTests()">Check CSS Classes</button>
+      <div class="console-output" id="css-output">
+        <pre>Click "Check CSS Classes" to verify styles are applied...</pre>
+      </div>
+    </div>
+
+    <!-- Test 4: Filter Integration -->
+    <div class="test-section">
+      <h2>
+        <span id="test4-icon">⏳</span>
+        Test 4: Filter Dropdown Simulation
+      </h2>
+      <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #475569;">Status Filter:</label>
+      <select id="statusFilterTest" style="padding: 0.5rem; border-radius: 6px; border: 2px solid #e2e8f0; width: 300px; font-size: 1rem;">
+        <option value="all">All Statuses</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <button onclick="testFilterUpdate()" style="margin-left: 1rem;">Add New Statuses</button>
+      <div class="info-box">
+        <strong>Expected:</strong> After clicking button, "Queued" and "In Progress" should appear in the dropdown.
+      </div>
+    </div>
+  </div>
+
+  <script src="/javascripts/status-handler.js"></script>
+  <script>
+    // Visual test on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      // Check if badges have correct background colors
+      const queuedBadge = document.querySelector('.status-badge.queued');
+      const inProgressBadge = document.querySelector('.status-badge.in-progress');
+      
+      if (queuedBadge) {
+        const bgColor = window.getComputedStyle(queuedBadge).backgroundColor;
+        const isCorrect = bgColor.includes('254, 243, 199') || bgColor.includes('rgb(254, 243, 199)');
+        document.getElementById('queued-result').innerHTML = isCorrect 
+          ? '<span class="test-result pass">✓ PASS</span>' 
+          : '<span class="test-result fail">✗ FAIL</span>';
+        
+        if (isCorrect) {
+          document.getElementById('test1-icon').innerHTML = '<span class="check-icon">✓</span>';
+        }
+      }
+      
+      if (inProgressBadge) {
+        const bgColor = window.getComputedStyle(inProgressBadge).backgroundColor;
+        const isCorrect = bgColor.includes('219, 234, 254') || bgColor.includes('rgb(219, 234, 254)');
+        document.getElementById('inprogress-result').innerHTML = isCorrect 
+          ? '<span class="test-result pass">✓ PASS</span>' 
+          : '<span class="test-result fail">✗ FAIL</span>';
+      }
+    });
+
+    function runJSTests() {
+      const output = document.getElementById('js-output');
+      let html = '<pre>';
+      let allPassed = true;
+
+      // Test 1: Check if functions exist
+      html += '> Testing window.getStatusDisplay...\n';
+      if (typeof window.getStatusDisplay === 'function') {
+        html += '✓ PASS: window.getStatusDisplay is defined\n\n';
+      } else {
+        html += '✗ FAIL: window.getStatusDisplay is NOT defined\n\n';
+        allPassed = false;
+      }
+
+      // Test 2: Get Queued status
+      html += '> window.getStatusDisplay("Queued")\n';
+      try {
+        const queuedInfo = window.getStatusDisplay('Queued');
+        html += JSON.stringify(queuedInfo, null, 2) + '\n';
+        if (queuedInfo.text === 'Queued' && queuedInfo.icon === '📥') {
+          html += '✓ PASS: Queued info is correct\n\n';
+        } else {
+          html += '✗ FAIL: Queued info is incorrect\n\n';
+          allPassed = false;
+        }
+      } catch (e) {
+        html += '✗ ERROR: ' + e.message + '\n\n';
+        allPassed = false;
+      }
+
+      // Test 3: Get In Progress status
+      html += '> window.getStatusDisplay("In Progress")\n';
+      try {
+        const inProgressInfo = window.getStatusDisplay('In Progress');
+        html += JSON.stringify(inProgressInfo, null, 2) + '\n';
+        if (inProgressInfo.text === 'In Progress' && inProgressInfo.icon === '⚙️') {
+          html += '✓ PASS: In Progress info is correct\n\n';
+        } else {
+          html += '✗ FAIL: In Progress info is incorrect\n\n';
+          allPassed = false;
+        }
+      } catch (e) {
+        html += '✗ ERROR: ' + e.message + '\n\n';
+        allPassed = false;
+      }
+
+      // Test 4: Create badge
+      html += '> window.createStatusBadge("Queued", true)\n';
+      try {
+        const badge = window.createStatusBadge('Queued', true);
+        html += badge + '\n';
+        if (badge.includes('Queued') && badge.includes('status-badge')) {
+          html += '✓ PASS: Badge HTML is correct\n\n';
+        } else {
+          html += '✗ FAIL: Badge HTML is incorrect\n\n';
+          allPassed = false;
+        }
+      } catch (e) {
+        html += '✗ ERROR: ' + e.message + '\n\n';
+        allPassed = false;
+      }
+
+      html += '\n' + (allPassed ? '✓ ALL TESTS PASSED!' : '✗ SOME TESTS FAILED') + '</pre>';
+      output.innerHTML = html;
+      
+      document.getElementById('test2-icon').innerHTML = allPassed 
+        ? '<span class="check-icon">✓</span>' 
+        : '<span class="x-icon">✗</span>';
+    }
+
+    function runCSSTests() {
+      const output = document.getElementById('css-output');
+      let html = '<pre>';
+      let allPassed = true;
+
+      // Create test elements
+      const testQueued = document.createElement('span');
+      testQueued.className = 'status-badge queued';
+      testQueued.style.display = 'none';
+      document.body.appendChild(testQueued);
+
+      const testInProgress = document.createElement('span');
+      testInProgress.className = 'status-badge in-progress';
+      testInProgress.style.display = 'none';
+      document.body.appendChild(testInProgress);
+
+      // Check Queued styles
+      html += '> Checking .status-badge.queued styles...\n';
+      const queuedStyles = window.getComputedStyle(testQueued);
+      const queuedBg = queuedStyles.backgroundColor;
+      const queuedColor = queuedStyles.color;
+      
+      html += 'Background: ' + queuedBg + '\n';
+      html += 'Color: ' + queuedColor + '\n';
+      
+      if (queuedBg.includes('254, 243, 199') || queuedBg.includes('#fef3c7')) {
+        html += '✓ PASS: Queued background color is correct\n\n';
+      } else {
+        html += '✗ FAIL: Queued background color is incorrect\n\n';
+        allPassed = false;
+      }
+
+      // Check In Progress styles
+      html += '> Checking .status-badge.in-progress styles...\n';
+      const inProgressStyles = window.getComputedStyle(testInProgress);
+      const inProgressBg = inProgressStyles.backgroundColor;
+      const inProgressColor = inProgressStyles.color;
+      
+      html += 'Background: ' + inProgressBg + '\n';
+      html += 'Color: ' + inProgressColor + '\n';
+      
+      if (inProgressBg.includes('219, 234, 254') || inProgressBg.includes('#dbeafe')) {
+        html += '✓ PASS: In Progress background color is correct\n\n';
+      } else {
+        html += '✗ FAIL: In Progress background color is incorrect\n\n';
+        allPassed = false;
+      }
+
+      // Cleanup
+      document.body.removeChild(testQueued);
+      document.body.removeChild(testInProgress);
+
+      html += '\n' + (allPassed ? '✓ ALL CSS TESTS PASSED!' : '✗ SOME CSS TESTS FAILED') + '</pre>';
+      output.innerHTML = html;
+      
+      document.getElementById('test3-icon').innerHTML = allPassed 
+        ? '<span class="check-icon">✓</span>' 
+        : '<span class="x-icon">✗</span>';
+    }
+
+    function testFilterUpdate() {
+      const select = document.getElementById('statusFilterTest');
+      const beforeCount = select.options.length;
+      
+      // Call the update function
+      if (typeof window.updateStatusFilterDropdown === 'function') {
+        window.updateStatusFilterDropdown();
+        
+        setTimeout(() => {
+          const afterCount = select.options.length;
+          const hasQueued = Array.from(select.options).some(opt => opt.value === 'Queued');
+          const hasInProgress = Array.from(select.options).some(opt => opt.value === 'In Progress');
+          
+          if (hasQueued && hasInProgress) {
+            alert('✓ SUCCESS! Queued and In Progress were added to the dropdown.');
+            document.getElementById('test4-icon').innerHTML = '<span class="check-icon">✓</span>';
+          } else {
+            alert('✗ FAIL: New statuses were not added. Check console for errors.');
+            document.getElementById('test4-icon').innerHTML = '<span class="x-icon">✗</span>';
+          }
+        }, 100);
+      } else {
+        alert('✗ ERROR: window.updateStatusFilterDropdown is not defined. Is status-handler.js loaded?');
+        document.getElementById('test4-icon').innerHTML = '<span class="x-icon">✗</span>';
+      }
+    }
+  </script>
+</body>
+</html>

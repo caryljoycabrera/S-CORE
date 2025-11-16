@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize enhanced multi-select dropdowns
   const statusFilter = new EnhancedMultiSelect('statusFilter', 
-    ['pending', 'approved', 'for revision', 'completed', 'rejected', 'archived'], 
+    ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'], 
     'Select Status', false);
     
   const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
@@ -1777,6 +1777,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (statusSelect && currentStatusValue) {
       const statusOptions = [
         { value: 'Pending', label: 'Pending' },
+        { value: 'Queued', label: 'Queued' },
+        { value: 'In Progress', label: 'In Progress' },
         { value: 'Approved', label: 'Approved' },
         { value: 'For Revision', label: 'For Revision' },
         { value: 'Completed', label: 'Completed' },
@@ -2293,7 +2295,7 @@ window.openImagePreview = function(imageUrl, fileName) {
       
       const statusBadge = row.querySelector('.status-badge');
       if (statusBadge) {
-        statusBadge.className = `status-badge ${updatedData.status.toLowerCase().replace(' ', '-')}`;
+        statusBadge.className = `status-badge ${updatedData.status.toLowerCase().replace(/\s+/g, '-')}`;
         statusBadge.textContent = updatedData.status;
       }
     }

@@ -578,7 +578,7 @@ function populateRevisionHotspotTable(requests) {
       <td><span class="revision-count major">${request.majorRevisions}</span></td>
       <td><span class="revision-count minor">${request.minorRevisions}</span></td>
       <td><span class="revision-count total">${request.totalRevisions}</span></td>
-      <td><span class="status-badge ${request.status.toLowerCase().replace(' ', '-')}">${request.status}</span></td>
+      <td><span class="status-badge ${request.status.toLowerCase().replace(/\s+/g, '-')}">${request.status}</span></td>
       <td>
         <a href="/admin/${request.type === 'approval' ? 'approvals' : 'services'}?id=${request._id}" class="btn-view">View</a>
       </td>

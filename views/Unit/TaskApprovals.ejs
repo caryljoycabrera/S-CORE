@@ -7,6 +7,7 @@
 
   <!-- Base Stylesheet and Google Fonts (same as AllTasks) -->
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
@@ -92,16 +93,54 @@
                   </div>
                   
                   <div class="filter-item">
-                    <label for="statusFilter" class="filter-sublabel">Status</label>
-                    <select id="statusFilter" class="filter-select">
-                      <option value="all">All Statuses</option>
-                      <option value="Pending">Pending</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="For Revision">For Revision</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
+                    <label class="filter-sublabel">Status</label>
+                    <div class="custom-select-wrapper">
+                      <div class="custom-select" id="statusFilter">
+                        <div class="select-display">All Status</div>
+                        <div class="select-dropdown" id="statusDropdown">
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="all" checked>
+                            <span class="checkbox-custom"></span>
+                            All Status
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="pending">
+                            <span class="checkbox-custom"></span>
+                            Pending
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="queued">
+                            <span class="checkbox-custom"></span>
+                            Queued
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="in-progress">
+                            <span class="checkbox-custom"></span>
+                            In Progress
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="approved">
+                            <span class="checkbox-custom"></span>
+                            Approved
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="completed">
+                            <span class="checkbox-custom"></span>
+                            Completed
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="for-revision">
+                            <span class="checkbox-custom"></span>
+                            For Revision
+                          </label>
+                          <label class="dropdown-option">
+                            <input type="checkbox" value="rejected">
+                            <span class="checkbox-custom"></span>
+                            Rejected
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="filter-item">
@@ -122,13 +161,13 @@
                   <div class="filter-item">
                     <label for="sortSelect" class="filter-sublabel">Sort By</label>
                     <select id="sortSelect" class="filter-select">
-                      <option value="pending-deadline">Pending (Nearest Deadline)</option>
-                      <option value="date-desc">Date (Newest First)</option>
-                      <option value="date-asc">Date (Oldest First)</option>
+                      <option value="priority">Priority (Urgent First)</option>
+                      <option value="deadline-asc">Deadline (Nearest First)</option>
+                      <option value="deadline-desc">Deadline (Farthest First)</option>
+                      <option value="status-priority">Status (Active First)</option>
+                      <option value="date-desc">Date Submitted (Newest)</option>
+                      <option value="date-asc">Date Submitted (Oldest)</option>
                       <option value="title-asc">Title (A-Z)</option>
-                      <option value="title-desc">Title (Z-A)</option>
-                      <option value="status-asc">Status (A-Z)</option>
-                      <option value="status-desc">Status (Z-A)</option>
                     </select>
                   </div>
                 </div>
@@ -148,16 +187,41 @@
                   <th>Requestor</th>
                   <th>Organization/Office/Dept</th>
                   <th>Date Submitted</th>
-                  <th>Deadline</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th style="text-align: center;">Deadline</th>
                 </tr>
               </thead>
               <tbody id="requestsTableBody">
                 <% 
-                // Only approval requests (no services)
+                // Smart sorting for approval requests
                 const allRequests = (approvalRequests || []).map(r => ({...r, requestType: 'approval'}))
-                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                  .sort((a, b) => {
+                    const statusPriority = {
+                      'Queued': 1,
+                      'In Progress': 2,
+                      'Pending': 3,
+                      'For Revision': 4,
+                      'Approved': 5,
+                      'Completed': 6,
+                      'Rejected': 7,
+                      'Cancelled': 8
+                    };
+                    
+                    const aPriority = statusPriority[a.status] || 999;
+                    const bPriority = statusPriority[b.status] || 999;
+                    
+                    if (aPriority === bPriority) {
+                      if (aPriority <= 4) {
+                        if (!a.deadline && !b.deadline) return new Date(b.createdAt) - new Date(a.createdAt);
+                        if (!a.deadline) return 1;
+                        if (!b.deadline) return -1;
+                        return new Date(a.deadline) - new Date(b.deadline);
+                      }
+                      return new Date(b.createdAt) - new Date(a.createdAt);
+                    }
+                    
+                    return aPriority - bPriority;
+                  });
                 %>
                 
                 <% if (allRequests && allRequests.length > 0) { %>
@@ -210,24 +274,33 @@
                       <td><%= requestor %></td>
                       <td><%= organization %></td>
                       <td><%= dateSubmitted %></td>
-                      <td><%= deadline ? new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %></td>
                       <td>
                         <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>
                       </td>
-                      <td>
-                        <button class="view-btn">
-                          <svg class="view-btn-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                          </svg>
-                          <span class="view-btn-text">View Details</span>
-                        </button>
+                      <td style="text-align: center;">
+                        <% if (deadline) { %>
+                          <% 
+                            const today = new Date();
+                            today.setHours(0,0,0,0);
+                            const deadlineDate = new Date(deadline);
+                            deadlineDate.setHours(0,0,0,0);
+                            const timeDiff = deadlineDate - today;
+                            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                            const isOverdue = daysDiff < 0 && (status.toLowerCase() === 'pending' || status.toLowerCase() === 'queued' || status.toLowerCase() === 'in-progress' || status.toLowerCase() === 'for-revision');
+                            const isNearDeadline = daysDiff >= 0 && daysDiff <= 1 && (status.toLowerCase() === 'pending' || status.toLowerCase() === 'queued' || status.toLowerCase() === 'in-progress' || status.toLowerCase() === 'for-revision');
+                          %>
+                          <span class="deadline-badge <%= isOverdue ? 'overdue' : isNearDeadline ? 'near-deadline' : '' %>">
+                            <%= new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                          </span>
+                        <% } else { %>
+                          <span class="deadline-badge">N/A</span>
+                        <% } %>
                       </td>
                     </tr>
                   <% }); %>
                 <% } else { %>
                   <tr>
-                    <td colspan="8" style="text-align: center; padding: 3rem; color: #64748b;">
+                    <td colspan="7" style="text-align: center; padding: 3rem; color: #64748b;">
                       <div style="font-size: 3rem; margin-bottom: 1rem;">
                         <svg width="64" height="64" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block;">
                           <rect x="4" y="4" width="16" height="16" rx="2"/>
@@ -526,5 +599,6 @@
       // No extra initialization required; `alltasks.js` works on the table rows and will function normally.
     });
   </script>
+  <script src="/javascripts/status-handler.js"></script>
   </body>
   </html>

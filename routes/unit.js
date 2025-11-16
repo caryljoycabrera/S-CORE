@@ -56,6 +56,18 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       status: { $regex: /^pending$/i }
     });
     console.log('[/unit/dashboard] Pending approval tasks:', pendingApprovalTasks);
+    
+    const queuedApprovalTasks = await RequestApproval.countDocuments({
+      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      status: { $regex: /^queued$/i }
+    });
+    console.log('[/unit/dashboard] Queued approval tasks:', queuedApprovalTasks);
+    
+    const inProgressApprovalTasks = await RequestApproval.countDocuments({
+      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      status: { $regex: /^in progress$/i }
+    });
+    console.log('[/unit/dashboard] In Progress approval tasks:', inProgressApprovalTasks);
 
     const revisionApprovalTasks = await RequestApproval.countDocuments({
       assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
@@ -76,6 +88,18 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       status: { $regex: /^pending$/i }
     });
     console.log('[/unit/dashboard] Pending service tasks:', pendingServiceTasks);
+    
+    const queuedServiceTasks = await ServiceRequest.countDocuments({
+      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      status: { $regex: /^queued$/i }
+    });
+    console.log('[/unit/dashboard] Queued service tasks:', queuedServiceTasks);
+    
+    const inProgressServiceTasks = await ServiceRequest.countDocuments({
+      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      status: { $regex: /^in progress$/i }
+    });
+    console.log('[/unit/dashboard] In Progress service tasks:', inProgressServiceTasks);
 
     const revisionServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
@@ -93,6 +117,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     // Calculate combined statistics
     const totalTasks = totalApprovalTasks + totalServiceTasks;
     const newTasks = pendingApprovalTasks + pendingServiceTasks;
+    const queuedTasks = queuedApprovalTasks + queuedServiceTasks;
+    const inProgressTasks = inProgressApprovalTasks + inProgressServiceTasks;
     const activeRevisions = revisionApprovalTasks + revisionServiceTasks;
 
     // Get approved tasks count
@@ -451,6 +477,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       totalRequests: totalTasks,
       approvedRequests: approvedTasks,
       pendingRequests: newTasks,
+      queuedRequests: queuedTasks,
+      inProgressRequests: inProgressTasks,
       inReviewRequests: activeRevisions,
       recentActivity,
       upcomingDeadlines,
@@ -1348,6 +1376,10 @@ router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
 
     // Update task status to Completed
     task.status = 'Completed';
+    
+    // Note: revisionCount is managed when user requests revisions
+    // When marking as completed, we don't reset it - it tracks total revisions across all cycles
+    
     await task.save();
 
     // Send notification to the requestor
@@ -1368,6 +1400,62 @@ router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
   } catch (error) {
     console.error('Error completing task:', error);
     res.status(500).json({ success: false, message: 'Error completing task: ' + error.message });
+  }
+});
+
+/**
+ * POST /unit/task/acknowledge/:id
+ * Acknowledge a queued task and change status to "In Progress"
+ * This is the unit's way of accepting a task from their queue
+ */
+router.post('/unit/task/acknowledge/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+    const { taskType } = req.body; // 'service' or 'approval'
+
+    let task;
+    if (taskType === 'service') {
+      task = await ServiceRequest.findById(taskId).populate('userId');
+    } else if (taskType === 'approval') {
+      task = await RequestApproval.findById(taskId).populate('userId');
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid task type' });
+    }
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Verify task is in Queued status
+    if (task.status !== 'Queued') {
+      return res.status(400).json({ success: false, message: 'Only queued tasks can be acknowledged' });
+    }
+
+    // Update task status to In Progress
+    task.status = 'In Progress';
+    await task.save();
+
+    // Send notification to the requestor that their task is now being worked on
+    try {
+      if (taskType === 'service') {
+        await notificationService.notifyServiceInProgress(task._id, task.userId._id, user._id);
+      } else {
+        await notificationService.notifyApprovalInProgress(task._id, task.userId._id, user._id);
+      }
+    } catch (notifError) {
+      console.error('Error sending in-progress notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Task acknowledged and moved to In Progress' });
+  } catch (error) {
+    console.error('Error acknowledging task:', error);
+    res.status(500).json({ success: false, message: 'Error acknowledging task: ' + error.message });
   }
 });
 

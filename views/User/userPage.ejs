@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>S-CORE Dashboard</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
@@ -1036,6 +1037,17 @@ It's already a flex container, but we need to add two key properties:
 .status-badge.pending {
   background-color: #fef3c7;
   color: #d97706;
+}
+
+.status-badge.queued {
+  background-color: #e0f2fe;
+  color: #0c4a6e;
+}
+
+.status-badge.in-progress,
+.status-badge.inprogress {
+  background-color: #dbeafe;
+  color: #1e40af;
 }
 
 .status-badge.approved {
@@ -2685,5 +2697,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileNavigation();
 });
 </script>
+<script src="/javascripts/status-handler.js"></script>
 </body>
 </html>

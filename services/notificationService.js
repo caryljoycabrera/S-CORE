@@ -1075,6 +1075,93 @@ class NotificationService {
       console.error('Error notifying admins of unit completion:', error);
     }
   }
+
+  // Notify requestor when task moves to "In Progress"
+  async notifyServiceInProgress(serviceId, requestorId, unitMemberId) {
+    try {
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+
+      await this.createNotification({
+        recipient: requestorId,
+        sender: unitMemberId,
+        title: 'Service Request In Progress',
+        message: `${unitName} team has started working on your service request`,
+        type: 'service_in_progress',
+        relatedId: serviceId,
+        relatedModel: 'ServiceRequest',
+        priority: 'medium',
+        actionUrl: `/service-requests?modal=true&requestId=${serviceId}&type=service`
+      });
+    } catch (error) {
+      console.error('Error notifying service in progress:', error);
+    }
+  }
+
+  // Notify requestor when approval task moves to "In Progress"
+  async notifyApprovalInProgress(approvalId, requestorId, unitMemberId) {
+    try {
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+
+      await this.createNotification({
+        recipient: requestorId,
+        sender: unitMemberId,
+        title: 'Approval Request In Progress',
+        message: `${unitName} team has started reviewing your approval request`,
+        type: 'approval_in_progress',
+        relatedId: approvalId,
+        relatedModel: 'RequestApproval',
+        priority: 'medium',
+        actionUrl: `/request-approvals?modal=true&requestId=${approvalId}&type=approval`
+      });
+    } catch (error) {
+      console.error('Error notifying approval in progress:', error);
+    }
+  }
+
+  // Notify unit when user requests revision on completed task
+  async notifyUnitRevisionRequested(requestId, requestorId, assignedUnits, revisionCount) {
+    try {
+      const unitsArray = typeof assignedUnits === 'string' 
+        ? assignedUnits.split(',').map(u => u.trim()).filter(u => u && u !== 'Not yet assigned')
+        : Array.isArray(assignedUnits)
+          ? assignedUnits.filter(u => u && u !== 'Not yet assigned')
+          : [assignedUnits].filter(u => u && u !== 'Not yet assigned');
+
+      if (unitsArray.length === 0) return;
+
+      const unitMembers = await User.find({
+        role: 'unit',
+        unitTeam: { $in: unitsArray }
+      });
+
+      if (unitMembers.length === 0) return;
+
+      const requestor = await User.findById(requestorId);
+      const revisionsRemaining = 2 - revisionCount;
+
+      const notificationData = {
+        title: 'Revision Requested',
+        message: `${requestor.fName} ${requestor.lName} requested revision #${revisionCount} (${revisionsRemaining} remaining)`,
+        type: 'revision_requested',
+        relatedId: requestId,
+        relatedModel: 'ServiceRequest',
+        sender: requestorId,
+        priority: 'high',
+        actionUrl: `/unit/all-tasks?modal=true&requestId=${requestId}&type=service`
+      };
+
+      const notifications = unitMembers.map(member => 
+        this.createNotification({ ...notificationData, recipient: member._id })
+      );
+      
+      await Promise.all(notifications);
+      console.log(`✅ User revision request notification sent to ${unitMembers.length} unit members`);
+    } catch (error) {
+      console.error('Error notifying unit of revision request:', error);
+    }
+  }
 }
 
 // Export singleton instance

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/stylesheets/ejs/services.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/Admin/approvals-conversation-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <!-- Quill Editor -->
@@ -343,7 +344,7 @@
                 <td><%= request.title %></td>
                 <td><%= request.displayOrganization || request.organization %></td>
                 <td>
-                  <span class="status-badge <%= request.status.toLowerCase().replace(' ', '-') %>">
+                  <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                     <%= request.status %>
                   </span>
                 </td>
@@ -427,6 +428,10 @@
             <div class="info-item">
         <span class="info-label">Specific Request Type:</span>
         <span class="info-value" id="detailSpecificType" style="color: var(--primary-green); font-weight: 600;">Not specified</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Revision Count:</span>
+        <span class="info-value" id="detailRevisionCount">0</span>
       </div>
     
             <div class="info-item">
@@ -920,5 +925,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<script src="/javascripts/status-handler.js"></script>
 </body>
 </html>

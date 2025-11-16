@@ -815,6 +815,11 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
     // Auto-assign unit based on request type
     const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);
     const assignedUnits = autoAssignedUnit || 'Not yet assigned';
+    
+    // Smart Triage: Set status based on whether it's auto-assigned
+    // If auto-assigned (specified type), set to 'Queued' for unit inbox
+    // If not auto-assigned (custom type), set to 'Pending' for admin inbox
+    const initialStatus = autoAssignedUnit ? 'Queued' : 'Pending';
 
     const newRequest = new RequestApproval({
       title: projectTitle,
@@ -825,6 +830,7 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
       userId: req.session.userId,
       files: filePaths,
       file: filePaths[0] || null,
+      status: initialStatus,
       assignedUnits: assignedUnits,
       originalAssignedUnits: autoAssignedUnit // Store original auto-assignment
     });
@@ -1016,6 +1022,11 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
     // Auto-assign unit based on request type
     const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);
     const assignedUnits = autoAssignedUnit || 'Not yet assigned';
+    
+    // Smart Triage: Set status based on whether it's auto-assigned
+    // If auto-assigned (specified type), set to 'Queued' for unit inbox
+    // If not auto-assigned (custom type), set to 'Pending' for admin inbox
+    const initialStatus = autoAssignedUnit ? 'Queued' : 'Pending';
 
     const newRequest = new ServiceRequest({
       title: projectTitle,
@@ -1026,6 +1037,7 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
       userId: req.session.userId,
       files: filePaths,
       file: filePaths[0] || null,
+      status: initialStatus,
       assignedUnits: assignedUnits,
       originalAssignedUnits: autoAssignedUnit // Store original auto-assignment
     });
@@ -1222,6 +1234,178 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
   } catch (error) {
     console.error('Error resubmitting approval request:', error);
     res.status(500).json({ success: false, message: 'Error resubmitting request: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/service/request-revision/:id
+ * User-initiated revision request for completed service requests
+ * Allows users to request changes with specific feedback (2 revision limit)
+ */
+router.post('/user/service/request-revision/:id', requireLogin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { revisionNotes } = req.body;
+    const userId = req.session.userId;
+
+    // Find the service request
+    const request = await ServiceRequest.findById(id);
+    
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Service request not found' });
+    }
+
+    // Verify user owns this request
+    if (request.userId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to request revision for this request' });
+    }
+
+    // Verify request is in Completed status
+    if (request.status !== 'Completed') {
+      return res.status(400).json({ success: false, message: 'Only completed requests can be sent for revision' });
+    }
+
+    // Check revision limit (2 revisions maximum)
+    if (request.revisionCount >= 2) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This task has reached its 2-revision limit. For further changes, please submit a new Service Request and reference this one.' 
+      });
+    }
+
+    // Validate revision notes
+    if (!revisionNotes || revisionNotes.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
+    }
+
+    // Increment revision count
+    request.revisionCount += 1;
+    request.status = 'For Revision';
+    await request.save();
+
+    // Add message to conversation
+    const Conversation = require('../models/Conversation');
+    let conversation = await Conversation.findOne({ serviceRequestId: id });
+    
+    if (!conversation) {
+      conversation = new Conversation({
+        serviceRequestId: id,
+        requestType: 'service',
+        messages: []
+      });
+    }
+
+    conversation.messages.push({
+      senderId: userId,
+      senderRole: 'user',
+      content: `🔄 **Revision Request #${request.revisionCount}**\n\n${revisionNotes}\n\n_Revisions remaining: ${2 - request.revisionCount}_`,
+      timestamp: new Date()
+    });
+
+    await conversation.save();
+
+    // Notify unit team about the revision request
+    try {
+      await notificationService.notifyUnitRevisionRequested(request._id, userId, request.assignedUnits, request.revisionCount);
+    } catch (notifError) {
+      console.error('Error sending revision request notification:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Revision request submitted successfully. (Revision ${request.revisionCount} of 2)`,
+      revisionCount: request.revisionCount,
+      revisionsRemaining: 2 - request.revisionCount
+    });
+  } catch (error) {
+    console.error('Error requesting service revision:', error);
+    res.status(500).json({ success: false, message: 'Error requesting revision: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/approval/request-revision/:id
+ * User-initiated revision request for completed approval requests
+ * Allows users to request changes with specific feedback (2 revision limit)
+ */
+router.post('/user/approval/request-revision/:id', requireLogin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { revisionNotes } = req.body;
+    const userId = req.session.userId;
+
+    // Find the approval request
+    const request = await RequestApproval.findById(id);
+    
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Approval request not found' });
+    }
+
+    // Verify user owns this request
+    if (request.userId.toString() !== userId) {
+      return res.status(403).json({ success: false, message: 'Unauthorized to request revision for this request' });
+    }
+
+    // Verify request is in Approved status (for approval requests, "Approved" is the completed state)
+    if (request.status !== 'Approved') {
+      return res.status(400).json({ success: false, message: 'Only approved requests can be sent for revision' });
+    }
+
+    // Check revision limit (2 revisions maximum)
+    if (request.revisionCount >= 2) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This task has reached its 2-revision limit. For further changes, please submit a new Request for Approval and reference this one.' 
+      });
+    }
+
+    // Validate revision notes
+    if (!revisionNotes || revisionNotes.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
+    }
+
+    // Increment revision count
+    request.revisionCount += 1;
+    request.status = 'For Revision';
+    await request.save();
+
+    // Add message to conversation
+    const Conversation = require('../models/Conversation');
+    let conversation = await Conversation.findOne({ approvalRequestId: id });
+    
+    if (!conversation) {
+      conversation = new Conversation({
+        approvalRequestId: id,
+        requestType: 'approval',
+        messages: []
+      });
+    }
+
+    conversation.messages.push({
+      senderId: userId,
+      senderRole: 'user',
+      content: `🔄 **Revision Request #${request.revisionCount}**\n\n${revisionNotes}\n\n_Revisions remaining: ${2 - request.revisionCount}_`,
+      timestamp: new Date()
+    });
+
+    await conversation.save();
+
+    // Notify unit team about the revision request
+    try {
+      await notificationService.notifyUnitRevisionRequested(request._id, userId, request.assignedUnits, request.revisionCount);
+    } catch (notifError) {
+      console.error('Error sending revision request notification:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Revision request submitted successfully. (Revision ${request.revisionCount} of 2)`,
+      revisionCount: request.revisionCount,
+      revisionsRemaining: 2 - request.revisionCount
+    });
+  } catch (error) {
+    console.error('Error requesting approval revision:', error);
+    res.status(500).json({ success: false, message: 'Error requesting revision: ' + error.message });
   }
 });
 

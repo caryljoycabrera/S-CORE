@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Request for Approval</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
@@ -997,6 +998,19 @@
   border-color: #f59e0b;
 }
 
+.status-badge-large.queued {
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  color: #0c4a6e;
+  border-color: #0ea5e9;
+}
+
+.status-badge-large.in-progress,
+.status-badge-large.inprogress {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
 .status-badge-large.approved {
   background: linear-gradient(135deg, #d1fae5, #a7f3d0);
   color: #065f46;
@@ -1010,9 +1024,15 @@
 }
 
 .status-badge-large.completed {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  color: #1e40af;
-  border-color: #3b82f6;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.status-badge-large.for-revision {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #78350f;
+  border-color: #f97316;
 }
 
 .description-section {
@@ -2073,9 +2093,29 @@ option:hover {
                           Pending
                         </label>
                         <label class="dropdown-option">
+                          <input type="checkbox" value="queued">
+                          <span class="checkbox-custom"></span>
+                          Queued
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="in-progress">
+                          <span class="checkbox-custom"></span>
+                          In Progress
+                        </label>
+                        <label class="dropdown-option">
                           <input type="checkbox" value="approved">
                           <span class="checkbox-custom"></span>
                           Approved
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="completed">
+                          <span class="checkbox-custom"></span>
+                          Completed
+                        </label>
+                        <label class="dropdown-option">
+                          <input type="checkbox" value="for-revision">
+                          <span class="checkbox-custom"></span>
+                          For Revision
                         </label>
                         <label class="dropdown-option">
                           <input type="checkbox" value="rejected">
@@ -2194,7 +2234,7 @@ option:hover {
                   <td><%= request.title %></td>
                   <td><%= request.organization %></td>
                   <td>
-                    <span class="status-badge <%= request.status.toLowerCase() %>">
+                    <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                       <%= request.status %>
                     </span>
                   </td>
@@ -4131,7 +4171,7 @@ document.querySelectorAll('.request-row').forEach(row => {
       if (detailStatus && detailStatusBadge) {
         const status = row.dataset.status || '';
         detailStatus.innerText = status;
-        detailStatusBadge.className = `status-badge-large ${status.toLowerCase()}`;
+        detailStatusBadge.className = `status-badge-large ${status.toLowerCase().replace(/\s+/g, '-')}`;
 
         // Show additional files section only for "for revision" status where additional file upload is allowed
         const additionalFilesSection = document.getElementById('additional-files-section');

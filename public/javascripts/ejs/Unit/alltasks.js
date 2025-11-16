@@ -165,62 +165,169 @@ function initializeEventListeners() {
 }
 
 function initializeTableFilters() {
-    const filterInputs = {
-        title: document.getElementById('filterTitle'),
-        type: document.getElementById('filterType'),
-        status: document.getElementById('filterStatus'),
-        requestor: document.getElementById('filterRequestor'),
-        dateFrom: document.getElementById('filterDateFrom'),
-        dateTo: document.getElementById('filterDateTo')
-    };
+    // Initialize custom dropdown filters
+    initializeCustomDropdowns();
+    
+    // Add event listeners for text inputs
+    const titleFilter = document.getElementById('titleFilter');
+    const requestorFilter = document.getElementById('requestorFilter');
+    const dateFromFilter = document.getElementById('dateFromFilter');
+    const dateToFilter = document.getElementById('dateToFilter');
+    
+    if (titleFilter) titleFilter.addEventListener('input', applyTableFilters);
+    if (requestorFilter) requestorFilter.addEventListener('input', applyTableFilters);
+    if (dateFromFilter) dateFromFilter.addEventListener('change', applyTableFilters);
+    if (dateToFilter) dateToFilter.addEventListener('change', applyTableFilters);
+}
 
-    // Add event listeners to all filter inputs
-    Object.values(filterInputs).forEach(input => {
-        if (input) {
-            input.addEventListener('input', applyTableFilters);
-            input.addEventListener('change', applyTableFilters);
+function initializeCustomDropdowns() {
+    // Initialize Type filter dropdown (if exists)
+    const typeFilterDropdown = document.getElementById('typeFilter');
+    if (typeFilterDropdown) {
+        initializeCustomDropdown(typeFilterDropdown, 'typeDropdown', applyTableFilters);
+    }
+    
+    // Initialize Status filter dropdown
+    const statusFilterDropdown = document.getElementById('statusFilter');
+    if (statusFilterDropdown) {
+        initializeCustomDropdown(statusFilterDropdown, 'statusDropdown', applyTableFilters);
+    }
+}
+
+function initializeCustomDropdown(customSelectElement, dropdownId, onChangeCallback) {
+    const selectDisplay = customSelectElement.querySelector('.select-display');
+    const dropdown = document.getElementById(dropdownId);
+    
+    if (!selectDisplay || !dropdown) return;
+    
+    // Toggle dropdown on click
+    selectDisplay.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = dropdown.classList.contains('show');
+        
+        // Close all other dropdowns and remove active class
+        document.querySelectorAll('.select-dropdown.show').forEach(dd => {
+            if (dd !== dropdown) {
+                dd.classList.remove('show');
+                const otherDisplay = dd.parentElement.querySelector('.select-display');
+                if (otherDisplay) otherDisplay.classList.remove('active');
+            }
+        });
+        
+        // Toggle current dropdown
+        dropdown.classList.toggle('show', !isOpen);
+        selectDisplay.classList.toggle('active', !isOpen);
+    });
+    
+    // Handle checkbox changes
+    const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            handleCheckboxChange(customSelectElement, dropdown, checkboxes, onChangeCallback);
+        });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!customSelectElement.contains(e.target)) {
+            dropdown.classList.remove('show');
+            selectDisplay.classList.remove('active');
         }
     });
 }
 
-function applyTableFilters() {
-    const filters = {
-        title: document.getElementById('filterTitle')?.value.toLowerCase() || '',
-        type: document.getElementById('filterType')?.value.toLowerCase() || '',
-        status: document.getElementById('filterStatus')?.value.toLowerCase() || '',
-        requestor: document.getElementById('filterRequestor')?.value.toLowerCase() || '',
-        dateFrom: document.getElementById('filterDateFrom')?.value || '',
-        dateTo: document.getElementById('filterDateTo')?.value || ''
-    };
+function handleCheckboxChange(customSelectElement, dropdown, checkboxes, onChangeCallback) {
+    const selectDisplay = customSelectElement.querySelector('.select-display');
+    const allCheckbox = dropdown.querySelector('input[value="all"]');
+    const otherCheckboxes = Array.from(checkboxes).filter(cb => cb.value !== 'all');
+    
+    // If "All" checkbox was clicked
+    if (event.target.value === 'all') {
+        if (event.target.checked) {
+            // Uncheck all other checkboxes
+            otherCheckboxes.forEach(cb => cb.checked = false);
+            selectDisplay.textContent = getDefaultText(dropdown.id);
+        }
+    } else {
+        // If any other checkbox was clicked, uncheck "All"
+        if (allCheckbox) allCheckbox.checked = false;
+        
+        // Update display text
+        const checkedBoxes = otherCheckboxes.filter(cb => cb.checked);
+        if (checkedBoxes.length === 0) {
+            // If nothing selected, check "All" again
+            if (allCheckbox) allCheckbox.checked = true;
+            selectDisplay.textContent = getDefaultText(dropdown.id);
+        } else if (checkedBoxes.length === 1) {
+            selectDisplay.textContent = checkedBoxes[0].parentElement.textContent.trim();
+        } else {
+            selectDisplay.textContent = `${checkedBoxes.length} selected`;
+        }
+    }
+    
+    // Apply filters
+    if (onChangeCallback) onChangeCallback();
+}
 
-    const tableRows = document.querySelectorAll('.requests-table tbody tr');
+function getDefaultText(dropdownId) {
+    if (dropdownId === 'typeDropdown') return 'All Types';
+    if (dropdownId === 'statusDropdown') return 'All Status';
+    return 'All';
+}
+
+function applyTableFilters() {
+    // Get filter values
+    const titleFilter = document.getElementById('titleFilter')?.value.toLowerCase() || '';
+    const requestorFilter = document.getElementById('requestorFilter')?.value.toLowerCase() || '';
+    const dateFromFilter = document.getElementById('dateFromFilter')?.value || '';
+    const dateToFilter = document.getElementById('dateToFilter')?.value || '';
+    
+    // Get selected types from custom dropdown
+    const selectedTypes = getSelectedDropdownValues('typeDropdown');
+    
+    // Get selected statuses from custom dropdown
+    const selectedStatuses = getSelectedDropdownValues('statusDropdown');
+    
+    const tableRows = document.querySelectorAll('.requests-table tbody tr.request-row');
     
     tableRows.forEach(row => {
         const title = row.getAttribute('data-title')?.toLowerCase() || '';
         const type = row.getAttribute('data-request-type')?.toLowerCase() || '';
-        const status = row.getAttribute('data-status')?.toLowerCase() || '';
+        const status = row.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
         const requestor = row.getAttribute('data-requestor')?.toLowerCase() || '';
         const dateSubmitted = row.getAttribute('data-date-submitted') || '';
 
         let showRow = true;
 
-        // Apply filters
-        if (filters.title && !title.includes(filters.title)) {
+        // Apply title filter
+        if (titleFilter && !title.includes(titleFilter)) {
             showRow = false;
         }
-        if (filters.type && type !== filters.type) {
+        
+        // Apply type filter (only if type dropdown exists - not in TaskApprovals/TaskServices)
+        if (selectedTypes.length > 0 && !selectedTypes.includes('all')) {
+            if (!selectedTypes.includes(type)) {
+                showRow = false;
+            }
+        }
+        
+        // Apply status filter
+        if (selectedStatuses.length > 0 && !selectedStatuses.includes('all')) {
+            if (!selectedStatuses.includes(status)) {
+                showRow = false;
+            }
+        }
+        
+        // Apply requestor filter
+        if (requestorFilter && !requestor.includes(requestorFilter)) {
             showRow = false;
         }
-        if (filters.status && status !== filters.status) {
+        
+        // Apply date range filters
+        if (dateFromFilter && dateSubmitted < dateFromFilter) {
             showRow = false;
         }
-        if (filters.requestor && !requestor.includes(filters.requestor)) {
-            showRow = false;
-        }
-        if (filters.dateFrom && dateSubmitted < filters.dateFrom) {
-            showRow = false;
-        }
-        if (filters.dateTo && dateSubmitted > filters.dateTo) {
+        if (dateToFilter && dateSubmitted > dateToFilter) {
             showRow = false;
         }
 
@@ -228,20 +335,61 @@ function applyTableFilters() {
     });
 }
 
-function clearAllFilters() {
-    document.getElementById('filterTitle').value = '';
-    document.getElementById('filterType').value = '';
-    document.getElementById('filterStatus').value = '';
-    document.getElementById('filterRequestor').value = '';
-    document.getElementById('filterDateFrom').value = '';
-    document.getElementById('filterDateTo').value = '';
+function getSelectedDropdownValues(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return [];
     
+    const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function clearAllFilters() {
+    // Clear text inputs
+    const titleFilter = document.getElementById('titleFilter');
+    const requestorFilter = document.getElementById('requestorFilter');
+    const dateFromFilter = document.getElementById('dateFromFilter');
+    const dateToFilter = document.getElementById('dateToFilter');
+    
+    if (titleFilter) titleFilter.value = '';
+    if (requestorFilter) requestorFilter.value = '';
+    if (dateFromFilter) dateFromFilter.value = '';
+    if (dateToFilter) dateToFilter.value = '';
+    
+    // Reset type dropdown (if exists)
+    resetCustomDropdown('typeFilter', 'typeDropdown', 'All Types');
+    
+    // Reset status dropdown
+    resetCustomDropdown('statusFilter', 'statusDropdown', 'All Status');
+    
+    // Reset sort select
     const sortSelect = document.getElementById('sortSelect');
     if (sortSelect) {
-        sortSelect.value = 'pending-deadline';
+        sortSelect.value = 'priority';
     }
     
     applyTableFilters();
+    applySorting();
+}
+
+function resetCustomDropdown(filterId, dropdownId, defaultText) {
+    const filterElement = document.getElementById(filterId);
+    const dropdown = document.getElementById(dropdownId);
+    
+    if (!filterElement || !dropdown) return;
+    
+    // Reset display text
+    const selectDisplay = filterElement.querySelector('.select-display');
+    if (selectDisplay) {
+        selectDisplay.textContent = defaultText;
+    }
+    
+    // Uncheck all checkboxes
+    const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    // Check "All" checkbox
+    const allCheckbox = dropdown.querySelector('input[value="all"]');
+    if (allCheckbox) allCheckbox.checked = true;
 }
 
 function applySorting() {
@@ -260,44 +408,100 @@ function applySorting() {
         let aValue, bValue;
         
         switch(sortValue) {
-            case 'pending-deadline':
-                // Pending tasks with nearest deadlines first
-                const aStatus = (a.getAttribute('data-status') || '').toLowerCase();
-                const bStatus = (b.getAttribute('data-status') || '').toLowerCase();
-                const aPending = aStatus === 'pending';
-                const bPending = bStatus === 'pending';
+            case 'priority':
+                // Smart priority: Overdue tasks first, then by status priority, then by nearest deadline
+                const aDeadline = a.getAttribute('data-deadline');
+                const bDeadline = b.getAttribute('data-deadline');
+                const now = new Date();
                 
-                // Pending tasks come first
-                if (aPending && !bPending) return -1;
-                if (!aPending && bPending) return 1;
+                const aOverdue = aDeadline && new Date(aDeadline) < now;
+                const bOverdue = bDeadline && new Date(bDeadline) < now;
                 
-                // For pending tasks, sort by deadline (nearest first)
-                if (aPending && bPending) {
-                    const aDeadline = a.getAttribute('data-deadline');
-                    const bDeadline = b.getAttribute('data-deadline');
-                    
-                    // Tasks with no deadline go to the end
-                    if (!aDeadline && bDeadline) return 1;
-                    if (aDeadline && !bDeadline) return -1;
-                    if (!aDeadline && !bDeadline) return 0;
-                    
-                    // Sort by nearest deadline first
+                // Overdue tasks come first
+                if (aOverdue && !bOverdue) return -1;
+                if (!aOverdue && bOverdue) return 1;
+                
+                // Then by status priority (Queued > In Progress > Pending > For Revision)
+                const statusPriority = {
+                    'queued': 1,
+                    'in-progress': 2,
+                    'pending': 3,
+                    'for-revision': 4,
+                    'approved': 5,
+                    'completed': 6,
+                    'rejected': 7
+                };
+                
+                const aStatus = (a.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
+                const bStatus = (b.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
+                const aPriority = statusPriority[aStatus] || 999;
+                const bPriority = statusPriority[bStatus] || 999;
+                
+                if (aPriority !== bPriority) return aPriority - bPriority;
+                
+                // Within same status, sort by nearest deadline
+                if (aDeadline && bDeadline) {
                     return new Date(aDeadline) - new Date(bDeadline);
                 }
+                if (aDeadline && !bDeadline) return -1;
+                if (!aDeadline && bDeadline) return 1;
                 
-                // For non-pending tasks, sort by date submitted (newest first)
-                aValue = new Date(a.getAttribute('data-date-submitted') || 0);
-                bValue = new Date(b.getAttribute('data-date-submitted') || 0);
-                return bValue - aValue;
+                // Finally by date submitted (newest first)
+                return new Date(b.getAttribute('data-date-submitted') || 0) - new Date(a.getAttribute('data-date-submitted') || 0);
+                
+            case 'deadline-asc':
+                // Nearest deadline first
+                aValue = a.getAttribute('data-deadline');
+                bValue = b.getAttribute('data-deadline');
+                
+                if (!aValue && !bValue) return 0;
+                if (!aValue) return 1;
+                if (!bValue) return -1;
+                
+                return new Date(aValue) - new Date(bValue);
+                
+            case 'deadline-desc':
+                // Farthest deadline first
+                aValue = a.getAttribute('data-deadline');
+                bValue = b.getAttribute('data-deadline');
+                
+                if (!aValue && !bValue) return 0;
+                if (!aValue) return 1;
+                if (!bValue) return -1;
+                
+                return new Date(bValue) - new Date(aValue);
+                
+            case 'status-priority':
+                // Active statuses first (Queued, In Progress, Pending, For Revision)
+                const statusOrder = {
+                    'queued': 1,
+                    'in-progress': 2,
+                    'pending': 3,
+                    'for-revision': 4,
+                    'approved': 5,
+                    'completed': 6,
+                    'rejected': 7,
+                    'cancelled': 8
+                };
+                
+                const aStatusNorm = (a.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
+                const bStatusNorm = (b.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
+                const aOrder = statusOrder[aStatusNorm] || 999;
+                const bOrder = statusOrder[bStatusNorm] || 999;
+                
+                if (aOrder !== bOrder) return aOrder - bOrder;
+                
+                // Within same status, sort by date submitted (newest first)
+                return new Date(b.getAttribute('data-date-submitted') || 0) - new Date(a.getAttribute('data-date-submitted') || 0);
                 
             case 'date-desc':
-                // Parse dates and sort newest first
+                // Newest first
                 aValue = new Date(a.getAttribute('data-date-submitted') || 0);
                 bValue = new Date(b.getAttribute('data-date-submitted') || 0);
                 return bValue - aValue;
                 
             case 'date-asc':
-                // Parse dates and sort oldest first
+                // Oldest first
                 aValue = new Date(a.getAttribute('data-date-submitted') || 0);
                 bValue = new Date(b.getAttribute('data-date-submitted') || 0);
                 return aValue - bValue;
@@ -306,21 +510,6 @@ function applySorting() {
                 aValue = (a.getAttribute('data-title') || '').toLowerCase();
                 bValue = (b.getAttribute('data-title') || '').toLowerCase();
                 return aValue.localeCompare(bValue);
-                
-            case 'title-desc':
-                aValue = (a.getAttribute('data-title') || '').toLowerCase();
-                bValue = (b.getAttribute('data-title') || '').toLowerCase();
-                return bValue.localeCompare(aValue);
-                
-            case 'status-asc':
-                aValue = (a.getAttribute('data-status') || '').toLowerCase();
-                bValue = (b.getAttribute('data-status') || '').toLowerCase();
-                return aValue.localeCompare(bValue);
-                
-            case 'status-desc':
-                aValue = (a.getAttribute('data-status') || '').toLowerCase();
-                bValue = (b.getAttribute('data-status') || '').toLowerCase();
-                return bValue.localeCompare(aValue);
                 
             default:
                 return 0;
@@ -363,7 +552,15 @@ function openRequestDetails(requestId, requestType) {
     document.getElementById('modalRequestorEmail').textContent = requestorEmail;
     document.getElementById('modalOrganization').textContent = organization;
     document.getElementById('modalDate').textContent = dateSubmitted;
-    document.getElementById('modalStatus').textContent = status.toUpperCase();
+    
+    // Update status badge with proper styling
+    const modalStatus = document.getElementById('modalStatus');
+    if (modalStatus) {
+        const statusLower = status.toLowerCase().replace(/\s+/g, '-');
+        modalStatus.textContent = status.toUpperCase();
+        modalStatus.className = 'status-badge ' + statusLower;
+    }
+    
     document.getElementById('modalDescription').textContent = description;
 
     // Update type badge
@@ -565,6 +762,9 @@ function openRequestDetails(requestId, requestType) {
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
     }
 
+    // Handle Queued status - show Start Task button
+    handleQueuedStatus(status, requestId, requestType);
+
     // Load team conversation messages
     loadConversation(requestId);
 
@@ -665,14 +865,11 @@ async function loadRevisionHistory(requestId) {
             }
         } else {
             console.log('[Revision History] No revisions to display');
-            // Hide section if no revisions or not an approval request
+            // Hide section if no revisions
             if (historySection) historySection.style.display = 'none';
             
-            // Show the regular approval actions panel
-            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
-            if (approvalActionsPanel) {
-                approvalActionsPanel.style.display = 'block';
-            }
+            // Note: Do NOT show approval panel here - let openRequestDetails handle panel display
+            // based on requestType to avoid conflicts with service requests
         }
     } catch (error) {
         console.error('[Revision History] Error loading:', error);
@@ -3085,6 +3282,121 @@ window.closeImageViewer = function() {
     const modal = document.getElementById('imageViewerModal');
     if (modal) {
         modal.style.display = 'none';
+    }
+};
+
+// ==========================================
+// QUEUED STATUS HANDLING - START TASK
+// ==========================================
+function handleQueuedStatus(status, requestId, requestType) {
+    const statusLower = status.toLowerCase().trim();
+    
+    const actionPanel = requestType === 'approval' 
+        ? document.getElementById('approvalActionsPanel')
+        : document.getElementById('serviceActionsPanel');
+    
+    if (!actionPanel) return;
+    
+    // If status is Queued, hide the action panel and show Start Task button
+    if (statusLower === 'queued') {
+        // Hide the action panel initially
+        actionPanel.style.display = 'none';
+        
+        // Check if Start Task button already exists
+        let startTaskBtn = document.getElementById('startTaskBtn');
+        if (startTaskBtn) {
+            startTaskBtn.style.display = 'block';
+            return;
+        }
+        
+        // Create Start Task button
+        const buttonHTML = `
+            <div id="startTaskBtn" class="unit-action-panel" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; margin-bottom: 1rem;">
+                <div class="unit-panel-header" style="background: none;">
+                    <h3 style="color: #1e40af;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        Task Queued
+                    </h3>
+                    <p style="color: #1e40af;">This task has been assigned to your unit. Click below to start working on it.</p>
+                </div>
+                <button onclick="acknowledgeTask('${requestId}', '${requestType}')" class="unit-btn" style="background: #3b82f6; color: white; width: 100%; justify-content: center;">
+                    <span class="btn-icon">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <polyline points="9 11 12 14 22 4"/>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        </svg>
+                    </span>
+                    <span>Start Task - Change to "In Progress"</span>
+                </button>
+            </div>
+        `;
+        
+        // Insert before the action panel
+        actionPanel.insertAdjacentHTML('beforebegin', buttonHTML);
+    } else {
+        // For other statuses, remove Start Task button and show action panel
+        const existingBtn = document.getElementById('startTaskBtn');
+        if (existingBtn) existingBtn.remove();
+        
+        // Show the action panel for non-queued statuses
+        actionPanel.style.display = 'block';
+    }
+}
+
+// Function to acknowledge task and change status to In Progress
+window.acknowledgeTask = async function(requestId, requestType) {
+    if (!confirm('Are you ready to start working on this task? This will change the status to "In Progress".')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/unit/task/acknowledge/${requestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ taskType: requestType })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            window.logSuccess('Task started successfully! Status changed to "In Progress".');
+            
+            // Update the status badge in the modal
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                const statusDisplay = window.getStatusDisplay('in progress');
+                modalStatus.textContent = statusDisplay.text;
+                modalStatus.className = 'status-badge ' + statusDisplay.class;
+            }
+            
+            // Remove Start Task button
+            const startTaskBtn = document.getElementById('startTaskBtn');
+            if (startTaskBtn) startTaskBtn.remove();
+            
+            // Show the appropriate action panel now that task is in progress
+            const actionPanel = requestType === 'approval' 
+                ? document.getElementById('approvalActionsPanel')
+                : document.getElementById('serviceActionsPanel');
+            
+            if (actionPanel) {
+                actionPanel.style.display = 'block';
+            }
+            
+            // Reload the page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            window.logError('Failed to start task', data.message || 'Unknown error');
+        }
+    } catch (error) {
+        console.error('Error acknowledging task:', error);
+        window.logError('An error occurred while starting the task', error);
     }
 };
 
