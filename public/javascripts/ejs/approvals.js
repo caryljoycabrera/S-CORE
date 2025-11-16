@@ -1773,6 +1773,9 @@ if (specificRequestType) {
     // Handle file preview
     populateFilePreview(rowData);
     
+    // Load revision history
+    loadRevisionHistory(currentRequestId);
+    
     // Show/hide additional file upload toggle based on status
     const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
     if (additionalFileToggleSection) {
@@ -2807,3 +2810,328 @@ document.addEventListener("click", function(event) {
     headerDropdown.close();
   }
 });
+
+// ==========================================
+// REVISION HISTORY FUNCTIONS (Admin Approvals - Observer Only)
+// ==========================================
+
+async function loadRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    console.log('[Admin Approvals - Revision History] Loading for request:', requestId);
+    
+    if (!historyContainer) {
+        console.warn('[Admin Approvals - Revision History] Container not found!');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/revision-history/${requestId}`);
+        console.log('[Admin Approvals - Revision History] Response status:', response.status);
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('[Admin Approvals - Revision History] API returned non-JSON response');
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('[Admin Approvals - Revision History] API Response:', result);
+        console.log('[Admin Approvals - Revision History] Revisions count:', result.revisions?.length || 0);
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            console.log('[Admin Approvals - Revision History] Showing section with', result.revisions.length, 'revisions');
+            
+            // Enable two-column layout when revisions exist
+            const modalContent = document.querySelector('#detailsModal .modal-content');
+            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+            
+            if (modalContent && modalBody) {
+                modalContent.style.maxWidth = '1600px';
+                modalBody.classList.add('has-revisions');
+            }
+            
+            if (historySection) {
+                historySection.style.display = 'block';
+            }
+            
+            historyContainer.innerHTML = '';
+            
+            // Filter out initial submission and render all revisions
+            const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+            
+            revisionsToShow.forEach((revision, index) => {
+                console.log('[Admin Approvals - Revision History] Rendering revision', index, ':', revision.type);
+                const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length);
+                historyContainer.appendChild(entry);
+            });
+            
+            console.log('[Admin Approvals - Revision History] All revisions rendered');
+        } else {
+            console.log('[Admin Approvals - Revision History] No revisions to display');
+            
+            // Reset to single column layout when no revisions - keep original size
+            const modalContent = document.querySelector('#detailsModal .modal-content');
+            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+            
+            if (modalContent && modalBody) {
+                modalContent.style.maxWidth = '900px';
+                modalBody.classList.remove('has-revisions');
+            }
+            
+            if (historySection) {
+                historySection.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('[Admin Approvals - Revision History] Error loading revision history:', error);
+        
+        // Reset to single column layout on error - keep original size
+        const modalContent = document.querySelector('#detailsModal .modal-content');
+        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+        
+        if (modalContent && modalBody) {
+            modalContent.style.maxWidth = '900px';
+            modalBody.classList.remove('has-revisions');
+        }
+        
+        if (historySection) {
+            historySection.style.display = 'none';
+        }
+    }
+}
+
+function createAdminRevisionEntry(revision, index, total) {
+    console.log('🔍 [Admin Approvals] Creating revision entry:', {
+        index,
+        total,
+        hasRequestedBy: !!revision.requestedBy,
+        hasRespondedBy: !!revision.respondedBy,
+        type: revision.type
+    });
+    
+    const entry = document.createElement('div');
+    
+    const isUnitAction = revision.requestedBy || revision.type === 'revision' || revision.type === 'revoked' || revision.type === 'approved';
+    const isRequestorAction = revision.respondedBy || revision.type === 'initial' || revision.type === 'resubmitted';
+    
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
+    
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt || revision.timestamp);
+    const fullTimestamp = timestamp.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    const shortTimestamp = timestamp.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let relativeTime;
+    if (diffMins < 1) relativeTime = 'Just now';
+    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    else if (diffDays < 7) relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    else relativeTime = shortTimestamp;
+    
+    let typeLabel, badgeClass;
+    if (revision.type === 'initial') {
+        typeLabel = 'Initial Submission';
+        badgeClass = 'badge-initial';
+    } else if (revision.type === 'approved') {
+        typeLabel = '✓ Approved';
+        badgeClass = 'badge-approved';
+    } else if (isUnitAction) {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    } else if (isRequestorAction) {
+        typeLabel = 'Resubmitted For Review';
+        badgeClass = 'badge-resubmitted';
+    } else {
+        typeLabel = 'Update';
+        badgeClass = 'badge-revision';
+    }
+    
+    const isLast = index === total - 1;
+    let statusIndicator = '';
+    if (revision.type === 'approved') {
+        statusIndicator = `<div class="status-indicator approved"><svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg><span style="color: #10b981; font-weight: 600;">Request Approved - Process Complete</span></div>`;
+    } else if (isLast) {
+        statusIndicator = isUnitAction ?
+            `<div class="status-indicator waiting"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Waiting for Requestor Response</div>` :
+            `<div class="status-indicator under-review"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Under Unit Review</div>`;
+    }
+    
+    let authorName = 'Unknown', authorUnit = '';
+    if (revision.by) {
+        authorName = revision.by;
+    } else if (revision.requestedBy) {
+        if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
+            authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
+            if (revision.requestedBy.unitTeam) authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+        } else {
+            authorName = 'Unit Team';
+        }
+    } else if (revision.respondedBy) {
+        if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
+            authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+        } else {
+            authorName = 'Requestor';
+        }
+    } else if (isUnitAction) {
+        authorName = 'Unit Team';
+    } else {
+        authorName = 'Requestor';
+    }
+    
+    entry.innerHTML = `
+        <div class="revision-number-badge">#${index + 1}</div>
+        <div class="revision-message-bubble">
+            <div class="revision-bubble-header">
+                <div>
+                    <span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
+                <div class="revision-timestamp">
+                    <span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
+                </div>
+            </div>
+            <div class="message-content-section">
+                <div class="content-label">${(() => {
+                    if (revision.type === 'approved') return 'APPROVAL DETAILS:';
+                    if (revision.type === 'initial') return 'REQUEST DESCRIPTION:';
+                    if (isUnitAction) return 'UNIT FEEDBACK:';
+                    return 'USER RESPONSE:';
+                })()}</div>
+                <div class="content-text">${displayFormattedText((() => {
+                    if (revision.type === 'approved') return 'The request has been reviewed and approved by the unit team. All requirements have been met.';
+                    if (revision.type === 'initial') return revision.description || 'No description provided';
+                    if (isUnitAction) return revision.revisionNotes || revision.description || 'No feedback provided';
+                    return revision.responseNotes || revision.description || 'No response provided';
+                })())}</div>
+            </div>
+            ${((revision.revisionFiles && revision.revisionFiles.length > 0) || (revision.responseFiles && revision.responseFiles.length > 0) || (revision.files && revision.files.length > 0)) ? `
+                <div class="message-attachments-section">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                        <span class="attachments-count">${(revision.revisionFiles || revision.responseFiles || revision.files || []).length} file${(revision.revisionFiles || revision.responseFiles || revision.files || []).length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div class="attachments-grid">
+                        ${(revision.revisionFiles || revision.responseFiles || revision.files || []).map(file => createAdminRevisionFileCard(file, revision.requestedAt || revision.respondedAt || revision.timestamp)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            ${statusIndicator}
+        </div>
+    `;
+    return entry;
+}
+
+function createAdminRevisionFileCard(file, revisionTimestamp) {
+    const filename = file.filename || file.path || file.name || file;
+    if (typeof file === 'string') {
+        const ext = file.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+        const isPDF = ext === 'pdf';
+        const fileUrl = `/uploads/${file}`;
+        let iconColor = '#64748b';
+        if (isImage) iconColor = '#059669';
+        else if (isPDF) iconColor = '#dc2626';
+        else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+        else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+        const timestamp = revisionTimestamp ? new Date(revisionTimestamp).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'Unknown date';
+        return `
+            <div class="revision-file-card">
+                <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                </div>
+                <div class="revision-file-info">
+                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(file)}</div>
+                    <div class="revision-file-size">${ext.toUpperCase()}</div>
+                    <div class="revision-file-date">${timestamp}</div>
+                </div>
+                <div class="revision-file-actions">
+                    ${isPDF ? `<button class="file-action-icon" onclick="window.open('${fileUrl}', '_blank')" title="View PDF"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>` : ''}
+                    <button class="file-action-icon" onclick="window.open('${fileUrl}', '_blank')" title="Download"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                </div>
+            </div>
+        `;
+    }
+    return '';
+}
+
+function getFileColor(ext) {
+    const colorMap = {
+        'pdf': '#dc2626',
+        'doc': '#2563eb', 'docx': '#2563eb',
+        'xls': '#059669', 'xlsx': '#059669',
+        'ppt': '#ea580c', 'pptx': '#ea580c',
+        'jpg': '#7c3aed', 'jpeg': '#7c3aed', 'png': '#7c3aed', 'gif': '#7c3aed',
+        'zip': '#ca8a04', 'rar': '#ca8a04',
+        'txt': '#64748b'
+    };
+    return colorMap[ext] || '#6b7280';
+}
+
+// Helper function to display formatted text (supports HTML from Quill and markdown-style formatting)
+function displayFormattedText(text) {
+    if (!text) return '';
+    
+    // Check if the text is already HTML (from Quill editor)
+    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
+    if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
+        // It's HTML content from Quill, return as-is
+        return text;
+    }
+    
+    // It's plain text, escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

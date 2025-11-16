@@ -296,6 +296,24 @@ body .unit-message-bubble.own-message,
   width: 100% !important;
   min-width: 0 !important;
   overflow: hidden !important;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.message-content strong {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.message-content em {
+  font-style: italic;
+}
+
+.message-content u {
+  text-decoration: underline;
+  text-decoration-color: #3b82f6;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
 }
 
 .message-header {

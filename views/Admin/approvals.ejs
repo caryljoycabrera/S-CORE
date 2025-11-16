@@ -394,15 +394,22 @@
 <!-- Enhanced Request Details Modal -->
 <div id="detailsModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width: 1000px;">
-    <header class="modal-header">
-      <span class="modal-title">Approval Request Details</span>
+    <header class="modal-header admin-modal-header approval-header-color">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h2>Approval Request Details</h2>
+        <span class="type-badge">APPROVAL</span>
+      </div>
       <span class="close" id="closeDetailsModal">&times;</span>
     </header>
-    <div class="modal-body details-modal-body">
-      <div class="details-content">
+    <div class="modal-body admin-modal-body">
+      <!-- Left Column -->
+      <div class="admin-left-column">
         
         <!-- Update the general-info-section div in the HTML -->
-<div class="general-info-section">
+<div class="admin-info-card general-info-section">
   <h3>General Information</h3>
   <div class="general-info-row">
     <div class="info-item">
@@ -506,33 +513,57 @@
         </div>
 
         <!-- Description Section -->
-        <div class="description-section">
-          <h3>Project Description</h3>
+        <div class="admin-info-card description-section">
+          <div class="admin-card-header">
+            <h3>Project Description</h3>
+            <p class="admin-card-subtitle">Request details and requirements</p>
+          </div>
           <div class="description-content" id="detailDescription"></div>
         </div>
 
         <!-- Files Section -->
         <div id="file-preview"></div>
 
-        <!-- Revision History Section -->
-        <div id="revisionHistorySection" class="details-section" style="display: none;">
-          <h3>📋 Revision History</h3>
-          <div class="details-content">
-            <div id="revisionHistoryContainer" class="revision-history-timeline">
-              <!-- Dynamically populated by JavaScript -->
+        <!-- Quick Actions -->
+        <div class="admin-info-card">
+          <button class="admin-chat-button" id="openChatFromModal">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <div class="admin-chat-text">
+              <strong>Open Team Discussion</strong>
+              <small>Collaborate with team members</small>
             </div>
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left: auto;">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="admin-right-column">
+
+        <!-- Revision History Section -->
+        <div id="revisionHistorySection" class="admin-action-panel revision-history-panel" style="display: none;">
+          <div class="admin-panel-header revision-header">
+            <h3>Revision History</h3>
+            <p>Complete timeline of all revisions and resubmissions</p>
+          </div>
+          <div id="revisionHistoryContainer" class="revision-history-timeline">
+            <!-- Dynamically populated by JavaScript -->
           </div>
         </div>
 
         <!-- Additional File Upload Toggle -->
-        <div id="additionalFileToggleSection" style="display: none;">
+        <div id="additionalFileToggleSection" class="admin-action-panel" style="display: none;">
           <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <label class="toggle-switch" style="margin: 0;">
-                <input type="checkbox" id="toggleAdditionalFileUploadBtn">
-                <span class="toggle-slider"></span>
-              </label>
-              <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label class="toggle-switch" style="margin: 0;">
+              <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
             </div>
             <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
               This will permit users to add more files when revising their requests
@@ -650,27 +681,7 @@
           </style>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-action-buttons">
-          <button class="quick-action-btn chat-card-btn" id="openChatFromModal" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-                <div style="text-align: left;">
-                  <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
-                  <div style="font-size: 0.875rem; color: #047857;">Collaborate with your team members</div>
-                </div>
-              </div>
-              <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </div>
-          </button>
-        </div>
+        <!-- Quick Actions removed - Use button in left column instead -->
       </div>
     </div>
   </div>

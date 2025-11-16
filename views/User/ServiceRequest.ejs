@@ -3130,10 +3130,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function addMessageToUI(message) {
       if (!messagesContainer) return;
       
-      // Clear empty state message if it exists
-      const emptyStateMessage = messagesContainer.querySelector('p');
-      if (emptyStateMessage && (emptyStateMessage.textContent.includes('No messages yet') || emptyStateMessage.textContent.includes('No messages yet. Start the conversation!'))) {
-        messagesContainer.innerHTML = '';
+      // Clear empty state container if it exists
+      const emptyStateDiv = messagesContainer.querySelector('.unit-messages-empty');
+      if (emptyStateDiv) {
+        emptyStateDiv.remove();
       }
       
       const messageDiv = document.createElement('div');
@@ -4960,31 +4960,19 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('[ServiceRequest] Message input element not found!');
       }
       
-      // Wire up formatting toolbar buttons
-      const boldBtn = document.getElementById('boldBtn');
-      const italicBtn = document.getElementById('italicBtn');
-      const underlineBtn = document.getElementById('underlineBtn');
+      // Wire up formatting toolbar buttons using data-chat-format attribute
+      const formatButtons = document.querySelectorAll('.format-btn[data-chat-format]');
+      console.log('[ServiceRequest] Found format buttons:', formatButtons.length);
       
-      if (boldBtn) {
-        boldBtn.addEventListener('click', function(e) {
+      formatButtons.forEach(btn => {
+        const format = btn.getAttribute('data-chat-format');
+        btn.addEventListener('click', function(e) {
           e.preventDefault();
-          applyUserFormatting('bold');
+          console.log('[ServiceRequest] Format button clicked:', format);
+          applyUserFormatting(format);
+          return false;
         });
-      }
-      
-      if (italicBtn) {
-        italicBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          applyUserFormatting('italic');
-        });
-      }
-      
-      if (underlineBtn) {
-        underlineBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          applyUserFormatting('underline');
-        });
-      }
+      });
     });
   </script>
 </body>

@@ -118,6 +118,19 @@
                     <label for="dateToFilter" class="filter-sublabel">Date To</label>
                     <input type="date" id="dateToFilter" class="filter-input">
                   </div>
+
+                  <div class="filter-item">
+                    <label for="sortSelect" class="filter-sublabel">Sort By</label>
+                    <select id="sortSelect" class="filter-select">
+                      <option value="pending-deadline">Pending (Nearest Deadline)</option>
+                      <option value="date-desc">Date (Newest First)</option>
+                      <option value="date-asc">Date (Oldest First)</option>
+                      <option value="title-asc">Title (A-Z)</option>
+                      <option value="title-desc">Title (Z-A)</option>
+                      <option value="status-asc">Status (A-Z)</option>
+                      <option value="status-desc">Status (Z-A)</option>
+                    </select>
+                  </div>
                 </div>
 
                 <button id="clearFilters" class="clear-filters-btn">Clear All Filters</button>
@@ -133,8 +146,9 @@
                   <th>Type</th>
                   <th>Title</th>
                   <th>Requestor</th>
-                  <th>Organization</th>
+                  <th>Organization/Office/Dept</th>
                   <th>Date Submitted</th>
+                  <th>Deadline</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -196,6 +210,7 @@
                       <td><%= requestor %></td>
                       <td><%= organization %></td>
                       <td><%= dateSubmitted %></td>
+                      <td><%= deadline ? new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %></td>
                       <td>
                         <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>
                       </td>
@@ -212,7 +227,7 @@
                   <% }); %>
                 <% } else { %>
                   <tr>
-                    <td colspan="7" style="text-align: center; padding: 3rem; color: #64748b;">
+                    <td colspan="8" style="text-align: center; padding: 3rem; color: #64748b;">
                       <div style="font-size: 3rem; margin-bottom: 1rem;">
                         <svg width="64" height="64" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block;">
                           <rect x="4" y="4" width="16" height="16" rx="2"/>
@@ -282,6 +297,10 @@
               <div class="unit-info-item">
                 <span class="unit-info-label">Current Status</span>
                 <span class="status-badge" id="modalStatus">Pending</span>
+              </div>
+              <div class="unit-info-item" id="approvedOnField" style="display: none;">
+                <span class="unit-info-label">Approved On</span>
+                <span class="unit-info-value" id="modalApprovedOn" style="color: #16a34a; font-weight: 600;">N/A</span>
               </div>
               <div class="unit-info-item" id="deadlineField" style="display: none;">
                 <span class="unit-info-label">Deadline</span>

@@ -608,7 +608,7 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
       .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
-      .populate('userId', 'fName lName email studentOrg office')
+      .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -642,14 +642,14 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
     // Get service requests currently assigned to their unit (can process)
     const currentServiceRequests = await ServiceRequest
       .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
-      .populate('userId', 'fName lName email studentOrg office')
+      .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
 
     // Get service requests they were ever auto-assigned to (can view)
     const viewableServiceRequests = await ServiceRequest
       .find({ originalAssignedUnits: user.unitTeam })
-      .populate('userId', 'fName lName email studentOrg office')
+      .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -1048,6 +1048,20 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
     // Update task status to Approved
     task.status = 'Approved';
     task.awaitingResubmission = false; // Clear resubmission flag
+    
+    // Add approval to revision history
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
+    }
+    
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: `Request approved by ${user.fName} ${user.lName} (${user.unitTeam} Unit)`,
+      revisionFiles: [],
+      status: 'resolved'
+    });
+    
     await task.save();
 
     // Send notification to the requestor

@@ -1146,7 +1146,7 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
       request.files = [...(request.files || []), ...additionalFilePaths];
     }
 
-    // Update the most recent revision history entry
+    // Update the most recent revision history entry with response
     if (request.revisionHistory && request.revisionHistory.length > 0) {
       const latestRevision = request.revisionHistory[request.revisionHistory.length - 1];
       latestRevision.respondedBy = req.session.userId;
@@ -1156,10 +1156,25 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
       latestRevision.status = 'responded';
     }
 
+    // CREATE NEW REVISION HISTORY ENTRY for the resubmission (visible to user)
+    // Use the existing schema structure - this represents a "responded" revision
+    const newResubmission = {
+      respondedBy: req.session.userId,
+      respondedAt: new Date(),
+      responseNotes: resubmissionNotes || 'Resubmitted with updates',
+      responseFiles: additionalFilePaths,
+      status: 'responded'  // Valid enum values: 'pending', 'responded', 'resolved'
+    };
+    
+    console.log('🔥 CREATING RESUBMISSION ENTRY:', newResubmission);
+    request.revisionHistory.push(newResubmission);
+    console.log('✅ Total revision history entries:', request.revisionHistory.length);
+
     // Change status back to Pending for unit to review again
     request.status = 'Pending';
     request.awaitingResubmission = false;
     await request.save();
+    console.log('✅ Request saved with new resubmission entry');
 
     // Add message to conversation
     const Conversation = require('../models/Conversation');

@@ -603,17 +603,50 @@
 .form-group input[type="file"] {
   display: block;
   width: 100%;
-  padding: 0.75rem;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  background: #f9fafb;
+  padding: 20px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+  text-align: center;
 }
 
 .form-group input[type="file"]:hover {
-  border-color: var(--primary-green);
-  background: #f0fdf4;
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-style: solid;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.form-group input[type="file"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.form-group input[type="file"]::file-selector-button {
+  padding: 10px 20px;
+  margin-right: 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
 }
 
 .file-list {
@@ -1316,6 +1349,98 @@
   font-size: 11px;
   font-weight: bold;
 }
+
+/* Revision History Badge Styles */
+.revision-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-transform: capitalize;
+}
+
+.badge-initial {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.badge-revision {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.badge-revoked {
+  background: linear-gradient(135deg, #fecaca, #fca5a5);
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.badge-resubmitted {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #3730a3;
+  border: 1px solid #6366f1;
+}
+
+.badge-approved {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+/* Status Indicator Styles */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-top: 1rem;
+  font-weight: 600;
+  animation: slideIn 0.3s ease-out;
+}
+
+.status-indicator.approved {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 2px solid #10b981;
+}
+
+.status-indicator svg {
+  flex-shrink: 0;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Formatted Text Styles in Revision Content */
+.content-text strong {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.content-text em {
+  font-style: italic;
+  color: #4b5563;
+}
+
+.content-text u {
+  text-decoration: underline;
+  text-decoration-color: #6b7280;
+  text-underline-offset: 2px;
+}
 </style>
 </head>
 <body>
@@ -1682,8 +1807,8 @@
     </div>
   </div>
 
-<div id="detailsModal" class="modal" style="display:none; z-index: 50000 !important;">
-  <div class="modal-content requestor-modal-content" style="z-index: 50001 !important;">
+<div id="detailsModal" class="modal" style="display:none;">
+  <div class="modal-content requestor-modal-content">
     <header class="modal-header requestor-modal-header">
       <span class="modal-title">Request Details</span>
       <span class="close" id="closeDetailsModal">&times;</span>
@@ -1841,14 +1966,6 @@
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                 </svg>
                 Submit for Approval Again
-              </button>
-              <button type="button" id="askClarificationBtn" class="btn-clarification">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-                Ask for Clarification
               </button>
             </div>
           </form>
@@ -2312,7 +2429,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Modal close handlers
-closeDetailsModal.onclick = () => detailModal.style.display = 'none';
+closeDetailsModal.onclick = () => {
+  const modalBody = document.querySelector('.requestor-modal-body');
+  const rightColumn = document.getElementById('requestorRightColumn');
+  
+  detailModal.style.display = 'none';
+  if (modalBody) modalBody.classList.remove('two-column');
+  if (rightColumn) rightColumn.style.display = 'none';
+};
 
 openChatFromDetailsModal.onclick = function() {
   // Use the currentConversationId that was set when the modal was opened
@@ -2323,7 +2447,14 @@ openChatFromDetailsModal.onclick = function() {
 };
 
 window.onclick = function(event) {
-  if (event.target === detailModal) detailModal.style.display = 'none';
+  if (event.target === detailModal) {
+    const modalBody = document.querySelector('.requestor-modal-body');
+    const rightColumn = document.getElementById('requestorRightColumn');
+    
+    detailModal.style.display = 'none';
+    if (modalBody) modalBody.classList.remove('two-column');
+    if (rightColumn) rightColumn.style.display = 'none';
+  }
 }
 
 function filterRequests() {
@@ -2530,7 +2661,16 @@ document.querySelectorAll('.request-row').forEach(row => {
       }
     }
     
-    if (detailModal) detailModal.style.display = 'flex';
+    if (detailModal) {
+      detailModal.style.display = 'flex';
+      const modalContent = detailModal.querySelector('.requestor-modal-content');
+      console.log('[allRequestsUser] Modal opened for request:', row.dataset.id);
+      console.log('[allRequestsUser] Initial modal classes:', modalContent ? modalContent.className : 'NOT FOUND');
+      console.log('[allRequestsUser] Initial inline style:', modalContent ? modalContent.getAttribute('style') : 'N/A');
+      console.log('[allRequestsUser] Initial modal width:', modalContent ? modalContent.offsetWidth : 'N/A');
+      console.log('[allRequestsUser] Initial computed width:', modalContent ? window.getComputedStyle(modalContent).width : 'N/A');
+      console.log('[allRequestsUser] Initial computed max-width:', modalContent ? window.getComputedStyle(modalContent).maxWidth : 'N/A');
+    }
   });
 });
 
@@ -2585,14 +2725,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Initialize resubmission form handlers
   const submitResubmissionBtn = document.getElementById('submitResubmissionBtn');
-  const askClarificationBtn = document.getElementById('askClarificationBtn');
   
   if (submitResubmissionBtn) {
     submitResubmissionBtn.addEventListener('click', handleResubmission);
-  }
-  
-  if (askClarificationBtn) {
-    askClarificationBtn.addEventListener('click', handleClarificationRequest);
   }
 });
 
@@ -3806,6 +3941,35 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+// Helper function to format text with markdown-like syntax
+function displayFormattedText(text) {
+    if (!text) return '';
+    
+    // Check if the text is already HTML (from Quill editor)
+    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
+    if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
+        // It's HTML content from Quill, return as-is
+        return text;
+    }
+    
+    // It's plain text, escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+}
+
 // PDF Viewer functions
 window.viewPdf = function(url, name) {
     const modal = document.getElementById('pdfViewerModal');
@@ -3913,6 +4077,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 sendTeamMessage();
             }
+            
+            // Keyboard shortcuts for formatting
+            // Ctrl+B or Cmd+B for bold
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                console.log('[Keyboard] Bold shortcut triggered (Ctrl+B)');
+                applyFormatting('bold');
+                return false;
+            }
+            // Ctrl+I or Cmd+I for italic
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                console.log('[Keyboard] Italic shortcut triggered (Ctrl+I)');
+                applyFormatting('italic');
+                return false;
+            }
+            // Ctrl+U or Cmd+U for underline
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                e.preventDefault();
+                console.log('[Keyboard] Underline shortcut triggered (Ctrl+U)');
+                applyFormatting('underline');
+                return false;
+            }
         });
     }
 });
@@ -3938,13 +4125,26 @@ function displayChatFiles(files, container) {
 let resubmissionQuill = null;
 
 async function loadRevisionHistory(requestId) {
+    console.log('[allRequestsUser] loadRevisionHistory called for:', requestId);
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     const rightColumn = document.getElementById('requestorRightColumn');
     const modalBody = document.querySelector('.requestor-modal-body');
+    const modalContent = document.querySelector('.requestor-modal-content');
     const resubmissionSection = document.getElementById('resubmissionFormSection');
     
-    if (!historyContainer) return;
+    console.log('[allRequestsUser] Elements found:', {
+      historySection: !!historySection,
+      historyContainer: !!historyContainer,
+      rightColumn: !!rightColumn,
+      modalBody: !!modalBody,
+      modalContent: !!modalContent
+    });
+    
+    if (!historyContainer) {
+      console.log('[allRequestsUser] History container not found!');
+      return;
+    }
     
     try {
         const response = await fetch(`/api/revision-history/${requestId}`);
@@ -3959,18 +4159,41 @@ async function loadRevisionHistory(requestId) {
         
         const result = await response.json();
         
-        // Filter out initial submission, only show unit feedback and requestor responses
+        console.log('🔥 [AllRequests] RAW API RESPONSE:', result);
+        
+        // Filter out initial submission, but show unit feedback AND user resubmissions
+        console.log('📋 [AllRequests] All revisions before filter:', result.revisions);
+        console.log('📊 [AllRequests] REVISION TYPES:', result.revisions?.map((r, i) => ({ 
+            index: i,
+            type: r.type, 
+            createdBy: r.createdBy, 
+            hasFiles: !!r.files,
+            filesCount: r.files?.length || 0,
+            fileNames: r.files || []
+        })));
         const revisionsToShow = result.revisions ? result.revisions.filter(rev => rev.type !== 'initial') : [];
+        console.log('✅ [AllRequests] Revisions after filter (showing):', revisionsToShow);
+        console.log('📊 [AllRequests] FILTERED TYPES:', revisionsToShow.map(r => ({ type: r.type, createdBy: r.createdBy, files: r.files?.length || 0 })));
         
         if (result.success && revisionsToShow.length > 0) {
+            console.log('[allRequestsUser] Revisions to show:', revisionsToShow.length);
+            console.log('[allRequestsUser] BEFORE layout change - modalContent classes:', modalContent ? modalContent.className : 'N/A');
+            console.log('[allRequestsUser] BEFORE layout change - modalContent width:', modalContent ? modalContent.offsetWidth : 'N/A');
+            
             // Show two-column layout
             if (rightColumn) rightColumn.style.display = 'flex';
             if (modalBody) modalBody.classList.add('two-column');
+            if (modalContent) modalContent.classList.add('has-revisions');
             if (historySection) historySection.style.display = 'block';
             
-            // Make modal wider for revision history
-            const modalContent = document.querySelector('.requestor-modal-content');
-            if (modalContent) modalContent.classList.add('has-revisions');
+            // Force reflow
+            if (modalContent) {
+              void modalContent.offsetHeight;
+              console.log('[allRequestsUser] AFTER layout change - modalContent classes:', modalContent.className);
+              console.log('[allRequestsUser] AFTER layout change - modalContent width:', modalContent.offsetWidth);
+              console.log('[allRequestsUser] AFTER layout change - computed width:', window.getComputedStyle(modalContent).width);
+              console.log('[allRequestsUser] AFTER layout change - computed max-width:', window.getComputedStyle(modalContent).maxWidth);
+            }
             
             historyContainer.innerHTML = '';
             
@@ -3982,8 +4205,10 @@ async function loadRevisionHistory(requestId) {
             // Check if request is "For Revision" - show resubmission form
             const row = document.querySelector(`tr[data-id="${requestId}"]`);
             const status = row ? row.dataset.status : '';
+            console.log('🔍 [AllRequests] Checking resubmission form visibility:', { requestId, status, hasSection: !!resubmissionSection });
             
-            if (status.toLowerCase() === 'for revision' && resubmissionSection) {
+            if ((status.toLowerCase() === 'for revision' || status.toLowerCase() === 'revision requested') && resubmissionSection) {
+                console.log('✅ [AllRequests] Showing resubmission form');
                 resubmissionSection.style.display = 'block';
                 
                 // Initialize Quill editor if not already initialized
@@ -4025,24 +4250,60 @@ async function loadRevisionHistory(requestId) {
 }
 
 function createRevisionEntry(revision, index, total) {
+    console.log('🔍 [AllRequests] Creating revision entry:', {
+        index,
+        total,
+        hasRequestedBy: !!revision.requestedBy,
+        hasRespondedBy: !!revision.respondedBy,
+        status: revision.status,
+        revisionNotes: revision.revisionNotes,
+        responseNotes: revision.responseNotes,
+        hasFiles: revision.responseFiles?.length > 0 || revision.revisionFiles?.length > 0,
+        revision: revision
+    });
+    
     const entry = document.createElement('div');
     
     // Determine if this is a unit action or requestor action
-    const isUnitAction = revision.type === 'revision' || revision.type === 'revoked';
-    const isRequestorAction = revision.type === 'resubmitted';
+    // Unit action: has requestedBy (unit requests revision)
+    // Requestor action: has respondedBy but no requestedBy (user resubmits)
+    const isUnitAction = revision.requestedBy && !revision.respondedBy;
+    const isRequestorAction = revision.respondedBy && !revision.requestedBy;
+    
+    console.log('✅ [AllRequests] Action type:', {
+        isUnitAction,
+        isRequestorAction
+    });
     
     entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
     const revisionNumber = index + 1;
-    const timestamp = new Date(revision.timestamp);
+    // Use requestedAt for unit actions, respondedAt for requestor actions
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt);
     const fullDate = timestamp.toLocaleString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
         year: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
     });
+    
+    // Determine type label based on action type
+    let typeLabel = '';
+    let badgeClass = '';
+    if (isUnitAction) {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    } else if (isRequestorAction) {
+        typeLabel = 'Resubmitted for Review';
+        badgeClass = 'badge-resubmitted';
+    } else {
+        typeLabel = 'Update';
+        badgeClass = 'badge-revision';
+    }
     
     // Calculate relative time
     const now = new Date();
@@ -4060,7 +4321,17 @@ function createRevisionEntry(revision, index, total) {
     // Show status indicator on last message
     let statusIndicator = '';
     if (index === total - 1) {
-        if (isUnitAction) {
+        if (revision.type === 'approved') {
+            statusIndicator = `
+                <div class="status-indicator approved">
+                    <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="8 12 11 15 16 9"/>
+                    </svg>
+                    <span style="color: #10b981; font-weight: 600;">Your Request Has Been Approved!</span>
+                </div>
+            `;
+        } else if (isUnitAction) {
             statusIndicator = `
                 <div class="status-indicator waiting">
                     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -4087,30 +4358,35 @@ function createRevisionEntry(revision, index, total) {
         <div class="revision-number-badge">#${revisionNumber}</div>
         <div class="revision-message-bubble">
             <div class="revision-bubble-header">
-                <span class="revision-author">${escapeHtml(revision.by || 'System')}</span>
+                <div>
+                    <span class="revision-author">${escapeHtml(revision.by || 'System')}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
                 <div class="revision-timestamp">
                     <span style="font-weight: 600; color: #1e293b;">${fullDate}</span>
                     <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
                 </div>
             </div>
             
-            ${revision.description ? `
-                <div class="message-content-section">
-                    <div class="content-label">${isUnitAction ? 'Unit Feedback:' : 'Your Response:'}</div>
-                    <div class="content-text">${escapeHtml(revision.description)}</div>
-                </div>
-            ` : ''}
+            <div class="message-content-section">
+                <div class="content-label">${isUnitAction ? 'UNIT FEEDBACK:' : 'YOUR RESPONSE:'}</div>
+                <div class="content-text">${(() => {
+                    const content = isUnitAction ? revision.revisionNotes : revision.responseNotes;
+                    console.log('🎯 Rendering content:', { isUnitAction, content, type: typeof content });
+                    return displayFormattedText(content || 'No feedback provided');
+                })()}</div>
+            </div>
             
-            ${revision.files && revision.files.length > 0 ? `
+            ${((revision.revisionFiles && revision.revisionFiles.length > 0) || (revision.responseFiles && revision.responseFiles.length > 0)) ? `
                 <div class="message-attachments-section">
                     <div class="attachments-header">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                         </svg>
-                        <span class="attachments-count">${revision.files.length} file${revision.files.length > 1 ? 's' : ''} attached</span>
+                        <span class="attachments-count">${(revision.revisionFiles || revision.responseFiles).length} file${(revision.revisionFiles || revision.responseFiles).length > 1 ? 's' : ''} attached</span>
                     </div>
                     <div class="attachments-grid">
-                        ${revision.files.map(file => createRevisionFileCard(file)).join('')}
+                        ${(revision.revisionFiles || revision.responseFiles).map(file => createRevisionFileCard(file)).join('')}
                     </div>
                 </div>
             ` : ''}
@@ -4123,11 +4399,37 @@ function createRevisionEntry(revision, index, total) {
 }
 
 function createRevisionFileCard(file) {
+    console.log('📁 [AllRequests] Creating file card for:', file);
     const filename = typeof file === 'string' ? file : (file.filename || file.name || file);
     const displayName = typeof file === 'object' ? (file.originalname || file.filename || file.name) : file;
     const ext = filename.split('.').pop().toLowerCase();
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
     const isPDF = ext === 'pdf';
+    console.log('📁 [AllRequests] File details:', { filename, displayName, ext, isImage, isPDF });
+    
+    // Extract timestamp from filename if present (format: upload-timestamp-randomnumber.ext)
+    let uploadDate = '';
+    const timestampMatch = filename.match(/upload-?(\d{13})/);
+    console.log('📅 [AllRequests] Timestamp extraction:', {
+        filename,
+        timestampMatch,
+        hasMatch: !!timestampMatch,
+        extractedTimestamp: timestampMatch ? timestampMatch[1] : null
+    });
+    if (timestampMatch) {
+        const timestamp = parseInt(timestampMatch[1]);
+        const date = new Date(timestamp);
+        uploadDate = date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        console.log('✅ [AllRequests] Extracted date:', uploadDate);
+    } else {
+        console.log('⚠️ [AllRequests] No timestamp match found in filename');
+    }
     
     let iconColor = '#64748b';
     if (isImage) iconColor = '#059669';
@@ -4146,7 +4448,7 @@ function createRevisionFileCard(file) {
             </div>
             <div class="revision-file-info">
                 <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
-                <div class="revision-file-size">${ext.toUpperCase()}</div>
+                <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
             </div>
             <div class="revision-file-actions">
                 <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
@@ -4170,7 +4472,11 @@ async function handleResubmission() {
     
     // Validate response text
     if (!responseText || responseText.trim() === '<p><br></p>' || responseText.trim() === '') {
-        showAlert('error', 'Please enter your response before submitting.');
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'Please enter your response before submitting.');
+        } else {
+            alert('Please enter your response before submitting.');
+        }
         return;
     }
     
@@ -4185,15 +4491,23 @@ async function handleResubmission() {
     }
     
     try {
-        const response = await fetch(`/user/resubmit-approval-request/${currentConversationId}`, {
+        const response = await fetch(`/resubmit-approval-request/${currentConversationId}`, {
             method: 'POST',
             body: formData
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
         
         if (result.success) {
-            showAlert('success', 'Your response has been submitted successfully!');
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('success', 'Your response has been submitted successfully!');
+            } else {
+                alert('Your response has been submitted successfully!');
+            }
             
             // Clear form
             resubmissionQuill.setContents([]);
@@ -4208,11 +4522,19 @@ async function handleResubmission() {
                 location.reload();
             }, 1500);
         } else {
-            showAlert('error', result.message || 'Failed to submit response. Please try again.');
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('error', result.message || 'Failed to submit response. Please try again.');
+            } else {
+                alert(result.message || 'Failed to submit response. Please try again.');
+            }
         }
     } catch (error) {
         console.error('Error submitting resubmission:', error);
-        showAlert('error', 'An error occurred while submitting your response.');
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'An error occurred while submitting your response.');
+        } else {
+            alert('An error occurred while submitting your response.');
+        }
     }
 }
 

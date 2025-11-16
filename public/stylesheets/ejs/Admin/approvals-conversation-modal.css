@@ -24,12 +24,13 @@
   flex-direction: column !important;
 }
 
-/* Match main page header color */
+/* Match main page header color - Light Blue for Approvals */
 #conversationModal .unit-modal-header,
 .unit-conversation-modal .unit-modal-header,
 .modal-header.unit-modal-header {
-  background: linear-gradient(135deg, #2d7a4a 0%, #256d3f 100%) !important;
-  box-shadow: 0 4px 12px rgba(45, 122, 74, 0.25) !important;
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
 }
 
 .unit-conversation-subtitle {

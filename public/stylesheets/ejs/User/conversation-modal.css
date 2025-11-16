@@ -96,8 +96,10 @@ body #teamMessagesContainer,
   min-height: 500px;
   display: flex !important;
   flex-direction: column !important;
-  align-items: flex-start !important; /* Changed from stretch to flex-start */
+  align-items: stretch !important; /* Changed back to stretch for proper width */
   justify-content: flex-start !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .unit-messages-empty {
@@ -137,7 +139,7 @@ body #teamMessagesContainer,
   width: 100% !important;
   flex-direction: row !important;
   min-width: 0 !important;
-  overflow: hidden !important;
+  box-sizing: border-box !important;
 }
 
 /* Message alignment - NUCLEAR SPECIFICITY with body selector and attribute targeting */
@@ -216,7 +218,8 @@ body .modal .unit-message-item.message-right,
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   max-width: 100% !important;
-  overflow: hidden !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
 }
 
 /* Role-based message colors - FORCE with !important */
@@ -302,7 +305,9 @@ body .unit-message-bubble.own-message,
   overflow-wrap: break-word !important;
   white-space: pre-wrap !important;
   max-width: 100% !important;
-  overflow: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
 }
 
 /* ==========================================

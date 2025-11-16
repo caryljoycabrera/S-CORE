@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
     initializeTableFilters();
     initializeRevisionFeatures();
+    
+    // Apply default sorting (pending with nearest deadlines first)
+    applySorting();
 });
 
 // ==========================================
@@ -39,6 +42,12 @@ function initializeEventListeners() {
     const clearFiltersBtn = document.getElementById('clearFilters');
     if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+
+    // Sort select dropdown
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', applySorting);
     }
 
     // Table row click events - use event delegation
@@ -73,10 +82,13 @@ function initializeEventListeners() {
     }
 
     // Approval actions
-    const approveBtn = document.getElementById('approveBtn');
-    if (approveBtn) {
-        approveBtn.addEventListener('click', approveRequest);
-    }
+    // Use event delegation for approve button (button may be recreated)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#approveBtn')) {
+            console.log('[DEBUG] Approve button clicked');
+            approveRequest();
+        }
+    });
 
     const requestRevisionBtn = document.getElementById('requestRevisionBtn');
     if (requestRevisionBtn) {
@@ -224,7 +236,99 @@ function clearAllFilters() {
     document.getElementById('filterDateFrom').value = '';
     document.getElementById('filterDateTo').value = '';
     
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+        sortSelect.value = 'pending-deadline';
+    }
+    
     applyTableFilters();
+}
+
+function applySorting() {
+    const sortSelect = document.getElementById('sortSelect');
+    if (!sortSelect) return;
+
+    const sortValue = sortSelect.value;
+    const tableBody = document.getElementById('requestsTableBody');
+    if (!tableBody) return;
+
+    // Get all visible rows
+    const rows = Array.from(tableBody.querySelectorAll('tr.request-row'));
+    
+    // Sort rows based on selected option
+    rows.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch(sortValue) {
+            case 'pending-deadline':
+                // Pending tasks with nearest deadlines first
+                const aStatus = (a.getAttribute('data-status') || '').toLowerCase();
+                const bStatus = (b.getAttribute('data-status') || '').toLowerCase();
+                const aPending = aStatus === 'pending';
+                const bPending = bStatus === 'pending';
+                
+                // Pending tasks come first
+                if (aPending && !bPending) return -1;
+                if (!aPending && bPending) return 1;
+                
+                // For pending tasks, sort by deadline (nearest first)
+                if (aPending && bPending) {
+                    const aDeadline = a.getAttribute('data-deadline');
+                    const bDeadline = b.getAttribute('data-deadline');
+                    
+                    // Tasks with no deadline go to the end
+                    if (!aDeadline && bDeadline) return 1;
+                    if (aDeadline && !bDeadline) return -1;
+                    if (!aDeadline && !bDeadline) return 0;
+                    
+                    // Sort by nearest deadline first
+                    return new Date(aDeadline) - new Date(bDeadline);
+                }
+                
+                // For non-pending tasks, sort by date submitted (newest first)
+                aValue = new Date(a.getAttribute('data-date-submitted') || 0);
+                bValue = new Date(b.getAttribute('data-date-submitted') || 0);
+                return bValue - aValue;
+                
+            case 'date-desc':
+                // Parse dates and sort newest first
+                aValue = new Date(a.getAttribute('data-date-submitted') || 0);
+                bValue = new Date(b.getAttribute('data-date-submitted') || 0);
+                return bValue - aValue;
+                
+            case 'date-asc':
+                // Parse dates and sort oldest first
+                aValue = new Date(a.getAttribute('data-date-submitted') || 0);
+                bValue = new Date(b.getAttribute('data-date-submitted') || 0);
+                return aValue - bValue;
+                
+            case 'title-asc':
+                aValue = (a.getAttribute('data-title') || '').toLowerCase();
+                bValue = (b.getAttribute('data-title') || '').toLowerCase();
+                return aValue.localeCompare(bValue);
+                
+            case 'title-desc':
+                aValue = (a.getAttribute('data-title') || '').toLowerCase();
+                bValue = (b.getAttribute('data-title') || '').toLowerCase();
+                return bValue.localeCompare(aValue);
+                
+            case 'status-asc':
+                aValue = (a.getAttribute('data-status') || '').toLowerCase();
+                bValue = (b.getAttribute('data-status') || '').toLowerCase();
+                return aValue.localeCompare(bValue);
+                
+            case 'status-desc':
+                aValue = (a.getAttribute('data-status') || '').toLowerCase();
+                bValue = (b.getAttribute('data-status') || '').toLowerCase();
+                return bValue.localeCompare(aValue);
+                
+            default:
+                return 0;
+        }
+    });
+    
+    // Re-append rows in sorted order
+    rows.forEach(row => tableBody.appendChild(row));
 }
 
 // Function: openRequestDetails
@@ -345,32 +449,117 @@ function openRequestDetails(requestId, requestType) {
     }
     
     if (requestType === 'approval') {
-        if (approvalActionsPanel) approvalActionsPanel.style.display = 'block';
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
         
-        // Check if request is already approved
-        if (status.toLowerCase() === 'approved') {
-            if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'block';
-            if (approvalActionButtons) approvalActionButtons.style.display = 'none';
-            
-            // Re-attach revoke button event listener to ensure it works
-            const revokeBtn = document.getElementById('revokeApprovalBtn');
-            if (revokeBtn) {
-                // Remove any existing listeners by cloning
-                const newRevokeBtn = revokeBtn.cloneNode(true);
-                revokeBtn.parentNode.replaceChild(newRevokeBtn, revokeBtn);
-                // Add fresh listener
-                newRevokeBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('[DEBUG] Revoke button clicked (re-attached)');
-                    revokeApproval();
-                });
-            }
-        } else {
-            if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'none';
-            if (approvalActionButtons) approvalActionButtons.style.display = 'flex';
-        }
+        console.log('[DEBUG] Opening approval request:', requestId);
+        console.log('[DEBUG] Request status from row:', status);
+        
+        // Fetch revision history to check if request has been approved
+        fetch(`/api/revision-history/${requestId}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log('[DEBUG] Revision history response:', data);
+                
+                let hasApprovalEntry = false;
+                let approvalEntry = null;
+                
+                if (data.success && data.revisions) {
+                    console.log('[DEBUG] Checking revisions:', data.revisions);
+                    
+                    // Check if there's an approval entry in revision history
+                    approvalEntry = data.revisions.find(rev => {
+                        console.log('[DEBUG] Checking revision:', rev);
+                        console.log('[DEBUG] - status:', rev.status);
+                        console.log('[DEBUG] - type:', rev.type);
+                        return rev.status === 'resolved' || 
+                               rev.status === 'approved' || 
+                               (rev.type && rev.type === 'approved');
+                    });
+                    hasApprovalEntry = !!approvalEntry;
+                    console.log('[DEBUG] Found approval entry:', approvalEntry);
+                    console.log('[DEBUG] Has approval entry:', hasApprovalEntry);
+                }
+                
+                // Hide action buttons if request has been approved
+                if (hasApprovalEntry) {
+                    console.log('[DEBUG] Request has been approved - hiding action buttons');
+                    console.log('[DEBUG] approvalActionsPanel:', approvalActionsPanel);
+                    console.log('[DEBUG] approvalStatusIndicator:', approvalStatusIndicator);
+                    console.log('[DEBUG] approvalActionButtons:', approvalActionButtons);
+                    
+                    if (approvalActionsPanel) {
+                        approvalActionsPanel.style.display = 'none';
+                        console.log('[DEBUG] Set approvalActionsPanel display to none');
+                    }
+                    if (approvalStatusIndicator) {
+                        approvalStatusIndicator.style.display = 'block';
+                        console.log('[DEBUG] Set approvalStatusIndicator display to block');
+                    }
+                    if (approvalActionButtons) {
+                        approvalActionButtons.style.display = 'none';
+                        console.log('[DEBUG] Set approvalActionButtons display to none');
+                    }
+                    
+                    // Display approval date
+                    if (approvalEntry && approvalEntry.requestedAt) {
+                        const approvedOn = new Date(approvalEntry.requestedAt);
+                        const approvedOnField = document.getElementById('approvedOnField');
+                        const modalApprovedOn = document.getElementById('modalApprovedOn');
+                        if (approvedOnField && modalApprovedOn) {
+                            approvedOnField.style.display = 'block';
+                            modalApprovedOn.textContent = approvedOn.toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                        }
+                    }
+                    
+                    // Re-attach revoke button event listener
+                    const revokeBtn = document.getElementById('revokeApprovalBtn');
+                    if (revokeBtn) {
+                        const newRevokeBtn = revokeBtn.cloneNode(true);
+                        revokeBtn.parentNode.replaceChild(newRevokeBtn, revokeBtn);
+                        newRevokeBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('[DEBUG] Revoke button clicked (re-attached)');
+                            revokeApproval();
+                        });
+                    }
+                } else {
+                    // Show action buttons for non-approved requests
+                    console.log('[DEBUG] Request NOT approved - showing action buttons');
+                    
+                    if (approvalActionsPanel) {
+                        approvalActionsPanel.style.display = 'block';
+                        console.log('[DEBUG] Set approvalActionsPanel display to block');
+                    }
+                    if (approvalStatusIndicator) {
+                        approvalStatusIndicator.style.display = 'none';
+                        console.log('[DEBUG] Set approvalStatusIndicator display to none');
+                    }
+                    if (approvalActionButtons) {
+                        approvalActionButtons.style.display = 'flex';
+                        console.log('[DEBUG] Set approvalActionButtons display to flex');
+                    }
+                    
+                    const approvedOnField = document.getElementById('approvedOnField');
+                    if (approvedOnField) {
+                        approvedOnField.style.display = 'none';
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('[DEBUG] Error checking approval status:', err);
+                // On error, show action buttons by default
+                console.log('[DEBUG] Error occurred - showing buttons by default');
+                if (approvalActionsPanel) approvalActionsPanel.style.display = 'block';
+                if (approvalActionButtons) approvalActionButtons.style.display = 'flex';
+            });
     } else if (requestType === 'service') {
         if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
@@ -443,16 +632,36 @@ async function loadRevisionHistory(requestId) {
             
             console.log('[Revision History] All revisions rendered');
             
-            // Show action buttons within revision history
-            const revisionHistoryActions = document.getElementById('revisionHistoryActions');
-            if (revisionHistoryActions) {
-                revisionHistoryActions.style.display = 'flex';
-            }
+            // Check if request has been approved before showing action buttons
+            const hasApprovalEntry = result.revisions.some(rev => 
+                rev.status === 'resolved' || 
+                rev.status === 'approved' || 
+                (rev.type && rev.type === 'approved')
+            );
             
-            // Hide the regular approval actions panel since we have revision history
+            console.log('[Revision History] Has approval entry:', hasApprovalEntry);
+            
+            const revisionHistoryActions = document.getElementById('revisionHistoryActions');
             const approvalActionsPanel = document.getElementById('approvalActionsPanel');
-            if (approvalActionsPanel) {
-                approvalActionsPanel.style.display = 'none';
+            
+            if (hasApprovalEntry) {
+                // Request is approved - hide all action buttons
+                console.log('[Revision History] Request approved - hiding all action buttons');
+                if (revisionHistoryActions) {
+                    revisionHistoryActions.style.display = 'none';
+                }
+                if (approvalActionsPanel) {
+                    approvalActionsPanel.style.display = 'none';
+                }
+            } else {
+                // Request not approved - show action buttons in revision history
+                console.log('[Revision History] Request not approved - showing action buttons');
+                if (revisionHistoryActions) {
+                    revisionHistoryActions.style.display = 'flex';
+                }
+                if (approvalActionsPanel) {
+                    approvalActionsPanel.style.display = 'none';
+                }
             }
         } else {
             console.log('[Revision History] No revisions to display');
@@ -474,17 +683,30 @@ async function loadRevisionHistory(requestId) {
 
 // Function: createRevisionEntry
 function createRevisionEntry(revision, index, total) {
+    console.log('🔍 [Unit] Creating revision entry:', {
+        index,
+        total,
+        hasRequestedBy: !!revision.requestedBy,
+        hasRespondedBy: !!revision.respondedBy,
+        type: revision.type,
+        status: revision.status,
+        revisionNotes: revision.revisionNotes,
+        responseNotes: revision.responseNotes
+    });
+    
     const entry = document.createElement('div');
     
-    // Determine if this is a unit action (revision/revoke) or requestor action (initial/resubmit)
-    const isUnitAction = revision.type === 'revision' || revision.type === 'revoked';
-    const isRequestorAction = revision.type === 'initial' || revision.type === 'resubmitted';
+    // Determine if this is a unit action or requestor action
+    // Unit action: has requestedBy (unit requests revision)
+    // Requestor action: has respondedBy (user resubmits)  OR type is 'initial'
+    const isUnitAction = revision.requestedBy || revision.type === 'revision' || revision.type === 'revoked' || revision.type === 'approved';
+    const isRequestorAction = revision.respondedBy || revision.type === 'initial' || revision.type === 'resubmitted';
     
-    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-message' : 'requestor-message'}`;
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
-    // Format detailed timestamp
-    const date = new Date(revision.timestamp);
-    const fullTimestamp = date.toLocaleString('en-US', {
+    // Format detailed timestamp - use requestedAt for unit actions, respondedAt for requestor actions
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt || revision.timestamp);
+    const fullTimestamp = timestamp.toLocaleString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -495,7 +717,7 @@ function createRevisionEntry(revision, index, total) {
         hour12: true
     });
     
-    const shortTimestamp = date.toLocaleString('en-US', {
+    const shortTimestamp = timestamp.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -505,7 +727,7 @@ function createRevisionEntry(revision, index, total) {
     
     // Get relative time
     const now = new Date();
-    const diffMs = now - date;
+    const diffMs = now - timestamp;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -523,14 +745,19 @@ function createRevisionEntry(revision, index, total) {
     if (revision.type === 'initial') {
         typeLabel = 'Initial Submission';
         badgeClass = 'badge-initial';
-    } else if (revision.type === 'revoked') {
-        typeLabel = 'Approval Revoked - Revision Required';
-        badgeClass = 'badge-revoked';
-    } else if (revision.type === 'resubmitted') {
-        typeLabel = 'Resubmitted for Review';
+    } else if (revision.type === 'approved') {
+        typeLabel = '✓ Approved';
+        badgeClass = 'badge-approved';
+    } else if (isUnitAction) {
+        // Unit requested revision
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    } else if (isRequestorAction) {
+        // User resubmitted
+        typeLabel = 'Resubmitted For Review';
         badgeClass = 'badge-resubmitted';
     } else {
-        typeLabel = 'Revision Requested';
+        typeLabel = 'Update';
         badgeClass = 'badge-revision';
     }
     
@@ -548,74 +775,119 @@ function createRevisionEntry(revision, index, total) {
         }
     }
     
-    // Determine status indicator for unit messages
+    // Determine status indicator for last message
     let statusIndicator = '';
-    if (isUnitAction && isLast) {
+    if (revision.type === 'approved') {
+        // Show completion indicator for approved requests
         statusIndicator = `
-            <div class="status-indicator waiting">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
+                    <polyline points="8 12 11 15 16 9"/>
                 </svg>
-                <span>Waiting for Requestor Response</span>
+                <span style="color: #10b981; font-weight: 600;">Request Approved - Process Complete</span>
             </div>
         `;
-    } else if (isRequestorAction && isLast) {
-        statusIndicator = `
-            <div class="status-indicator review">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                </svg>
-                <span>Under Unit Review</span>
-            </div>
-        `;
-    }
-    
-    entry.innerHTML = `
-        <div class="conversation-timeline-line ${isLast ? 'last-item' : ''}"></div>
-        <div class="revision-number-badge ${isUnitAction ? 'unit-number' : 'requestor-number'}">
-            #${index + 1}
-        </div>
-        <div class="conversation-message-bubble ${isUnitAction ? 'unit-bubble' : 'requestor-bubble'}">
-            <div class="message-header-row">
-                <div class="message-sender-info">
-                    <div class="sender-details">
-                        <span class="sender-name">${revision.by || 'Unknown'}</span>
-                        <span class="sender-role">${isUnitAction ? 'Unit Team' : 'Requestor'}</span>
-                    </div>
-                </div>
-                <span class="message-badge ${badgeClass}">${typeLabel}</span>
-            </div>
-            
-            <div class="message-timestamp-row">
-                <span class="timestamp-full" title="${fullTimestamp}">
+    } else if (isLast) {
+        if (isUnitAction) {
+            statusIndicator = `
+                <div class="status-indicator waiting">
                     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10"/>
                         <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    ${fullTimestamp}
-                </span>
-                <span class="timestamp-relative">${relativeTime}</span>
+                    Waiting for Requestor Response
+                </div>
+            `;
+        } else {
+            statusIndicator = `
+                <div class="status-indicator under-review">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Under Unit Review
+                </div>
+            `;
+        }
+    }
+    
+    // Get the actual author name
+    let authorName = 'Unknown';
+    let authorUnit = '';
+    
+    if (revision.by) {
+        authorName = revision.by;
+    } else if (revision.requestedBy) {
+        // Unit action - show unit member name
+        if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
+            authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
+            if (revision.requestedBy.unitTeam) {
+                authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+            }
+        } else {
+            authorName = 'Unit Team';
+        }
+    } else if (revision.respondedBy) {
+        // Requestor action - show requestor name
+        if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
+            authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+        } else {
+            authorName = 'Requestor';
+        }
+    } else if (isUnitAction) {
+        authorName = 'Unit Team';
+    } else {
+        authorName = 'Requestor';
+    }
+    
+    entry.innerHTML = `
+        <div class="revision-number-badge">#${index + 1}</div>
+        <div class="revision-message-bubble">
+            <div class="revision-bubble-header">
+                <div>
+                    <span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
+                <div class="revision-timestamp">
+                    <span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
+                </div>
             </div>
             
-            ${revision.description ? `
-                <div class="message-content-section">
-                    <div class="content-label">${isUnitAction ? 'Unit Feedback:' : 'Submission Details:'}</div>
-                    <div class="content-text">${escapeHtml(revision.description)}</div>
-                </div>
-            ` : ''}
+            <div class="message-content-section">
+                <div class="content-label">${(() => {
+                    if (revision.type === 'approved') return 'APPROVAL DETAILS:';
+                    if (revision.type === 'initial') return 'REQUEST DESCRIPTION:';
+                    if (isUnitAction) return 'UNIT FEEDBACK:';
+                    return 'USER RESPONSE:';
+                })()}</div>
+                <div class="content-text">${(() => {
+                    let content;
+                    if (revision.type === 'approved') {
+                        content = 'The request has been reviewed and approved by the unit team. All requirements have been met.';
+                    } else if (revision.type === 'initial') {
+                        content = revision.description || 'No description provided';
+                    } else if (isUnitAction) {
+                        content = revision.revisionNotes || revision.description || 'No feedback provided';
+                    } else {
+                        content = revision.responseNotes || revision.description || 'No response provided';
+                    }
+                    console.log('🎯 [Unit] Rendering content:', { isUnitAction, content, type: typeof content });
+                    return displayFormattedText(content);
+                })()}</div>
+            </div>
             
-            ${revision.files && revision.files.length > 0 ? `
+            ${((revision.revisionFiles && revision.revisionFiles.length > 0) || (revision.responseFiles && revision.responseFiles.length > 0) || (revision.files && revision.files.length > 0)) ? `
                 <div class="message-attachments-section">
                     <div class="attachments-header">
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
                         </svg>
-                        <span class="attachments-count">${revision.files.length} file${revision.files.length > 1 ? 's' : ''} attached</span>
+                        <span class="attachments-count">${(revision.revisionFiles || revision.responseFiles || revision.files || []).length} file${(revision.revisionFiles || revision.responseFiles || revision.files || []).length > 1 ? 's' : ''} attached</span>
                     </div>
                     <div class="attachments-grid">
-                        ${revision.files.map(file => createRevisionFileCard(file, revision.timestamp)).join('')}
+                        ${(revision.revisionFiles || revision.responseFiles || revision.files || []).map(file => createRevisionFileCard(file, revision.requestedAt || revision.respondedAt || revision.timestamp)).join('')}
                     </div>
                 </div>
             ` : ''}
@@ -782,65 +1054,110 @@ function approveRequest() {
         return;
     }
 
-    // Show approval confirmation modal
-    showApprovalConfirmationModal();
+    // Show inline confirmation panel
+    showInlineApprovalConfirmation();
 }
 
-function showApprovalConfirmationModal() {
-    console.log('[DEBUG] Creating approval confirmation modal');
-    
-    // Remove any existing modal first
-    const existingModal = document.querySelector('.confirmation-modal-overlay');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
+function showInlineApprovalConfirmation() {
+    // Create modal backdrop
     const modal = document.createElement('div');
-    modal.className = 'confirmation-modal-overlay';
-    modal.setAttribute('id', 'approvalConfirmationModal');
-    modal.style.cssText = 'position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0, 0, 0, 0.6) !important; display: flex !important; align-items: center !important; justify-content: center !important; z-index: 1000000 !important;';
+    modal.id = 'approvalConfirmModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100000;
+    `;
     
-    modal.innerHTML = `
-        <div class="confirmation-modal" style="background: white !important; border-radius: 12px !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important; max-width: 450px !important; width: 90% !important; overflow: visible !important; position: relative !important; z-index: 1000001 !important; max-height: auto !important;">
-            <div class="confirmation-header" style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 1rem 1.25rem; text-align: center; color: white;">
-                <svg width="32" height="32" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24" style="margin-bottom: 0.25rem;">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="8 12 11 15 16 9"/>
-                </svg>
-                <h2 style="margin: 0; font-size: 1.125rem; font-weight: 700;">Approve Request</h2>
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    modalContent.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                <div style="flex-shrink: 0; width: 3rem; height: 3rem; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #16a34a;">
+                    <svg width="28" height="28" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="8 12 11 15 16 9"/>
+                    </svg>
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin: 0 0 0.5rem 0;">Confirm Approval</h3>
+                    <p style="font-size: 0.9375rem; color: #6b7280; margin: 0; line-height: 1.6;">Are you sure you want to approve this request? The requestor and all administrators will be notified.</p>
+                </div>
             </div>
-            <div class="confirmation-body" style="padding: 1.25rem;">
-                <p style="margin: 0 0 0.375rem 0; font-size: 0.875rem; color: #334155; line-height: 1.4;">Are you sure you want to approve this request?</p>
-                <p class="confirmation-note" style="font-size: 0.75rem; color: #64748b; font-style: italic; margin: 0;">This action will notify the requestor and all administrators.</p>
-            </div>
-            <div class="confirmation-actions" style="padding: 0.875rem 1.25rem; background: #f8fafc; display: flex; gap: 0.625rem; justify-content: flex-end; border-top: 1px solid #e2e8f0;">
-                <button class="confirmation-btn confirmation-btn-cancel" onclick="window.closeConfirmationModal()" style="padding: 0.5rem 1rem; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8125rem; cursor: pointer; background: #e2e8f0; color: #475569;">Cancel</button>
-                <button class="confirmation-btn confirmation-btn-confirm" onclick="window.confirmApproveRequest()" style="padding: 0.5rem 1rem; border: none; border-radius: 6px; font-weight: 600; font-size: 0.8125rem; cursor: pointer; background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); color: white; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">Approve Request</button>
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.5rem;">
+                <button onclick="closeApprovalConfirmModal()" style="background: #f3f4f6; color: #374151; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9375rem; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+                    Cancel
+                </button>
+                <button onclick="window.confirmApproveRequest()" style="background: #16a34a; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9375rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>Confirm Approval</span>
+                </button>
             </div>
         </div>
     `;
     
+    modal.appendChild(modalContent);
     document.body.appendChild(modal);
-    console.log('[DEBUG] Modal appended to body, element:', modal);
     
-    // Force reflow to ensure styles are applied
-    modal.offsetHeight;
-    
-    // Debug computed styles
-    const computedStyles = window.getComputedStyle(modal);
-    console.log('[DEBUG] Approval modal computed styles:', {
-        display: computedStyles.display,
-        position: computedStyles.position,
-        zIndex: computedStyles.zIndex,
-        visibility: computedStyles.visibility,
-        opacity: computedStyles.opacity,
-        pointerEvents: computedStyles.pointerEvents
+    // Close on backdrop click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeApprovalConfirmModal();
+        }
     });
 }
 
+function cancelInlineApprovalConfirmation() {
+    // Remove the confirmation panel
+    const confirmationPanel = document.getElementById('inlineApprovalConfirmation');
+    if (confirmationPanel) {
+        confirmationPanel.remove();
+    }
+    
+    // Close modal if exists
+    closeApprovalConfirmModal();
+}
+
+window.cancelInlineApprovalConfirmation = cancelInlineApprovalConfirmation;
+
+function closeApprovalConfirmModal() {
+    const modal = document.getElementById('approvalConfirmModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+window.closeApprovalConfirmModal = closeApprovalConfirmModal;
+
 async function confirmApproveRequest() {
     console.log('[DEBUG] Confirming approval');
-    window.closeConfirmationModal();
+    
+    // Close modal
+    closeApprovalConfirmModal();
+    
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
     
     try {
         const response = await fetch(`/unit/task/approve/${currentRequestId}`, {
@@ -856,20 +1173,37 @@ async function confirmApproveRequest() {
             showSuccessMessage('Request approved successfully');
             
             // Update modal UI immediately
-            const approvalStatusIndicator = document.getElementById('approvalStatusIndicator');
-            const approvalActionButtons = document.getElementById('approvalActionButtons');
-            const revisionHistorySection = document.getElementById('revisionHistorySection');
-            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
             const modalStatus = document.getElementById('modalStatus');
+            const approvedOnField = document.getElementById('approvedOnField');
+            const modalApprovedOn = document.getElementById('modalApprovedOn');
             
-            if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'block';
-            if (approvalActionButtons) approvalActionButtons.style.display = 'none';
-            if (revisionHistorySection) revisionHistorySection.style.display = 'none';
-            if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
             if (modalStatus) {
                 modalStatus.textContent = 'APPROVED';
                 modalStatus.className = 'status-badge approved';
             }
+            
+            // Show approval date
+            if (approvedOnField && modalApprovedOn) {
+                approvedOnField.style.display = 'block';
+                const now = new Date();
+                modalApprovedOn.textContent = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            // Hide the approval actions panel
+            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
+            if (approvalActionsPanel) {
+                approvalActionsPanel.style.display = 'none';
+            }
+            
+            // Reload revision history to show the approval entry
+            await loadRevisionHistory(currentRequestId);
             
             // Update table row status in background without reload
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
@@ -991,14 +1325,6 @@ async function submitRevokeApproval() {
         showErrorMessage('An error occurred while revoking the approval');
     }
 }
-
-// Global function to close confirmation modal
-window.closeConfirmationModal = function() {
-    const modal = document.querySelector('.confirmation-modal-overlay');
-    if (modal) {
-        modal.remove();
-    }
-};
 
 window.confirmApproveRequest = confirmApproveRequest;
 
@@ -1379,7 +1705,7 @@ async function loadConversation(requestId) {
                         <span class="message-sender">${senderName}</span>
                         <span class="message-time">${timestamp}</span>
                     </div>
-                    <div class="message-content">${escapeHtml(message.content)}</div>
+                    <div class="message-content">${formatText(message.content)}</div>
                 `;
                 
                 messagesContainer.appendChild(messageDiv);
@@ -1492,7 +1818,36 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Helper function to format text with markdown-style syntax
+// Helper function to display formatted text (for revision history display)
+function displayFormattedText(text) {
+    if (!text) return '';
+    
+    // Check if the text is already HTML (from Quill editor)
+    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
+    if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
+        // It's HTML content from Quill, return as-is
+        return text;
+    }
+    
+    // It's plain text, escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+}
+
+// Helper function to format text (for text editor formatting - different from display)
 function formatText(text) {
     if (!text) return '';
     
@@ -1517,6 +1872,7 @@ function formatText(text) {
 // Expose helper functions globally for createMessageElement
 window.escapeHtml = escapeHtml;
 window.formatText = formatText;
+window.displayFormattedText = displayFormattedText;
 
 function showSuccessMessage(message) {
     // Check if alert handler exists

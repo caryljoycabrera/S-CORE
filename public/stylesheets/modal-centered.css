@@ -121,17 +121,25 @@
   width: 85% !important;
 }
 
+/* Extra extra large modals (request details with revision history) */
+.modal-content[style*="max-width: 1500px"],
+.modal-content[style*="max-width: 1600px"],
+.modal-content[style*="max-width: 1700px"] {
+  max-width: min(1700px, calc(100vw - 120px)) !important;
+  width: 95% !important;
+}
+
 /* Requestor request details modal - original size when no revisions */
 .requestor-modal-content {
-  max-width: 1000px !important;
+  max-width: min(1000px, calc(100vw - 120px)) !important;
   width: 90% !important;
   max-height: 95vh !important;
 }
 
 /* Requestor modal becomes wider when revision history shows (two-column) */
 .requestor-modal-content.has-revisions {
-  max-width: 1800px !important;
-  width: 98% !important;
+  max-width: min(1800px, calc(100vw - 120px)) !important;
+  width: 95% !important;
 }
 
 /* Conversation modals - even wider for better chat experience */
@@ -176,13 +184,18 @@ body.modal-open {
   .edit-modal-content,
   .calendar-modal-content,
   .deadline-details-modal-content,
-  .notification-modal-content {
+  .notification-modal-content,
+  .requestor-modal-content {
     max-width: calc(100vw - 80px) !important;
     width: 95% !important;
   }
   
   .modal-content[style*="max-width: 1400px"],
-  .analytics-modal-content {
+  .modal-content[style*="max-width: 1500px"],
+  .modal-content[style*="max-width: 1600px"],
+  .modal-content[style*="max-width: 1700px"],
+  .analytics-modal-content,
+  .requestor-modal-content.has-revisions {
     max-width: calc(100vw - 80px) !important;
     width: 95% !important;
   }
@@ -204,7 +217,9 @@ body.modal-open {
   .edit-modal-content,
   .calendar-modal-content,
   .deadline-details-modal-content,
-  .notification-modal-content {
+  .notification-modal-content,
+  .requestor-modal-content,
+  .requestor-modal-content.has-revisions {
     max-width: 98% !important;
     width: 98% !important;
     max-height: 95vh !important;

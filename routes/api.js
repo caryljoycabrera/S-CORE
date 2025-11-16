@@ -549,23 +549,62 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
     // Add all revisions from revisionHistory array
     if (approvalRequest.revisionHistory && approvalRequest.revisionHistory.length > 0) {
       for (const revision of approvalRequest.revisionHistory) {
-        // Populate the requestedBy user
-        let requestedByUser = null;
-        if (revision.requestedBy) {
-          requestedByUser = await User.findById(revision.requestedBy).select('fName lName');
+        // Check if this is a unit action (requestedBy) or user resubmission (respondedBy only)
+        const isUnitAction = revision.requestedBy && !revision.respondedBy;
+        const isUserResubmission = revision.respondedBy && !revision.requestedBy;
+        
+        if (isUnitAction) {
+          // This is a unit requesting revision
+          let requestedByUser = await User.findById(revision.requestedBy).select('fName lName unitTeam');
+          
+          console.log('🔍 [API] Unit action revision:', {
+            revisionNotes: revision.revisionNotes,
+            notes: revision.notes,
+            description: revision.description,
+            hasRevisionNotes: !!revision.revisionNotes,
+            revisionNotesType: typeof revision.revisionNotes,
+            requestedByUser
+          });
+          
+          revisions.push({
+            requestedBy: requestedByUser ? {
+              _id: requestedByUser._id,
+              fName: requestedByUser.fName,
+              lName: requestedByUser.lName,
+              unitTeam: requestedByUser.unitTeam
+            } : revision.requestedBy,
+            requestedAt: revision.requestedAt,
+            revisionNotes: revision.revisionNotes || revision.notes || revision.description || '',
+            revisionFiles: revision.revisionFiles || revision.files || [],
+            status: revision.status,
+            type: revision.revisionNotes && revision.revisionNotes.includes('approved') ? 'approved' : 'revision'
+          });
+        } else if (isUserResubmission) {
+          // This is a user resubmitting after revision
+          let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
+          
+          console.log('🔍 [API] User resubmission:', {
+            responseNotes: revision.responseNotes,
+            notes: revision.notes,
+            description: revision.description,
+            hasResponseNotes: !!revision.responseNotes,
+            responseNotesType: typeof revision.responseNotes,
+            respondedByUser
+          });
+          
+          revisions.push({
+            respondedBy: respondedByUser ? {
+              _id: respondedByUser._id,
+              fName: respondedByUser.fName,
+              lName: respondedByUser.lName
+            } : revision.respondedBy,
+            respondedAt: revision.respondedAt,
+            responseNotes: revision.responseNotes || revision.notes || revision.description || '',
+            responseFiles: revision.responseFiles || revision.files || [],
+            type: 'resubmitted',
+            status: revision.status
+          });
         }
-        
-        const revisionType = revision.status === 'revoked' ? 'revoked' : 
-                            revision.status === 'resubmitted' ? 'resubmitted' : 
-                            'revision';
-        
-        revisions.push({
-          type: revisionType,
-          timestamp: revision.requestedAt,
-          by: requestedByUser ? `${requestedByUser.fName} ${requestedByUser.lName}` : 'Unit Team',
-          description: revision.revisionNotes || '',
-          files: revision.revisionFiles || []
-        });
       }
     }
 

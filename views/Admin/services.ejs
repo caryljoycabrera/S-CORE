@@ -544,12 +544,12 @@
         <!-- Additional File Upload Toggle -->
         <div id="additionalFileToggleSection" style="display: none;">
           <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <label class="toggle-switch" style="margin: 0;">
-                <input type="checkbox" id="toggleAdditionalFileUploadBtn">
-                <span class="toggle-slider"></span>
-              </label>
-              <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label class="toggle-switch" style="margin: 0;">
+              <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
             </div>
             <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
               This will permit users to add more files when revising their requests
@@ -680,27 +680,7 @@
           </style>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-action-buttons">
-          <button class="quick-action-btn chat-card-btn" id="openChatFromModal" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-                <div style="text-align: left;">
-                  <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
-                  <div style="font-size: 0.875rem; color: #047857;">Collaborate with your team members</div>
-                </div>
-              </div>
-              <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </div>
-          </button>
-        </div>
+        <!-- Quick Actions removed - Use button in left column instead -->
       </div>
     </div>
   </div>
