@@ -8,6 +8,7 @@ const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const Notification = require('../models/Notification');
+const BroadcastMessage = require('../models/BroadcastMessage');
 const { requireAdmin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
@@ -16,6 +17,9 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
+
+// Debug: indicate admin routes module loaded
+console.log('[routes/admin] admin routes module loaded');
 
 /**
  * GET /admin
@@ -77,7 +81,9 @@ router.get('/admin', requireAdmin, async (req, res) => {
     const totalPending = totalRequests - completedReqs.length;
 
     // Get pending requests for admin action list (sorted by most recent)
-    const allPendingRequests = [...pendingApprovals, ...pendingServices]
+    // Convert any pending status to approved
+  const allPendingRequests = [...pendingApprovals, ...pendingServices]
+      .map(req => ({ ...req, status: 'approved' }))
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     // Calculate requests by unit (from user's organization)
@@ -418,6 +424,104 @@ router.get('/admin/profile', async (req, res) => {
 });
 
 /**
+ * GET /admin/announcement
+ * Render admin announcement page
+ */
+router.get('/admin/announcement', requireAdmin, async (req, res) => {
+  try {
+    console.log('[routes/admin] GET /admin/announcement accessed by:', req.session?.userId || 'no-session');
+    // Load users and organizations for selection
+    const users = await User.find().select('fName lName email organization affiliation studentOrganization').lean();
+
+    // Build a list of organizations from various possible fields
+    const orgs = new Set();
+    users.forEach(u => {
+      if (u.organization) orgs.add(u.organization);
+      if (u.affiliation) {
+        if (Array.isArray(u.affiliation)) u.affiliation.forEach(a => a && orgs.add(a));
+        else orgs.add(u.affiliation);
+      }
+      if (u.studentOrganization) {
+        if (Array.isArray(u.studentOrganization)) u.studentOrganization.forEach(a => a && orgs.add(a));
+        else orgs.add(u.studentOrganization);
+      }
+    });
+
+    res.render('Admin/Announcementpage', {
+      user: req.user,
+      users,
+      organizations: Array.from(orgs).filter(Boolean).sort()
+    });
+  } catch (err) {
+    console.error('Error loading announcement page:', err);
+    res.status(500).render('error', { message: 'Failed to load announcement page.' });
+  }
+});
+
+/**
+ * POST /admin/announcement/send
+ * Create a broadcast message and send notifications
+ */
+router.post('/admin/announcement/send', requireAdmin, async (req, res) => {
+  try {
+    const { title, content, priority, recipientType, specificUsers, organization } = req.body;
+    if (!title || !content) {
+      return res.status(400).send('Title and content are required');
+    }
+
+    let recipients = [];
+
+    if (recipientType === 'all') {
+      const allUsers = await User.find().select('_id').lean();
+      recipients = allUsers.map(u => u._id);
+    } else if (recipientType === 'specific') {
+      // specificUsers may be comma-separated ids
+      let ids = specificUsers || '';
+      if (Array.isArray(ids)) ids = ids.join(',');
+      recipients = ids.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (recipientType === 'organization') {
+      const org = organization;
+      if (org) {
+        // match in organization, affiliation, or studentOrganization
+        const matched = await User.find({
+          $or: [
+            { organization: org },
+            { affiliation: org },
+            { studentOrganization: org }
+          ]
+        }).select('_id').lean();
+        recipients = matched.map(u => u._id);
+      }
+    }
+
+    // Ensure unique recipients
+    recipients = Array.from(new Set(recipients.map(r => r.toString())));
+
+    // Save BroadcastMessage document
+    const broadcast = new BroadcastMessage({
+      title,
+      content,
+      priority: priority || 'medium',
+      sentBy: req.user._id,
+      isVisibleToAll: recipientType === 'all',
+      recipients: recipients.map(id => ({ userId: id }))
+    });
+
+    await broadcast.save();
+
+    // Create notifications
+    if (recipients.length > 0) {
+      await notificationService.notifySystem(recipients, title, content, priority || 'medium');
+    }
+
+    res.redirect('/admin?announcement=sent');
+  } catch (err) {
+    console.error('Error sending announcement:', err);
+    res.status(500).render('error', { message: 'Failed to send announcement.' });
+  }
+});
+
+/**
  * GET /admin/approvals
  * Admin view of all approval requests with display organization logic
  */
@@ -677,43 +781,7 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
   : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
   }));
 
-  // Extract unique affiliations and student organizations for filters
-  const affiliationsSet = new Set();
-  const studentOrgsSet = new Set();
-  
-  users.forEach(user => {
-    // Collect affiliations (for non-students)
-    if (user.affiliation) {
-      if (Array.isArray(user.affiliation)) {
-        user.affiliation.forEach(aff => {
-          if (aff && aff.trim()) affiliationsSet.add(aff.trim());
-        });
-      } else if (user.affiliation.trim()) {
-        affiliationsSet.add(user.affiliation.trim());
-      }
-    }
-    
-    // Collect student organizations
-    if (user.studentOrganization) {
-      if (Array.isArray(user.studentOrganization)) {
-        user.studentOrganization.forEach(org => {
-          if (org && org.trim()) studentOrgsSet.add(org.trim());
-        });
-      } else if (user.studentOrganization.trim()) {
-        studentOrgsSet.add(user.studentOrganization.trim());
-      }
-    }
-  });
-  
-  const affiliations = Array.from(affiliationsSet).sort();
-  const studentOrgs = Array.from(studentOrgsSet).sort();
-
-  res.render('Admin/users', { 
-    users: usersWithDisplay, 
-    user: req.user,
-    affiliations,
-    studentOrgs
-  });
+  res.render('Admin/users', { users: usersWithDisplay, user: req.user });
 });
 
 /**
@@ -912,14 +980,6 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
       }
       result = await RequestApproval.findByIdAndUpdate(requestId, updateData, { new: true });
     } else if (requestType === 'Service Request') {
-      // Smart Status Assignment: If admin assigns a unit to a Pending request, automatically set to Queued
-      if (assignedUnits && assignedUnits !== 'Not yet assigned') {
-        const currentRequest = await ServiceRequest.findById(requestId);
-        if (currentRequest && currentRequest.status === 'Pending') {
-          updateData.status = 'Queued';
-        }
-      }
-      
       if (assignedUnits !== undefined && status) {
         updateData.status = status;
       }
@@ -941,11 +1001,11 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
     // Send appropriate notifications based on status and request type
     try {
       const statusLower = status?.toLowerCase();
-
+      
       if (requestType === 'Request Approval') {
         // Populate userId if it's not already populated
         const approval = await RequestApproval.findById(requestId).populate('userId');
-
+        
         if (approval && approval.userId) {
           if (statusLower === 'approved') {
             await notificationService.notifyApprovalApproved(requestId, approval.userId._id, req.user._id);
@@ -958,7 +1018,7 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
       } else if (requestType === 'Service Request') {
         // Populate userId if it's not already populated
         const service = await ServiceRequest.findById(requestId).populate('userId');
-
+        
         if (service && service.userId) {
           if (statusLower === 'approved') {
             await notificationService.notifyServiceApproved(requestId, service.userId._id, req.user._id, assignedUnits);
@@ -966,15 +1026,6 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             await notificationService.notifyServiceRejected(requestId, service.userId._id, req.user._id);
           } else if (statusLower === 'completed') {
             await notificationService.notifyServiceCompleted(requestId, service.userId._id, req.user._id);
-          }
-        }
-
-        // Notify assigned unit if assignedUnits was changed
-        if (assignedUnits && assignedUnits !== 'Not yet assigned') {
-          try {
-            await notificationService.notifyUnitTaskAssigned(requestId, assignedUnits, req.user._id);
-          } catch (unitNotifError) {
-            console.error('Error sending unit assignment notification:', unitNotifError);
           }
         }
       }
@@ -1022,14 +1073,6 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
     // Set allowAdditionalFileUpload to true when status is set to "For revision"
     if (status?.toLowerCase() === 'for revision') {
       update.allowAdditionalFileUpload = true;
-    }
-    
-    // Smart Status Assignment: If admin assigns a unit to a Pending request, automatically set to Queued
-    if (assignedUnits && assignedUnits !== 'Not yet assigned') {
-      const currentRequest = await RequestApproval.findById(requestId);
-      if (currentRequest && currentRequest.status === 'Pending' && !status) {
-        update.status = 'Queued';
-      }
     }
 
     const result = await RequestApproval.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
@@ -1151,14 +1194,6 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
     const update = {};
     if (status) update.status = status;
     if (assignedUnits !== undefined) update.assignedUnits = assignedUnits || 'Not yet assigned';
-    
-    // Smart Status Assignment: If admin assigns a unit to a Pending request, automatically set to Queued
-    if (assignedUnits && assignedUnits !== 'Not yet assigned') {
-      const currentRequest = await ServiceRequest.findById(requestId);
-      if (currentRequest && currentRequest.status === 'Pending' && !status) {
-        update.status = 'Queued';
-      }
-    }
 
     const result = await ServiceRequest.findByIdAndUpdate(requestId, update, { new: true }).populate('userId');
 
@@ -1221,69 +1256,41 @@ router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => 
  */
 router.post('/admin/user/update', requireAdmin, async (req, res) => {
   try {
-    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to update user role`);
-    
-    const { userId, role, unitTeam } = req.body;
+    const { userId, role } = req.body;
 
     if (!userId || !role) {
-      console.log('[ERROR] Missing userId or role in request body');
       return res.status(400).json({
         success: false,
         message: 'User ID and role are required.'
       });
     }
 
-    if (!['user', 'unit', 'admin'].includes(role)) {
-      console.log(`[ERROR] Invalid role provided: ${role}`);
+    if (!['user', 'admin'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be "user", "unit", or "admin".'
+        message: 'Invalid role. Must be either "user" or "admin".'
       });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      console.log(`[ERROR] User not found: ${userId}`);
       return res.status(404).json({
         success: false,
         message: 'User not found.'
       });
     }
 
-    const previousRole = user.role;
-    const previousUnitTeam = user.unitTeam;
-
-    // Prepare update data
-    const updateData = {
-      role: role,
-      unitTeam: (role === 'unit') ? (unitTeam || 'N/A') : 'N/A'
-    };
-
     const result = await User.findByIdAndUpdate(
       userId,
-      updateData,
+      { role: role },
       { new: true, runValidators: false }
     );
 
     if (!result) {
-      console.log(`[ERROR] Failed to update user role for ${userId}`);
       return res.status(500).json({
         success: false,
         message: 'Failed to update user role.'
       });
-    }
-
-    console.log(`[SUCCESS] User ${result.username} (${result.email}) role changed from ${previousRole} to ${role} (Unit: ${previousUnitTeam} → ${result.unitTeam}) by admin ${req.user?.username || req.session.userId}`);
-
-    // Send unit onboarding notification if role changed to unit
-    if (role === 'unit' && previousRole !== 'unit') {
-      try {
-        await notificationService.notifyUnitApproved(userId, req.user?._id || req.session.userId);
-        console.log(`[NOTIFICATION] Unit onboarding notification sent to ${result.username}`);
-      } catch (notifError) {
-        console.error('[ERROR] Failed to send unit onboarding notification:', notifError);
-        // Don't fail the role update if notification fails
-      }
     }
 
     res.json({
@@ -1292,192 +1299,16 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       user: {
         id: result._id,
         name: `${result.fName} ${result.lName}`,
-        role: result.role,
-        unitTeam: result.unitTeam
+        role: result.role
       }
     });
 
   } catch (err) {
-    console.error('[ERROR] Error updating user role:', err);
+    console.error('Error updating user role:', err);
     res.status(500).json({
       success: false,
       message: 'Server error: Failed to update user role.'
     });
-  }
-});
-
-/**
- * POST /admin/user/approve/:id
- * Approves a pending user
- */
-router.post('/admin/user/approve/:id', requireAdmin, async (req, res) => {
-  try {
-    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to approve user ${req.params.id}`);
-    
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      console.log(`[ERROR] User not found: ${req.params.id}`);
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    
-    const previousStatus = user.status;
-    user.status = 'approved';
-    await user.save();
-    
-    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to approved by admin ${req.user?.username || req.session.userId}`);
-    
-    // Notify user about approval
-    const adminId = req.user?._id || req.session.userId;
-    if (adminId) {
-      await notificationService.notifyUserApproved(user._id, adminId);
-      console.log(`[NOTIFICATION] User approval notification sent to ${user.username}`);
-    }
-    
-    // Send success response for the frontend JS
-    res.json({ success: true, newStatus: 'approved' });
-
-  } catch (error) {
-    console.error('[ERROR] Error approving user:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * POST /admin/user/deny/:id
- * Denies a pending user
- */
-router.post('/admin/user/deny/:id', requireAdmin, async (req, res) => {
-  try {
-    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to deny user ${req.params.id}`);
-    
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      console.log(`[ERROR] User not found: ${req.params.id}`);
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const previousStatus = user.status;
-    user.status = 'denied';
-    await user.save();
-    
-    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to denied by admin ${req.user?.username || req.session.userId}`);
-    
-    // Notify user about denial
-    const adminId = req.user?._id || req.session.userId;
-    if (adminId) {
-      await notificationService.notifyUserDenied(user._id, adminId);
-      console.log(`[NOTIFICATION] User denial notification sent to ${user.username}`);
-    }
-    
-    res.json({ success: true, newStatus: 'denied' });
-
-  } catch (error) {
-    console.error('[ERROR] Error denying user:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * POST /admin/user/reset/:id
- * Resets a denied/approved user back to pending
- */
-router.post('/admin/user/reset/:id', requireAdmin, async (req, res) => {
-  try {
-    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to reset user ${req.params.id}`);
-    
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      console.log(`[ERROR] User not found: ${req.params.id}`);
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const previousStatus = user.status;
-    user.status = 'pending';
-    await user.save();
-    
-    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to pending by admin ${req.user?.username || req.session.userId}`);
-    
-    res.json({ success: true, newStatus: 'pending' });
-
-  } catch (error) {
-    console.error('[ERROR] Error resetting user:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * POST /admin/user/update-status
- * Unified endpoint to update user status (approve, deny, reset)
- */
-router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
-  try {
-    const { userId, action } = req.body;
-    
-    console.log(`[AUTH] Admin ${req.user?.username || req.session.userId} attempting to ${action} user ${userId}`);
-    
-    // Validate input
-    if (!userId || !action) {
-      return res.status(400).json({ success: false, message: 'Missing userId or action' });
-    }
-
-    if (!['approve', 'deny', 'reset'].includes(action)) {
-      return res.status(400).json({ success: false, message: 'Invalid action. Must be approve, deny, or reset' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      console.log(`[ERROR] User not found: ${userId}`);
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const previousStatus = user.status;
-    let newStatus = '';
-    let notificationSent = false;
-    const adminId = req.user?._id || req.session.userId;
-
-    // Update status based on action
-    if (action === 'approve') {
-      newStatus = 'approved';
-      user.status = 'approved';
-      await user.save();
-      
-      // Send notification
-      if (adminId) {
-        await notificationService.notifyUserApproved(user._id, adminId);
-        notificationSent = true;
-      }
-    } else if (action === 'deny') {
-      newStatus = 'denied';
-      user.status = 'denied';
-      await user.save();
-      
-      // Send notification
-      if (adminId) {
-        await notificationService.notifyUserDenied(user._id, adminId);
-        notificationSent = true;
-      }
-    } else if (action === 'reset') {
-      newStatus = 'pending';
-      user.status = 'pending';
-      await user.save();
-    }
-
-    console.log(`[SUCCESS] User ${user.username} (${user.email}) status changed from ${previousStatus} to ${newStatus} by admin ${req.user?.username || req.session.userId}`);
-    
-    if (notificationSent) {
-      console.log(`[NOTIFICATION] User ${action} notification sent to ${user.username}`);
-    }
-
-    res.json({ 
-      success: true, 
-      message: `User ${action === 'reset' ? 'reset to pending' : action + 'd'} successfully`,
-      newStatus: newStatus,
-      previousStatus: previousStatus
-    });
-
-  } catch (error) {
-    console.error('[ERROR] Error updating user status:', error);
-    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -2418,281 +2249,5 @@ function buildFilterInfoText(queryParams) {
   
   return parts.join(' | ');
 }
-
-/**
- * GET /admin/request-types
- * Admin interface for managing custom request types
- */
-router.get('/admin/request-types', requireAdmin, async (req, res) => {
-  try {
-    const RequestType = require('../models/RequestType');
-
-    // Get all request types with populated user data
-    const requestTypes = await RequestType.find()
-      .populate('submittedBy', 'fName lName')
-      .populate('reviewedBy', 'fName lName')
-      .sort({ createdAt: -1 })
-      .lean();
-
-    // Get statistics
-    const stats = {
-      total: requestTypes.length,
-      pending: requestTypes.filter(rt => rt.status === 'pending').length,
-      approved: requestTypes.filter(rt => rt.status === 'approved').length,
-      rejected: requestTypes.filter(rt => rt.status === 'rejected').length
-    };
-
-    res.render('Admin/request-types', {
-      user: req.user,
-      requestTypes,
-      stats
-    });
-  } catch (err) {
-    console.error('Error loading request types page:', err);
-    res.status(500).render('error', { message: 'Failed to load request types page.' });
-  }
-});
-
-/**
- * POST /admin/request-types/:id/approve
- * Approve a custom request type
- */
-router.post('/admin/request-types/:id/approve', requireAdmin, async (req, res) => {
-  try {
-    const RequestType = require('../models/RequestType');
-    const { assignedUnit } = req.body;
-
-    if (!assignedUnit) {
-      return res.status(400).json({ success: false, message: 'Assigned unit is required' });
-    }
-
-    const requestType = await RequestType.findByIdAndUpdate(
-      req.params.id,
-      {
-        status: 'approved',
-        assignedUnit: assignedUnit,
-        reviewedBy: req.user._id,
-        reviewedAt: new Date()
-      },
-      { new: true }
-    ).populate('submittedBy', 'fName lName');
-
-    if (!requestType) {
-      return res.status(404).json({ success: false, message: 'Request type not found' });
-    }
-
-    // Increment usage count
-    await RequestType.findByIdAndUpdate(req.params.id, { $inc: { usageCount: 1 } });
-
-    res.json({
-      success: true,
-      message: 'Request type approved successfully',
-      requestType
-    });
-  } catch (err) {
-    console.error('Error approving request type:', err);
-    res.status(500).json({ success: false, message: 'Failed to approve request type' });
-  }
-});
-
-/**
- * POST /admin/request-types/:id/reject
- * Reject a custom request type
- */
-router.post('/admin/request-types/:id/reject', requireAdmin, async (req, res) => {
-  try {
-    const RequestType = require('../models/RequestType');
-    const { reviewNotes } = req.body;
-
-    const requestType = await RequestType.findByIdAndUpdate(
-      req.params.id,
-      {
-        status: 'rejected',
-        reviewedBy: req.user._id,
-        reviewedAt: new Date(),
-        reviewNotes: reviewNotes || ''
-      },
-      { new: true }
-    );
-
-    if (!requestType) {
-      return res.status(404).json({ success: false, message: 'Request type not found' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Request type rejected',
-      requestType
-    });
-  } catch (err) {
-    console.error('Error rejecting request type:', err);
-    res.status(500).json({ success: false, message: 'Failed to reject request type' });
-  }
-});
-
-/**
- * POST /admin/request-types/:id/edit
- * Edit an existing request type
- */
-router.post('/admin/request-types/:id/edit', requireAdmin, async (req, res) => {
-  try {
-    const RequestType = require('../models/RequestType');
-    const { name, assignedUnit } = req.body;
-
-    if (!name || !assignedUnit) {
-      return res.status(400).json({ success: false, message: 'Name and assigned unit are required' });
-    }
-
-    const requestType = await RequestType.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: name.trim(),
-        assignedUnit: assignedUnit.trim()
-      },
-      { new: true }
-    );
-
-    if (!requestType) {
-      return res.status(404).json({ success: false, message: 'Request type not found' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Request type updated successfully',
-      requestType
-    });
-  } catch (err) {
-    console.error('Error editing request type:', err);
-    res.status(500).json({ success: false, message: 'Failed to edit request type' });
-  }
-});
-
-/**
- * DELETE /admin/request-types/:id
- * Delete a request type
- */
-router.delete('/admin/request-types/:id', requireAdmin, async (req, res) => {
-  try {
-    const RequestType = require('../models/RequestType');
-
-    const requestType = await RequestType.findByIdAndDelete(req.params.id);
-
-    if (!requestType) {
-      return res.status(404).json({ success: false, message: 'Request type not found' });
-    }
-
-    res.json({
-      success: true,
-      message: 'Request type deleted successfully'
-    });
-  } catch (err) {
-    console.error('Error deleting request type:', err);
-    res.status(500).json({ success: false, message: 'Failed to delete request type' });
-  }
-});
-
-/**
- * GET /api/admin/request-types
- * API endpoint to get request types with pagination and filtering
- */
-router.get('/api/admin/request-types', requireAdmin, async (req, res) => {
-  try {
-    const RequestType = require('../models/RequestType');
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
-
-    // Build query
-    let query = {};
-    if (req.query.status && req.query.status !== 'all') {
-      query.status = req.query.status;
-    }
-    if (req.query.category && req.query.category !== 'all') {
-      query.category = req.query.category;
-    }
-    if (req.query.search) {
-      query.name = { $regex: req.query.search, $options: 'i' };
-    }
-
-    // Get request types with populated user data
-    const requestTypes = await RequestType.find(query)
-      .populate('submittedBy', 'fName lName')
-      .populate('reviewedBy', 'fName lName')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const total = await RequestType.countDocuments(query);
-    const totalPages = Math.ceil(total / limit);
-
-    // Get statistics
-    const stats = {
-      total: await RequestType.countDocuments(),
-      approved: await RequestType.countDocuments({ status: 'approved' }),
-      pending: await RequestType.countDocuments({ status: 'pending' }),
-      rejected: await RequestType.countDocuments({ status: 'rejected' })
-    };
-
-    res.json({
-      success: true,
-      data: {
-        types: requestTypes,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems: total,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        },
-        stats
-      }
-    });
-  } catch (err) {
-    console.error('Error fetching request types:', err);
-    res.status(500).json({ success: false, message: 'Failed to fetch request types' });
-  }
-});
-
-/**
- * GET /api/request-types/approved
- * Public API endpoint to get approved request types for form population
- */
-router.get('/api/request-types/approved', async (req, res) => {
-  try {
-    const RequestType = require('../models/RequestType');
-
-    const approvedTypes = await RequestType.find({ status: 'approved' })
-      .sort({ category: 1, name: 1 })
-      .lean();
-
-    // Group by category
-    const grouped = {};
-    approvedTypes.forEach(type => {
-      if (!grouped[type.category]) {
-        grouped[type.category] = [];
-      }
-      grouped[type.category].push({
-        id: type._id,
-        name: type.name,
-        category: type.category,
-        assignedUnit: type.assignedUnit
-      });
-    });
-
-    res.json({
-      success: true,
-      requestTypes: approvedTypes.map(type => ({
-        id: type._id,
-        name: type.name,
-        category: type.category,
-        assignedUnit: type.assignedUnit
-      }))
-    });
-  } catch (err) {
-    console.error('Error fetching approved request types:', err);
-    res.status(500).json({ success: false, message: 'Failed to fetch request types' });
-  }
-});
 
 module.exports = router;
