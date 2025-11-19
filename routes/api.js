@@ -918,4 +918,56 @@ router.get('/debug/deadlines', requireLogin, async (req, res) => {
   }
 });
 
+
+// Get request volume over time
+router.get('/admin/request-volume', async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 30;
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Generate date labels
+    const labels = [];
+    const approvalCounts = [];
+    const serviceCounts = [];
+
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+
+      // Count approvals for this date
+      const approvalCount = await ApprovalRequest.countDocuments({
+        createdAt: {
+          $gte: new Date(dateStr),
+          $lt: new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1))
+        }
+      });
+      approvalCounts.push(approvalCount);
+
+      // Count services for this date
+      const serviceCount = await ServiceRequest.countDocuments({
+        createdAt: {
+          $gte: new Date(dateStr),
+          $lt: new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1))
+        }
+      });
+      serviceCounts.push(serviceCount);
+    }
+
+    res.json({
+      success: true,
+      labels,
+      approvals: approvalCounts,
+      services: serviceCounts
+    });
+  } catch (error) {
+    console.error('Error fetching request volume:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

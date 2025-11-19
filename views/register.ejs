@@ -1639,9 +1639,6 @@ confirmPasswordInput.addEventListener('input', validatePasswordMatch);
 // Phone number formatting
 document.querySelector('input[name="phoneNumber"]').addEventListener('input', function(e) {
   let value = e.target.value.replace(/\D/g, '');
-  if (value.length >= 10) {
-    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-  }
   e.target.value = value;
 });
 
