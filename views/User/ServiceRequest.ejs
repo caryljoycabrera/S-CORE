@@ -175,7 +175,6 @@
 }
 
 .modal-body {
-  flex: 1;
   overflow-y: auto;
   padding: 0;
 }
@@ -1706,16 +1705,16 @@
 
 .revision-author {
   font-weight: 600;
-  color: #1e293b;
-  font-size: 0.9375rem;
+  color: #1f2937;
+  font-size: 0.95rem;
 }
 
 .revision-timestamp {
-  font-size: 0.8125rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: #6b7280;
+  white-space: nowrap;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.25rem;
 }
 
@@ -1735,28 +1734,28 @@
 .content-text {
   color: #374151;
   line-height: 1.6;
-  font-size: 0.9375rem;
+  font-size: 0.925rem;
 }
 
 .message-attachments-section {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #e5e7eb;
 }
 
 .attachments-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
   margin-bottom: 0.75rem;
 }
 
 .attachments-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.75rem;
+  grid-template-columns: 1fr;
 }
 
 /* Resubmission Form Styles */
@@ -1773,19 +1772,17 @@
 }
 
 .form-group label {
-  display: block;
   font-weight: 600;
+  font-size: 0.875rem;
   color: #374151;
   margin-bottom: 0.5rem;
-  font-size: 0.9375rem;
+  display: block;
 }
 
 #resubmissionEditor,
 #serviceRevisionEditor {
-  border: 1px solid #d1d5db;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: white;
-  min-height: 150px;
 }
 
 .form-group input[type="file"] {
@@ -1854,12 +1851,11 @@
 .btn-clarification {
   flex: 1;
   padding: 0.875rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 0.9375rem;
-  border: none;
   cursor: pointer;
   transition: all 0.3s ease;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1918,8 +1914,8 @@
 
 /* Revision File Cards */
 .revision-file-card {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0.75rem;
   display: flex;
@@ -1929,14 +1925,15 @@
 }
 
 .revision-file-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .revision-file-icon {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 6px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1949,9 +1946,9 @@
 }
 
 .revision-file-name {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #1f2937;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1968,23 +1965,23 @@
 }
 
 .revision-file-btn {
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  background: #f1f5f9;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #64748b;
-  text-decoration: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: linear-gradient(135deg, var(--primary-green), #059669);
+  color: white;
 }
 
 .revision-file-btn:hover {
-  background: #e2e8f0;
-  color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* Revision History Badge Styles */
@@ -2049,6 +2046,24 @@
   text-decoration: underline;
   text-decoration-color: #6b7280;
   text-underline-offset: 2px;
+}
+
+/* Mobile Responsiveness for Requestor Modal */
+@media (max-width: 1400px) {
+  .requestor-modal-body.two-column {
+    grid-template-columns: 1fr 650px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .requestor-modal-body.two-column {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  
+  .requestor-right-column {
+    display: block !important;
+  }
 }
 </style>
 </head>
@@ -3001,31 +3016,16 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
-  <!-- Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
-    <div class="modal-content unit-modal-wide">
-      <!-- Modal Header -->
-      <div class="modal-header unit-modal-header">
-        <div class="modal-title-section">
-          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <div>
-            <h2>Request Details</h2>
-            <span class="unit-modal-subtitle">View and manage your service request</span>
-          </div>
-        </div>
-        <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
+    <div class="modal-content requestor-modal-content">
+      <header class="modal-header requestor-modal-header">
+        <span class="modal-title">Request Details</span>
+        <span class="close" id="closeDetailsModal">&times;</span>
+      </header>
       
-      <div class="modal-body unit-modal-body">
+      <div class="modal-body requestor-modal-body">
         <!-- Left Column: Request Details -->
-        <div class="unit-left-column">
+        <div class="requestor-left-column">
         <div class="details-content">
           <!-- General Information Section -->
           <!-- General Information Section -->
@@ -3077,15 +3077,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="details-label">Assigned Units</div>
                 <div class="details-value" id="detailUnits"></div>
               </div>
-              
-              <div class="details-field" id="deadlineSection" style="display: none;">
-                <div class="details-label">Requested Deadline</div>
-                <div class="details-value">
-                  <span class="deadline-badge-large" id="detailDeadlineBadge">
-                    <span id="detailDeadline"></span>
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -3098,6 +3089,83 @@ document.addEventListener('DOMContentLoaded', function() {
           <!-- Files Section -->
           <div id="file-preview"></div>
 
+          <!-- Additional Files Upload Section (For Revision requests only) -->
+          <div id="additional-files-section" style="display: none;">
+            <div class="details-section">
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Add Additional Files for Revision
+              </h3>
+              <div style="background: #fef3c7; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #f59e0b; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #92400e; font-size: 0.95rem; font-weight: 600;">Important Notice:</h4>
+                <p style="margin: 0; color: #92400e; font-size: 0.875rem; line-height: 1.5;">
+                  Your request has been marked for revision. You can upload additional files to support your revisions. These files will be added to your existing attachments and will not replace your original files.
+                </p>
+              </div>
+
+              <div id="additional-file-upload-group" style="margin-bottom: 1.5rem;">
+                <div class="file-upload-group">
+                  <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <p class="upload-text">Upload Additional Files for Revision</p>
+                  <p class="upload-subtext">or click to browse from your device</p>
+                  <input type="file" id="additional-files-upload" name="additionalFiles" class="file-input-hidden" multiple required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" />
+                  <button type="button" class="browse-file-btn" onclick="event.stopPropagation(); document.getElementById('additional-files-upload').click()">
+                    <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14,2 14,8 20,8"/>
+                    </svg>
+                    Choose Additional Files
+                  </button>
+                </div>
+
+                <!-- Additional File Management Section -->
+                <div class="file-management" id="additional-file-management" style="display: none;">
+                  <div class="file-actions">
+                    <span id="additional-files-count">0 additional files selected</span>
+                    <button type="button" class="clear-all-btn" id="additional-clear-all-btn" onclick="clearAllAdditionalFiles()">
+                      <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="6" width="18" height="14" rx="2"/>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <line x1="1" y1="6" x2="23" y2="6"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
+                      </svg>
+                      Clear All Additional Files
+                    </button>
+                  </div>
+
+                  <!-- Selected Additional Files Container -->
+                  <div class="selected-files-container" id="additional-selected-files">
+                    <!-- Additional files will be added here dynamically -->
+                  </div>
+
+                  <div class="files-summary" id="additional-files-summary">
+                    Total additional size: 0 MB
+                  </div>
+                </div>
+              </div>
+
+              <div style="text-align: center;">
+                <button type="button" class="download-btn-enhanced" style="background: #10b981; color: white;" onclick="submitAdditionalFiles()">
+                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                  </svg>
+                  Upload Additional Files
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+        
+        <!-- Right Column: Revision History & Resubmission Form -->
+        <div class="requestor-right-column" id="requestorRightColumn">
           <!-- Chat Section -->
           <div class="chat-section" id="chatButtonSection" style="display: none;">
             <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
@@ -3119,11 +3187,7 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
             </button>
           </div>
-        </div>
-        </div>
-        
-        <!-- Right Column: Revision History & Resubmission Form -->
-        <div class="requestor-right-column" id="requestorRightColumn" style="display: none;">
+
           <!-- Revision History Section -->
           <div id="revisionHistorySection" class="requestor-revision-section">
             <div class="requestor-section-header">
@@ -3140,40 +3204,38 @@ document.addEventListener('DOMContentLoaded', function() {
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
             </div>
-            
-            <!-- Action Buttons for Service Requests with "For Checking" status -->
-            <div id="serviceActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
-              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
-                      style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                <span id="revisionFormToggleText">Request Revision</span>
-              </button>
-              <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" 
-                      style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Mark as Complete
-              </button>
-            </div>
           </div>
 
-          <!-- Service Revision Request Form -->
-          <div id="serviceRevisionFormSection" class="requestor-resubmission-section" style="display: none;">
+          <!-- Action Buttons for Service Requests with "For Checking" status -->
+          <div id="serviceActionButtons" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button type="button" id="showServiceRevisionFormBtn" onclick="toggleResubmissionForm()" 
+                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <span id="revisionFormToggleText">Respond to Revision</span>
+            </button>
+            <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" 
+                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Mark as Complete
+            </button>
+          </div>
+
+          <!-- Resubmission Form -->
+          <div id="resubmissionFormSection" class="requestor-resubmission-section" style="display: none;">
             <div class="requestor-section-header">
               <h3>
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7,10 12,15 17,10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                Request Revision
+                Respond to Revision Request
               </h3>
-              <p style="color: #64748b; font-size: 0.875rem; margin-top: 0.5rem;">
-                Describe what needs to be changed or improved in the deliverables
-              </p>
             </div>
             
             <form id="serviceRevisionForm">
@@ -3183,45 +3245,26 @@ document.addEventListener('DOMContentLoaded', function() {
                   <strong>Revision Feedback</strong>
                   <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Required)</span>
                 </label>
-                <div id="serviceRevisionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
+                <div id="serviceRevisionEditor" style="background: white; min-height: 150px;"></div>
                 <input type="hidden" id="serviceRevisionNotes" name="serviceRevisionNotes">
               </div>
 
               <!-- File Upload -->
               <div class="form-group">
-                <label for="serviceRevisionFiles">
-                  <strong>Attach Reference Files</strong>
-                  <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional)</span>
-                </label>
-                <div class="file-upload-area" style="border: 2px dashed #e2e8f0; border-radius: 8px; padding: 2rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" 
-                     onclick="document.getElementById('serviceRevisionFiles').click()">
-                  <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
-                  <p style="color: #64748b; margin: 0 0 0.5rem 0;">Drop files here or click to browse</p>
-                  <small style="color: #94a3b8;">PDF, DOC, DOCX, XLS, XLSX, images (Max 10MB each)</small>
-                </div>
-                <input type="file" id="serviceRevisionFiles" name="serviceRevisionFiles" multiple 
-                       accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" 
-                       style="display: none;">
-                <div id="serviceRevisionFileList" class="file-list" style="margin-top: 1rem;"></div>
+                <label for="serviceRevisionFiles">Attach Additional Files (optional)</label>
+                <input type="file" id="serviceRevisionFiles" name="serviceRevisionFiles" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
+                <div id="serviceRevisionFileList" class="file-list"></div>
               </div>
 
-              <!-- Submit Button -->
-              <div class="resubmission-actions" style="margin-top: 2rem;">
-                <button type="button" id="submitServiceRevisionBtn" class="btn-resubmit" onclick="handleServiceRevision()" 
-                        style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 2rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+              <!-- Action Buttons -->
+              <div class="resubmission-actions">
+                <button type="button" id="submitServiceRevisionBtn" class="btn-resubmit" onclick="handleServiceRevision()">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    <polyline points="9 11 12 14 22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                   </svg>
                   Submit Revision Request
                 </button>
-                <small style="color: #64748b; display: block; margin-top: 1rem;">
-                  ⚠️ <strong>Note:</strong> Maximum 2 revision requests allowed per service request
-                </small>
               </div>
             </form>
           </div>
@@ -4479,6 +4522,16 @@ document.querySelectorAll('.request-row').forEach(row => {
           const status = row.dataset.status || '';
           detailStatus.innerText = status;
           detailStatusBadge.className = `status-badge-large ${status.toLowerCase().replace(/\s+/g, '-')}`;
+          
+          // Always show right column for two-column layout
+          const requestorRightColumn = document.getElementById("requestorRightColumn");
+          const modalBody = document.querySelector('.requestor-modal-body');
+          if (requestorRightColumn) {
+            requestorRightColumn.style.display = 'flex';
+          }
+          if (modalBody) {
+            modalBody.classList.add('two-column');
+          }
         }
 
         // Enhanced deadline handling
@@ -6359,33 +6412,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Toggle service revision form visibility
-    function toggleServiceRevisionForm() {
-        const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+    // Toggle resubmission form visibility
+    function toggleResubmissionForm() {
+        const resubmissionSection = document.getElementById('resubmissionFormSection');
         const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
         const toggleText = document.getElementById('revisionFormToggleText');
         
-        if (serviceRevisionSection) {
-            const isVisible = serviceRevisionSection.style.display === 'block';
+        if (resubmissionSection) {
+            const isVisible = resubmissionSection.style.display === 'block';
             
             if (isVisible) {
                 // Hide the form
-                serviceRevisionSection.style.display = 'none';
-                if (toggleText) toggleText.textContent = 'Request Revision';
+                resubmissionSection.style.display = 'none';
+                if (toggleText) toggleText.textContent = 'Respond to Revision';
                 if (toggleBtn) {
                     toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
                 }
             } else {
                 // Show the form
-                serviceRevisionSection.style.display = 'block';
-                if (toggleText) toggleText.textContent = 'Hide Revision Form';
+                resubmissionSection.style.display = 'block';
+                if (toggleText) toggleText.textContent = 'Hide Response Form';
                 if (toggleBtn) {
                     toggleBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
                 }
                 
                 // Scroll to the form
                 setTimeout(() => {
-                    serviceRevisionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    resubmissionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }, 100);
             }
         }
