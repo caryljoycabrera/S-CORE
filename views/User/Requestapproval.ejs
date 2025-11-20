@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -1368,6 +1369,44 @@
   gap: 0.5rem;
 }
 
+/* Form Validation Error Styles */
+.form-error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.form-error-message.show {
+  display: flex;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea,
+.form-group.has-error .file-upload-group {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2;
+}
+
+.form-group.has-error label {
+  color: #dc2626;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .modal-form {
@@ -2359,11 +2398,19 @@ option:hover {
         <span class="close" id="closeModalBtn">&times;</span>
       </header>
       <div class="modal-body">
-        <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" id="requestForm" onsubmit="return handleFormSubmit(event)">
+        <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" id="requestForm">
           <!-- Row 1: Title and Organization -->
           <div class="form-group">
             <label for="projectTitle">Project/Event Title:</label>
             <input type="text" id="projectTitle" name="projectTitle" required placeholder="Enter project or event title..." />
+            <div class="form-error-message" id="projectTitleError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please enter a project/event title</span>
+            </div>
           </div>
           
           <div class="form-group">
@@ -2404,6 +2451,14 @@ option:hover {
             <% } else { %>
               <input type="text" id="organization" name="organization" placeholder="Enter organization/department" required />
             <% } %>
+            <div class="form-error-message" id="organizationError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please select or enter an organization</span>
+            </div>
           </div>
 
           <!-- Row 2: File Upload (Required for approval requests) -->
@@ -2461,6 +2516,14 @@ option:hover {
             </div>
             
             <small style="color: #dc2626; margin-top: 0.5rem;">* Required: Please attach relevant documents (Max 10MB per file)</small>
+            <div class="form-error-message" id="filesError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please upload at least one file</span>
+            </div>
           </div>
 
           <!-- Row 3: Relevant Links -->
@@ -2483,6 +2546,14 @@ option:hover {
             <label for="description">Description:</label>
             <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
             <input type="hidden" id="description" name="description" required>
+            <div class="form-error-message" id="descriptionError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please enter a description</span>
+            </div>
           </div>
 
           <!-- Row 5: Request Type -->
@@ -2492,6 +2563,14 @@ option:hover {
     <option value="" disabled selected>Select request type...</option>
     <!-- Predefined types will be populated by JavaScript -->
   </select>
+  <div class="form-error-message" id="requestTypeError">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span>Please select a request type</span>
+  </div>
 </div>
 
           <!-- Form Actions -->
@@ -2581,14 +2660,29 @@ option:hover {
 
   <!-- Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
-    <div class="modal-content requestor-modal-content">
-      <header class="modal-header requestor-modal-header">
-        <span class="modal-title">Request Details</span>
-        <span class="close" id="closeDetailsModal">&times;</span>
-      </header>
-      <div class="modal-body requestor-modal-body">
+    <div class="modal-content unit-modal-wide">
+      <!-- Modal Header -->
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <div>
+            <h2>Request Details</h2>
+            <span class="unit-modal-subtitle">View and manage your approval request</span>
+          </div>
+        </div>
+        <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="modal-body unit-modal-body">
         <!-- Left Column: Request Details -->
-        <div class="requestor-left-column">
+        <div class="unit-left-column">
         <div class="details-content">
           <!-- General Information Section -->
          <div class="details-section">
@@ -2723,45 +2817,45 @@ option:hover {
               </div>
             </div>
           </div>
-
-          <!-- Chat Section -->
-          <div class="chat-section" id="chatButtonSection" style="display: none;">
-            <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
-              <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                  <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  </div>
-                  <div style="text-align: left;">
-                    <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
-                    <div style="font-size: 0.875rem; color: #047857;">Communicate with SCO support</div>
-                  </div>
-                </div>
-                <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </div>
-            </button>
-          </div>
         </div>
         </div>
         
-        <!-- Right Column: Revision History & Resubmission Form -->
-        <div class="requestor-right-column" id="requestorRightColumn" style="display: none;">
+        <!-- Right Column: Communication & History -->
+        <div class="unit-right-column">
+          <!-- Team Conversation Button -->
+          <div class="unit-info-card unit-conversation-trigger">
+            <button id="openChatFromDetailsModal" class="unit-chat-button">
+              <span class="unit-chat-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
+              <div class="unit-chat-text">
+                <strong>Open Request Discussion</strong>
+                <small>Communicate with SCO support</small>
+              </div>
+              <span class="unit-chat-arrow">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+          
           <!-- Revision History Section -->
-          <div id="revisionHistorySection" class="requestor-revision-section">
-            <div class="requestor-section-header">
+          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
+            <div class="unit-panel-header revision-header">
               <h3>
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
                   <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
                   <path d="M21 3v5h-5"/>
-                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-                  <path d="M16 21h5v-5"/>
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                  <path d="M3 21v-5h5"/>
                 </svg>
                 Revision History
               </h3>
+              <p>Complete timeline of all revisions and resubmissions</p>
             </div>
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
@@ -3568,10 +3662,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update the Proceed button to actually submit
   const proceedSubmissionBtn = document.getElementById('proceedSubmissionBtn');
   if (proceedSubmissionBtn) {
-    proceedSubmissionBtn.onclick = () => {
-      if (submissionModal) submissionModal.style.display = 'none';
+    proceedSubmissionBtn.onclick = async () => {
+      const confirmModal = document.getElementById('submissionConfirmationModal');
+      if (confirmModal) confirmModal.style.display = 'none';
       console.log('User confirmed submission. Proceeding with fetch...');
-      submitFormDataDirect(); // Use the new direct submission function
+      await submitFormDataDirect(); // Use the new direct submission function
     };
   }
 // Function to handle form submission via Fetch
@@ -4135,32 +4230,10 @@ async function submitFormData() {
   }
 
   // Form submission handler with confirmation modal
-  function handleFormSubmit(event) {
-    event.preventDefault(); // Always prevent default
-    console.log('Form submit intercepted for validation and confirmation.');
-
-    // Validate files
-    if (selectedApprovalFiles.length === 0) {
-      alert('Please upload at least one file. Files are required for approval requests.');
-      return false;
-    }
-
-    console.log('Validation passed. Showing confirmation modal.');
-
-    // Show confirmation modal
-    const modal = document.getElementById('submissionConfirmationModal');
-    if (modal) {
-      modal.style.display = 'flex';
-    } else {
-      console.error('Submission confirmation modal not found!');
-      alert('Modal error. Please refresh and try again.');
-    }
-
-    return false;
-  }
+  // handleFormSubmit function removed - now using addEventListener on form
 
   // Direct submission function without modal
-  function submitFormDataDirect() {
+  async function submitFormDataDirect() {
     const form = document.getElementById('requestForm');
     if (!form) {
       console.error("Cannot submit, form not found.");
@@ -4170,10 +4243,17 @@ async function submitFormData() {
 
     // Add a loading indicator
     const submitButton = form.querySelector('button[type="submit"]');
+    const proceedButton = document.getElementById('proceedSubmissionBtn');
     const originalButtonText = submitButton ? submitButton.innerHTML : 'Submit Request';
+    const originalProceedText = proceedButton ? proceedButton.innerHTML : 'Confirm & Submit';
+    
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.innerHTML = '⏳ Submitting...';
+    }
+    if (proceedButton) {
+      proceedButton.disabled = true;
+      proceedButton.innerHTML = '⏳ Submitting...';
     }
 
     try {
@@ -4187,11 +4267,17 @@ async function submitFormData() {
         }
       }
 
-      // Add links
-      const links = getLinkValues();
-      links.forEach(link => {
-        formData.append('links', link);
-      });
+      // Add links - inline the logic since getLinkValues is in DOMContentLoaded scope
+      const linksContainer = document.getElementById('linksContainer');
+      if (linksContainer) {
+        const linkInputs = linksContainer.querySelectorAll('input[type="url"]');
+        linkInputs.forEach(input => {
+          const value = input.value.trim();
+          if (value) {
+            formData.append('links', value);
+          }
+        });
+      }
 
       console.log('selectedApprovalFiles before FormData:', selectedApprovalFiles);
       selectedApprovalFiles.forEach((file, index) => {
@@ -4210,48 +4296,44 @@ async function submitFormData() {
 
       console.log('Submitting to server...');
 
-      fetch('/submit-request-approval', {
+      const response = await fetch('/submit-request-approval', {
         method: 'POST',
         body: formData
-      })
-      .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-      })
-      .then(result => {
-        console.log('Server response:', result);
+      });
+      
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Server response:', result);
 
-        if (result.success) {
-          console.log('Submission successful:', result.message);
-          window.location.href = result.redirectUrl || '/request-approvals?submitted=true';
-        } else {
-          console.error('Submission failed on server:', result.message);
-          alert(result.message || 'Submission failed. Please try again.');
-
-          // Re-enable submit button
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.innerHTML = originalButtonText;
-          }
-        }
-      })
-      .catch(error => {
-        console.error('Submission error (fetch failed):', error);
-        alert('Submission failed due to a network error. Please try again.');
+      if (result.success) {
+        console.log('Submission successful:', result.message);
+        window.location.href = result.redirectUrl || '/request-approvals?submitted=true';
+      } else {
+        console.error('Submission failed on server:', result.message);
+        alert(result.message || 'Submission failed. Please try again.');
 
         // Re-enable submit button
         if (submitButton) {
           submitButton.disabled = false;
           submitButton.innerHTML = originalButtonText;
         }
-      });
+        if (proceedButton) {
+          proceedButton.disabled = false;
+          proceedButton.innerHTML = originalProceedText;
+        }
+      }
     } catch (error) {
-      console.error('Error preparing FormData:', error);
-      alert('Error preparing submission data. Please try again.');
+      console.error('Submission error (fetch failed):', error);
+      alert('Submission failed due to a network error. Please try again.');
 
+      // Re-enable submit button
       if (submitButton) {
         submitButton.disabled = false;
         submitButton.innerHTML = originalButtonText;
+      }
+      if (proceedButton) {
+        proceedButton.disabled = false;
+        proceedButton.innerHTML = originalProceedText;
       }
     }
   }
@@ -4287,14 +4369,19 @@ async function submitFormData() {
   }
 
   // Enhanced row click handler with improved modal population
-document.querySelectorAll('.request-row').forEach(row => {
-  row.addEventListener('click', (e) => {
-    // Mark related notifications as read when opening request
-    const requestId = row.dataset.id;
-    const requestType = 'Request Approval';
-    if (requestId && window.markNotificationReadForRequest) {
-      window.markNotificationReadForRequest(requestId, requestType);
-    }
+  function attachRowClickHandlers() {
+    const rows = document.querySelectorAll('.request-row');
+    console.log('[Requestapproval] Attaching click handlers to', rows.length, 'rows');
+    
+    rows.forEach(row => {
+      row.addEventListener('click', (e) => {
+        console.log('[Requestapproval] Row clicked:', row.dataset.id);
+        // Mark related notifications as read when opening request
+        const requestId = row.dataset.id;
+        const requestType = 'Request Approval';
+        if (requestId && window.markNotificationReadForRequest) {
+          window.markNotificationReadForRequest(requestId, requestType);
+        }
     
     // Reset additional files when opening a new request
     selectedAdditionalFiles = [];
@@ -4355,32 +4442,23 @@ document.querySelectorAll('.request-row').forEach(row => {
         createEnhancedFilePreview(allFiles, previewContainer);
       }
 
-      // Chat functionality
+      // Chat functionality - conversation is always available in right column
       currentConversationId = row.dataset.id;
-      const chatButtonSection = document.getElementById("chatButtonSection");
-      if (chatButtonSection) {
-        const requestType = row.dataset.type;
-        if (requestType === "Service Request" || requestType === "Request Approval") {
-          chatButtonSection.style.display = 'block';
-          
-          // Load revision history and enable two-column layout
-          const requestId = row.dataset.id;
-          const modalBody = document.querySelector('.requestor-modal-body');
-          const rightColumn = document.getElementById('requestorRightColumn');
-          
-          if (requestId) {
-            loadRevisionHistory(requestId).then(() => {
-              // Enable two-column layout when revision history exists
-              const historyContainer = document.getElementById('revisionHistoryContainer');
-              if (historyContainer && historyContainer.children.length > 0) {
-                if (modalBody) modalBody.classList.add('two-column');
-                if (rightColumn) rightColumn.style.display = 'flex';
-              }
-            });
+      
+      // Load revision history and enable two-column layout
+      const requestId = row.dataset.id;
+      const modalBody = document.querySelector('.requestor-modal-body');
+      const rightColumn = document.getElementById('requestorRightColumn');
+      
+      if (requestId) {
+        loadRevisionHistory(requestId).then(() => {
+          // Enable two-column layout when revision history exists
+          const historyContainer = document.getElementById('revisionHistoryContainer');
+          if (historyContainer && historyContainer.children.length > 0) {
+            if (modalBody) modalBody.classList.add('two-column');
+            if (rightColumn) rightColumn.style.display = 'flex';
           }
-        } else {
-          chatButtonSection.style.display = 'none';
-        }
+        });
       }
 
       if (detailModal) {
@@ -4393,8 +4471,12 @@ document.querySelectorAll('.request-row').forEach(row => {
         console.log('[Requestapproval] Initial computed width:', modalContent ? window.getComputedStyle(modalContent).width : 'N/A');
         console.log('[Requestapproval] Initial computed max-width:', modalContent ? window.getComputedStyle(modalContent).maxWidth : 'N/A');
       }
+      });
     });
-  });
+  }
+  
+  // Call the function to attach handlers
+  attachRowClickHandlers();
 
   // Header Dropdown Manager - Integrates with DropdownManager
   const headerDropdown = {
@@ -4456,13 +4538,34 @@ document.querySelectorAll('.request-row').forEach(row => {
   });
 
   // Enhanced form submission with confirmation modal
-// Enhanced form submission with confirmation modal
-const approvalForm = document.querySelector('#requestModal form');
+const approvalForm = document.getElementById('requestForm');
 
 if (approvalForm) {
   approvalForm.addEventListener('submit', function(e) {
     e.preventDefault(); // Prevent default form submission
     console.log('Form submit intercepted for validation and confirmation.');
+
+    // Clear all previous errors
+    clearFormErrors();
+
+    let hasErrors = false;
+    let firstErrorField = null;
+
+    // Validate project title
+    const projectTitle = document.getElementById('projectTitle');
+    if (!projectTitle || !projectTitle.value.trim()) {
+      showFieldError('projectTitle', 'projectTitleError');
+      hasErrors = true;
+      if (!firstErrorField) firstErrorField = projectTitle;
+    }
+
+    // Validate organization
+    const organization = document.getElementById('organization');
+    if (!organization || !organization.value.trim()) {
+      showFieldError('organization', 'organizationError');
+      hasErrors = true;
+      if (!firstErrorField) firstErrorField = organization;
+    }
 
     // Extract HTML content from Quill editor and set to hidden input
     if (descriptionQuill) {
@@ -4472,50 +4575,42 @@ if (approvalForm) {
       
       // Validate description has content
       if (!descriptionText) {
-        alert('Please enter a description.');
-        descriptionQuill.focus();
-        return;
+        showFieldError('descriptionEditor', 'descriptionError');
+        hasErrors = true;
+        if (!firstErrorField) firstErrorField = document.getElementById('descriptionEditor');
       }
-    }
-
-    // Validation
-    const fileInput = document.getElementById('upload');
-    const specificRequestType = document.getElementById('specificRequestType');
-    const projectTitle = document.getElementById('projectTitle');
-    const description = document.getElementById('description');
-
-    // Validate required fields
-    if (!projectTitle || !projectTitle.value.trim()) {
-      alert('Please enter a project title.');
-      projectTitle.focus();
-      return;
-    }
-
-    if (!description || !description.value.trim()) {
-      alert('Please enter a description.');
-      if (descriptionQuill) descriptionQuill.focus();
-      return;
     }
 
     // Validate required files
     if (selectedApprovalFiles.length === 0) {
-      alert('Please upload at least one file. Files are required for approval requests.');
-      console.log('Validation failed: No files selected');
-      return;
+      showFieldError('approvalFileUploadGroup', 'filesError');
+      hasErrors = true;
+      if (!firstErrorField) firstErrorField = document.getElementById('approvalFileUploadGroup');
     }
 
     // Validate specific request type
+    const specificRequestType = document.getElementById('specificRequestType');
     if (!specificRequestType || !specificRequestType.value) {
-      alert('Please select a specific request type.');
-      specificRequestType.focus();
+      showFieldError('specificRequestType', 'requestTypeError');
+      hasErrors = true;
+      if (!firstErrorField) firstErrorField = specificRequestType;
+    }
+
+    // If there are errors, focus on first error field and return
+    if (hasErrors) {
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (firstErrorField.focus) firstErrorField.focus();
+      }
       return;
     }
 
     console.log('Validation passed. Showing confirmation modal.');
 
     // Show confirmation modal
-    if (submissionModal) {
-      submissionModal.style.display = 'flex';
+    const confirmModal = document.getElementById('submissionConfirmationModal');
+    if (confirmModal) {
+      confirmModal.style.display = 'flex';
     } else {
       console.error('Submission confirmation modal not found!');
       alert('Modal error. Please refresh and try again.');
@@ -4523,6 +4618,60 @@ if (approvalForm) {
   });
 } else {
   console.error('Request form (#requestForm) not found!');
+}
+
+// Helper function to show field error
+function showFieldError(fieldId, errorId) {
+  const field = document.getElementById(fieldId);
+  const error = document.getElementById(errorId);
+  
+  if (field) {
+    const formGroup = field.closest('.form-group');
+    if (formGroup) {
+      formGroup.classList.add('has-error');
+    }
+  }
+  
+  if (error) {
+    error.classList.add('show');
+  }
+}
+
+// Helper function to clear all form errors
+function clearFormErrors() {
+  document.querySelectorAll('.form-group.has-error').forEach(group => {
+    group.classList.remove('has-error');
+  });
+  
+  document.querySelectorAll('.form-error-message.show').forEach(error => {
+    error.classList.remove('show');
+  });
+}
+
+// Clear errors on input/change
+['projectTitle', 'organization', 'specificRequestType'].forEach(fieldId => {
+  const field = document.getElementById(fieldId);
+  if (field) {
+    field.addEventListener('input', function() {
+      const formGroup = this.closest('.form-group');
+      if (formGroup) formGroup.classList.remove('has-error');
+      
+      const errorId = fieldId + 'Error';
+      const error = document.getElementById(errorId);
+      if (error) error.classList.remove('show');
+    });
+  }
+});
+
+// Clear description error on Quill editor change
+if (descriptionQuill) {
+  descriptionQuill.on('text-change', function() {
+    const formGroup = document.getElementById('descriptionEditor').closest('.form-group');
+    if (formGroup) formGroup.classList.remove('has-error');
+    
+    const error = document.getElementById('descriptionError');
+    if (error) error.classList.remove('show');
+  });
 }
   // ===== APPROVAL FILE UPLOAD FUNCTIONS =====
   
@@ -4612,6 +4761,12 @@ if (approvalForm) {
 
     fileManagement.style.display = 'block';
     uploadGroup.classList.add('has-file');
+    
+    // Clear file upload error when files are added
+    const formGroup = uploadGroup.closest('.form-group');
+    const filesError = document.getElementById('filesError');
+    if (formGroup) formGroup.classList.remove('has-error');
+    if (filesError) filesError.classList.remove('show');
 
     // Update files count
     filesCount.textContent = `${selectedApprovalFiles.length} file(s) selected`;

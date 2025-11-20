@@ -441,6 +441,21 @@ window.applyChatFormat = function(formatType) {
 // ==================================
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Connect chat button to conversation modal
+  const chatBtn = document.getElementById('openChatFromDetailsModal');
+  if (chatBtn) {
+    console.log('[User Conversation] Chat button found, attaching click handler');
+    chatBtn.addEventListener('click', function() {
+      const requestId = window.currentRequestId;
+      if (requestId) {
+        console.log('[User Conversation] Opening conversation for request:', requestId);
+        window.openUserConversation(requestId);
+      } else {
+        console.error('[User Conversation] No request ID available');
+      }
+    });
+  }
+
   const messageInput = document.getElementById('messageInput');
   if (messageInput) {
     console.log('[User Conversation] Message input found, attaching keyboard shortcuts');

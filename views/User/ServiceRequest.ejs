@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -1479,6 +1480,44 @@
   gap: 0.5rem;
 }
 
+/* Form Validation Error Styles */
+.form-error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.form-error-message.show {
+  display: flex;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea,
+.form-group.has-error .file-upload-group {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2;
+}
+
+.form-group.has-error label {
+  color: #dc2626;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .modal-form {
@@ -2427,6 +2466,14 @@
           <div class="form-group">
             <label for="projectTitle">Name of Request/Project Title:</label>
             <input type="text" id="projectTitle" name="projectTitle" required placeholder="Enter project title..." />
+            <div class="form-error-message" id="projectTitleError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please enter a project title</span>
+            </div>
           </div>
           
           <div class="form-group">
@@ -2467,6 +2514,14 @@
             <% } else { %>
               <input type="text" id="organization" name="organization" placeholder="Enter organization/department" required />
             <% } %>
+            <div class="form-error-message" id="organizationError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please select or enter an organization</span>
+            </div>
           </div>
 
           <!-- Row 2: File Upload (Full Width) -->
@@ -2546,6 +2601,14 @@
             <label for="deadline">Deadline:</label>
             <input type="date" id="deadline" name="deadline" required min="<%= new Date().toISOString().slice(0,10) %>" />
             <small style="color: var(--primary-green); margin-top: 0.25rem; font-weight: 600;">When do you need this completed?</small>
+            <div class="form-error-message" id="deadlineError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please select a deadline</span>
+            </div>
           </div>
 
           <!-- Row 4: Description (Full Width) -->
@@ -2553,6 +2616,14 @@
             <label for="description">Description:</label>
             <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
             <input type="hidden" id="description" name="description" required>
+            <div class="form-error-message" id="descriptionError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please enter a description</span>
+            </div>
           </div>
 
 <div class="form-group full-width">
@@ -2897,14 +2968,64 @@ document.addEventListener('DOMContentLoaded', function() {
   // Form validation before submission
   if (serviceRequestForm) {
     serviceRequestForm.addEventListener('submit', function(e) {
-      const finalType = finalRequestTypeInput ? finalRequestTypeInput.value.trim() : '';
+      e.preventDefault();
+      
+      // Clear all previous errors
+      clearServiceFormErrors();
 
+      let hasErrors = false;
+      let firstErrorField = null;
+
+      // Validate project title
+      const projectTitle = document.getElementById('projectTitle');
+      if (!projectTitle || !projectTitle.value.trim()) {
+        showServiceFieldError('projectTitle', 'projectTitleError');
+        hasErrors = true;
+        if (!firstErrorField) firstErrorField = projectTitle;
+      }
+
+      // Validate organization
+      const organization = document.getElementById('organization');
+      if (!organization || !organization.value.trim()) {
+        showServiceFieldError('organization', 'organizationError');
+        hasErrors = true;
+        if (!firstErrorField) firstErrorField = organization;
+      }
+
+      // Validate deadline
+      const deadline = document.getElementById('deadline');
+      if (!deadline || !deadline.value) {
+        showServiceFieldError('deadline', 'deadlineError');
+        hasErrors = true;
+        if (!firstErrorField) firstErrorField = deadline;
+      }
+
+      // Validate description
+      if (serviceDescriptionQuill) {
+        const descriptionText = serviceDescriptionQuill.getText().trim();
+        const descriptionHTML = serviceDescriptionQuill.root.innerHTML;
+        document.getElementById('description').value = descriptionHTML;
+        
+        if (!descriptionText) {
+          showServiceFieldError('descriptionEditor', 'descriptionError');
+          hasErrors = true;
+          if (!firstErrorField) firstErrorField = document.getElementById('descriptionEditor');
+        }
+      }
+
+      // Validate request type
+      const finalType = finalRequestTypeInput ? finalRequestTypeInput.value.trim() : '';
       if (!finalType) {
-        e.preventDefault();
         showRequestTypeError();
-        // Focus on dropdown first
-        if (specificRequestTypeSelect) {
-          specificRequestTypeSelect.focus();
+        hasErrors = true;
+        if (!firstErrorField) firstErrorField = specificRequestTypeSelect || customRequestTypeInput;
+      }
+
+      // If there are errors, focus on first error field and return
+      if (hasErrors) {
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (firstErrorField.focus) firstErrorField.focus();
         }
         return;
       }
@@ -2914,7 +3035,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const isCustomType = finalType && !dropdownOptions.includes(finalType);
 
       if (isCustomType) {
-        e.preventDefault();
         pendingCustomType = finalType;
 
         // Show custom type confirmation modal
@@ -2926,6 +3046,70 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // Allow normal submission for predefined types
+      this.submit();
+    });
+  }
+
+  // Helper function to show field error
+  function showServiceFieldError(fieldId, errorId) {
+    const field = document.getElementById(fieldId);
+    const error = document.getElementById(errorId);
+    
+    if (field) {
+      const formGroup = field.closest('.form-group');
+      if (formGroup) {
+        formGroup.classList.add('has-error');
+      }
+    }
+    
+    if (error) {
+      error.classList.add('show');
+    }
+  }
+
+  // Helper function to clear all form errors
+  function clearServiceFormErrors() {
+    document.querySelectorAll('.form-group.has-error').forEach(group => {
+      group.classList.remove('has-error');
+    });
+    
+    document.querySelectorAll('.form-error-message.show').forEach(error => {
+      error.classList.remove('show');
+    });
+  }
+
+  // Clear errors on input/change
+  ['projectTitle', 'organization', 'deadline'].forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.addEventListener('input', function() {
+        const formGroup = this.closest('.form-group');
+        if (formGroup) formGroup.classList.remove('has-error');
+        
+        const errorId = fieldId + 'Error';
+        const error = document.getElementById(errorId);
+        if (error) error.classList.remove('show');
+      });
+      
+      field.addEventListener('change', function() {
+        const formGroup = this.closest('.form-group');
+        if (formGroup) formGroup.classList.remove('has-error');
+        
+        const errorId = fieldId + 'Error';
+        const error = document.getElementById(errorId);
+        if (error) error.classList.remove('show');
+      });
+    }
+  });
+
+  // Clear description error on Quill editor change
+  if (serviceDescriptionQuill) {
+    serviceDescriptionQuill.on('text-change', function() {
+      const formGroup = document.getElementById('descriptionEditor').closest('.form-group');
+      if (formGroup) formGroup.classList.remove('has-error');
+      
+      const error = document.getElementById('descriptionError');
+      if (error) error.classList.remove('show');
     });
   }
 
@@ -3098,65 +3282,68 @@ document.addEventListener('DOMContentLoaded', function() {
           <!-- Files Section -->
           <div id="file-preview"></div>
 
-          <!-- Chat Section -->
-          <div class="chat-section" id="chatButtonSection" style="display: none;">
-            <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
-              <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                  <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  </div>
-                  <div style="text-align: left;">
-                    <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
-                    <div style="font-size: 0.875rem; color: #047857;">Communicate with SCO support</div>
-                  </div>
-                </div>
-                <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </div>
-            </button>
-          </div>
         </div>
         </div>
         
-        <!-- Right Column: Revision History & Resubmission Form -->
-        <div class="requestor-right-column" id="requestorRightColumn" style="display: none;">
+        <!-- Right Column: Communication & History -->
+        <div class="unit-right-column">
+          <!-- Team Conversation Button -->
+          <div class="unit-info-card unit-conversation-trigger">
+            <button id="openChatFromDetailsModal" class="unit-chat-button">
+              <span class="unit-chat-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
+              <div class="unit-chat-text">
+                <strong>Open Request Discussion</strong>
+                <small>Communicate with SCO support</small>
+              </div>
+              <span class="unit-chat-arrow">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+          
           <!-- Revision History Section -->
-          <div id="revisionHistorySection" class="requestor-revision-section">
-            <div class="requestor-section-header">
+          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
+            <div class="unit-panel-header revision-header">
               <h3>
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
                   <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
                   <path d="M21 3v5h-5"/>
-                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-                  <path d="M16 21h5v-5"/>
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                  <path d="M3 21v-5h5"/>
                 </svg>
                 Revision History
               </h3>
+              <p>Complete timeline of all revisions and resubmissions</p>
             </div>
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
             </div>
             
             <!-- Action Buttons for Service Requests with "For Checking" status -->
-            <div id="serviceActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
-              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
-                      style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
+            <div id="serviceActionButtons" class="unit-action-buttons" style="margin-top: 1.5rem; display: none;">
+              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" class="unit-btn unit-btn-revision">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </span>
                 <span id="revisionFormToggleText">Request Revision</span>
               </button>
-              <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" 
-                      style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Mark as Complete
+              <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" class="unit-btn unit-btn-approve">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span>Mark as Complete</span>
               </button>
             </div>
           </div>
@@ -4524,21 +4711,13 @@ document.querySelectorAll('.request-row').forEach(row => {
           createEnhancedFilePreview(allFiles, previewContainer);
         }
         
-        // Chat functionality
+        // Chat functionality - conversation is always available in right column
         currentConversationId = row.dataset.id;
-        const chatButtonSection = document.getElementById("chatButtonSection");
-        if (chatButtonSection) {
-          const requestType = row.dataset.type;
-          if (requestType === "Service Request" || requestType === "Request Approval") {
-            chatButtonSection.style.display = 'block';
-            
-            // Load revision history for service requests
-            if (requestType === "Service Request") {
-              loadServiceRevisionHistory(currentConversationId);
-            }
-          } else {
-            chatButtonSection.style.display = 'none';
-          }
+        const requestType = row.dataset.type;
+        
+        // Load revision history for service requests
+        if (requestType === "Service Request") {
+          loadServiceRevisionHistory(currentConversationId);
         }
         
         if (detailModal) detailModal.style.display = 'flex';
