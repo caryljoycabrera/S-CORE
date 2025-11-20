@@ -408,13 +408,31 @@
 
 <!-- Enhanced Request Details Modal -->
 <div id="detailsModal" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width: 1000px;">
-    <header class="modal-header">
-      <span class="modal-title">Service Request Details</span>
-      <span class="close" id="closeDetailsModal">&times;</span>
-    </header>
-    <div class="modal-body details-modal-body">
-      <div class="details-content">
+  <div class="modal-content unit-modal-wide">
+    <!-- Modal Header -->
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="2"/>
+          <line x1="8" y1="8" x2="16" y2="8"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+          <line x1="8" y1="16" x2="12" y2="16"/>
+        </svg>
+        <h2>Service Request Details</h2>
+        <span class="type-badge">SERVICE</span>
+      </div>
+      <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="modal-body unit-modal-body">
+      <!-- LEFT COLUMN: Request Details -->
+      <div class="unit-left-column">
         
         <!-- General Information Section -->
         <div class="general-info-section">
@@ -694,6 +712,47 @@
 
         <!-- Quick Actions removed - Use button in left column instead -->
       </div>
+
+      <!-- RIGHT COLUMN: Communication & History -->
+      <div class="unit-right-column">
+        <!-- Team Conversation Button -->
+        <div class="unit-info-card unit-conversation-trigger">
+          <button id="openTeamChatBtn" class="unit-chat-button">
+            <span class="unit-chat-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            <div class="unit-chat-text">
+              <strong>Open Request Discussion</strong>
+              <small>Communicate with users and units</small>
+            </div>
+            <span class="unit-chat-arrow">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Revision History Section (appears in right column) -->
+        <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
+          <div class="unit-panel-header revision-header">
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+              Revision History
+            </h3>
+            <p>Complete timeline of all revisions and resubmissions</p>
+          </div>
+          <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -707,7 +766,7 @@
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
         <h2>Request Discussion</h2>
-        <span class="unit-conversation-subtitle">Communicate with users and unit teams</span>
+        <span class="unit-conversation-subtitle">Communicate with users and units</span>
       </div>
       <button class="close-modal-btn" id="closeConversationModal" aria-label="Close">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -798,6 +857,7 @@
 <script>
   // Define current user role for conversation
   window.currentUserRole = 'admin';
+  window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
 </script>
 
 <!-- Update Confirmation Modal -->
@@ -881,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('messageEditor')) {
     window.messageQuill = new Quill('#messageEditor', {
       theme: 'snow',
-      placeholder: 'Type your message to team members...',
+      placeholder: 'Type your message...',
       modules: {
         toolbar: [
           ['bold', 'italic', 'underline'],

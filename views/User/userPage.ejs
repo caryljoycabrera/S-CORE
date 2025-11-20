@@ -1361,7 +1361,7 @@ It's already a flex container, but we need to add two key properties:
         </div>
         <div class="sidebar-profile-info">
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
-          <p class="sidebar-profile-role"><%= user.userType || 'User' %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : (user.userType === 'student' ? 'Student' : (user.userType || 'User')) %></p>
         </div>
         <span class="sidebar-profile-arrow">→</span>
       </a>
@@ -1620,7 +1620,7 @@ It's already a flex container, but we need to add two key properties:
         Request Approvals
       </h5>
       <ul class="guidelines-list">
-        <li>All requests must be submitted at least <strong>three (3) to five (5) working days</strong> prior to the required date.</li>
+        <li>All requests must be submitted at least <strong>three (3) working days</strong> prior to the required date.</li>
         <li>This lead time allows sufficient review, revisions, and endorsement.</li>
       </ul>
     </div>
@@ -1635,7 +1635,7 @@ It's already a flex container, but we need to add two key properties:
           Service Requests
         </h5>
       <ul class="guidelines-list">
-        <li>All service requests must be submitted at least <strong>seven (7) to ten (10) working days</strong> prior to the required date.</li>
+        <li>All service requests must be submitted at least <strong>seven (7) working days</strong> prior to the required date.</li>
         <li>This gives the team ample time to assess the request, assign resources, and schedule accordingly.</li>
         <li>Requests involving large-scale projects or specialized requirements may require a longer lead time with a minimum of <strong>fourteen (14) working days</strong>, subject to assessment by the concerned unit/s and is case-to-case basis.</li>
       </ul>
@@ -1720,7 +1720,7 @@ It's already a flex container, but we need to add two key properties:
               </div>
               <div class="activity-content">
                 <h4><%= activity.title %></h4>
-                <p><%= activity.description.length > 60 ? activity.description.slice(0, 60) + '...' : activity.description %></p>
+                <p><%- activity.description.length > 60 ? activity.description.slice(0, 60) + '...' : activity.description %></p>
                 <span class="activity-time"><%= timeAgo(activity.updatedAt) %></span>
               </div>
               <div class="status-badge <%= statusClass %>"><%= activity.status %></div>

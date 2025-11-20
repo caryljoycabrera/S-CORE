@@ -740,7 +740,7 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const { projectTitle, organization, description, specificRequestType } = req.body;
+  const { projectTitle, organization, description, specificRequestType, links } = req.body;
 
   console.log('Files received:', req.files);
   console.log('Organization received:', organization);
@@ -830,6 +830,7 @@ router.post('/submit-request-approval', upload.array('upload', 20), async (req, 
       userId: req.session.userId,
       files: filePaths,
       file: filePaths[0] || null,
+      links: links ? (Array.isArray(links) ? links : [links]) : [],
       status: initialStatus,
       assignedUnits: assignedUnits,
       originalAssignedUnits: autoAssignedUnit // Store original auto-assignment
@@ -975,7 +976,7 @@ router.post('/add-files/:requestId', upload.array('additionalFiles', 20), async 
 router.post('/submit-service-request', upload.array('uploadServiceFile', 20), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
 
-  const { projectTitle, organization, description, deadline, specificRequestType, isCustomType } = req.body;
+  const { projectTitle, organization, description, deadline, specificRequestType, isCustomType, links } = req.body;
 
   console.log('Files received:', req.files);
   console.log('Organization received:', organization);
@@ -1037,6 +1038,7 @@ router.post('/submit-service-request', upload.array('uploadServiceFile', 20), as
       userId: req.session.userId,
       files: filePaths,
       file: filePaths[0] || null,
+      links: links ? (Array.isArray(links) ? links : [links]) : [],
       status: initialStatus,
       assignedUnits: assignedUnits,
       originalAssignedUnits: autoAssignedUnit // Store original auto-assignment

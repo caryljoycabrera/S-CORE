@@ -310,44 +310,8 @@ hr {
   line-height: 1;
 }
 
-.status-badge.for-revision {
-  background-color: #fed7d7;
-  color: #e53e3e;
-}
-
-.status-badge.archived {
-  background-color: #f3f4f6;
-  color: #6b7280;
-}
-
-.deadline-badge {
-  display: inline-block;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  background-color: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
-}
-
-.deadline-badge.overdue {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #ef4444;
-}
-
-.deadline-badge.near-deadline {
-  background-color: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fbbf24;
-}
-
-.deadline-badge.near-deadline {
-  background-color: #fef3c7;
-  color: #d97706;
-}
+/* Status badges moved to status-badges-new.css */
+/* Deadline badges moved to status-badges-new.css */
 
 .deadline-badge.overdue {
   background-color: #fecaca;
@@ -2657,4 +2621,3 @@ hr {
     gap: 1rem !important;
   }
 }
-

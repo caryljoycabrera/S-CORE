@@ -405,12 +405,21 @@
 
           <div class="unit-info-card unit-conversation-trigger">
             <button id="openTeamChatBtn" class="unit-chat-button">
-              <span class="unit-chat-icon">...</span>
+              <span class="unit-chat-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
               <div class="unit-chat-text">
-                <strong>Open Team Discussion</strong>
-                <small>Collaborate with your team members</small>
+                <strong>Open Request Discussion</strong>
+                <small>Communicate with users and admins</small>
               </div>
-              <span class="unit-chat-arrow">...</span>
+              <span class="unit-chat-arrow">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
             </button>
           </div>
         </div>
@@ -558,18 +567,89 @@
     <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;">
       <div class="modal-header unit-modal-header">
         <div class="modal-title-section">
-          <h2>Team Discussion</h2>
-          <span class="unit-conversation-subtitle">Collaborate with your team members</span>
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <h2>Request Discussion</h2>
+          <span class="unit-conversation-subtitle">Communicate with users and admins</span>
         </div>
-        <button class="close-modal-btn" onclick="closeTeamConversationModal()" aria-label="Close">×</button>
+        <button class="close-modal-btn" onclick="closeTeamConversationModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
       <div class="unit-conversation-body">
-        <div id="teamMessagesContainer" class="unit-messages-container"></div>
+        <!-- Messages Container -->
+        <div id="teamMessagesContainer" class="unit-messages-container">
+          <div class="unit-messages-empty">
+            <div class="empty-icon">
+              <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <p>No discussion yet</p>
+            <small>Start the conversation below</small>
+          </div>
+        </div>
         <div class="unit-message-input-area">
-          <div class="unit-format-toolbar">...</div>
+          <!-- Attached Files Preview (Above Toolbar) -->
+          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
+            <div class="files-preview-header">
+              <span class="files-count">0 file(s) attached</span>
+              <button type="button" id="clearChatFiles" class="clear-files-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Clear all
+              </button>
+            </div>
+            <div id="chatFilesContainer" class="files-container"></div>
+          </div>
+
+          <!-- Text Formatting Toolbar -->
+          <div class="unit-format-toolbar">
+            <button type="button" class="format-btn" data-chat-format="bold" title="Bold (Ctrl+B)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="italic" title="Italic (Ctrl+I)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="19" y1="4" x2="10" y2="4"/>
+                <line x1="14" y1="20" x2="5" y2="20"/>
+                <line x1="15" y1="4" x2="9" y2="20"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="underline" title="Underline (Ctrl+U)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                <line x1="4" y1="21" x2="20" y2="21"/>
+              </svg>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+            <span class="toolbar-hint">Format your message</span>
+          </div>
+
+          <!-- Message Input -->
           <div class="unit-message-input-wrapper">
-            <textarea id="teamMessageInput" class="unit-message-input" placeholder="Type your message to team members..." rows="3"></textarea>
-            <button id="sendTeamMessageBtn" class="unit-send-btn">Send</button>
+            <textarea id="teamMessageInput" class="unit-message-input" placeholder="Type your message..." rows="3"></textarea>
+            <button id="sendTeamMessageBtn" class="unit-send-btn">
+              <span>Send</span>
+              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -579,6 +659,7 @@
   <script>
     // Define current user role for conversation
     window.currentUserRole = 'unit';
+    window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
   </script>
 
   <!-- PDF Viewer Modal -->

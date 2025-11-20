@@ -1937,7 +1937,7 @@
                 </div>
                 <div style="text-align: left;">
                   <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
-                  <div style="font-size: 0.875rem; color: #047857;">Collaborate with your team members</div>
+                  <div style="font-size: 0.875rem; color: #047857;">Communicate with SCO support</div>
                 </div>
               </div>
               <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
@@ -2716,7 +2716,7 @@ document.querySelectorAll('.request-row').forEach(row => {
      if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified';
     if (detailTitle) detailTitle.innerText = row.dataset.title || '';
     if (detailOrganization) detailOrganization.innerText = row.dataset.organization || '';
-    if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
+    if (detailDescription) detailDescription.innerHTML = row.dataset.description || 'No description provided';
     if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';
     if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
 

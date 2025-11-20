@@ -1128,6 +1128,74 @@
         document.getElementById('adminSidebar').classList.toggle('active');
       });
     }
+
+    // Initialize request volume chart
+    const requestVolumeChartCtx = document.getElementById('requestVolumeChart').getContext('2d');
+    const requestVolumeChart = new Chart(requestVolumeChartCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Approval Requests',
+          data: [],
+          borderColor: '#43a047',
+          backgroundColor: 'rgba(67, 160, 71, 0.1)',
+          tension: 0.4,
+          fill: true
+        }, {
+          label: 'Service Requests',
+          data: [],
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249, 115, 22, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12,
+                family: 'Inter'
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    // Function to load volume data
+    async function loadVolumeData() {
+      try {
+        const response = await fetch('/admin/request-volume?days=30');
+        const data = await response.json();
+        if (data.success) {
+          requestVolumeChart.data.labels = data.labels;
+          requestVolumeChart.data.datasets[0].data = data.approvals;
+          requestVolumeChart.data.datasets[1].data = data.services;
+          requestVolumeChart.update();
+        }
+      } catch (error) {
+        console.error('Error loading volume data:', error);
+      }
+    }
+
+    // Load data on page load
+    loadVolumeData();
   </script>
 </body>
 </html>

@@ -147,13 +147,13 @@ function initializeEventListeners() {
         uploadDeliverablesBtn.addEventListener('click', uploadDeliverables);
     }
 
-    // Message sending
-    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    // Message sending - check for both standard and team-specific IDs
+    const sendMessageBtn = document.getElementById('sendMessageBtn') || document.getElementById('sendTeamMessageBtn');
     if (sendMessageBtn) {
         sendMessageBtn.addEventListener('click', sendMessage);
     }
 
-    const messageInput = document.getElementById('messageInput');
+    const messageInput = document.getElementById('messageInput') || document.getElementById('teamMessageInput');
     if (messageInput) {
         messageInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -561,7 +561,7 @@ function openRequestDetails(requestId, requestType) {
         modalStatus.className = 'status-badge ' + statusLower;
     }
     
-    document.getElementById('modalDescription').textContent = description;
+    document.getElementById('modalDescription').innerHTML = description;
 
     // Update type badge
     const typeBadge = document.getElementById('modalTypeBadge');
@@ -768,7 +768,7 @@ function openRequestDetails(requestId, requestType) {
     // Handle Queued status - show Start Task button
     handleQueuedStatus(status, requestId, requestType);
 
-    // Load team conversation messages
+    // Load conversation messages
     loadConversation(requestId);
 
     // Load revision history (for approval requests)
@@ -2221,18 +2221,18 @@ async function loadConversation(requestId) {
         const response = await fetch(`/api/conversation/${requestId}`);
         const result = await response.json();
 
-        const messagesContainer = document.getElementById('conversationMessages');
+        const messagesContainer = document.getElementById('conversationMessages') || document.getElementById('teamMessagesContainer');
         if (!messagesContainer) return;
 
-        if (response.ok && result.success && result.messages) {
+        if (response.ok && result.success && result.conversation) {
             messagesContainer.innerHTML = '';
             
-            if (result.messages.length === 0) {
+            if (result.conversation.length === 0) {
                 messagesContainer.innerHTML = '<p class="no-messages">No messages yet. Start the conversation!</p>';
                 return;
             }
 
-            result.messages.forEach(message => {
+            result.conversation.forEach(message => {
                 // Skip revision-related messages (they appear in revision history instead)
                 const content = message.content || '';
                 if (content.includes('Revision Request') || 
@@ -2268,7 +2268,7 @@ async function loadConversation(requestId) {
         }
     } catch (error) {
         console.error('Error loading conversation:', error);
-        const messagesContainer = document.getElementById('conversationMessages');
+        const messagesContainer = document.getElementById('conversationMessages') || document.getElementById('teamMessagesContainer');
         if (messagesContainer) {
             messagesContainer.innerHTML = '<p class="no-messages">Error loading conversation</p>';
         }
@@ -2282,7 +2282,7 @@ async function sendMessage() {
         return;
     }
 
-    const messageInput = document.getElementById('messageInput');
+    const messageInput = document.getElementById('messageInput') || document.getElementById('teamMessageInput');
     const messageText = messageInput?.value.trim();
 
     if (!messageText) {
@@ -2484,7 +2484,7 @@ function loadTeamConversation(requestId) {
                                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                             </svg>
                         </div>
-                        <p>No team discussion yet</p>
+                        <p>No discussion yet</p>
                         <small>Start the conversation below</small>
                     </div>
                 `;
@@ -2500,7 +2500,7 @@ function createMessageElement(msg) {
     const div = document.createElement('div');
     
     // Determine if this is the current user's message
-    const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
+    const isOwnMessage = window.currentUserFullName && msg.senderName === window.currentUserFullName;
     
     // Role-based styling (matching Admin)
     let roleClass = 'user-message';

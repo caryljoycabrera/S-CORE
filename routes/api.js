@@ -438,27 +438,10 @@ router.post('/api/conversation/:requestId/message', requireLogin, upload.array('
     await conversation.populate('messages.senderId', 'fName lName role');
     await conversation.populate('messages.readBy.userId', 'fName lName role');
     
-    // Send notification to the other parties (not the sender)
+    // Send notification to the other parties (not the sender) - excluding admins
     try {
       const targetRequest = serviceRequest || approvalRequest;
       const notificationPromises = [];
-      
-      // Notify admins if message is not from admin
-      if (user.role !== 'admin') {
-        const admins = await User.find({ role: 'admin' });
-        for (const admin of admins) {
-          notificationPromises.push(
-            notificationService.notifyNewMessage(
-              conversation._id,
-              user._id,
-              admin._id,
-              content || 'Sent a file',
-              requestId,
-              serviceRequest ? 'service' : 'approval'
-            ).catch(err => console.error('Admin notification error:', err))
-          );
-        }
-      }
       
       // Notify unit members if message is not from unit
       if (user.role !== 'unit') {
@@ -499,7 +482,22 @@ router.post('/api/conversation/:requestId/message', requireLogin, upload.array('
 
     res.json({
       success: true,
-      message: conversation.messages[conversation.messages.length - 1]
+      message: {
+        _id: conversation.messages[conversation.messages.length - 1]._id,
+        senderName: conversation.messages[conversation.messages.length - 1].senderId ? 
+          `${conversation.messages[conversation.messages.length - 1].senderId.fName} ${conversation.messages[conversation.messages.length - 1].senderId.lName}` : 'Unknown',
+        senderRole: conversation.messages[conversation.messages.length - 1].senderRole,
+        content: conversation.messages[conversation.messages.length - 1].content,
+        attachments: conversation.messages[conversation.messages.length - 1].attachments || [],
+        timestamp: conversation.messages[conversation.messages.length - 1].timestamp,
+        isRead: conversation.messages[conversation.messages.length - 1].isRead,
+        readBy: (conversation.messages[conversation.messages.length - 1].readBy || []).map(reader => ({
+          userId: reader.userId._id,
+          userName: reader.userId ? `${reader.userId.fName} ${reader.userId.lName}` : 'Unknown',
+          userRole: reader.userId.role,
+          readAt: reader.readAt
+        }))
+      }
     });
   } catch (err) {
     console.error('Error sending message:', err);

@@ -1313,7 +1313,7 @@ function openUserModal(row, scrollTo = null) {
   document.getElementById('viewPhone').textContent = row.dataset.phone || '';
 
   const typeBadge = document.getElementById('viewUserType');
-  typeBadge.textContent = row.dataset.usertype || '';
+  typeBadge.textContent = row.dataset.usertype === 'student' ? 'Student' : 'Non-Student';
   typeBadge.className = 'user-type-badge ' + (row.dataset.usertype === 'student' ? 'student' : 'nonstudent');
 
   if (row.dataset.usertype === 'student') {

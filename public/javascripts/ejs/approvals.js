@@ -1742,6 +1742,13 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
+    function setElementHTML(id, value) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.innerHTML = value || 'N/A';
+      }
+    }
+    
     // Populate general information
     setElementText('detailTitle', rowData.title);
     setElementText('detailStudent', rowData.student);
@@ -1749,7 +1756,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setElementText('detailOrganization', rowData.organization);
     setElementText('detailDatetime', rowData.datetime);
     setElementText('detailDeadlineInfo', rowData.formattedDeadline);
-    setElementText('detailDescription', rowData.description || 'No description provided');
+    setElementHTML('detailDescription', rowData.description || 'No description provided');
     
     // Update specific request type with fallback
   const specificRequestType = document.querySelector('[data-field="specificRequestType"]');
@@ -2548,7 +2555,7 @@ console.log('✅ Approvals Admin script loaded successfully');
     const div = document.createElement('div');
     
     // Determine if this is the current user's message
-    const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
+    const isOwnMessage = window.currentUserFullName && msg.senderName === window.currentUserFullName;
     
     // Role-based styling
     let roleClass = 'user-message';

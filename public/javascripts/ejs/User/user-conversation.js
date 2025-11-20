@@ -128,11 +128,13 @@ window.closeImageViewer = function() {
 
 function createMessageElement(msg) {
   console.log('[User Conversation] Creating message element:', msg);
+  console.log('[User Conversation] currentUserFullName:', window.currentUserFullName);
+  console.log('[User Conversation] msg.senderName:', msg.senderName);
   const div = document.createElement('div');
   
   // Determine if this is the current user's message
-  const isOwnMessage = window.currentUserRole && msg.senderRole === window.currentUserRole;
-  console.log('[User Conversation] Message alignment:', { isOwnMessage, currentUserRole: window.currentUserRole, senderRole: msg.senderRole });
+  const isOwnMessage = window.currentUserFullName && msg.senderName === window.currentUserFullName;
+  console.log('[User Conversation] Message alignment:', { isOwnMessage, currentUserFullName: window.currentUserFullName, senderName: msg.senderName });
   
   // Role-based styling
   let roleClass = 'user-message';

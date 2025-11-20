@@ -251,40 +251,6 @@ hr {
   line-height: 1;
 }
 
-.status-badge.for-revision {
-  background-color: #fed7d7;
-  color: #e53e3e;
-}
-
-.status-badge.archived {
-  background-color: #f3f4f6;
-  color: #6b7280;
-}
-
-.deadline-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.deadline-badge.near-deadline {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
-.deadline-badge.overdue {
-  background-color: #fecaca;
-  color: #dc2626;
-}
-
-.deadline-badge.editable-deadline:hover {
-  background-color: #e5e7eb;
-  cursor: pointer;
-}
-
 .message {
   margin-bottom: 1rem;
   max-width: 80%;
@@ -1025,7 +991,7 @@ hr {
   margin-top: 2rem;
 }
 
-.admin-btn {
+.btn {
   padding: 0.75rem 2rem;
   border: none;
   border-radius: 8px;
@@ -1040,23 +1006,23 @@ hr {
   justify-content: center;
 }
 
-.admin-btn-primary {
+.btn-primary {
   background: var(--primary-green);
   color: white;
 }
 
-.admin-btn-primary:hover {
+.btn-primary:hover {
   background: #157347;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
-.admin-btn-secondary {
+.btn-secondary {
   background: #6b7280;
   color: white;
 }
 
-.admin-btn-secondary:hover {
+.btn-secondary:hover {
   background: #4b5563;
   transform: translateY(-1px);
 }

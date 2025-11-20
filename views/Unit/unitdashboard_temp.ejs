@@ -33,7 +33,7 @@
         </div>
         <div class="sidebar-profile-info">
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
-          <p class="sidebar-profile-role"><%= user.userType || 'User' %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : (user.userType === 'student' ? 'Student' : (user.userType || 'User')) %></p>
         </div>
         <span class="sidebar-profile-arrow">â†’</span>
       </a>
@@ -394,7 +394,7 @@
               </div>
               <div class="activity-content">
                 <h4><%= activity.title %></h4>
-                <p><%= activity.description.length > 60 ? activity.description.slice(0, 60) + '...' : activity.description %></p>
+                <p><%- activity.description.length > 60 ? activity.description.slice(0, 60) + '...' : activity.description %></p>
                 <span class="activity-time"><%= timeAgo(activity.updatedAt) %></span>
               </div>
               <div class="status-badge <%= statusClass %>"><%= activity.status %></div>

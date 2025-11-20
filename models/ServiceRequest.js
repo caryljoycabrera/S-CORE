@@ -76,6 +76,11 @@ const serviceRequestSchema = new mongoose.Schema({
     type: String
   }],
 
+  // Relevant links
+  links: [{
+    type: String
+  }],
+
   // Deliverables uploaded by unit team (completed work)
   deliverables: [{
     type: String

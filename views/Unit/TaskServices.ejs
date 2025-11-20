@@ -22,19 +22,38 @@
   <%- include('../partials/unit-navbar', { user: user, activePage: 'task-services' }) %>
 
   <div class="unit-main-content">
+  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <div class="unit-main-content">
+    <!-- HEADER -->
     <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
       <div class="header-left-group">
-        <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">☰</button>
-        <div class="group"><img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;"></div>
+        <!-- Hamburger Menu Button for Mobile -->
+        <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
         <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
       </div>
+      
       <span class="text-wrapper-2">Service Requests</span>
+
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
+        
         <div class="dropdown-wrapper">
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
-            <div class="user"><img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" /></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
             <a href="/unit/profile">My Profile</a>
@@ -44,12 +63,13 @@
       </div>
     </div>
 
+    <!-- MAIN CONTENT -->
     <div class="student-side">
       <div class="div">
         <section class="activity-section">
           <div class="section-header" style="padding: 2rem 3rem 0 3rem;">
             <h1><%= unitTeam %> Team - Service Requests</h1>
-            <p>Process service requests assigned to your unit</p>
+            <p>Process and collaborate on service requests assigned to your unit</p>
           </div>
 
           <nav class="nav-tabs tabs" style="padding: 0 3rem; margin-bottom: 1.5rem;">
@@ -294,10 +314,21 @@
     <div class="modal-content unit-modal-wide">
       <div class="modal-header unit-modal-header">
         <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
           <h2 id="modalTitle">Request Details</h2>
           <span class="type-badge" id="modalTypeBadge">SERVICE</span>
         </div>
-        <button class="close-modal-btn" onclick="closeRequestModal()" aria-label="Close">×</button>
+        <button class="close-modal-btn" onclick="closeRequestModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
 
       <div class="modal-body unit-modal-body">
@@ -313,26 +344,104 @@
               <div class="unit-info-item"><span class="unit-info-label">Organization/Office/Dept</span><span class="unit-info-value" id="modalOrganization">Loading...</span></div>
               <div class="unit-info-item"><span class="unit-info-label">Date Submitted</span><span class="unit-info-value" id="modalDate">Loading...</span></div>
               <div class="unit-info-item"><span class="unit-info-label">Current Status</span><span class="status-badge" id="modalStatus">Pending</span></div>
+              <div class="unit-info-item" id="approvedOnField" style="display: none;"><span class="unit-info-label">Approved On</span><span class="unit-info-value" id="modalApprovedOn" style="color: #16a34a; font-weight: 600;">N/A</span></div>
               <div class="unit-info-item" id="deadlineField" style="display: none;"><span class="unit-info-label">Deadline</span><span class="unit-info-value" id="modalDeadline">N/A</span></div>
               <div class="unit-info-item" id="serviceTypeField" style="display: none;"><span class="unit-info-label">Service Type</span><span class="unit-info-value" id="modalServiceType">N/A</span></div>
             </div>
           </div>
 
-          <div class="unit-info-card"><div class="unit-card-header"><h3>Description</h3><p class="unit-card-subtitle">Request details and requirements</p></div><div class="unit-description-content" id="modalDescription">Loading description...</div></div>
+          <div class="unit-info-card">
+            <div class="unit-card-header">
+              <h3>Description</h3>
+              <p class="unit-card-subtitle">Request details and requirements</p>
+            </div>
+            <div class="unit-description-content" id="modalDescription">Loading description...</div>
+          </div>
 
-          <div id="filesSection" class="unit-info-card" style="display: none;"><div class="unit-card-header"><h3>Attached Files</h3><p class="unit-card-subtitle">Files submitted with this request</p></div><div id="modalFiles"></div></div>
+          <div id="filesSection" class="unit-info-card" style="display: none;">
+            <div class="unit-card-header">
+              <h3>Attached Files</h3>
+              <p class="unit-card-subtitle">Files submitted with this request</p>
+            </div>
+            <div id="modalFiles"></div>
+          </div>
 
-          <div id="deliverablesSection" class="unit-info-card" style="display: none;"><div class="unit-card-header"><h3>Deliverables</h3><p class="unit-card-subtitle">Files uploaded by unit team</p></div><div id="modalDeliverables"></div></div>
+          <div id="deliverablesSection" class="unit-info-card" style="display: none;">
+            <div class="unit-card-header">
+              <h3>Deliverables</h3>
+              <p class="unit-card-subtitle">Files uploaded by unit team</p>
+            </div>
+            <div id="modalDeliverables"></div>
+          </div>
 
-          <div class="unit-info-card unit-conversation-trigger"><button id="openTeamChatBtn" class="unit-chat-button">Open Team Discussion</button></div>
+          <div class="unit-info-card unit-conversation-trigger">
+            <button id="openTeamChatBtn" class="unit-chat-button">
+              <span class="unit-chat-icon">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
+              <div class="unit-chat-text">
+                <strong>Open Request Discussion</strong>
+                <small>Communicate with users and admins</small>
+              </div>
+              <span class="unit-chat-arrow">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
+            </button>
+          </div>
         </div>
 
         <div class="unit-right-column">
-          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;"><div class="unit-panel-header revision-header"><h3>Revision History</h3><p>Complete timeline of all revisions and resubmissions</p></div><div id="revisionHistoryContainer" class="revision-history-timeline"></div><div id="revisionHistoryActions" class="unit-action-buttons" style="margin-top:1.5rem; display:none;"><button id="approveAfterRevisionBtn" class="unit-btn unit-btn-approve">Approve Request</button><button id="requestAnotherRevisionBtn" class="unit-btn unit-btn-revision">Request Another Revision</button></div></div>
+          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
+            <div class="unit-panel-header revision-header">
+              <h3>Revision History</h3>
+              <p>Complete timeline of all revisions and resubmissions</p>
+            </div>
+            <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
+            <div id="revisionHistoryActions" class="unit-action-buttons" style="margin-top: 1.5rem; display: none;">
+              <button id="approveAfterRevisionBtn" class="unit-btn unit-btn-approve">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span>Approve Request</span>
+              </button>
+              <button id="requestAnotherRevisionBtn" class="unit-btn unit-btn-revision">
+                <span class="btn-icon">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </span>
+                <span>Request Another Revision</span>
+              </button>
+            </div>
+          </div>
 
           <div id="serviceActionsPanel" class="unit-action-panel service-panel" style="display: none;">
-            <div class="unit-panel-header service-header"><h3>Process Service Request</h3><p>Upload deliverables and complete the service</p></div>
-            <div class="unit-action-guide"><div class="guide-item"><span class="guide-icon">⇪</span><span>Upload all required deliverables</span></div><div class="guide-item"><span class="guide-icon">📁</span><span>Verify files before uploading</span></div><div class="guide-item"><span class="guide-icon">✔</span><span>Mark as complete when work is done</span></div></div>
+            <div class="unit-panel-header service-header">
+              <h3>Process Service Request</h3>
+              <p>Upload deliverables and complete the service</p>
+            </div>
+            <div class="unit-action-guide">
+              <div class="guide-item">
+                <span class="guide-icon">⇪</span>
+                <span>Upload all required deliverables</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">📁</span>
+                <span>Verify files before uploading</span>
+              </div>
+              <div class="guide-item">
+                <span class="guide-icon">✔</span>
+                <span>Mark as complete when work is done</span>
+              </div>
+            </div>
 
             <div class="unit-upload-section">
               <label class="unit-form-label"><strong>Upload Deliverables</strong><small>Select one or more files to upload</small></label>
@@ -341,11 +450,23 @@
                 <button type="button" class="unit-browse-file-btn" onclick="event.stopPropagation(); document.getElementById('deliverablesFileInput').click()">Choose Files</button>
                 <div class="unit-upload-progress" id="unitUploadProgress"><div class="unit-progress-bar"><div class="unit-progress-fill" id="unitProgressFill"></div></div></div>
               </div>
-              <div class="unit-file-management" id="unitFileManagement" style="display: none;"><div class="unit-file-actions"><span id="unitFilesCount">0 files selected</span><button type="button" class="unit-clear-all-btn" id="unitClearAllBtn">Clear All Files</button></div><div class="unit-selected-files-container" id="unitSelectedFiles"></div><div class="unit-files-summary" id="unitFilesSummary">Total size: 0 MB</div></div>
+              <div class="unit-file-management" id="unitFileManagement" style="display: none;">
+                <div class="unit-file-actions">
+                  <span id="unitFilesCount">0 files selected</span>
+                  <button type="button" class="unit-clear-all-btn" id="unitClearAllBtn">Clear All Files</button>
+                </div>
+                <div class="unit-selected-files-container" id="unitSelectedFiles"></div>
+                <div class="unit-files-summary" id="unitFilesSummary">Total size: 0 MB</div>
+              </div>
               <button id="uploadDeliverablesBtn" disabled class="unit-btn unit-btn-upload" style="margin-top: 1rem;">Submit Deliverables for Review</button>
             </div>
 
-            <div class="unit-info-notice"><div><p style="margin:0; font-weight:600; color:#1e293b;">Service Request Workflow</p><p style="margin:0; font-size:0.875rem; color:#64748b;">Upload files and submit for requestor review. Only requestor can mark complete.</p></div></div>
+            <div class="unit-info-notice">
+              <div>
+                <p style="margin:0; font-weight:600; color:#1e293b;">Service Request Workflow</p>
+                <p style="margin:0; font-size:0.875rem; color:#64748b;">Upload files and submit for requestor review. Only requestor can mark complete.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -354,10 +475,103 @@
 
   <!-- Minimal placeholders for modals reused by alltasks.js -->
   <div id="teamConversationModal" class="modal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important;">
-    <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;"> </div>
+    <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <h2>Request Discussion</h2>
+          <span class="unit-conversation-subtitle">Communicate with users and admins</span>
+        </div>
+        <button class="close-modal-btn" onclick="closeTeamConversationModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="unit-conversation-body">
+        <!-- Messages Container -->
+        <div id="teamMessagesContainer" class="unit-messages-container">
+          <div class="unit-messages-empty">
+            <div class="empty-icon">
+              <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <p>No discussion yet</p>
+            <small>Start the conversation below</small>
+          </div>
+        </div>
+        <div class="unit-message-input-area">
+          <!-- Attached Files Preview (Above Toolbar) -->
+          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
+            <div class="files-preview-header">
+              <span class="files-count">0 file(s) attached</span>
+              <button type="button" id="clearChatFiles" class="clear-files-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Clear all
+              </button>
+            </div>
+            <div id="chatFilesContainer" class="files-container"></div>
+          </div>
+
+          <!-- Text Formatting Toolbar -->
+          <div class="unit-format-toolbar">
+            <button type="button" class="format-btn" data-chat-format="bold" title="Bold (Ctrl+B)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="italic" title="Italic (Ctrl+I)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="19" y1="4" x2="10" y2="4"/>
+                <line x1="14" y1="20" x2="5" y2="20"/>
+                <line x1="15" y1="4" x2="9" y2="20"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-chat-format="underline" title="Underline (Ctrl+U)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                <line x1="4" y1="21" x2="20" y2="21"/>
+              </svg>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+            <span class="toolbar-hint">Format your message</span>
+          </div>
+
+          <!-- Message Input -->
+          <div class="unit-message-input-wrapper">
+            <textarea id="teamMessageInput" class="unit-message-input" placeholder="Type your message..." rows="3"></textarea>
+            <button id="sendTeamMessageBtn" class="unit-send-btn">
+              <span>Send</span>
+              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script>window.currentUserRole = 'unit';</script>
+  <script>
+    // Define current user role for conversation
+    window.currentUserRole = 'unit';
+    window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
+  </script>
   <div id="pdfViewerModal" class="modal" style="display:none;"></div>
 
   <script src="/javascripts/ejs/Unit/alltasks.js"></script>

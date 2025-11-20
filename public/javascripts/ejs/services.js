@@ -720,7 +720,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Add conversation modal functionality
   function initializeConversationModal() {
-    const openChatBtn = document.getElementById('openChatFromModal');
+    const openChatBtn = document.getElementById('openChatFromModal') || document.getElementById('openTeamChatBtn');
     const conversationModal = document.getElementById('conversationModal');
     const closeConversationBtn = document.getElementById('closeConversationModal');
     const sendMessageBtn = document.getElementById('sendMessageBtn');
@@ -1711,7 +1711,11 @@ document.addEventListener('DOMContentLoaded', function() {
     setElementText('detailOrganization', rowData.organization);
     setElementText('detailDatetime', rowData.datetime);
     setElementText('detailDeadlineInfo', rowData.formattedDeadline);
-    setElementText('detailDescription', rowData.description || 'No description provided');
+    // Set description with HTML rendering
+    const descElement = document.getElementById('detailDescription');
+    if (descElement) {
+      descElement.innerHTML = rowData.description || 'No description provided';
+    }
     
     // Populate admin form
     populateAdminForm(rowData);

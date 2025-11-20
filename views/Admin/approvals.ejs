@@ -400,20 +400,31 @@
 
 <!-- Enhanced Request Details Modal -->
 <div id="detailsModal" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width: 1000px;">
-    <header class="modal-header admin-modal-header approval-header-color">
+  <div class="modal-content unit-modal-wide">
+    <!-- Modal Header -->
+    <div class="modal-header unit-modal-header">
       <div class="modal-title-section">
         <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          <rect x="4" y="4" width="16" height="16" rx="2"/>
+          <line x1="8" y1="8" x2="16" y2="8"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+          <line x1="8" y1="16" x2="12" y2="16"/>
         </svg>
         <h2>Approval Request Details</h2>
         <span class="type-badge">APPROVAL</span>
       </div>
-      <span class="close" id="closeDetailsModal">&times;</span>
-    </header>
-    <div class="modal-body admin-modal-body">
-      <!-- Left Column -->
-      <div class="admin-left-column">
+      <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="modal-body unit-modal-body">
+      <!-- LEFT COLUMN: Request Details -->
+      <div class="unit-left-column">
         
         <!-- Update the general-info-section div in the HTML -->
 <div class="admin-info-card general-info-section">
@@ -531,29 +542,34 @@
         <!-- Files Section -->
         <div id="file-preview"></div>
 
-        <!-- Quick Actions -->
-        <div class="admin-info-card">
-          <button class="admin-chat-button" id="openChatFromModal">
-            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <div class="admin-chat-text">
-              <strong>Open Team Discussion</strong>
-              <small>Collaborate with team members</small>
+        <!-- Team Conversation Button -->
+        <div class="unit-info-card unit-conversation-trigger">
+          <button id="openChatFromModal" class="unit-chat-button">
+            <span class="unit-chat-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            <div class="unit-chat-text">
+              <strong>Open Request Discussion</strong>
+              <small>Communicate with users and units</small>
             </div>
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left: auto;">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
+            <span class="unit-chat-arrow">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
           </button>
         </div>
       </div>
 
-      <!-- Right Column -->
-      <div class="admin-right-column">
+      <!-- RIGHT COLUMN: Processing Actions -->
+      <div class="unit-right-column">
 
-        <!-- Revision History Section -->
-        <div id="revisionHistorySection" class="admin-action-panel revision-history-panel" style="display: none;">
-          <div class="admin-panel-header revision-header">
+        <!-- Revision History Section (appears in right column) -->
+        <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
+          <div class="unit-panel-header revision-header">
             <h3>Revision History</h3>
             <p>Complete timeline of all revisions and resubmissions</p>
           </div>
@@ -703,7 +719,7 @@
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
         <h2>Request Discussion</h2>
-        <span class="unit-conversation-subtitle">Communicate with users and unit teams</span>
+        <span class="unit-conversation-subtitle">Communicate with users and units</span>
       </div>
       <button class="close-modal-btn" id="closeConversationModal" aria-label="Close">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -777,7 +793,7 @@
 
         <!-- Message Input -->
         <div class="unit-message-input-wrapper">
-          <textarea id="messageInput" placeholder="Type your message to team members..." rows="3" class="unit-message-input"></textarea>
+          <textarea id="messageInput" placeholder="Type your message..." rows="3" class="unit-message-input"></textarea>
           <button id="sendMessageBtn" class="unit-send-btn">
             <span>Send</span>
             <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -794,6 +810,7 @@
 <script>
   // Define current user role for conversation
   window.currentUserRole = 'admin';
+  window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
 </script>
 
 <!-- PDF Viewer Modal -->

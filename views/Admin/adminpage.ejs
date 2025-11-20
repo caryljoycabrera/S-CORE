@@ -766,6 +766,61 @@
       color: #991b1b;
     }
 
+    .task-row-critical {
+      background-color: #fee2e2;
+      cursor: pointer;
+    }
+
+    .task-row-urgent {
+      background-color: #fef3c7;
+      cursor: pointer;
+    }
+
+    .task-row-normal {
+      background-color: transparent;
+      cursor: pointer;
+    }
+
+    .priority-badge.critical {
+      background: #dc2626;
+    }
+
+    .priority-badge.urgent {
+      background: #f97316;
+    }
+
+    .priority-badge.normal {
+      background: #6b7280;
+    }
+
+    .priority-text.critical {
+      color: #dc2626;
+    }
+
+    .priority-text.urgent {
+      color: #f97316;
+    }
+
+    .priority-text.normal {
+      color: #6b7280;
+    }
+
+    .priority-bg.critical {
+      background: #dc2626;
+    }
+
+    .priority-bg.urgent {
+      background: #f97316;
+    }
+
+    .priority-bg.normal {
+      background: #6b7280;
+    }
+
+    .task-row-overdue {
+      background-color: #fee2e2;
+    }
+
 
   </style>
 </head>
@@ -788,7 +843,7 @@
         </div>
         <div class="sidebar-profile-info">
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
-          <p class="sidebar-profile-role"><%= user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
         </div>
         <span class="sidebar-profile-arrow">→</span>
       </a>
@@ -1223,10 +1278,10 @@
                     const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
                     const bgColor = task.priority === 'critical' ? '#fee2e2' : task.priority === 'urgent' ? '#fef3c7' : 'transparent';
                   %>
-                    <tr style="background-color: <%= bgColor %>; cursor: pointer;" 
+                    <tr class="<%= task.priority === 'critical' ? 'task-row-critical' : task.priority === 'urgent' ? 'task-row-urgent' : 'task-row-normal' %>" 
                         onclick="openUnassignedTaskModal('<%= task._id %>', '<%= task.requestType %>')">
                       <td style="text-align: center;">
-                        <span style="display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; background: <%= task.priorityColor %>; color: white; font-weight: 700; font-size: 0.7rem;">
+                        <span class="priority-badge <%= task.priority %>" style="display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; color: white; font-weight: 700; font-size: 0.7rem;">
                           <%= index + 1 %>
                         </span>
                       </td>
@@ -1242,7 +1297,7 @@
                         <% if (daysLeft !== null) { %>
                           <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 0.75rem;"><%= new Date(task.deadline).toLocaleDateString() %></span>
-                            <span style="color: <%= task.priorityColor %>; font-weight: 600; font-size: 0.7rem;">
+                            <span class="priority-text <%= task.priority %>" style="font-weight: 600; font-size: 0.7rem;">
                               <%= daysLeft > 0 ? daysLeft + 'd' : 'Today' %>
                             </span>
                           </div>
@@ -1252,7 +1307,7 @@
                       </td>
                       <td>
                         <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
-                           class="btn-view" style="background: <%= task.priorityColor %>; padding: 0.4rem 0.8rem; font-size: 0.875rem;"
+                           class="btn-view priority-bg <%= task.priority %>" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;"
                            onclick="event.stopPropagation();">Assign</a>
                       </td>
                     </tr>
@@ -1362,7 +1417,7 @@
                     const daysLeft = task.deadline ? Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
                     const bgColor = task.priority === 'critical' ? '#fee2e2' : task.priority === 'urgent' ? '#fef3c7' : 'transparent';
                   %>
-                    <tr style="background-color: <%= bgColor %>;">
+                    <tr class="<%= task.priority === 'critical' ? 'task-row-critical' : task.priority === 'urgent' ? 'task-row-urgent' : 'task-row-normal' %>">
                       <td style="padding: 1rem 1.25rem;"><strong><%= task.userId?.fName || 'Unknown' %> <%= task.userId?.lName || '' %></strong></td>
                       <td style="padding: 1rem 1.25rem;"><%= task.displayOrganization || task.organization || 'N/A' %></td>
                       <td style="padding: 1rem 1.25rem;"><strong><%= task.title || task.description || 'No title' %></strong></td>
@@ -1376,7 +1431,7 @@
                       </td>
                       <td style="text-align: center; padding: 1rem 0.75rem;">
                         <% if (daysLeft !== null) { %>
-                          <span style="color: <%= task.priorityColor %>; font-weight: 600; font-size: 0.875rem;">
+                          <span class="priority-text <%= task.priority %>" style="font-weight: 600; font-size: 0.875rem;">
                             <%= daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : 'Today' %>
                           </span>
                         <% } else { %>
@@ -1385,7 +1440,7 @@
                       </td>
                       <td style="text-align: center; padding: 1rem 0.75rem;">
                         <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
-                           class="btn-view" style="background: <%= task.priorityColor %>; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block; color: white;">Assign Now</a>
+                           class="btn-view priority-bg <%= task.priority %>" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block; color: white;">Assign Now</a>
                       </td>
                     </tr>
                   <% }) %>
@@ -1445,7 +1500,9 @@
       </div>
 
       <script>
+        // @ts-nocheck
         // Store unassigned tasks data
+        /* @ts-ignore */
         const unassignedTasksData = <%- JSON.stringify(unassignedTasks || []) %>;
 
         function openUnassignedTaskModal(taskId, requestType) {
@@ -1685,7 +1742,7 @@
               <tbody id="urgent-tasks-tbody">
                 <% if (urgentTasks && urgentTasks.length > 0) { %>
                   <% urgentTasks.forEach(task => { %>
-                    <tr style="<%= task.isOverdue ? 'background-color: #fee2e2;' : (task.priority === 'critical' ? 'background-color: #fef3c7;' : '') %>">
+                    <tr class="<%= task.isOverdue ? 'task-row-overdue' : (task.priority === 'critical' ? 'task-row-urgent' : '') %>">
                       <td><strong><%= task.title || task.description ? (task.title || task.description).substring(0, 25) + ((task.title || task.description).length > 25 ? '...' : '') : 'No title' %></strong></td>
                       <td>
                         <span class="status-badge <%= task.status?.toLowerCase().replace(/\s+/g, '') %>">
@@ -1694,13 +1751,13 @@
                       </td>
                       <td><%= task.deadline ? new Date(task.deadline).toLocaleDateString() : 'N/A' %></td>
                       <td>
-                        <span style="color: <%= task.priorityColor %>; font-weight: 700; font-size: 0.875rem;">
+                        <span class="priority-text <%= task.priority %>" style="font-weight: 700; font-size: 0.875rem;">
                           <%= task.isOverdue ? 'OVERDUE' : task.priority.toUpperCase() %>
                         </span>
                       </td>
                       <td>
                         <a href="/admin/<%= task.requestType === 'service' ? 'services' : 'approvals' %>?openModalId=<%= task._id %>" 
-                           class="btn-view" style="padding: 0.4rem 0.8rem; font-size: 0.875rem; background: <%= task.priorityColor %>;">View</a>
+                           class="btn-view priority-bg <%= task.priority %>" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">View</a>
                       </td>
                     </tr>
                   <% }) %>
@@ -2288,6 +2345,7 @@
     const statusChartCtx = document.getElementById('statusChart').getContext('2d');
     const statusChart = new Chart(statusChartCtx, {
       type: 'doughnut',
+      /* @ts-ignore */
       data: {
         labels: ['Pending Assignment', 'Awaiting Approval', 'In Revision', 'Completed'],
         datasets: [{
@@ -2372,17 +2430,17 @@
     const volumeChart = new Chart(volumeChartCtx, {
       type: 'line',
       data: {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        labels: [],
         datasets: [{
           label: 'Approval Requests',
-          data: [8, 12, 15, 10],
+          data: [],
           borderColor: '#43a047',
           backgroundColor: 'rgba(67, 160, 71, 0.1)',
           tension: 0.4,
           fill: true
         }, {
           label: 'Service Requests',
-          data: [5, 8, 10, 12],
+          data: [],
           borderColor: '#f97316',
           backgroundColor: 'rgba(249, 115, 22, 0.1)',
           tension: 0.4,
@@ -2416,11 +2474,28 @@
       }
     });
 
+    // Function to load volume data
+    async function loadVolumeData(days) {
+      try {
+        const response = await fetch(`/admin/request-volume?days=${days}`);
+        const data = await response.json();
+        if (data.success) {
+          volumeChart.data.labels = data.labels;
+          volumeChart.data.datasets[0].data = data.approvals;
+          volumeChart.data.datasets[1].data = data.services;
+          volumeChart.update();
+        }
+      } catch (error) {
+        console.error('Error loading volume data:', error);
+      }
+    }
+
+    // Load initial data
+    loadVolumeData(30);
+
     // Time range filter for volume chart
     document.getElementById('timeRangeFilter').addEventListener('change', function(e) {
-      // Update chart based on selected range
-      console.log('Time range changed to:', e.target.value);
-      // TODO: Fetch new data and update chart
+      loadVolumeData(parseInt(e.target.value));
     });
 
     // Fetch and populate dashboard data

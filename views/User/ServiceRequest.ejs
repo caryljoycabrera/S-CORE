@@ -248,6 +248,87 @@
   font-size: 1rem;
 }
 
+/* Links Section Styles */
+#linksContainer {
+  margin-bottom: 1rem;
+}
+
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.link-item:hover {
+  border-color: var(--primary-green);
+  background: #f0fdf4;
+}
+
+.link-item input[type="url"] {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  transition: border-color 0.3s ease;
+}
+
+.link-item input[type="url"]:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1);
+}
+
+.remove-link-btn {
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-link-btn:hover {
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.add-link-btn {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
+}
+
+.add-link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+}
+
 .form-actions {
   grid-column: 1 / -1;
   display: flex;
@@ -1988,7 +2069,7 @@
         </div>
         <div class="sidebar-profile-info">
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
-          <p class="sidebar-profile-role"><%= user.userType || 'User' %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : (user.userType === 'student' ? 'Student' : (user.userType || 'User')) %></p>
         </div>
         <span class="sidebar-profile-arrow">→</span>
       </a>
@@ -2445,7 +2526,22 @@
             <small style="color: #6b7280; margin-top: 0.5rem;">Optional: Attach relevant documents (Max 10MB per file)</small>
           </div>
 
-          <!-- Row 3: Deadline (Emphasized with green stroke) -->
+          <!-- Row 3: Relevant Links -->
+          <div class="form-group full-width">
+            <label>Relevant Links (Optional):</label>
+            <small style="color: #6b7280; display: block; margin-bottom: 0.5rem;">💡 Reminder: Please ensure links have public access or proper sharing permissions</small>
+            <div id="linksContainer">
+              <!-- Links will be added here dynamically -->
+            </div>
+            <button type="button" id="addLinkBtn" class="add-link-btn">
+              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Add Link
+            </button>
+          </div>
+
+          <!-- Row 4: Deadline (Emphasized with green stroke) -->
           <div class="form-group deadline-group full-width">
             <label for="deadline">Deadline:</label>
             <input type="date" id="deadline" name="deadline" required min="<%= new Date().toISOString().slice(0,10) %>" />
@@ -2484,7 +2580,7 @@
   </div>
 </div>
 
-          <!-- Row 5: Meeting Request (Full Width) -->
+          <!-- Row 6: Meeting Request (Full Width) -->
           <div class="form-group full-width">
             <label class="checkbox-container">
               <input type="checkbox" id="meetingRequest" name="meetingRequest">
@@ -2590,6 +2686,21 @@ document.addEventListener('DOMContentLoaded', function() {
           return false;
         }
       }
+
+      // Add links to form data
+      const links = getLinkValues();
+      // Clear any existing link inputs from previous submissions
+      const existingLinkInputs = serviceForm.querySelectorAll('input[name="links"]');
+      existingLinkInputs.forEach(input => input.remove());
+      
+      // Add link inputs
+      links.forEach(link => {
+        const linkInput = document.createElement('input');
+        linkInput.type = 'hidden';
+        linkInput.name = 'links';
+        linkInput.value = link;
+        serviceForm.appendChild(linkInput);
+      });
     });
   }
 });
@@ -2686,6 +2797,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Load request types on page load
   loadApprovedRequestTypes();
+
+  // ===== LINKS MANAGEMENT =====
+  const linksContainer = document.getElementById('linksContainer');
+  const addLinkBtn = document.getElementById('addLinkBtn');
+
+  // Function to create a new link input field
+  function createLinkInput(value = '') {
+    const linkItem = document.createElement('div');
+    linkItem.className = 'link-item';
+    
+    linkItem.innerHTML = `
+      <input type="url" placeholder="https://example.com" value="${value}" />
+      <button type="button" class="remove-link-btn" title="Remove link">&times;</button>
+    `;
+    
+    // Add event listener to remove button
+    const removeBtn = linkItem.querySelector('.remove-link-btn');
+    removeBtn.addEventListener('click', function() {
+      linkItem.remove();
+    });
+    
+    return linkItem;
+  }
+
+  // Add link button event listener
+  addLinkBtn.addEventListener('click', function() {
+    const linkInput = createLinkInput();
+    linksContainer.appendChild(linkInput);
+    // Focus on the new input
+    linkInput.querySelector('input[type="url"]').focus();
+  });
+
+  // Function to get all link values
+  function getLinkValues() {
+    const linkInputs = linksContainer.querySelectorAll('input[type="url"]');
+    const links = [];
+    linkInputs.forEach(input => {
+      const value = input.value.trim();
+      if (value) {
+        links.push(value);
+      }
+    });
+    return links;
+  }
 
   // Handle dropdown selection
   if (specificRequestTypeSelect) {
@@ -2848,14 +3003,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <!-- Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
-    <div class="modal-content requestor-modal-content">
-      <header class="modal-header requestor-modal-header">
-        <span class="modal-title">Request Details</span>
-        <span class="close" id="closeDetailsModal">&times;</span>
-      </header>
-      <div class="modal-body requestor-modal-body">
+    <div class="modal-content unit-modal-wide">
+      <!-- Modal Header -->
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <div>
+            <h2>Request Details</h2>
+            <span class="unit-modal-subtitle">View and manage your service request</span>
+          </div>
+        </div>
+        <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="modal-body unit-modal-body">
         <!-- Left Column: Request Details -->
-        <div class="requestor-left-column">
+        <div class="unit-left-column">
         <div class="details-content">
           <!-- General Information Section -->
           <!-- General Information Section -->
@@ -2940,7 +3110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   </div>
                   <div style="text-align: left;">
                     <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
-                    <div style="font-size: 0.875rem; color: #047857;">Collaborate with your team members</div>
+                    <div style="font-size: 0.875rem; color: #047857;">Communicate with SCO support</div>
                   </div>
                 </div>
                 <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
@@ -3069,7 +3239,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
           <h2>Request Discussion</h2>
-          <span class="unit-conversation-subtitle">Communicate with admin and unit teams</span>
+          <span class="unit-conversation-subtitle">Communicate with SCO staff</span>
         </div>
         <button class="close-modal-btn" id="closeConversationModal" aria-label="Close">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -3799,8 +3969,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (messagesContainer) messagesContainer.innerHTML = '';
         
-        if (conversation.messages && conversation.messages.length > 0) {
-          conversation.messages.forEach(message => {
+        if (conversation.conversation && conversation.conversation.length > 0) {
+          conversation.conversation.forEach(message => {
             addMessageToUI(message);
           });
           
@@ -3836,7 +4006,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       const messageDiv = document.createElement('div');
-      const senderName = message.senderId ? `${message.senderId.fName} ${message.senderId.lName}` : 'Unknown';
+      const senderName = message.senderName || 'Unknown';
       
       // Determine if this is the current user's message (name-based comparison)
       const isOwnMessage = window.currentUserFullName && senderName === window.currentUserFullName;
@@ -4300,7 +4470,7 @@ document.querySelectorAll('.request-row').forEach(row => {
     } else {
       console.error('detailOrganization element not found!');
     }
-        if (detailDescription) detailDescription.innerText = row.dataset.description || 'No description provided';
+        if (detailDescription) detailDescription.innerHTML = row.dataset.description || 'No description provided';
         if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';
         if (detailDatetime) detailDatetime.innerText = row.dataset.datetime || '';
 

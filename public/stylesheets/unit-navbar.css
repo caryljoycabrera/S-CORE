@@ -10,12 +10,6 @@
    CSS CUSTOM PROPERTIES (VARIABLES)
    ========================================== */
 :root {
-  --unit-primary: #2d7a4a;
-  --unit-secondary: #256d3f;
-  --unit-dark: #1e5c35;
-  --unit-light: #dcfce7;
-  --unit-blue: #1e3a5f;
-  --unit-blue-dark: #172e4a;
   --sidebar-width-collapsed: 64px;
   --sidebar-width-expanded: 240px;
   --header-height-desktop: 80px;
@@ -33,7 +27,7 @@
   top: var(--header-height-desktop);
   bottom: 0;
   width: var(--sidebar-width-collapsed);
-  background: linear-gradient(180deg, var(--unit-primary) 0%, var(--unit-secondary) 40%, var(--unit-blue) 100%);
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   z-index: 100;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -481,7 +475,7 @@ body:has(.modal[style*="display: block"]) .unit-sidebar {
   top: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(90deg, var(--unit-primary) 0%, var(--unit-secondary) 40%, var(--unit-blue) 100%);
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
   z-index: 10000 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-bottom: none;
@@ -883,20 +877,20 @@ body:has(.modal[style*="display: block"]) .unit-sidebar {
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: var(--unit-light);
-  color: var(--unit-dark);
+  background: var(--light-green);
+  color: var(--primary-green);
   text-decoration: none;
   border-radius: 12px;
   font-weight: 700;
   font-size: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 2px 4px rgba(44, 93, 49, 0.2);
 }
 
 .back-to-dashboard-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(6, 95, 70, 0.3);
-  background: var(--unit-dark);
+  box-shadow: 0 4px 12px rgba(44, 93, 49, 0.3);
+  background: var(--primary-green);
   color: #ffffff;
 }
 

@@ -76,6 +76,11 @@ const requestApprovalSchema = new mongoose.Schema({
     type: String
   }],
 
+  // Relevant links
+  links: [{
+    type: String
+  }],
+
   // Revision tracking (2 revision limit)
   revisionCount: {
     type: Number,

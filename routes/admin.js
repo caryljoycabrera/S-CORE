@@ -1313,6 +1313,79 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
 });
 
 /**
+ * POST /admin/user/update-status
+ * Updates user account status (approve/deny/reset)
+ */
+router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
+  const { userId, action } = req.body;
+
+  try {
+    if (!userId || !action) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User ID and action are required' 
+      });
+    }
+
+    // Map action to status
+    let newStatus;
+    if (action === 'approve') newStatus = 'approved';
+    else if (action === 'deny') newStatus = 'denied';
+    else if (action === 'reset') newStatus = 'pending';
+    else {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid action' 
+      });
+    }
+
+    // Update user status
+    const user = await User.findByIdAndUpdate(
+      userId, 
+      { status: newStatus }, 
+      { new: true }
+    ).populate('role');
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    // Send appropriate notification
+    try {
+      if (action === 'approve') {
+        if (user.role === 'unit') {
+          await notificationService.notifyUnitApproved(userId, req.user._id);
+        } else {
+          await notificationService.notifyUserApproved(userId, req.user._id);
+        }
+      } else if (action === 'deny') {
+        await notificationService.notifyUserDenied(userId, req.user._id);
+      }
+      // Reset action doesn't send notification
+    } catch (notificationError) {
+      console.error('Error sending notification:', notificationError);
+      // Don't fail the request if notification fails
+    }
+
+    res.json({ 
+      success: true, 
+      message: `User status updated to ${newStatus}`,
+      newStatus 
+    });
+
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error while updating user status' 
+    });
+  }
+});
+
+/**
  * GET /admin/debug/orphaned-requests
  * Debug route to check for orphaned requests
  */
