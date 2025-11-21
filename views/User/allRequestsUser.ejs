@@ -1789,7 +1789,7 @@
 <tr class="request-row"
     data-id="<%= request._id %>"
     data-type="<%= request.type %>"
-    data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
+    data-specifictype="<%= request.type === 'Request Approval' ? (request.requestType || 'Not specified') : (request.serviceType || 'Not specified') %>"
     data-title="<%= request.title %>"
     data-status="<%= request.status %>"
     data-organization="<%= request.organization %>"
@@ -1847,12 +1847,12 @@
   </div>
 
 <div id="detailsModal" class="modal" style="display:none;">
-  <div class="modal-content requestor-modal-content">
+  <div class="modal-content requestor-modal-content has-revisions">
     <header class="modal-header requestor-modal-header">
       <span class="modal-title">Request Details</span>
       <span class="close" id="closeDetailsModal">&times;</span>
     </header>
-    <div class="modal-body requestor-modal-body">
+    <div class="modal-body requestor-modal-body two-column">
       <!-- Left Column: Request Details -->
       <div class="requestor-left-column">
       <div class="details-content">
@@ -1926,7 +1926,7 @@
         <div id="file-preview"></div>
 
         <!-- Chat Section -->
-        <div class="chat-section" id="chatButtonSection" style="display: none;">
+        <div class="chat-section" id="chatButtonSectionLeft" style="display: none;">
           <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
               <div style="display: flex; align-items: center; gap: 1rem;">
@@ -1950,7 +1950,29 @@
       </div>
       
       <!-- Right Column: Revision History & Resubmission Form -->
-      <div class="requestor-right-column" id="requestorRightColumn" style="display: none;">
+      <div class="requestor-right-column" id="requestorRightColumn" style="display: flex;">
+        <!-- Chat Section -->
+        <div class="chat-section" id="chatButtonSection" style="display: block;">
+          <button id="openChatFromDetailsModalRight" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </div>
+                <div style="text-align: left;">
+                  <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
+                  <div style="font-size: 0.875rem; color: #047857;">Communicate with SCO support</div>
+                </div>
+              </div>
+              <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </div>
+          </button>
+        </div>
+
         <!-- Revision History Section -->
         <div id="revisionHistorySection" class="requestor-revision-section">
           <div class="requestor-section-header">
@@ -2558,10 +2580,14 @@ document.addEventListener('DOMContentLoaded', function() {
 closeDetailsModal.onclick = () => {
   const modalBody = document.querySelector('.requestor-modal-body');
   const rightColumn = document.getElementById('requestorRightColumn');
+  const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
+  const chatButtonSectionRight = document.querySelector('.requestor-right-column .chat-section[id="chatButtonSection"]');
   
   detailModal.style.display = 'none';
   if (modalBody) modalBody.classList.remove('two-column');
   if (rightColumn) rightColumn.style.display = 'none';
+  if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
+  if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'none';
 };
 
 openChatFromDetailsModal.onclick = function() {
@@ -2572,14 +2598,30 @@ openChatFromDetailsModal.onclick = function() {
   }
 };
 
+// Handler for right column chat button
+const openChatFromDetailsModalRight = document.getElementById("openChatFromDetailsModalRight");
+if (openChatFromDetailsModalRight) {
+  openChatFromDetailsModalRight.onclick = function() {
+    // Use the currentConversationId that was set when the modal was opened
+    if (currentConversationId) {
+      detailModal.style.display = 'none';
+      window.openTeamConversationModal(currentConversationId);
+    }
+  };
+}
+
 window.onclick = function(event) {
   if (event.target === detailModal) {
     const modalBody = document.querySelector('.requestor-modal-body');
     const rightColumn = document.getElementById('requestorRightColumn');
+    const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
+    const chatButtonSectionRight = document.querySelector('.requestor-right-column .chat-section[id="chatButtonSection"]');
     
     detailModal.style.display = 'none';
     if (modalBody) modalBody.classList.remove('two-column');
     if (rightColumn) rightColumn.style.display = 'none';
+    if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
+    if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'none';
   }
 }
 
@@ -2773,22 +2815,25 @@ document.querySelectorAll('.request-row').forEach(row => {
     // Chat functionality
     currentConversationId = row.dataset.id;
     currentRequestType = row.dataset.type; // Store request type globally
-    const chatButtonSection = document.getElementById("chatButtonSection");
-    if (chatButtonSection) {
-      const reqType = row.dataset.type;
-      if (reqType === "Service Request" || reqType === "Request Approval") {
-        chatButtonSection.style.display = 'block';
-        
-        // Load revision history based on request type
-        if (reqType === "Request Approval") {
-          loadRevisionHistory(currentConversationId);
-        } else if (reqType === "Service Request") {
-          loadServiceRevisionHistory(currentConversationId);
-        }
-      } else {
-        chatButtonSection.style.display = 'none';
-      }
+    const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft'); // Left column chat
+    const chatButtonSectionRight = document.querySelector('.requestor-right-column .chat-section[id="chatButtonSection"]'); // Right column chat
+    const modalBody = document.querySelector('.requestor-modal-body');
+    const rightColumn = document.getElementById('requestorRightColumn');
+    
+    // Always show two-column layout for all request types
+    if (modalBody) modalBody.classList.add('two-column');
+    if (rightColumn) rightColumn.style.display = 'flex';
+    
+    // Load appropriate revision history based on request type
+    if (currentRequestType === "Service Request") {
+      loadServiceRevisionHistory(currentConversationId);
+    } else {
+      loadRevisionHistory(currentConversationId);
     }
+    
+    // Handle chat buttons - always show in right column for consistent layout
+    if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
+    if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'block';
     
     if (detailModal) {
       detailModal.style.display = 'flex';
@@ -4867,9 +4912,10 @@ async function loadServiceRevisionHistory(requestId) {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.log('[Service] ❌ Non-JSON response');
+            // Hide revision section but keep two-column layout with chat button
             if (historySection) historySection.style.display = 'none';
-            if (rightColumn) rightColumn.style.display = 'none';
-            if (modalBody) modalBody.classList.remove('two-column');
+            if (rightColumn) rightColumn.style.display = 'flex'; // Keep right column visible for chat button
+            if (modalBody) modalBody.classList.add('two-column'); // Keep two-column layout
             return;
         }
         
@@ -5000,23 +5046,26 @@ async function loadServiceRevisionHistory(requestId) {
                     serviceRevisionSection.style.display = 'none';
                 }
             } else {
+                // No revision history - hide revision section but keep two-column layout with chat button
                 if (historySection) historySection.style.display = 'none';
-                if (rightColumn) rightColumn.style.display = 'none';
-                if (modalBody) modalBody.classList.remove('two-column');
-                if (modalContent) modalContent.classList.remove('has-revisions');
+                if (rightColumn) rightColumn.style.display = 'flex'; // Keep right column visible for chat button
+                if (modalBody) modalBody.classList.add('two-column'); // Keep two-column layout
+                if (modalContent) modalContent.classList.add('has-revisions'); // Keep wider modal
             }
         } else {
+            // No revisions data - hide revision section but keep two-column layout with chat button
             if (historySection) historySection.style.display = 'none';
-            if (rightColumn) rightColumn.style.display = 'none';
-            if (modalBody) modalBody.classList.remove('two-column');
-            if (modalContent) modalContent.classList.remove('has-revisions');
+            if (rightColumn) rightColumn.style.display = 'flex'; // Keep right column visible for chat button
+            if (modalBody) modalBody.classList.add('two-column'); // Keep two-column layout
+            if (modalContent) modalContent.classList.add('has-revisions'); // Keep wider modal
         }
     } catch (error) {
         console.error('[Service] Error loading revision history:', error);
+        // Error case - hide revision section but keep two-column layout with chat button
         if (historySection) historySection.style.display = 'none';
-        if (rightColumn) rightColumn.style.display = 'none';
-        if (modalBody) modalBody.classList.remove('two-column');
-        if (modalContent) modalContent.classList.remove('has-revisions');
+        if (rightColumn) rightColumn.style.display = 'flex'; // Keep right column visible for chat button
+        if (modalBody) modalBody.classList.add('two-column'); // Keep two-column layout
+        if (modalContent) modalContent.classList.add('has-revisions'); // Keep wider modal
     }
 }
 

@@ -149,16 +149,15 @@
   display: none;
   justify-content: center;
   align-items: center;
-  /* z-index removed - using global modal-centered.css (99999) to ensure backdrop covers sidebar */
   padding: 20px;
 }
 
 .modal-content {
   background: white;
   border-radius: 1rem;
-  max-width: 800px;
+  max-width: 1363px !important;
   width: 95%;
-  max-height: 90vh;
+  max-height: 90vh !important;
   box-shadow: var(--card-shadow);
   overflow: hidden;
   display: flex;
@@ -3019,7 +3018,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div id="detailsModal" class="modal" style="display:none;">
     <div class="modal-content requestor-modal-content">
       <header class="modal-header requestor-modal-header">
-        <span class="modal-title">Request Details</span>
+        <span class="modal-title">Service Details</span>
         <span class="close" id="closeDetailsModal">&times;</span>
       </header>
       
@@ -3165,7 +3164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         
         <!-- Right Column: Revision History & Resubmission Form -->
-        <div class="requestor-right-column" id="requestorRightColumn">
+        <div class="requestor-right-column" id="requestorRightColumn" style="display: none;">
           <!-- Chat Section -->
           <div class="chat-section" id="chatButtonSection" style="display: none;">
             <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
@@ -5968,6 +5967,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Always show two-column layout for service requests
+        if (rightColumn) {
+            rightColumn.style.display = 'flex';
+            console.log('[Service] ✅ Right column always visible for service requests');
+        }
+        if (modalBody) {
+            modalBody.classList.add('two-column');
+            console.log('[Service] ✅ Two-column layout always activated for service requests');
+        }
+        
         try {
             console.log('[Service] Fetching API...');
             const response = await fetch(`/api/service-revision-history/${requestId}`);
@@ -5976,8 +5985,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 console.log('[Service] ❌ Non-JSON response');
-                if (rightColumn) rightColumn.style.display = 'none';
-                if (modalBody) modalBody.classList.remove('two-column');
+                // Show empty revision history
+                historyContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #64748b;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>No revision history available yet.</p>
+                        <small>Revision history will appear here when updates are made to your request.</small>
+                    </div>
+                `;
                 return;
             }
             
@@ -5992,15 +6009,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (revisionsToShow.length > 0) {
                     console.log('[Service] ✅ Displaying revision history');
                     
-                    // Show two-column layout
-                    if (rightColumn) {
-                        rightColumn.style.display = 'flex';
-                        console.log('[Service] ✅ Right column visible');
-                    }
-                    if (modalBody) {
-                        modalBody.classList.add('two-column');
-                        console.log('[Service] ✅ Two-column layout activated');
-                    }
                     if (modalContent) modalContent.classList.add('has-revisions');
                     
                     historyContainer.innerHTML = '';
@@ -6049,20 +6057,46 @@ document.addEventListener('DOMContentLoaded', function() {
                         serviceRevisionSection.style.display = 'none';
                     }
                 } else {
-                    if (rightColumn) rightColumn.style.display = 'none';
-                    if (modalBody) modalBody.classList.remove('two-column');
+                    // No revisions to show, but still show the section with empty message
                     if (modalContent) modalContent.classList.remove('has-revisions');
+                    historyContainer.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #64748b;">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p>No revision history available yet.</p>
+                            <small>Revision history will appear here when updates are made to your request.</small>
+                        </div>
+                    `;
                 }
             } else {
-                if (rightColumn) rightColumn.style.display = 'none';
-                if (modalBody) modalBody.classList.remove('two-column');
+                // API call successful but no revisions
                 if (modalContent) modalContent.classList.remove('has-revisions');
+                historyContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #64748b;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>No revision history available yet.</p>
+                        <small>Revision history will appear here when updates are made to your request.</small>
+                    </div>
+                `;
             }
         } catch (error) {
             console.error('[Service] Error loading revision history:', error);
-            if (rightColumn) rightColumn.style.display = 'none';
-            if (modalBody) modalBody.classList.remove('two-column');
+            // Show error message in revision history section
             if (modalContent) modalContent.classList.remove('has-revisions');
+            historyContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #dc2626;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <p>Unable to load revision history.</p>
+                    <small>Please try refreshing the page.</small>
+                </div>
+            `;
         }
     }
 
