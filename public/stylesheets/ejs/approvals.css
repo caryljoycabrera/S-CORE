@@ -956,6 +956,21 @@ hr {
   border-bottom: 1px solid #e2e8f0;
 }
 
+.modal-header.unit-modal-header {
+  background: #0891b2 !important;
+  color: white !important;
+}
+
+.modal-header.unit-modal-header.approval-header-color {
+  background: #0891b2 !important;
+  color: white !important;
+}
+
+.modal-header.unit-modal-header.service-header-color {
+  background: #f97316 !important;
+  color: white !important;
+}
+
 .modal-title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -1980,8 +1995,8 @@ hr {
 }
 
 .admin-modal-header {
-  background: #dbeafe;
-  color: #1e3a8a;
+  background: #0891b2 !important;
+  color: #ffffff !important;
   padding: 1.5rem;
   border-bottom: none;
   display: flex;
@@ -1989,19 +2004,15 @@ hr {
   justify-content: space-between;
 }
 
-/* Header colors for different request types - Light backgrounds */
+/* Header colors for different request types - Dynamic based on type */
 .admin-modal-header.approval-header-color {
-  background: #dbeafe;
-  color: #1e3a8a;
+  background: #0891b2 !important;
+  color: #ffffff !important;
 }
 
 .admin-modal-header.service-header-color {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.admin-modal-header.approval-header-color {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #f97316 !important;
+  color: #ffffff !important;
 }
 
 .modal-title-section {
@@ -2673,4 +2684,111 @@ hr {
     grid-template-columns: 1fr !important;
     gap: 1.5rem !important;
   }
+}
+
+/* ========================================
+   UNIT CHAT BUTTON - THEME ALIGNED
+   ======================================== */
+
+.unit-info-card.unit-conversation-trigger {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 1.5rem;
+}
+
+.unit-info-card.unit-conversation-trigger:hover {
+  border-color: #86efac;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.25);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.unit-chat-button {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.unit-chat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: white;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.unit-chat-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.unit-chat-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.unit-chat-text strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #166534;
+  letter-spacing: 0.3px;
+}
+
+.unit-chat-text small {
+  font-size: 0.8rem;
+  color: #15803d;
+  font-weight: 500;
+}
+
+.unit-chat-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #22c55e;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.unit-chat-arrow svg {
+  width: 20px;
+  height: 20px;
+  stroke: #22c55e;
+  stroke-width: 2.5;
+}
+
+.unit-chat-button:hover .unit-chat-arrow {
+  transform: translateX(6px);
+  color: #16a34a;
+}
+
+.unit-chat-button:hover .unit-chat-arrow svg {
+  stroke: #16a34a;
+}
+
+.unit-info-card.unit-conversation-trigger:hover .unit-chat-icon {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
 }

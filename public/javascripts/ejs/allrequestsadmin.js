@@ -1007,7 +1007,7 @@ function populateModalData(rowData) {
   setDetailText('detailSpecificRequest', rowData.specifictype);
   setDetailText('detailOrganization', rowData.organization);
   setDetailText('detailDatetime', rowData.datetime);
-  setDetailText('detailDescription', rowData.description || 'No description provided');
+  setElementHTML('detailDescription', rowData.description || 'No description provided');
 
   // Handle deadline visibility
   const deadlineElements = ['deadlineInfo', 'adminDeadlineField'];
@@ -1034,7 +1034,7 @@ function populateModalData(rowData) {
   const chatButton = document.getElementById('openChatFromModal');
   if (chatButton) {
     chatButton.onclick = function() {
-      openTeamConversationModal(currentRequestId);
+      window.openConversation(currentRequestId);
     };
   }
 }
@@ -1042,6 +1042,11 @@ function populateModalData(rowData) {
 function setDetailText(id, value) {
   const element = document.getElementById(id);
   if (element) element.textContent = value || 'N/A';
+}
+
+function setElementHTML(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.innerHTML = value || 'N/A';
 }
 
 // Admin form population
@@ -2369,6 +2374,198 @@ function formatText(text) {
     
     return formatted;
 }
+
+// ==========================================
+// APPROVAL REQUEST REVISION HISTORY FUNCTIONS (Admin View)
+// ==========================================
+
+async function loadRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    console.log('[Approval Revision History] Starting load for request:', requestId);
+    
+    if (!historyContainer) {
+        console.warn('[Approval Revision History] Container not found');
+        return;
+    }
+    
+    try {
+        // Try to fetch approval revision history from API
+        const response = await fetch(`/api/approval-revision-history/${requestId}`);
+        const contentType = response.headers.get('content-type');
+        
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('[Approval Revision History] API returned non-JSON response');
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('[Approval Revision History] API Response:', result);
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            // Filter out initial submission for revision display
+            const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+            
+            if (revisionsToShow.length > 0) {
+                // Show the revision history section
+                if (historySection) {
+                    historySection.style.display = 'block';
+                }
+                
+                // Clear container
+                historyContainer.innerHTML = '';
+                
+                // Render each revision entry
+                revisionsToShow.forEach((revision, index) => {
+                    const entry = createRevisionEntry(revision, index, revisionsToShow.length);
+                    historyContainer.appendChild(entry);
+                });
+                
+                // Enable two-column layout
+                const modalContent = document.querySelector('#detailsModal .modal-content');
+                const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+                const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+                
+                if (modalContent && modalBody) {
+                    modalContent.style.maxWidth = '1600px';
+                    modalBody.classList.add('has-revisions');
+                }
+                if (rightColumn) {
+                    rightColumn.style.display = 'flex';
+                }
+            } else {
+                // No revisions to show
+                if (historySection) historySection.style.display = 'none';
+                resetModalLayout();
+            }
+        } else {
+            console.log('[Approval Revision History] No revisions available');
+            if (historySection) historySection.style.display = 'none';
+            resetModalLayout();
+        }
+    } catch (error) {
+        console.error('[Approval Revision History] Error loading:', error);
+        // Don't show error to user, just hide the section
+        if (historySection) historySection.style.display = 'none';
+        resetModalLayout();
+    }
+}
+
+function resetModalLayout() {
+    const modalContent = document.querySelector('#detailsModal .modal-content');
+    const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+    const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+    
+    if (modalContent && modalBody) {
+        modalContent.style.maxWidth = '900px';
+        modalBody.classList.remove('has-revisions');
+    }
+    if (rightColumn) rightColumn.style.display = 'none';
+}
+
+function createRevisionEntry(revision, index, total) {
+    const entry = document.createElement('div');
+    entry.className = 'revision-conversation-item';
+    
+    // Format timestamp
+    const timestamp = new Date(revision.timestamp || revision.createdAt || Date.now());
+    const fullTimestamp = timestamp.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    // Get relative time
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let relativeTime;
+    if (diffMins < 1) relativeTime = 'Just now';
+    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    else relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    // Determine badge and label
+    let typeLabel = 'Update';
+    let badgeClass = 'badge-revision';
+    
+    if (revision.type === 'approved') {
+        typeLabel = '✓ Approved';
+        badgeClass = 'badge-approved';
+    } else if (revision.type === 'rejected') {
+        typeLabel = '✕ Rejected';
+        badgeClass = 'badge-rejection';
+    } else if (revision.type === 'revision_requested') {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    }
+    
+    const isLast = index === total - 1;
+    let statusIndicator = '';
+    
+    if (revision.type === 'approved') {
+        statusIndicator = `
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <span style="color: #10b981; font-weight: 600;">Request Approved</span>
+            </div>
+        `;
+    } else if (revision.type === 'rejected') {
+        statusIndicator = `
+            <div class="status-indicator rejected">
+                <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="8" y1="8" x2="16" y2="16"/>
+                    <line x1="16" y1="8" x2="8" y2="16"/>
+                </svg>
+                <span style="color: #ef4444; font-weight: 600;">Request Rejected</span>
+            </div>
+        `;
+    }
+    
+    const authorName = revision.by || revision.authorName || 'Admin';
+    const content = revision.notes || revision.description || 'No details provided';
+    
+    entry.innerHTML = `
+        <div class="revision-number-badge">#${index + 1}</div>
+        <div class="revision-message-bubble">
+            <div class="revision-bubble-header">
+                <div>
+                    <span class="revision-author">${escapeHtml(authorName)}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
+                <div class="revision-timestamp">
+                    <span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
+                </div>
+            </div>
+            
+            <div class="message-content-section">
+                <div class="content-label">APPROVAL DETAILS:</div>
+                <div class="content-text">${displayFormattedText(content)}</div>
+            </div>
+            
+            ${statusIndicator}
+        </div>
+    `;
+    
+    return entry;
+}
+
+
 
 // Send team message
 window.sendTeamMessage = function() {
