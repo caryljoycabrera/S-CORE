@@ -2529,6 +2529,41 @@ input:checked + .toggle-slider:before {
   display: none !important;
 }
 
+/* Unit-prefixed classes for two-column layout */
+.unit-modal-body {
+  display: grid !important;
+  grid-template-columns: 1fr 700px !important;
+  gap: 2rem !important;
+  padding: 2rem !important;
+  max-height: calc(95vh - 120px) !important;
+  overflow: hidden;
+}
+
+.unit-modal-body .unit-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+  padding-right: 1rem;
+  min-height: 0;
+}
+
+.unit-modal-body .unit-right-column {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+  padding-left: 1rem;
+  border-left: 2px solid #e5e7eb;
+  min-height: 0;
+}
+
+/* Maintain two-column layout always */
+.unit-modal-body.has-revisions {
+  display: grid !important;
+  grid-template-columns: 1fr 700px !important;
+}
+
 .admin-info-card {
   background: white;
   border: 1px solid #e5e7eb;

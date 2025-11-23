@@ -3221,8 +3221,8 @@ async function loadServiceRevisionHistory(requestId) {
                 
                 // Enable two-column layout for revision history
                 const modalContent = document.querySelector('#detailsModal .modal-content');
-                const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-                const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+                const modalBody = document.querySelector('#detailsModal .unit-modal-body');
+                const rightColumn = document.querySelector('#detailsModal .unit-right-column');
                 
                 console.log('[Service Revision History] Modal content element:', !!modalContent);
                 console.log('[Service Revision History] Modal body element:', !!modalBody);
@@ -3239,12 +3239,12 @@ async function loadServiceRevisionHistory(requestId) {
                 
                 console.log('[Service Revision History] ✅ Two-column layout enabled');
             } else {
-                // No revisions to show, hide history section
+                // No revisions to show, but keep section visible for service requests
                 console.log('[Service Revision History] No revisions after filtering');
-                if (historySection) historySection.style.display = 'none';
+                if (historySection) historySection.style.display = 'block'; // Keep visible even without revisions
                 const modalContent = document.querySelector('#detailsModal .modal-content');
-                const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-                const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+                const modalBody = document.querySelector('#detailsModal .unit-modal-body');
+                const rightColumn = document.querySelector('#detailsModal .unit-right-column');
                 if (modalContent && modalBody) {
                     modalContent.style.maxWidth = '900px';
                     modalBody.classList.remove('has-revisions');
