@@ -1341,7 +1341,9 @@ hr {
   background: var(--primary-green);
   color: white;
   padding: 1.5rem;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   border-radius: 12px 12px 0 0;
 }
 
@@ -1351,7 +1353,6 @@ hr {
   font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
 }
 
@@ -1420,8 +1421,9 @@ hr {
 
 .confirmation-actions {
   display: flex;
-  gap: 1rem;
-  justify-content: center;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .confirmation-btn {
@@ -1452,6 +1454,48 @@ hr {
 
 .confirmation-btn-cancel:hover {
   background: #4b5563;
+}
+
+/* Edit Modal Button Styles */
+.btn-cancel,
+.btn-confirm,
+.btn-danger {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm {
+  background: #10b981;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: #059669;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
 }
 
 /* Mobile responsiveness */
@@ -3420,7 +3464,6 @@ input:checked + .toggle-slider:before {
   /* Buttons - Minimum touch target 44px */
   .download-btn-enhanced,
   .quick-action-btn,
-  .admin-btn,
   .edit-btn {
     min-height: 44px;
     padding: 0.75rem 1rem;
@@ -4314,7 +4357,6 @@ input:checked + .toggle-slider:before {
   input[type="button"],
   input[type="submit"],
   .quick-action-btn,
-  .admin-btn,
   .download-btn-enhanced,
   .edit-btn,
   .confirmation-btn {
@@ -4482,5 +4524,189 @@ input:checked + .toggle-slider:before {
     background: white !important;
     color: #000 !important;
     border: 1px solid #000 !important;
+  }
+}
+
+/* ========================================
+   EDIT AND DELETE BUTTON STYLES
+   ======================================== */
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.modal-action-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.modal-action-btn.edit-btn:hover {
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.modal-action-btn.delete-btn:hover {
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.modal-action-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+/* Edit Modal Specific Styles */
+.edit-modal-content {
+  max-width: 600px;
+  width: 90%;
+}
+
+.edit-modal-body {
+  padding: 24px;
+}
+
+.edit-form-group {
+  margin-bottom: 20px;
+}
+
+.edit-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.edit-form-group .required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.edit-input,
+.edit-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+
+.edit-input:focus,
+.edit-textarea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.edit-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* Read-only Information Section */
+.edit-info-section {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.edit-readonly-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.edit-readonly-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.edit-readonly-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.edit-readonly-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #064e3b;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #d1fae5;
+}
+
+/* Form row for side-by-side fields */
+.edit-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .edit-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .edit-readonly-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Delete Modal Warning Style */
+.confirmation-header.warning {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-bottom: 2px solid #fecaca;
+}
+
+.confirmation-header.warning h3 {
+  color: #991b1b;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-header-actions {
+    gap: 4px;
+  }
+
+  .modal-action-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .modal-action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-action-btn span {
+    display: none;
   }
 }

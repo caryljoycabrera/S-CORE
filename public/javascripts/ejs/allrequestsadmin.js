@@ -1102,7 +1102,10 @@ function populateAdminForm(rowData) {
   const statusSelect = document.getElementById('adminStatusSelect');
   if (statusSelect) {
     const options = getStatusOptions(rowData.type);
-    statusSelect.innerHTML = options.map(opt => `<option value="${opt}" ${opt === rowData.status ? 'selected' : ''}>${opt}</option>`).join('');
+    // Add current value as first option with special label
+    const currentOption = `<option value="${rowData.status}" selected>Current: ${rowData.status}</option>`;
+    const otherOptions = options.filter(opt => opt !== rowData.status).map(opt => `<option value="${opt}">${opt}</option>`).join('');
+    statusSelect.innerHTML = currentOption + otherOptions;
     document.getElementById('currentStatusValue').textContent = rowData.status;
   }
 
@@ -1158,28 +1161,37 @@ function populateUnitsDropdown(rowData) {
 
   const recommendations = specificRecommendations[rowData.specifictype || rowData.specificRequestType] || [];
   const unitsSelect = document.getElementById('adminUnitsSelect');
+  const currentUnitsValue = rowData.units === 'Not yet assigned' ? '' : rowData.units;
 
-  // Create recommended units optgroup (only recommended ones)
+  // Create current unit option at the top
+  let currentUnitOption = '';
+  if (currentUnitsValue) {
+    currentUnitOption = `<option value="${currentUnitsValue}" selected>Current: ${currentUnitsValue}</option>`;
+  }
+
+  // Create recommended units optgroup (excluding current unit if it's recommended)
   const recommendedUnitsHTML = recommendations.length > 0 ?
-    `<optgroup label="Recommended Units">${recommendations.map(unit =>
+    `<optgroup label="Recommended Units">${recommendations.filter(unit => unit !== currentUnitsValue).map(unit =>
       `<option value="${unit}" class="recommended-unit">★ ${unit}</option>`
     ).join('')}</optgroup>` :
     `<optgroup label="Recommended Units"><option value="" disabled>No recommendations available</option></optgroup>`;
 
-  // Create other units optgroup (units not in recommendations)
-  const otherUnits = unitNames.filter(unit => !recommendations.includes(unit));
+  // Create other units optgroup (units not in recommendations and not current)
+  const otherUnits = unitNames.filter(unit => !recommendations.includes(unit) && unit !== currentUnitsValue);
   const otherUnitsHTML = otherUnits.length > 0 ?
     `<optgroup label="Other Units">${otherUnits.map(unit =>
       `<option value="${unit}">${unit}</option>`
     ).join('')}</optgroup>` : '';
 
   unitsSelect.innerHTML = `
-    <option value="">Not yet assigned</option>
+    <option value="" ${currentUnitsValue === '' ? 'selected' : ''}>Not yet assigned</option>
+    ${currentUnitOption}
     ${recommendedUnitsHTML}
     ${otherUnitsHTML}
   `;
 
-  unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
+  // Also set the value programmatically as backup
+  unitsSelect.value = currentUnitsValue;
 }
 
 function formatDateForInput(dateStr) {

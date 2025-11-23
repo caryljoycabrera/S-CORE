@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Archive - Deleted Requests</title>
+
+  <!-- Base Stylesheet and Google Fonts -->
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-modal-two-column.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+
+  <!-- Archive Page Specific Stylesheet -->
+  <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/archive.css" />
+
+  <!-- Archive Page Specific JavaScript -->
+  <script src="/javascripts/ejs/archive.js"></script>
+</head>
+<body>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <!-- Profile Section at Top -->
+    <div class="sidebar-profile">
+      <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
+        <% if (user.profilePicture) { %>
+          <img src="<%= user.profilePicture %>" alt="Profile" class="sidebar-profile-pic">
+        <% } else { %>
+          <svg class="sidebar-profile-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+          </svg>
+        <% } %>
+        <div class="sidebar-profile-info">
+          <span class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></span>
+          <span class="sidebar-profile-role">Administrator</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Dashboard</span>
+      </a>
+      
+      <a href="/admin/analytics" class="sidebar-item" title="Analytics">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Analytics</span>
+      </a>
+      
+      <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">All Requests</span>
+      </a>
+      
+      <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Approvals</span>
+      </a>
+      
+      <a href="/admin/services" class="sidebar-item" title="Manage Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Services</span>
+      </a>
+      
+      <a href="/admin/users" class="sidebar-item" title="User Accounts">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Users</span>
+      </a>
+
+      <a href="/admin/archive" class="sidebar-item active" title="Archived Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Archive</span>
+      </a>
+
+      <a href="/admin/announcement" class="sidebar-item" title="Announcements">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Announcements</span>
+      </a>
+
+      <a href="/admin/reports" class="sidebar-item" title="Generate Reports">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Reports</span>
+      </a>
+    </div>
+    
+    <!-- Logout Button at Bottom -->
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" fill="currentColor"/>
+        </svg>
+        <span class="sidebar-text">Logout</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <div class="admin-main-content">
+    <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
+      <div class="header-left-group">
+        <button class="admin-menu-toggle" id="adminMenuToggle" aria-label="Toggle menu">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
+          </svg>
+        </button>
+        <img class="vector-logo" alt="Logo" src="/Picture/logo.png" />
+        <div class="title-container">
+          <div class="text-wrapper">S-CORE</div>
+          <div class="div">Student Customer Relationship E-Portal</div>
+        </div>
+      </div>
+      
+      <span class="text-wrapper-2">Archive</span>
+
+      <div class="header-right-section">
+        <div class="notification-wrapper">
+          <%- include('../partials/notifications') %>
+        </div>
+        <div class="dropdown">
+          <img 
+            class="profile-pic" 
+            src="<%= user.profilePicture || '/Picture/default-avatar.png' %>" 
+            alt="Profile Picture" 
+            onclick="toggleDropdown()"
+          />
+          <div class="dropdown-content" id="dropdownMenu">
+            <a href="/admin/profile">👤 My Profile</a>
+            <a href="/logout">🚪 Logout</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section -->
+      <section class="activity-section">
+        <div class="archive-info-banner">
+          <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
+          </svg>
+          <span>Archived requests are hidden from active views. You can restore or permanently delete them here.</span>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filters-container">
+          <div class="filter-group">
+            <label for="searchInput">Search:</label>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Search by title, organization, or requester..."
+              class="filter-input"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="typeFilter">Request Type:</label>
+            <select id="typeFilter" class="filter-select">
+              <option value="all">All Types</option>
+              <option value="Request Approval">Request Approval</option>
+              <option value="Service Request">Service Request</option>
+            </select>
+          </div>
+
+          <button class="filter-reset-btn" onclick="resetFilters()">Reset Filters</button>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="table-container">
+          <table class="requests-table">
+            <thead>
+              <tr>
+                <th>Request Type</th>
+                <th>Title</th>
+                <th>Organization</th>
+                <th>Requester</th>
+                <th>Deleted By</th>
+                <th>Deleted On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="requestsTableBody">
+              <% if (archivedRequests && archivedRequests.length > 0) { %>
+                <% archivedRequests.forEach(request => { %>
+                  <tr class="request-row" 
+                      data-request-id="<%= request._id %>" 
+                      data-request-type="<%= request.type %>"
+                      data-title="<%= request.title %>"
+                      data-organization="<%= request.displayOrganization %>"
+                      data-requester="<%= request.userName %>"
+                      data-deleted-by="<%= request.deletedByName %>"
+                      data-deleted-at="<%= request.deletedAt %>">
+                    <td><span class="type-badge <%= request.type === 'Request Approval' ? 'type-approval' : 'type-service' %>"><%= request.type %></span></td>
+                    <td><%= request.title %></td>
+                    <td><%= request.displayOrganization %></td>
+                    <td><%= request.userName %></td>
+                    <td><%= request.deletedByName %></td>
+                    <td><%= new Date(request.deletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></td>
+                    <td>
+                      <button class="action-btn restore-btn" onclick="restoreRequest('<%= request._id %>', '<%= request.type %>')" title="Restore">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" fill="currentColor"/>
+                        </svg>
+                        Restore
+                      </button>
+                      <button class="action-btn delete-btn-permanent" onclick="permanentDeleteRequest('<%= request._id %>', '<%= request.type %>')" title="Permanent Delete">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                        </svg>
+                        Delete Forever
+                      </button>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr class="empty-state">
+                  <td colspan="7">
+                    <div class="empty-archive-message">
+                      <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
+                        <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+                      </svg>
+                      <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No archived requests</p>
+                      <p style="color: #6b7280;">Deleted requests will appear here</p>
+                    </div>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Confirmation Modals -->
+  <div id="restoreConfirmModal" class="confirmation-modal">
+    <div class="confirmation-modal-content">
+      <div class="confirmation-header">
+        <h3>Confirm Restore</h3>
+        <button class="modal-close" onclick="closeRestoreModal()">✕</button>
+      </div>
+      <div class="confirmation-body">
+        <p>Are you sure you want to restore this request? It will be moved back to the active requests list.</p>
+        <div class="confirmation-actions">
+          <button class="btn-cancel" onclick="closeRestoreModal()">Cancel</button>
+          <button class="btn-confirm" onclick="confirmRestore()">Restore Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="permanentDeleteModal" class="confirmation-modal">
+    <div class="confirmation-modal-content">
+      <div class="confirmation-header warning">
+        <h3>⚠️ Confirm Permanent Deletion</h3>
+        <button class="modal-close" onclick="closePermanentDeleteModal()">✕</button>
+      </div>
+      <div class="confirmation-body">
+        <p style="color: #dc2626; font-weight: 600;">This action cannot be undone!</p>
+        <p>Are you sure you want to permanently delete this request? All associated data will be lost forever.</p>
+        <div class="confirmation-actions">
+          <button class="btn-cancel" onclick="closePermanentDeleteModal()">Cancel</button>
+          <button class="btn-danger" onclick="confirmPermanentDelete()">Delete Forever</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// Sidebar hover effect
+const sidebar = document.getElementById('adminSidebar');
+if (sidebar) {
+  sidebar.addEventListener('mouseenter', function() {
+    this.classList.add('expanded');
+  });
+  sidebar.addEventListener('mouseleave', function() {
+    this.classList.remove('expanded');
+  });
+}
+
+// Mobile hamburger menu toggle
+document.addEventListener('DOMContentLoaded', () => {
+  const menuToggle = document.getElementById('adminMenuToggle');
+  const sidebarEl = document.getElementById('adminSidebar');
+
+  if (menuToggle && sidebarEl) {
+    menuToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebarEl.classList.toggle('mobile-active');
+    });
+  }
+
+  // Close sidebar when clicking outside of it on mobile
+  document.addEventListener('click', (e) => {
+    if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
+      if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
+        sidebarEl.classList.remove('mobile-active');
+      }
+    }
+  });
+});
+
+// Header Dropdown
+window.toggleDropdown = function() {
+  document.getElementById('dropdownMenu').classList.toggle('show');
+};
+
+document.addEventListener("click", function(event) {
+  const dropdown = document.getElementById('dropdownMenu');
+  const profilePic = document.querySelector('.profile-pic');
+  if (dropdown && profilePic && !profilePic.contains(event.target)) {
+    dropdown.classList.remove('show');
+  }
+});
+</script>
+</body>
+</html>

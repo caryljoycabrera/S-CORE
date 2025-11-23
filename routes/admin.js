@@ -527,7 +527,7 @@ router.post('/admin/announcement/send', requireAdmin, async (req, res) => {
  */
 router.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
-    let approvals = await RequestApproval.find()
+    let approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -790,8 +790,8 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
  */
 router.get('/admin/all-requests', requireAdmin, async (req, res) => {
   try {
-    // Fetch with proper population and error handling
-    const approvals = await RequestApproval.find()
+    // Fetch with proper population and error handling (exclude deleted items)
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
       .populate({
         path: 'userId',
         select: 'fName lName userType affiliation studentOrganization',
@@ -799,7 +799,7 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       })
       .lean();
 
-    const serviceRequests = await ServiceRequest.find()
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } })
       .populate({
         path: 'userId',
         select: 'fName lName userType affiliation studentOrganization',
@@ -931,6 +931,104 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Error loading all admin requests:', err);
     res.status(500).render('error', { message: 'Failed to load all requests page.' });
+  }
+});
+
+/**
+ * GET /admin/archive
+ * View archived (deleted) requests
+ */
+router.get('/admin/archive', requireAdmin, async (req, res) => {
+  try {
+    // Fetch only deleted/archived requests
+    const approvals = await RequestApproval.find({ isDeleted: true })
+      .populate({
+        path: 'userId',
+        select: 'fName lName userType affiliation studentOrganization',
+        options: { strictPopulate: false }
+      })
+      .populate({
+        path: 'deletedBy',
+        select: 'fName lName'
+      })
+      .lean();
+
+    const serviceRequests = await ServiceRequest.find({ isDeleted: true })
+      .populate({
+        path: 'userId',
+        select: 'fName lName userType affiliation studentOrganization',
+        options: { strictPopulate: false }
+      })
+      .populate({
+        path: 'deletedBy',
+        select: 'fName lName'
+      })
+      .lean();
+
+    // Process archived requests
+    const archivedRequests = [
+      ...approvals.map(r => {
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        let deletedByName = 'Unknown';
+
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        }
+
+        if (r.deletedBy && r.deletedBy.fName) {
+          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+        }
+
+        return {
+          ...r,
+          type: "Request Approval",
+          displayOrganization,
+          userName,
+          deletedByName,
+          datetime: r.datetime || r.createdAt
+        };
+      }),
+      ...serviceRequests.map(r => {
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        let deletedByName = 'Unknown';
+
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        }
+
+        if (r.deletedBy && r.deletedBy.fName) {
+          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+        }
+
+        return {
+          ...r,
+          type: "Service Request",
+          displayOrganization,
+          userName,
+          deletedByName,
+          datetime: r.datetime || r.createdAt
+        };
+      })
+    ];
+
+    // Sort by deleted date (most recent first)
+    archivedRequests.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+
+    res.render('Admin/archive', {
+      archivedRequests,
+      user: req.user
+    });
+  } catch (err) {
+    console.error('Error loading archived requests:', err);
+    res.status(500).render('error', { message: 'Failed to load archived requests page.' });
   }
 });
 
@@ -2322,5 +2420,173 @@ function buildFilterInfoText(queryParams) {
   
   return parts.join(' | ');
 }
+
+/**
+ * PUT /admin/request/edit
+ * Edit request details (title, description, organization, deadline, etc.)
+ */
+router.put('/admin/request/edit', requireAdmin, async (req, res) => {
+  try {
+    const { requestId, requestType, updates } = req.body;
+
+    if (!requestId || !requestType) {
+      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
+    }
+
+    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
+    
+    // Find and update the request
+    const request = await Model.findByIdAndUpdate(
+      requestId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Request updated successfully',
+      request
+    });
+  } catch (error) {
+    console.error('Error editing request:', error);
+    res.status(500).json({ success: false, message: 'Failed to update request' });
+  }
+});
+
+/**
+ * POST /admin/request/delete
+ * Soft delete request (move to archive/trash)
+ */
+router.post('/admin/request/delete', requireAdmin, async (req, res) => {
+  try {
+    const { requestId, requestType } = req.body;
+
+    if (!requestId || !requestType) {
+      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
+    }
+
+    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
+    
+    // Soft delete by setting isDeleted flag
+    const request = await Model.findByIdAndUpdate(
+      requestId,
+      { 
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: req.user._id
+      },
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Create notification for the user who submitted the request
+    try {
+      await notificationService.createNotification({
+        userId: request.userId,
+        message: `Your ${requestType.toLowerCase()} "${request.title}" has been archived by an administrator`,
+        link: '/user/my-requests',
+        type: 'system'
+      });
+    } catch (notifError) {
+      console.error('Error sending notification:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Request moved to archive successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting request:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete request' });
+  }
+});
+
+/**
+ * POST /admin/request/restore
+ * Restore archived request
+ */
+router.post('/admin/request/restore', requireAdmin, async (req, res) => {
+  try {
+    const { requestId, requestType } = req.body;
+
+    if (!requestId || !requestType) {
+      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
+    }
+
+    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
+    
+    // Restore by unsetting isDeleted flag
+    const request = await Model.findByIdAndUpdate(
+      requestId,
+      { 
+        isDeleted: false,
+        $unset: { deletedAt: 1, deletedBy: 1 }
+      },
+      { new: true }
+    );
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Create notification for the user who submitted the request
+    try {
+      await notificationService.createNotification({
+        userId: request.userId,
+        message: `Your ${requestType.toLowerCase()} "${request.title}" has been restored from archive`,
+        link: '/user/my-requests',
+        type: 'system'
+      });
+    } catch (notifError) {
+      console.error('Error sending notification:', notifError);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Request restored successfully'
+    });
+  } catch (error) {
+    console.error('Error restoring request:', error);
+    res.status(500).json({ success: false, message: 'Failed to restore request' });
+  }
+});
+
+/**
+ * DELETE /admin/request/permanent-delete
+ * Permanently delete a request (cannot be undone)
+ */
+router.delete('/admin/request/permanent-delete', requireAdmin, async (req, res) => {
+  try {
+    const { requestId, requestType } = req.body;
+
+    if (!requestId || !requestType) {
+      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
+    }
+
+    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
+    
+    // Permanently delete
+    const request = await Model.findByIdAndDelete(requestId);
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Request permanently deleted'
+    });
+  } catch (error) {
+    console.error('Error permanently deleting request:', error);
+    res.status(500).json({ success: false, message: 'Failed to permanently delete request' });
+  }
+});
 
 module.exports = router;
