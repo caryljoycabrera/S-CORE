@@ -1103,7 +1103,7 @@ function populateAdminForm(rowData) {
   if (statusSelect) {
     const options = getStatusOptions(rowData.type);
     // Add current value as first option with special label
-    const currentOption = `<option value="${rowData.status}" selected>Current: ${rowData.status}</option>`;
+    const currentOption = `<option value="${rowData.status}" selected>${rowData.status}</option>`;
     const otherOptions = options.filter(opt => opt !== rowData.status).map(opt => `<option value="${opt}">${opt}</option>`).join('');
     statusSelect.innerHTML = currentOption + otherOptions;
     document.getElementById('currentStatusValue').textContent = rowData.status;
@@ -1166,7 +1166,7 @@ function populateUnitsDropdown(rowData) {
   // Create current unit option at the top
   let currentUnitOption = '';
   if (currentUnitsValue) {
-    currentUnitOption = `<option value="${currentUnitsValue}" selected>Current: ${currentUnitsValue}</option>`;
+    currentUnitOption = `<option value="${currentUnitsValue}" selected>${currentUnitsValue}</option>`;
   }
 
   // Create recommended units optgroup (excluding current unit if it's recommended)
