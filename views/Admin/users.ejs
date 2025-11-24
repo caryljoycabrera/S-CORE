@@ -385,6 +385,15 @@
             </svg>
             Back to Dashboard
           </a>
+          <button class="trash-btn" id="trashBtn" title="View Deleted Users">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            View Deleted
+          </button>
         </div>
       </section>
     </div>
@@ -654,6 +663,119 @@
   </div>
 </div>
 
+<!-- Trash Modal - View Deleted Users -->
+<div id="trashModal" class="modal" style="display:none;">
+  <div class="modal-content trash-modal-content">
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <h2>Deleted Users</h2>
+      </div>
+      <button class="close-modal-btn" onclick="closeTrashModal()" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="trash-modal-body">
+      <div class="trash-info-banner">
+        <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
+        </svg>
+        <span>These users are hidden from active views. You can restore or permanently delete them.</span>
+      </div>
+
+      <div class="trash-table-container">
+        <table class="trash-requests-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Deleted By</th>
+              <th>Deleted On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="trashTableBody">
+            <!-- Populated by JavaScript -->
+          </tbody>
+        </table>
+        <div id="trashEmptyState" class="trash-empty-state" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
+            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+          </svg>
+          <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No deleted users</p>
+          <p style="color: #6b7280;">Deleted users will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div id="restoreConfirmModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 500px; margin: auto;">
+    <header class="modal-header">
+      <span class="modal-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+        </svg>
+        Restore User
+      </span>
+      <span class="close" onclick="closeRestoreConfirm()">&times;</span>
+    </header>
+    <div class="modal-body" style="padding: 2rem;">
+      <p id="restoreConfirmMessage" style="margin-bottom: 2rem; color: #374151; line-height: 1.6;">Are you sure you want to restore this user?</p>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button type="button" class="user-admin-btn user-admin-btn-secondary" onclick="closeRestoreConfirm()">
+          Cancel
+        </button>
+        <button type="button" class="user-admin-btn user-admin-btn-primary" id="confirmRestoreBtn" onclick="confirmRestore()">
+          Restore
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Permanent Delete Confirmation Modal -->
+<div id="permanentDeleteConfirmModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 500px; margin: auto;">
+    <header class="modal-header">
+      <span class="modal-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Permanently Delete User
+      </span>
+      <span class="close" onclick="closePermanentDeleteConfirm()">&times;</span>
+    </header>
+    <div class="modal-body" style="padding: 2rem;">
+      <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+        <p style="margin: 0; color: #991b1b; font-size: 0.95rem;">
+          <strong>Warning:</strong> This action cannot be undone. The user and all associated data will be permanently deleted.
+        </p>
+      </div>
+      <p id="permanentDeleteMessage" style="margin-bottom: 2rem; color: #374151; line-height: 1.6;">Are you sure you want to permanently delete this user?</p>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button type="button" class="user-admin-btn user-admin-btn-secondary" onclick="closePermanentDeleteConfirm()">
+          Cancel
+        </button>
+        <button type="button" class="user-admin-btn user-admin-btn-danger" id="confirmPermanentDeleteBtn" onclick="confirmPermanentDelete()" style="background: #dc2626; color: white;">
+          Permanently Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 <!-- Shared Data Arrays -->
@@ -661,6 +783,3 @@
 
 <!-- External JavaScript File -->
 <script src="/javascripts/ejs/users.js"></script>
-
-</body>
-</html>

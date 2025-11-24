@@ -1151,6 +1151,123 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/deleted-users
+ * API endpoint to get deleted users as JSON
+ */
+router.get('/api/admin/deleted-users', requireAdmin, async (req, res) => {
+  try {
+    const deletedUsers = await User.find({ isDeleted: true })
+      .populate({
+        path: 'deletedBy',
+        select: 'fName lName'
+      })
+      .select('-password')
+      .lean();
+
+    const formattedUsers = deletedUsers.map(user => {
+      let deletedByName = 'Unknown';
+      
+      if (user.deletedBy && user.deletedBy.fName) {
+        deletedByName = `${user.deletedBy.fName} ${user.deletedBy.lName || ''}`.trim();
+      }
+
+      return {
+        _id: user._id,
+        fName: user.fName,
+        lName: user.lName,
+        email: user.email,
+        role: user.role,
+        deletedByName,
+        deletedAt: user.deletedAt
+      };
+    });
+
+    // Sort by deleted date (most recent first)
+    formattedUsers.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+
+    res.json({
+      success: true,
+      deletedUsers: formattedUsers
+    });
+  } catch (err) {
+    console.error('Error fetching deleted users:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch deleted users.'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/restore-user/:userId
+ * Restore a deleted user
+ */
+router.post('/api/admin/restore-user/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 
+        isDeleted: false, 
+        deletedBy: null, 
+        deletedAt: null 
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User restored successfully',
+      user
+    });
+  } catch (err) {
+    console.error('Error restoring user:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to restore user'
+    });
+  }
+});
+
+/**
+ * DELETE /api/admin/delete-user-permanently/:userId
+ * Permanently delete a user (hard delete)
+ */
+router.delete('/api/admin/delete-user-permanently/:userId', requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User permanently deleted'
+    });
+  } catch (err) {
+    console.error('Error permanently deleting user:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to permanently delete user'
+    });
+  }
+});
+
+/**
  * POST /admin/all-requests/update-status
  * Universal update endpoint for both approval and service requests from all-requests page
  */

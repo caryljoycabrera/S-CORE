@@ -334,6 +334,34 @@ hr {
   flex-shrink: 0;
 }
 
+/* Trash button styling */
+.trash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #fef3c7;
+  color: #92400e;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.trash-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3);
+  background: #92400e;
+  color: #ffffff;
+}
+
+.trash-btn svg {
+  flex-shrink: 0;
+}
+
 /* No users message styling */
 .no-users-message {
   text-align: center;

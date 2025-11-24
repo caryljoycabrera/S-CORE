@@ -49,6 +49,21 @@ window.onclick = e => {
     confirmStatusModal.style.display = 'none';
     document.body.style.overflow = '';
   }
+  // Close trash modal when clicking outside
+  const trashModal = document.getElementById('trashModal');
+  if (e.target === trashModal) {
+    closeTrashModal();
+  }
+  // Close restore confirm modal when clicking outside
+  const restoreModal = document.getElementById('restoreConfirmModal');
+  if (e.target === restoreModal) {
+    closeRestoreConfirm();
+  }
+  // Close permanent delete modal when clicking outside
+  const deleteModal = document.getElementById('permanentDeleteConfirmModal');
+  if (e.target === deleteModal) {
+    closePermanentDeleteConfirm();
+  }
 };
 
 // ========================================
@@ -1021,6 +1036,24 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Grid row click listener attached successfully');
   }
   
+  // ========================================
+  // TRASH BUTTON EVENT LISTENER
+  // ========================================
+  const trashBtn = document.getElementById('trashBtn');
+  console.log('🗑️  Trash Button:', trashBtn ? 'FOUND ✓' : 'NOT FOUND ✗');
+  
+  if (trashBtn) {
+    console.log('🗑️  Found trash button, attaching click listener');
+    trashBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('🗑️  Trash button clicked - calling openTrashModal()');
+      openTrashModal();
+    });
+  } else {
+    console.warn('⚠️  Trash button not found in DOM');
+  }
+  
   console.log('🎉 Grid event listeners initialized successfully!');
 });
 
@@ -1474,6 +1507,196 @@ function openUserModal(row, scrollTo = null) {
 window.openUserModal = openUserModal;
 
 // ========================================
+// TRASH MODAL FUNCTIONS
+// ========================================
+async function openTrashModal() {
+  console.log('🗑️ openTrashModal called');
+
+  const modal = document.getElementById('trashModal');
+  const tableBody = document.getElementById('trashTableBody');
+  const emptyState = document.getElementById('trashEmptyState');
+
+  console.log('🔍 Modal element:', modal);
+  console.log('🔍 Table body element:', tableBody);
+  console.log('🔍 Empty state element:', emptyState);
+
+  if (!modal) {
+    console.error('❌ Trash modal not found');
+    alert('Trash modal not found in DOM');
+    return;
+  }
+
+  // Show loading - display modal immediately
+  tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading deleted users...</td></tr>';
+  emptyState.style.display = 'none';
+
+  // Display the modal
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  console.log('✅ Modal displayed');
+
+  try {
+    const response = await fetch('/api/admin/deleted-users', {
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.deletedUsers) {
+      if (data.deletedUsers.length > 0) {
+        tableBody.innerHTML = data.deletedUsers.map(user => `
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 1rem;">${String(user._id).slice(-6)}</td>
+            <td style="padding: 1rem;">${user.fName} ${user.lName}</td>
+            <td style="padding: 1rem;">${user.email}</td>
+            <td style="padding: 1rem;">
+              <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600;"
+                    class="role-badge ${user.role === 'admin' ? 'role-admin' : (user.role === 'unit' ? 'role-unit' : 'role-user')}">
+                ${user.role.toUpperCase()}
+              </span>
+            </td>
+            <td style="padding: 1rem;">${user.deletedByName || 'N/A'}</td>
+            <td style="padding: 1rem;">${new Date(user.deletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+            <td style="padding: 1rem; text-align: center;">
+              <button class="action-btn restore-btn" onclick="openRestoreConfirm('${user._id}', '${user.fName} ${user.lName}')" title="Restore" style="background: #d1fae5; color: #065f46; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem; margin-right: 0.5rem;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                  <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                </svg>
+                Restore
+              </button>
+              <button class="action-btn delete-btn-permanent" onclick="openPermanentDeleteConfirm('${user._id}', '${user.fName} ${user.lName}')" title="Permanent Delete" style="background: #fee2e2; color: #991b1b; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.875rem;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                Delete Forever
+              </button>
+            </td>
+          </tr>
+        `).join('');
+        emptyState.style.display = 'none';
+      } else {
+        tableBody.innerHTML = '';
+        emptyState.style.display = 'block';
+      }
+    } else {
+      tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #dc2626;">Failed to load deleted users</td></tr>';
+      emptyState.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error loading deleted users:', error);
+    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #dc2626;">Error: ' + error.message + '</td></tr>';
+    emptyState.style.display = 'none';
+  }
+}
+
+// Close trash modal
+function closeTrashModal() {
+  const modal = document.getElementById('trashModal');
+  if (modal) {
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+// Open restore confirmation
+function openRestoreConfirm(userId, userName) {
+  const modal = document.getElementById('restoreConfirmModal');
+  currentRestoreUserId = userId;
+  document.getElementById('restoreConfirmMessage').innerHTML = `Are you sure you want to restore <strong>${userName}</strong>?`;
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// Close restore confirmation
+function closeRestoreConfirm() {
+  const modal = document.getElementById('restoreConfirmModal');
+  modal.classList.remove('show');
+  modal.style.display = 'none';
+  currentRestoreUserId = null;
+  document.body.style.overflow = '';
+}
+
+// Confirm restore
+async function confirmRestore() {
+  if (!currentRestoreUserId) return;
+
+  try {
+    const response = await fetch(`/api/admin/restore-user/${currentRestoreUserId}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      alert('User restored successfully');
+      closeRestoreConfirm();
+      openTrashModal(); // Refresh the trash modal
+    } else {
+      alert('Failed to restore user: ' + (data.message || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error restoring user:', error);
+    alert('Error restoring user');
+  }
+}
+
+// Open permanent delete confirmation
+function openPermanentDeleteConfirm(userId, userName) {
+  const modal = document.getElementById('permanentDeleteConfirmModal');
+  currentPermanentDeleteUserId = userId;
+  document.getElementById('permanentDeleteMessage').innerHTML = `Are you sure you want to permanently delete <strong>${userName}</strong>? This action cannot be undone.`;
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// Close permanent delete confirmation
+function closePermanentDeleteConfirm() {
+  const modal = document.getElementById('permanentDeleteConfirmModal');
+  modal.classList.remove('show');
+  modal.style.display = 'none';
+  currentPermanentDeleteUserId = null;
+  document.body.style.overflow = '';
+}
+
+// Confirm permanent delete
+async function confirmPermanentDelete() {
+  if (!currentPermanentDeleteUserId) return;
+
+  try {
+    const response = await fetch(`/api/admin/delete-user-permanently/${currentPermanentDeleteUserId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      alert('User permanently deleted');
+      closePermanentDeleteConfirm();
+      openTrashModal(); // Refresh the trash modal
+    } else {
+      alert('Failed to delete user: ' + (data.message || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    alert('Error deleting user');
+  }
+}
+
+// ========================================
 // ACTIVATE 'ALL USERS' TAB ON LOAD
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -1519,4 +1742,4 @@ document.addEventListener('DOMContentLoaded', function() {
         allUsersTab.click();
       }
     }
-});
+  });

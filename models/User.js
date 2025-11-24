@@ -111,6 +111,21 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['N/A', 'Graphics', 'Multimedia', 'Public Relations', 'Social Media'],
     default: 'N/A'
+  },
+
+  // Soft delete fields
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  deletedAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

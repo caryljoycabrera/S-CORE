@@ -628,12 +628,6 @@ function openRequestDetails(requestId, requestType) {
         if (deliverablesSection) deliverablesSection.style.display = 'none';
     }
 
-    // Show appropriate action panels
-    const approvalActionsPanel = document.getElementById('approvalActionsPanel');
-    const serviceActionsPanel = document.getElementById('serviceActionsPanel');
-    const approvalStatusIndicator = document.getElementById('approvalStatusIndicator');
-    const approvalActionButtons = document.getElementById('approvalActionButtons');
-    
     // Update modal header color based on request type
     const modalHeader = document.querySelector('.unit-modal-header');
     if (modalHeader) {
@@ -645,123 +639,10 @@ function openRequestDetails(requestId, requestType) {
         }
     }
     
-    if (requestType === 'approval') {
-        if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
-        
-        console.log('[DEBUG] Opening approval request:', requestId);
-        console.log('[DEBUG] Request status from row:', status);
-        
-        // Fetch revision history to check if request has been approved
-        fetch(`/api/revision-history/${requestId}`)
-            .then(res => res.json())
-            .then(data => {
-                console.log('[DEBUG] Revision history response:', data);
-                
-                let hasApprovalEntry = false;
-                let approvalEntry = null;
-                
-                if (data.success && data.revisions) {
-                    console.log('[DEBUG] Checking revisions:', data.revisions);
-                    
-                    // Check if there's an approval entry in revision history
-                    approvalEntry = data.revisions.find(rev => {
-                        console.log('[DEBUG] Checking revision:', rev);
-                        console.log('[DEBUG] - status:', rev.status);
-                        console.log('[DEBUG] - type:', rev.type);
-                        return rev.status === 'resolved' || 
-                               rev.status === 'approved' || 
-                               (rev.type && rev.type === 'approved');
-                    });
-                    hasApprovalEntry = !!approvalEntry;
-                    console.log('[DEBUG] Found approval entry:', approvalEntry);
-                    console.log('[DEBUG] Has approval entry:', hasApprovalEntry);
-                }
-                
-                // Hide action buttons if request has been approved
-                if (hasApprovalEntry) {
-                    console.log('[DEBUG] Request has been approved - hiding action buttons');
-                    console.log('[DEBUG] approvalActionsPanel:', approvalActionsPanel);
-                    console.log('[DEBUG] approvalStatusIndicator:', approvalStatusIndicator);
-                    console.log('[DEBUG] approvalActionButtons:', approvalActionButtons);
-                    
-                    if (approvalActionsPanel) {
-                        approvalActionsPanel.style.display = 'none';
-                        console.log('[DEBUG] Set approvalActionsPanel display to none');
-                    }
-                    if (approvalStatusIndicator) {
-                        approvalStatusIndicator.style.display = 'block';
-                        console.log('[DEBUG] Set approvalStatusIndicator display to block');
-                    }
-                    if (approvalActionButtons) {
-                        approvalActionButtons.style.display = 'none';
-                        console.log('[DEBUG] Set approvalActionButtons display to none');
-                    }
-                    
-                    // Display approval date
-                    if (approvalEntry && approvalEntry.requestedAt) {
-                        const approvedOn = new Date(approvalEntry.requestedAt);
-                        const approvedOnField = document.getElementById('approvedOnField');
-                        const modalApprovedOn = document.getElementById('modalApprovedOn');
-                        if (approvedOnField && modalApprovedOn) {
-                            approvedOnField.style.display = 'block';
-                            modalApprovedOn.textContent = approvedOn.toLocaleDateString('en-US', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
-                        }
-                    }
-                    
-                    // Re-attach revoke button event listener
-                    const revokeBtn = document.getElementById('revokeApprovalBtn');
-                    if (revokeBtn) {
-                        const newRevokeBtn = revokeBtn.cloneNode(true);
-                        revokeBtn.parentNode.replaceChild(newRevokeBtn, revokeBtn);
-                        newRevokeBtn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('[DEBUG] Revoke button clicked (re-attached)');
-                            revokeApproval();
-                        });
-                    }
-                } else {
-                    // Show action buttons for non-approved requests
-                    console.log('[DEBUG] Request NOT approved - showing action buttons');
-                    
-                    if (approvalActionsPanel) {
-                        approvalActionsPanel.style.display = 'block';
-                        console.log('[DEBUG] Set approvalActionsPanel display to block');
-                    }
-                    if (approvalStatusIndicator) {
-                        approvalStatusIndicator.style.display = 'none';
-                        console.log('[DEBUG] Set approvalStatusIndicator display to none');
-                    }
-                    if (approvalActionButtons) {
-                        approvalActionButtons.style.display = 'flex';
-                        console.log('[DEBUG] Set approvalActionButtons display to flex');
-                    }
-                    
-                    const approvedOnField = document.getElementById('approvedOnField');
-                    if (approvedOnField) {
-                        approvedOnField.style.display = 'none';
-                    }
-                }
-            })
-            .catch(err => {
-                console.error('[DEBUG] Error checking approval status:', err);
-                // On error, show action buttons by default
-                console.log('[DEBUG] Error occurred - showing buttons by default');
-                if (approvalActionsPanel) approvalActionsPanel.style.display = 'block';
-                if (approvalActionButtons) approvalActionButtons.style.display = 'flex';
-            });
-    } else if (requestType === 'service') {
-        if (approvalActionsPanel) approvalActionsPanel.style.display = 'none';
+    // Load service revision history for service requests
+    if (requestType === 'service') {
+        const serviceActionsPanel = document.getElementById('serviceActionsPanel');
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
-        
-        // Load service revision history
         loadServiceRevisionHistory(requestId);
     }
 
