@@ -28,9 +28,6 @@
   <!-- Admin All Requests Page Specific Stylesheet -->
   <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
 
-  <!-- Admin All Requests Page Specific JavaScript -->
-  <script src="/javascripts/ejs/allrequestsadmin.js"></script>
-
 
 </head>
 <body>
@@ -409,6 +406,12 @@
 
         <!-- Back to Dashboard Button -->
         <div class="back-to-dashboard-container">
+          <button class="trash-btn" onclick="openTrashModal()" title="View Deleted Requests">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Trash
+          </button>
           <a href="/admin" class="back-to-dashboard-btn">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -941,32 +944,122 @@
   </div>
 
 
+<!-- Trash Modal -->
+<div id="trashModal" class="modal" style="display:none;">
+  <div class="modal-content trash-modal-content">
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <h2>Deleted Requests</h2>
+      </div>
+      <button class="close-modal-btn" onclick="closeTrashModal()" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="trash-modal-body">
+      <div class="trash-info-banner">
+        <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
+        </svg>
+        <span>These requests are hidden from active views. You can restore or permanently delete them.</span>
+      </div>
+
+      <div class="trash-table-container">
+        <table class="trash-requests-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Title</th>
+              <th>Organization</th>
+              <th>Requester</th>
+              <th>Deleted By</th>
+              <th>Deleted On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="trashTableBody">
+            <!-- Populated by JavaScript -->
+          </tbody>
+        </table>
+        <div id="trashEmptyState" class="trash-empty-state" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
+            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+          </svg>
+          <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No deleted requests</p>
+          <p style="color: #6b7280;">Deleted requests will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div id="restoreConfirmModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header">
+      <h3>Confirm Restore</h3>
+      <button class="modal-close" onclick="closeRestoreModal()">✕</button>
+    </div>
+    <div class="confirmation-body">
+      <p>Are you sure you want to restore this request? It will be moved back to the active requests list.</p>
+      <div class="confirmation-actions">
+        <button class="btn-cancel" onclick="closeRestoreModal()">Cancel</button>
+        <button class="btn-confirm" onclick="confirmRestore()">Restore Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Permanent Delete Confirmation Modal -->
+<div id="permanentDeleteModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header warning">
+      <h3>⚠️ Confirm Permanent Deletion</h3>
+      <button class="modal-close" onclick="closePermanentDeleteModal()">✕</button>
+    </div>
+    <div class="confirmation-body">
+      <p style="color: #dc2626; font-weight: 600;">This action cannot be undone!</p>
+      <p>Are you sure you want to permanently delete this request? All associated data will be lost forever.</p>
+      <div class="confirmation-actions">
+        <button class="btn-cancel" onclick="closePermanentDeleteModal()">Cancel</button>
+        <button class="btn-danger" onclick="confirmPermanentDelete()">Delete Forever</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <script>
 // Enhanced Conversation Modal Functionality
 document.addEventListener('DOMContentLoaded', function() {
-  const conversationModal = document.getElementById("conversationModal");
-  const closeConversationModal = document.getElementById("closeConversationModal");
-  const messagesContainer = document.getElementById("messagesContainer");
-  const messageInput = document.getElementById("messageInput");
-  const sendMessageBtn = document.getElementById("sendMessageBtn");
+  const conversationModal = document.getElementById("teamConversationModal");
+  const closeConversationModal = document.getElementById("closeTeamConversationModal");
+  const messagesContainer = document.getElementById("teamMessagesContainer");
+  const messageInput = document.getElementById("teamMessageInput");
+  const sendMessageBtn = document.getElementById("sendTeamMessageBtn");
   
   // Formatting buttons
-  const boldBtn = document.getElementById("boldBtn");
-  const italicBtn = document.getElementById("italicBtn");
-  const underlineBtn = document.getElementById("underlineBtn");
+  const boldBtn = document.getElementById("teamBoldBtn");
+  const italicBtn = document.getElementById("teamItalicBtn");
+  const underlineBtn = document.getElementById("teamUnderlineBtn");
   
   let currentConversationId = null;
   let uploadedFile = null;
 
-  // Close modal handlers
-  if (closeConversationModal) {
+  // Close modal handlers - only if modal exists
+  if (conversationModal && closeConversationModal) {
     closeConversationModal.onclick = () => conversationModal.style.display = 'none';
+    
+    // Click outside to close
+    window.addEventListener('click', function(event) {
+      if (event.target === conversationModal) conversationModal.style.display = 'none';
+    });
   }
-
-  // Click outside to close
-  window.addEventListener('click', function(event) {
-    if (event.target === conversationModal) conversationModal.style.display = 'none';
-  });
 
   // Formatting button handlers
   if (boldBtn) {
@@ -1006,7 +1099,8 @@ document.addEventListener('DOMContentLoaded', function() {
     input.focus();
   }
   
-  // Upload functionality
+  // Upload functionality - these elements don't exist in the current modal structure
+  // Keeping for potential future use, but won't cause errors if missing
   const imageBtn = document.getElementById('imageBtn');
   const fileBtn = document.getElementById('fileBtn');
   const imageUpload = document.getElementById('imageUpload');
@@ -1298,7 +1392,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Send message functionality
-  if (sendMessageBtn) {
+  if (sendMessageBtn && messageInput) {
     sendMessageBtn.onclick = async function() {
       const content = messageInput.value.trim();
       if (!content && !currentAttachment && !uploadedFile) return;
@@ -1434,6 +1528,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.style.overflow = 'hidden';
   };
 });
+
+// Close team conversation modal function (called from HTML onclick)
+function closeTeamConversationModal() {
+  const modal = document.getElementById('teamConversationModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
 
 // Sidebar hover effect
 const sidebar = document.getElementById('adminSidebar');
@@ -1822,6 +1924,205 @@ document.addEventListener('click', function(e) {
 });
 
 </script>
+
+<!-- ==========================================
+     TRASH MODAL FUNCTIONALITY - GLOBAL SCOPE
+     These functions must be in global scope to be accessible from onclick handlers
+     ========================================== -->
+<script>
+let currentRestoreRequestId = null;
+let currentRestoreRequestType = null;
+let currentPermanentDeleteRequestId = null;
+let currentPermanentDeleteRequestType = null;
+
+// Open trash modal
+async function openTrashModal() {
+  console.log('🗑️ Opening trash modal...');
+  const modal = document.getElementById('trashModal');
+  const tableBody = document.getElementById('trashTableBody');
+  const emptyState = document.getElementById('trashEmptyState');
+
+  console.log('Modal element:', modal);
+  console.log('Table body:', tableBody);
+
+  if (!modal || !tableBody) {
+    console.error('❌ Trash modal elements not found!');
+    return;
+  }
+
+  // Show loading
+  tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading deleted requests...</td></tr>';
+  modal.style.display = 'flex';
+  modal.classList.add('show'); // Add 'show' class to trigger CSS
+  console.log('✅ Modal display set to flex with show class');
+
+  try {
+    const response = await fetch('/api/admin/deleted-requests?type=all');
+    const data = await response.json();
+
+    if (data.success) {
+      if (data.archivedRequests.length > 0) {
+        tableBody.innerHTML = data.archivedRequests.map(request => `
+          <tr class="trash-request-row" 
+              data-request-id="${request._id}" 
+              data-request-type="${request.type}">
+            <td><span class="type-badge ${request.type === 'Request Approval' ? 'type-approval' : 'type-service'}">${request.type}</span></td>
+            <td>${request.title}</td>
+            <td>${request.displayOrganization}</td>
+            <td>${request.userName}</td>
+            <td>${request.deletedByName}</td>
+            <td>${new Date(request.deletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+            <td>
+              <button class="action-btn restore-btn" onclick="openRestoreConfirm('${request._id}', '${request.type}')" title="Restore">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" fill="currentColor"/>
+                </svg>
+                Restore
+              </button>
+              <button class="action-btn delete-btn-permanent" onclick="openPermanentDeleteConfirm('${request._id}', '${request.type}')" title="Permanent Delete">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                </svg>
+                Delete Forever
+              </button>
+            </td>
+          </tr>
+        `).join('');
+        emptyState.style.display = 'none';
+      } else {
+        tableBody.innerHTML = '';
+        emptyState.style.display = 'block';
+      }
+    } else {
+      tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #dc2626;">Failed to load deleted requests</td></tr>';
+    }
+  } catch (error) {
+    console.error('Error loading deleted requests:', error);
+    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #dc2626;">Error loading deleted requests</td></tr>';
+  }
+};
+
+// Close trash modal
+window.closeTrashModal = function() {
+  const modal = document.getElementById('trashModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show'); // Remove 'show' class
+  }
+};
+
+// Open restore confirmation
+window.openRestoreConfirm = function(requestId, requestType) {
+  currentRestoreRequestId = requestId;
+  currentRestoreRequestType = requestType;
+  document.getElementById('restoreConfirmModal').style.display = 'flex';
+};
+
+// Close restore confirmation
+window.closeRestoreModal = function() {
+  document.getElementById('restoreConfirmModal').style.display = 'none';
+  currentRestoreRequestId = null;
+  currentRestoreRequestType = null;
+};
+
+// Confirm restore
+window.confirmRestore = async function() {
+  if (!currentRestoreRequestId || !currentRestoreRequestType) return;
+
+  try {
+    const response = await fetch('/admin/request/restore', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requestId: currentRestoreRequestId,
+        requestType: currentRestoreRequestType
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification('Request restored successfully!', 'success');
+      closeRestoreModal();
+      closeTrashModal();
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification(data.message || 'Failed to restore request', 'error');
+    }
+  } catch (error) {
+    console.error('Error restoring request:', error);
+    showNotification('An error occurred while restoring the request', 'error');
+  }
+};
+
+// Open permanent delete confirmation
+window.openPermanentDeleteConfirm = function(requestId, requestType) {
+  currentPermanentDeleteRequestId = requestId;
+  currentPermanentDeleteRequestType = requestType;
+  document.getElementById('permanentDeleteModal').style.display = 'flex';
+};
+
+// Close permanent delete confirmation
+window.closePermanentDeleteModal = function() {
+  document.getElementById('permanentDeleteModal').style.display = 'none';
+  currentPermanentDeleteRequestId = null;
+  currentPermanentDeleteRequestType = null;
+};
+
+// Confirm permanent delete
+window.confirmPermanentDelete = async function() {
+  if (!currentPermanentDeleteRequestId || !currentPermanentDeleteRequestType) return;
+
+  try {
+    const response = await fetch('/admin/request/permanent-delete', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requestId: currentPermanentDeleteRequestId,
+        requestType: currentPermanentDeleteRequestType
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      showNotification('Request permanently deleted!', 'success');
+      closePermanentDeleteModal();
+      // Refresh the trash modal
+      openTrashModal();
+    } else {
+      showNotification(data.message || 'Failed to delete request', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting request:', error);
+    showNotification('An error occurred while deleting the request', 'error');
+  }
+};
+
+// Add event listener for trash button
+document.addEventListener('DOMContentLoaded', function() {
+  const trashBtn = document.getElementById('trashBtn');
+  if (trashBtn) {
+    trashBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      window.openTrashModal();
+    });
+  }
+});
+
+</script>
+<!-- ===========================================
+   ALL REQUESTS PAGE JAVASCRIPT CONNECTION
+   File: public/javascripts/ejs/allrequestsadmin.js
+   Purpose: Provides client-side functionality for the admin all requests page
+   Dependencies: Requires DOM to be fully loaded, connects to various API endpoints
+   Connection: This script enables interactive features like filtering, modals, and form handling
+   =========================================== -->
+<script src="/javascripts/ejs/allrequestsadmin.js"></script>
 <script src="/javascripts/status-handler.js"></script>
 </body>
 </html>

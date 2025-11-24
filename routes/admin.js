@@ -1038,6 +1038,119 @@ router.get('/admin/archive', requireAdmin, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/deleted-requests
+ * API endpoint to get deleted/archived requests as JSON
+ * Query params: type (optional) - 'all', 'Request Approval', 'Service Request'
+ */
+router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
+  try {
+    const { type = 'all' } = req.query;
+
+    let archivedRequests = [];
+
+    // Fetch approvals if type is 'all' or 'Request Approval'
+    if (type === 'all' || type === 'Request Approval') {
+      const approvals = await RequestApproval.find({ isDeleted: true })
+        .populate({
+          path: 'userId',
+          select: 'fName lName userType affiliation studentOrganization',
+          options: { strictPopulate: false }
+        })
+        .populate({
+          path: 'deletedBy',
+          select: 'fName lName'
+        })
+        .lean();
+
+      archivedRequests.push(...approvals.map(r => {
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        let deletedByName = 'Unknown';
+
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        }
+
+        if (r.deletedBy && r.deletedBy.fName) {
+          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+        }
+
+        return {
+          _id: r._id,
+          type: "Request Approval",
+          title: r.title,
+          displayOrganization,
+          userName,
+          deletedByName,
+          deletedAt: r.deletedAt,
+          datetime: r.datetime || r.createdAt
+        };
+      }));
+    }
+
+    // Fetch service requests if type is 'all' or 'Service Request'
+    if (type === 'all' || type === 'Service Request') {
+      const serviceRequests = await ServiceRequest.find({ isDeleted: true })
+        .populate({
+          path: 'userId',
+          select: 'fName lName userType affiliation studentOrganization',
+          options: { strictPopulate: false }
+        })
+        .populate({
+          path: 'deletedBy',
+          select: 'fName lName'
+        })
+        .lean();
+
+      archivedRequests.push(...serviceRequests.map(r => {
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        let deletedByName = 'Unknown';
+
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        }
+
+        if (r.deletedBy && r.deletedBy.fName) {
+          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+        }
+
+        return {
+          _id: r._id,
+          type: "Service Request",
+          title: r.title,
+          displayOrganization,
+          userName,
+          deletedByName,
+          deletedAt: r.deletedAt,
+          datetime: r.datetime || r.createdAt
+        };
+      }));
+    }
+
+    // Sort by deleted date (most recent first)
+    archivedRequests.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+
+    res.json({
+      success: true,
+      archivedRequests
+    });
+  } catch (err) {
+    console.error('Error fetching deleted requests:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch deleted requests.'
+    });
+  }
+});
+
+/**
  * POST /admin/all-requests/update-status
  * Universal update endpoint for both approval and service requests from all-requests page
  */

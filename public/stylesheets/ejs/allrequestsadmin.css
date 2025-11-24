@@ -137,6 +137,10 @@ hr {
 
 .back-to-dashboard-container {
   margin: 2rem 3rem 1.5rem 3rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  align-items: center;
 }
 
 .back-to-dashboard-btn {
@@ -162,6 +166,34 @@ hr {
 }
 
 .back-to-dashboard-btn svg {
+  flex-shrink: 0;
+}
+
+/* Trash button styling */
+.trash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #fef3c7;
+  color: #92400e;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.trash-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3);
+  background: #92400e;
+  color: #ffffff;
+}
+
+.trash-btn svg {
   flex-shrink: 0;
 }
 
@@ -1044,6 +1076,25 @@ hr {
 .modal-content.unit-conversation-modal {
   z-index: 100101 !important;
   position: relative;
+}
+
+/* Trash modal - Must be above details and other modals */
+#trashModal {
+  z-index: 100200 !important; /* Higher than conversation modal */
+}
+
+#trashModal .modal-content {
+  z-index: 100201 !important;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Restore and Delete confirmation modals - Above trash modal */
+#restoreConfirmModal,
+#permanentDeleteModal {
+  z-index: 100300 !important;
 }
 
 .modal.show,
@@ -4713,6 +4764,135 @@ input:checked + .toggle-slider:before {
   .edit-readonly-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==========================================
+   TRASH MODAL STYLES
+   ========================================== */
+
+.trash-modal-content {
+  max-width: 1200px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.trash-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.trash-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 1rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.trash-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.trash-requests-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trash-requests-table thead {
+  background: #f8f9fa;
+}
+
+.trash-requests-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.trash-requests-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.trash-request-row:hover {
+  background: #f9fafb;
+}
+
+.trash-empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.trash-empty-state svg {
+  margin-bottom: 1rem;
+}
+
+.trash-empty-state p {
+  margin: 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.trash-empty-state p:last-child {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+/* Action buttons in trash modal */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+}
+
+.restore-btn {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.restore-btn:hover {
+  background: #1e40af;
+  color: white;
+}
+
+.delete-btn-permanent {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.delete-btn-permanent:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.action-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Delete Modal Warning Style */
