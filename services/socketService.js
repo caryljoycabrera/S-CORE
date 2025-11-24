@@ -84,6 +84,81 @@ class SocketService {
         // This could trigger database update if needed
         console.log(`Notification ${notificationId} marked as read by user ${socket.userId}`);
       });
+
+      // ===== Messaging Handlers =====
+
+      // Join conversation room
+      socket.on('joinConversation', (data) => {
+        const { conversationId } = data;
+        socket.join(`conversation-${conversationId}`);
+        console.log(`[Socket] User ${socket.userId} joined conversation ${conversationId}`);
+        
+        // Broadcast user joined event
+        socket.to(`conversation-${conversationId}`).emit('userJoinedConversation', {
+          conversationId: conversationId,
+          userId: socket.userId
+        });
+
+        // Emit user online presence
+        socket.to(`conversation-${conversationId}`).emit('userOnline', {
+          conversationId: conversationId,
+          userId: socket.userId,
+          timestamp: new Date(),
+          lastSeen: null
+        });
+
+        // Broadcast updated presence to all users in room
+        const presence = this.getConversationPresence(conversationId);
+        this.io.to(`conversation-${conversationId}`).emit('presenceUpdate', {
+          conversationId: conversationId,
+          presence: presence,
+          timestamp: new Date()
+        });
+      });
+
+      // Leave conversation room
+      socket.on('leaveConversation', (data) => {
+        const { conversationId } = data;
+        socket.leave(`conversation-${conversationId}`);
+        console.log(`[Socket] User ${socket.userId} left conversation ${conversationId}`);
+        
+        // Broadcast user left event
+        socket.to(`conversation-${conversationId}`).emit('userLeftConversation', {
+          conversationId: conversationId,
+          userId: socket.userId
+        });
+
+        // Emit user offline presence
+        socket.to(`conversation-${conversationId}`).emit('userOffline', {
+          conversationId: conversationId,
+          userId: socket.userId,
+          lastSeen: new Date(),
+          timestamp: new Date()
+        });
+
+        // Broadcast updated presence to all users in room
+        const presence = this.getConversationPresence(conversationId);
+        this.io.to(`conversation-${conversationId}`).emit('presenceUpdate', {
+          conversationId: conversationId,
+          presence: presence,
+          timestamp: new Date()
+        });
+      });
+
+      // Handle typing indicator
+      socket.on('typing', (data) => {
+        const { conversationId, userName, isTyping } = data;
+        console.log(`[Socket] ${userName} ${isTyping ? 'started' : 'stopped'} typing in ${conversationId}`);
+        
+        // Broadcast typing status to conversation participants (except sender)
+        socket.to(`conversation-${conversationId}`).emit('userTyping', {
+          conversationId: conversationId,
+          userId: socket.userId,
+          userName: userName,
+          isTyping: isTyping,
+          timestamp: new Date()
+        });
+      });
     });
 
     console.log('Socket.IO service initialized');
@@ -145,6 +220,73 @@ class SocketService {
   }
 
   /**
+   * Emit event to all participants in a conversation
+   * @param {String} conversationId - Conversation ID
+   * @param {String} event - Event name
+   * @param {Object} data - Event data
+   */
+  emitToConversation(conversationId, event, data) {
+    if (this.io) {
+      this.io.to(`conversation-${conversationId}`).emit(event, data);
+      console.log(`[Socket] Emitted ${event} to conversation ${conversationId}`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Join user to conversation room
+   * @param {String} socketId - Socket ID
+   * @param {String} conversationId - Conversation ID
+   */
+  joinConversation(socketId, conversationId) {
+    if (this.io && this.io.sockets.sockets.has(socketId)) {
+      const socket = this.io.sockets.sockets.get(socketId);
+      socket.join(`conversation-${conversationId}`);
+      console.log(`[Socket] User joined conversation: ${conversationId}`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Leave user from conversation room
+   * @param {String} socketId - Socket ID
+   * @param {String} conversationId - Conversation ID
+   */
+  leaveConversation(socketId, conversationId) {
+    if (this.io && this.io.sockets.sockets.has(socketId)) {
+      const socket = this.io.sockets.sockets.get(socketId);
+      socket.leave(`conversation-${conversationId}`);
+      console.log(`[Socket] User left conversation: ${conversationId}`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Emit typing indicator to conversation
+   * @param {String} conversationId - Conversation ID
+   * @param {String} userId - User ID
+   * @param {String} userName - User name
+   * @param {Boolean} isTyping - Is typing
+   */
+  emitTypingIndicator(conversationId, userId, userName, isTyping) {
+    if (this.io) {
+      this.io.to(`conversation-${conversationId}`).emit('userTyping', {
+        conversationId: conversationId,
+        userId: userId,
+        userName: userName,
+        isTyping: isTyping,
+        timestamp: new Date()
+      });
+      console.log(`[Socket] Typing indicator: ${userName} ${isTyping ? 'started' : 'stopped'} typing`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Get online user count
    * @returns {Number} Number of connected users
    */
@@ -167,6 +309,104 @@ class SocketService {
    */
   isUserOnline(userId) {
     return this.users.has(userId.toString());
+  }
+
+  /**
+   * Broadcast user online status to conversation
+   * @param {String} conversationId - Conversation ID
+   * @param {String} userId - User ID coming online
+   * @param {String} userName - User display name
+   */
+  emitUserOnline(conversationId, userId, userName) {
+    if (this.io && conversationId) {
+      this.io.to(`conversation-${conversationId}`).emit('userOnline', {
+        conversationId: conversationId,
+        userId: userId,
+        userName: userName,
+        timestamp: new Date(),
+        lastSeen: null
+      });
+      console.log(`[Presence] ${userName} is now online in conversation ${conversationId}`);
+    }
+  }
+
+  /**
+   * Broadcast user offline status to conversation
+   * @param {String} conversationId - Conversation ID
+   * @param {String} userId - User ID going offline
+   * @param {String} userName - User display name
+   * @param {Date} lastSeen - Last activity timestamp
+   */
+  emitUserOffline(conversationId, userId, userName, lastSeen) {
+    if (this.io && conversationId) {
+      this.io.to(`conversation-${conversationId}`).emit('userOffline', {
+        conversationId: conversationId,
+        userId: userId,
+        userName: userName,
+        lastSeen: lastSeen || new Date(),
+        timestamp: new Date()
+      });
+      console.log(`[Presence] ${userName} is now offline in conversation ${conversationId}`);
+    }
+  }
+
+  /**
+   * Get presence information for all users in conversation
+   * @param {String} conversationId - Conversation ID
+   * @returns {Object} User presence data
+   */
+  getConversationPresence(conversationId) {
+    if (!this.io || !conversationId) return {};
+    
+    const room = this.io.sockets.adapter.rooms.get(`conversation-${conversationId}`);
+    const presence = {};
+    
+    if (room) {
+      room.forEach(socketId => {
+        const socket = this.io.sockets.sockets.get(socketId);
+        if (socket && socket.userId) {
+          presence[socket.userId.toString()] = {
+            socketId: socketId,
+            isOnline: true,
+            lastActivity: new Date()
+          };
+        }
+      });
+    }
+    
+    return presence;
+  }
+
+  /**
+   * Broadcast presence update to all users in conversation
+   * @param {String} conversationId - Conversation ID
+   */
+  broadcastPresenceUpdate(conversationId) {
+    const presence = this.getConversationPresence(conversationId);
+    if (this.io && conversationId) {
+      this.io.to(`conversation-${conversationId}`).emit('presenceUpdate', {
+        conversationId: conversationId,
+        presence: presence,
+        timestamp: new Date()
+      });
+    }
+  }
+
+  /**
+   * Get all online users
+   * @returns {Array} Array of online user IDs
+   */
+  getOnlineUsers() {
+    return Array.from(this.users.keys());
+  }
+
+  /**
+   * Get user socket ID
+   * @param {String} userId - User ID
+   * @returns {String} Socket ID or null
+   */
+  getUserSocketId(userId) {
+    return this.users.get(userId.toString()) || null;
   }
 }
 

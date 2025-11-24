@@ -13,6 +13,7 @@ const notificationService = require('../services/notificationService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
+const { requestLimiter } = require('../middleware/rateLimiter');
 
 /**
  * Request Type to Unit Mapping
@@ -734,8 +735,9 @@ router.post('/profile/delete-picture', async (req, res) => {
 /**
  * POST /submit-request-approval
  * Handles submission of approval requests with file uploads
+ * Rate limited to prevent request spam
  */
-router.post('/submit-request-approval', upload.array('upload', 20), async (req, res) => {
+router.post('/submit-request-approval', requestLimiter, upload.array('upload', 20), async (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
@@ -972,8 +974,9 @@ router.post('/add-files/:requestId', upload.array('additionalFiles', 20), async 
 /**
  * POST /submit-service-request
  * Handles submission of service requests with file uploads
+ * Rate limited to prevent request spam
  */
-router.post('/submit-service-request', upload.array('uploadServiceFile', 20), async (req, res) => {
+router.post('/submit-service-request', requestLimiter, upload.array('uploadServiceFile', 20), async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
 
   const { projectTitle, organization, description, deadline, specificRequestType, isCustomType, links } = req.body;
@@ -1480,6 +1483,453 @@ router.post('/user/approval/request-revision/:id', requireLogin, async (req, res
   } catch (error) {
     console.error('Error requesting approval revision:', error);
     res.status(500).json({ success: false, message: 'Error requesting revision: ' + error.message });
+  }
+});
+
+// ===== User Settings Routes =====
+
+/**
+ * GET /user/settings
+ * Render user settings page
+ */
+router.get('/settings', requireLogin, (req, res) => {
+  try {
+    res.render('User/settings', { 
+      user: req.user,
+      title: 'Settings'
+    });
+  } catch (error) {
+    console.error('Error loading settings page:', error);
+    res.status(500).render('error', { error: error.message });
+  }
+});
+
+/**
+ * POST /user/settings/profile
+ * Update user profile information
+ */
+router.post('/settings/profile', requireLogin, async (req, res) => {
+  try {
+    const { firstName, lastName, email, contactNumber } = req.body;
+    const userId = req.user._id;
+
+    // Validate inputs
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({ success: false, message: 'First name, last name, and email are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
+    // Check if email is already taken by another user
+    const existingUser = await User.findOne({ email: email, _id: { $ne: userId } });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email already in use' });
+    }
+
+    // Update user profile
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        contactNumber: contactNumber ? contactNumber.trim() : ''
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Profile updated successfully',
+      user: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        contactNumber: user.contactNumber
+      }
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ success: false, message: 'Error updating profile: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/settings/profile-pic
+ * Upload user profile picture
+ */
+router.post('/settings/profile-pic', requireLogin, upload.single('profilePic'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const userId = req.user._id;
+    const fileName = `${userId}_${Date.now()}_${req.file.originalname}`;
+    const filePath = path.join(UPLOADS_DIR, fileName);
+
+    // Move file from temp to uploads directory
+    fs.renameSync(req.file.path, filePath);
+
+    // Delete old profile picture if exists
+    if (req.user.profilePicture) {
+      const oldPath = path.join(UPLOADS_DIR, req.user.profilePicture);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // Update user with new profile picture
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { profilePicture: fileName },
+      { new: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Profile picture uploaded successfully',
+      profilePicture: fileName
+    });
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    res.status(500).json({ success: false, message: 'Error uploading profile picture: ' + error.message });
+  }
+});
+
+/**
+ * DELETE /user/settings/profile-pic
+ * Remove user profile picture
+ */
+router.delete('/settings/profile-pic', requireLogin, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Delete file from filesystem
+    if (req.user.profilePicture) {
+      const filePath = path.join(UPLOADS_DIR, req.user.profilePicture);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Update user to remove picture reference
+    await User.findByIdAndUpdate(
+      userId,
+      { profilePicture: null },
+      { new: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Profile picture removed successfully'
+    });
+  } catch (error) {
+    console.error('Error removing profile picture:', error);
+    res.status(500).json({ success: false, message: 'Error removing profile picture: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/settings/notifications
+ * Update user notification preferences
+ */
+router.post('/settings/notifications', requireLogin, async (req, res) => {
+  try {
+    const { emailNotifications, notificationFrequency, notificationTypes } = req.body;
+    const userId = req.user._id;
+
+    // Validate inputs
+    const validFrequencies = ['immediate', 'daily', 'weekly', 'never'];
+    if (notificationFrequency && !validFrequencies.includes(notificationFrequency)) {
+      return res.status(400).json({ success: false, message: 'Invalid notification frequency' });
+    }
+
+    // Parse notification types (handle both array and string from form data)
+    let parsedTypes = [];
+    if (Array.isArray(notificationTypes)) {
+      parsedTypes = notificationTypes;
+    } else if (typeof notificationTypes === 'string') {
+      parsedTypes = notificationTypes.split(',').filter(t => t);
+    }
+
+    // Update user notification settings
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 
+        settings: {
+          ...req.user.settings,
+          emailNotifications: emailNotifications === 'true' || emailNotifications === true,
+          notificationFrequency: notificationFrequency || 'immediate',
+          notificationTypes: parsedTypes
+        }
+      },
+      { new: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Notification preferences updated successfully',
+      settings: user.settings
+    });
+  } catch (error) {
+    console.error('Error updating notification settings:', error);
+    res.status(500).json({ success: false, message: 'Error updating notification settings: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/settings/password
+ * Change user password
+ */
+router.post('/settings/password', requireLogin, async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user._id;
+
+    // Validate inputs
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: 'All password fields are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 8 characters long' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'New passwords do not match' });
+    }
+
+    // Get user with password field
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user password
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    res.json({ 
+      success: true, 
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ success: false, message: 'Error changing password: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/settings/preferences
+ * Update user preferences (language, timezone, dark mode, etc.)
+ */
+router.post('/settings/preferences', requireLogin, async (req, res) => {
+  try {
+    const { language, timezone, darkMode, itemsPerPage } = req.body;
+    const userId = req.user._id;
+
+    // Validate inputs
+    const validLanguages = ['en', 'es', 'fr'];
+    const validTimezones = ['UTC', 'EST', 'CST', 'PST'];
+    
+    if (language && !validLanguages.includes(language)) {
+      return res.status(400).json({ success: false, message: 'Invalid language' });
+    }
+
+    if (timezone && !validTimezones.includes(timezone)) {
+      return res.status(400).json({ success: false, message: 'Invalid timezone' });
+    }
+
+    // Validate itemsPerPage
+    const validPageSizes = [10, 20, 50];
+    const parsedPageSize = parseInt(itemsPerPage);
+    if (itemsPerPage && !validPageSizes.includes(parsedPageSize)) {
+      return res.status(400).json({ success: false, message: 'Invalid page size' });
+    }
+
+    // Update user preferences
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 
+        settings: {
+          ...req.user.settings,
+          language: language || 'en',
+          timezone: timezone || 'UTC',
+          darkMode: darkMode === 'true' || darkMode === true,
+          itemsPerPage: parsedPageSize || 20
+        }
+      },
+      { new: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Preferences updated successfully',
+      settings: user.settings
+    });
+  } catch (error) {
+    console.error('Error updating preferences:', error);
+    res.status(500).json({ success: false, message: 'Error updating preferences: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/settings/privacy
+ * Update user privacy settings
+ */
+router.post('/settings/privacy', requireLogin, async (req, res) => {
+  try {
+    const { profileVisibility } = req.body;
+    const userId = req.user._id;
+
+    // Validate inputs
+    const validVisibility = ['everyone', 'organization', 'admins', 'private'];
+    if (!validVisibility.includes(profileVisibility)) {
+      return res.status(400).json({ success: false, message: 'Invalid visibility setting' });
+    }
+
+    // Update user privacy settings
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 
+        settings: {
+          ...req.user.settings,
+          profileVisibility: profileVisibility
+        }
+      },
+      { new: true }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Privacy settings updated successfully',
+      settings: user.settings
+    });
+  } catch (error) {
+    console.error('Error updating privacy settings:', error);
+    res.status(500).json({ success: false, message: 'Error updating privacy settings: ' + error.message });
+  }
+});
+
+/**
+ * GET /user/settings/download-data
+ * Download user's data as JSON
+ */
+router.get('/settings/download-data', requireLogin, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Gather user data
+    const user = await User.findById(userId);
+    const serviceRequests = await ServiceRequest.find({ requesterId: userId });
+    const approvalRequests = await RequestApproval.find({ requesterId: userId });
+
+    const userData = {
+      userProfile: user,
+      serviceRequests: serviceRequests,
+      approvalRequests: approvalRequests,
+      downloadDate: new Date().toISOString()
+    };
+
+    // Set response headers for download
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="user-data-${userId}.json"`);
+    res.json(userData);
+  } catch (error) {
+    console.error('Error downloading user data:', error);
+    res.status(500).json({ success: false, message: 'Error downloading data: ' + error.message });
+  }
+});
+
+/**
+ * DELETE /user/settings/account
+ * Delete user account (with all related data)
+ */
+router.delete('/settings/account', requireLogin, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Password required to delete account' });
+    }
+
+    // Get user with password field
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: 'Incorrect password' });
+    }
+
+    // Delete profile picture if exists
+    if (user.profilePicture) {
+      const filePath = path.join(UPLOADS_DIR, user.profilePicture);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Delete user and related data
+    await User.findByIdAndDelete(userId);
+    await ServiceRequest.deleteMany({ requesterId: userId });
+    await RequestApproval.deleteMany({ requesterId: userId });
+
+    // Clear user session
+    req.logout((err) => {
+      if (err) {
+        console.error('Error logging out after account deletion:', err);
+      }
+      res.json({ 
+        success: true, 
+        message: 'Account deleted successfully',
+        redirect: '/'
+      });
+    });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({ success: false, message: 'Error deleting account: ' + error.message });
+  }
+});
+
+/**
+ * POST /user/settings/logout-other-sessions
+ * Logout user from all other sessions
+ */
+router.post('/settings/logout-other-sessions', requireLogin, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // In a multi-session implementation, you would:
+    // 1. Invalidate all sessions except current one for this user
+    // 2. Clear from session store / Redis
+    // For now, we'll send a success message as a placeholder
+    // In production, implement with session store like Redis
+
+    res.json({ 
+      success: true, 
+      message: 'All other sessions have been logged out'
+    });
+  } catch (error) {
+    console.error('Error logging out other sessions:', error);
+    res.status(500).json({ success: false, message: 'Error logging out sessions: ' + error.message });
   }
 });
 

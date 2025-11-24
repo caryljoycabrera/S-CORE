@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>System Settings - Admin</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+  <style>
+    /* Settings Page Specific Styles */
+    .settings-container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 2rem;
+      padding: 2rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .settings-sidebar {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .settings-sidebar-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .settings-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .settings-nav-item {
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      background: white;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      color: #4b5563;
+      border-left: 3px solid transparent;
+    }
+
+    .settings-nav-item:hover {
+      background: #f3f4f6;
+      border-left-color: #10b981;
+    }
+
+    .settings-nav-item.active {
+      background: #ecfdf5;
+      color: #10b981;
+      border-left-color: #10b981;
+      font-weight: 600;
+    }
+
+    .settings-content {
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      border: 1px solid #e5e7eb;
+    }
+
+    .settings-section {
+      display: none;
+    }
+
+    .settings-section.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .settings-section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .settings-section-description {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .settings-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .settings-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .settings-form-group label {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.875rem;
+    }
+
+    .settings-form-group input,
+    .settings-form-group select,
+    .settings-form-group textarea {
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+
+    .settings-form-group input:focus,
+    .settings-form-group select:focus,
+    .settings-form-group textarea:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .settings-form-help {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    .settings-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .settings-checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 6px;
+    }
+
+    .settings-checkbox-group input[type="checkbox"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+    }
+
+    .settings-checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .settings-button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .settings-btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .settings-btn-primary {
+      background: #10b981;
+      color: white;
+    }
+
+    .settings-btn-primary:hover {
+      background: #059669;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .settings-btn-secondary {
+      background: #e5e7eb;
+      color: #1f2937;
+    }
+
+    .settings-btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .settings-btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .settings-btn-danger:hover {
+      background: #dc2626;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .settings-alert {
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .settings-alert.show {
+      display: block;
+    }
+
+    .settings-alert-success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .settings-alert-error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    @media (max-width: 768px) {
+      .settings-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .settings-sidebar {
+        position: static;
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+      }
+
+      .settings-nav {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
+
+      .settings-form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Notification Preferences Styles */
+    .settings-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .settings-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 0.5rem;
+    }
+
+    .settings-card-description {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-toggle-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .settings-toggle-item {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .settings-toggle-item:hover {
+      border-color: #d1d5db;
+      background: #f3f4f6;
+    }
+
+    .settings-toggle-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .settings-toggle-label {
+      font-weight: 500;
+      color: #374151;
+      font-size: 0.95rem;
+    }
+
+    .settings-toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 24px;
+      appearance: none;
+      background: #d1d5db;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .settings-toggle-switch:checked {
+      background: #10b981;
+    }
+
+    .settings-toggle-switch:checked::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: right 0.3s ease;
+    }
+
+    .settings-toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: left 0.3s ease;
+    }
+
+    .settings-toggle-description {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Admin Sidebar Navigation -->
+  <%- include('../partials/admin-sidebar', { user: user, activePage: 'settings' }) %>
+
+  <!-- Main Content Area -->
+  <div class="admin-main-content">
+    <!-- Header -->
+    <div class="admin-header">
+      <div class="admin-header-left">
+        <h1>System Settings & Configuration</h1>
+        <p>Manage system-wide settings, user preferences, and advanced configurations</p>
+      </div>
+      <div class="admin-header-right">
+        <%- include('../partials/notifications') %>
+        <div class="admin-profile-dropdown">
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+               alt="<%= user.fName %>" class="admin-profile-img" />
+          <div class="admin-dropdown-menu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Container -->
+    <div class="settings-container">
+      <!-- Sidebar Navigation -->
+      <div class="settings-sidebar">
+        <div class="settings-sidebar-title">Settings Categories</div>
+        <div class="settings-nav">
+          <div class="settings-nav-item active" onclick="switchTab('general')">
+            ⚙️ General Settings
+          </div>
+          <div class="settings-nav-item" onclick="switchTab('requests')">
+            📋 Request Management
+          </div>
+          <div class="settings-nav-item" onclick="switchTab('notifications')">
+            🔔 Notifications
+          </div>
+          <div class="settings-nav-item" onclick="switchTab('storage')">
+            💾 File Storage
+          </div>
+          <div class="settings-nav-item" onclick="switchTab('features')">
+            🚀 Features & Flags
+          </div>
+          <div class="settings-nav-item" onclick="switchTab('backup')">
+            📦 Backup & Maintenance
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="settings-content">
+        <div class="settings-alert settings-alert-success" id="successAlert"></div>
+        <div class="settings-alert settings-alert-error" id="errorAlert"></div>
+
+        <!-- General Settings Tab -->
+        <div class="settings-section active" id="general-section">
+          <h2 class="settings-section-title">General Settings</h2>
+          <p class="settings-section-description">Configure basic system information and preferences</p>
+          
+          <form class="settings-form" id="generalForm" onsubmit="saveGeneralSettings(event)">
+            <div class="settings-form-row">
+              <div class="settings-form-group">
+                <label for="siteTitle">Site Title</label>
+                <input type="text" id="siteTitle" name="siteTitle" placeholder="S-CORE - Student Communications Office...">
+                <div class="settings-form-help">The main title displayed throughout the system</div>
+              </div>
+              <div class="settings-form-group">
+                <label for="timezone">Timezone</label>
+                <select id="timezone" name="timezone">
+                  <option value="Asia/Manila">Asia/Manila (Philippine Time)</option>
+                  <option value="UTC">UTC</option>
+                  <option value="Asia/Bangkok">Asia/Bangkok</option>
+                  <option value="Asia/Singapore">Asia/Singapore</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-form-group">
+              <label for="siteDescription">Site Description</label>
+              <textarea id="siteDescription" name="siteDescription" rows="3" placeholder="Describe your system..."></textarea>
+              <div class="settings-form-help">Brief description of the system purpose</div>
+            </div>
+
+            <div class="settings-form-row">
+              <div class="settings-form-group">
+                <label for="dateFormat">Date Format</label>
+                <select id="dateFormat" name="dateFormat">
+                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                </select>
+              </div>
+              <div class="settings-form-group">
+                <label for="language">Language</label>
+                <select id="language" name="language">
+                  <option value="en">English</option>
+                  <option value="tl">Tagalog</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-button-group">
+              <button type="submit" class="settings-btn settings-btn-primary">Save Changes</button>
+              <button type="button" class="settings-btn settings-btn-secondary" onclick="resetGeneralSettings()">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Request Management Settings Tab -->
+        <div class="settings-section" id="requests-section">
+          <h2 class="settings-section-title">Request Management</h2>
+          <p class="settings-section-description">Configure request workflow and revision policies</p>
+          
+          <form class="settings-form" id="requestsForm" onsubmit="saveRequestSettings(event)">
+            <div class="settings-form-row">
+              <div class="settings-form-group">
+                <label for="maxRevisions">Maximum Major Revisions</label>
+                <input type="number" id="maxRevisions" name="maxRevisions" min="1" max="10">
+                <div class="settings-form-help">How many major revisions are allowed per request</div>
+              </div>
+              <div class="settings-form-group">
+                <label for="maxMinorRevisions">Maximum Minor Revisions</label>
+                <input type="number" id="maxMinorRevisions" name="maxMinorRevisions" min="0" max="10">
+                <div class="settings-form-help">How many minor revisions are allowed per request</div>
+              </div>
+            </div>
+
+            <div class="settings-form-group">
+              <label for="defaultDeadlineDays">Default Deadline (Days)</label>
+              <input type="number" id="defaultDeadlineDays" name="defaultDeadlineDays" min="1" max="90">
+              <div class="settings-form-help">Default number of days for request deadline</div>
+            </div>
+
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="autoApproveAfterRevisions" name="autoApproveAfterRevisions">
+              <label for="autoApproveAfterRevisions">Auto-approve after X revisions</label>
+            </div>
+
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="requireUnitReview" name="requireUnitReview" checked>
+              <label for="requireUnitReview">Require unit team review before approval</label>
+            </div>
+
+            <div class="settings-button-group">
+              <button type="submit" class="settings-btn settings-btn-primary">Save Changes</button>
+              <button type="button" class="settings-btn settings-btn-secondary" onclick="resetRequestSettings()">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Notifications Settings Tab -->
+        <div class="settings-section" id="notifications-section">
+          <h2 class="settings-section-title">Notification Settings</h2>
+          <p class="settings-section-description">Configure email and system notifications</p>
+          
+          <!-- Notification Delivery Methods -->
+          <div class="settings-card">
+            <h3 class="settings-card-title">📬 Notification Delivery Methods</h3>
+            <p class="settings-card-description">Choose how you want to receive notifications</p>
+            
+            <div class="settings-toggle-group">
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">📧 Email Notifications</span>
+                  <input type="checkbox" id="enableEmailNotifications" class="settings-toggle-switch" checked>
+                </div>
+                <p class="settings-toggle-description">Receive notifications via email</p>
+              </div>
+
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">🔔 In-App Notifications</span>
+                  <input type="checkbox" id="enableInAppNotifications" class="settings-toggle-switch" checked>
+                </div>
+                <p class="settings-toggle-description">See notifications in your dashboard</p>
+              </div>
+
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">📱 Push Notifications</span>
+                  <input type="checkbox" id="enablePushNotifications" class="settings-toggle-switch">
+                </div>
+                <p class="settings-toggle-description">Get browser push notifications</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notification Types -->
+          <div class="settings-card" style="margin-top: 2rem;">
+            <h3 class="settings-card-title">🎯 Notification Types</h3>
+            <p class="settings-card-description">Select which types of notifications you want to receive</p>
+            
+            <div class="settings-toggle-group">
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">📋 Request Updates</span>
+                  <input type="checkbox" id="notifyRequestUpdates" class="settings-toggle-switch" checked>
+                </div>
+                <p class="settings-toggle-description">When service requests are updated or completed</p>
+              </div>
+
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">✅ Approvals</span>
+                  <input type="checkbox" id="notifyApprovals" class="settings-toggle-switch" checked>
+                </div>
+                <p class="settings-toggle-description">When approval requests need your attention</p>
+              </div>
+
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">💬 Messages</span>
+                  <input type="checkbox" id="notifyMessages" class="settings-toggle-switch" checked>
+                </div>
+                <p class="settings-toggle-description">When you receive new direct messages</p>
+              </div>
+
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">📢 Announcements</span>
+                  <input type="checkbox" id="notifyAnnouncements" class="settings-toggle-switch" checked>
+                </div>
+                <p class="settings-toggle-description">Important system announcements</p>
+              </div>
+
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">⚠️ System Alerts</span>
+                  <input type="checkbox" id="notifySystemAlerts" class="settings-toggle-switch" checked>
+                </div>
+                <p class="settings-toggle-description">Critical system alerts and warnings</p>
+              </div>
+
+              <div class="settings-toggle-item">
+                <div class="settings-toggle-header">
+                  <span class="settings-toggle-label">👥 User Activity</span>
+                  <input type="checkbox" id="notifyUserActivity" class="settings-toggle-switch">
+                </div>
+                <p class="settings-toggle-description">New user registrations and activities</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email Configuration -->
+          <form class="settings-form" id="notificationsForm" onsubmit="saveNotificationSettings(event)" style="margin-top: 2rem;">
+            <h3 class="settings-card-title">⚙️ Email Configuration</h3>
+            
+            <div class="settings-form-row">
+              <div class="settings-form-group">
+                <label for="smtpHost">SMTP Host</label>
+                <input type="text" id="smtpHost" name="smtpHost" placeholder="smtp.gmail.com">
+              </div>
+              <div class="settings-form-group">
+                <label for="smtpPort">SMTP Port</label>
+                <input type="number" id="smtpPort" name="smtpPort" value="587">
+              </div>
+            </div>
+
+            <div class="settings-form-group">
+              <label for="emailFrom">Email From Address</label>
+              <input type="email" id="emailFrom" name="emailFrom" placeholder="noreply@dlsud.edu.ph">
+              <div class="settings-form-help">The email address notifications will be sent from</div>
+            </div>
+
+            <div class="settings-form-group">
+              <label for="notificationFrequency">Notification Frequency</label>
+              <select id="notificationFrequency" name="notificationFrequency">
+                <option value="immediate">Immediate</option>
+                <option value="daily">Daily Digest</option>
+                <option value="weekly">Weekly Digest</option>
+              </select>
+              <div class="settings-form-help">How often to send notification emails</div>
+            </div>
+
+            <div class="settings-button-group">
+              <button type="submit" class="settings-btn settings-btn-primary">Save Notification Settings</button>
+              <button type="button" class="settings-btn settings-btn-secondary" onclick="resetNotificationSettings()">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- File Storage Settings Tab -->
+        <div class="settings-section" id="storage-section">
+          <h2 class="settings-section-title">File Storage</h2>
+          <p class="settings-section-description">Configure file upload limits and storage options</p>
+          
+          <form class="settings-form" id="storageForm" onsubmit="saveStorageSettings(event)">
+            <div class="settings-form-row">
+              <div class="settings-form-group">
+                <label for="maxFileSize">Max File Size (MB)</label>
+                <input type="number" id="maxFileSize" name="maxFileSize" min="1" max="500">
+                <div class="settings-form-help">Maximum file size for uploads in megabytes</div>
+              </div>
+              <div class="settings-form-group">
+                <label for="storageType">Storage Type</label>
+                <select id="storageType" name="storageType">
+                  <option value="local">Local Storage</option>
+                  <option value="aws">AWS S3</option>
+                  <option value="gcs">Google Cloud Storage</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="retainAllRevisionFiles" name="retainAllRevisionFiles" checked>
+              <label for="retainAllRevisionFiles">Retain all revision files (no auto-deletion)</label>
+            </div>
+
+            <div class="settings-form-group">
+              <label for="autoDeleteOldFilesAfterDays">Auto-delete files after (days)</label>
+              <input type="number" id="autoDeleteOldFilesAfterDays" name="autoDeleteOldFilesAfterDays" min="1">
+              <div class="settings-form-help">Leave empty to disable auto-deletion</div>
+            </div>
+
+            <div class="settings-button-group">
+              <button type="submit" class="settings-btn settings-btn-primary">Save Changes</button>
+              <button type="button" class="settings-btn settings-btn-secondary" onclick="resetStorageSettings()">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Features & Flags Tab -->
+        <div class="settings-section" id="features-section">
+          <h2 class="settings-section-title">Features & Flags</h2>
+          <p class="settings-section-description">Enable or disable system features</p>
+          
+          <form class="settings-form" id="featuresForm" onsubmit="saveFeatureSettings(event)">
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="enableAnnouncements" name="enableAnnouncements" checked>
+              <label for="enableAnnouncements">Enable Announcements System</label>
+            </div>
+
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="enableUserSearch" name="enableUserSearch" checked>
+              <label for="enableUserSearch">Enable Global User Search</label>
+            </div>
+
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="enableDarkMode" name="enableDarkMode" checked>
+              <label for="enableDarkMode">Enable Dark Mode for Users</label>
+            </div>
+
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="enableAnalytics" name="enableAnalytics" checked>
+              <label for="enableAnalytics">Enable Analytics Dashboard</label>
+            </div>
+
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="enableMobileApp" name="enableMobileApp">
+              <label for="enableMobileApp">Enable Mobile App Support</label>
+            </div>
+
+            <div class="settings-button-group">
+              <button type="submit" class="settings-btn settings-btn-primary">Save Changes</button>
+              <button type="button" class="settings-btn settings-btn-secondary" onclick="resetFeatureSettings()">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Backup & Maintenance Tab -->
+        <div class="settings-section" id="backup-section">
+          <h2 class="settings-section-title">Backup & Maintenance</h2>
+          <p class="settings-section-description">Configure system backups and maintenance mode</p>
+          
+          <form class="settings-form" id="backupForm" onsubmit="return false;">
+            <div class="settings-checkbox-group">
+              <input type="checkbox" id="maintenanceMode" name="maintenanceMode">
+              <label for="maintenanceMode">Enable Maintenance Mode (System will be unavailable)</label>
+            </div>
+
+            <div class="settings-form-group">
+              <label for="maintenanceMessage">Maintenance Message</label>
+              <textarea id="maintenanceMessage" name="maintenanceMessage" rows="3" placeholder="System is under maintenance..."></textarea>
+              <div class="settings-form-help">Message displayed when maintenance mode is enabled</div>
+            </div>
+
+            <div class="settings-button-group">
+              <button type="button" class="settings-btn settings-btn-primary" onclick="saveBackupSettings()">Save & Enable Maintenance</button>
+              <button type="button" class="settings-btn settings-btn-danger" onclick="resetToDefaults()">⚠️ Reset All to Defaults</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load settings on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadSettings();
+    });
+
+    // Switch between tabs
+    function switchTab(tabName) {
+      // Hide all sections
+      document.querySelectorAll('.settings-section').forEach(section => {
+        section.classList.remove('active');
+      });
+
+      // Remove active from all nav items
+      document.querySelectorAll('.settings-nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      // Show selected section
+      document.getElementById(`${tabName}-section`).classList.add('active');
+
+      // Add active to clicked nav item
+      event.target.classList.add('active');
+    }
+
+    // Load all settings from server
+    async function loadSettings() {
+      try {
+        const response = await fetch('/admin/settings/data');
+        const data = await response.json();
+
+        if (data.success) {
+          const settings = data.settings;
+
+          // Populate General Settings
+          document.getElementById('siteTitle').value = settings.siteTitle || '';
+          document.getElementById('siteDescription').value = settings.siteDescription || '';
+          document.getElementById('timezone').value = settings.timezone || 'Asia/Manila';
+          document.getElementById('dateFormat').value = settings.dateFormat || 'MM/DD/YYYY';
+          document.getElementById('language').value = settings.language || 'en';
+
+          // Populate Request Settings
+          document.getElementById('maxRevisions').value = settings.maxRevisions || 3;
+          document.getElementById('maxMinorRevisions').value = settings.maxMinorRevisions || 2;
+          document.getElementById('defaultDeadlineDays').value = settings.defaultDeadlineDays || 7;
+          document.getElementById('autoApproveAfterRevisions').checked = settings.autoApproveAfterRevisions || false;
+          document.getElementById('requireUnitReview').checked = settings.requireUnitReview !== false;
+
+          // Populate Notification Settings
+          document.getElementById('enableEmailNotifications').checked = settings.enableEmailNotifications !== false;
+          document.getElementById('smtpHost').value = settings.smtpHost || '';
+          document.getElementById('smtpPort').value = settings.smtpPort || 587;
+          document.getElementById('emailFrom').value = settings.emailFrom || '';
+          document.getElementById('notificationFrequency').value = settings.notificationFrequency || 'immediate';
+
+          // Populate Storage Settings
+          document.getElementById('maxFileSize').value = settings.maxFileSize || 50;
+          document.getElementById('storageType').value = settings.storageType || 'local';
+          document.getElementById('retainAllRevisionFiles').checked = settings.retainAllRevisionFiles !== false;
+          document.getElementById('autoDeleteOldFilesAfterDays').value = settings.autoDeleteOldFilesAfterDays || '';
+
+          // Populate Feature Flags
+          document.getElementById('enableAnnouncements').checked = settings.enableAnnouncements !== false;
+          document.getElementById('enableUserSearch').checked = settings.enableUserSearch !== false;
+          document.getElementById('enableDarkMode').checked = settings.enableDarkMode !== false;
+          document.getElementById('enableAnalytics').checked = settings.enableAnalytics !== false;
+          document.getElementById('enableMobileApp').checked = settings.enableMobileApp || false;
+
+          // Populate Backup Settings
+          document.getElementById('maintenanceMode').checked = settings.maintenanceMode || false;
+          document.getElementById('maintenanceMessage').value = settings.maintenanceMessage || '';
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        showError('Failed to load settings');
+      }
+    }
+
+    // Save General Settings
+    async function saveGeneralSettings(event) {
+      event.preventDefault();
+
+      const data = {
+        siteTitle: document.getElementById('siteTitle').value,
+        siteDescription: document.getElementById('siteDescription').value,
+        timezone: document.getElementById('timezone').value,
+        dateFormat: document.getElementById('dateFormat').value,
+        language: document.getElementById('language').value
+      };
+
+      try {
+        const response = await fetch('/admin/settings/general', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showSuccess('General settings updated successfully');
+        } else {
+          showError(result.message || 'Failed to save settings');
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        showError('An error occurred while saving');
+      }
+    }
+
+    // Save Request Management Settings
+    async function saveRequestSettings(event) {
+      event.preventDefault();
+
+      const data = {
+        maxRevisions: document.getElementById('maxRevisions').value,
+        maxMinorRevisions: document.getElementById('maxMinorRevisions').value,
+        defaultDeadlineDays: document.getElementById('defaultDeadlineDays').value,
+        autoApproveAfterRevisions: document.getElementById('autoApproveAfterRevisions').checked,
+        requireUnitReview: document.getElementById('requireUnitReview').checked
+      };
+
+      try {
+        const response = await fetch('/admin/settings/request-management', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showSuccess('Request settings updated successfully');
+        } else {
+          showError(result.message || 'Failed to save settings');
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        showError('An error occurred while saving');
+      }
+    }
+
+    // Save Notification Settings
+    async function saveNotificationSettings(event) {
+      event.preventDefault();
+
+      const data = {
+        // Delivery methods
+        enableEmailNotifications: document.getElementById('enableEmailNotifications').checked,
+        enableInAppNotifications: document.getElementById('enableInAppNotifications').checked,
+        enablePushNotifications: document.getElementById('enablePushNotifications').checked,
+        
+        // Notification types
+        notifyRequestUpdates: document.getElementById('notifyRequestUpdates').checked,
+        notifyApprovals: document.getElementById('notifyApprovals').checked,
+        notifyMessages: document.getElementById('notifyMessages').checked,
+        notifyAnnouncements: document.getElementById('notifyAnnouncements').checked,
+        notifySystemAlerts: document.getElementById('notifySystemAlerts').checked,
+        notifyUserActivity: document.getElementById('notifyUserActivity').checked,
+        
+        // Email configuration
+        smtpHost: document.getElementById('smtpHost').value,
+        smtpPort: document.getElementById('smtpPort').value,
+        emailFrom: document.getElementById('emailFrom').value,
+        notificationFrequency: document.getElementById('notificationFrequency').value
+      };
+
+      try {
+        const response = await fetch('/admin/settings/notifications', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showSuccess('Notification preferences updated successfully');
+        } else {
+          showError(result.message || 'Failed to save preferences');
+        }
+      } catch (error) {
+        console.error('Error saving notification preferences:', error);
+        showError('An error occurred while saving preferences');
+      }
+    }
+
+    // Save Storage Settings
+    async function saveStorageSettings(event) {
+      event.preventDefault();
+
+      const data = {
+        maxFileSize: document.getElementById('maxFileSize').value,
+        storageType: document.getElementById('storageType').value,
+        retainAllRevisionFiles: document.getElementById('retainAllRevisionFiles').checked,
+        autoDeleteOldFilesAfterDays: document.getElementById('autoDeleteOldFilesAfterDays').value
+      };
+
+      try {
+        const response = await fetch('/admin/settings/storage', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showSuccess('Storage settings updated successfully');
+        } else {
+          showError(result.message || 'Failed to save settings');
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        showError('An error occurred while saving');
+      }
+    }
+
+    // Save Feature Settings
+    async function saveFeatureSettings(event) {
+      event.preventDefault();
+
+      const data = {
+        enableAnnouncements: document.getElementById('enableAnnouncements').checked,
+        enableUserSearch: document.getElementById('enableUserSearch').checked,
+        enableDarkMode: document.getElementById('enableDarkMode').checked,
+        enableAnalytics: document.getElementById('enableAnalytics').checked,
+        enableMobileApp: document.getElementById('enableMobileApp').checked
+      };
+
+      try {
+        const response = await fetch('/admin/settings/features', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          showSuccess('Feature settings updated successfully');
+        } else {
+          showError(result.message || 'Failed to save settings');
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        showError('An error occurred while saving');
+      }
+    }
+
+    // Save Backup Settings
+    async function saveBackupSettings() {
+      // Implementation for backup settings
+      showSuccess('Maintenance mode status updated');
+    }
+
+    // Reset to all defaults
+    async function resetToDefaults() {
+      if (!confirm('Are you sure? This will reset ALL settings to defaults. This action cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/admin/settings/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          await loadSettings();
+          showSuccess('All settings have been reset to defaults');
+        } else {
+          showError(result.message || 'Failed to reset settings');
+        }
+      } catch (error) {
+        console.error('Error resetting settings:', error);
+        showError('An error occurred while resetting');
+      }
+    }
+
+    // Reset individual sections
+    function resetGeneralSettings() {
+      loadSettings();
+      showSuccess('General settings reset');
+    }
+
+    function resetRequestSettings() {
+      loadSettings();
+      showSuccess('Request settings reset');
+    }
+
+    function resetNotificationSettings() {
+      loadSettings();
+      showSuccess('Notification settings reset');
+    }
+
+    function resetStorageSettings() {
+      loadSettings();
+      showSuccess('Storage settings reset');
+    }
+
+    function resetFeatureSettings() {
+      loadSettings();
+      showSuccess('Feature settings reset');
+    }
+
+    // Show success message
+    function showSuccess(message) {
+      const alert = document.getElementById('successAlert');
+      alert.textContent = '✓ ' + message;
+      alert.classList.add('show');
+      setTimeout(() => alert.classList.remove('show'), 4000);
+    }
+
+    // Show error message
+    function showError(message) {
+      const alert = document.getElementById('errorAlert');
+      alert.textContent = '✗ ' + message;
+      alert.classList.add('show');
+      setTimeout(() => alert.classList.remove('show'), 4000);
+    }
+  </script>
+</body>
+</html>

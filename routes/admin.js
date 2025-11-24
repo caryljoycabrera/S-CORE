@@ -9,9 +9,14 @@ const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const Notification = require('../models/Notification');
 const BroadcastMessage = require('../models/BroadcastMessage');
+const SystemSettings = require('../models/SystemSettings');
+const RequestType = require('../models/RequestType');
 const { requireAdmin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
+const settingsService = require('../services/settingsService');
+const reportService = require('../services/reportService');
+const announcementService = require('../services/announcementService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -2001,9 +2006,13 @@ router.get('/admin/reports', requireAdmin, async (req, res) => {
       read: false
     });
 
+    // Get available filters for report page
+    const availableFilters = await reportService.getAvailableFilters();
+
     res.render('admin/reports', {
       user: req.user,
-      unreadCount: unreadCount
+      unreadCount: unreadCount,
+      availableFilters: availableFilters
     });
   } catch (error) {
     console.error('Error rendering reports page:', error);
@@ -2586,6 +2595,966 @@ router.delete('/admin/request/permanent-delete', requireAdmin, async (req, res) 
   } catch (error) {
     console.error('Error permanently deleting request:', error);
     res.status(500).json({ success: false, message: 'Failed to permanently delete request' });
+  }
+});
+
+// ========================================
+// REQUEST TYPE MANAGEMENT ROUTES
+// ========================================
+
+/**
+ * GET /admin/request-types
+ * Display request types management page
+ */
+router.get('/admin/request-types', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const requestTypes = await RequestType.find().populate('submittedBy').lean();
+    const unreadCount = await Notification.countDocuments({
+      recipient: req.session.userId,
+      isRead: false
+    });
+
+    // Calculate statistics
+    const stats = {
+      total: requestTypes.length,
+      pending: requestTypes.filter(rt => rt.status === 'pending').length,
+      approved: requestTypes.filter(rt => rt.status === 'approved').length,
+      rejected: requestTypes.filter(rt => rt.status === 'rejected').length
+    };
+
+    res.render('Admin/request-types', {
+      user: user,
+      requestTypes: requestTypes,
+      stats: stats,
+      unreadCount: unreadCount
+    });
+  } catch (error) {
+    console.error('Error loading request types page:', error);
+    res.status(500).render('error', { message: 'Failed to load request types' });
+  }
+});
+
+/**
+ * GET /admin/request-types/data
+ * Get all request types as JSON
+ */
+router.get('/admin/request-types/data', requireAdmin, async (req, res) => {
+  try {
+    const requestTypes = await RequestType.find()
+      .populate('submittedBy', 'fName lName email')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: requestTypes });
+  } catch (error) {
+    console.error('Error fetching request types:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch request types' });
+  }
+});
+
+/**
+ * POST /admin/request-types
+ * Create new request type
+ */
+router.post('/admin/request-types', requireAdmin, async (req, res) => {
+  try {
+    const { name, category, description, requiredFields, assignedUnit } = req.body;
+
+    if (!name || !category) {
+      return res.status(400).json({ success: false, message: 'Name and category are required' });
+    }
+
+    const newRequestType = new RequestType({
+      name,
+      category,
+      description,
+      requiredFields: requiredFields ? requiredFields.split(',').map(f => f.trim()) : [],
+      assignedUnit,
+      status: 'approved', // Auto-approve admin-created types
+      submittedBy: req.session.userId
+    });
+
+    await newRequestType.save();
+    res.json({ success: true, message: 'Request type created successfully', data: newRequestType });
+  } catch (error) {
+    console.error('Error creating request type:', error);
+    res.status(500).json({ success: false, message: 'Failed to create request type' });
+  }
+});
+
+/**
+ * PUT /admin/request-types/:id
+ * Update request type
+ */
+router.put('/admin/request-types/:id', requireAdmin, async (req, res) => {
+  try {
+    const { name, category, description, requiredFields, assignedUnit, status } = req.body;
+    const { id } = req.params;
+
+    const requestType = await RequestType.findByIdAndUpdate(
+      id,
+      {
+        name,
+        category,
+        description,
+        requiredFields: requiredFields ? requiredFields.split(',').map(f => f.trim()) : [],
+        assignedUnit,
+        status,
+        reviewedBy: req.session.userId,
+        reviewedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    res.json({ success: true, message: 'Request type updated successfully', data: requestType });
+  } catch (error) {
+    console.error('Error updating request type:', error);
+    res.status(500).json({ success: false, message: 'Failed to update request type' });
+  }
+});
+
+/**
+ * DELETE /admin/request-types/:id
+ * Delete request type
+ */
+router.delete('/admin/request-types/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const requestType = await RequestType.findByIdAndDelete(id);
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    res.json({ success: true, message: 'Request type deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting request type:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete request type' });
+  }
+});
+
+/**
+ * POST /admin/request-types/:id/approve
+ * Approve a pending request type
+ */
+router.post('/admin/request-types/:id/approve', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { assignedUnit } = req.body;
+
+    if (!assignedUnit) {
+      return res.status(400).json({ success: false, message: 'Assigned unit is required' });
+    }
+
+    const requestType = await RequestType.findByIdAndUpdate(
+      id,
+      {
+        status: 'approved',
+        assignedUnit,
+        reviewedBy: req.session.userId,
+        reviewedAt: new Date()
+      },
+      { new: true }
+    ).populate('submittedBy', 'fName lName email');
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    // Create notification for the user
+    try {
+      await notificationService.createNotification({
+        userId: requestType.submittedBy._id,
+        message: `Your request type "${requestType.name}" has been approved and is now available to all users!`,
+        link: '/user/my-requests',
+        type: 'system'
+      });
+    } catch (notifError) {
+      console.error('Error sending approval notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Request type approved successfully', requestType });
+  } catch (error) {
+    console.error('Error approving request type:', error);
+    res.status(500).json({ success: false, message: 'Failed to approve request type' });
+  }
+});
+
+/**
+ * POST /admin/request-types/:id/reject
+ * Reject a pending request type
+ */
+router.post('/admin/request-types/:id/reject', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reviewNotes } = req.body;
+
+    const requestType = await RequestType.findByIdAndUpdate(
+      id,
+      {
+        status: 'rejected',
+        reviewNotes,
+        reviewedBy: req.session.userId,
+        reviewedAt: new Date()
+      },
+      { new: true }
+    ).populate('submittedBy', 'fName lName email');
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    // Create notification for the user
+    try {
+      await notificationService.createNotification({
+        userId: requestType.submittedBy._id,
+        message: `Your request type "${requestType.name}" has been rejected. Check the details for feedback.`,
+        link: '/user/my-requests',
+        type: 'system'
+      });
+    } catch (notifError) {
+      console.error('Error sending rejection notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Request type rejected successfully', requestType });
+  } catch (error) {
+    console.error('Error rejecting request type:', error);
+    res.status(500).json({ success: false, message: 'Failed to reject request type' });
+  }
+});
+
+/**
+ * POST /admin/request-types/:id/edit
+ * Edit an existing request type
+ */
+router.post('/admin/request-types/:id/edit', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, assignedUnit } = req.body;
+
+    if (!name || !assignedUnit) {
+      return res.status(400).json({ success: false, message: 'Name and assigned unit are required' });
+    }
+
+    const requestType = await RequestType.findByIdAndUpdate(
+      id,
+      {
+        name,
+        assignedUnit
+      },
+      { new: true }
+    ).populate('submittedBy', 'fName lName email');
+
+    if (!requestType) {
+      return res.status(404).json({ success: false, message: 'Request type not found' });
+    }
+
+    res.json({ success: true, message: 'Request type updated successfully', requestType });
+  } catch (error) {
+    console.error('Error editing request type:', error);
+    res.status(500).json({ success: false, message: 'Failed to edit request type' });
+  }
+});
+
+// ========================================
+// SYSTEM SETTINGS ROUTES
+// ========================================
+
+/**
+ * GET /admin/settings
+
+ * Display system settings page
+ */
+router.get('/admin/settings', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const settings = await settingsService.getSettings();
+    const unreadCount = await Notification.countDocuments({
+      recipient: req.session.userId,
+      isRead: false
+    });
+
+    res.render('Admin/settings', {
+      user: user,
+      settings: settings,
+      unreadCount: unreadCount
+    });
+  } catch (error) {
+    console.error('Error loading settings page:', error);
+    res.status(500).render('error', { message: 'Failed to load settings' });
+  }
+});
+
+/**
+ * GET /admin/settings/data
+ * Get settings data as JSON (for AJAX)
+ */
+router.get('/admin/settings/data', requireAdmin, async (req, res) => {
+  try {
+    const settings = await settingsService.getSettings();
+    res.json({ success: true, settings: settings });
+  } catch (error) {
+    console.error('Error fetching settings data:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch settings' });
+  }
+});
+
+/**
+ * PUT /admin/settings/general
+ * Update general settings
+ */
+router.put('/admin/settings/general', requireAdmin, async (req, res) => {
+  try {
+    const { siteTitle, siteDescription, timezone, dateFormat, language } = req.body;
+    
+    const updates = {
+      siteTitle,
+      siteDescription,
+      timezone,
+      dateFormat,
+      language
+    };
+
+    const settings = await settingsService.updateSettings(updates, req.session.userId);
+    res.json({ success: true, message: 'General settings updated', settings });
+  } catch (error) {
+    console.error('Error updating general settings:', error);
+    res.status(500).json({ success: false, message: 'Failed to update settings' });
+  }
+});
+
+/**
+ * PUT /admin/settings/request-management
+ * Update request management settings
+ */
+router.put('/admin/settings/request-management', requireAdmin, async (req, res) => {
+  try {
+    const {
+      maxRevisions,
+      maxMinorRevisions,
+      defaultDeadlineDays,
+      autoApproveAfterRevisions,
+      requireUnitReview
+    } = req.body;
+
+    const updates = {
+      maxRevisions: parseInt(maxRevisions),
+      maxMinorRevisions: parseInt(maxMinorRevisions),
+      defaultDeadlineDays: parseInt(defaultDeadlineDays),
+      autoApproveAfterRevisions: autoApproveAfterRevisions === 'true' || autoApproveAfterRevisions === true,
+      requireUnitReview: requireUnitReview === 'true' || requireUnitReview === true
+    };
+
+    const settings = await settingsService.updateSettings(updates, req.session.userId);
+    res.json({ success: true, message: 'Request management settings updated', settings });
+  } catch (error) {
+    console.error('Error updating request management settings:', error);
+    res.status(500).json({ success: false, message: 'Failed to update settings' });
+  }
+});
+
+/**
+ * PUT /admin/settings/notifications
+ * Update notification settings
+ */
+router.put('/admin/settings/notifications', requireAdmin, async (req, res) => {
+  try {
+    const {
+      enableEmailNotifications,
+      smtpHost,
+      smtpPort,
+      emailFrom,
+      notificationFrequency
+    } = req.body;
+
+    const updates = {
+      enableEmailNotifications: enableEmailNotifications === 'true' || enableEmailNotifications === true,
+      smtpHost,
+      smtpPort: parseInt(smtpPort),
+      emailFrom,
+      notificationFrequency
+    };
+
+    const settings = await settingsService.updateSettings(updates, req.session.userId);
+    res.json({ success: true, message: 'Notification settings updated', settings });
+  } catch (error) {
+    console.error('Error updating notification settings:', error);
+    res.status(500).json({ success: false, message: 'Failed to update settings' });
+  }
+});
+
+/**
+ * PUT /admin/settings/storage
+ * Update file storage settings
+ */
+router.put('/admin/settings/storage', requireAdmin, async (req, res) => {
+  try {
+    const {
+      maxFileSize,
+      allowedFileTypes,
+      storageType,
+      retainAllRevisionFiles,
+      autoDeleteOldFilesAfterDays
+    } = req.body;
+
+    const updates = {
+      maxFileSize: parseInt(maxFileSize),
+      allowedFileTypes: Array.isArray(allowedFileTypes) ? allowedFileTypes : allowedFileTypes.split(','),
+      storageType,
+      retainAllRevisionFiles: retainAllRevisionFiles === 'true' || retainAllRevisionFiles === true,
+      autoDeleteOldFilesAfterDays: autoDeleteOldFilesAfterDays ? parseInt(autoDeleteOldFilesAfterDays) : null
+    };
+
+    const settings = await settingsService.updateSettings(updates, req.session.userId);
+    res.json({ success: true, message: 'Storage settings updated', settings });
+  } catch (error) {
+    console.error('Error updating storage settings:', error);
+    res.status(500).json({ success: false, message: 'Failed to update settings' });
+  }
+});
+
+/**
+ * PUT /admin/settings/features
+ * Update feature flags
+ */
+router.put('/admin/settings/features', requireAdmin, async (req, res) => {
+  try {
+    const {
+      enableAnnouncements,
+      enableUserSearch,
+      enableDarkMode,
+      enableAnalytics,
+      enableMobileApp
+    } = req.body;
+
+    const updates = {
+      enableAnnouncements: enableAnnouncements === 'true' || enableAnnouncements === true,
+      enableUserSearch: enableUserSearch === 'true' || enableUserSearch === true,
+      enableDarkMode: enableDarkMode === 'true' || enableDarkMode === true,
+      enableAnalytics: enableAnalytics === 'true' || enableAnalytics === true,
+      enableMobileApp: enableMobileApp === 'true' || enableMobileApp === true
+    };
+
+    const settings = await settingsService.updateSettings(updates, req.session.userId);
+    res.json({ success: true, message: 'Feature flags updated', settings });
+  } catch (error) {
+    console.error('Error updating feature flags:', error);
+    res.status(500).json({ success: false, message: 'Failed to update settings' });
+  }
+});
+
+/**
+ * POST /admin/settings/reset
+ * Reset all settings to defaults
+ */
+router.post('/admin/settings/reset', requireAdmin, async (req, res) => {
+  try {
+    const settings = await settingsService.resetToDefaults(req.session.userId);
+    res.json({ success: true, message: 'Settings reset to defaults', settings });
+  } catch (error) {
+    console.error('Error resetting settings:', error);
+    res.status(500).json({ success: false, message: 'Failed to reset settings' });
+  }
+});
+
+// ========================================
+// REPORT GENERATION ROUTES
+// ========================================
+
+/**
+ * GET /admin/reports
+ * Display reports page
+ */
+router.get('/admin/reports', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const unreadCount = await Notification.countDocuments({
+      recipient: req.session.userId,
+      isRead: false
+    });
+    const availableFilters = await reportService.getAvailableFilters();
+
+    res.render('Admin/reports', {
+      user: user,
+      unreadCount: unreadCount,
+      availableFilters: availableFilters
+    });
+  } catch (error) {
+    console.error('Error loading reports page:', error);
+    res.status(500).render('error', { message: 'Failed to load reports' });
+  }
+});
+
+/**
+ * POST /admin/reports/generate
+ * Generate report with filters and return JSON data
+ */
+router.post('/admin/reports/generate', requireAdmin, async (req, res) => {
+  try {
+    const {
+      startDate,
+      endDate,
+      units,
+      requestType,
+      statuses,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.body;
+
+    const filters = {
+      startDate,
+      endDate,
+      units: units && Array.isArray(units) ? units : (units ? [units] : []),
+      requestType,
+      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : []),
+      sortBy,
+      sortOrder
+    };
+
+    const reportData = await reportService.generateReport(filters);
+    const summary = await reportService.getReportSummary(filters);
+
+    res.json({
+      success: true,
+      data: reportData,
+      summary: summary,
+      recordCount: reportData.length
+    });
+  } catch (error) {
+    console.error('Error generating report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/summary
+ * Get report summary statistics
+ */
+router.get('/admin/reports/summary', requireAdmin, async (req, res) => {
+  try {
+    const {
+      startDate,
+      endDate,
+      units,
+      requestType,
+      statuses
+    } = req.query;
+
+    const filters = {
+      startDate,
+      endDate,
+      units: units && Array.isArray(units) ? units : (units ? [units] : []),
+      requestType,
+      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : [])
+    };
+
+    const summary = await reportService.getReportSummary(filters);
+
+    res.json({
+      success: true,
+      summary: summary
+    });
+  } catch (error) {
+    console.error('Error generating summary:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/reports/export-csv
+ * Export report data as CSV
+ */
+router.post('/admin/reports/export-csv', requireAdmin, async (req, res) => {
+  try {
+    const {
+      startDate,
+      endDate,
+      units,
+      requestType,
+      statuses
+    } = req.body;
+
+    const filters = {
+      startDate,
+      endDate,
+      units: units && Array.isArray(units) ? units : (units ? [units] : []),
+      requestType,
+      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : [])
+    };
+
+    const reportData = await reportService.generateReport(filters);
+    const csv = reportService.exportToCSV(reportData);
+
+    res.setHeader('Content-Type', 'text/csv;charset=utf-8;');
+    res.setHeader('Content-Disposition', `attachment;filename=report-${Date.now()}.csv`);
+    res.send(csv);
+  } catch (error) {
+    console.error('Error exporting CSV:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/reports/export-pdf
+ * Export report data as PDF (returns HTML for client-side PDF generation)
+ */
+router.post('/admin/reports/export-pdf', requireAdmin, async (req, res) => {
+  try {
+    const {
+      startDate,
+      endDate,
+      units,
+      requestType,
+      statuses
+    } = req.body;
+
+    const filters = {
+      startDate,
+      endDate,
+      units: units && Array.isArray(units) ? units : (units ? [units] : []),
+      requestType,
+      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : [])
+    };
+
+    const reportData = await reportService.generateReport(filters);
+    const summary = await reportService.getReportSummary(filters);
+    const html = reportService.exportToPDF(reportData, summary);
+
+    res.setHeader('Content-Type', 'text/html;charset=utf-8;');
+    res.send(html);
+  } catch (error) {
+    console.error('Error exporting PDF:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/filters
+ * Get available filter options
+ */
+router.get('/admin/reports/filters', requireAdmin, async (req, res) => {
+  try {
+    const filters = await reportService.getAvailableFilters();
+    res.json({
+      success: true,
+      filters: filters
+    });
+  } catch (error) {
+    console.error('Error fetching filters:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ========================================
+// ANNOUNCEMENT MANAGEMENT ROUTES
+// ========================================
+
+/**
+ * GET /admin/announcement
+ * Display announcements management page
+ */
+router.get('/admin/announcement', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const result = await announcementService.getAnnouncements(1, 50);
+    const stats = await announcementService.getStatistics();
+    const unreadCount = await Notification.countDocuments({
+      recipient: req.session.userId,
+      isRead: false
+    });
+
+    res.render('Admin/announcements', {
+      user: user,
+      announcements: result.announcements,
+      stats: stats,
+      unreadCount: unreadCount
+    });
+  } catch (error) {
+    console.error('Error loading announcements page:', error);
+    res.status(500).render('error', { message: 'Failed to load announcements' });
+  }
+});
+
+/**
+ * GET /admin/announcement/:id
+ * Get single announcement
+ */
+router.get('/admin/announcement/:id', requireAdmin, async (req, res) => {
+  try {
+    const announcement = await announcementService.getAnnouncement(req.params.id);
+    res.json({
+      success: true,
+      announcement: announcement
+    });
+  } catch (error) {
+    console.error('Error fetching announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/announcement
+ * Create new announcement
+ */
+router.post('/admin/announcement', requireAdmin, async (req, res) => {
+  try {
+    const {
+      title,
+      content,
+      priority,
+      recipientType,
+      organization,
+      recipients,
+      scheduledTime
+    } = req.body;
+
+    if (!title || !content) {
+      return res.status(400).json({ success: false, message: 'Title and content are required' });
+    }
+
+    const announcement = await announcementService.createAnnouncement({
+      title,
+      content,
+      priority: priority || 'medium',
+      recipientType: recipientType || 'all',
+      organization,
+      recipients: recipients && Array.isArray(recipients) ? recipients : [],
+      scheduledTime,
+      createdBy: req.session.userId
+    });
+
+    res.json({
+      success: true,
+      message: scheduledTime ? 'Announcement scheduled successfully' : 'Announcement created and sent successfully',
+      announcement: announcement
+    });
+  } catch (error) {
+    console.error('Error creating announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * PUT /admin/announcement/:id
+ * Update announcement
+ */
+router.put('/admin/announcement/:id', requireAdmin, async (req, res) => {
+  try {
+    const { title, content, priority } = req.body;
+
+    const announcement = await announcementService.updateAnnouncement(req.params.id, {
+      title,
+      content,
+      priority
+    });
+
+    res.json({
+      success: true,
+      message: 'Announcement updated successfully',
+      announcement: announcement
+    });
+  } catch (error) {
+    console.error('Error updating announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/announcement/:id
+ * Delete announcement
+ */
+router.delete('/admin/announcement/:id', requireAdmin, async (req, res) => {
+  try {
+    await announcementService.deleteAnnouncement(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Announcement deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/announcements/data
+ * Get announcements as JSON with pagination
+ */
+router.get('/admin/announcements/data', requireAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const result = await announcementService.getAnnouncements(page, limit);
+
+    res.json({
+      success: true,
+      data: result.announcements,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    console.error('Error fetching announcements data:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/announcements/stats
+ * Get announcement statistics
+ */
+router.get('/admin/announcements/stats', requireAdmin, async (req, res) => {
+  try {
+    const stats = await announcementService.getStatistics();
+
+    res.json({
+      success: true,
+      stats: stats
+    });
+  } catch (error) {
+    console.error('Error fetching announcement stats:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/announcement/:id/resend
+ * Resend announcement to users
+ */
+router.post('/admin/announcement/:id/resend', requireAdmin, async (req, res) => {
+  try {
+    const announcement = await announcementService.getAnnouncement(req.params.id);
+
+    if (!announcement) {
+      return res.status(404).json({ success: false, message: 'Announcement not found' });
+    }
+
+    await announcementService.sendAnnouncement(announcement._id, announcement.recipients);
+
+    res.json({
+      success: true,
+      message: 'Announcement resent to all recipients'
+    });
+  } catch (error) {
+    console.error('Error resending announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * ===== Analytics Routes =====
+ */
+
+/**
+ * GET /admin/analytics
+ * Display analytics dashboard
+ */
+router.get('/admin/analytics', requireAdmin, async (req, res) => {
+  try {
+    const analytics = await reportService.getAnalytics();
+    const requestTypeAnalytics = await reportService.getRequestTypeAnalytics();
+    const unitAnalytics = await reportService.getUnitAnalytics();
+    const userAnalytics = await reportService.getUserAnalytics();
+
+    res.render('Admin/analytics', {
+      user: req.user,
+      title: 'Analytics',
+      analytics: analytics,
+      requestTypeAnalytics: requestTypeAnalytics,
+      unitAnalytics: unitAnalytics,
+      userAnalytics: userAnalytics
+    });
+  } catch (error) {
+    console.error('Error loading analytics page:', error);
+    res.status(500).render('error', { error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/data
+ * Get analytics data in JSON format
+ */
+router.get('/admin/analytics/data', requireAdmin, async (req, res) => {
+  try {
+    const analytics = await reportService.getAnalytics();
+    const requestTypeAnalytics = await reportService.getRequestTypeAnalytics();
+    const unitAnalytics = await reportService.getUnitAnalytics();
+    const userAnalytics = await reportService.getUserAnalytics();
+
+    res.json({
+      success: true,
+      data: {
+        summary: analytics.summary,
+        byStatus: analytics.byStatus,
+        byUnit: analytics.byUnit,
+        trend: analytics.trend,
+        requestTypes: requestTypeAnalytics,
+        units: unitAnalytics,
+        users: userAnalytics
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching analytics data:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/request-types
+ * Get detailed request type performance data
+ */
+router.get('/admin/analytics/request-types', requireAdmin, async (req, res) => {
+  try {
+    const requestTypeAnalytics = await reportService.getRequestTypeAnalytics();
+
+    res.json({
+      success: true,
+      data: requestTypeAnalytics
+    });
+  } catch (error) {
+    console.error('Error fetching request type analytics:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/units
+ * Get detailed unit performance metrics
+ */
+router.get('/admin/analytics/units', requireAdmin, async (req, res) => {
+  try {
+    const unitAnalytics = await reportService.getUnitAnalytics();
+
+    res.json({
+      success: true,
+      data: unitAnalytics
+    });
+  } catch (error) {
+    console.error('Error fetching unit analytics:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/users
+ * Get detailed user activity analytics
+ */
+router.get('/admin/analytics/users', requireAdmin, async (req, res) => {
+  try {
+    const userAnalytics = await reportService.getUserAnalytics();
+
+    res.json({
+      success: true,
+      data: userAnalytics
+    });
+  } catch (error) {
+    console.error('Error fetching user analytics:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

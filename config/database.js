@@ -3,8 +3,8 @@
 
 const mongoose = require('mongoose');
 
-// Database connection URI - should be moved to environment variables in production
-const uri = 'mongodb+srv://scoadmin:JoJiCa52425@cluster0.18ajqou.mongodb.net/';
+// Database connection URI from environment variables
+const uri = process.env.MONGO_URI || 'mongodb+srv://scoadmin:JoJiCa52425@cluster0.18ajqou.mongodb.net/';
 
 /**
  * Establishes connection to MongoDB database

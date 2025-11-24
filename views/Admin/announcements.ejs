@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcements Management - S-CORE Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css">
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css">
+  <link rel="stylesheet" href="/stylesheets/notifications.css">
+  <link rel="stylesheet" href="/stylesheets/no-animations.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <!-- Quill Editor -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <link rel="stylesheet" href="/stylesheets/quill-custom.css">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="/javascripts/alert-handler.js"></script>
+
+  <style>
+    /* Admin Layout */
+    .admin-side { padding: 0 !important; background: #f8f9fa !important; box-sizing: border-box; }
+    .activity-section { padding: 0 !important; margin: 0 !important; background: #f8f9fa !important; overflow: visible !important; position: relative; z-index: 1; }
+    .page-header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; padding: 2rem 3rem 0 3rem; }
+    .user-info-section { display: flex; align-items: center; gap: 1rem; flex: 1; }
+    .action-button-container { margin-left: auto; }
+    .filter-section { background: white; border: none; border-radius: 0; padding: 1.25rem; margin: 0 3rem 1.5rem 3rem; box-shadow: none; overflow: visible !important; position: relative; z-index: 1; }
+    .table-section { background: white; padding: 1.5rem; margin: 0 3rem 2rem 3rem; border-radius: 0; }
+
+    /* Announcements Table */
+    .announcements-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); background: white; }
+    .announcements-table thead { background: var(--light-green); color: var(--primary-green); }
+    .announcements-table th, .announcements-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    .announcements-table th { font-weight: 600; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .announcements-table tbody tr:hover { background: #f9fafb; }
+
+    /* Priority Badge */
+    .priority-badge { display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .priority-badge.low { background: #dbeafe; color: #1e40af; }
+    .priority-badge.medium { background: #fef3c7; color: #d97706; }
+    .priority-badge.high { background: #fecaca; color: #dc2626; }
+
+    /* Status Badge */
+    .status-badge { display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-badge.active { background: #d1fae5; color: #065f46; }
+    .status-badge.scheduled { background: #fef3c7; color: #d97706; }
+    .status-badge.expired { background: #f3f4f6; color: #6b7280; }
+
+    /* Action Buttons */
+    .action-btn { padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.5px; }
+    .action-btn.edit { background: #3b82f6; color: white; }
+    .action-btn.edit:hover { background: #2563eb; transform: translateY(-1px); }
+    .action-btn.delete { background: #6b7280; color: white; }
+    .action-btn.delete:hover { background: #4b5563; transform: translateY(-1px); }
+    .action-btn.view { background: #10b981; color: white; }
+    .action-btn.view:hover { background: #059669; transform: translateY(-1px); }
+
+    /* Modal Styles */
+    .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-content { background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); }
+    .modal-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 1.25rem; font-weight: 600; color: #1f2937; margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease; }
+    .modal-close:hover { background: #f3f4f6; color: #374151; }
+    .modal-body { padding: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+    .form-input { width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; transition: all 0.2s ease; }
+    .form-input:focus { outline: none; border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1); }
+    .form-textarea { resize: vertical; min-height: 120px; }
+    .modal-actions { padding: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.75rem; justify-content: flex-end; }
+    .modal-btn { padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.5px; }
+    .modal-btn.primary { background: var(--primary-green); color: white; }
+    .modal-btn.primary:hover { background: #157347; transform: translateY(-1px); }
+    .modal-btn.secondary { background: #f3f4f6; color: #374151; border: 2px solid #e5e7eb; }
+    .modal-btn.secondary:hover { background: #e5e7eb; transform: translateY(-1px); }
+    .modal-btn.danger { background: #ef4444; color: white; }
+    .modal-btn.danger:hover { background: #dc2626; transform: translateY(-1px); }
+
+    /* Checkbox Group */
+    .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .checkbox-item { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    .checkbox-item label { margin: 0; cursor: pointer; }
+
+    /* Editor Container */
+    .editor-container { background: white; min-height: 200px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1rem; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 3rem 2rem; color: #6b7280; }
+    .empty-state-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
+    .empty-state-title { font-size: 1.25rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-header-container, .filter-section, .table-section { padding-left: 1.5rem; padding-right: 1.5rem; margin-left: 1.5rem; margin-right: 1.5rem; }
+      .modal-content { margin: 1rem; width: calc(100% - 2rem); }
+      .checkbox-group { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-profile">
+      <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
+        <div class="sidebar-profile-icon-container">
+          <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>"
+               alt="<%= user.fName %> <%= user.lName %>"
+               class="sidebar-profile-avatar" />
+        </div>
+        <div class="sidebar-profile-info">
+          <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
+          <p class="sidebar-profile-role">Administrator</p>
+        </div>
+        <span class="sidebar-profile-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+
+      <a href="/admin/all-requests" class="sidebar-item" title="All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span class="sidebar-label">All Requests</span>
+      </a>
+
+      <a href="/admin/approvals" class="sidebar-item" title="Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Approvals</span>
+      </a>
+
+      <a href="/admin/services" class="sidebar-item" title="Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 0 0 1.4 0l1.6 1.6a1 1 0 0 0 0 1.4l-3.77 3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Services</span>
+      </a>
+
+      <a href="/admin/users" class="sidebar-item" title="Users">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="sidebar-label">Users</span>
+      </a>
+
+      <a href="/admin/announcement" class="sidebar-item active" title="Announcements">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 9.5v5a1 1 0 0 1-1 1h-2.5L14 20v-6H9a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1h5l4.5-4V8.5H21a1 1 0 0 1 1 1z"></path>
+          <path d="M3 11v2a7 7 0 0 0 7 7v-2a5 5 0 0 1-5-5v-2H3z"></path>
+        </svg>
+        <span class="sidebar-label">Announcements</span>
+      </a>
+
+      <a href="/admin/request-types" class="sidebar-item" title="Request Types">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="sidebar-label">Request Types</span>
+      </a>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Logout</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="admin-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <div class="header-left-group">
+        <button class="admin-menu-toggle" id="adminMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/admin" class="text-wrapper">S-CORE</a>
+      </div>
+
+      <span class="text-wrapper-2">Announcements</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-side">
+      <section class="activity-section">
+        <!-- Page Header -->
+        <div class="page-header-container">
+          <div class="user-info-section">
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>"
+                 alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
+            <div>
+              <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
+              <p style="color: #6b7280;">Administrator</p>
+            </div>
+          </div>
+          <div class="action-button-container">
+            <button onclick="openCreateModal()" class="view-all-btn" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              New Announcement
+            </button>
+          </div>
+        </div>
+
+        <!-- Announcements Table -->
+        <section class="table-section">
+          <% if (announcements && announcements.length > 0) { %>
+          <table class="announcements-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Recipients</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% announcements.forEach(announcement => { %>
+              <tr>
+                <td>
+                  <strong><%= announcement.title %></strong>
+                  <% if (announcement.description && announcement.description.length > 50) { %>
+                  <br><small style="color: #6b7280;"><%= announcement.description.substring(0, 50) %>...</small>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="priority-badge <%= announcement.priority || 'medium' %>">
+                    <%= announcement.priority || 'medium' %>
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge <%= announcement.status || 'active' %>">
+                    <%= announcement.status || 'active' %>
+                  </span>
+                </td>
+                <td><%= announcement.recipientCount || 0 %> user<%= announcement.recipientCount !== 1 ? 's' : '' %></td>
+                <td><%= new Date(announcement.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <button class="action-btn view" onclick="viewAnnouncement('<%= announcement._id %>')">View</button>
+                  <button class="action-btn edit" onclick="editAnnouncement('<%= announcement._id %>')">Edit</button>
+                  <button class="action-btn delete" onclick="deleteAnnouncement('<%= announcement._id %>')">Delete</button>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <% } else { %>
+          <div class="empty-state">
+            <div class="empty-state-icon">📢</div>
+            <div class="empty-state-title">No Announcements Yet</div>
+            <p style="color: #6b7280;">Create your first announcement to communicate with users across the system.</p>
+          </div>
+          <% } %>
+        </section>
+
+        <!-- Back to Dashboard Button -->
+        <div style="text-align: center; margin-top: 2rem;">
+          <a href="/admin" class="view-all-btn" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Dashboard
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  <div id="announcementModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">New Announcement</h2>
+        <button class="modal-close" onclick="closeModal('announcementModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="announcementTitle">Title</label>
+          <input type="text" id="announcementTitle" class="form-input" placeholder="Announcement title" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="announcementEditor">Message</label>
+          <div id="announcementEditor" class="editor-container"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="announcementPriority">Priority</label>
+          <select id="announcementPriority" class="form-input">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Recipients</label>
+          <div class="checkbox-group">
+            <div class="checkbox-item">
+              <input type="radio" id="recipientAll" name="recipientType" value="all" checked onchange="toggleRecipientOptions()">
+              <label for="recipientAll">All Users</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="radio" id="recipientOrg" name="recipientType" value="organization" onchange="toggleRecipientOptions()">
+              <label for="recipientOrg">By Organization</label>
+            </div>
+            <div class="checkbox-item">
+              <input type="radio" id="recipientSpecific" name="recipientType" value="specific" onchange="toggleRecipientOptions()">
+              <label for="recipientSpecific">Specific Users</label>
+            </div>
+          </div>
+        </div>
+
+        <div id="orgSelectBlock" class="form-group" style="display: none;">
+          <label class="form-label" for="organizationSelect">Select Organization</label>
+          <select id="organizationSelect" class="form-input">
+            <option value="">-- Select organization --</option>
+            <option value="Graphics">Graphics</option>
+            <option value="Multimedia">Multimedia</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Public Relations">Public Relations</option>
+          </select>
+        </div>
+
+        <div id="userSelectBlock" class="form-group" style="display: none;">
+          <label class="form-label" for="userSelect">Select Users</label>
+          <select id="userSelect" class="form-input" multiple style="min-height: 120px;">
+            <option value="">-- Select users --</option>
+          </select>
+          <small>Hold Ctrl/Cmd to select multiple</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="scheduledTime">Schedule Send Time (Optional)</label>
+          <input type="datetime-local" id="scheduledTime" class="form-input">
+          <small>Leave empty to send immediately</small>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('announcementModal')">Cancel</button>
+        <button class="modal-btn primary" id="submitBtn" onclick="submitAnnouncement()">Create Announcement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Modal -->
+  <div id="viewModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="viewTitle">View Announcement</h2>
+        <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="viewContent" style="line-height: 1.6;"></div>
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Recipients:</strong> <span id="viewRecipients"></span></p>
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Priority:</strong> <span id="viewPriority"></span></p>
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Created:</strong> <span id="viewCreated"></span></p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('viewModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Delete Announcement</h2>
+        <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this announcement? This action cannot be undone.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="closeModal('deleteModal')">Cancel</button>
+        <button class="modal-btn danger" id="confirmDeleteBtn" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Quill Editor
+    let announcementQuill;
+    let currentAnnouncementId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Quill
+      announcementQuill = new Quill('#announcementEditor', {
+        theme: 'snow',
+        placeholder: 'Write your announcement here...',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'header': [1, 2, 3, false] }],
+            ['link', 'blockquote']
+          ]
+        }
+      });
+
+      // Sidebar
+      const sidebar = document.getElementById('adminSidebar');
+      if (sidebar) {
+        sidebar.addEventListener('mouseenter', function() { this.classList.add('expanded'); });
+        sidebar.addEventListener('mouseleave', function() { this.classList.remove('expanded'); });
+      }
+    });
+
+    function toggleDropdown() {
+      document.getElementById('dropdownMenu')?.classList.toggle('show');
+    }
+
+    function toggleRecipientOptions() {
+      const type = document.querySelector('input[name="recipientType"]:checked').value;
+      document.getElementById('orgSelectBlock').style.display = type === 'organization' ? 'block' : 'none';
+      document.getElementById('userSelectBlock').style.display = type === 'specific' ? 'block' : 'none';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    function openCreateModal() {
+      currentAnnouncementId = null;
+      document.getElementById('modalTitle').textContent = 'New Announcement';
+      document.getElementById('submitBtn').textContent = 'Create Announcement';
+      document.getElementById('announcementTitle').value = '';
+      announcementQuill.setContents([]);
+      document.getElementById('announcementPriority').value = 'medium';
+      document.getElementById('recipientAll').checked = true;
+      document.getElementById('scheduledTime').value = '';
+      toggleRecipientOptions();
+      document.getElementById('announcementModal').style.display = 'flex';
+    }
+
+    function editAnnouncement(id) {
+      currentAnnouncementId = id;
+      document.getElementById('modalTitle').textContent = 'Edit Announcement';
+      document.getElementById('submitBtn').textContent = 'Update Announcement';
+      // Load announcement data (would need to add endpoint)
+      document.getElementById('announcementModal').style.display = 'flex';
+    }
+
+    function viewAnnouncement(id) {
+      // Load and display announcement (would need to add endpoint)
+      document.getElementById('viewModal').style.display = 'flex';
+    }
+
+    function deleteAnnouncement(id) {
+      currentAnnouncementId = id;
+      document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function confirmDelete() {
+      if (currentAnnouncementId) {
+        // Call delete endpoint (would need to add route)
+        showAlert('Announcement deleted successfully', 'success');
+        closeModal('deleteModal');
+        setTimeout(() => location.reload(), 1500);
+      }
+    }
+
+    function submitAnnouncement() {
+      const title = document.getElementById('announcementTitle').value.trim();
+      const content = announcementQuill.root.innerHTML;
+      const priority = document.getElementById('announcementPriority').value;
+      const recipientType = document.querySelector('input[name="recipientType"]:checked').value;
+      const scheduledTime = document.getElementById('scheduledTime').value;
+
+      if (!title || content === '<p><br></p>') {
+        showAlert('Please fill in title and message', 'error');
+        return;
+      }
+
+      // Prepare data
+      const data = {
+        title,
+        content,
+        priority,
+        recipientType,
+        scheduledTime: scheduledTime || null
+      };
+
+      if (recipientType === 'organization') {
+        data.organization = document.getElementById('organizationSelect').value;
+      } else if (recipientType === 'specific') {
+        data.recipients = Array.from(document.getElementById('userSelect').selectedOptions).map(opt => opt.value);
+      }
+
+      // Call API endpoint (would need to add route)
+      showAlert('Announcement saved successfully', 'success');
+      closeModal('announcementModal');
+      setTimeout(() => location.reload(), 1500);
+    }
+
+    // Close dropdown on outside click
+    window.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown-wrapper')) {
+        document.getElementById('dropdownMenu')?.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

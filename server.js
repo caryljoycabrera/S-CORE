@@ -8,20 +8,34 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const http = require('http');
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 // Import configuration modules
 const { connectDB } = require('./config/database');
 const { upload, ensureUploadsDirectory, UPLOADS_DIR } = require('./config/upload');
 
+// Import middleware
+const { apiLimiter, authLimiter, messageLimiter, requestLimiter } = require('./middleware/rateLimiter');
+
 // Import services
 const socketService = require('./services/socketService');
+const settingsService = require('./services/settingsService');
+const announcementService = require('./services/announcementService');
+const cron = require('node-cron');
 
 // Create Express application and HTTP server
 const app = express();
 const server = http.createServer(app);
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 // ======= Database Connection =======
 connectDB();
+
+// ======= Load System Settings =======
+settingsService.loadSettings().catch(err => {
+  console.error('[SERVER] Failed to load system settings:', err);
+});
 
 // ======= Socket.IO Initialization =======
 socketService.initialize(server);
@@ -37,12 +51,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Body parsers
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: process.env.MAX_FILE_SIZE || '50mb' }));
 app.use(bodyParser.json());
 
-// Session handling
+// Session handling with environment-based secret
 app.use(session({
-  secret: 's-core-secret',
+  secret: process.env.SESSION_SECRET || 's-core-secret',
   resave: false,
   saveUninitialized: false
 }));
@@ -77,6 +91,7 @@ const adminRoutes = require('./routes/admin');
 const unitRoutes = require('./routes/unit');
 const apiRoutes = require('./routes/api');
 const notificationRoutes = require('./routes/notifications');
+const messagesRoutes = require('./routes/messages');
 
 // Use route modules
 app.use('/', authRoutes);
@@ -85,11 +100,30 @@ app.use('/', adminRoutes);
 app.use('/', unitRoutes);
 app.use('/', apiRoutes);
 app.use('/', notificationRoutes);
+app.use('/', messagesRoutes);
 
 // ======= Test Route for Status Integration ========
 app.get('/test-status-integration', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'test-status-integration.html'));
 });
+
+// ======= Scheduled Jobs ========
+
+// Schedule announcement processor to run every 5 minutes
+const announcementSchedule = cron.schedule('*/5 * * * *', async () => {
+  try {
+    console.log('[SCHEDULER] Processing scheduled announcements...');
+    await announcementService.processScheduledAnnouncements();
+    console.log('[SCHEDULER] Announcement processing completed');
+  } catch (error) {
+    console.error('[SCHEDULER] Error processing announcements:', error);
+  }
+}, {
+  scheduled: true,
+  timezone: process.env.TIMEZONE || 'UTC'
+});
+
+console.log('[SCHEDULER] Announcement scheduler initialized - runs every 5 minutes');
 
 // ======= Server Startup ========
 
@@ -97,6 +131,7 @@ app.get('/test-status-integration', (req, res) => {
 server.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
   console.log('Socket.IO enabled for real-time notifications');
+  console.log('[SCHEDULER] All scheduled jobs are active');
 });
 
 // ======= Modules for Route Use ========

@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const router = express.Router();
 const User = require('../models/User');
 const notificationService = require('../services/notificationService');
+const { authLimiter } = require('../middleware/rateLimiter');
 
 /**
  * GET /register
@@ -26,8 +27,9 @@ router.get('/login', (req, res) => {
  * POST /register
  * Processes user registration
  * Validates input, creates user account, and redirects to login
+ * Rate limited to prevent abuse
  */
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   try {
     console.log('Registration attempt:', req.body);
     const {
@@ -243,8 +245,9 @@ router.post('/register', async (req, res) => {
  * POST /login
  * Processes user authentication
  * Validates credentials and establishes session
+ * Rate limited to prevent brute force attacks
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { username, password } = req.body;
 
   try {

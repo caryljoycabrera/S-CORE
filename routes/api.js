@@ -11,6 +11,7 @@ const Conversation = require('../models/Conversation');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
 const { upload } = require('../config/upload');
 const notificationService = require('../services/notificationService');
+const { apiLimiter } = require('../middleware/rateLimiter');
 
 /**
  * POST /api/users/verify
@@ -95,7 +96,7 @@ router.post('/api/users/deny', requireAdmin, async (req, res) => {
  * GET /api/deadlines
  * Admin API endpoint for all request deadlines grouped by date
  */
-router.get('/api/deadlines', requireLogin, async (req, res) => {
+router.get('/api/deadlines', apiLimiter, requireLogin, async (req, res) => {
   try {
     console.log('Admin fetching deadlines from database...');
 
@@ -256,7 +257,7 @@ router.get('/api/deadlines/:date/details', requireLogin, async (req, res) => {
  * GET /api/conversation/:requestId
  * API endpoint to get conversation for a specific request
  */
-router.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
+router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
     const user = await User.findById(req.session.userId);
@@ -354,7 +355,7 @@ router.get('/api/conversation/:requestId', requireLogin, async (req, res) => {
  * POST /api/conversation/:requestId/message
  * API endpoint to send a new message to a conversation
  */
-router.post('/api/conversation/:requestId/message', requireLogin, upload.array('chatFiles', 10), async (req, res) => {
+router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, upload.array('chatFiles', 10), async (req, res) => {
   try {
     const { requestId } = req.params;
     const { content } = req.body;

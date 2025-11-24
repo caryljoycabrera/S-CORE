@@ -200,39 +200,118 @@
         </div>
 
         <div class="filter-group">
-          <label for="unitFilter">Unit</label>
-          <select id="unitFilter" class="filter-input" multiple size="3">
-            <option value="">All Units</option>
-            <option value="Graphics">Graphics</option>
-            <option value="Multimedia">Multimedia</option>
-            <option value="Social Media">Social Media</option>
-            <option value="Public Relations">Public Relations</option>
+          <label for="startDateFilter">Start Date</label>
+          <input type="date" id="startDateFilter" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label for="endDateFilter">End Date</label>
+          <input type="date" id="endDateFilter" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label for="datePresetFilter">Quick Date Range</label>
+          <select id="datePresetFilter" class="filter-input">
+            <option value="">Custom Range</option>
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="365">Last Year</option>
           </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="unitFilter">Unit</label>
+          <select id="unitFilter" class="filter-input" multiple size="4">
+            <option value="">All Units</option>
+            <% if (availableFilters && availableFilters.units) { %>
+              <% availableFilters.units.forEach(unit => { %>
+                <option value="<%= unit %>"><%= unit %></option>
+              <% }); %>
+            <% } %>
+          </select>
+          <small>Hold Ctrl/Cmd to select multiple</small>
         </div>
 
         <div class="filter-group">
           <label for="requestTypeFilter">Request Type</label>
           <select id="requestTypeFilter" class="filter-input">
             <option value="">All Types</option>
-            <option value="Service Request">Service Request</option>
-            <option value="Request for Approval">Request for Approval</option>
+            <option value="ServiceRequest">Service Request</option>
+            <option value="RequestApproval">Request for Approval</option>
           </select>
         </div>
 
         <div class="filter-group">
           <label for="statusFilter">Status</label>
-          <select id="statusFilter" class="filter-input">
+          <select id="statusFilter" class="filter-input" multiple size="4">
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
+            <% if (availableFilters && availableFilters.statuses) { %>
+              <% availableFilters.statuses.forEach(status => { %>
+                <option value="<%= status %>"><%= status %></option>
+              <% }); %>
+            <% } %>
+          </select>
+          <small>Hold Ctrl/Cmd to select multiple</small>
+        </div>
+
+        <div class="filter-group">
+          <label for="sortByFilter">Sort By</label>
+          <select id="sortByFilter" class="filter-input">
+            <option value="createdAt">Date Submitted</option>
+            <option value="deadline">Deadline</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="sortOrderFilter">Sort Order</label>
+          <select id="sortOrderFilter" class="filter-input">
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
           </select>
         </div>
 
         <div class="filter-actions">
-          <button id="generatePreviewBtn" class="btn-primary">Generate Preview</button>
-          <button id="clearFiltersBtn" class="btn-secondary">Clear Filters</button>
+          <button id="generatePreviewBtn" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+              <path d="M3 21v-5h5"></path>
+            </svg>
+            Generate Preview
+          </button>
+          <button id="clearFiltersBtn" class="btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 4 21 4 23 6 23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V6"></polyline>
+              <line x1="10" y1="12" x2="14" y2="12"></line>
+            </svg>
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- REPORT STATS -->
+      <div class="report-stats-container" id="reportStats" style="display:none;">
+        <h3>Report Summary</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">Total Records</div>
+            <div class="stat-value" id="statTotal">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Completion Rate</div>
+            <div class="stat-value" id="statCompletionRate">0%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value" id="statPending">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">In Progress</div>
+            <div class="stat-value" id="statInProgress">0</div>
+          </div>
         </div>
       </div>
 
@@ -245,13 +324,16 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M9 13h6"></path>
+                <path d="M9 17h3"></path>
               </svg>
-              Export Excel
+              Export CSV
             </button>
             <button id="exportPdfBtn" class="btn-export btn-pdf" disabled>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
+                <text x="9" y="17" font-size="8">PDF</text>
               </svg>
               Export PDF
             </button>
@@ -270,11 +352,14 @@
                 <th>Status</th>
                 <th>Date Submitted</th>
                 <th>Deadline</th>
+                <th>Revisions</th>
               </tr>
             </thead>
             <tbody id="reportTableBody">
               <tr class="no-data-row">
-                <td colspan="8">Click "Generate Preview" to load data</td>
+                <td colspan="9" style="text-align: center; padding: 2rem; color: #6b7280;">
+                  Click "Generate Preview" to load data
+                </td>
               </tr>
             </tbody>
           </table>
@@ -283,20 +368,276 @@
     </div>
   </div>
 
+  <!-- Loading Indicator -->
+  <div id="loadingIndicator" class="loading-indicator" style="display:none;">
+    <div class="spinner"></div>
+    <p>Generating report...</p>
+  </div>
 
   <!-- Scripts -->
   <script src="/javascripts/notifications.js"></script>
   <script src="/javascripts/ejs/reports.js"></script>
   <script>
-    // Dropdown toggle function
-    function toggleDropdown() {
-      const dropdown = document.getElementById('dropdownMenu');
-      if (dropdown) {
-        dropdown.classList.toggle('show');
-      }
-    }
+    // Report Generation Handler
+    const reportHandler = {
+      currentData: null,
 
-    // Close dropdown when clicking outside
+      /**
+       * Get filter values from form
+       */
+      getFilters() {
+        const statuses = Array.from(document.getElementById('statusFilter').selectedOptions).map(opt => opt.value);
+        const units = Array.from(document.getElementById('unitFilter').selectedOptions).map(opt => opt.value);
+        
+        return {
+          startDate: document.getElementById('startDateFilter').value,
+          endDate: document.getElementById('endDateFilter').value,
+          units: units.filter(u => u !== ''),
+          requestType: document.getElementById('requestTypeFilter').value,
+          statuses: statuses.filter(s => s !== ''),
+          sortBy: document.getElementById('sortByFilter').value,
+          sortOrder: document.getElementById('sortOrderFilter').value
+        };
+      },
+
+      /**
+       * Generate preview report
+       */
+      async generatePreview() {
+        const loading = document.getElementById('loadingIndicator');
+        loading.style.display = 'flex';
+
+        try {
+          const filters = this.getFilters();
+          
+          const response = await fetch('/admin/reports/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            this.currentData = result.data;
+            this.displayTable(result.data);
+            this.displayStats(result.summary);
+            
+            // Enable export buttons
+            document.getElementById('exportExcelBtn').disabled = false;
+            document.getElementById('exportPdfBtn').disabled = false;
+            
+            showAlert(`Report generated with ${result.recordCount} records`, 'success');
+          } else {
+            showAlert(result.message || 'Failed to generate report', 'error');
+          }
+        } catch (error) {
+          console.error('Error generating preview:', error);
+          showAlert('An error occurred while generating the report', 'error');
+        } finally {
+          loading.style.display = 'none';
+        }
+      },
+
+      /**
+       * Display table data
+       */
+      displayTable(data) {
+        const tbody = document.getElementById('reportTableBody');
+        
+        if (!data || data.length === 0) {
+          tbody.innerHTML = '<tr class="no-data-row"><td colspan="9" style="text-align: center; padding: 2rem;">No records found</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.map(record => `
+          <tr>
+            <td><strong>${record.requestId}</strong></td>
+            <td>${record.type}</td>
+            <td>${record.requester}</td>
+            <td>${record.unit}</td>
+            <td>${record.service}</td>
+            <td>
+              <span class="status-badge status-${record.status.toLowerCase().replace(' ', '-')}">
+                ${record.status}
+              </span>
+            </td>
+            <td>${new Date(record.dateSubmitted).toLocaleDateString()}</td>
+            <td>${record.deadline ? new Date(record.deadline).toLocaleDateString() : 'N/A'}</td>
+            <td>${record.revisionsCount}</td>
+          </tr>
+        `).join('');
+      },
+
+      /**
+       * Display statistics
+       */
+      displayStats(summary) {
+        if (!summary) return;
+
+        document.getElementById('reportStats').style.display = 'block';
+        document.getElementById('statTotal').textContent = summary.totalRequests || 0;
+        document.getElementById('statCompletionRate').textContent = (summary.completionRate || 0) + '%';
+        document.getElementById('statPending').textContent = (summary.byStatus?.['Pending'] || 0);
+        document.getElementById('statInProgress').textContent = (summary.byStatus?.['In Progress'] || 0);
+      },
+
+      /**
+       * Clear all filters
+       */
+      clearFilters() {
+        document.getElementById('startDateFilter').value = '';
+        document.getElementById('endDateFilter').value = '';
+        document.getElementById('datePresetFilter').value = '';
+        document.getElementById('unitFilter').selectedIndex = 0;
+        document.getElementById('requestTypeFilter').value = '';
+        document.getElementById('statusFilter').selectedIndex = 0;
+        document.getElementById('sortByFilter').value = 'createdAt';
+        document.getElementById('sortOrderFilter').value = 'desc';
+        document.getElementById('reportTableBody').innerHTML = '<tr class="no-data-row"><td colspan="9" style="text-align: center; padding: 2rem;">Click "Generate Preview" to load data</td></tr>';
+        document.getElementById('reportStats').style.display = 'none';
+        document.getElementById('exportExcelBtn').disabled = true;
+        document.getElementById('exportPdfBtn').disabled = true;
+      },
+
+      /**
+       * Export to CSV
+       */
+      async exportCSV() {
+        if (!this.currentData || this.currentData.length === 0) {
+          showAlert('No data to export', 'error');
+          return;
+        }
+
+        const filters = this.getFilters();
+        
+        try {
+          const response = await fetch('/admin/reports/export-csv', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+          });
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `report-${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          showAlert('Report exported successfully', 'success');
+        } catch (error) {
+          console.error('Error exporting CSV:', error);
+          showAlert('Failed to export CSV', 'error');
+        }
+      },
+
+      /**
+       * Export to PDF (opens in new window)
+       */
+      async exportPDF() {
+        if (!this.currentData || this.currentData.length === 0) {
+          showAlert('No data to export', 'error');
+          return;
+        }
+
+        const filters = this.getFilters();
+        
+        try {
+          const response = await fetch('/admin/reports/export-pdf', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+          });
+
+          const html = await response.text();
+          const newWindow = window.open();
+          newWindow.document.write(html);
+          newWindow.document.close();
+
+          showAlert('Report opened in new window', 'success');
+        } catch (error) {
+          console.error('Error exporting PDF:', error);
+          showAlert('Failed to export PDF', 'error');
+        }
+      }
+    };
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Generate Preview Button
+      document.getElementById('generatePreviewBtn').addEventListener('click', () => {
+        reportHandler.generatePreview();
+      });
+
+      // Clear Filters Button
+      document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+        reportHandler.clearFilters();
+      });
+
+      // Export CSV Button
+      document.getElementById('exportExcelBtn').addEventListener('click', () => {
+        reportHandler.exportCSV();
+      });
+
+      // Export PDF Button
+      document.getElementById('exportPdfBtn').addEventListener('click', () => {
+        reportHandler.exportPDF();
+      });
+
+      // Date Preset Quick Select
+      document.getElementById('datePresetFilter').addEventListener('change', (e) => {
+        const days = parseInt(e.target.value);
+        if (days) {
+          const endDate = new Date();
+          const startDate = new Date(endDate);
+          startDate.setDate(startDate.getDate() - days);
+          
+          document.getElementById('startDateFilter').value = startDate.toISOString().split('T')[0];
+          document.getElementById('endDateFilter').value = endDate.toISOString().split('T')[0];
+        }
+      });
+
+      // Dropdown toggle
+      const headerDropdown = document.getElementById('dropdownMenu');
+      if (headerDropdown) {
+        document.querySelector('.dropdown-toggle')?.addEventListener('click', () => {
+          headerDropdown.classList.toggle('show');
+        });
+      }
+
+      // Sidebar hover
+      const sidebar = document.getElementById('adminSidebar');
+      if (sidebar) {
+        sidebar.addEventListener('mouseenter', function() {
+          this.classList.add('expanded');
+        });
+        sidebar.addEventListener('mouseleave', function() {
+          this.classList.remove('expanded');
+        });
+      }
+
+      // Mobile menu
+      const menuToggle = document.getElementById('adminMenuToggle');
+      if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          sidebar.classList.toggle('mobile-active');
+        });
+      }
+    });
+
+    // Close dropdown on outside click
     window.addEventListener('click', function(e) {
       if (!e.target.closest('.dropdown-wrapper')) {
         const dropdown = document.getElementById('dropdownMenu');
@@ -305,57 +646,107 @@
         }
       }
     });
-
-    // Sidebar hover expand/collapse
-    const sidebar = document.getElementById('adminSidebar');
-    if (sidebar) {
-      sidebar.addEventListener('mouseenter', function() {
-        this.classList.add('expanded');
-      });
-      sidebar.addEventListener('mouseleave', function() {
-        this.classList.remove('expanded');
-      });
-    }
-
-    // Mobile hamburger menu toggle
-    document.addEventListener('DOMContentLoaded', () => {
-      const menuToggle = document.getElementById('adminMenuToggle');
-      const sidebarEl = document.getElementById('adminSidebar');
-
-      console.log('Menu Toggle:', menuToggle); // Debug
-      console.log('Sidebar:', sidebarEl); // Debug
-      console.log('Window width:', window.innerWidth); // Debug
-
-      if (menuToggle && sidebarEl) {
-        menuToggle.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('Menu button clicked!'); // Debug
-          const isActive = sidebarEl.classList.toggle('mobile-active');
-          console.log('Sidebar is now:', isActive ? 'OPEN' : 'CLOSED'); // Debug
-          console.log('Sidebar classes:', sidebarEl.className); // Debug
-          console.log('Computed left position:', window.getComputedStyle(sidebarEl).left); // Debug
-        });
-      }
-
-      // Close sidebar when clicking outside of it on mobile
-      document.addEventListener('click', (e) => {
-        if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
-          if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
-            console.log('Clicking outside - closing sidebar'); // Debug
-            sidebarEl.classList.remove('mobile-active');
-          }
-        }
-      });
-    });
-
-    // Sidebar toggle (mobile)
-    const menuToggle = document.getElementById('menuToggle');
-    if (menuToggle) {
-      menuToggle.addEventListener('click', () => {
-        document.getElementById('adminSidebar').classList.toggle('active');
-      });
-    }
   </script>
+
+  <style>
+    /* Report-specific styles */
+    .loading-indicator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      z-index: 2000;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #10b981;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .report-stats-container {
+      background: #f0fdf4;
+      border: 1px solid #d1fae5;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stat-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #10b981;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: #10b981;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.375rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-badge.status-pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .status-badge.status-in-progress,
+    .status-badge.status-in-review {
+      background: #bfdbfe;
+      color: #1e40af;
+    }
+
+    .status-badge.status-completed,
+    .status-badge.status-done {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-badge.status-cancelled,
+    .status-badge.status-rejected {
+      background: #fecaca;
+      color: #dc2626;
+    }
+  </style>
 </body>
 </html>
