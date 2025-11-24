@@ -765,6 +765,13 @@ function openRequestDetails(requestId, requestType) {
         loadServiceRevisionHistory(requestId);
     }
 
+    // Populate admin form with current status and units
+    const rowData = {
+        status: status,
+        units: ''  // Will be populated from the server or set as 'Not yet assigned'
+    };
+    populateAdminForm(rowData);
+
     // Handle Queued status - show Start Task button
     handleQueuedStatus(status, requestId, requestType);
 
@@ -805,7 +812,8 @@ async function loadRevisionHistory(requestId) {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Revision History] API returned non-JSON response');
-            if (historySection) historySection.style.display = 'none';
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available</p>';
             return;
         }
         
@@ -870,16 +878,18 @@ async function loadRevisionHistory(requestId) {
             }
         } else {
             console.log('[Revision History] No revisions to display');
-            // Hide section if no revisions
-            if (historySection) historySection.style.display = 'none';
+            // Show section with empty state
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available</p>';
             
             // Note: Do NOT show approval panel here - let openRequestDetails handle panel display
             // based on requestType to avoid conflicts with service requests
         }
     } catch (error) {
         console.error('[Revision History] Error loading:', error);
-        // Silently hide section on error (common for service requests)
-        if (historySection) historySection.style.display = 'none';
+        // Show section with error message instead of hiding
+        if (historySection) historySection.style.display = 'block';
+        historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">Unable to load revision history</p>';
     }
 }
 
@@ -911,7 +921,8 @@ async function loadServiceRevisionHistory(requestId) {
         
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Service Revision History] ❌ API returned non-JSON response');
-            if (historySection) historySection.style.display = 'none';
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available</p>';
             return;
         }
         
@@ -999,30 +1010,33 @@ async function loadServiceRevisionHistory(requestId) {
                     revisionHistoryActions.style.display = 'none'; // Hide approval actions for service requests
                 }
             } else {
-                // No revisions to show, hide history section
+                // No revisions to show, but keep section visible (empty state)
                 console.log('[Service Revision History] No revisions after filtering');
-                if (historySection) historySection.style.display = 'none';
+                if (historySection) historySection.style.display = 'block';
+                historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available yet</p>';
                 const modalBody = document.querySelector('.unit-modal-body');
                 const rightColumn = document.querySelector('.unit-right-column');
-                if (modalBody) modalBody.classList.remove('two-column');
-                if (rightColumn) rightColumn.style.display = 'none';
+                if (modalBody) modalBody.classList.add('two-column');
+                if (rightColumn) rightColumn.style.display = 'flex';
             }
         } else {
             console.log('[Service Revision History] No revisions to display');
-            if (historySection) historySection.style.display = 'none';
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available yet</p>';
             const modalBody = document.querySelector('.unit-modal-body');
             const rightColumn = document.querySelector('.unit-right-column');
-            if (modalBody) modalBody.classList.remove('two-column');
-            if (rightColumn) rightColumn.style.display = 'none';
+            if (modalBody) modalBody.classList.add('two-column');
+            if (rightColumn) rightColumn.style.display = 'flex';
         }
     } catch (error) {
         console.error('[Service Revision History] ❌ ERROR:', error);
         console.error('[Service Revision History] Error stack:', error.stack);
-        if (historySection) historySection.style.display = 'none';
+        if (historySection) historySection.style.display = 'block';
+        historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">Unable to load revision history</p>';
         const modalBody = document.querySelector('.unit-modal-body');
         const rightColumn = document.querySelector('.unit-right-column');
-        if (modalBody) modalBody.classList.remove('two-column');
-        if (rightColumn) rightColumn.style.display = 'none';
+        if (modalBody) modalBody.classList.add('two-column');
+        if (rightColumn) rightColumn.style.display = 'flex';
     }
 }
 
@@ -1535,6 +1549,60 @@ function createRevisionFileCard(file, revisionTimestamp) {
             </div>
         </div>
     `;
+}
+
+// Function: populateAdminForm - Populate admin form fields with current values
+function populateAdminForm(rowData) {
+    // Populate status options
+    const statusSelect = document.getElementById('adminStatusSelect');
+    const currentStatusValue = document.getElementById('currentStatusValue');
+    
+    if (statusSelect && currentStatusValue) {
+        const statusOptions = [
+            { value: 'Pending', label: 'Pending' },
+            { value: 'Queued', label: 'Queued' },
+            { value: 'In Progress', label: 'In Progress' },
+            { value: 'Approved', label: 'Approved' },
+            { value: 'For Revision', label: 'For Revision' },
+            { value: 'Completed', label: 'Completed' },
+            { value: 'Rejected', label: 'Rejected' },
+            { value: 'Archived', label: 'Archived' }
+        ];
+        
+        statusSelect.innerHTML = statusOptions.map(option => 
+            `<option value="${option.value}" ${option.value === rowData.status ? 'selected' : ''}>${option.label}</option>`
+        ).join('');
+        
+        // Set current status value
+        currentStatusValue.textContent = rowData.status || 'N/A';
+    }
+    
+    // Populate units
+    const unitsSelect = document.getElementById('adminUnitsSelect');
+    const currentUnitsValue = document.getElementById('currentUnitsValue');
+
+    if (unitsSelect && currentUnitsValue) {
+        unitsSelect.innerHTML = `
+            <option value="">Not yet assigned</option>
+            <optgroup label="Recommended Units (based on request type)">
+                <option value="Social Media Unit">⭐ Social Media Unit</option>
+                <option value="Graphics Unit">⭐ Graphics Unit</option>
+                <option value="Multimedia Unit">⭐ Multimedia Unit</option>
+                <option value="Public Relations Unit">⭐ Public Relations Unit</option>
+            </optgroup>
+            <optgroup label="All Available Units">
+                <option value="Social Media Unit">Social Media Unit</option>
+                <option value="Graphics Unit">Graphics Unit</option>
+                <option value="Multimedia Unit">Multimedia Unit</option>
+                <option value="Public Relations Unit">Public Relations Unit</option>
+            </optgroup>
+        `;
+
+        unitsSelect.value = '';
+        
+        // Set current units value
+        currentUnitsValue.textContent = rowData.units || 'Not yet assigned';
+    }
 }
 
 // Function: closeRequestModal
@@ -3650,108 +3718,11 @@ function handleQueuedStatus(status, requestId, requestType) {
     
     if (!actionPanel) return;
     
-    // If status is Queued, hide the action panel and show Start Task button
-    if (statusLower === 'queued') {
-        // Hide the action panel initially
-        actionPanel.style.display = 'none';
-        
-        // Check if Start Task button already exists
-        let startTaskBtn = document.getElementById('startTaskBtn');
-        if (startTaskBtn) {
-            startTaskBtn.style.display = 'block';
-            return;
-        }
-        
-        // Create Start Task button
-        const buttonHTML = `
-            <div id="startTaskBtn" class="unit-action-panel" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; margin-bottom: 1rem;">
-                <div class="unit-panel-header" style="background: none;">
-                    <h3 style="color: #1e40af;">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        Task Queued
-                    </h3>
-                    <p style="color: #1e40af;">This task has been assigned to your unit. Click below to start working on it.</p>
-                </div>
-                <button onclick="acknowledgeTask('${requestId}', '${requestType}')" class="unit-btn" style="background: #3b82f6; color: white; width: 100%; justify-content: center;">
-                    <span class="btn-icon">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <polyline points="9 11 12 14 22 4"/>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                        </svg>
-                    </span>
-                    <span>Start Task - Change to "In Progress"</span>
-                </button>
-            </div>
-        `;
-        
-        // Insert before the action panel
-        actionPanel.insertAdjacentHTML('beforebegin', buttonHTML);
-    } else {
-        // For other statuses, remove Start Task button and show action panel
-        const existingBtn = document.getElementById('startTaskBtn');
-        if (existingBtn) existingBtn.remove();
-        
-        // Show the action panel for non-queued statuses
-        actionPanel.style.display = 'block';
-    }
+    // Show the action panel for all statuses
+    actionPanel.style.display = 'block';
 }
 
-// Function to acknowledge task and change status to In Progress
-window.acknowledgeTask = async function(requestId, requestType) {
-    if (!confirm('Are you ready to start working on this task? This will change the status to "In Progress".')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/unit/task/acknowledge/${requestId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ taskType: requestType })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            window.logSuccess('Task started successfully! Status changed to "In Progress".');
-            
-            // Update the status badge in the modal
-            const modalStatus = document.getElementById('modalStatus');
-            if (modalStatus) {
-                const statusDisplay = window.getStatusDisplay('in progress');
-                modalStatus.textContent = statusDisplay.text;
-                modalStatus.className = 'status-badge ' + statusDisplay.class;
-            }
-            
-            // Remove Start Task button
-            const startTaskBtn = document.getElementById('startTaskBtn');
-            if (startTaskBtn) startTaskBtn.remove();
-            
-            // Show the appropriate action panel now that task is in progress
-            const actionPanel = requestType === 'approval' 
-                ? document.getElementById('approvalActionsPanel')
-                : document.getElementById('serviceActionsPanel');
-            
-            if (actionPanel) {
-                actionPanel.style.display = 'block';
-            }
-            
-            // Reload the page to show updated status
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        } else {
-            window.logError('Failed to start task', data.message || 'Unknown error');
-        }
-    } catch (error) {
-        console.error('Error acknowledging task:', error);
-        window.logError('An error occurred while starting the task', error);
-    }
-};
+
 
 // Initialize chat file features when DOM loads
 document.addEventListener('DOMContentLoaded', function() {

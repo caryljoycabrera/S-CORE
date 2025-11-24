@@ -20,7 +20,9 @@ async function loadRevisionHistory(requestId) {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('Revision history API returned non-JSON response');
-            if (historySection) historySection.style.display = 'none';
+            // Keep section visible - it will show empty state
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available</p>';
             return;
         }
         
@@ -35,12 +37,15 @@ async function loadRevisionHistory(requestId) {
                 historyContainer.appendChild(entry);
             });
         } else {
-            // Hide section if no revisions or not an approval request
-            if (historySection) historySection.style.display = 'none';
+            // Show section but with empty state message
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available</p>';
         }
     } catch (error) {
-        // Silently hide section on error (common for service requests)
-        if (historySection) historySection.style.display = 'none';
+        // Show section with error message instead of hiding
+        console.error('Error loading revision history:', error);
+        if (historySection) historySection.style.display = 'block';
+        historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">Unable to load revision history</p>';
     }
 }
 

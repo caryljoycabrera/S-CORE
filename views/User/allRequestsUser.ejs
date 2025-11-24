@@ -401,43 +401,14 @@
 }
 
 /* ========================================
-   REQUESTOR TWO-COLUMN MODAL LAYOUT
+   DEPRECATED CLASSES - USE unit-modal-* INSTEAD
    ======================================== */
-
-.requestor-modal-body {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 0 !important;
-  padding: 0 !important;
-  max-height: calc(95vh - 120px) !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  scroll-behavior: smooth !important;
-}
-
-.requestor-modal-body.two-column {
-  grid-template-columns: 1fr 850px !important;
-  gap: 2rem !important;
-  padding: 2rem !important;
-}
-
-.requestor-left-column,
-.requestor-right-column {
-  overflow: visible !important;
-  min-height: fit-content;
-}
-
-.requestor-left-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.requestor-right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
+/* The following classes have been replaced by standardized unit-modal-* classes.
+   They are kept for reference only and should not be used in new code.
+   - .requestor-modal-body → .unit-modal-body
+   - .requestor-left-column → .unit-left-column
+   - .requestor-right-column → .unit-right-column
+*/
 
 /* Revision Section Styles */
 .requestor-revision-section {
@@ -1847,14 +1818,28 @@
   </div>
 
 <div id="detailsModal" class="modal" style="display:none;">
-  <div class="modal-content requestor-modal-content has-revisions">
-    <header class="modal-header requestor-modal-header">
-      <span class="modal-title">Request Details</span>
-      <span class="close" id="closeDetailsModal">&times;</span>
-    </header>
-    <div class="modal-body requestor-modal-body two-column">
+  <div class="modal-content unit-modal-wide">
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="2"/>
+          <line x1="8" y1="8" x2="16" y2="8"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+          <line x1="8" y1="16" x2="12" y2="16"/>
+        </svg>
+        <h2 class="modal-title">Request Details</h2>
+        <span class="type-badge" id="modalTypeBadge">APPROVAL</span>
+      </div>
+      <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body unit-modal-body">
       <!-- Left Column: Request Details -->
-      <div class="requestor-left-column">
+      <div class="unit-left-column">
       <div class="details-content">
       <!-- General Information Section -->
       <div class="details-section">
@@ -1950,7 +1935,7 @@
       </div>
       
       <!-- Right Column: Revision History & Resubmission Form -->
-      <div class="requestor-right-column" id="requestorRightColumn" style="display: flex;">
+      <div class="unit-right-column" id="requestorRightColumn" style="display: flex;">
         <!-- Chat Section -->
         <div class="chat-section" id="chatButtonSection" style="display: block;">
           <button id="openChatFromDetailsModalRight" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
@@ -2542,7 +2527,6 @@ const userOrganizations = userOrgData.organizations || [];
 
 // DOM Elements
 const detailModal = document.getElementById("detailsModal");
-const closeDetailsModal = document.getElementById("closeDetailsModal");
 const clearFiltersBtn = document.getElementById("clearFilters");
 const tableBody = document.getElementById("requestsTableBody");
 const allRows = Array.from(document.querySelectorAll('.request-row'));
@@ -2576,19 +2560,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// Modal close handlers
-closeDetailsModal.onclick = () => {
-  const modalBody = document.querySelector('.requestor-modal-body');
+// Modal close handler
+function closeDetailsModal() {
+  const modalBody = document.querySelector('.unit-modal-body');
   const rightColumn = document.getElementById('requestorRightColumn');
   const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
-  const chatButtonSectionRight = document.querySelector('.requestor-right-column .chat-section[id="chatButtonSection"]');
+  const chatButtonSectionRight = document.querySelector('.unit-right-column .chat-section[id="chatButtonSection"]');
   
   detailModal.style.display = 'none';
   if (modalBody) modalBody.classList.remove('two-column');
   if (rightColumn) rightColumn.style.display = 'none';
   if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
   if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'none';
-};
+}
 
 openChatFromDetailsModal.onclick = function() {
   // Use the currentConversationId that was set when the modal was opened
@@ -2816,8 +2800,8 @@ document.querySelectorAll('.request-row').forEach(row => {
     currentConversationId = row.dataset.id;
     currentRequestType = row.dataset.type; // Store request type globally
     const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft'); // Left column chat
-    const chatButtonSectionRight = document.querySelector('.requestor-right-column .chat-section[id="chatButtonSection"]'); // Right column chat
-    const modalBody = document.querySelector('.requestor-modal-body');
+    const chatButtonSectionRight = document.querySelector('.unit-right-column .chat-section[id="chatButtonSection"]'); // Right column chat
+    const modalBody = document.querySelector('.unit-modal-body');
     const rightColumn = document.getElementById('requestorRightColumn');
     
     // Always show two-column layout for all request types

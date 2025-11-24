@@ -1604,6 +1604,9 @@ option:hover {
   padding: 2rem !important;
 }
 
+/* DEPRECATED - These classes have been replaced by unit-modal-* standards.
+   Kept for backwards compatibility during migration.
+   Use .unit-left-column and .unit-right-column instead. */
 .requestor-left-column,
 .requestor-right-column {
   overflow: visible !important;
@@ -2353,11 +2356,23 @@ option:hover {
 
   <!-- Create Request Modal -->
   <div id="requestModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <header class="modal-header">
-        <span class="modal-title">Create a Request for Approval</span>
-        <span class="close" id="closeModalBtn">&times;</span>
-      </header>
+    <div class="modal-content unit-modal-wide">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <h2 class="modal-title">Create a Request for Approval</h2>
+          <span class="type-badge">APPROVAL</span>
+        </div>
+        <button class="close-modal-btn" onclick="document.getElementById('requestModal').style.display='none'" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
       <div class="modal-body">
         <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" id="requestForm" onsubmit="return handleFormSubmit(event)">
           <!-- Row 1: Title and Organization -->
@@ -2581,14 +2596,28 @@ option:hover {
 
   <!-- Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
-    <div class="modal-content requestor-modal-content">
-      <header class="modal-header requestor-modal-header">
-        <span class="modal-title">Request Details</span>
-        <span class="close" id="closeDetailsModal">&times;</span>
-      </header>
-      <div class="modal-body requestor-modal-body">
+    <div class="modal-content unit-modal-wide">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <line x1="8" y1="8" x2="16" y2="8"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+            <line x1="8" y1="16" x2="12" y2="16"/>
+          </svg>
+          <h2 class="modal-title">Request Details</h2>
+          <span class="type-badge">APPROVAL</span>
+        </div>
+        <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body unit-modal-body">
         <!-- Left Column: Request Details -->
-        <div class="requestor-left-column">
+        <div class="unit-left-column">
         <div class="details-content">
           <!-- General Information Section -->
          <div class="details-section">
@@ -2727,7 +2756,7 @@ option:hover {
         </div>
         
         <!-- Right Column: Revision History & Resubmission Form -->
-        <div class="requestor-right-column" id="requestorRightColumn" style="display: none;">
+        <div class="unit-right-column" id="requestorRightColumn" style="display: none;">
           <!-- Chat Section -->
           <div class="chat-section" id="chatButtonSection" style="display: none;">
             <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
@@ -4385,7 +4414,7 @@ document.querySelectorAll('.request-row').forEach(row => {
 
       if (detailModal) {
         detailModal.style.display = 'flex';
-        const modalContent = detailModal.querySelector('.requestor-modal-content');
+        const modalContent = detailModal.querySelector('.unit-modal-wide');
         console.log('[Requestapproval] Modal opened for request:', row.dataset.id);
         console.log('[Requestapproval] Initial modal classes:', modalContent ? modalContent.className : 'NOT FOUND');
         console.log('[Requestapproval] Initial inline style:', modalContent ? modalContent.getAttribute('style') : 'N/A');
@@ -5900,8 +5929,8 @@ async function loadRevisionHistory(requestId) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     const rightColumn = document.getElementById('requestorRightColumn');
-    const modalBody = document.querySelector('.requestor-modal-body');
-    const modalContent = document.querySelector('.requestor-modal-content');
+    const modalBody = document.querySelector('.unit-modal-body');
+    const modalContent = document.querySelector('.unit-modal-wide');
     const resubmissionSection = document.getElementById('resubmissionFormSection');
     
     console.log('[Requestapproval] Elements found:', {

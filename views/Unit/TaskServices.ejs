@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=3" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=3" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-conversation-modal.css?v=3" />
+  <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
   <script src="/javascripts/unit-navbar.js"></script>
@@ -350,6 +351,80 @@
             </div>
           </div>
 
+          <!-- Admin Controls Form Section -->
+          <div class="admin-form-section">
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+              </svg>
+              Administrative Controls
+              <span class="admin-badge">EDIT & UPDATE</span>
+            </h3>
+
+            <form id="adminUpdateForm" onsubmit="return false;">
+              <div class="admin-form-grid">
+                <!-- Status Field -->
+                <div class="form-field">
+                  <label for="adminStatusSelect">Request Status</label>
+                  <select id="adminStatusSelect" name="status"></select>
+                  <div class="current-value">
+                    Current: <span id="currentStatusValue">Loading...</span>
+                  </div>
+                </div>
+
+                <!-- Assigned Units Field -->
+                <div class="form-field">
+                  <label for="adminUnitsSelect">Assigned Unit</label>
+                  <select id="adminUnitsSelect" name="assignedUnits">
+                    <option value="">Not yet assigned</option>
+                    <optgroup label="Recommended Units (based on request type)">
+                      <option value="Social Media Unit" class="recommended-unit" id="social-media-option">⭐ Social Media Unit</option>
+                      <option value="Graphics Unit" class="recommended-unit" id="graphics-option">⭐ Graphics Unit</option>
+                      <option value="Multimedia Unit" class="recommended-unit" id="multimedia-option">⭐ Multimedia Unit</option>
+                      <option value="Public Relations Unit" class="recommended-unit" id="pr-option">⭐ Public Relations Unit</option>
+                    </optgroup>
+                    <optgroup label="All Available Units">
+                      <option value="Social Media Unit">Social Media Unit</option>
+                      <option value="Graphics Unit">Graphics Unit</option>
+                      <option value="Multimedia Unit">Multimedia Unit</option>
+                      <option value="Public Relations Unit">Public Relations Unit</option>
+                    </optgroup>
+                  </select>
+                  <div class="current-value">
+                    Current: <span id="currentUnitsValue">Loading...</span>
+                  </div>
+                </div>
+
+                <!-- Deadline Field (for Service Requests only) -->
+                <div class="form-field" id="adminDeadlineField" style="display: none;">
+                  <label for="adminDeadlineInput">Request Deadline</label>
+                  <input type="datetime-local" id="adminDeadlineInput" name="deadline">
+                  <div class="current-value">
+                    Current: <span id="currentDeadlineValue">Loading...</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-form-actions">
+                <button type="button" class="admin-btn admin-btn-secondary" id="adminCancelBtn">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                  Cancel Changes
+                </button>
+                <button type="button" class="admin-btn admin-btn-primary" id="adminUpdateBtn">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17,21 17,13 7,13 7,21"/>
+                    <polyline points="7,3 7,8 15,8"/>
+                  </svg>
+                  Update Request
+                </button>
+              </div>
+            </form>
+          </div>
+
           <div class="unit-info-card">
             <div class="unit-card-header">
               <h3>Description</h3>
@@ -395,31 +470,13 @@
               </span>
             </button>
           </div>
-          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
+
+          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel">
             <div class="unit-panel-header revision-header">
               <h3>Revision History</h3>
               <p>Complete timeline of all revisions and resubmissions</p>
             </div>
             <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
-            <div id="revisionHistoryActions" class="unit-action-buttons" style="margin-top: 1.5rem; display: none;">
-              <button id="approveAfterRevisionBtn" class="unit-btn unit-btn-approve">
-                <span class="btn-icon">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </span>
-                <span>Approve Request</span>
-              </button>
-              <button id="requestAnotherRevisionBtn" class="unit-btn unit-btn-revision">
-                <span class="btn-icon">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </span>
-                <span>Request Another Revision</span>
-              </button>
-            </div>
           </div>
 
           <div id="serviceActionsPanel" class="unit-action-panel service-panel" style="display: none;">
@@ -464,6 +521,68 @@
               <div>
                 <p style="margin:0; font-weight:600; color:#1e293b;">Service Request Workflow</p>
                 <p style="margin:0; font-size:0.875rem; color:#64748b;">Upload files and submit for requestor review. Only requestor can mark complete.</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="additionalFileToggleSection" class="unit-action-panel">
+            <style>
+              .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 50px;
+                height: 24px;
+                margin: 0;
+              }
+
+              .toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #cbd5e1;
+                transition: 0.4s;
+                border-radius: 24px;
+              }
+
+              .toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+              }
+
+              input:checked + .toggle-slider {
+                background-color: #10b981;
+              }
+
+              input:checked + .toggle-slider:before {
+                transform: translateX(26px);
+              }
+
+              .toggle-switch input[type="checkbox"] {
+                opacity: 0;
+                width: 0;
+                height: 0;
+              }
+            </style>
+            <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label class="toggle-switch" style="margin: 0;">
+                  <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
+              </div>
+              <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
+                This will permit users to add more files when revising their requests
               </div>
             </div>
           </div>
