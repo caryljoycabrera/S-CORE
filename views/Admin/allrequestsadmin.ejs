@@ -529,16 +529,14 @@
                   <select id="adminUnitsSelect" name="assignedUnits">
                     <option value="">Not yet assigned</option>
                     <optgroup label="Recommended Units (based on request type)">
-                      <option value="Social Media Unit" class="recommended-unit" id="social-media-option">⭐ Social Media Unit</option>
-                      <option value="Graphics Unit" class="recommended-unit" id="graphics-option">⭐ Graphics Unit</option>
-                      <option value="Multimedia Unit" class="recommended-unit" id="multimedia-option">⭐ Multimedia Unit</option>
-                      <option value="Public Relations Unit" class="recommended-unit" id="pr-option">⭐ Public Relations Unit</option>
+                      <% units.forEach(unit => { %>
+                      <option value="<%= unit %>" class="recommended-unit">⭐ <%= unit %></option>
+                      <% }); %>
                     </optgroup>
                     <optgroup label="All Available Units">
-                      <option value="Social Media Unit">Social Media Unit</option>
-                      <option value="Graphics Unit">Graphics Unit</option>
-                      <option value="Multimedia Unit">Multimedia Unit</option>
-                      <option value="Public Relations Unit">Public Relations Unit</option>
+                      <% units.forEach(unit => { %>
+                      <option value="<%= unit %>"><%= unit %></option>
+                      <% }); %>
                     </optgroup>
                   </select>
                   <div class="current-value">

@@ -374,10 +374,9 @@
           <label class="form-label" for="organizationSelect">Select Organization</label>
           <select id="organizationSelect" class="form-input">
             <option value="">-- Select organization --</option>
-            <option value="Graphics">Graphics</option>
-            <option value="Multimedia">Multimedia</option>
-            <option value="Social Media">Social Media</option>
-            <option value="Public Relations">Public Relations</option>
+            <% units.forEach(unit => { %>
+            <option value="<%= unit %>"><%= unit %></option>
+            <% }); %>
           </select>
         </div>
 

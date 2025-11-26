@@ -85,14 +85,19 @@ const updateSettings = async (updates, userId = null) => {
       settings = new SystemSettings();
     }
     
-    // Apply all updates
+    // Apply updates
     Object.keys(updates).forEach(key => {
       settings[key] = updates[key];
+      if (key === 'userRoles') {
+        console.log('[Settings Service] Setting userRoles:', JSON.stringify(updates[key], null, 2));
+      }
     });
     
     settings.updatedBy = userId;
     settings.updatedAt = new Date();
+    console.log('[Settings Service] About to save userRoles:', JSON.stringify(settings.userRoles, null, 2));
     await settings.save();
+    console.log('[Settings Service] Saved to database');
     
     // Update cache
     cachedSettings = settings;

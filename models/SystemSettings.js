@@ -58,23 +58,41 @@ const systemSettingsSchema = new mongoose.Schema({
 
   // Units & Organizations Settings
   units: [{
-    _id: mongoose.Schema.Types.ObjectId,
-    name: String,
-    email: String,
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active'
-    }
+    type: String
   }],
   organizations: [{
-    _id: mongoose.Schema.Types.ObjectId,
+    type: String
+  }],
+
+  // Offices/Departments Settings
+  offices: [{
+    type: String
+  }],
+
+  // Request Management Settings
+  requestStatuses: [{
+    type: String,
+    default: ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived']
+  }],
+  userRoles: [{
     name: String,
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active'
-    }
+    permissions: [{
+      type: String
+    }]
+  }],
+  announcementPriorities: [{
+    type: String,
+    default: ['low', 'medium', 'high']
+  }],
+  announcementTypes: [{
+    type: String,
+    default: ['Event', 'News', 'Reminder', 'Update', 'Maintenance']
+  }],
+
+  // Request Type to Unit Mappings
+  requestTypeMappings: [{
+    requestType: String,
+    recommendedUnit: String
   }],
 
   // Notification Settings
@@ -144,28 +162,6 @@ const systemSettingsSchema = new mongoose.Schema({
   maintenanceMessage: {
     type: String,
     default: 'System is under maintenance. Please try again later.'
-  },
-
-  // Feature Flags
-  enableAnnouncements: {
-    type: Boolean,
-    default: true
-  },
-  enableUserSearch: {
-    type: Boolean,
-    default: true
-  },
-  enableDarkMode: {
-    type: Boolean,
-    default: true
-  },
-  enableAnalytics: {
-    type: Boolean,
-    default: true
-  },
-  enableMobileApp: {
-    type: Boolean,
-    default: false
   },
 
   // Audit & Logging

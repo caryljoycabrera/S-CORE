@@ -8,12 +8,32 @@ const router = express.Router();
 const User = require('../models/User');
 const notificationService = require('../services/notificationService');
 const { authLimiter } = require('../middleware/rateLimiter');
+const { getOrganizations, getOffices } = require('../utils/settingsHelpers');
 
 /**
  * GET /register
- * Renders the registration form
+ * Renders the registration form with organizations and offices from database
  */
-router.get('/register', (req, res) => res.render('register', { error: null }));
+router.get('/register', async (req, res) => {
+  try {
+    const organizations = getOrganizations();
+    const offices = getOffices();
+    
+    res.render('register', {
+      error: null,
+      organizations: organizations,
+      offices: offices
+    });
+  } catch (error) {
+    console.error('[Register] Error loading registration page:', error);
+    // Fallback to empty arrays if settings not loaded
+    res.render('register', {
+      error: null,
+      organizations: [],
+      offices: []
+    });
+  }
+});
 
 /**
  * GET /login

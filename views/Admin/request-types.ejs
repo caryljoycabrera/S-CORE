@@ -785,10 +785,9 @@
           <label class="form-label" for="approveAssignedUnit">Assign to Unit:</label>
           <select id="approveAssignedUnit" class="form-input" required>
             <option value="">Select unit...</option>
-            <option value="Graphics">Graphics</option>
-            <option value="Multimedia">Multimedia</option>
-            <option value="Public Relations">Public Relations</option>
-            <option value="Social Media">Social Media</option>
+            <% units.forEach(unit => { %>
+            <option value="<%= unit %>"><%= unit %></option>
+            <% }); %>
           </select>
         </div>
 
@@ -858,10 +857,9 @@
           <label class="form-label" for="editAssignedUnit">Assigned Unit:</label>
           <select id="editAssignedUnit" class="form-input" required>
             <option value="">Select unit...</option>
-            <option value="Graphics">Graphics</option>
-            <option value="Multimedia">Multimedia</option>
-            <option value="Public Relations">Public Relations</option>
-            <option value="Social Media">Social Media</option>
+            <% units.forEach(unit => { %>
+            <option value="<%= unit %>"><%= unit %></option>
+            <% }); %>
           </select>
         </div>
       </div>

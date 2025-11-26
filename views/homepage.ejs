@@ -166,12 +166,10 @@
             <div class="contact-card-icon"><%= card.icon %></div>
             <h3><%= card.title %></h3>
             <p><%= card.description %></p>
-            <p style="white-space: pre-line;"><strong style="color: #FFD700;"><%= card.contactInfo %></strong></p>
+            <p style="white-space: pre-line;"><strong style="color: #FFD700;"><%- card.contactInfo.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" style="color: #FFD700;">$1</a>') %></strong></p>
           </div>
-          <% }); %>
-        </div>
-
-        <div class="social-section fade-in">
+        <% }); %>
+        </div>        <div class="social-section fade-in">
           <h3><%= content.socialSectionTitle %></h3>
           <div class="social-links">
             <% if (content.socialMedia && content.socialMedia.length > 0) { %>

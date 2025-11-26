@@ -11,48 +11,11 @@ const Page = require('../models/Page');
 const { requireLogin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
+const { getAutoAssignedUnit, getDefaultDeadlineDays } = require('../utils/settingsHelpers');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { requestLimiter } = require('../middleware/rateLimiter');
-
-/**
- * Request Type to Unit Mapping
- * Automatically assigns requests to appropriate units based on specificRequestType
- */
-const requestTypeToUnitMapping = {
-  // Graphics & Design Services (Service Requests)
-  "Creation of New Graphics/Pubmat": "Graphics",
-  "Creation of New Logo/Branding Element": "Graphics",
-
-  // Multimedia Services (Service Requests)
-  "Event Photo & Video Coverage": "Multimedia",
-  "Photo/Video Editing Service": "Multimedia",
-
-  // Content & Communications (Service Requests)
-  "Magazine Content Creation": "Public Relations",
-  "Social Media Content Sharing/Posting": "Social Media",
-
-  // Content & Communications Services (Approval Requests)
-  "Content Posting": "Public Relations",
-  "Social Media Monitoring": "Social Media",
-  "Caption Approval": "Public Relations",
-  "Publication Design": "Graphics",
-  "Proofreading": "Public Relations",
-
-  // Multimedia Services (Approval Requests)
-  "Graphics Design": "Graphics",
-  "Media Coverage": "Multimedia"
-};
-
-/**
- * Get auto-assigned unit for a specific request type
- * @param {string} specificRequestType - The type of request
- * @returns {string} The assigned unit name or empty string if not found
- */
-function getAutoAssignedUnit(specificRequestType) {
-  return requestTypeToUnitMapping[specificRequestType] || '';
-}
 
 /**
  * GET /
@@ -230,7 +193,15 @@ router.get('/request-approvals', async (req, res) => {
       organization: r.organization || 'N/A'
     }));
 
-    res.render('User/Requestapproval', { approvals, user, allRequests });
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    
+    res.render('User/Requestapproval', { 
+      approvals, 
+      user, 
+      allRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
   } catch (err) {
     console.error('Error loading approvals:', err);
     res.status(500).send('Error loading page');
@@ -299,7 +270,15 @@ router.get('/service-requests', async (req, res) => {
       specificRequestType: r.specificRequestType || 'Not specified'
     }));
 
-    res.render('User/ServiceRequest', { user, serviceRequests, allRequests });
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    
+    res.render('User/ServiceRequest', { 
+      user, 
+      serviceRequests, 
+      allRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
 
   } catch (err) {
     console.error('Error loading service requests:', err);
@@ -838,9 +817,9 @@ router.post('/submit-request-approval', requestLimiter, upload.array('upload', 2
       throw new Error('Organization must be a single string value');
     }
 
-    // Calculate 3 working days from now
+    // Calculate deadline from settings (default 7 days)
     const { addWorkingDays } = require('../utils/helpers');
-    const deadline = addWorkingDays(new Date(), 3);
+    const deadline = addWorkingDays(new Date(), getDefaultDeadlineDays());
 
     // Auto-assign unit based on request type
     const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);

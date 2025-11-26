@@ -12,6 +12,7 @@ const { requireLogin, requireAdmin } = require('../middleware/auth');
 const { upload } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const { apiLimiter } = require('../middleware/rateLimiter');
+const { getOrganizations, getOffices, getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
 
 /**
  * POST /api/users/verify
@@ -88,6 +89,30 @@ router.post('/api/users/deny', requireAdmin, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Internal server error while denying user' 
+    });
+  }
+});
+
+/**
+ * GET /api/system-data
+ * Public API endpoint for system configuration data (organizations, offices, units, requestStatuses)
+ */
+router.get('/api/system-data', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        organizations: getOrganizations(),
+        offices: getOffices(),
+        units: getUnits(),
+        requestStatuses: getRequestStatuses()
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching system data:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch system data'
     });
   }
 });

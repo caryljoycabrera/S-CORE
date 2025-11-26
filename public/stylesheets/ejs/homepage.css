@@ -36,6 +36,17 @@ body {
   color: var(--text-dark);
   line-height: 1.6;
   overflow-x: hidden;
+  user-select: none;
+}
+
+/* Allow text selection in form elements and interactive content */
+input,
+textarea,
+select,
+button,
+a,
+[href] {
+  user-select: text;
 }
 
 .bg-animation {

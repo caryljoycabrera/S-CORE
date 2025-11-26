@@ -32,10 +32,17 @@ const port = process.env.PORT || 8080;
 // ======= Database Connection =======
 connectDB();
 
-// ======= Load System Settings =======
-settingsService.loadSettings().catch(err => {
-  console.error('[SERVER] Failed to load system settings:', err);
-});
+// ======= Initialize Server Async =======
+(async () => {
+  try {
+    // Load system settings before starting server
+    await settingsService.loadSettings();
+    console.log('[SERVER] System settings loaded successfully');
+  } catch (err) {
+    console.error('[SERVER] Failed to load system settings:', err);
+    console.error('[SERVER] Server will continue with default settings');
+  }
+})();
 
 // ======= Socket.IO Initialization =======
 socketService.initialize(server);
@@ -60,6 +67,21 @@ app.use(session({
   resave: false,
   saveUninitialized: false
 }));
+
+// Make settings helpers available to all views
+const settingsHelpers = require('./utils/settingsHelpers');
+app.use((req, res, next) => {
+  // Make settings helpers available in all views
+  res.locals.settingsHelpers = settingsHelpers;
+  res.locals.systemSettings = {
+    organizations: settingsHelpers.getOrganizations(),
+    offices: settingsHelpers.getOffices(),
+    units: settingsHelpers.getUnits(),
+    requestStatuses: settingsHelpers.getRequestStatuses(),
+    siteConfig: settingsHelpers.getSiteConfig()
+  };
+  next();
+});
 
 // Logging middleware for API calls
 app.use((req, res, next) => {

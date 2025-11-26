@@ -610,10 +610,11 @@
           </label>
           <select name="unitTeam" id="editUnitTeam" class="filter-select" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
             <option value="N/A">N/A (No Unit)</option>
-            <option value="Graphics">Graphics Unit</option>
-            <option value="Multimedia">Multimedia Unit</option>
-            <option value="Public Relations">Public Relations Unit</option>
-            <option value="Social Media">Social Media Unit</option>
+            <% if (typeof units !== 'undefined' && units.length > 0) { %>
+              <% units.forEach(unit => { %>
+                <option value="<%= unit %>"><%= unit %></option>
+              <% }) %>
+            <% } %>
           </select>
           <small style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem; display: block;">
             Select which SCO unit team this member belongs to. They will only see tasks assigned to their specific unit.

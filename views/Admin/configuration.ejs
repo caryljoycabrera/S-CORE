@@ -137,6 +137,8 @@
     .form-group input[type="text"],
     .form-group input[type="email"],
     .form-group input[type="url"],
+    .form-group input[type="number"],
+    .form-group select,
     .form-group textarea {
       width: 100%;
       padding: 0.75rem 1rem;
@@ -146,13 +148,70 @@
       font-family: 'Inter', sans-serif;
       transition: all 0.2s ease;
       box-sizing: border-box;
+      background: white;
+    }
+
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1.25rem;
+      padding-right: 2.5rem;
+    }
+
+    .form-group input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .form-group input[type="number"]::-webkit-outer-spin-button,
+    .form-group input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
     .form-group input:focus,
+    .form-group select:focus,
     .form-group textarea:focus {
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group input[type="checkbox"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid #d1d5db;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin: 0;
+    }
+
+    .form-group input[type="checkbox"]:checked {
+      background-color: #3b82f6;
+      border-color: #3b82f6;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 0.875rem;
+    }
+
+    .form-group input[type="checkbox"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group label[style*="display: flex"] {
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .form-group label[style*="display: flex"]:hover {
+      background-color: #f9fafb;
     }
 
     .form-group textarea {
@@ -176,6 +235,21 @@
       color: #9ca3af;
       text-align: right;
       margin-top: 0.25rem;
+    }
+
+    /* Role option styling */
+    .role-option:has(input[type="radio"]:checked) {
+      border-color: #3b82f6 !important;
+      background-color: #eff6ff;
+    }
+
+    .role-option:hover {
+      border-color: #93c5fd !important;
+      background-color: #f0f9ff;
+    }
+
+    .role-option input[type="radio"] {
+      accent-color: #3b82f6;
     }
 
     /* Preview Modal */
@@ -430,6 +504,44 @@
       font-size: 0.9rem;
       padding: 0.5rem 0.75rem;
     }
+
+    /* Tab Navigation Styles */
+    .config-tabs {
+      display: flex;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 2rem;
+    }
+
+    .config-tab {
+      padding: 1rem 2rem;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .config-tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    .config-tab:hover {
+      color: #3b82f6;
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -618,25 +730,37 @@
         </div>
       <% } %>
 
-      <!-- Header -->
-      <div class="config-header">
-        <h1>Homepage Configuration</h1>
-        <div class="config-header-actions">
-          <button type="button" class="btn-preview" onclick="showPreview()">
-            👁️ Preview Changes
-          </button>
-          <button type="submit" form="configForm" class="btn-save">
-            💾 Save Changes
-          </button>
-          <button type="button" class="btn-reset" onclick="resetForm()">
-            🔄 Reset Form
-          </button>
-        </div>
+      <!-- Tab Navigation -->
+      <div class="config-tabs">
+        <button type="button" class="config-tab active" onclick="switchTab('system')">
+          ⚙️ System Configuration
+        </button>
+        <button type="button" class="config-tab" onclick="switchTab('homepage')">
+          🏠 Homepage Configuration
+        </button>
       </div>
 
-      <!-- Configuration Form -->
-      <form id="configForm" method="POST" action="/admin/configuration">
-        <div class="config-sections">
+      <!-- Homepage Configuration Tab -->
+      <div id="homepage-tab" class="tab-content">
+        <!-- Header -->
+        <div class="config-header">
+          <h1>Homepage Configuration</h1>
+          <div class="config-header-actions">
+            <button type="button" class="btn-preview" onclick="showPreview()">
+              👁️ Preview Changes
+            </button>
+            <button type="submit" form="configForm" class="btn-save">
+              💾 Save Changes
+            </button>
+            <button type="button" class="btn-reset" onclick="resetForm()">
+              🔄 Reset Form
+            </button>
+          </div>
+        </div>
+
+        <!-- Configuration Form -->
+        <form id="configForm" method="POST" action="/admin/configuration">
+          <div class="config-sections">
 
           <!-- Hero Section -->
           <div class="config-section">
@@ -1400,6 +1524,683 @@
 
         </div>
       </form>
+      </div> <!-- End homepage-tab -->
+
+      <!-- System Configuration Tab -->
+      <div id="system-tab" class="tab-content active">
+        <!-- Header -->
+        <div class="config-header">
+          <h1>System Configuration</h1>
+          <div class="config-header-actions">
+            <button type="submit" form="systemConfigForm" class="btn-save">
+              💾 Save Changes
+            </button>
+            <button type="button" class="btn-reset" onclick="resetSystemForm()">
+              🔄 Reset Form
+            </button>
+          </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+          <p style="margin: 0; color: #1e40af; font-weight: 500;">
+            <strong>ℹ️ System Configuration:</strong> All settings configured here are stored in the database and dynamically control the system behavior. Changes take effect immediately after saving.
+          </p>
+        </div>
+
+        <!-- System Configuration Form -->
+        <form id="systemConfigForm" method="POST" action="/admin/system-configuration">
+          <div class="config-sections">
+
+            <!-- Organizations Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🏢</span>
+                Organizations
+              </h2>
+              <p class="section-description">
+                Manage the list of student organizations that users can select from.
+              </p>
+              <div class="form-group">
+                <label for="organizationsList">Student Organizations (one per line)</label>
+                <textarea
+                  id="organizationsList"
+                  name="organizationsList"
+                  class="tall"
+                  placeholder="University Student Government (USG)&#10;College of Business Administration and Accountancy Student Government (CBAASG)&#10;etc."
+                  rows="10"
+                ><%= (settings && settings.organizations && settings.organizations.length > 0) ? (Array.isArray(settings.organizations) ? settings.organizations.map(org => typeof org === 'string' ? org : org.name).join('\n') : '') : '' %></textarea>
+                <p class="form-hint">Enter each organization on a new line</p>
+              </div>
+            </div>
+
+            <!-- Offices/Departments Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🏛️</span>
+                Offices/Departments
+              </h2>
+              <p class="section-description">
+                Manage the list of offices and departments for non-student users.
+              </p>
+              <div class="form-group">
+                <label for="officesList">Offices/Departments (one per line)</label>
+                <textarea
+                  id="officesList"
+                  name="officesList"
+                  class="tall"
+                  placeholder="Academic Affairs&#10;Student Services&#10;Administration&#10;etc."
+                  rows="10"
+                ><%= (settings && settings.offices && settings.offices.length > 0) ? settings.offices.join('\n') : '' %></textarea>
+                <p class="form-hint">Enter each office/department on a new line</p>
+              </div>
+            </div>
+
+            <!-- Units and Request Types Management Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🔗</span>
+                Units & Request Types Management
+              </h2>
+              <p class="section-description">
+                Manage units and their associated request types. Each unit can handle multiple types of requests.
+              </p>
+              <div class="dynamic-items-section">
+                <div class="dynamic-items-header">
+                  <h3>Units</h3>
+                  <button type="button" class="btn-add-item" onclick="addUnitWithRequestTypes()">
+                    <span>+</span> Add Unit
+                  </button>
+                </div>
+                <div id="unitsWithRequestTypesContainer" class="dynamic-items-container">
+                  <% 
+                  // Get existing units and mappings from database
+                  const existingUnits = (settings && settings.units) || [];
+                  const mappings = (settings && settings.requestTypeMappings) || [];
+                  
+                  // Group request types by unit
+                  const unitRequestTypes = {};
+                  existingUnits.forEach(unit => {
+                    const unitName = typeof unit === 'string' ? unit : unit.name || unit;
+                    unitRequestTypes[unitName] = [];
+                  });
+                  
+                  mappings.forEach(mapping => {
+                    const unit = mapping.recommendedUnit;
+                    if (!unitRequestTypes[unit]) {
+                      unitRequestTypes[unit] = [];
+                    }
+                    unitRequestTypes[unit].push(mapping.requestType);
+                  });
+                  
+                  Object.keys(unitRequestTypes).forEach((unitName, index) => { %>
+                  <div class="dynamic-item unit-request-item" data-index="<%= index %>">
+                    <div class="item-header">
+                      <span class="item-number">Unit <%= index + 1 %>: <strong><%= unitName %></strong></span>
+                      <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
+                        <span>×</span>
+                      </button>
+                    </div>
+                    <div class="item-content">
+                      <div class="form-group">
+                        <label>Unit Name</label>
+                        <input
+                          type="text"
+                          name="unitName[]"
+                          value="<%= unitName %>"
+                          maxlength="100"
+                          required
+                          onchange="updateUnitLabel(this)"
+                        >
+                      </div>
+                      <div class="form-group">
+                        <label>Request Types for this Unit (one per line)</label>
+                        <textarea
+                          name="unitRequestTypes[]"
+                          class="tall"
+                          placeholder="Enter request types that this unit handles (one per line)"
+                          rows="8"
+                        ><%= unitRequestTypes[unitName].join('\n') %></textarea>
+                        <p class="form-hint">Enter each request type on a new line</p>
+                      </div>
+                    </div>
+                  </div>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Request Statuses Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">📊</span>
+                Request Statuses
+              </h2>
+              <p class="section-description">
+                Manage the possible statuses for service requests.
+              </p>
+              <div class="form-group">
+                <label for="requestStatuses">Request Statuses (one per line)</label>
+                <textarea
+                  id="requestStatuses"
+                  name="requestStatuses"
+                  class="tall"
+                  placeholder="Pending&#10;Queued&#10;In Progress&#10;etc."
+                  rows="8"
+                ><%= (settings && settings.requestStatuses && settings.requestStatuses.length > 0) ? settings.requestStatuses.join('\n') : '' %></textarea>
+                <p class="form-hint">Enter each status on a new line</p>
+              </div>
+            </div>
+
+            <!-- User Roles Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">👤</span>
+                User Roles & Permissions
+              </h2>
+              <p class="section-description">
+                Manage user roles and configure their access permissions.
+              </p>
+              <div class="dynamic-items-section">
+                <div class="dynamic-items-header">
+                  <h3>User Roles</h3>
+                  <button type="button" class="btn-add-item" onclick="addUserRole()">
+                    <span>+</span> Add Role
+                  </button>
+                </div>
+                <div id="userRolesContainer" class="dynamic-items-container">
+                  <% 
+                  // Get user roles from database only
+                  const userRoles = (settings && settings.userRoles) || [];
+                  
+                  userRoles.forEach((role, index) => { 
+                    const roleName = typeof role === 'string' ? role : role.name;
+                    const rolePerms = typeof role === 'string' ? [] : (role.permissions || []);
+                  %>
+                  <div class="dynamic-item" data-index="<%= index %>">
+                    <div class="item-header">
+                      <span class="item-number">Role <%= index + 1 %>: <strong><%= roleName %></strong></span>
+                      <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
+                        <span>×</span>
+                      </button>
+                    </div>
+                    <div class="item-content">
+                      <div class="form-group">
+                        <label>Role Name</label>
+                        <input
+                          type="text"
+                          name="roleName[]"
+                          value="<%= roleName %>"
+                          maxlength="50"
+                          required
+                          onchange="updateRoleLabel(this)"
+                        >
+                      </div>
+                      <div class="form-group">
+                        <label>Access Level</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                          <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                            <input type="radio" name="roleAccessLevel_<%= index %>" value="user" <%= rolePerms.includes('user') || (!rolePerms.includes('unit') && !rolePerms.includes('admin')) ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
+                            <div style="flex: 1;">
+                              <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                  <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                Requestor (User) - Submits Requests
+                              </div>
+                              <div style="font-size: 0.875rem; color: #6b7280;">Can create and view their own requests</div>
+                            </div>
+                          </label>
+                          
+                          <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                            <input type="radio" name="roleAccessLevel_<%= index %>" value="unit" <%= rolePerms.includes('unit') ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
+                            <div style="flex: 1;">
+                              <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="9" cy="7" r="4"></circle>
+                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                Unit Member - Works on Tasks
+                              </div>
+                              <div style="font-size: 0.875rem; color: #6b7280;">Can view all requests, work on assigned tasks, and upload deliverables</div>
+                            </div>
+                          </label>
+                          
+                          <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                            <input type="radio" name="roleAccessLevel_<%= index %>" value="admin" <%= rolePerms.includes('admin') ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
+                            <div style="flex: 1;">
+                              <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                </svg>
+                                Administrator - Full System Access
+                              </div>
+                              <div style="font-size: 0.875rem; color: #6b7280;">Complete administrative access to all system features</div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Announcement Priority Levels Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🎯</span>
+                Announcement Priority Levels
+              </h2>
+              <p class="section-description">
+                Manage the priority levels for announcements (e.g., low, medium, high, urgent).
+              </p>
+              <div class="form-group">
+                <label for="announcementPriorities">Priority Levels (one per line)</label>
+                <textarea
+                  id="announcementPriorities"
+                  name="announcementPriorities"
+                  class="tall"
+                  placeholder="low&#10;medium&#10;high&#10;urgent"
+                  rows="5"
+                ><%= (settings && settings.announcementPriorities && settings.announcementPriorities.length > 0) ? settings.announcementPriorities.join('\n') : '' %></textarea>
+                <p class="form-hint">Enter each priority level on a new line</p>
+              </div>
+            </div>
+
+            <!-- Announcement Types Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">📢</span>
+                Announcement Types
+              </h2>
+              <p class="section-description">
+                Manage the types/categories of announcements (e.g., Event, News, Reminder, Update).
+              </p>
+              <div class="form-group">
+                <label for="announcementTypes">Announcement Types (one per line)</label>
+                <textarea
+                  id="announcementTypes"
+                  name="announcementTypes"
+                  class="tall"
+                  placeholder="Event&#10;News&#10;Reminder&#10;Update&#10;Maintenance"
+                  rows="6"
+                ><%= (settings && settings.announcementTypes && settings.announcementTypes.length > 0) ? settings.announcementTypes.join('\n') : '' %></textarea>
+                <p class="form-hint">Enter each announcement type on a new line</p>
+              </div>
+            </div>
+
+            <!-- General Settings Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">⚙️</span>
+                General Settings
+              </h2>
+              <p class="section-description">
+                Configure basic system settings and branding.
+              </p>
+              <div class="form-group">
+                <label for="siteTitle">Site Title</label>
+                <input
+                  type="text"
+                  id="siteTitle"
+                  name="siteTitle"
+                  value="<%= settings.siteTitle || 'S-CORE - Student Communications Office Request & Engagement System' %>"
+                  maxlength="200"
+                >
+              </div>
+              <div class="form-group">
+                <label for="siteDescription">Site Description</label>
+                <textarea
+                  id="siteDescription"
+                  name="siteDescription"
+                  maxlength="500"
+                  rows="3"
+                ><%= settings.siteDescription || 'A comprehensive request management portal for DLSU-D Student Communications Office' %></textarea>
+              </div>
+              <div class="form-group">
+                <label for="timezone">Timezone</label>
+                <select id="timezone" name="timezone">
+                  <option value="Asia/Manila" <%= settings.timezone === 'Asia/Manila' ? 'selected' : '' %>>Asia/Manila</option>
+                  <option value="UTC" <%= settings.timezone === 'UTC' ? 'selected' : '' %>>UTC</option>
+                  <option value="America/New_York" <%= settings.timezone === 'America/New_York' ? 'selected' : '' %>>America/New York</option>
+                  <option value="Europe/London" <%= settings.timezone === 'Europe/London' ? 'selected' : '' %>>Europe/London</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="dateFormat">Date Format</label>
+                <select id="dateFormat" name="dateFormat">
+                  <option value="MM/DD/YYYY" <%= settings.dateFormat === 'MM/DD/YYYY' ? 'selected' : '' %>>MM/DD/YYYY</option>
+                  <option value="DD/MM/YYYY" <%= settings.dateFormat === 'DD/MM/YYYY' ? 'selected' : '' %>>DD/MM/YYYY</option>
+                  <option value="YYYY-MM-DD" <%= settings.dateFormat === 'YYYY-MM-DD' ? 'selected' : '' %>>YYYY-MM-DD</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="logo">Logo URL (optional)</label>
+                <input
+                  type="text"
+                  id="logo"
+                  name="logo"
+                  value="<%= settings.logo || '' %>"
+                  placeholder="https://example.com/logo.png"
+                >
+              </div>
+              <div class="form-group">
+                <label for="favicon">Favicon URL (optional)</label>
+                <input
+                  type="text"
+                  id="favicon"
+                  name="favicon"
+                  value="<%= settings.favicon || '' %>"
+                  placeholder="https://example.com/favicon.ico"
+                >
+              </div>
+            </div>
+
+            <!-- Request Management Settings Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">📋</span>
+                Request Management Settings
+              </h2>
+              <p class="section-description">
+                Configure how requests are handled and processed. These settings control revision limits, default deadlines, and workflow automation.
+              </p>
+              <div class="form-group">
+                <label for="maxRevisions">Maximum Major Revisions</label>
+                <input
+                  type="number"
+                  id="maxRevisions"
+                  name="maxRevisions"
+                  value="<%= settings.maxRevisions || 3 %>"
+                  min="1"
+                  max="10"
+                >
+                <p class="form-hint">Maximum number of major revisions allowed per request</p>
+              </div>
+              <div class="form-group">
+                <label for="maxMinorRevisions">Maximum Minor Revisions</label>
+                <input
+                  type="number"
+                  id="maxMinorRevisions"
+                  name="maxMinorRevisions"
+                  value="<%= settings.maxMinorRevisions || 2 %>"
+                  min="1"
+                  max="10"
+                >
+                <p class="form-hint">Maximum number of minor revisions allowed per request</p>
+              </div>
+              <div class="form-group">
+                <label for="defaultDeadlineDays">Default Deadline (Days)</label>
+                <input
+                  type="number"
+                  id="defaultDeadlineDays"
+                  name="defaultDeadlineDays"
+                  value="<%= settings.defaultDeadlineDays || 7 %>"
+                  min="1"
+                  max="365"
+                >
+                <p class="form-hint">Default number of days for request deadlines</p>
+              </div>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="autoApproveAfterRevisions"
+                    name="autoApproveAfterRevisions"
+                    <%= settings.autoApproveAfterRevisions ? 'checked' : '' %>
+                  >
+                  Auto-approve requests after all revisions
+                </label>
+              </div>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="requireUnitReview"
+                    name="requireUnitReview"
+                    <%= settings.requireUnitReview !== false ? 'checked' : '' %>
+                  >
+                  Require unit review for all requests
+                </label>
+              </div>
+            </div>
+
+            <!-- File Storage Settings Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">📁</span>
+                File Storage Settings
+              </h2>
+              <p class="section-description">
+                Configure file upload and storage settings. These control the maximum file size and allowed file types for all file uploads in the system.
+              </p>
+              <div class="form-group">
+                <label for="maxFileSize">Maximum File Size (MB)</label>
+                <input
+                  type="number"
+                  id="maxFileSize"
+                  name="maxFileSize"
+                  value="<%= settings.maxFileSize || 50 %>"
+                  min="1"
+                  max="500"
+                >
+              </div>
+              <div class="form-group">
+                <label for="allowedFileTypes">Allowed File Types (one per line)</label>
+                <textarea
+                  id="allowedFileTypes"
+                  name="allowedFileTypes"
+                  rows="5"
+                  placeholder="pdf&#10;jpg&#10;png&#10;docx"
+                ><%= (settings.allowedFileTypes && settings.allowedFileTypes.length > 0) ? settings.allowedFileTypes.join('\n') : 'pdf\njpg\njpeg\npng\ngif\ndoc\ndocx\nxlsx\nxls\ntxt\npptx' %></textarea>
+                <p class="form-hint">Enter each file extension without the dot</p>
+              </div>
+              <div class="form-group">
+                <label for="storageType">Storage Type</label>
+                <select id="storageType" name="storageType">
+                  <option value="local" <%= settings.storageType === 'local' || !settings.storageType ? 'selected' : '' %>>Local Storage</option>
+                  <option value="aws" <%= settings.storageType === 'aws' ? 'selected' : '' %>>AWS S3</option>
+                  <option value="gcs" <%= settings.storageType === 'gcs' ? 'selected' : '' %>>Google Cloud Storage</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="retainAllRevisionFiles"
+                    name="retainAllRevisionFiles"
+                    <%= settings.retainAllRevisionFiles !== false ? 'checked' : '' %>
+                  >
+                  Retain all revision files
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="autoDeleteOldFilesAfterDays">Auto-delete old files after (days)</label>
+                <input
+                  type="number"
+                  id="autoDeleteOldFilesAfterDays"
+                  name="autoDeleteOldFilesAfterDays"
+                  value="<%= settings.autoDeleteOldFilesAfterDays || '' %>"
+                  min="30"
+                  max="3650"
+                  placeholder="Leave empty to never auto-delete"
+                >
+                <p class="form-hint">Leave empty to never auto-delete old files</p>
+              </div>
+            </div>
+
+            <!-- Notification Settings Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🔔</span>
+                Notification Settings
+              </h2>
+              <p class="section-description">
+                Configure email notifications and notification frequency.
+              </p>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="enableEmailNotifications"
+                    name="enableEmailNotifications"
+                    <%= settings.enableEmailNotifications !== false ? 'checked' : '' %>
+                  >
+                  Enable email notifications
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="notificationFrequency">Notification Frequency</label>
+                <select id="notificationFrequency" name="notificationFrequency">
+                  <option value="immediate" <%= settings.notificationFrequency === 'immediate' || !settings.notificationFrequency ? 'selected' : '' %>>Immediate</option>
+                  <option value="daily" <%= settings.notificationFrequency === 'daily' ? 'selected' : '' %>>Daily Digest</option>
+                  <option value="weekly" <%= settings.notificationFrequency === 'weekly' ? 'selected' : '' %>>Weekly Digest</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="emailFrom">Email From Address</label>
+                <input
+                  type="email"
+                  id="emailFrom"
+                  name="emailFrom"
+                  value="<%= settings.emailFrom || 'noreply@dlsud.edu.ph' %>"
+                >
+              </div>
+              <div class="form-group">
+                <label for="smtpHost">SMTP Host</label>
+                <input
+                  type="text"
+                  id="smtpHost"
+                  name="smtpHost"
+                  value="<%= settings.smtpHost || 'smtp.gmail.com' %>"
+                  placeholder="smtp.gmail.com"
+                >
+              </div>
+              <div class="form-group">
+                <label for="smtpPort">SMTP Port</label>
+                <input
+                  type="number"
+                  id="smtpPort"
+                  name="smtpPort"
+                  value="<%= settings.smtpPort || 587 %>"
+                  min="1"
+                  max="65535"
+                >
+              </div>
+            </div>
+
+            <!-- Maintenance & Backup Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🔧</span>
+                Maintenance & Backup
+              </h2>
+              <p class="section-description">
+                Configure system maintenance and backup settings.
+              </p>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="maintenanceMode"
+                    name="maintenanceMode"
+                    <%= settings.maintenanceMode ? 'checked' : '' %>
+                  >
+                  Maintenance Mode
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="maintenanceMessage">Maintenance Message</label>
+                <textarea
+                  id="maintenanceMessage"
+                  name="maintenanceMessage"
+                  rows="3"
+                ><%= settings.maintenanceMessage || 'System is under maintenance. Please try again later.' %></textarea>
+              </div>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="backupEnabled"
+                    name="backupEnabled"
+                    <%= settings.backupEnabled !== false ? 'checked' : '' %>
+                  >
+                  Enable Automatic Backups
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="backupFrequency">Backup Frequency</label>
+                <select id="backupFrequency" name="backupFrequency">
+                  <option value="daily" <%= settings.backupFrequency === 'daily' ? 'selected' : '' %>>Daily</option>
+                  <option value="weekly" <%= settings.backupFrequency === 'weekly' || !settings.backupFrequency ? 'selected' : '' %>>Weekly</option>
+                  <option value="monthly" <%= settings.backupFrequency === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="backupRetentionDays">Backup Retention (Days)</label>
+                <input
+                  type="number"
+                  id="backupRetentionDays"
+                  name="backupRetentionDays"
+                  value="<%= settings.backupRetentionDays || 90 %>"
+                  min="7"
+                  max="3650"
+                >
+              </div>
+            </div>
+
+            <!-- Audit & Logging Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">📊</span>
+                Audit & Logging
+              </h2>
+              <p class="section-description">
+                Configure system logging and audit trail settings.
+              </p>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="enableDetailedLogs"
+                    name="enableDetailedLogs"
+                    <%= settings.enableDetailedLogs !== false ? 'checked' : '' %>
+                  >
+                  Enable Detailed Logs
+                </label>
+              </div>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                  <input
+                    type="checkbox"
+                    id="trackUserActions"
+                    name="trackUserActions"
+                    <%= settings.trackUserActions !== false ? 'checked' : '' %>
+                  >
+                  Track User Actions
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="logRetentionDays">Log Retention (Days)</label>
+                <input
+                  type="number"
+                  id="logRetentionDays"
+                  name="logRetentionDays"
+                  value="<%= settings.logRetentionDays || 90 %>"
+                  min="7"
+                  max="3650"
+                >
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div> <!-- End system-tab -->
     </div>
   </div>
 
@@ -2273,6 +3074,240 @@
         item.setAttribute('data-index', index);
       });
     }
+
+    // Tab switching function
+    function switchTab(tabName) {
+      // Hide all tabs
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      // Remove active class from all tab buttons
+      const tabButtons = document.querySelectorAll('.config-tab');
+      tabButtons.forEach(button => button.classList.remove('active'));
+
+      // Show selected tab
+      const selectedTab = document.getElementById(tabName + '-tab');
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+      }
+
+      // Add active class to clicked button
+      const activeButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+      if (activeButton) {
+        activeButton.classList.add('active');
+      }
+    }
+
+    // System Configuration Functions
+
+
+
+
+    function addUnitWithRequestTypes() {
+      const container = document.getElementById('unitsWithRequestTypesContainer');
+      const itemCount = container.children.length + 1;
+      
+      const itemHtml = `
+        <div class="dynamic-item unit-request-item" data-index="${itemCount - 1}">
+          <div class="item-header">
+            <span class="item-number">Unit ${itemCount}: <strong>New Unit</strong></span>
+            <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
+              <span>×</span>
+            </button>
+          </div>
+          <div class="item-content">
+            <div class="form-group">
+              <label>Unit Name</label>
+              <input type="text" name="unitName[]" maxlength="100" required onchange="updateUnitLabel(this)">
+            </div>
+            <div class="form-group">
+              <label>Request Types for this Unit (one per line)</label>
+              <textarea name="unitRequestTypes[]" class="tall" placeholder="Enter request types that this unit handles (one per line)" rows="8"></textarea>
+              <p class="form-hint">Enter each request type on a new line</p>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      container.insertAdjacentHTML('beforeend', itemHtml);
+      updateUnitNumbers(container);
+    }
+
+    function removeUnitWithRequestTypes(button) {
+      const item = button.closest('.dynamic-item');
+      const container = item.parentElement;
+      item.remove();
+      updateUnitNumbers(container);
+    }
+
+    function updateUnitLabel(input) {
+      const item = input.closest('.dynamic-item');
+      const label = item.querySelector('.item-number strong');
+      if (label) {
+        label.textContent = input.value || 'New Unit';
+      }
+    }
+
+    function updateUnitNumbers(container) {
+      const items = container.querySelectorAll('.unit-request-item');
+      items.forEach((item, index) => {
+        const numberSpan = item.querySelector('.item-number');
+        const unitName = item.querySelector('input[name="unitName[]"]').value || 'New Unit';
+        numberSpan.innerHTML = `Unit ${index + 1}: <strong>${unitName}</strong>`;
+        item.setAttribute('data-index', index);
+      });
+    }
+
+    function addUserRole() {
+      const container = document.getElementById('userRolesContainer');
+      const itemCount = container.children.length;
+      
+      const itemHtml = `
+        <div class="dynamic-item" data-index="${itemCount}">
+          <div class="item-header">
+            <span class="item-number">Role ${itemCount + 1}: <strong>New Role</strong></span>
+            <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
+              <span>×</span>
+            </button>
+          </div>
+          <div class="item-content">
+            <div class="form-group">
+              <label>Role Name</label>
+              <input type="text" name="roleName[]" maxlength="50" required onchange="updateRoleLabel(this)">
+            </div>
+            <div class="form-group">
+              <label>Access Level</label>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                  <input type="radio" name="roleAccessLevel_${itemCount}" value="user" checked style="margin-top: 0.25rem; cursor: pointer;">
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                      <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      Requestor (User) - Submits Requests
+                    </div>
+                    <div style="font-size: 0.875rem; color: #6b7280;">Can create and view their own requests</div>
+                  </div>
+                </label>
+                
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                  <input type="radio" name="roleAccessLevel_${itemCount}" value="unit" style="margin-top: 0.25rem; cursor: pointer;">
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                      <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      Unit Member - Works on Tasks
+                    </div>
+                    <div style="font-size: 0.875rem; color: #6b7280;">Can view all requests, work on assigned tasks, and upload deliverables</div>
+                  </div>
+                </label>
+                
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                  <input type="radio" name="roleAccessLevel_${itemCount}" value="admin" style="margin-top: 0.25rem; cursor: pointer;">
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                      </svg>
+                      Administrator - Full System Access
+                    </div>
+                    <div style="font-size: 0.875rem; color: #6b7280;">Complete administrative access to all system features</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      container.insertAdjacentHTML('beforeend', itemHtml);
+      updateRoleNumbers(container);
+    }
+
+    function removeUserRole(button) {
+      const item = button.closest('.dynamic-item');
+      const container = item.parentElement;
+      item.remove();
+      updateRoleNumbers(container);
+    }
+
+    function updateRoleLabel(input) {
+      const item = input.closest('.dynamic-item');
+      const label = item.querySelector('.item-number strong');
+      if (label) {
+        label.textContent = input.value || 'New Role';
+      }
+    }
+
+    function updateRoleNumbers(container) {
+      const items = container.querySelectorAll('.dynamic-item');
+      items.forEach((item, index) => {
+        const numberSpan = item.querySelector('.item-number');
+        const roleName = item.querySelector('input[name="roleName[]"]').value || 'New Role';
+        numberSpan.innerHTML = `Role ${index + 1}: <strong>${roleName}</strong>`;
+        item.setAttribute('data-index', index);
+      });
+    }
+
+    function resetSystemForm() {
+      if (confirm('Are you sure you want to reset the system configuration form? All unsaved changes will be lost.')) {
+        document.getElementById('systemConfigForm').reset();
+        // Reset dynamic containers
+        document.getElementById('unitsWithRequestTypesContainer').innerHTML = '';
+        document.getElementById('userRolesContainer').innerHTML = '';
+      }
+    }
+
+    // System Config Form submission handling
+    document.getElementById('systemConfigForm')?.addEventListener('submit', (e) => {
+      // Allow default form submission
+      const organizationsList = document.getElementById('organizationsList');
+      const officesList = document.getElementById('officesList');
+      
+      // Basic validation
+      if (organizationsList && !organizationsList.value.trim()) {
+        e.preventDefault();
+        alert('Please add at least one organization.');
+        organizationsList.focus();
+        return false;
+      }
+
+      // Form is valid, allow submission
+      return true;
+    });
+
+    // Initialize tab on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check if there's a tab parameter in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      const success = urlParams.get('success');
+      const error = urlParams.get('error');
+      
+      // Show success or error messages
+      if (success) {
+        alert('✅ ' + success);
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (error) {
+        alert('❌ ' + error);
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      
+      if (tab === 'homepage') {
+        switchTab('homepage');
+      } else {
+        // Default to system tab
+        switchTab('system');
+      }
+    });
   </script>
 </body>
 </html>

@@ -4,6 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
@@ -287,6 +288,8 @@ router.get('/admin', requireAdmin, async (req, res) => {
       totalUnassigned: unassignedTasks.length
     };
 
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    
     res.render('Admin/adminpage', {
       user: req.user,
       name: `${req.user.fName}`,
@@ -298,7 +301,9 @@ router.get('/admin', requireAdmin, async (req, res) => {
       recentRequests: recentRequests,
       urgentTasks: urgentAndOverdueTasks,
       revisionRequests: requestsWithRevisions,
-      stats
+      stats,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (err) {
     console.error('Error loading admin dashboard:', err);
@@ -561,7 +566,13 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
       };
     });
 
-    res.render('Admin/approvals', { approvals: approvals, user: req.user });
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    res.render('Admin/approvals', { 
+      approvals: approvals, 
+      user: req.user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
   } catch (err) {
     console.error('Error fetching admin approvals:', err);
     res.status(500).render('error', { message: 'Server error' });
@@ -697,7 +708,13 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
 
-    res.render('Admin/services', { serviceRequests: serviceRequestsWithDisplay, user: req.user });
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    res.render('Admin/services', { 
+      serviceRequests: serviceRequestsWithDisplay, 
+      user: req.user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
   } catch (err) {
     console.error('Error loading admin services:', err);
     res.status(500).send('Error loading services page');
@@ -779,6 +796,7 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
  */
 router.get('/admin/users', requireAdmin, async (req, res) => {
   const users = await User.find().lean();
+  const settingsHelpers = require('../utils/settingsHelpers');
 
   const usersWithDisplay = users.map(user => ({
     ...user,
@@ -787,7 +805,11 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
   : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
   }));
 
-  res.render('Admin/users', { users: usersWithDisplay, user: req.user });
+  res.render('Admin/users', { 
+    users: usersWithDisplay, 
+    user: req.user,
+    units: settingsHelpers.getUnits()
+  });
 });
 
 /**
@@ -930,9 +952,13 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       return 0;
     });
 
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    
     res.render('Admin/allrequestsadmin', {
       allRequests,
-      user: req.user
+      user: req.user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (err) {
     console.error('Error loading all admin requests:', err);
@@ -3822,11 +3848,276 @@ router.get('/admin/configuration', requireAdmin, async (req, res) => {
       });
       await pageContent.save();
     }
+
+    // Get system settings
+    let settings = await settingsService.getSettings();
+    
+    // Track if we need to save defaults
+    let needsSave = false;
+    const defaultUpdates = {};
+
+    // Initialize default units if not set
+    if (!settings.units || settings.units.length === 0) {
+      defaultUpdates.units = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
+      needsSave = true;
+    }
+
+    // Initialize default organizations if not set
+    if (!settings.organizations || settings.organizations.length === 0) {
+      defaultUpdates.organizations = [
+        "University Student Government (USG)",
+        "Internal Audit Service (IAS)",
+        "University Student Election Commission (USEC)",
+        "Office of the Solicitor General (OSG)",
+        "College of Business Administration and Accountancy Student Government (CBAASG)",
+        "Business Management Program Council (BMPC)",
+        "Junior Philippine Institute of Accountants (JPIA)",
+        "Marketing Management Program Council (MMPC)",
+        "College of Education Student Government (COEdSG)",
+        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
+        "Architecture Program Council (ArchPC)",
+        "Civil Engineering Program Council (CEEPC)",
+        "Computer Engineering Program Council (CpEPC)",
+        "Electrical Engineering Program Council (EEEPC)",
+        "Electronics Engineering Program Council (ECEPC)",
+        "Industrial Engineering Program Council (IEEPC)",
+        "Mechanical Engineering Program Council (MEEPC)",
+        "Multimedia Arts Program Council (MMAPC)",
+        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
+        "College of Criminal Justice Education Student Government (CCJESG)",
+        "Criminology Program Council (CrimPC)",
+        "Forensic Science Program Council (FScPC)",
+        "College of Liberal Arts and Communication Student Government (CLACSG)",
+        "Communication Program Council (CPC)",
+        "International Development Program Council (IDPC)",
+        "Political Science Program Council (PSPC)",
+        "Psychology Program Council (PPC)",
+        "College of Science Student Government (COSSG)",
+        "Applied Mathematics Program Council (AMPC)",
+        "Biology Program Council (BioPC)",
+        "College of Information and Computer Studies Student Government (CICSSG)",
+        "Computer Science Program Council (CSPC)",
+        "Information Technology Program Council (ITPC)",
+        "DLSU-D Chorale (CHORALE)",
+        "Lasallian Symphony Orchestra (LSO)",
+        "La Salle Filipiniana Dance Company (LSFDC)",
+        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
+        "Lasallian Pop Band (LPB)",
+        "Teatro Lasalliana (TEATRO)",
+        "Visual and Performing Arts Production Unit (VPAPU)",
+        "Heraldo Filipino",
+        "Vicissitude",
+        "Council of Student Organizations (CSO)",
+        "Business Operations Management Society (BOMS)",
+        "Junior Marketing Association (JMA)",
+        "DLSU-D Psychological Society (DPS)",
+        "DLSU-D Pre-Medical Society (DPMS)",
+        "Hotel and Restaurant Management Society (HRMS)",
+        "Turismo Lasalleño Society (TLS)",
+        "Lasallian Educators Society (LES)",
+        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
+        "DLSU-D Pre-Law Society (DPLS)",
+        "Astraeus Literary and Arts Guild",
+        "Accounting Enrichment Society (ACES)",
+        "Circle of Student Assistants (COSA)",
+        "DLSU-D Lifters",
+        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
+        "DLSU-D United Patriots Football Club",
+        "Junior Financial Executives Institute of the Philippines (JFINEX)",
+        "Marché Société (MS)",
+        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
+        "SINAG Society of Leaders (SISOL)",
+        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
+        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
+        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
+        "LS Verde of Campus Sustainability Office",
+        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
+        "Green FM of Communications and Journalism Department",
+        "International Students' Association (ISA) of International Students Office",
+        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+      ];
+      needsSave = true;
+    }
+
+    // Initialize default offices if not set
+    if (!settings.offices || settings.offices.length === 0) {
+      defaultUpdates.offices = [
+        "Office of the President",
+        "Office of the Chief Administrative Officer",
+        "Office of the Provost",
+        "Office of the Chief Lasallian Mission Officer",
+        "Office of the Principal",
+        "Corporate and Executive Management Office",
+        "Center for Heritage Conservation",
+        "Museo De La Salle",
+        "Risk, Compliance and Audit Office",
+        "University Chaplain",
+        "Office of the Vice President for Administrative Services",
+        "Office of the Vice President for Finance",
+        "Office of the Vice President for Global Engagement and External Relations",
+        "Human Resource Management Office",
+        "Strategic Communications Office",
+        "Ancillary and Asset Management Office",
+        "Legal Counsel",
+        "Data Protection Office",
+        "Campus Development Office",
+        "Buildings and Facilities Maintenance Office",
+        "Campus Sustainability Office",
+        "General Services Office",
+        "Green Architecture and Campus Planning Office",
+        "Information and Communications Technology Center",
+        "Accounting Office",
+        "Treasury Office",
+        "Advancement and Alumni Relations Office",
+        "Lasallian Community Development Center",
+        "Linkages and Scholarship Office",
+        "Office of the Vice Provost for Academics",
+        "Office of the Deputy Provost for Research",
+        "Academic Planning and Quality Management",
+        "College of Law",
+        "College of Professional and Graduate Studies",
+        "School of Innovative and Flexible Learning",
+        "School of Governance, Public Service, and Corporate Leadership",
+        "Aklatang Emilio Aguinaldo-Information Resource Center",
+        "Center for Student Admissions",
+        "University Registrar",
+        "Cavite Studies Center",
+        "University Research Office",
+        "Herminia D. Torres Quality Assurance Office",
+        "Center for Innovative Learning Program",
+        "Center for Curriculum Development and Instruction",
+        "Language Learning Center",
+        "Center for Artificial Intelligence",
+        "Center for Creative Program",
+        "Academy of Continuing Education",
+        "College of Business Administration and Accountancy",
+        "Accountancy Department",
+        "Allied Business Department",
+        "Business Management Department",
+        "Marketing Department",
+        "College of Criminal Justice Education",
+        "College of Education",
+        "Physical Education Department",
+        "Professional Education Department",
+        "Religious Education Department",
+        "College of Engineering, Architecture and Technology",
+        "Architecture Department",
+        "Engineering Department",
+        "Graphics Design and Multimedia Department",
+        "Center of Technology",
+        "College of Information and Computer Studies",
+        "Computer Studies Department",
+        "Information Technology Department",
+        "College of Liberal Arts and Communication",
+        "Communication and Journalism Department",
+        "Languages and Literature Department",
+        "Social Sciences Department",
+        "Philosophy and Psychology Department",
+        "College of Tourism and Hospitality Management",
+        "Hospitality Management Department",
+        "Tourism Management Department",
+        "College of Science",
+        "Biological Sciences Department",
+        "Mathematics & Statistics Department",
+        "Physical Sciences Department",
+        "Office of Student Services",
+        "Student Development and Activities Office",
+        "Student Welfare and Formation Office",
+        "Student Wellness Center",
+        "NSTP-CWTS",
+        "Campus Ministry Office",
+        "DLS Bahay Pag-asa Dasmariñas",
+        "Night College",
+        "Sports Development Office",
+        "University Lasallian Family Office",
+        "Basic Education",
+        "Office of the Associate Principal for Academics and Research",
+        "Office of the Associate Principal for Administrative Services and Student Affairs",
+        "Dormitory",
+        "Materials Reproduction Office / Food Services Office",
+        "Retreat and Conference Center / Sports & Recreation Complex",
+        "Warehouse Office",
+        "Safety & Health Office",
+        "Purchasing Office",
+        "Transportation Office",
+        "Facilities Maintenance Office",
+        "Housekeeping & Grounds",
+        "De La Salle Dasmariñas Alumni Association",
+        "DLSU-D Development Cooperative",
+        "Faculty Organization",
+        "KABALIKAT ng DLSU-D Inc.",
+        "Parents Organization La Salle Cavite",
+        "Human Resource Management Office"
+      ];
+      needsSave = true;
+    }
+
+    // Initialize default request type mappings if not set
+    if (!settings.requestTypeMappings || settings.requestTypeMappings.length === 0) {
+      defaultUpdates.requestTypeMappings = [
+        { requestType: 'Creation of New Graphics/Pubmat', recommendedUnit: 'Graphics' },
+        { requestType: 'Creation of New Logo/Branding Element', recommendedUnit: 'Graphics' },
+        { requestType: 'Event Photo & Video Coverage', recommendedUnit: 'Multimedia' },
+        { requestType: 'Photo/Video Editing Service', recommendedUnit: 'Multimedia' },
+        { requestType: 'Magazine Content Creation', recommendedUnit: 'Public Relations' },
+        { requestType: 'Social Media Content Sharing/Posting', recommendedUnit: 'Social Media' },
+        { requestType: 'Content Posting', recommendedUnit: 'Public Relations' },
+        { requestType: 'Social Media Monitoring', recommendedUnit: 'Social Media' },
+        { requestType: 'Caption Approval', recommendedUnit: 'Public Relations' },
+        { requestType: 'Publication Design', recommendedUnit: 'Graphics' },
+        { requestType: 'Proofreading', recommendedUnit: 'Public Relations' },
+        { requestType: 'Graphics Design', recommendedUnit: 'Graphics' },
+        { requestType: 'Media Coverage', recommendedUnit: 'Multimedia' }
+      ];
+      needsSave = true;
+    }
+
+    // Initialize default request statuses if not set
+    if (!settings.requestStatuses || settings.requestStatuses.length === 0) {
+      defaultUpdates.requestStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived'];
+      needsSave = true;
+    }
+
+    // User roles are now automatically initialized by server.js and settingsService
+    // No need to check here as they are always populated on server startup
+
+    // Initialize default announcement priorities if not set
+    if (!settings.announcementPriorities || settings.announcementPriorities.length === 0) {
+      defaultUpdates.announcementPriorities = ['low', 'medium', 'high'];
+      needsSave = true;
+    }
+
+    // Initialize default announcement types if not set
+    if (!settings.announcementTypes || settings.announcementTypes.length === 0) {
+      defaultUpdates.announcementTypes = ['Event', 'News', 'Reminder', 'Update', 'Maintenance'];
+      needsSave = true;
+    }
+
+    // Save defaults to database if needed
+    if (needsSave) {
+      await settingsService.updateSettings(defaultUpdates);
+      settings = await settingsService.getSettings(); // Reload settings with defaults
+      console.log('[ADMIN] Initialized default system settings in database');
+    }
+
+    // Get request types
+    let requestTypes = [];
+    try {
+      requestTypes = await RequestType.find({}).sort({ name: 1 });
+      if (!Array.isArray(requestTypes)) {
+        requestTypes = [];
+      }
+    } catch (error) {
+      console.error('Error fetching request types:', error);
+      requestTypes = [];
+    }
     
     res.render('Admin/configuration', {
       name: user.firstName,
       user: user,
       pageContent: pageContent.content || {},
+      settings: settings,
+      requestTypes: requestTypes,
       success: req.query.success,
       error: req.query.error
     });
@@ -4009,6 +4300,176 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('[ADMIN] Error saving configuration:', error);
     res.redirect('/admin/configuration?error=Failed to save homepage content');
+  }
+});
+
+/**
+ * POST /admin/system-configuration
+ * Save system configuration settings
+ */
+router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    
+    // Process organizations from textarea
+    const organizations = req.body.organizationsList ? 
+      req.body.organizationsList.split('\n').map(org => org.trim()).filter(org => org) : 
+      [];
+
+    // Process units and their request types
+    const units = [];
+    const requestTypeMappings = [];
+    
+    if (req.body.unitName && Array.isArray(req.body.unitName)) {
+      req.body.unitName.forEach((unitName, index) => {
+        if (unitName && unitName.trim()) {
+          units.push(unitName.trim());
+          
+          // Process request types for this unit
+          const unitRequestTypesText = req.body.unitRequestTypes[index] || '';
+          const requestTypesForUnit = unitRequestTypesText
+            .split('\n')
+            .map(rt => rt.trim())
+            .filter(rt => rt);
+          
+          // Create mappings for each request type to this unit
+          requestTypesForUnit.forEach(requestType => {
+            requestTypeMappings.push({
+              requestType: requestType,
+              recommendedUnit: unitName.trim()
+            });
+          });
+        }
+      });
+    }
+
+    // Process offices/departments
+    const offices = req.body.officesList ? 
+      req.body.officesList.split('\n').map(office => office.trim()).filter(office => office) : 
+      [];
+
+    // Process request statuses
+    const requestStatuses = req.body.requestStatuses ? 
+      req.body.requestStatuses.split('\n').map(status => status.trim()).filter(status => status) : 
+      ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived'];
+
+    // Process user roles with simplified permissions
+    const userRoles = [];
+    if (req.body.roleName && Array.isArray(req.body.roleName)) {
+      req.body.roleName.forEach((roleName, index) => {
+        if (roleName && roleName.trim()) {
+          // Get the access level from radio button (roleAccessLevel_0, roleAccessLevel_1, etc.)
+          const accessLevel = req.body[`roleAccessLevel_${index}`] || 'user';
+          
+          console.log(`[ADMIN] Role ${index}: ${roleName}, Access Level: ${accessLevel}`);
+          
+          // Convert access level to permission array matching users.ejs system
+          let permissions = [];
+          switch(accessLevel) {
+            case 'user':
+              permissions = ['user']; // Submits Requests
+              break;
+            case 'unit':
+              permissions = ['unit']; // Works on Tasks
+              break;
+            case 'admin':
+              permissions = ['admin']; // Full System Access
+              break;
+            default:
+              permissions = ['user'];
+          }
+          
+          userRoles.push({
+            name: roleName.trim(),
+            permissions: permissions
+          });
+        }
+      });
+    }
+    
+    console.log('[ADMIN] Processed user roles:', JSON.stringify(userRoles, null, 2));
+
+    // Process announcement priorities
+    const announcementPriorities = req.body.announcementPriorities ? 
+      req.body.announcementPriorities.split('\n').map(priority => priority.trim()).filter(priority => priority) : 
+      ['low', 'medium', 'high'];
+
+    // Process announcement types
+    const announcementTypes = req.body.announcementTypes ? 
+      req.body.announcementTypes.split('\n').map(type => type.trim()).filter(type => type) : 
+      ['Event', 'News', 'Reminder', 'Update', 'Maintenance'];
+
+    // Process allowed file types
+    const allowedFileTypes = req.body.allowedFileTypes ? 
+      req.body.allowedFileTypes.split('\n').map(type => type.trim()).filter(type => type) : 
+      ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'doc', 'docx', 'xlsx', 'xls', 'txt', 'pptx'];
+
+    // Update system settings
+    const updateData = {
+      // Core configurations
+      organizations: organizations,
+      units: units,
+      offices: offices,
+      requestStatuses: requestStatuses,
+      userRoles: userRoles,
+      announcementPriorities: announcementPriorities,
+      announcementTypes: announcementTypes,
+      requestTypeMappings: requestTypeMappings,
+      
+      // General settings
+      siteTitle: req.body.siteTitle,
+      siteDescription: req.body.siteDescription,
+      timezone: req.body.timezone,
+      dateFormat: req.body.dateFormat,
+      logo: req.body.logo || null,
+      favicon: req.body.favicon || null,
+      
+      // Request management settings
+      maxRevisions: parseInt(req.body.maxRevisions) || 3,
+      maxMinorRevisions: parseInt(req.body.maxMinorRevisions) || 2,
+      defaultDeadlineDays: parseInt(req.body.defaultDeadlineDays) || 7,
+      autoApproveAfterRevisions: req.body.autoApproveAfterRevisions === 'on',
+      requireUnitReview: req.body.requireUnitReview === 'on',
+      
+      // File storage settings
+      maxFileSize: parseInt(req.body.maxFileSize) || 50,
+      allowedFileTypes: allowedFileTypes,
+      storageType: req.body.storageType || 'local',
+      retainAllRevisionFiles: req.body.retainAllRevisionFiles === 'on',
+      autoDeleteOldFilesAfterDays: req.body.autoDeleteOldFilesAfterDays ? parseInt(req.body.autoDeleteOldFilesAfterDays) : null,
+      
+      // Notification settings
+      enableEmailNotifications: req.body.enableEmailNotifications === 'on',
+      notificationFrequency: req.body.notificationFrequency || 'immediate',
+      emailFrom: req.body.emailFrom,
+      smtpHost: req.body.smtpHost,
+      smtpPort: parseInt(req.body.smtpPort) || 587,
+      
+      // Maintenance & backup
+      maintenanceMode: req.body.maintenanceMode === 'on',
+      maintenanceMessage: req.body.maintenanceMessage,
+      backupEnabled: req.body.backupEnabled === 'on',
+      backupFrequency: req.body.backupFrequency || 'weekly',
+      backupRetentionDays: parseInt(req.body.backupRetentionDays) || 90,
+      
+      // Audit & logging
+      enableDetailedLogs: req.body.enableDetailedLogs === 'on',
+      trackUserActions: req.body.trackUserActions === 'on',
+      logRetentionDays: parseInt(req.body.logRetentionDays) || 90,
+      
+      // Metadata
+      updatedBy: user._id,
+      updatedAt: new Date()
+    };
+
+    console.log('[ADMIN] Saving userRoles to database:', JSON.stringify(updateData.userRoles, null, 2));
+    
+    await settingsService.updateSettings(updateData);
+    
+    res.redirect('/admin/configuration?success=System configuration updated successfully');
+  } catch (error) {
+    console.error('[ADMIN] Error saving system configuration:', error);
+    res.redirect('/admin/configuration?error=Failed to save system configuration');
   }
 });
 

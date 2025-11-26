@@ -12,6 +12,7 @@ const Notification = require('../models/Notification');
 const { requireUnit } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const uploadConfig = require('../config/upload');
+const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
 
 /**
  * GET /unit/dashboard
@@ -489,7 +490,9 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       taskBreakdown,
       requesterCompliance,
       taskTimeline,
-      name: `${user.fName} ${user.lName}`
+      name: `${user.fName} ${user.lName}`,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
     console.log('[/unit/dashboard] res.render() called successfully');
     console.log('=== UNIT DASHBOARD ROUTE HANDLER COMPLETE ===');
@@ -536,7 +539,9 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
       user,
       unitTeam: user.unitTeam,
       approvalRequests,
-      serviceRequests
+      serviceRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (err) {
     console.error('Error loading unit tasks:', err);
@@ -553,7 +558,12 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
 router.get('/unit/profile', requireUnit, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
-    res.render('Unit/unitprofile', { user });
+    
+    res.render('Unit/unitprofile', { 
+      user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
   } catch (err) {
     console.error('Error loading profile:', err);
     res.status(500).render('error', {
@@ -569,7 +579,12 @@ router.get('/unit/profile', requireUnit, async (req, res) => {
 router.get('/unit/guide', requireUnit, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
-    res.render('Unit/unitguide', { user });
+    
+    res.render('Unit/unitguide', { 
+      user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
   } catch (err) {
     console.error('Error loading guide:', err);
     res.status(500).render('error', {
@@ -610,7 +625,9 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
       user,
       unitTeam: user.unitTeam,
       approvalRequests,
-      serviceRequests
+      serviceRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (err) {
     console.error('Error loading all tasks:', err);
@@ -644,7 +661,9 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
     res.render('Unit/TaskApprovals', {
       user,
       unitTeam: user.unitTeam,
-      approvalRequests
+      approvalRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (err) {
     console.error('Error loading task approvals:', err);
@@ -692,7 +711,9 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
     res.render('Unit/TaskServices', {
       user,
       unitTeam: user.unitTeam,
-      serviceRequests: allServiceRequests
+      serviceRequests: allServiceRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (err) {
     console.error('Error loading task services:', err);
@@ -1501,7 +1522,9 @@ router.get('/unit/reports', requireUnit, async (req, res) => {
     res.render('Unit/unitReports', {
       user: user,
       unreadCount: unreadCount,
-      unitTeam: user.unitTeam // Pass unitTeam to the view
+      unitTeam: user.unitTeam,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (error) {
     console.error('Error rendering reports page:', error);
