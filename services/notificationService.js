@@ -571,32 +571,63 @@ class NotificationService {
   async getUserNotifications(userId, page = 1, limit = 20, unreadOnly = false) {
     try {
       const skip = (page - 1) * limit;
+      const now = new Date();
       
       const query = { recipient: userId };
       if (unreadOnly) {
         query.isRead = false;
       }
 
-      const notifications = await Notification.find(query)
+      // Get all notifications without limit first to filter by scheduled time
+      const allNotifications = await Notification.find(query)
         .populate('sender', 'fName lName role')
         .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
         .lean();
+
+      // Filter out announcements that haven't reached their scheduled time yet
+      const BroadcastMessage = require('../models/BroadcastMessage');
+      let filteredNotifications = [];
+
+      for (const notification of allNotifications) {
+        // If it's not an announcement or doesn't have a related BroadcastMessage, include it
+        if (notification.type !== 'announcement' || !notification.relatedId) {
+          filteredNotifications.push(notification);
+          continue;
+        }
+
+        // For announcements, check if the scheduled time has passed
+        try {
+          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime').lean();
+          if (announcement) {
+            // Include announcement if it has no scheduled time or if the scheduled time has passed
+            if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
+              filteredNotifications.push(notification);
+            }
+          } else {
+            // If announcement doesn't exist, include the notification (deleted announcement case)
+            filteredNotifications.push(notification);
+          }
+        } catch (err) {
+          console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
+          // Include notification if there's an error checking schedule
+          filteredNotifications.push(notification);
+        }
+      }
+
+      // Apply pagination to filtered notifications
+      const paginatedNotifications = filteredNotifications.slice(skip, skip + limit);
 
       const unreadCount = await Notification.countDocuments({ 
         recipient: userId, 
         isRead: false 
       });
 
-      const totalCount = await Notification.countDocuments({ recipient: userId });
-
       return { 
-        notifications, 
+        notifications: paginatedNotifications, 
         unreadCount, 
-        totalCount,
+        totalCount: filteredNotifications.length,
         currentPage: page,
-        totalPages: Math.ceil(totalCount / limit)
+        totalPages: Math.ceil(filteredNotifications.length / limit)
       };
     } catch (error) {
       console.error('Error getting user notifications:', error);
@@ -1160,6 +1191,72 @@ class NotificationService {
       console.log(`✅ User revision request notification sent to ${unitMembers.length} unit members`);
     } catch (error) {
       console.error('Error notifying unit of revision request:', error);
+    }
+  }
+
+  // Helper method to check if an announcement notification should be shown
+  async isAnnouncementNotificationValid(notification) {
+    try {
+      // If it's not an announcement, always include it
+      if (notification.type !== 'announcement' || !notification.relatedId) {
+        return true;
+      }
+
+      // For announcements, check if the scheduled time has passed
+      const BroadcastMessage = require('../models/BroadcastMessage');
+      const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime').lean();
+      
+      if (!announcement) {
+        // If announcement doesn't exist, include the notification (deleted announcement case)
+        return true;
+      }
+
+      // Include if no scheduled time or if scheduled time has passed
+      const now = new Date();
+      return !announcement.scheduledTime || new Date(announcement.scheduledTime) <= now;
+    } catch (err) {
+      console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
+      // Include notification if there's an error checking schedule
+      return true;
+    }
+  }
+
+  // Get unread notification count, filtering out scheduled announcements
+  async getUnreadCount(userId) {
+    try {
+      const now = new Date();
+      
+      // Get all unread notifications
+      const unreadNotifications = await Notification.find({
+        recipient: userId,
+        isRead: false
+      }).select('type relatedId relatedModel').lean();
+
+      // Filter out announcements that haven't reached their scheduled time yet
+      const BroadcastMessage = require('../models/BroadcastMessage');
+      let validCount = 0;
+
+      for (const notification of unreadNotifications) {
+        if (notification.type !== 'announcement' || !notification.relatedId) {
+          validCount++;
+          continue;
+        }
+
+        try {
+          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime').lean();
+          if (!announcement || !announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
+            validCount++;
+          }
+        } catch (err) {
+          console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
+          validCount++;
+        }
+      }
+
+      return validCount;
+    } catch (error) {
+      console.error('Error getting unread notification count:', error);
+      throw error;
     }
   }
 }

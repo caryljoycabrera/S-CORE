@@ -430,41 +430,6 @@ router.get('/admin/profile', async (req, res) => {
 });
 
 /**
- * GET /admin/announcement
- * Render admin announcement page
- */
-router.get('/admin/announcement', requireAdmin, async (req, res) => {
-  try {
-    console.log('[routes/admin] GET /admin/announcement accessed by:', req.session?.userId || 'no-session');
-    // Load users and organizations for selection
-    const users = await User.find().select('fName lName email organization affiliation studentOrganization').lean();
-
-    // Build a list of organizations from various possible fields
-    const orgs = new Set();
-    users.forEach(u => {
-      if (u.organization) orgs.add(u.organization);
-      if (u.affiliation) {
-        if (Array.isArray(u.affiliation)) u.affiliation.forEach(a => a && orgs.add(a));
-        else orgs.add(u.affiliation);
-      }
-      if (u.studentOrganization) {
-        if (Array.isArray(u.studentOrganization)) u.studentOrganization.forEach(a => a && orgs.add(a));
-        else orgs.add(u.studentOrganization);
-      }
-    });
-
-    res.render('Admin/Announcementpage', {
-      user: req.user,
-      users,
-      organizations: Array.from(orgs).filter(Boolean).sort()
-    });
-  } catch (err) {
-    console.error('Error loading announcement page:', err);
-    res.status(500).render('error', { message: 'Failed to load announcement page.' });
-  }
-});
-
-/**
  * POST /admin/announcement/send
  * Create a broadcast message and send notifications
  */
@@ -3556,7 +3521,7 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
       organization,
       recipients: recipients && Array.isArray(recipients) ? recipients : [],
       scheduledTime,
-      createdBy: req.session.userId
+      sentBy: req.session.userId
     });
 
     res.json({
@@ -3571,17 +3536,49 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
 });
 
 /**
+ * POST /admin/announcement/upload
+ * Upload files/images for announcements
+ */
+router.post('/admin/announcement/upload', requireAdmin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No file uploaded' 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'File uploaded successfully',
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: `/uploads/${req.file.filename}`
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'File upload failed' 
+    });
+  }
+});
+
+/**
  * PUT /admin/announcement/:id
  * Update announcement
  */
 router.put('/admin/announcement/:id', requireAdmin, async (req, res) => {
   try {
-    const { title, content, priority } = req.body;
+    const { title, content, priority, scheduledTime } = req.body;
 
     const announcement = await announcementService.updateAnnouncement(req.params.id, {
       title,
       content,
-      priority
+      priority,
+      scheduledTime: scheduledTime ? new Date(scheduledTime) : null
     });
 
     res.json({

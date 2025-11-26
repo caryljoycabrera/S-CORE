@@ -2,12 +2,15 @@
 // This module handles all user-facing routes and functionality
 // Includes dashboard, profile management, request submission, and user APIs
 
+console.log('[USER ROUTES] Module loaded');
+
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const Page = require('../models/Page');
+const BroadcastMessage = require('../models/BroadcastMessage');
 const { requireLogin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
@@ -156,6 +159,63 @@ router.get('/dashboard', requireLogin, async (req, res) => {
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
       .slice(0, 3);
 
+    // Fetch announcements for this user
+    // Show announcements where scheduledTime is not set OR scheduledTime <= now
+    // Also filter by expiresAt to only show non-expired announcements
+    let announcements = [];
+    try {
+      const now = new Date();
+      
+      announcements = await BroadcastMessage
+        .find({
+          $and: [
+            {
+              $or: [
+                { expiresAt: { $gte: now } },
+                { expiresAt: { $exists: false } },
+                { expiresAt: null }
+              ]
+            },
+            {
+              $or: [
+                { isVisibleToAll: true },
+                { 'recipients.userId': user._id }
+              ]
+            },
+            {
+              $or: [
+                { scheduledTime: { $exists: false } },
+                { scheduledTime: null },
+                { scheduledTime: { $lte: now } }
+              ]
+            }
+          ]
+        })
+        .populate('sentBy', 'fName lName role')
+        .sort({ priority: -1, createdAt: -1 })
+        .limit(10)
+        .lean();
+      
+
+      
+      // Add isRead status for the current user
+      announcements = announcements.map(announcement => {
+        const recipientEntry = announcement.recipients?.find(
+          r => r.userId && r.userId.toString() === user._id.toString()
+        );
+        return {
+          ...announcement,
+          isRead: recipientEntry ? recipientEntry.isRead : false,
+          readAt: recipientEntry ? recipientEntry.readAt : null
+        };
+      });
+      
+      console.log('[/dashboard] Announcements found:', announcements.length);
+    } catch (error) {
+      console.log('[/dashboard] BroadcastMessage query error:', error.message);
+      // Continue without announcements if model doesn't work as expected
+    }
+
     res.render('User/userPage', {
       name: `${user.fName} ${user.lName}`,
       user,
@@ -163,7 +223,8 @@ router.get('/dashboard', requireLogin, async (req, res) => {
       approvedRequests,
       pendingRequests,
       inReviewRequests,
-      recentActivity
+      recentActivity,
+      announcements
     });
   } catch (err) {
     console.error('User dashboard load error:', err);

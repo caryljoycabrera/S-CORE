@@ -42,6 +42,7 @@ const notificationSchema = new mongoose.Schema({
       'user_denied',         // User account denied
       'new_message',         // New chat message
       'system',              // System notification
+      'announcement',        // Broadcast announcement from admin
       'deadline_reminder',   // Deadline reminder
       'status_change',       // General status change
       'unit_task_assigned',  // Task assigned to unit team
@@ -69,7 +70,7 @@ const notificationSchema = new mongoose.Schema({
   },
   relatedModel: {
     type: String,
-    enum: ['ServiceRequest', 'RequestApproval', 'Conversation', 'User'],
+    enum: ['ServiceRequest', 'RequestApproval', 'Conversation', 'User', 'BroadcastMessage'],
     required: false
   },
 

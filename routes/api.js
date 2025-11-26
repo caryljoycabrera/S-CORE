@@ -969,4 +969,152 @@ router.get('/admin/request-volume', async (req, res) => {
   }
 });
 
+// ===== Announcement Routes =====
+
+const BroadcastMessage = require('../models/BroadcastMessage');
+
+/**
+ * POST /api/announcements/:id/read
+ * Mark an announcement as read for the current user
+ */
+router.post('/api/announcements/:id/read', requireLogin, async (req, res) => {
+  try {
+    const announcementId = req.params.id;
+    const userId = req.session.userId;
+
+    // Find the announcement
+    const announcement = await BroadcastMessage.findById(announcementId);
+    
+    if (!announcement) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Announcement not found' 
+      });
+    }
+
+    // Check if user is in recipients array
+    const recipientIndex = announcement.recipients.findIndex(
+      r => r.userId && r.userId.toString() === userId.toString()
+    );
+
+    if (recipientIndex !== -1) {
+      // User is already in recipients array, update isRead status
+      announcement.recipients[recipientIndex].isRead = true;
+      announcement.recipients[recipientIndex].readAt = new Date();
+    } else {
+      // User is not in recipients array (probably visible to all), add them
+      announcement.recipients.push({
+        userId: userId,
+        isRead: true,
+        readAt: new Date()
+      });
+    }
+
+    await announcement.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Announcement marked as read' 
+    });
+
+  } catch (error) {
+    console.error('Error marking announcement as read:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to mark announcement as read' 
+    });
+  }
+});
+
+/**
+ * GET /api/announcements
+ * Get all announcements for the current user
+ */
+router.get('/api/announcements', requireLogin, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    // Find announcements that are either visible to all or user is in recipients
+    // Show only if scheduledTime doesn't exist or has passed
+    const now = new Date();
+    console.log('[GET /api/announcements] Current time (server):', now.toISOString());
+    
+    // Debug: Check all announcements first
+    const allAnnouncements = await BroadcastMessage.find({}).lean();
+    console.log('[GET /api/announcements] Total announcements in DB:', allAnnouncements.length);
+    allAnnouncements.forEach(a => {
+      console.log('[GET /api/announcements] Announcement:', a.title, '| scheduledTime:', a.scheduledTime, '| isVisibleToAll:', a.isVisibleToAll);
+      if (a.scheduledTime) {
+        const scheduledDate = new Date(a.scheduledTime);
+        console.log('[GET /api/announcements]   - scheduledTime as Date:', scheduledDate.toISOString());
+        console.log('[GET /api/announcements]   - scheduledTime <= now:', scheduledDate <= now);
+      }
+    });
+    
+    const announcements = await BroadcastMessage
+      .find({
+        $and: [
+          {
+            $or: [
+              { expiresAt: { $gte: now } },
+              { expiresAt: { $exists: false } },
+              { expiresAt: null }
+            ]
+          },
+          {
+            // Only show announcements with no schedule or past scheduled time
+            $or: [
+              { scheduledTime: { $exists: false } },
+              { scheduledTime: null },
+              { scheduledTime: { $lte: now } }
+            ]
+          },
+          {
+            $or: [
+              { isVisibleToAll: true },
+              { 'recipients.userId': userId }
+            ]
+          }
+        ]
+      })
+      .populate('sentBy', 'fName lName role')
+      .sort({ priority: -1, createdAt: -1 })
+      .lean();
+
+    console.log('[GET /api/announcements] Filtered announcements count:', announcements.length);
+
+    // Add isRead status for the current user
+    const processedAnnouncements = announcements.map(announcement => {
+      const recipientEntry = announcement.recipients?.find(
+        r => r.userId && r.userId.toString() === userId.toString()
+      );
+      return {
+        ...announcement,
+        isRead: recipientEntry ? recipientEntry.isRead : false,
+        readAt: recipientEntry ? recipientEntry.readAt : null
+      };
+    });
+
+    res.json({ 
+      success: true, 
+      announcements: processedAnnouncements 
+    });
+
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch announcements' 
+    });
+  }
+});
+
 module.exports = router;
