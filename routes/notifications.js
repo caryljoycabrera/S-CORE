@@ -107,16 +107,11 @@ router.get('/api/notifications', requireAuth, async (req, res) => {
  */
 router.get('/api/notifications/unread-count', requireAuth, async (req, res) => {
   try {
-    const result = await notificationService.getUserNotifications(
-      req.user._id,
-      1,
-      1,
-      false
-    );
+    const unreadCount = await notificationService.getUnreadCount(req.user._id);
     
     res.json({
       success: true,
-      unreadCount: result.unreadCount
+      unreadCount: unreadCount
     });
   } catch (error) {
     console.error('Error fetching unread count:', error);

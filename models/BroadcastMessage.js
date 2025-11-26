@@ -65,6 +65,11 @@ const broadcastMessageSchema = new mongoose.Schema({
     default: true
   },
 
+  // Scheduled send time
+  scheduledTime: {
+    type: Date
+  },
+
   // Optional expiration date
   expiresAt: {
     type: Date

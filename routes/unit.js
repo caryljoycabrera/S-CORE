@@ -241,17 +241,70 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       .slice(0, 5);
 
     // Get announcements from admins (if BroadcastMessage model exists)
+    // Show announcements where scheduledTime is not set OR scheduledTime <= now
+    // Also filter by expiresAt to only show non-expired announcements
     console.log('[/unit/dashboard] Fetching announcements...');
     let announcements = [];
     try {
+      const now = new Date();
+      console.log('[/unit/dashboard] Current time (server):', now.toISOString());
+      
+      // Debug: Check all announcements first
+      const allAnnouncements = await BroadcastMessage.find({}).lean();
+      console.log('[/unit/dashboard] Total announcements in DB:', allAnnouncements.length);
+      allAnnouncements.forEach(a => {
+        console.log('[/unit/dashboard] Announcement:', a.title, '| scheduledTime:', a.scheduledTime, '| isVisibleToAll:', a.isVisibleToAll);
+        if (a.scheduledTime) {
+          const scheduledDate = new Date(a.scheduledTime);
+          console.log('[/unit/dashboard]   - scheduledTime as Date:', scheduledDate.toISOString());
+          console.log('[/unit/dashboard]   - scheduledTime <= now:', scheduledDate <= now);
+        }
+      });
+      
       announcements = await BroadcastMessage
         .find({
-          expiresAt: { $gte: new Date() }
+          $and: [
+            {
+              $or: [
+                { expiresAt: { $gte: now } },
+                { expiresAt: { $exists: false } },
+                { expiresAt: null }
+              ]
+            },
+            {
+              $or: [
+                { isVisibleToAll: true },
+                { 'recipients.userId': user._id }
+              ]
+            },
+            {
+              $or: [
+                { scheduledTime: { $exists: false } },
+                { scheduledTime: null },
+                { scheduledTime: { $lte: now } }
+              ]
+            }
+          ]
         })
-        .populate('senderId', 'fName lName role')
-        .sort({ createdAt: -1 })
-        .limit(5)
+        .populate('sentBy', 'fName lName role')
+        .sort({ priority: -1, createdAt: -1 })
+        .limit(10)
         .lean();
+      
+      console.log('[/unit/dashboard] Filtered announcements count:', announcements.length);
+      
+      // Add isRead status for the current user
+      announcements = announcements.map(announcement => {
+        const recipientEntry = announcement.recipients?.find(
+          r => r.userId && r.userId.toString() === user._id.toString()
+        );
+        return {
+          ...announcement,
+          isRead: recipientEntry ? recipientEntry.isRead : false,
+          readAt: recipientEntry ? recipientEntry.readAt : null
+        };
+      });
+      
       console.log('[/unit/dashboard] Announcements found:', announcements.length);
     } catch (error) {
       console.log('[/unit/dashboard] BroadcastMessage query error:', error.message);

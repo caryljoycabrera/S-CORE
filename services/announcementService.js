@@ -24,7 +24,8 @@ class AnnouncementService {
         organization = null,
         recipients = [],
         scheduledTime = null,
-        createdBy = null
+        createdBy = null,
+        sentBy = null
       } = announcementData;
 
       // Determine actual recipients
@@ -54,14 +55,10 @@ class AnnouncementService {
         title,
         content,
         priority,
-        recipientType,
-        organization,
-        recipients: recipientIds,
-        scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
-        createdBy,
-        status: scheduledTime ? 'scheduled' : 'active',
-        recipientCount,
-        viewCount: 0
+        isVisibleToAll: recipientType === 'all',
+        recipients: recipientIds.map(id => ({ userId: id })),
+        sentBy: sentBy || createdBy,
+        scheduledTime: scheduledTime ? new Date(scheduledTime) : null
       });
 
       await announcement.save();
@@ -97,11 +94,14 @@ class AnnouncementService {
       // Send in-app notifications
       const notificationPromises = recipientIds.map(recipientId =>
         notificationService.createNotification({
-          userId: recipientId,
-          message: `📢 ${announcement.title}`,
-          link: '/announcements',
+          recipient: recipientId,
+          title: `📢 ${announcement.title}`,
+          message: announcement.content.substring(0, 200) + (announcement.content.length > 200 ? '...' : ''),
           type: 'announcement',
-          priority: announcement.priority
+          priority: announcement.priority,
+          actionUrl: '/dashboard',
+          relatedId: announcement._id,
+          relatedModel: 'BroadcastMessage'
         }).catch(err => {
           console.error(`Failed to send announcement to user ${recipientId}:`, err);
           return null;
@@ -203,7 +203,7 @@ class AnnouncementService {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate('createdBy', 'fName lName email')
+        .populate('sentBy', 'fName lName email')
         .lean();
 
       const total = await BroadcastMessage.countDocuments();
@@ -231,7 +231,7 @@ class AnnouncementService {
   async getAnnouncement(announcementId) {
     try {
       const announcement = await BroadcastMessage.findById(announcementId)
-        .populate('createdBy', 'fName lName email');
+        .populate('sentBy', 'fName lName email');
 
       if (!announcement) {
         throw new Error('Announcement not found');
@@ -271,12 +271,15 @@ class AnnouncementService {
     try {
       const now = new Date();
       const scheduledAnnouncements = await BroadcastMessage.find({
-        status: 'scheduled',
+        scheduledTime: { $exists: true },
+        scheduledTime: { $ne: null },
         scheduledTime: { $lte: now }
       });
 
       for (const announcement of scheduledAnnouncements) {
-        await this.sendAnnouncement(announcement._id, announcement.recipients);
+        // Get all recipient IDs from the recipients array
+        const recipientIds = announcement.recipients.map(r => r.userId);
+        await this.sendAnnouncement(announcement._id, recipientIds);
       }
 
       console.log(`[AnnouncementService] Processed ${scheduledAnnouncements.length} scheduled announcements`);
@@ -294,9 +297,16 @@ class AnnouncementService {
    */
   async getUserAnnouncements(userId, limit = 10) {
     try {
+      const now = new Date();
+      
+      // Find announcements where scheduledTime doesn't exist or has passed
       const announcements = await BroadcastMessage.find({
-        recipients: userId,
-        status: { $in: ['active', 'scheduled'] }
+        recipients: { $elemMatch: { userId: userId } },
+        $or: [
+          { scheduledTime: { $exists: false } },
+          { scheduledTime: null },
+          { scheduledTime: { $lte: now } }
+        ]
       })
         .sort({ createdAt: -1 })
         .limit(limit)
@@ -315,36 +325,37 @@ class AnnouncementService {
    */
   async getStatistics() {
     try {
+      const now = new Date();
       const total = await BroadcastMessage.countDocuments();
-      const active = await BroadcastMessage.countDocuments({ status: 'active' });
-      const scheduled = await BroadcastMessage.countDocuments({ status: 'scheduled' });
-      const expired = await BroadcastMessage.countDocuments({ status: 'expired' });
-
-      // Get average engagement
-      const announcements = await BroadcastMessage.find().select('recipientCount viewCount');
-      let avgEngagement = 0;
-      if (announcements.length > 0) {
-        const totalEngagement = announcements.reduce((sum, a) => {
-          return sum + (a.recipientCount > 0 ? (a.viewCount / a.recipientCount) * 100 : 0);
-        }, 0);
-        avgEngagement = Math.round(totalEngagement / announcements.length);
-      }
+      
+      // Sent announcements (isSent: true)
+      const sent = await BroadcastMessage.countDocuments({ isSent: true });
+      
+      // Scheduled announcements (not yet sent and scheduledTime is in the future)
+      const scheduled = await BroadcastMessage.countDocuments({
+        isSent: false,
+        scheduledTime: { $gt: now }
+      });
+      
+      // Past due announcements (not sent but scheduledTime has passed)
+      const pastDue = await BroadcastMessage.countDocuments({
+        isSent: false,
+        scheduledTime: { $lte: now }
+      });
 
       return {
         total,
-        active,
+        sent,
         scheduled,
-        expired,
-        avgEngagement: avgEngagement + '%'
+        pastDue
       };
     } catch (error) {
       console.error('Error fetching announcement statistics:', error);
       return {
         total: 0,
-        active: 0,
+        sent: 0,
         scheduled: 0,
-        expired: 0,
-        avgEngagement: '0%'
+        pastDue: 0
       };
     }
   }

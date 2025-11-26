@@ -85,6 +85,15 @@
     /* Editor Container */
     .editor-container { background: white; min-height: 200px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1rem; }
 
+    /* Quill Editor Toolbar Customization */
+    .ql-toolbar { border-top-left-radius: 8px; border-top-right-radius: 8px; }
+    .ql-container { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+    .ql-snow .ql-toolbar button { font-size: 1rem; width: 32px; height: 32px; padding: 4px; }
+    .ql-snow .ql-toolbar button:hover { color: var(--primary-green); }
+    .ql-file-upload { background: none; border: none; cursor: pointer; padding: 4px 8px; font-size: 1rem; margin: 0 2px; border-radius: 4px; transition: all 0.2s ease; }
+    .ql-file-upload:hover { background: #f3f4f6; }
+    .ql-toolbar .ql-formats { gap: 2px; }
+
     /* Empty State */
     .empty-state { text-align: center; padding: 3rem 2rem; color: #6b7280; }
     .empty-state-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
@@ -270,6 +279,7 @@
                 <th>Status</th>
                 <th>Recipients</th>
                 <th>Created</th>
+                <th>Scheduled</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -288,12 +298,40 @@
                   </span>
                 </td>
                 <td>
-                  <span class="status-badge <%= announcement.status || 'active' %>">
-                    <%= announcement.status || 'active' %>
+                  <span class="status-badge <%= announcement.isVisibleToAll ? 'active' : 'scheduled' %>">
+                    <%= announcement.isVisibleToAll ? 'All Users' : 'Selected' %>
                   </span>
                 </td>
-                <td><%= announcement.recipientCount || 0 %> user<%= announcement.recipientCount !== 1 ? 's' : '' %></td>
+                <td><%= announcement.recipients ? announcement.recipients.length : 0 %> user<%= (announcement.recipients ? announcement.recipients.length : 0) !== 1 ? 's' : '' %></td>
                 <td><%= new Date(announcement.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <% if (announcement.scheduledTime) { %>
+                    <% 
+                      const schedDate = new Date(announcement.scheduledTime);
+                      // Convert UTC back to UTC+8 for display
+                      const year = schedDate.getUTCFullYear();
+                      const month = String(schedDate.getUTCMonth() + 1).padStart(2, '0');
+                      let day = schedDate.getUTCDate();
+                      let hours = schedDate.getUTCHours() + 8; // Add 8 hours for UTC+8
+                      
+                      // Handle day rollover
+                      if (hours >= 24) {
+                        hours -= 24;
+                        day += 1;
+                      }
+                      
+                      const dayStr = String(day).padStart(2, '0');
+                      const hoursStr = String(hours).padStart(2, '0');
+                      const minutes = String(schedDate.getUTCMinutes()).padStart(2, '0');
+                      const seconds = String(schedDate.getUTCSeconds()).padStart(2, '0');
+                      const ampm = hours >= 12 ? 'PM' : 'AM';
+                      const displayHours = String(hours % 12 || 12).padStart(2, '0');
+                    %>
+                    <%= month %>/<%= dayStr %>/<%= year %>, <%= displayHours %>:<%= minutes %>:<%= seconds %> <%= ampm %>
+                  <% } else { %>
+                    <span style="color: #9ca3af;">—</span>
+                  <% } %>
+                </td>
                 <td>
                   <button class="action-btn view" onclick="viewAnnouncement('<%= announcement._id %>')">View</button>
                   <button class="action-btn edit" onclick="editAnnouncement('<%= announcement._id %>')">Edit</button>
@@ -444,20 +482,167 @@
     let announcementQuill;
     let currentAnnouncementId = null;
 
+    // Toast notification system
+    function showAlert(message, type = 'info') {
+      // Remove existing toasts
+      const existingToast = document.querySelector('.toast-notification');
+      if (existingToast) existingToast.remove();
+
+      const toast = document.createElement('div');
+      toast.className = `toast-notification toast-${type}`;
+      toast.innerHTML = `
+        <span class="toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'}</span>
+        <span class="toast-message">${message}</span>
+      `;
+      
+      // Add toast styles if not present
+      if (!document.getElementById('toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+          .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-weight: 500;
+          }
+          .toast-success { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+          .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+          .toast-info { background: #dbeafe; color: #1e40af; border: 1px solid #3b82f6; }
+          .toast-icon { font-size: 1.25rem; }
+          @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      // Initialize Quill
+      // Create custom module for image/file upload
+      const imageHandler = () => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = async () => {
+          const file = input.files[0];
+          if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+              const response = await fetch('/admin/announcement/upload', {
+                method: 'POST',
+                body: formData
+              });
+              
+              const data = await response.json();
+              if (data.success) {
+                const range = announcementQuill.getSelection();
+                announcementQuill.insertEmbed(range.index, 'image', data.path);
+                showAlert('Image uploaded successfully', 'success');
+              } else {
+                showAlert(data.message || 'Failed to upload image', 'error');
+              }
+            } catch (error) {
+              console.error('Upload error:', error);
+              showAlert('Error uploading image: ' + error.message, 'error');
+            }
+          }
+        };
+      };
+
+      const fileHandler = () => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.click();
+
+        input.onchange = async () => {
+          const file = input.files[0];
+          if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+              const response = await fetch('/admin/announcement/upload', {
+                method: 'POST',
+                body: formData
+              });
+              
+              const data = await response.json();
+              if (data.success) {
+                const range = announcementQuill.getSelection();
+                // Insert file link with download icon
+                announcementQuill.insertText(range.index, `📎 ${file.name}`, {
+                  'link': data.path
+                });
+                showAlert('File uploaded successfully', 'success');
+              } else {
+                showAlert(data.message || 'Failed to upload file', 'error');
+              }
+            } catch (error) {
+              console.error('Upload error:', error);
+              showAlert('Error uploading file: ' + error.message, 'error');
+            }
+          }
+        };
+      };
+
+      // Initialize Quill with enhanced toolbar
       announcementQuill = new Quill('#announcementEditor', {
         theme: 'snow',
         placeholder: 'Write your announcement here...',
         modules: {
-          toolbar: [
-            ['bold', 'italic', 'underline'],
-            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-            [{ 'header': [1, 2, 3, false] }],
-            ['link', 'blockquote']
-          ]
+          toolbar: {
+            container: [
+              ['bold', 'italic', 'underline'],
+              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+              [{ 'header': [1, 2, 3, false] }],
+              ['link', 'blockquote', 'image-upload', 'file-upload']
+            ],
+            handlers: {
+              'image-upload': imageHandler,
+              'file-upload': fileHandler
+            }
+          }
         }
       });
+
+      // Add custom button styles
+      const toolbar = document.querySelector('.ql-toolbar');
+      if (toolbar) {
+        // Style image button
+        const imageBtn = toolbar.querySelector('button[class*="image"]');
+        if (imageBtn) {
+          imageBtn.setAttribute('title', 'Insert Image');
+          imageBtn.innerHTML = '🖼️';
+        }
+        
+        // Create and add file button
+        const fileBtn = document.createElement('button');
+        fileBtn.className = 'ql-file-upload';
+        fileBtn.setAttribute('title', 'Attach File');
+        fileBtn.innerHTML = '📎';
+        fileBtn.type = 'button';
+        fileBtn.onclick = (e) => {
+          e.preventDefault();
+          fileHandler();
+        };
+        
+        const formats = toolbar.querySelector('.ql-formats');
+        if (formats) formats.appendChild(fileBtn);
+      }
 
       // Sidebar
       const sidebar = document.getElementById('adminSidebar');
@@ -465,7 +650,30 @@
         sidebar.addEventListener('mouseenter', function() { this.classList.add('expanded'); });
         sidebar.addEventListener('mouseleave', function() { this.classList.remove('expanded'); });
       }
+
+      // Load users for specific user selection
+      loadUsers();
     });
+
+    // Load users for multi-select
+    async function loadUsers() {
+      try {
+        const response = await fetch('/api/users');
+        if (response.ok) {
+          const data = await response.json();
+          const userSelect = document.getElementById('userSelect');
+          userSelect.innerHTML = '';
+          (data.users || data).forEach(user => {
+            const option = document.createElement('option');
+            option.value = user._id;
+            option.textContent = `${user.fName} ${user.lName} - ${user.email || user.organization || ''}`;
+            userSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    }
 
     function toggleDropdown() {
       document.getElementById('dropdownMenu')?.classList.toggle('show');
@@ -494,16 +702,70 @@
       document.getElementById('announcementModal').style.display = 'flex';
     }
 
-    function editAnnouncement(id) {
+    async function editAnnouncement(id) {
       currentAnnouncementId = id;
       document.getElementById('modalTitle').textContent = 'Edit Announcement';
       document.getElementById('submitBtn').textContent = 'Update Announcement';
-      // Load announcement data (would need to add endpoint)
+      
+      try {
+        const response = await fetch(`/admin/announcement/${id}`);
+        const data = await response.json();
+        if (data.success && data.announcement) {
+          document.getElementById('announcementTitle').value = data.announcement.title;
+          announcementQuill.root.innerHTML = data.announcement.content;
+          document.getElementById('announcementPriority').value = data.announcement.priority || 'medium';
+          
+          // Populate scheduledTime if it exists
+          if (data.announcement.scheduledTime) {
+            // Convert UTC back to UTC+8 for display
+            // We stored it as UTC, so we need to ADD 8 hours to display in UTC+8
+            const date = new Date(data.announcement.scheduledTime);
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            let hours = date.getUTCHours() + 8; // Add 8 hours for UTC+8
+            let adjustedDay = day;
+            
+            // Handle day rollover
+            if (hours >= 24) {
+              hours -= 24;
+              // Increment day
+              let nextDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+              nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+              adjustedDay = String(nextDate.getUTCDate()).padStart(2, '0');
+            }
+            
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            const hoursStr = String(hours).padStart(2, '0');
+            const localDateTime = `${year}-${month}-${adjustedDay}T${hoursStr}:${minutes}`;
+            document.getElementById('scheduledTime').value = localDateTime;
+          } else {
+            document.getElementById('scheduledTime').value = '';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading announcement:', error);
+      }
+      
       document.getElementById('announcementModal').style.display = 'flex';
     }
 
-    function viewAnnouncement(id) {
-      // Load and display announcement (would need to add endpoint)
+    async function viewAnnouncement(id) {
+      try {
+        const response = await fetch(`/admin/announcement/${id}`);
+        const data = await response.json();
+        if (data.success && data.announcement) {
+          document.getElementById('viewTitle').textContent = data.announcement.title;
+          document.getElementById('viewContent').innerHTML = data.announcement.content;
+          document.getElementById('viewRecipients').textContent = 
+            data.announcement.isVisibleToAll ? 'All Users' : `${data.announcement.recipients?.length || 0} users`;
+          document.getElementById('viewPriority').textContent = data.announcement.priority || 'medium';
+          document.getElementById('viewCreated').textContent = new Date(data.announcement.createdAt).toLocaleString();
+        }
+      } catch (error) {
+        console.error('Error loading announcement:', error);
+        showAlert('Failed to load announcement', 'error');
+      }
       document.getElementById('viewModal').style.display = 'flex';
     }
 
@@ -512,25 +774,61 @@
       document.getElementById('deleteModal').style.display = 'flex';
     }
 
-    function confirmDelete() {
+    async function confirmDelete() {
       if (currentAnnouncementId) {
-        // Call delete endpoint (would need to add route)
-        showAlert('Announcement deleted successfully', 'success');
-        closeModal('deleteModal');
-        setTimeout(() => location.reload(), 1500);
+        try {
+          const response = await fetch(`/admin/announcement/${currentAnnouncementId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const data = await response.json();
+          if (data.success) {
+            showAlert('Announcement deleted successfully', 'success');
+            closeModal('deleteModal');
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            showAlert(data.message || 'Failed to delete announcement', 'error');
+          }
+        } catch (error) {
+          console.error('Error deleting announcement:', error);
+          showAlert('Failed to delete announcement', 'error');
+        }
       }
     }
 
-    function submitAnnouncement() {
+    async function submitAnnouncement() {
       const title = document.getElementById('announcementTitle').value.trim();
       const content = announcementQuill.root.innerHTML;
       const priority = document.getElementById('announcementPriority').value;
       const recipientType = document.querySelector('input[name="recipientType"]:checked').value;
-      const scheduledTime = document.getElementById('scheduledTime').value;
+      const scheduledTimeInput = document.getElementById('scheduledTime').value;
 
       if (!title || content === '<p><br></p>') {
         showAlert('Please fill in title and message', 'error');
         return;
+      }
+
+      // Convert datetime-local to ISO string format
+      let scheduledTime = null;
+      if (scheduledTimeInput) {
+        // datetime-local format is "YYYY-MM-DDTHH:mm" - this is the user's local time
+        // We always want to treat this as UTC+8 (Philippine Time)
+        const [date, time] = scheduledTimeInput.split('T');
+        const [year, month, day] = date.split('-');
+        const [hours, minutes] = time.split(':');
+        
+        // Create a UTC date assuming the input is in UTC+8
+        // To convert UTC+8 to UTC: subtract 8 hours
+        // So if user enters 10:00, we want 10:00 UTC+8 = 02:00 UTC
+        const utcDate = new Date(Date.UTC(year, month - 1, day, hours - 8, minutes, 0));
+        
+        console.log('[Frontend] Scheduled Time Details:');
+        console.log('  - User input (local/UTC+8):', scheduledTimeInput);
+        console.log('  - Treating as UTC+8 timezone');
+        console.log('  - UTC Date (converted):', utcDate.toISOString());
+        console.log('  - Note: User enters 10:00 UTC+8 → stored as 02:00 UTC');
+        
+        scheduledTime = utcDate.toISOString();
       }
 
       // Prepare data
@@ -539,19 +837,48 @@
         content,
         priority,
         recipientType,
-        scheduledTime: scheduledTime || null
+        scheduledTime
       };
 
       if (recipientType === 'organization') {
         data.organization = document.getElementById('organizationSelect').value;
+        if (!data.organization) {
+          showAlert('Please select an organization', 'error');
+          return;
+        }
       } else if (recipientType === 'specific') {
         data.recipients = Array.from(document.getElementById('userSelect').selectedOptions).map(opt => opt.value);
+        if (data.recipients.length === 0) {
+          showAlert('Please select at least one user', 'error');
+          return;
+        }
       }
 
-      // Call API endpoint (would need to add route)
-      showAlert('Announcement saved successfully', 'success');
-      closeModal('announcementModal');
-      setTimeout(() => location.reload(), 1500);
+      try {
+        const url = currentAnnouncementId 
+          ? `/admin/announcement/${currentAnnouncementId}` 
+          : '/admin/announcement';
+        const method = currentAnnouncementId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showAlert(result.message || 'Announcement saved successfully', 'success');
+          closeModal('announcementModal');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showAlert(result.message || 'Failed to save announcement', 'error');
+        }
+      } catch (error) {
+        console.error('Error saving announcement:', error);
+        showAlert('Failed to save announcement', 'error');
+      }
     }
 
     // Close dropdown on outside click

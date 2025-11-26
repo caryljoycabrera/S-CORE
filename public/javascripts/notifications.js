@@ -528,7 +528,7 @@ class NotificationSystem {
         </div>
         <div class="notification-content">
           <h4 class="notification-item-title">${this.escapeHtml(notification.title)}</h4>
-          <p class="notification-item-message">${this.escapeHtml(notification.message)}</p>
+          <p class="notification-item-message">${this.processNotificationMessage(notification.message, notification.type)}</p>
           <div class="notification-meta">
             <span class="notification-time">${timeAgo}</span>
             ${showSender ? `<span class="notification-sender">from ${this.escapeHtml(notification.sender.name)}</span>` : ''}
@@ -562,10 +562,36 @@ class NotificationSystem {
       'user_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17,11 19,13 23,9"></polyline></svg>',
       'user_denied': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>',
       'new_message': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+      'announcement': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
       'system': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'
     };
     
     return icons[type] || icons['system'];
+  }
+
+  /**
+   * Process notification message - detect attachments and format appropriately
+   */
+  processNotificationMessage(message, type) {
+    // For announcements, detect attachment types
+    if (type === 'announcement') {
+      const hasImages = /<img\s/i.test(message);
+      const hasFileLinks = /<a\s[^>]*href="\/uploads\/[^>]*>📎/i.test(message);
+      
+      if (hasImages && hasFileLinks) {
+        return '📎 File Attachment & 🖼️ Image Attachment';
+      } else if (hasImages) {
+        return '🖼️ Image Attachment';
+      } else if (hasFileLinks) {
+        return '📎 File Attachment';
+      } else {
+        // Strip HTML tags for regular text content
+        return message.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+      }
+    }
+    
+    // For other notification types, escape HTML normally
+    return this.escapeHtml(message);
   }
 
   /**
@@ -596,7 +622,22 @@ class NotificationSystem {
           }
         }
         
-        // Handle navigation based on URL type
+        // Handle announcement notifications specially - open announcement modal
+        if (type === 'announcement') {
+          console.log('📢 Announcement notification clicked - opening modal');
+          this.closeDropdown();
+          // Get the announcement ID from the notification's relatedId
+          const announcement = this.notifications.find(n => (n._id || n.id) === id);
+          if (announcement && announcement.relatedId) {
+            console.log('📂 Opening announcement modal with ID:', announcement.relatedId);
+            this.openAnnouncementModalFromNotification(announcement.relatedId);
+          } else {
+            console.warn('⚠️ Could not find announcement ID for notification:', id);
+          }
+          return;
+        }
+        
+        // Handle navigation based on URL type for other notifications
         if (url && url !== 'undefined' && url !== '') {
           console.log('🔗 Handling notification navigation with URL:', url);
           this.closeDropdown();
@@ -627,6 +668,26 @@ class NotificationSystem {
         this.deleteNotification(id);
       });
     });
+  }
+
+  /**
+   * Open announcement modal from notification click
+   */
+  openAnnouncementModalFromNotification(announcementId) {
+    console.log('🎯 openAnnouncementModalFromNotification called with ID:', announcementId);
+    
+    // Call the openAnnouncementDetail function from the page if it exists
+    if (typeof openAnnouncementDetail === 'function') {
+      console.log('✅ Calling openAnnouncementDetail function');
+      openAnnouncementDetail(announcementId);
+    } else {
+      console.warn('⚠️ openAnnouncementDetail function not found on page');
+      // Fallback: try to call it on window for unit users
+      if (window.openAnnouncementDetail && typeof window.openAnnounce === 'function') {
+        console.log('✅ Using window.openAnnouncementDetail');
+        window.openAnnouncementDetail(announcementId);
+      }
+    }
   }
 
   /**
