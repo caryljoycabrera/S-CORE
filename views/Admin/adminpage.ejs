@@ -2509,14 +2509,113 @@
     // Fetch and populate dashboard data
     async function loadDashboardData() {
       try {
+        // Load all KPI data from backend
+        const kpiResponse = await fetch('/api/admin/dashboard-kpis');
+        const kpiData = await kpiResponse.json();
+        
+        if (kpiData.success) {
+          // Update KPI values
+          document.getElementById('kpi-in-revision').textContent = kpiData.inRevision || '0';
+          document.getElementById('kpi-completed-month').textContent = kpiData.completedThisMonth || '0';
+          
+          // Update upcoming deadlines count
+          document.getElementById('kpi-upcoming-deadlines').textContent = kpiData.upcomingDeadlines || '0';
+          
+          // Update overdue count
+          document.getElementById('kpi-overdue').textContent = kpiData.overdue || '0';
+        }
+        
         // Load revision hotspot data
         await loadRevisionHotspot();
         
-        // Update additional KPIs
-        document.getElementById('kpi-in-revision').textContent = '3';
+        // Load incoming requests data
+        await loadIncomingRequests();
+        
+        // Load urgent and overdue tasks
+        await loadUrgentAndOverdueTasks();
         
       } catch (error) {
         console.error('Error loading dashboard data:', error);
+      }
+    }
+
+    // Load incoming requests
+    async function loadIncomingRequests() {
+      try {
+        const response = await fetch('/api/admin/incoming-requests');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const tbody = document.getElementById('incoming-requests-tbody');
+          
+          if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No incoming requests</td></tr>';
+            return;
+          }
+          
+          let html = '';
+          result.data.forEach(item => {
+            const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A';
+            const url = item.type === 'Approval Request' 
+              ? `/admin/approvals?openModalId=${item._id}`
+              : `/admin/services?openModalId=${item._id}`;
+            
+            html += `
+              <tr>
+                <td><strong>${item.title || 'Untitled'}</strong></td>
+                <td><span class="type-badge ${item.type === 'Approval Request' ? 'approval' : 'service'}">${item.type}</span></td>
+                <td>${item.requesterName || 'Unknown'}</td>
+                <td>${date}</td>
+                <td><a href="${url}" class="btn-view">View</a></td>
+              </tr>
+            `;
+          });
+          
+          tbody.innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading incoming requests:', error);
+      }
+    }
+
+    // Load urgent and overdue tasks
+    async function loadUrgentAndOverdueTasks() {
+      try {
+        const response = await fetch('/api/admin/urgent-overdue-tasks');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const tbody = document.getElementById('urgent-overdue-tbody');
+          
+          if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No urgent or overdue tasks</td></tr>';
+            return;
+          }
+          
+          let html = '';
+          result.data.forEach(item => {
+            const deadline = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
+            const priorityClass = item.priority || 'normal';
+            const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
+            const url = item.type === 'Approval Request' 
+              ? `/admin/approvals?openModalId=${item._id}`
+              : `/admin/services?openModalId=${item._id}`;
+            
+            html += `
+              <tr>
+                <td><strong>${item.title || 'Untitled'}</strong></td>
+                <td><span class="status-badge ${statusClass}">${item.status}</span></td>
+                <td>${deadline}</td>
+                <td><span class="priority-badge ${priorityClass}">${priorityClass.toUpperCase()}</span></td>
+                <td><a href="${url}" class="btn-view">View</a></td>
+              </tr>
+            `;
+          });
+          
+          tbody.innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading urgent/overdue tasks:', error);
       }
     }
 

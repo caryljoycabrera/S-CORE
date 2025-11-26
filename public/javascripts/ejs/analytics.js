@@ -161,6 +161,7 @@ let topRequestorsChart, requestVolumeChart, activeWorkloadChart, turnaroundByUni
 document.addEventListener('DOMContentLoaded', function() {
   initializeCharts();
   loadRevisionHotspot();
+  loadAnalyticsData();
 });
 
 function initializeCharts() {
@@ -169,9 +170,9 @@ function initializeCharts() {
   topRequestorsChart = new Chart(topRequestorsCtx, {
     type: 'pie',
     data: {
-      labels: ['CAFA', 'CS', 'COE', 'CAS', 'CEA', 'CON', 'CBA'],
+      labels: [],
       datasets: [{
-        data: [25, 20, 18, 15, 12, 7, 3],
+        data: [],
         backgroundColor: [
           '#3b82f6',
           '#10b981',
@@ -179,7 +180,8 @@ function initializeCharts() {
           '#ef4444',
           '#8b5cf6',
           '#06b6d4',
-          '#ec4899'
+          '#ec4899',
+          '#14b8a6'
         ],
         borderWidth: 2,
         borderColor: '#ffffff'
@@ -219,11 +221,11 @@ function initializeCharts() {
   requestVolumeChart = new Chart(requestVolumeCtx, {
     type: 'line',
     data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      labels: [],
       datasets: [
         {
           label: 'Approval Requests',
-          data: [30, 35, 40, 38, 42, 45, 50, 48, 52, 55, 60, 58],
+          data: [],
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           borderWidth: 3,
@@ -232,7 +234,7 @@ function initializeCharts() {
         },
         {
           label: 'Service Requests',
-          data: [20, 22, 25, 28, 30, 32, 35, 33, 38, 40, 42, 45],
+          data: [],
           borderColor: '#10b981',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           borderWidth: 3,
@@ -301,21 +303,25 @@ function initializeCharts() {
   activeWorkloadChart = new Chart(activeWorkloadCtx, {
     type: 'bar',
     data: {
-      labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+      labels: [],
       datasets: [{
         label: 'Active Tasks',
-        data: [15, 22, 18, 12],
+        data: [],
         backgroundColor: [
           'rgba(59, 130, 246, 0.8)',
           'rgba(16, 185, 129, 0.8)',
           'rgba(245, 158, 11, 0.8)',
-          'rgba(139, 92, 246, 0.8)'
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(6, 182, 212, 0.8)'
         ],
         borderColor: [
           '#3b82f6',
           '#10b981',
           '#f59e0b',
-          '#8b5cf6'
+          '#8b5cf6',
+          '#ec4899',
+          '#06b6d4'
         ],
         borderWidth: 2,
         borderRadius: 8
@@ -371,21 +377,25 @@ function initializeCharts() {
   turnaroundByUnitChart = new Chart(turnaroundByUnitCtx, {
     type: 'bar',
     data: {
-      labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+      labels: [],
       datasets: [{
         label: 'Avg. Days',
-        data: [2.5, 3.2, 2.8, 2.1],
+        data: [],
         backgroundColor: [
           'rgba(59, 130, 246, 0.8)',
           'rgba(16, 185, 129, 0.8)',
           'rgba(245, 158, 11, 0.8)',
-          'rgba(139, 92, 246, 0.8)'
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(6, 182, 212, 0.8)'
         ],
         borderColor: [
           '#3b82f6',
           '#10b981',
           '#f59e0b',
-          '#8b5cf6'
+          '#8b5cf6',
+          '#ec4899',
+          '#06b6d4'
         ],
         borderWidth: 2,
         borderRadius: 8
@@ -449,15 +459,17 @@ function initializeCharts() {
   currentStatusChart = new Chart(currentStatusCtx, {
     type: 'doughnut',
     data: {
-      labels: ['Pending', 'In Progress', 'For Revision', 'Completed', 'Approved'],
+      labels: [],
       datasets: [{
-        data: [15, 22, 8, 40, 15],
+        data: [],
         backgroundColor: [
           '#f59e0b',
           '#3b82f6',
           '#ef4444',
           '#10b981',
-          '#8b5cf6'
+          '#8b5cf6',
+          '#06b6d4',
+          '#14b8a6'
         ],
         borderWidth: 3,
         borderColor: '#ffffff'
@@ -495,47 +507,71 @@ function initializeCharts() {
 }
 
 /* ============================================
+   LOAD DATA FROM APIS
+   ============================================ */
+
+function loadAnalyticsData() {
+  // Load all chart data in parallel
+  Promise.all([
+    fetch('/admin/analytics-data/top-requestors').then(r => r.json()),
+    fetch('/admin/analytics-data/request-volume?days=30').then(r => r.json()),
+    fetch('/admin/analytics-data/active-workload').then(r => r.json()),
+    fetch('/admin/analytics-data/turnaround-by-unit').then(r => r.json()),
+    fetch('/admin/analytics-data/current-status').then(r => r.json())
+  ])
+  .then(([topReq, volume, workload, turnaround, status]) => {
+    // Update charts with fetched data
+    if (topReq.success) updateTopRequestorsChart(topReq);
+    if (volume.success) updateRequestVolumeChart(volume);
+    if (workload.success) updateActiveWorkloadChart(workload);
+    if (turnaround.success) updateTurnaroundByUnitChart(turnaround);
+    if (status.success) updateCurrentStatusChart(status);
+  })
+  .catch(error => console.error('Error loading analytics data:', error));
+}
+
+/* ============================================
    CHART UPDATE FUNCTIONS
    ============================================ */
 
 function updateTopRequestorsChart(data) {
   if (!data || !topRequestorsChart) return;
   
-  topRequestorsChart.data.labels = data.labels;
-  topRequestorsChart.data.datasets[0].data = data.values;
+  topRequestorsChart.data.labels = data.labels || [];
+  topRequestorsChart.data.datasets[0].data = data.data || [];
   topRequestorsChart.update();
 }
 
 function updateRequestVolumeChart(data) {
   if (!data || !requestVolumeChart) return;
   
-  requestVolumeChart.data.labels = data.labels;
-  requestVolumeChart.data.datasets[0].data = data.approvals;
-  requestVolumeChart.data.datasets[1].data = data.services;
+  requestVolumeChart.data.labels = data.labels || [];
+  requestVolumeChart.data.datasets[0].data = data.approvals || [];
+  requestVolumeChart.data.datasets[1].data = data.services || [];
   requestVolumeChart.update();
 }
 
 function updateActiveWorkloadChart(data) {
   if (!data || !activeWorkloadChart) return;
   
-  activeWorkloadChart.data.labels = data.labels;
-  activeWorkloadChart.data.datasets[0].data = data.values;
+  activeWorkloadChart.data.labels = data.labels || [];
+  activeWorkloadChart.data.datasets[0].data = data.data || [];
   activeWorkloadChart.update();
 }
 
 function updateTurnaroundByUnitChart(data) {
   if (!data || !turnaroundByUnitChart) return;
   
-  turnaroundByUnitChart.data.labels = data.labels;
-  turnaroundByUnitChart.data.datasets[0].data = data.values;
+  turnaroundByUnitChart.data.labels = data.labels || [];
+  turnaroundByUnitChart.data.datasets[0].data = data.data || [];
   turnaroundByUnitChart.update();
 }
 
 function updateCurrentStatusChart(data) {
   if (!data || !currentStatusChart) return;
   
-  currentStatusChart.data.labels = data.labels;
-  currentStatusChart.data.datasets[0].data = data.values;
+  currentStatusChart.data.labels = data.labels || [];
+  currentStatusChart.data.datasets[0].data = data.data || [];
   currentStatusChart.update();
 }
 
@@ -544,7 +580,7 @@ function updateCurrentStatusChart(data) {
    ============================================ */
 
 function loadRevisionHotspot() {
-  fetch('/api/admin/revision-hotspot')
+  fetch('/admin/analytics-data/revision-hotspot')
     .then(response => response.json())
     .then(data => {
       if (data.success) {
@@ -571,16 +607,16 @@ function populateRevisionHotspotTable(requests) {
     <tr>
       <td>${request.title || 'N/A'}</td>
       <td>
-        <span class="type-badge ${request.type}">${request.type === 'approval' ? 'Approval' : 'Service'}</span>
+        <span class="type-badge">${request.type === 'Service' ? 'Service' : 'Approval'}</span>
       </td>
       <td>${request.requester}</td>
       <td>${request.unit || 'Unassigned'}</td>
-      <td><span class="revision-count major">${request.majorRevisions}</span></td>
-      <td><span class="revision-count minor">${request.minorRevisions}</span></td>
-      <td><span class="revision-count total">${request.totalRevisions}</span></td>
-      <td><span class="status-badge ${request.status.toLowerCase().replace(/\s+/g, '-')}">${request.status}</span></td>
+      <td><span class="revision-count major">${request.major}</span></td>
+      <td><span class="revision-count minor">${request.minor}</span></td>
+      <td><span class="revision-count total">${request.total}</span></td>
+      <td><span class="status-badge">${request.status || 'Unknown'}</span></td>
       <td>
-        <a href="/admin/${request.type === 'approval' ? 'approvals' : 'services'}?id=${request._id}" class="btn-view">View</a>
+        <a href="/admin/${request.type === 'Service' ? 'services' : 'approvals'}?id=${request.id}" class="btn-view">View</a>
       </td>
     </tr>
   `).join('');

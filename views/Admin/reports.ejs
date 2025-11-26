@@ -180,23 +180,14 @@
       <!-- FILTER PANEL -->
       <div class="report-filters-container">
         <div class="filter-group">
-          <label for="dateRange">Date Range</label>
-          <select id="dateRange" class="filter-input">
-            <option value="all">All Time</option>
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
-            <option value="custom">Custom Range</option>
+          <label for="datePresetFilter">Quick Date Range</label>
+          <select id="datePresetFilter" class="filter-input">
+            <option value="">Custom Range</option>
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="365">Last Year</option>
           </select>
-        </div>
-
-        <div class="filter-group" id="customDateGroup" style="display: none;">
-          <label for="startDate">Start Date</label>
-          <input type="date" id="startDate" class="filter-input">
-        </div>
-
-        <div class="filter-group" id="customEndDateGroup" style="display: none;">
-          <label for="endDate">End Date</label>
-          <input type="date" id="endDate" class="filter-input">
         </div>
 
         <div class="filter-group">
@@ -207,17 +198,6 @@
         <div class="filter-group">
           <label for="endDateFilter">End Date</label>
           <input type="date" id="endDateFilter" class="filter-input" />
-        </div>
-
-        <div class="filter-group">
-          <label for="datePresetFilter">Quick Date Range</label>
-          <select id="datePresetFilter" class="filter-input">
-            <option value="">Custom Range</option>
-            <option value="7">Last 7 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-            <option value="365">Last Year</option>
-          </select>
         </div>
 
         <div class="filter-group">
@@ -378,7 +358,7 @@
   <script src="/javascripts/notifications.js"></script>
   <script src="/javascripts/ejs/reports.js"></script>
   <script>
-    // Report Generation Handler
+    // ===== Report Generation Handler =====
     const reportHandler = {
       currentData: null,
 
@@ -386,15 +366,19 @@
        * Get filter values from form
        */
       getFilters() {
-        const statuses = Array.from(document.getElementById('statusFilter').selectedOptions).map(opt => opt.value);
-        const units = Array.from(document.getElementById('unitFilter').selectedOptions).map(opt => opt.value);
+        const statuses = Array.from(document.getElementById('statusFilter').selectedOptions)
+          .map(opt => opt.value)
+          .filter(v => v);
+        const units = Array.from(document.getElementById('unitFilter').selectedOptions)
+          .map(opt => opt.value)
+          .filter(v => v);
         
         return {
           startDate: document.getElementById('startDateFilter').value,
           endDate: document.getElementById('endDateFilter').value,
-          units: units.filter(u => u !== ''),
+          units: units,
           requestType: document.getElementById('requestTypeFilter').value,
-          statuses: statuses.filter(s => s !== ''),
+          statuses: statuses,
           sortBy: document.getElementById('sortByFilter').value,
           sortOrder: document.getElementById('sortOrderFilter').value
         };
@@ -410,6 +394,17 @@
         try {
           const filters = this.getFilters();
           
+          // Validate date range if both dates are provided
+          if (filters.startDate && filters.endDate) {
+            const start = new Date(filters.startDate);
+            const end = new Date(filters.endDate);
+            if (start > end) {
+              showAlert('Start date must be before end date', 'error');
+              loading.style.display = 'none';
+              return;
+            }
+          }
+          
           const response = await fetch('/admin/reports/generate', {
             method: 'POST',
             headers: {
@@ -417,6 +412,10 @@
             },
             body: JSON.stringify(filters)
           });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
 
           const result = await response.json();
 
@@ -429,7 +428,7 @@
             document.getElementById('exportExcelBtn').disabled = false;
             document.getElementById('exportPdfBtn').disabled = false;
             
-            showAlert(`Report generated with ${result.recordCount} records`, 'success');
+            showAlert(`Report generated with ${result.recordCount || 0} records`, 'success');
           } else {
             showAlert(result.message || 'Failed to generate report', 'error');
           }
@@ -452,23 +451,29 @@
           return;
         }
 
-        tbody.innerHTML = data.map(record => `
-          <tr>
-            <td><strong>${record.requestId}</strong></td>
-            <td>${record.type}</td>
-            <td>${record.requester}</td>
-            <td>${record.unit}</td>
-            <td>${record.service}</td>
-            <td>
-              <span class="status-badge status-${record.status.toLowerCase().replace(' ', '-')}">
-                ${record.status}
-              </span>
-            </td>
-            <td>${new Date(record.dateSubmitted).toLocaleDateString()}</td>
-            <td>${record.deadline ? new Date(record.deadline).toLocaleDateString() : 'N/A'}</td>
-            <td>${record.revisionsCount}</td>
-          </tr>
-        `).join('');
+        tbody.innerHTML = data.map(record => {
+          const dateSubmitted = record.dateSubmitted ? new Date(record.dateSubmitted).toLocaleDateString() : 'N/A';
+          const deadline = record.deadline ? new Date(record.deadline).toLocaleDateString() : 'N/A';
+          const statusClass = (record.status || '').toLowerCase().replace(/\s+/g, '-');
+          
+          return `
+            <tr>
+              <td><strong>${this.escapeHtml(record.requestId || 'N/A')}</strong></td>
+              <td>${this.escapeHtml(record.type || 'N/A')}</td>
+              <td>${this.escapeHtml(record.requester || 'N/A')}</td>
+              <td>${this.escapeHtml(record.unit || 'N/A')}</td>
+              <td>${this.escapeHtml(record.service || 'N/A')}</td>
+              <td>
+                <span class="status-badge status-${statusClass}">
+                  ${this.escapeHtml(record.status || 'N/A')}
+                </span>
+              </td>
+              <td>${dateSubmitted}</td>
+              <td>${deadline}</td>
+              <td>${record.revisionsCount || 0}</td>
+            </tr>
+          `;
+        }).join('');
       },
 
       /**
@@ -480,8 +485,8 @@
         document.getElementById('reportStats').style.display = 'block';
         document.getElementById('statTotal').textContent = summary.totalRequests || 0;
         document.getElementById('statCompletionRate').textContent = (summary.completionRate || 0) + '%';
-        document.getElementById('statPending').textContent = (summary.byStatus?.['Pending'] || 0);
-        document.getElementById('statInProgress').textContent = (summary.byStatus?.['In Progress'] || 0);
+        document.getElementById('statPending').textContent = (summary.byStatus && summary.byStatus['Pending']) || 0;
+        document.getElementById('statInProgress').textContent = (summary.byStatus && summary.byStatus['In Progress']) || 0;
       },
 
       /**
@@ -512,6 +517,8 @@
         }
 
         const filters = this.getFilters();
+        const loading = document.getElementById('loadingIndicator');
+        loading.style.display = 'flex';
         
         try {
           const response = await fetch('/admin/reports/export-csv', {
@@ -521,6 +528,10 @@
             },
             body: JSON.stringify(filters)
           });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
 
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
@@ -536,6 +547,8 @@
         } catch (error) {
           console.error('Error exporting CSV:', error);
           showAlert('Failed to export CSV', 'error');
+        } finally {
+          loading.style.display = 'none';
         }
       },
 
@@ -549,6 +562,8 @@
         }
 
         const filters = this.getFilters();
+        const loading = document.getElementById('loadingIndicator');
+        loading.style.display = 'flex';
         
         try {
           const response = await fetch('/admin/reports/export-pdf', {
@@ -559,6 +574,10 @@
             body: JSON.stringify(filters)
           });
 
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
           const html = await response.text();
           const newWindow = window.open();
           newWindow.document.write(html);
@@ -568,50 +587,69 @@
         } catch (error) {
           console.error('Error exporting PDF:', error);
           showAlert('Failed to export PDF', 'error');
+        } finally {
+          loading.style.display = 'none';
         }
+      },
+
+      /**
+       * Escapes HTML to prevent XSS
+       */
+      escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
       }
     };
 
-    // Event Listeners
+    // ===== Event Listeners =====
     document.addEventListener('DOMContentLoaded', () => {
       // Generate Preview Button
-      document.getElementById('generatePreviewBtn').addEventListener('click', () => {
-        reportHandler.generatePreview();
-      });
+      const generatePreviewBtn = document.getElementById('generatePreviewBtn');
+      if (generatePreviewBtn) {
+        generatePreviewBtn.addEventListener('click', () => {
+          reportHandler.generatePreview();
+        });
+      }
 
       // Clear Filters Button
-      document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-        reportHandler.clearFilters();
-      });
+      const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+      if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+          reportHandler.clearFilters();
+        });
+      }
 
       // Export CSV Button
-      document.getElementById('exportExcelBtn').addEventListener('click', () => {
-        reportHandler.exportCSV();
-      });
+      const exportExcelBtn = document.getElementById('exportExcelBtn');
+      if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', () => {
+          reportHandler.exportCSV();
+        });
+      }
 
       // Export PDF Button
-      document.getElementById('exportPdfBtn').addEventListener('click', () => {
-        reportHandler.exportPDF();
-      });
+      const exportPdfBtn = document.getElementById('exportPdfBtn');
+      if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', () => {
+          reportHandler.exportPDF();
+        });
+      }
 
       // Date Preset Quick Select
-      document.getElementById('datePresetFilter').addEventListener('change', (e) => {
-        const days = parseInt(e.target.value);
-        if (days) {
-          const endDate = new Date();
-          const startDate = new Date(endDate);
-          startDate.setDate(startDate.getDate() - days);
-          
-          document.getElementById('startDateFilter').value = startDate.toISOString().split('T')[0];
-          document.getElementById('endDateFilter').value = endDate.toISOString().split('T')[0];
-        }
-      });
-
-      // Dropdown toggle
-      const headerDropdown = document.getElementById('dropdownMenu');
-      if (headerDropdown) {
-        document.querySelector('.dropdown-toggle')?.addEventListener('click', () => {
-          headerDropdown.classList.toggle('show');
+      const datePresetFilter = document.getElementById('datePresetFilter');
+      if (datePresetFilter) {
+        datePresetFilter.addEventListener('change', (e) => {
+          const days = parseInt(e.target.value);
+          if (days) {
+            const endDate = new Date();
+            const startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - days);
+            
+            document.getElementById('startDateFilter').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDateFilter').value = endDate.toISOString().split('T')[0];
+          }
         });
       }
 
@@ -626,13 +664,23 @@
         });
       }
 
-      // Mobile menu
+      // Mobile menu toggle
       const menuToggle = document.getElementById('adminMenuToggle');
       if (menuToggle && sidebar) {
         menuToggle.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           sidebar.classList.toggle('mobile-active');
+        });
+      }
+
+      // Dropdown toggle
+      const dropdownToggle = document.querySelector('.dropdown-toggle');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      if (dropdownToggle && dropdownMenu) {
+        dropdownToggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          dropdownMenu.classList.toggle('show');
         });
       }
     });

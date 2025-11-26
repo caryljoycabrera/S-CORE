@@ -399,19 +399,78 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     
     const urgentCount = unassignedTasks.filter(t => t.priority === 'critical' || t.priority === 'urgent').length;
 
+    // Calculate dynamic KPIs
+    const completedRequests = allRequests.filter(r => r.status?.toLowerCase() === 'completed');
+    const inProgressRequests = allRequests.filter(r => r.status?.toLowerCase() === 'in progress' || r.status?.toLowerCase() === 'in_progress');
+    const inRevisionRequests = allRequests.filter(r => r.status?.toLowerCase() === 'revision required' || r.status?.toLowerCase() === 'revision_required');
+
+    // Calculate Average Turnaround Time (days from creation to completion)
+    let avgTurnaroundTime = 2.5; // default
+    if (completedRequests.length > 0) {
+      const turnaroundTimes = completedRequests
+        .filter(r => r.createdAt && r.updatedAt)
+        .map(r => {
+          const createdDate = new Date(r.createdAt);
+          const completedDate = new Date(r.updatedAt);
+          return (completedDate - createdDate) / (1000 * 60 * 60 * 24); // convert to days
+        });
+      if (turnaroundTimes.length > 0) {
+        avgTurnaroundTime = (turnaroundTimes.reduce((a, b) => a + b, 0) / turnaroundTimes.length).toFixed(1);
+      }
+    }
+
+    // Calculate Completion Rate (percentage)
+    let completionRate = 85; // default
+    if (allRequests.length > 0) {
+      completionRate = Math.round((completedRequests.length / allRequests.length) * 100);
+    }
+
+    // Calculate Average Response Time (hours from creation to first assignment/status change)
+    let avgResponseTime = 4.2; // default
+    const responseTimesInHours = allRequests
+      .filter(r => r.createdAt && r.updatedAt)
+      .map(r => {
+        const createdDate = new Date(r.createdAt);
+        const firstUpdateDate = new Date(r.updatedAt);
+        return (firstUpdateDate - createdDate) / (1000 * 60 * 60); // convert to hours
+      });
+    if (responseTimesInHours.length > 0) {
+      avgResponseTime = (responseTimesInHours.reduce((a, b) => a + b, 0) / responseTimesInHours.length).toFixed(1);
+    }
+
+    // Count overdue tasks
+    const overdueTasks = allRequests.filter(r => {
+      return r.deadline && new Date(r.deadline) < now && 
+             (r.status?.toLowerCase() !== 'completed');
+    }).length;
+
     const stats = {
       totalApprovals: approvals.length,
       totalServices: serviceRequests.length,
       pendingApprovals: pendingApprovals.length,
       pendingServices: pendingServices.length,
       urgentUnassigned: urgentCount,
-      totalUnassigned: unassignedTasks.length
+      totalUnassigned: unassignedTasks.length,
+      // Dynamic KPIs
+      avgTurnaroundTime: parseFloat(avgTurnaroundTime),
+      completionRate: completionRate,
+      avgResponseTime: parseFloat(avgResponseTime),
+      overdueTasks: overdueTasks,
+      completedRequests: completedRequests.length,
+      inProgressRequests: inProgressRequests.length,
+      inRevisionRequests: inRevisionRequests.length
     };
+
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    const units = getUnits();
+    const requestStatuses = getRequestStatuses();
 
     res.render('Admin/analytics', {
       user: req.user,
       stats,
-      unassignedTasks
+      unassignedTasks,
+      units,
+      requestStatuses
     });
   } catch (err) {
     console.error('Error loading analytics page:', err);
@@ -3482,9 +3541,11 @@ router.get('/admin/reports/filters', requireAdmin, async (req, res) => {
  */
 router.get('/admin/announcement', requireAdmin, async (req, res) => {
   try {
+    const { getUnits } = require('../utils/settingsHelpers');
     const user = await User.findById(req.session.userId);
     const result = await announcementService.getAnnouncements(1, 50);
     const stats = await announcementService.getStatistics();
+    const units = getUnits();
     const unreadCount = await Notification.countDocuments({
       recipient: req.session.userId,
       isRead: false
@@ -3494,6 +3555,7 @@ router.get('/admin/announcement', requireAdmin, async (req, res) => {
       user: user,
       announcements: result.announcements,
       stats: stats,
+      units: units,
       unreadCount: unreadCount
     });
   } catch (error) {
@@ -3620,11 +3682,11 @@ router.put('/admin/announcement/:id', requireAdmin, async (req, res) => {
 
 /**
  * DELETE /admin/announcement/:id
- * Delete announcement
+ * Soft delete announcement
  */
 router.delete('/admin/announcement/:id', requireAdmin, async (req, res) => {
   try {
-    await announcementService.deleteAnnouncement(req.params.id);
+    await announcementService.deleteAnnouncement(req.params.id, req.session.userId);
 
     res.json({
       success: true,
@@ -3632,6 +3694,64 @@ router.delete('/admin/announcement/:id', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/announcements/deleted
+ * Get deleted announcements for trash
+ */
+router.get('/admin/announcements/deleted', requireAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+
+    const result = await announcementService.getDeletedAnnouncements(page, limit);
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error fetching deleted announcements:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * PUT /admin/announcement/:id/restore
+ * Restore deleted announcement
+ */
+router.put('/admin/announcement/:id/restore', requireAdmin, async (req, res) => {
+  try {
+    const announcement = await announcementService.restoreAnnouncement(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Announcement restored successfully',
+      data: announcement
+    });
+  } catch (error) {
+    console.error('Error restoring announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/announcement/:id/permanent
+ * Permanently delete announcement
+ */
+router.delete('/admin/announcement/:id/permanent', requireAdmin, async (req, res) => {
+  try {
+    await announcementService.permanentlyDeleteAnnouncement(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Announcement permanently deleted'
+    });
+  } catch (error) {
+    console.error('Error permanently deleting announcement:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -4467,6 +4587,455 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('[ADMIN] Error saving system configuration:', error);
     res.redirect('/admin/configuration?error=Failed to save system configuration');
+  }
+});
+
+/**
+ * GET /admin/analytics-data/top-requestors
+ * Get top requestors for pie chart
+ */
+router.get('/admin/analytics-data/top-requestors', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    const allRequests = [...approvals, ...serviceRequests];
+
+    // Group by organization
+    const organizationMap = {};
+    allRequests.forEach(req => {
+      const org = req.organization || req.userId?.studentOrganization?.[0] || req.userId?.affiliation?.[0] || 'Unknown';
+      organizationMap[org] = (organizationMap[org] || 0) + 1;
+    });
+
+    // Sort and get top 8
+    const topRequestors = Object.entries(organizationMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }));
+
+    res.json({
+      success: true,
+      labels: topRequestors.map(r => r.name),
+      data: topRequestors.map(r => r.count)
+    });
+  } catch (error) {
+    console.error('Error loading top requestors:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/request-volume
+ * Get request volume over time
+ */
+router.get('/admin/analytics-data/request-volume', requireAdmin, async (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 30;
+    const approvals = await RequestApproval.find().populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+
+    const dateMap = {};
+    const now = new Date();
+
+    // Initialize date map
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const key = date.toISOString().split('T')[0];
+      dateMap[key] = { approvals: 0, services: 0 };
+    }
+
+    // Count approvals by date
+    approvals.forEach(a => {
+      const date = new Date(a.createdAt).toISOString().split('T')[0];
+      if (dateMap[date]) dateMap[date].approvals++;
+    });
+
+    // Count services by date
+    serviceRequests.forEach(s => {
+      const date = new Date(s.createdAt).toISOString().split('T')[0];
+      if (dateMap[date]) dateMap[date].services++;
+    });
+
+    const labels = Object.keys(dateMap).sort();
+    const approvalData = labels.map(d => dateMap[d].approvals);
+    const serviceData = labels.map(d => dateMap[d].services);
+
+    res.json({
+      success: true,
+      labels,
+      approvals: approvalData,
+      services: serviceData
+    });
+  } catch (error) {
+    console.error('Error loading request volume:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/active-workload
+ * Get active workload by unit
+ */
+router.get('/admin/analytics-data/active-workload', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({
+      status: { $in: ['in progress', 'in_progress', 'In Progress'] }
+    }).lean();
+    const serviceRequests = await ServiceRequest.find({
+      status: { $in: ['in progress', 'in_progress', 'In Progress'] }
+    }).lean();
+
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
+
+    // Initialize unit counts
+    units.forEach(unit => {
+      unitMap[unit] = 0;
+    });
+
+    // Count by assigned units
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned') {
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit] !== undefined) unitMap[unit]++;
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits] !== undefined) unitMap[req.assignedUnits]++;
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      labels: Object.keys(unitMap),
+      data: Object.values(unitMap)
+    });
+  } catch (error) {
+    console.error('Error loading active workload:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/turnaround-by-unit
+ * Get average turnaround time by unit
+ */
+router.get('/admin/analytics-data/turnaround-by-unit', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({
+      status: 'completed'
+    }).lean();
+    const serviceRequests = await ServiceRequest.find({
+      status: 'completed'
+    }).lean();
+
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
+
+    // Initialize unit turnaround times
+    units.forEach(unit => {
+      unitMap[unit] = { total: 0, count: 0 };
+    });
+
+    // Calculate turnaround times
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned' && req.createdAt && req.updatedAt) {
+        const turnaroundDays = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60 * 24);
+        
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit]) {
+              unitMap[unit].total += turnaroundDays;
+              unitMap[unit].count++;
+            }
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits]) {
+            unitMap[req.assignedUnits].total += turnaroundDays;
+            unitMap[req.assignedUnits].count++;
+          }
+        }
+      }
+    });
+
+    // Calculate averages
+    const averages = {};
+    Object.entries(unitMap).forEach(([unit, data]) => {
+      averages[unit] = data.count > 0 ? (data.total / data.count).toFixed(1) : 0;
+    });
+
+    res.json({
+      success: true,
+      labels: Object.keys(averages),
+      data: Object.values(averages).map(v => parseFloat(v))
+    });
+  } catch (error) {
+    console.error('Error loading turnaround by unit:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/current-status
+ * Get current request status distribution
+ */
+router.get('/admin/analytics-data/current-status', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().lean();
+    const serviceRequests = await ServiceRequest.find().lean();
+    const allRequests = [...approvals, ...serviceRequests];
+
+    const statusMap = {};
+    const { getRequestStatuses } = require('../utils/settingsHelpers');
+    const statuses = getRequestStatuses();
+
+    // Initialize status counts
+    statuses.forEach(status => {
+      statusMap[status] = 0;
+    });
+    statusMap['Unassigned'] = 0;
+
+    // Count by status
+    allRequests.forEach(req => {
+      const status = req.status ? req.status.charAt(0).toUpperCase() + req.status.slice(1) : 'pending';
+      const statusKey = Object.keys(statusMap).find(s => s.toLowerCase() === status.toLowerCase());
+      if (statusKey) {
+        statusMap[statusKey]++;
+      } else {
+        statusMap[status] = (statusMap[status] || 0) + 1;
+      }
+
+      // Check if unassigned
+      if (!req.assignedUnits || req.assignedUnits === 'Not yet assigned') {
+        statusMap['Unassigned']++;
+      }
+    });
+
+    const labels = Object.keys(statusMap).filter(s => statusMap[s] > 0);
+    const data = labels.map(label => statusMap[label]);
+
+    res.json({
+      success: true,
+      labels,
+      data
+    });
+  } catch (error) {
+    console.error('Error loading current status:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/revision-hotspot
+ * Get requests with most revisions
+ */
+router.get('/admin/analytics-data/revision-hotspot', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find()
+      .populate('userId')
+      .lean();
+    const serviceRequests = await ServiceRequest.find()
+      .populate('userId')
+      .lean();
+
+    const allRequests = [...approvals, ...serviceRequests];
+
+    // Filter requests with revisions and sort by revision count
+    const revisionsMap = {};
+    const majorRevisionsMap = {};
+
+    allRequests.forEach(req => {
+      if (req.revisionHistory && req.revisionHistory.length > 0) {
+        const major = req.revisionHistory.filter(r => r.type === 'major').length;
+        const minor = req.revisionHistory.filter(r => r.type === 'minor').length;
+        const total = req.revisionHistory.length;
+
+        if (total > 0) {
+          revisionsMap[req._id.toString()] = {
+            title: req.title || req.description || 'Untitled',
+            type: serviceRequests.some(s => s._id.toString() === req._id.toString()) ? 'Service' : 'Approval',
+            requester: req.userId ? `${req.userId.fName} ${req.userId.lName}` : 'Unknown',
+            unit: req.assignedUnits || 'Unassigned',
+            major,
+            minor,
+            total,
+            status: req.status,
+            id: req._id
+          };
+        }
+      }
+    });
+
+    // Sort by total revisions descending and get top 10
+    const topRevisions = Object.values(revisionsMap)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
+
+    res.json({
+      success: true,
+      data: topRevisions
+    });
+  } catch (error) {
+    console.error('Error loading revision hotspot:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/admin/dashboard-kpis
+ * Fetch all dashboard KPI metrics
+ */
+router.get('/api/admin/dashboard-kpis', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().lean();
+    const serviceRequests = await ServiceRequest.find().lean();
+    const allRequests = [...approvals, ...serviceRequests];
+    
+    // Count in revision
+    const inRevision = allRequests.filter(r => r.status?.toLowerCase() === 'for-revision' || r.status?.toLowerCase() === 'in revision').length;
+    
+    // Count completed this month
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const completedThisMonth = allRequests.filter(r => {
+      const updatedAt = new Date(r.updatedAt);
+      return r.status?.toLowerCase() === 'completed' && updatedAt >= firstDayOfMonth;
+    }).length;
+    
+    // Count upcoming deadlines (within 7 days)
+    const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+    const upcomingDeadlines = allRequests.filter(r => {
+      const deadline = new Date(r.deadline);
+      return deadline > now && deadline <= sevenDaysFromNow && r.status?.toLowerCase() !== 'completed';
+    }).length;
+    
+    // Count overdue (deadline passed but not completed)
+    const overdue = allRequests.filter(r => {
+      const deadline = new Date(r.deadline);
+      return deadline < now && r.status?.toLowerCase() !== 'completed';
+    }).length;
+    
+    res.json({
+      success: true,
+      inRevision,
+      completedThisMonth,
+      upcomingDeadlines,
+      overdue
+    });
+  } catch (error) {
+    console.error('Error loading dashboard KPIs:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/admin/incoming-requests
+ * Fetch incoming requests (awaiting assignment)
+ */
+router.get('/api/admin/incoming-requests', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().populate('userId', 'fName lName').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId', 'fName lName').lean();
+    
+    // Get incoming (pending, unassigned) requests
+    const incomingApprovals = approvals.filter(a => 
+      a.status?.toLowerCase() === 'pending' && (!a.assignedUnits || a.assignedUnits === 'Not yet assigned')
+    ).map(a => ({
+      _id: a._id,
+      title: a.title,
+      type: 'Approval Request',
+      requesterName: a.userId ? `${a.userId.fName} ${a.userId.lName}` : 'Unknown',
+      createdAt: a.createdAt
+    }));
+    
+    const incomingServices = serviceRequests.filter(s => 
+      s.status?.toLowerCase() === 'pending' && (!s.assignedUnits || s.assignedUnits === 'Not yet assigned')
+    ).map(s => ({
+      _id: s._id,
+      title: s.title,
+      type: 'Service Request',
+      requesterName: s.userId ? `${s.userId.fName} ${s.userId.lName}` : 'Unknown',
+      createdAt: s.createdAt
+    }));
+    
+    const allIncoming = [...incomingApprovals, ...incomingServices]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+    
+    res.json({
+      success: true,
+      data: allIncoming
+    });
+  } catch (error) {
+    console.error('Error loading incoming requests:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/admin/urgent-overdue-tasks
+ * Fetch urgent and overdue tasks
+ */
+router.get('/api/admin/urgent-overdue-tasks', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().populate('userId', 'fName lName').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId', 'fName lName').lean();
+    const allRequests = [...approvals, ...serviceRequests];
+    
+    const now = new Date();
+    const oneDayFromNow = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
+    const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+    
+    const urgentAndOverdue = allRequests
+      .filter(req => {
+        if (req.status?.toLowerCase() === 'completed') return false;
+        const deadline = new Date(req.deadline);
+        const isOverdue = deadline < now;
+        const isCritical = deadline <= oneDayFromNow;
+        const isUrgent = deadline <= threeDaysFromNow;
+        return isOverdue || isCritical || isUrgent;
+      })
+      .map(req => {
+        const isService = serviceRequests.some(s => s._id.toString() === req._id.toString());
+        const deadline = new Date(req.deadline);
+        const isOverdue = deadline < now;
+        
+        let priority = 'normal';
+        if (isOverdue) {
+          priority = 'critical';
+        } else if (deadline <= oneDayFromNow) {
+          priority = 'critical';
+        } else if (deadline <= threeDaysFromNow) {
+          priority = 'urgent';
+        }
+        
+        return {
+          _id: req._id,
+          title: req.title,
+          type: isService ? 'Service Request' : 'Approval Request',
+          status: req.status,
+          deadline: req.deadline,
+          priority
+        };
+      })
+      .sort((a, b) => {
+        // Sort by priority (critical first, then urgent)
+        const priorityOrder = { critical: 0, urgent: 1, normal: 2 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      })
+      .slice(0, 5);
+    
+    res.json({
+      success: true,
+      data: urgentAndOverdue
+    });
+  } catch (error) {
+    console.error('Error loading urgent/overdue tasks:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

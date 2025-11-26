@@ -73,6 +73,20 @@ const broadcastMessageSchema = new mongoose.Schema({
   // Optional expiration date
   expiresAt: {
     type: Date
+  },
+
+  // Soft delete fields
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  deletedAt: {
+    type: Date
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

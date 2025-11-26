@@ -354,7 +354,7 @@
               </svg>
               Unit
             </label>
-            <select id="unitFilter" class="filter-select" multiple size="1">
+            <select id="unitFilter" class="filter-select">
               <option value="all" selected>All Units</option>
               <% units.forEach(unit => { %>
               <option value="<%= unit.toLowerCase().replace(/\s+/g, '-') %>"><%= unit %></option>
@@ -786,7 +786,7 @@
             <div class="kpi-content">
               <div class="kpi-label">Avg. Turnaround Time</div>
               <div class="kpi-value" id="kpi-avg-turnaround">
-                <span class="kpi-number">2.5</span>
+                <span class="kpi-number"><%= Math.round(stats.avgTurnaroundTime) %></span>
                 <span class="kpi-unit">days</span>
               </div>
               <div class="kpi-subtext">From submission to done</div>
@@ -836,7 +836,7 @@
             <div class="kpi-content">
               <div class="kpi-label">Completion Rate</div>
               <div class="kpi-value" id="kpi-completion-rate">
-                <span class="kpi-number">85</span>
+                <span class="kpi-number"><%= stats.completionRate %></span>
                 <span class="kpi-unit">%</span>
               </div>
               <div class="kpi-subtext">Successfully completed</div>
@@ -854,7 +854,7 @@
             <div class="kpi-content">
               <div class="kpi-label">Avg. Response Time</div>
               <div class="kpi-value" id="kpi-response-time">
-                <span class="kpi-number">4.2</span>
+                <span class="kpi-number"><%= stats.avgResponseTime %></span>
                 <span class="kpi-unit">hrs</span>
               </div>
               <div class="kpi-subtext">Initial response time</div>
@@ -986,7 +986,7 @@
                 </div>
                 <div class="stat-content">
                   <div class="stat-label">Completion Rate</div>
-                  <div class="stat-value" id="stat-completion-rate">85%</div>
+                  <div class="stat-value" id="stat-completion-rate"><%= stats.completionRate %>%</div>
                 </div>
               </div>
               <div class="stat-item">
@@ -998,7 +998,7 @@
                 </div>
                 <div class="stat-content">
                   <div class="stat-label">Avg. Response Time</div>
-                  <div class="stat-value" id="stat-response-time">4.2 hrs</div>
+                  <div class="stat-value" id="stat-response-time"><%= stats.avgResponseTime %> hrs</div>
                 </div>
               </div>
               <div class="stat-item">
@@ -1011,7 +1011,7 @@
                 </div>
                 <div class="stat-content">
                   <div class="stat-label">Overdue Tasks</div>
-                  <div class="stat-value" id="stat-overdue">3</div>
+                  <div class="stat-value" id="stat-overdue"><%= stats.overdueTasks %></div>
                 </div>
               </div>
             </div>

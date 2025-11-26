@@ -175,9 +175,18 @@ class AnnouncementService {
    * @param {String} announcementId - Announcement ID
    * @returns {Promise<Object>} - Deleted announcement
    */
-  async deleteAnnouncement(announcementId) {
+  async deleteAnnouncement(announcementId, userId = null) {
     try {
-      const announcement = await BroadcastMessage.findByIdAndDelete(announcementId);
+      // Use soft delete instead of hard delete
+      const announcement = await BroadcastMessage.findByIdAndUpdate(
+        announcementId,
+        {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: userId
+        },
+        { new: true }
+      );
 
       if (!announcement) {
         throw new Error('Announcement not found');
@@ -199,14 +208,14 @@ class AnnouncementService {
   async getAnnouncements(page = 1, limit = 20) {
     try {
       const skip = (page - 1) * limit;
-      const announcements = await BroadcastMessage.find()
+      const announcements = await BroadcastMessage.find({ isDeleted: { $ne: true } })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('sentBy', 'fName lName email')
         .lean();
 
-      const total = await BroadcastMessage.countDocuments();
+      const total = await BroadcastMessage.countDocuments({ isDeleted: { $ne: true } });
 
       return {
         announcements,
@@ -357,6 +366,117 @@ class AnnouncementService {
         scheduled: 0,
         pastDue: 0
       };
+    }
+  }
+
+  /**
+   * Get deleted announcements (for trash)
+   * @param {String} page - Page number
+   * @param {Number} limit - Items per page
+   * @returns {Promise<Object>} - Deleted announcements
+   */
+  async getDeletedAnnouncements(page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+      const announcements = await BroadcastMessage.find({ isDeleted: true })
+        .sort({ deletedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('sentBy', 'fName lName email')
+        .populate('deletedBy', 'fName lName email')
+        .lean();
+
+      const total = await BroadcastMessage.countDocuments({ isDeleted: true });
+
+      return {
+        announcements,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching deleted announcements:', error);
+      throw new Error('Failed to fetch deleted announcements');
+    }
+  }
+
+  /**
+   * Soft delete an announcement
+   * @param {String} announcementId - Announcement ID
+   * @param {String} userId - User performing the deletion
+   * @returns {Promise<Object>} - Updated announcement
+   */
+  async softDeleteAnnouncement(announcementId, userId) {
+    try {
+      const announcement = await BroadcastMessage.findByIdAndUpdate(
+        announcementId,
+        {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: userId
+        },
+        { new: true }
+      );
+
+      if (!announcement) {
+        throw new Error('Announcement not found');
+      }
+
+      return announcement;
+    } catch (error) {
+      console.error('Error soft deleting announcement:', error);
+      throw new Error('Failed to delete announcement');
+    }
+  }
+
+  /**
+   * Restore a deleted announcement
+   * @param {String} announcementId - Announcement ID
+   * @returns {Promise<Object>} - Restored announcement
+   */
+  async restoreAnnouncement(announcementId) {
+    try {
+      const announcement = await BroadcastMessage.findByIdAndUpdate(
+        announcementId,
+        {
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null
+        },
+        { new: true }
+      );
+
+      if (!announcement) {
+        throw new Error('Announcement not found');
+      }
+
+      return announcement;
+    } catch (error) {
+      console.error('Error restoring announcement:', error);
+      throw new Error('Failed to restore announcement');
+    }
+  }
+
+  /**
+   * Permanently delete an announcement
+   * @param {String} announcementId - Announcement ID
+   * @returns {Promise<boolean>} - Success status
+   */
+  async permanentlyDeleteAnnouncement(announcementId) {
+    try {
+      const result = await BroadcastMessage.findByIdAndDelete(announcementId);
+
+      if (!result) {
+        throw new Error('Announcement not found');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error permanently deleting announcement:', error);
+      throw new Error('Failed to permanently delete announcement');
     }
   }
 }

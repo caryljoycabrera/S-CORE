@@ -306,6 +306,8 @@ hr {
 
 .back-to-dashboard-container {
   margin: 0rem 3rem 1.5rem 3rem;
+  display: flex;
+  gap: 60rem;
 }
 
 .back-to-dashboard-btn {

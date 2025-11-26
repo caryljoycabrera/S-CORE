@@ -5,224 +5,292 @@
 // ========================================
 
 // ========================================
-// DOM ELEMENTS
+// DOM CACHE OBJECT - Centralized DOM references
 // ========================================
-const userModal = document.getElementById("userModal");
-const closeUserModal = document.getElementById("closeUserModal");
-const cancelUpdateBtn = document.getElementById("cancelUpdateBtn");
-const clearFiltersBtn = document.getElementById("clearFilters");
-const allRows = Array.from(document.querySelectorAll('.grid-row'));
+const DOMCache = {
+  // User Modal
+  userModal: null,
+  closeUserModal: null,
+  cancelUpdateBtn: null,
+  
+  // Confirmation Modal
+  confirmStatusModal: null,
+  closeConfirmModal: null,
+  cancelConfirmBtn: null,
+  
+  // Filter Elements
+  clearFiltersBtn: null,
+  
+  // Grid Elements
+  gridBody: null,
+  
+  // Initialize all DOM references
+  init() {
+    this.userModal = document.getElementById("userModal");
+    this.closeUserModal = document.getElementById("closeUserModal");
+    this.cancelUpdateBtn = document.getElementById("cancelUpdateBtn");
+    this.confirmStatusModal = document.getElementById("confirmStatusModal");
+    this.closeConfirmModal = document.getElementById("closeConfirmModal");
+    this.cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
+    this.clearFiltersBtn = document.getElementById("clearFilters");
+    this.gridBody = document.getElementById("gridBody");
+  },
+
+  // Get all grid rows
+  getAllRows() {
+    return Array.from(document.querySelectorAll('.grid-row'));
+  }
+};
+
+// Backward compatibility - Legacy references
+const userModal = () => DOMCache.userModal;
+const closeUserModal = () => DOMCache.closeUserModal;
+const cancelUpdateBtn = () => DOMCache.cancelUpdateBtn;
+const clearFiltersBtn = () => DOMCache.clearFiltersBtn;
+const allRows = () => DOMCache.getAllRows();
 
 // Confirmation Modal Elements
-const confirmStatusModal = document.getElementById("confirmStatusModal");
-const closeConfirmModal = document.getElementById("closeConfirmModal");
-const cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
+const confirmStatusModal = () => DOMCache.confirmStatusModal;
+const closeConfirmModal = () => DOMCache.closeConfirmModal;
+const cancelConfirmBtn = () => DOMCache.cancelConfirmBtn;
+
+// ========================================
+// MODAL UTILITY OBJECT
+// ========================================
+const ModalUtility = {
+  // Close modal helper
+  closeModal(modal) {
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  },
+
+  // Open modal helper
+  openModal(modal) {
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  },
+
+  // Setup close button handlers
+  setupCloseHandlers(modal, closeBtn, cancelBtn) {
+    if (closeBtn) closeBtn.onclick = () => this.closeModal(modal);
+    if (cancelBtn) cancelBtn.onclick = () => this.closeModal(modal);
+  }
+};
 
 // ========================================
 // MODAL HANDLERS
 // ========================================
-closeUserModal.onclick = () => {
-  userModal.style.display = 'none';
-  document.body.style.overflow = '';
-};
-cancelUpdateBtn.onclick = () => {
-  userModal.style.display = 'none';
-  document.body.style.overflow = '';
-};
-
-// Confirmation modal close handlers
-closeConfirmModal.onclick = () => {
-  confirmStatusModal.style.display = 'none';
-  document.body.style.overflow = '';
-};
-cancelConfirmBtn.onclick = () => {
-  confirmStatusModal.style.display = 'none';
-  document.body.style.overflow = '';
-};
-
-window.onclick = e => {
-  if (e.target === userModal) {
-    userModal.style.display = 'none';
-    document.body.style.overflow = '';
-  }
-  if (e.target === confirmStatusModal) {
-    confirmStatusModal.style.display = 'none';
-    document.body.style.overflow = '';
-  }
-  // Close trash modal when clicking outside
-  const trashModal = document.getElementById('trashModal');
-  if (e.target === trashModal) {
-    closeTrashModal();
-  }
-  // Close restore confirm modal when clicking outside
-  const restoreModal = document.getElementById('restoreConfirmModal');
-  if (e.target === restoreModal) {
-    closeRestoreConfirm();
-  }
-  // Close permanent delete modal when clicking outside
-  const deleteModal = document.getElementById('permanentDeleteConfirmModal');
-  if (e.target === deleteModal) {
-    closePermanentDeleteConfirm();
-  }
-};
-
-// ========================================
-// TOAST NOTIFICATION FUNCTION
-// ========================================
-function showToast(title, message, type = 'success') {
-  // Get or create toast container
-  let container = document.getElementById('toastContainer');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toastContainer';
-    container.style.cssText = `
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    `;
-    document.body.appendChild(container);
-  }
-
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-
-  const iconSvg = type === 'success'
-    ? '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>'
-    : type === 'error'
-    ? '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
-    : '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
-
-  toast.innerHTML = `
-    <div class="toast-icon">${iconSvg}</div>
-    <div class="toast-content">
-      <div class="toast-title">${title}</div>
-      <div class="toast-message">${message}</div>
-    </div>
-    <button class="toast-close" onclick="this.parentElement.remove()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
-  `;
-
-  container.appendChild(toast);
-
-  // Auto-remove after 4 seconds
-  setTimeout(() => {
-    toast.classList.add('hiding');
-    setTimeout(() => toast.remove(), 300);
-  }, 4000);
+function setupModalHandlers() {
+  const { userModal, closeUserModal, cancelUpdateBtn, confirmStatusModal, closeConfirmModal, cancelConfirmBtn } = DOMCache;
+  
+  // User modal handlers
+  ModalUtility.setupCloseHandlers(userModal, closeUserModal, cancelUpdateBtn);
+  
+  // Confirm status modal handlers
+  ModalUtility.setupCloseHandlers(confirmStatusModal, closeConfirmModal, cancelConfirmBtn);
 }
 
 // ========================================
-// NOTIFICATION FUNCTIONS
+// GLOBAL EVENT LISTENERS - Modal Backdrop & ESC Key
 // ========================================
-function showNotificationPersistent(message, type = 'success') {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    backdrop-filter: blur(4px);
-  `;
-
-  const modal = document.createElement('div');
-  modal.style.cssText = `
-    background: white;
-    border-radius: 20px;
-    padding: 0;
-    max-width: 520px;
-    width: 90%;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-  `;
-
-  let headerColor;
-  switch(type) {
-    case 'success':
-      headerColor = 'linear-gradient(135deg, var(--primary-green), #20c997)';
-      break;
-    case 'error':
-      headerColor = 'linear-gradient(135deg, #ef4444, #dc2626)';
-      break;
-    case 'info':
-    default:
-      headerColor = 'linear-gradient(135deg, #3b82f6, #2563eb)';
-      break;
+window.addEventListener('click', function(e) {
+  const { userModal, confirmStatusModal } = DOMCache;
+  
+  // User Modal
+  if (e.target === userModal) {
+    ModalUtility.closeModal(userModal);
   }
+  // Confirm Status Modal
+  if (e.target === confirmStatusModal) {
+    ModalUtility.closeModal(confirmStatusModal);
+  }
+  // Trash Modal (independent)
+  const trashModal = document.getElementById('trashModal');
+  if (trashModal && e.target === trashModal) {
+    closeTrashModal();
+  }
+  // Restore Confirm Modal
+  const restoreModal = document.getElementById('restoreConfirmModal');
+  if (restoreModal && e.target === restoreModal) {
+    closeRestoreConfirm();
+  }
+  // Permanent Delete Modal
+  const deleteModal = document.getElementById('permanentDeleteConfirmModal');
+  if (deleteModal && e.target === deleteModal) {
+    closePermanentDeleteConfirm();
+  }
+});
 
-  modal.innerHTML = `
-    <div style="background: ${headerColor}; color: white; padding: 2rem; text-align: center;">
-      <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">
-        ${type === 'success' ? 'Update Successful!' : type === 'error' ? 'Update Failed!' : 'Information'}
-      </h3>
-    </div>
-    <div style="padding: 2rem; text-align: center;">
-      <p style="margin: 0 0 2rem 0; font-size: 1.1rem; color: #374151; line-height: 1.6;">${message}</p>
-      <div style="display: flex; gap: 1rem; justify-content: center;">
-        <button id="persistentNotificationOkBtn" style="
-          background: ${headerColor};
-          color: white;
-          border: none;
-          padding: 1rem 2.5rem;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        ">Got it!</button>
-        ${type === 'success' ? `
-        <button id="persistentNotificationRefreshBtn" style="
-          background: linear-gradient(135deg, #6b7280, #4b5563);
-          color: white;
-          border: none;
-          padding: 1rem 2.5rem;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        ">Refresh Page</button>
-        ` : ''}
-      </div>
-    </div>
-  `;
-
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-
-  const okBtn = modal.querySelector('#persistentNotificationOkBtn');
-  const refreshBtn = modal.querySelector('#persistentNotificationRefreshBtn');
-
-  function closeModal() {
-    if (document.body.contains(overlay)) {
-      document.body.removeChild(overlay);
+// ESC key closes modals
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const { userModal, confirmStatusModal } = DOMCache;
+    
+    const trashModal = document.getElementById('trashModal');
+    if (trashModal && trashModal.classList.contains('show')) {
+      closeTrashModal();
     }
-    document.body.style.overflow = '';
+    if (userModal && userModal.style.display === 'flex') {
+      ModalUtility.closeModal(userModal);
+    }
+    if (confirmStatusModal && confirmStatusModal.style.display === 'flex') {
+      ModalUtility.closeModal(confirmStatusModal);
+    }
+    
+    const restoreModal = document.getElementById('restoreConfirmModal');
+    if (restoreModal && restoreModal.classList.contains('show')) {
+      closeRestoreConfirm();
+    }
+    
+    const deleteModal = document.getElementById('permanentDeleteConfirmModal');
+    if (deleteModal && deleteModal.classList.contains('show')) {
+      closePermanentDeleteConfirm();
+    }
   }
+});
 
-  okBtn.addEventListener('click', closeModal);
+// ========================================
+// NOTIFICATION UTILITY
+// ========================================
+const NotificationManager = {
+  ICONS: {
+    success: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>',
+    error: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    info: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+  },
 
-  if (refreshBtn) {
-    refreshBtn.addEventListener('click', () => {
-      window.location.reload();
-    });
+  CLOSE_ICON: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+
+  // Get or create toast container
+  getToastContainer() {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.style.cssText = `
+        position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+        display: flex; flex-direction: column; gap: 0.5rem;
+      `;
+      document.body.appendChild(container);
+    }
+    return container;
+  },
+
+  // Show toast notification
+  showToast(title, message, type = 'success') {
+    const container = this.getToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">${this.ICONS[type] || this.ICONS.info}</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+      <button class="toast-close" onclick="this.parentElement.remove()">
+        ${this.CLOSE_ICON}
+      </button>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      toast.classList.add('hiding');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  },
+
+  // Show persistent notification modal
+  showNotificationPersistent(message, type = 'success') {
+    const headerColorMap = {
+      'success': 'linear-gradient(135deg, var(--primary-green), #20c997)',
+      'error': 'linear-gradient(135deg, #ef4444, #dc2626)',
+      'info': 'linear-gradient(135deg, #3b82f6, #2563eb)'
+    };
+
+    const titleMap = {
+      'success': 'Update Successful!',
+      'error': 'Update Failed!',
+      'info': 'Information'
+    };
+
+    const headerColor = headerColorMap[type] || headerColorMap.info;
+    const title = titleMap[type] || titleMap.info;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6); display: flex; align-items: center;
+      justify-content: center; z-index: 99999; backdrop-filter: blur(4px);
+    `;
+
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      background: white; border-radius: 20px; padding: 0; max-width: 520px;
+      width: 90%; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3); overflow: hidden;
+    `;
+
+    modal.innerHTML = `
+      <div style="background: ${headerColor}; color: white; padding: 2rem; text-align: center;">
+        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">${title}</h3>
+      </div>
+      <div style="padding: 2rem; text-align: center;">
+        <p style="margin: 0 0 2rem 0; font-size: 1.1rem; color: #374151; line-height: 1.6;">${message}</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+          <button id="persistentNotificationOkBtn" style="
+            background: ${headerColor}; color: white; border: none;
+            padding: 1rem 2.5rem; border-radius: 12px; font-weight: 600;
+            font-size: 1rem; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          ">Got it!</button>
+          ${type === 'success' ? `
+          <button id="persistentNotificationRefreshBtn" style="
+            background: linear-gradient(135deg, #6b7280, #4b5563); color: white;
+            border: none; padding: 1rem 2.5rem; border-radius: 12px; font-weight: 600;
+            font-size: 1rem; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          ">Refresh Page</button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const okBtn = modal.querySelector('#persistentNotificationOkBtn');
+    const refreshBtn = modal.querySelector('#persistentNotificationRefreshBtn');
+
+    const closeModal = () => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      document.body.style.overflow = '';
+    };
+
+    okBtn.addEventListener('click', closeModal);
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        window.location.reload();
+      });
+    }
+
+    document.body.style.overflow = 'hidden';
   }
+};
 
-  document.body.style.overflow = 'hidden';
+// Backward compatible functions
+function showToast(title, message, type = 'success') {
+  NotificationManager.showToast(title, message, type);
+}
+
+function showNotificationPersistent(message, type = 'success') {
+  NotificationManager.showNotificationPersistent(message, type);
 }
 
 // ========================================
@@ -496,323 +564,437 @@ function initializeSearchableDropdowns() {
 document.addEventListener('DOMContentLoaded', initializeSearchableDropdowns);
 
 // ========================================
-// FILTER FUNCTIONS
+// FILTER MANAGER
 // ========================================
+const FilterManager = {
+  filters: {
+    userId: '',
+    name: '',
+    username: '',
+    email: '',
+    cys: ''
+  },
+
+  updateFilterValue(filterName, value) {
+    if (this.filters.hasOwnProperty(filterName)) {
+      this.filters[filterName] = value.toLowerCase();
+      this.applyFilters();
+    }
+  },
+
+  checkTextMatch(text, filterValue) {
+    return filterValue === '' || text.toLowerCase().includes(filterValue);
+  },
+
+  checkSelectMatch(selectedValues, rowValue) {
+    if (!selectedValues.includes('all')) {
+      return selectedValues.includes(rowValue.toLowerCase());
+    }
+    return true;
+  },
+
+  checkArrayMatch(selectedValues, rowValue) {
+    if (!selectedValues.includes('all')) {
+      return selectedValues.some(val => rowValue.includes(val.toLowerCase()));
+    }
+    return true;
+  },
+
+  applyFilters() {
+    const allRows = DOMCache.getAllRows();
+    let visibleCount = 0;
+
+    allRows.forEach(row => {
+      const rowUserId = row.dataset.userId.toLowerCase();
+      const rowFullname = `${row.dataset.fname} ${row.dataset.mname} ${row.dataset.lname}`.toLowerCase();
+      const rowUsername = row.dataset.username.toLowerCase();
+      const rowEmail = row.dataset.email.toLowerCase();
+      const rowCys = row.dataset.cys.toLowerCase();
+      const rowRole = (row.dataset.role || '').toLowerCase();
+      const rowAffiliation = (row.dataset.affiliation || '').toLowerCase();
+      const rowStudentOrg = (row.dataset.studentorg || '').toLowerCase();
+
+      // Text filters
+      const userIdMatch = this.checkTextMatch(rowUserId, this.filters.userId);
+      const nameMatch = this.checkTextMatch(rowFullname, this.filters.name);
+      const usernameMatch = this.checkTextMatch(rowUsername, this.filters.username);
+      const emailMatch = this.checkTextMatch(rowEmail, this.filters.email);
+      const cysMatch = this.checkTextMatch(rowCys, this.filters.cys);
+
+      // Dropdown filters
+      const roleMatch = this.checkSelectMatch(roleFilter.getSelectedValues(), rowRole);
+      const affiliationMatch = this.checkArrayMatch(affiliationFilter.getSelectedValues(), rowAffiliation);
+      const studentOrgMatch = this.checkArrayMatch(studentOrgFilter.getSelectedValues(), rowStudentOrg);
+
+      const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && 
+                       roleMatch && affiliationMatch && studentOrgMatch;
+
+      row.style.display = isVisible ? 'grid' : 'none';
+      if (isVisible) visibleCount++;
+    });
+
+    this.updateResultsCount(visibleCount, allRows.length);
+  },
+
+  updateResultsCount(visibleCount, totalCount) {
+    const resultsCount = document.getElementById('resultsCount');
+    if (visibleCount === totalCount) {
+      resultsCount.textContent = `Showing all ${totalCount} users`;
+    } else {
+      resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} users`;
+    }
+  },
+
+  clearFilters() {
+    // Clear text filters
+    document.getElementById('userIdFilter').value = '';
+    document.getElementById('nameFilter').value = '';
+    document.getElementById('usernameFilter').value = '';
+    document.getElementById('emailFilter').value = '';
+    document.getElementById('cysFilter').value = '';
+
+    // Reset to defaults
+    this.filters = { userId: '', name: '', username: '', email: '', cys: '' };
+
+    // Reset dropdowns
+    if (roleFilter) roleFilter.reset();
+    if (affiliationFilter) affiliationFilter.reset();
+    if (studentOrgFilter) studentOrgFilter.reset();
+
+    this.applyFilters();
+  }
+};
+
+// Backward compatible filterUsers function
 function filterUsers() {
-  const userIdValue = document.getElementById('userIdFilter').value.toLowerCase();
-  const nameValue = document.getElementById('nameFilter').value.toLowerCase();
-  const usernameValue = document.getElementById('usernameFilter').value.toLowerCase();
-  const emailValue = document.getElementById('emailFilter').value.toLowerCase();
-  const cysValue = document.getElementById('cysFilter').value.toLowerCase();
+  FilterManager.applyFilters();
+}
 
-  let visibleCount = 0;
+// ========================================
+// FILTER EVENT LISTENERS SETUP
+// ========================================
+function setupFilterEventListeners() {
+  const filterInputs = {
+    'userIdFilter': 'userId',
+    'nameFilter': 'name',
+    'usernameFilter': 'username',
+    'emailFilter': 'email',
+    'cysFilter': 'cys'
+  };
 
-  allRows.forEach(row => {
-    const userId = row.dataset.id; // Get the user ID for matching action row
-    const rowUserId = row.dataset.userId.toLowerCase();
-    const rowFullname = `${row.dataset.fname} ${row.dataset.mname} ${row.dataset.lname}`.toLowerCase();
-    const rowUsername = row.dataset.username.toLowerCase();
-    const rowEmail = row.dataset.email.toLowerCase();
-    const rowCys = row.dataset.cys.toLowerCase();
-    const rowRole = (row.dataset.role || '').toLowerCase();
-    const rowAffiliation = (row.dataset.affiliation || '').toLowerCase();
-    const rowStudentOrg = (row.dataset.studentorg || '').toLowerCase();
-
-    const userIdMatch = userIdValue === '' || rowUserId.includes(userIdValue);
-    const nameMatch = nameValue === '' || rowFullname.includes(nameValue);
-    const usernameMatch = usernameValue === '' || rowUsername.includes(usernameValue);
-    const emailMatch = emailValue === '' || rowEmail.includes(emailValue);
-    const cysMatch = cysValue === '' || rowCys.includes(cysValue);
-
-    // Multi-select matching for roles using EnhancedMultiSelect
-    let roleMatch = true;
-    if (roleFilter && roleFilter.selectedValues) {
-      const selectedRoles = roleFilter.getSelectedValues();
-      if (!selectedRoles.includes('all')) {
-        roleMatch = selectedRoles.includes(rowRole);
-      }
+  Object.entries(filterInputs).forEach(([elementId, filterName]) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.addEventListener('input', (e) => {
+        FilterManager.updateFilterValue(filterName, e.target.value);
+      });
     }
-
-    // Multi-select matching for affiliations using EnhancedMultiSelect
-    let affiliationMatch = true;
-    if (affiliationFilter && affiliationFilter.selectedValues) {
-      const selectedAffs = affiliationFilter.getSelectedValues();
-      if (!selectedAffs.includes('all')) {
-        affiliationMatch = selectedAffs.some(aff => rowAffiliation.includes(aff.toLowerCase()));
-      }
-    }
-
-    // Multi-select matching for student orgs using EnhancedMultiSelect
-    let studentOrgMatch = true;
-    if (studentOrgFilter && studentOrgFilter.selectedValues) {
-      const selectedOrgs = studentOrgFilter.getSelectedValues();
-      if (!selectedOrgs.includes('all')) {
-        studentOrgMatch = selectedOrgs.some(org => rowStudentOrg.includes(org.toLowerCase()));
-      }
-    }
-
-    const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && roleMatch && affiliationMatch && studentOrgMatch;
-    
-    // Update grid row visibility
-    row.style.display = isVisible ? 'grid' : 'none';
-
-    if (isVisible) visibleCount++;
   });
 
-  const totalCount = allRows.length;
-  const resultsCount = document.getElementById('resultsCount');
-  if (visibleCount === totalCount) {
-    resultsCount.textContent = `Showing all ${totalCount} users`;
-  } else {
-    resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} users`;
+  // Clear filters button
+  const { clearFiltersBtn } = DOMCache;
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', () => {
+      FilterManager.clearFilters();
+    });
   }
 }
 
 // ========================================
-// FILTER EVENT LISTENERS
+// MAIN INITIALIZATION
 // ========================================
-document.getElementById('userIdFilter').addEventListener('input', filterUsers);
-document.getElementById('nameFilter').addEventListener('input', filterUsers);
-document.getElementById('usernameFilter').addEventListener('input', filterUsers);
-document.getElementById('emailFilter').addEventListener('input', filterUsers);
-document.getElementById('cysFilter').addEventListener('input', filterUsers);
+function initializeApplication() {
+  console.log('🚀 Initializing Users Management Application');
 
-clearFiltersBtn.addEventListener('click', () => {
-  document.getElementById('userIdFilter').value = '';
-  document.getElementById('nameFilter').value = '';
-  document.getElementById('usernameFilter').value = '';
-  document.getElementById('emailFilter').value = '';
-  document.getElementById('cysFilter').value = '';
+  // Initialize DOM cache
+  DOMCache.init();
+  console.log('✅ DOM Cache initialized');
 
-  // Reset EnhancedMultiSelect dropdowns
-  if (roleFilter) {
-    roleFilter.reset();
-  }
-  if (affiliationFilter) {
-    affiliationFilter.reset();
-  }
-  if (studentOrgFilter) {
-    studentOrgFilter.reset();
-  }
+  // Setup all event listeners and managers
+  setupModalHandlers();
+  setupFilterEventListeners();
+  StatusTabManager.setup();
+  UserFormHandler.setup();
+  RoleManager.setupRoleFieldHighlighting();
+  HeaderDropdown.init();
+  NavigationManager.init();
 
-  filterUsers();
-});
+  console.log('✅ All components initialized successfully');
+}
+
+// Run initialization when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeApplication);
 
 // ========================================
-// STATUS TAB FILTERING
+// STATUS TAB MANAGER
 // ========================================
-document.querySelectorAll('.status-tab').forEach(tab => {
-  tab.addEventListener('click', function(e) {
+const StatusTabManager = {
+  setup() {
+    document.querySelectorAll('.status-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => this.handleTabClick(e));
+    });
+  },
+
+  handleTabClick(e) {
     e.preventDefault();
-    
-    // Remove active class from all tabs
+
+    // Update active tab
     document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
-    
-    // Add active class to clicked tab
-    this.classList.add('active');
-    
-    // Get the status to filter by
-    const filterStatus = this.dataset.status;
-    
-    // Get all grid rows
+    e.target.classList.add('active');
+
+    // Filter rows by status
+    const filterStatus = e.target.dataset.status;
+    this.filterByStatus(filterStatus);
+  },
+
+  filterByStatus(filterStatus) {
     const gridRows = document.querySelectorAll('.grid-row');
-    
+    let visibleCount = 0;
+
     gridRows.forEach(row => {
       const userStatus = row.dataset.status;
-      
-      if (filterStatus === 'all' || userStatus === filterStatus) {
-        row.style.display = 'grid';
-      } else {
-        row.style.display = 'none';
-      }
+      const isVisible = filterStatus === 'all' || userStatus === filterStatus;
+      row.style.display = isVisible ? 'grid' : 'none';
+      if (isVisible) visibleCount++;
     });
-    
-    // Update results count
-    const visibleRows = Array.from(gridRows).filter(row => row.style.display !== 'none');
+
+    this.updateResultsCount(visibleCount, gridRows.length);
+  },
+
+  updateResultsCount(visibleCount, totalCount) {
     const resultsCount = document.getElementById('resultsCount');
     if (resultsCount) {
-      resultsCount.textContent = `Showing ${visibleRows.length} of ${gridRows.length} users`;
+      resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} users`;
     }
-  });
+  }
+};
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  StatusTabManager.setup();
 });
 
 // ========================================
-// ROLE MANAGEMENT FUNCTIONS
+// ROLE MANAGEMENT UTILITY
 // ========================================
+const RoleManager = {
+  ROLE_NAMES: {
+    'admin': 'Administrator',
+    'unit': 'Unit Member',
+    'user': 'Standard User'
+  },
+
+  ROLE_DESCRIPTIONS: {
+    'user': 'Requestor (User) - Submits requests',
+    'unit': 'Unit Member - Works on tasks',
+    'admin': 'Administrator - Full System Access'
+  },
+
+  updateCurrentRoleDisplay(role) {
+    const currentRoleDisplay = document.getElementById('currentRoleDisplay');
+    if (currentRoleDisplay) {
+      currentRoleDisplay.textContent = this.ROLE_NAMES[role] || this.ROLE_NAMES.user;
+    }
+  },
+
+  updateRoleDropdownDisplay(value) {
+    document.getElementById('editRole').value = value;
+    document.getElementById('selectedRoleText').textContent = this.ROLE_DESCRIPTIONS[value] || this.ROLE_DESCRIPTIONS.user;
+    this.updateCurrentRoleDisplay(value);
+    this.toggleUnitAssignmentDropdown(value);
+  },
+
+  toggleUnitAssignmentDropdown(role) {
+    const unitContainer = document.getElementById('unitAssignmentContainer');
+    if (unitContainer) {
+      unitContainer.style.display = role === 'unit' ? 'block' : 'none';
+      if (role !== 'unit') {
+        document.getElementById('editUnitTeam').value = 'N/A';
+      }
+    }
+  },
+
+  setupRoleFieldHighlighting() {
+    const roleField = document.getElementById('editRole');
+    if (roleField) {
+      roleField.addEventListener('change', () => this.updateRoleWarning(roleField.value));
+    }
+  },
+
+  updateRoleWarning(role) {
+    const warning = document.querySelector('.role-update-warning');
+    if (!warning) return;
+
+    const isAdmin = role === 'admin';
+    const backgroundColor = isAdmin ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)';
+    const borderColor = isAdmin ? '#ef4444' : '#f59e0b';
+    const textColor = isAdmin ? '#991b1b' : '#92400e';
+    const warningIcon = isAdmin ? 
+      '<svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.5rem; vertical-align: text-top;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      : '<svg width="16" height="16" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.5rem; vertical-align: text-top;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+    const warningText = isAdmin ?
+      '<strong>Critical:</strong> This user will gain FULL ADMINISTRATIVE ACCESS including the ability to manage all users, approve/reject requests, and access sensitive system functions.'
+      : '<strong>Important:</strong> This user will have standard access permissions for submitting and viewing their own requests only.';
+
+    warning.style.background = backgroundColor;
+    warning.style.borderLeftColor = borderColor;
+    warning.style.color = textColor;
+    warning.innerHTML = `${warningIcon}${warningText}`;
+  }
+};
+
+// Backward compatible functions
 function updateCurrentRoleDisplay(role) {
-  const currentRoleDisplay = document.getElementById('currentRoleDisplay');
-  if (currentRoleDisplay) {
-    const roleNames = {
-      'admin': 'Administrator',
-      'unit': 'Unit Member',
-      'user': 'Standard User'
-    };
-    currentRoleDisplay.textContent = roleNames[role] || 'Standard User';
-  }
-}
-
-function toggleCustomDropdown() {
-  const dropdown = document.getElementById('customDropdownOptions');
-  const selected = document.querySelector('.dropdown-selected');
-
-  if (dropdown.style.display === 'none' || dropdown.style.display === '') {
-    dropdown.style.display = 'block';
-    selected.classList.add('active');
-  } else {
-    dropdown.style.display = 'none';
-    selected.classList.remove('active');
-  }
+  RoleManager.updateCurrentRoleDisplay(role);
 }
 
 function selectCustomRole(value, text) {
-  document.getElementById('editRole').value = value;
-  document.getElementById('selectedRoleText').textContent = text;
+  RoleManager.updateRoleDropdownDisplay(value);
   document.getElementById('customDropdownOptions').style.display = 'none';
   document.querySelector('.dropdown-selected').classList.remove('active');
-  updateCurrentRoleDisplay(value);
-
-  // Show/hide unit team assignment dropdown based on role
-  const unitContainer = document.getElementById('unitAssignmentContainer');
-  if (value === 'unit') {
-    unitContainer.style.display = 'block';
-  } else {
-    unitContainer.style.display = 'none';
-    document.getElementById('editUnitTeam').value = 'N/A'; // Reset if role is not 'unit'
-  }
 
   const changeEvent = new Event('change');
   document.getElementById('editRole').dispatchEvent(changeEvent);
 }
 
 // ========================================
-// FORM SUBMISSION
+// USER UPDATE FORM HANDLER
 // ========================================
-document.getElementById('userUpdateForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-
-  const submitBtn = this.querySelector('button[type="submit"]');
-  const originalText = submitBtn.innerHTML;
-
-  // Show loading state
-  submitBtn.disabled = true;
-  submitBtn.classList.add('loading');
-
-  // Get role change information
-  const newRole = document.getElementById('editRole').value;
-  const userName = document.getElementById('viewFullName').textContent;
-  const userId = document.getElementById('editUserId').value;
-  const newUnitTeam = document.getElementById('editUnitTeam').value;
-
-  const requestData = {
-    userId: userId,
-    role: newRole,
-    unitTeam: newUnitTeam
-  };
-
-  fetch(this.action, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestData)
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+const UserFormHandler = {
+  setup() {
+    const form = document.getElementById('userUpdateForm');
+    if (form) {
+      form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
-    return response.json();
-  })
-  .then(data => {
-    if (data.success) {
-      // Reset button state
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('loading');
-      submitBtn.innerHTML = originalText;
+  },
 
-      // Update custom dropdown display with the new role
-      const roleTextMap = {
-        'user': 'Requestor (User) - Submits requests',
-        'unit': 'Unit Member - Works on tasks',
-        'admin': 'Administrator - Full System Access'
-      };
-      const roleText = roleTextMap[newRole] || roleTextMap['user'];
-      document.getElementById('selectedRoleText').textContent = roleText;
-      
-      // Update current role display
-      const roleNames = {
-        'admin': 'Administrator',
-        'unit': 'Unit Member',
-        'user': 'Standard User'
-      };
-      const currentRoleDisplay = document.getElementById('currentRoleDisplay');
-      if (currentRoleDisplay) {
-        currentRoleDisplay.textContent = roleNames[newRole] || 'Standard User';
+  async handleSubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    // Get form data
+    const newRole = document.getElementById('editRole').value;
+    const userName = document.getElementById('viewFullName').textContent;
+    const userId = document.getElementById('editUserId').value;
+    const newUnitTeam = document.getElementById('editUnitTeam').value;
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+
+    const requestData = { userId, role: newRole, unitTeam: newUnitTeam };
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Update the row in the grid
-      const currentRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
-      if (currentRow) {
-        currentRow.dataset.role = newRole;
-        currentRow.dataset.unitteam = newUnitTeam;
-        
-        // Update the role badge in the grid
-        const roleBadge = currentRow.querySelector('.role-badge');
-        if (roleBadge) {
-          // Remove old classes
-          roleBadge.classList.remove('role-admin', 'role-unit', 'role-user');
-          // Add new class
-          roleBadge.classList.add(`role-${newRole}`);
-          // Update text
-          let badgeText = newRole.toUpperCase();
-          if (newRole === 'unit' && newUnitTeam && newUnitTeam !== 'N/A') {
-            badgeText += ` - ${newUnitTeam}`;
-          }
-          roleBadge.textContent = badgeText;
+      const data = await response.json();
+
+      if (data.success) {
+        this.handleSuccess(userId, newRole, newUnitTeam, userName, submitBtn, originalText);
+      } else {
+        throw new Error(data.message || 'Update failed');
+      }
+    } catch (error) {
+      this.handleError(error, userName, submitBtn, originalText);
+    }
+  },
+
+  handleSuccess(userId, newRole, newUnitTeam, userName, submitBtn, originalText) {
+    // Reset button state
+    submitBtn.disabled = false;
+    submitBtn.classList.remove('loading');
+    submitBtn.innerHTML = originalText;
+
+    // Update UI
+    document.getElementById('selectedRoleText').textContent = RoleManager.ROLE_DESCRIPTIONS[newRole];
+    RoleManager.updateCurrentRoleDisplay(newRole);
+
+    // Update grid row
+    const currentRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
+    if (currentRow) {
+      currentRow.dataset.role = newRole;
+      currentRow.dataset.unitteam = newUnitTeam;
+
+      const roleBadge = currentRow.querySelector('.role-badge');
+      if (roleBadge) {
+        roleBadge.classList.remove('role-admin', 'role-unit', 'role-user');
+        roleBadge.classList.add(`role-${newRole}`);
+        let badgeText = newRole.toUpperCase();
+        if (newRole === 'unit' && newUnitTeam && newUnitTeam !== 'N/A') {
+          badgeText += ` - ${newUnitTeam}`;
         }
+        roleBadge.textContent = badgeText;
       }
-
-      // Show success toast
-      const unitInfo = (newRole === 'unit' && newUnitTeam && newUnitTeam !== 'N/A') 
-        ? ` (${newUnitTeam})` 
-        : '';
-      showToast('Success', `${userName}'s role updated to ${roleNames[newRole]}${unitInfo}`, 'success');
-
-      // Scroll to top of modal to see personal information
-      const modalBody = document.querySelector('.user-details-modal-body');
-      if (modalBody) {
-        modalBody.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    } else {
-      throw new Error(data.message || 'Update failed');
     }
-  })
-  .catch(error => {
+
+    // Show success toast
+    const unitInfo = (newRole === 'unit' && newUnitTeam && newUnitTeam !== 'N/A') ? ` (${newUnitTeam})` : '';
+    showToast('Success', `${userName}'s role updated to ${RoleManager.ROLE_NAMES[newRole]}${unitInfo}`, 'success');
+
+    // Scroll to top
+    const modalBody = document.querySelector('.user-details-modal-body');
+    if (modalBody) {
+      modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  },
+
+  handleError(error, userName, submitBtn, originalText) {
     console.error('Error:', error);
     showToast('Error', `Failed to update ${userName}'s role`, 'error');
     submitBtn.disabled = false;
     submitBtn.classList.remove('loading');
     submitBtn.innerHTML = originalText;
-  });
+  }
+};
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  UserFormHandler.setup();
+  RoleManager.setupRoleFieldHighlighting();
 });
 
 // ========================================
-// EVENT LISTENERS
+// HEADER DROPDOWN MANAGER
 // ========================================
-// Header Dropdown Manager
-const headerDropdown = {
+const HeaderDropdown = {
   menu: null,
   isOpen: false,
 
   init() {
     this.menu = document.getElementById("dropdownMenu");
+    this.setupEventListeners();
+  },
+
+  setupEventListeners() {
+    document.addEventListener("click", (e) => {
+      const toggle = document.querySelector(".dropdown-toggle");
+      if (!toggle?.contains(e.target)) {
+        this.close();
+      }
+
+      // Close custom role dropdown when clicking outside
+      const dropdown = document.getElementById('customRoleDropdown');
+      if (dropdown && !dropdown.contains(e.target)) {
+        document.getElementById('customDropdownOptions').style.display = 'none';
+        document.querySelector('.dropdown-selected').classList.remove('active');
+      }
+    });
   },
 
   toggle() {
-    if (this.isOpen) {
-      this.close();
-    } else {
-      this.open();
-    }
+    this.isOpen ? this.close() : this.open();
   },
 
   open() {
@@ -830,180 +1012,128 @@ const headerDropdown = {
   }
 };
 
+// Backward compatible function
 function toggleDropdown() {
-  if (!headerDropdown.menu) {
-    headerDropdown.init();
-  }
-  headerDropdown.toggle();
+  HeaderDropdown.init();
+  HeaderDropdown.toggle();
 }
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-  headerDropdown.init();
+  HeaderDropdown.init();
 });
 
-document.addEventListener("click", function (event) {
-  const toggle = document.querySelector(".dropdown-toggle");
-  const menu = document.getElementById("dropdownMenu");
-  if (!toggle.contains(event.target)) {
-    headerDropdown.close();
-  }
+// ========================================
+// SIDEBAR & MOBILE NAVIGATION MANAGER
+// ========================================
+const NavigationManager = {
+  sidebar: null,
+  menuToggle: null,
+  mobileOverlay: null,
+  touchStartX: 0,
+  touchEndX: 0,
+  SWIPE_THRESHOLD: 100,
 
-  // Close custom dropdown when clicking outside
-  const dropdown = document.getElementById('customRoleDropdown');
-  if (dropdown && !dropdown.contains(event.target)) {
-    document.getElementById('customDropdownOptions').style.display = 'none';
-    document.querySelector('.dropdown-selected').classList.remove('active');
-  }
-});
+  init() {
+    this.sidebar = document.getElementById('adminSidebar');
+    this.menuToggle = document.getElementById('adminMenuToggle');
+    this.mobileOverlay = document.getElementById('mobileOverlay');
 
-// Role field highlighting
-document.addEventListener('DOMContentLoaded', function() {
-  const roleField = document.getElementById('editRole');
-  if (roleField) {
-    roleField.addEventListener('change', function() {
-      const warning = document.querySelector('.role-update-warning');
-      if (this.value === 'admin') {
-        warning.style.background = 'rgba(239, 68, 68, 0.1)';
-        warning.style.borderLeftColor = '#ef4444';
-        warning.style.color = '#991b1b';
-        warning.innerHTML = `
-          <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.5rem; vertical-align: text-top;">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <strong>Critical:</strong> This user will gain FULL ADMINISTRATIVE ACCESS including the ability to manage all users, approve/reject requests, and access sensitive system functions.
-        `;
-      } else {
-        warning.style.background = 'rgba(245, 158, 11, 0.1)';
-        warning.style.borderLeftColor = '#f59e0b';
-        warning.style.color = '#92400e';
-        warning.innerHTML = `
-          <svg width="16" height="16" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.5rem; vertical-align: text-top;">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <strong>Important:</strong> This user will have standard access permissions for submitting and viewing their own requests only.
-        `;
-      }
-    });
-  }
-});
+    if (this.sidebar) {
+      // Sidebar hover effect
+      this.sidebar.addEventListener('mouseenter', () => this.sidebar.classList.add('expanded'));
+      this.sidebar.addEventListener('mouseleave', () => this.sidebar.classList.remove('expanded'));
+    }
 
-// Sidebar hover effect
-const sidebar = document.getElementById('adminSidebar');
-if (sidebar) {
-  sidebar.addEventListener('mouseenter', function() {
-    this.classList.add('expanded');
-  });
-  sidebar.addEventListener('mouseleave', function() {
-    this.classList.remove('expanded');
-  });
-}
+    this.setupMobileNavigation();
+    window.addEventListener('resize', () => this.handleResize(), { passive: true });
+    document.addEventListener('click', (e) => this.handleClickOutside(e));
+  },
 
-// Mobile hamburger menu toggle
-document.addEventListener('DOMContentLoaded', () => {
-  // Mobile Navigation Setup
-  const menuToggle = document.getElementById('adminMenuToggle');
-  const sidebarEl = document.getElementById('adminSidebar');
-  const mobileOverlay = document.getElementById('mobileOverlay');
-  let touchStartX = 0;
-  let touchEndX = 0;
-
-  // Initialize Mobile Navigation
-  function initMobileNavigation() {
-    if (menuToggle && sidebarEl && mobileOverlay) {
-      // Toggle menu on button click
-      menuToggle.addEventListener('click', (e) => {
+  setupMobileNavigation() {
+    if (this.menuToggle && this.sidebar && this.mobileOverlay) {
+      this.menuToggle.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleMobileMenu(true);
+        this.toggleMobileMenu(true);
       });
 
-      // Close menu when clicking overlay
-      mobileOverlay.addEventListener('click', () => {
-        toggleMobileMenu(false);
+      this.mobileOverlay.addEventListener('click', () => {
+        this.toggleMobileMenu(false);
       });
 
-      // Handle touch swipe gestures
-      sidebarEl.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
+      // Touch gestures
+      this.sidebar.addEventListener('touchstart', (e) => {
+        this.touchStartX = e.touches[0].clientX;
       }, { passive: true });
 
-      sidebarEl.addEventListener('touchmove', (e) => {
-        touchEndX = e.touches[0].clientX;
+      this.sidebar.addEventListener('touchmove', (e) => {
+        this.touchEndX = e.touches[0].clientX;
       }, { passive: true });
 
-      sidebarEl.addEventListener('touchend', () => {
-        handleSwipe();
+      this.sidebar.addEventListener('touchend', () => {
+        this.handleSwipe();
       });
 
-      // Handle escape key
+      // Escape key
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && sidebarEl.classList.contains('mobile-active')) {
-          toggleMobileMenu(false);
+        if (e.key === 'Escape' && this.sidebar.classList.contains('mobile-active')) {
+          this.toggleMobileMenu(false);
         }
       });
     }
-  }
+  },
 
-  // Toggle Mobile Menu
-  function toggleMobileMenu(show) {
+  toggleMobileMenu(show) {
     if (show) {
-      sidebarEl.classList.add('mobile-active');
-      mobileOverlay.classList.add('active');
+      this.sidebar.classList.add('mobile-active');
+      this.mobileOverlay.classList.add('active');
       document.body.style.overflow = 'hidden';
-
-      // Announce for screen readers
-      const announcement = document.createElement('div');
-      announcement.setAttribute('role', 'status');
-      announcement.setAttribute('aria-live', 'polite');
-      announcement.className = 'sr-only';
-      announcement.textContent = 'Navigation menu opened';
-      document.body.appendChild(announcement);
-      setTimeout(() => announcement.remove(), 1000);
+      this.announceMenuState('Navigation menu opened');
     } else {
-      sidebarEl.classList.remove('mobile-active');
-      mobileOverlay.classList.remove('active');
+      this.sidebar.classList.remove('mobile-active');
+      this.mobileOverlay.classList.remove('active');
       document.body.style.overflow = '';
     }
-  }
+  },
 
-  // Handle Swipe Gesture
-  function handleSwipe() {
-    const swipeDistance = touchEndX - touchStartX;
-    const threshold = 100; // Minimum swipe distance
+  announceMenuState(message) {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('role', 'status');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
+    document.body.appendChild(announcement);
+    setTimeout(() => announcement.remove(), 1000);
+  },
 
-    if (sidebarEl.classList.contains('mobile-active') && swipeDistance < -threshold) {
-      // Swipe left - close menu
-      toggleMobileMenu(false);
+  handleSwipe() {
+    const swipeDistance = this.touchEndX - this.touchStartX;
+    if (this.sidebar.classList.contains('mobile-active') && swipeDistance < -this.SWIPE_THRESHOLD) {
+      this.toggleMobileMenu(false);
     }
-  }
+  },
 
-  // Adjust sidebar visibility based on screen size
-  function handleResize() {
-    if (window.innerWidth > 768 && sidebarEl && mobileOverlay) {
-      // Reset mobile menu state on desktop
-      sidebarEl.classList.remove('mobile-active');
-      mobileOverlay.classList.remove('active');
+  handleResize() {
+    if (window.innerWidth > 768) {
+      this.sidebar.classList.remove('mobile-active');
+      this.mobileOverlay.classList.remove('active');
       document.body.style.overflow = '';
     }
-  }
+  },
 
-  // Initialize
-  initMobileNavigation();
-  window.addEventListener('resize', handleResize, { passive: true });
-
-  // Close sidebar when clicking outside
-  document.addEventListener('click', (e) => {
-    if (sidebarEl && sidebarEl.classList.contains('mobile-active')) {
-      if (!sidebarEl.contains(e.target) && menuToggle && !menuToggle.contains(e.target)) {
-        toggleMobileMenu(false);
+  handleClickOutside(e) {
+    if (this.sidebar && this.sidebar.classList.contains('mobile-active')) {
+      if (!this.sidebar.contains(e.target) && this.menuToggle && !this.menuToggle.contains(e.target)) {
+        this.toggleMobileMenu(false);
       }
     }
-  });
+  }
+};
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  NavigationManager.init();
 });
 
 // ========================================
@@ -1047,9 +1177,10 @@ document.addEventListener('DOMContentLoaded', function() {
     trashBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       console.log('🗑️  Trash button clicked - calling openTrashModal()');
       openTrashModal();
-    });
+    }, true); // Use capture phase to ensure this fires before other handlers
   } else {
     console.warn('⚠️  Trash button not found in DOM');
   }
@@ -1515,10 +1646,12 @@ async function openTrashModal() {
   const modal = document.getElementById('trashModal');
   const tableBody = document.getElementById('trashTableBody');
   const emptyState = document.getElementById('trashEmptyState');
+  const modalContent = modal ? modal.querySelector('.modal-content') : null;
 
-  console.log('🔍 Modal element:', modal);
-  console.log('🔍 Table body element:', tableBody);
-  console.log('🔍 Empty state element:', emptyState);
+  console.log('🔍 Modal element:', modal ? 'FOUND ✓' : 'NOT FOUND ✗');
+  console.log('🔍 Table body element:', tableBody ? 'FOUND ✓' : 'NOT FOUND ✗');
+  console.log('🔍 Empty state element:', emptyState ? 'FOUND ✓' : 'NOT FOUND ✗');
+  console.log('🔍 Modal content:', modalContent ? 'FOUND ✓' : 'NOT FOUND ✗');
 
   if (!modal) {
     console.error('❌ Trash modal not found');
@@ -1526,16 +1659,46 @@ async function openTrashModal() {
     return;
   }
 
+  // Force remove inline display none style
+  modal.removeAttribute('style');
+  
   // Show loading - display modal immediately
-  tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading deleted users...</td></tr>';
-  emptyState.style.display = 'none';
+  if (tableBody) {
+    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading deleted users...</td></tr>';
+  }
+  if (emptyState) {
+    emptyState.style.display = 'none';
+  }
 
-  // Display the modal
+  // Ensure modal content is visible
+  if (modalContent) {
+    modalContent.style.display = 'flex';
+    modalContent.style.visibility = 'visible';
+    modalContent.style.opacity = '1';
+    modalContent.style.zIndex = '10001';
+  }
+
+  // Display the modal with explicit z-index and flex - use !important to override any CSS
   modal.classList.add('show');
-  modal.style.display = 'flex';
+  modal.style.cssText = `
+    display: flex !important;
+    z-index: 10000 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    align-items: center !important;
+    justify-content: center !important;
+  `;
   document.body.style.overflow = 'hidden';
 
-  console.log('✅ Modal displayed');
+  console.log('✅ Modal displayed with explicit CSS and z-index 10000');
+  console.log('📊 Modal styles applied:', {
+    display: modal.style.display,
+    zIndex: modal.style.zIndex,
+    visibility: modal.style.visibility
+  });
 
   try {
     const response = await fetch('/api/admin/deleted-users', {
