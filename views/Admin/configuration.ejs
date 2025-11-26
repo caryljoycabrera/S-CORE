@@ -252,7 +252,6 @@
       padding: 2rem;
       background: #f9fafb;
       border-radius: 0.75rem;
-      border: 1px solid #e5e7eb;
     }
 
     .preview-section h3 {
@@ -260,8 +259,6 @@
       font-weight: 700;
       color: #1f2937;
       margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #d1d5db;
     }
 
     .preview-item {
@@ -852,6 +849,20 @@
             </div>
 
             <div class="form-group">
+              <label for="aboutMissionTitle">Mission Title</label>
+              <input
+                type="text"
+                id="aboutMissionTitle"
+                name="aboutMissionTitle"
+                value="<%= pageContent.aboutMissionTitle %>"
+                maxlength="50"
+                oninput="updateCharCount(this, 'aboutMissionTitleCount', 50)"
+              >
+              <div class="char-count" id="aboutMissionTitleCount"></div>
+              <p class="form-hint">Title for the mission section (e.g., "Our Mission")</p>
+            </div>
+
+            <div class="form-group">
               <label for="aboutMission">Mission Statement</label>
               <textarea
                 id="aboutMission"
@@ -861,6 +872,20 @@
                 oninput="updateCharCount(this, 'aboutMissionCount', 600)"
               ><%= pageContent.aboutMission %></textarea>
               <div class="char-count" id="aboutMissionCount"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="aboutVisionTitle">Vision Title</label>
+              <input
+                type="text"
+                id="aboutVisionTitle"
+                name="aboutVisionTitle"
+                value="<%= pageContent.aboutVisionTitle %>"
+                maxlength="50"
+                oninput="updateCharCount(this, 'aboutVisionTitleCount', 50)"
+              >
+              <div class="char-count" id="aboutVisionTitleCount"></div>
+              <p class="form-hint">Title for the vision section (e.g., "Our Vision")</p>
             </div>
 
             <div class="form-group">
@@ -1571,7 +1596,9 @@
         { id: 'pledge3Description', countId: 'pledge3DescriptionCount', max: 250 },
         { id: 'aboutSectionTitle', countId: 'aboutSectionTitleCount', max: 50 },
         { id: 'aboutSectionSubtitle', countId: 'aboutSectionSubtitleCount', max: 100 },
+        { id: 'aboutMissionTitle', countId: 'aboutMissionTitleCount', max: 50 },
         { id: 'aboutMission', countId: 'aboutMissionCount', max: 600 },
+        { id: 'aboutVisionTitle', countId: 'aboutVisionTitleCount', max: 50 },
         { id: 'aboutVision', countId: 'aboutVisionCount', max: 600 },
         { id: 'servicesSectionTitle', countId: 'servicesSectionTitleCount', max: 50 },
         { id: 'servicesSectionSubtitle', countId: 'servicesSectionSubtitleCount', max: 100 },
@@ -1656,7 +1683,9 @@
         pledgeSectionTitle: document.getElementById('pledgeSectionTitle')?.value || '',
         aboutSectionTitle: document.getElementById('aboutSectionTitle')?.value || '',
         aboutSectionSubtitle: document.getElementById('aboutSectionSubtitle')?.value || '',
+        aboutMissionTitle: document.getElementById('aboutMissionTitle')?.value || '',
         aboutMission: document.getElementById('aboutMission')?.value || '',
+        aboutVisionTitle: document.getElementById('aboutVisionTitle')?.value || '',
         aboutVision: document.getElementById('aboutVision')?.value || '',
         servicesSectionTitle: document.getElementById('servicesSectionTitle')?.value || '',
         servicesSectionSubtitle: document.getElementById('servicesSectionSubtitle')?.value || '',
@@ -1768,19 +1797,21 @@
               </div>
               <div class="preview-about-grid">
                 <div class="preview-about-content">
-                  <h3>Our Mission</h3>
+                  <h3>${content.aboutMissionTitle}</h3>
                   <p>${content.aboutMission}</p>
-                  <h3>Our Vision</h3>
+                  <h3>${content.aboutVisionTitle}</h3>
                   <p>${content.aboutVision}</p>
                 </div>
                 <div class="preview-about-visual">
-                  ${aboutFeatures.length > 0 ? aboutFeatures.map((feature, index) => `
-                    <div class="preview-feature-card" style="background: #e8f5e8; padding: 20px; border-radius: 15px; margin-bottom: 15px; text-align: center; transition: all 0.3s ease; border: 2px solid transparent;">
-                      <div class="preview-feature-icon" style="width: 40px; height: 40px; background: linear-gradient(135deg, #1a5d1a 0%, #2d7a2d 100%); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; margin-bottom: 10px;">${feature.icon || '📱'}</div>
-                      <h4 style="font-size: 1rem; color: #1a2e1a; margin-bottom: 8px;">${feature.title || 'Feature Title'}</h4>
-                      <p style="color: #4a5d4a; font-size: 0.9rem;">${feature.description || 'Feature description'}</p>
-                    </div>
-                  `).join('') : '<p style="color: #4a5d4a;">No features configured</p>'}
+                  <div class="preview-feature-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    ${aboutFeatures.length > 0 ? aboutFeatures.map((feature, index) => `
+                      <div class="preview-feature-card" style="background: #e8f5e8; padding: 20px; border-radius: 15px; text-align: center; transition: all 0.3s ease; border: 2px solid transparent;">
+                        <div class="preview-feature-icon" style="width: 40px; height: 40px; background: linear-gradient(135deg, #1a5d1a 0%, #2d7a2d 100%); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; margin-bottom: 10px;">${feature.icon || '📱'}</div>
+                        <h4 style="font-size: 1rem; color: #1a2e1a; margin-bottom: 8px;">${feature.title || 'Feature Title'}</h4>
+                        <p style="color: #4a5d4a; font-size: 0.9rem;">${feature.description || 'Feature description'}</p>
+                      </div>
+                    `).join('') : '<p style="color: #4a5d4a;">No features configured</p>'}
+                  </div>
                 </div>
               </div>
             </div>

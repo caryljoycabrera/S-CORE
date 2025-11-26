@@ -58,9 +58,17 @@ const pageSchema = new mongoose.Schema({
       type: String,
       default: 'Dedicated to excellence in institutional communication and community engagement'
     },
+    aboutMissionTitle: {
+      type: String,
+      default: 'Our Mission'
+    },
     aboutMission: {
       type: String,
       default: 'The Strategic Communications Office serves as the primary hub for institutional communication at De La Salle University-Dasmariñas. We identify the diverse information needs of different offices within our academic community and develop comprehensive communication strategies to meet those needs effectively.'
+    },
+    aboutVisionTitle: {
+      type: String,
+      default: 'Our Vision'
     },
     aboutVision: {
       type: String,
