@@ -11,6 +11,7 @@ const Notification = require('../models/Notification');
 const BroadcastMessage = require('../models/BroadcastMessage');
 const SystemSettings = require('../models/SystemSettings');
 const RequestType = require('../models/RequestType');
+const Page = require('../models/Page');
 const { requireAdmin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
@@ -1046,7 +1047,7 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
   try {
     const { type = 'all' } = req.query;
 
-    let archivedRequests = [];
+    let deletedRequests = [];
 
     // Fetch approvals if type is 'all' or 'Request Approval'
     if (type === 'all' || type === 'Request Approval') {
@@ -1062,7 +1063,7 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
         })
         .lean();
 
-      archivedRequests.push(...approvals.map(r => {
+      deletedRequests.push(...approvals.map(r => {
         let userName = 'System User';
         let displayOrganization = r.organization || 'N/A';
         let deletedByName = 'Unknown';
@@ -1105,7 +1106,7 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
         })
         .lean();
 
-      archivedRequests.push(...serviceRequests.map(r => {
+      deletedRequests.push(...serviceRequests.map(r => {
         let userName = 'System User';
         let displayOrganization = r.organization || 'N/A';
         let deletedByName = 'Unknown';
@@ -1135,11 +1136,11 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
     }
 
     // Sort by deleted date (most recent first)
-    archivedRequests.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+    deletedRequests.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
 
     res.json({
       success: true,
-      archivedRequests
+      deletedRequests
     });
   } catch (err) {
     console.error('Error fetching deleted requests:', err);
@@ -3785,6 +3786,229 @@ router.get('/admin/analytics/users', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error fetching user analytics:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/configuration
+ * Admin page configuration - edit homepage content
+ */
+router.get('/admin/configuration', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    
+    // Try to get homepage content from database
+    let pageContent = await Page.findOne({ slug: 'home' });
+    
+    // If no content exists in database, try to load from JSON file
+    if (!pageContent) {
+      try {
+        const dataPath = path.join(__dirname, '..', 'data', 'homepage.json');
+        if (fs.existsSync(dataPath)) {
+          const jsonData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+          pageContent = { content: jsonData };
+        }
+      } catch (jsonError) {
+        console.log('[ADMIN] No JSON fallback found, using defaults');
+      }
+    }
+    
+    // If still no content, create default content
+    if (!pageContent) {
+      pageContent = new Page({
+        slug: 'home',
+        title: 'Homepage',
+        content: {}
+      });
+      await pageContent.save();
+    }
+    
+    res.render('Admin/configuration', {
+      name: user.firstName,
+      user: user,
+      pageContent: pageContent.content || {},
+      success: req.query.success,
+      error: req.query.error
+    });
+  } catch (error) {
+    console.error('[ADMIN] Error loading configuration page:', error);
+    res.status(500).send('Error loading configuration page');
+  }
+});
+
+/**
+ * POST /admin/configuration
+ * Save homepage content updates
+ */
+router.post('/admin/configuration', requireAdmin, async (req, res) => {
+  try {
+    const {
+      heroTitle, heroTitleHighlight, heroSubtitle,
+      pledgeSectionTitle,
+      aboutSectionTitle, aboutSectionSubtitle,
+      aboutMission, aboutVision,
+      servicesSectionTitle, servicesSectionSubtitle,
+      teamSectionTitle, teamSectionSubtitle,
+      contactSectionTitle, contactIntroText,
+      socialSectionTitle,
+      footerTagline, footerText,
+      heroPrimaryButtonText, heroPrimaryButtonLink,
+      heroSecondaryButtonText, heroSecondaryButtonLink
+    } = req.body;
+    
+    // Handle array fields
+    const pledgeItems = [];
+    if (req.body.pledgeName && Array.isArray(req.body.pledgeName)) {
+      req.body.pledgeName.forEach((name, index) => {
+        if (name && req.body.pledgeDescription && req.body.pledgeDescription[index]) {
+          pledgeItems.push({
+            name: name,
+            description: req.body.pledgeDescription[index]
+          });
+        }
+      });
+    }
+    
+    const services = [];
+    if (req.body.serviceTitle && Array.isArray(req.body.serviceTitle)) {
+      req.body.serviceTitle.forEach((title, index) => {
+        if (title && req.body.serviceDescription && req.body.serviceDescription[index]) {
+          services.push({
+            title: title,
+            description: req.body.serviceDescription[index]
+          });
+        }
+      });
+    }
+    
+    const teamMembers = [];
+    if (req.body.teamName && Array.isArray(req.body.teamName)) {
+      req.body.teamName.forEach((name, index) => {
+        if (name && req.body.teamRole && req.body.teamRole[index] && req.body.teamEmail && req.body.teamEmail[index]) {
+          teamMembers.push({
+            name: name,
+            role: req.body.teamRole[index],
+            email: req.body.teamEmail[index]
+          });
+        }
+      });
+    }
+    
+    const contactCards = [];
+    if (req.body.contactIcon && Array.isArray(req.body.contactIcon)) {
+      req.body.contactIcon.forEach((icon, index) => {
+        if (icon && req.body.contactTitle && req.body.contactTitle[index] && req.body.contactDescription && req.body.contactDescription[index]) {
+          contactCards.push({
+            icon: icon,
+            title: req.body.contactTitle[index],
+            description: req.body.contactDescription[index],
+            contactInfo: req.body.contactInfo ? req.body.contactInfo[index] : '',
+            contactType: req.body.contactType ? req.body.contactType[index] : 'email'
+          });
+        }
+      });
+    }
+    
+    const socialMedia = [];
+    if (req.body.socialIcon && Array.isArray(req.body.socialIcon)) {
+      req.body.socialIcon.forEach((icon, index) => {
+        if (icon && req.body.socialTitle && req.body.socialTitle[index] && req.body.socialUrl && req.body.socialUrl[index]) {
+          socialMedia.push({
+            icon: icon,
+            title: req.body.socialTitle[index],
+            url: req.body.socialUrl[index]
+          });
+        }
+      });
+    }
+    
+    const footerLinks = [];
+    if (req.body.footerLinkText && Array.isArray(req.body.footerLinkText)) {
+      req.body.footerLinkText.forEach((text, index) => {
+        if (text && req.body.footerLinkUrl && req.body.footerLinkUrl[index]) {
+          footerLinks.push({
+            text: text,
+            url: req.body.footerLinkUrl[index]
+          });
+        }
+      });
+    }
+    
+    const aboutFeatures = [];
+    if (req.body.featureIcon && Array.isArray(req.body.featureIcon)) {
+      req.body.featureIcon.forEach((icon, index) => {
+        if (icon && req.body.featureTitle && req.body.featureTitle[index] && req.body.featureDescription && req.body.featureDescription[index]) {
+          aboutFeatures.push({
+            icon: icon,
+            title: req.body.featureTitle[index],
+            description: req.body.featureDescription[index]
+          });
+        }
+      });
+    }
+    
+    // Find or create the homepage document
+    let pageContent = await Page.findOne({ slug: 'home' });
+    
+    if (!pageContent) {
+      pageContent = new Page({
+        slug: 'home',
+        title: 'Homepage'
+      });
+    }
+    
+    // Update all content fields
+    pageContent.content = {
+      heroTitle: heroTitle || pageContent.content?.heroTitle,
+      heroTitleHighlight: heroTitleHighlight || pageContent.content?.heroTitleHighlight,
+      heroSubtitle: heroSubtitle || pageContent.content?.heroSubtitle,
+      pledgeSectionTitle: pledgeSectionTitle || pageContent.content?.pledgeSectionTitle,
+      pledgeItems: pledgeItems.length > 0 ? pledgeItems : pageContent.content?.pledgeItems || [],
+      aboutSectionTitle: aboutSectionTitle || pageContent.content?.aboutSectionTitle,
+      aboutSectionSubtitle: aboutSectionSubtitle || pageContent.content?.aboutSectionSubtitle,
+      aboutMission: aboutMission || pageContent.content?.aboutMission,
+      aboutVision: aboutVision || pageContent.content?.aboutVision,
+      aboutFeatures: aboutFeatures.length > 0 ? aboutFeatures : pageContent.content?.aboutFeatures || [],
+      servicesSectionTitle: servicesSectionTitle || pageContent.content?.servicesSectionTitle,
+      servicesSectionSubtitle: servicesSectionSubtitle || pageContent.content?.servicesSectionSubtitle,
+      services: services.length > 0 ? services : pageContent.content?.services || [],
+      teamSectionTitle: teamSectionTitle || pageContent.content?.teamSectionTitle,
+      teamSectionSubtitle: teamSectionSubtitle || pageContent.content?.teamSectionSubtitle,
+      teamMembers: teamMembers.length > 0 ? teamMembers : pageContent.content?.teamMembers || [],
+      contactSectionTitle: contactSectionTitle || pageContent.content?.contactSectionTitle,
+      contactIntroText: contactIntroText || pageContent.content?.contactIntroText,
+      contactCards: contactCards.length > 0 ? contactCards : pageContent.content?.contactCards || [],
+      socialSectionTitle: socialSectionTitle || pageContent.content?.socialSectionTitle,
+      socialMedia: socialMedia.length > 0 ? socialMedia : pageContent.content?.socialMedia || [],
+      footerTagline: footerTagline || pageContent.content?.footerTagline,
+      footerText: footerText || pageContent.content?.footerText,
+      footerLinks: footerLinks.length > 0 ? footerLinks : pageContent.content?.footerLinks || [],
+      heroPrimaryButtonText: heroPrimaryButtonText || pageContent.content?.heroPrimaryButtonText,
+      heroPrimaryButtonLink: heroPrimaryButtonLink || pageContent.content?.heroPrimaryButtonLink,
+      heroSecondaryButtonText: heroSecondaryButtonText || pageContent.content?.heroSecondaryButtonText,
+      heroSecondaryButtonLink: heroSecondaryButtonLink || pageContent.content?.heroSecondaryButtonLink
+    };
+    
+    pageContent.updatedBy = req.session.userId;
+    await pageContent.save();
+    
+    // Also save to JSON file as backup
+    try {
+      const dataDir = path.join(__dirname, '..', 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      
+      const dataPath = path.join(dataDir, 'homepage.json');
+      fs.writeFileSync(dataPath, JSON.stringify(pageContent.content, null, 2));
+    } catch (jsonError) {
+      console.error('[ADMIN] Failed to save JSON backup:', jsonError);
+    }
+    
+    res.redirect('/admin/configuration?success=Homepage content updated successfully');
+  } catch (error) {
+    console.error('[ADMIN] Error saving configuration:', error);
+    res.redirect('/admin/configuration?error=Failed to save homepage content');
   }
 });
 

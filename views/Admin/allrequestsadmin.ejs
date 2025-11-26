@@ -928,16 +928,16 @@
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
-          Move to Archive?
+          Delete Request?
         </h3>
         <button class="modal-close" onclick="closeDeleteConfirm()">✕</button>
       </div>
       <div class="confirmation-body">
-        <p>Are you sure you want to move this request to the archive?</p>
-        <p style="color: #6b7280; font-size: 13px; margin-top: 8px;">The request will be hidden from active views but can be restored from the Archive page.</p>
+        <p>Are you sure you want to delete this request?</p>
+        <p style="color: #6b7280; font-size: 13px; margin-top: 8px;">The request will be hidden from active views but can be restored from the Trash.</p>
         <div class="confirmation-actions" style="margin-top: 24px;">
           <button class="btn-cancel" onclick="closeDeleteConfirm()">Cancel</button>
-          <button class="btn-danger" onclick="confirmDelete()">Move to Archive</button>
+          <button class="btn-danger" onclick="openDeleteConfirm()">Delete Request</button>
         </div>
       </div>
     </div>
@@ -1823,7 +1823,7 @@ window.closeDeleteConfirm = function() {
 
 // Confirm delete
 window.confirmDelete = async function() {
-  if (!currentEditRequestId || !currentEditRequestType) {
+  if (!currentRequestId || !currentRequestType) {
     console.error('No request selected for deletion');
     return;
   }
@@ -1835,15 +1835,15 @@ window.confirmDelete = async function() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        requestId: currentEditRequestId,
-        requestType: currentEditRequestType
+        requestId: currentRequestId,
+        requestType: currentRequestType
       })
     });
     
     const data = await response.json();
     
     if (data.success) {
-      showNotification('Request moved to archive successfully!', 'success');
+      showNotification('Request deleted successfully!', 'success');
       closeDeleteConfirm();
       
       // Close the details modal and reload page
@@ -1855,6 +1855,24 @@ window.confirmDelete = async function() {
   } catch (error) {
     console.error('Error deleting request:', error);
     showNotification('An error occurred while deleting the request', 'error');
+  }
+};
+
+// Open delete confirm modal
+window.openDeleteConfirm = function() {
+  const modal = document.getElementById('deleteConfirmModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('show');
+  }
+};
+
+// Close delete confirm modal
+window.closeDeleteConfirm = function() {
+  const modal = document.getElementById('deleteConfirmModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('show');
   }
 };
 
@@ -1961,8 +1979,8 @@ async function openTrashModal() {
     const data = await response.json();
 
     if (data.success) {
-      if (data.archivedRequests.length > 0) {
-        tableBody.innerHTML = data.archivedRequests.map(request => `
+      if (data.deletedRequests.length > 0) {
+        tableBody.innerHTML = data.deletedRequests.map(request => `
           <tr class="trash-request-row" 
               data-request-id="${request._id}" 
               data-request-type="${request.type}">

@@ -1,0 +1,184 @@
+{
+  "heroTitle": "Empowering Communication,",
+  "heroTitleHighlight": "Building Connections",
+  "heroSubtitle": "The Strategic Communications Office identifies the information needs of the different offices of the academic community and develops appropriate communication strategies to meet those needs. It produces institutional information materials, establishes linkages with the mass media and formulates marketing strategies that create an accurate image of the University.",
+  "pledgeSectionTitle": "Our Pledge",
+  "pledgeItems": [
+    {
+      "name": "Creativity",
+      "description": "To bring out the best of the community through projects of high aesthetic quality",
+      "_id": "692634ea11cceee9f37e720f"
+    },
+    {
+      "name": "Efficiency",
+      "description": "To operate resourcefully and accurately in upholding the image of the university",
+      "_id": "692634ea11cceee9f37e7210"
+    },
+    {
+      "name": "Dedication",
+      "description": "To commit ourselves in fulfilling the communication needs of the institution",
+      "_id": "692634ea11cceee9f37e7211"
+    }
+  ],
+  "aboutSectionTitle": "About Our Office",
+  "aboutSectionSubtitle": "Dedicated to excellence in institutional communication and community engagement",
+  "aboutMission": "The Strategic Communications Office serves as the primary hub for institutional communication at De La Salle University-Dasmariñas. We identify the diverse information needs of different offices within our academic community and develop comprehensive communication strategies to meet those needs effectively.",
+  "aboutVision": "Through innovative approaches and creative solutions, we produce high-quality institutional information materials, establish meaningful linkages with mass media, and formulate strategic marketing initiatives that accurately represent our University's values and achievements.",
+  "contactSectionTitle": "Contact Us",
+  "contactIntroText": "Let us know if you have concerns.",
+  "contactCards": [
+    {
+      "icon": "📧",
+      "title": "Email Us",
+      "description": "Get in touch with our team for inquiries, collaboration opportunities, or communication support.",
+      "contactInfo": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7212"
+    },
+    {
+      "icon": "📞",
+      "title": "Call Us",
+      "description": "Speak directly with us for immediate assistance and consultation.",
+      "contactInfo": "(046) 481-1900 local 3031",
+      "_id": "692634ea11cceee9f37e7213"
+    },
+    {
+      "icon": "📍",
+      "title": "Visit Us",
+      "description": "Meet us in person at our office for detailed discussions and strategic planning sessions.",
+      "contactInfo": "2nd Floor, Ayuntamiento De Gonzalez Building\r\nDLSU-Dasmariñas, Cavite",
+      "_id": "692634ea11cceee9f37e7214"
+    },
+    {
+      "icon": "🕒",
+      "title": "Office Hours",
+      "description": "We're available during regular business hours to serve you better.",
+      "contactInfo": "Monday - Friday: 8:00 AM - 5:00 PM",
+      "_id": "692634ea11cceee9f37e7215"
+    }
+  ],
+  "socialSectionTitle": "Follow Us on Social Media",
+  "socialMedia": [
+    {
+      "icon": "f",
+      "url": "https://facebook.com/DLSU.Dasmarinas",
+      "title": "Facebook",
+      "_id": "692634ea11cceee9f37e7216"
+    },
+    {
+      "icon": "f",
+      "url": "https://facebook.com/dlsudsco",
+      "title": "Facebook",
+      "_id": "692634ea11cceee9f37e7217"
+    },
+    {
+      "icon": "▶",
+      "url": "https://youtube.com/@DLSUDasmaOfficial",
+      "title": "YouTube",
+      "_id": "692634ea11cceee9f37e7218"
+    }
+  ],
+  "heroPrimaryButtonText": "Connect With Us",
+  "heroPrimaryButtonLink": "#contact",
+  "heroSecondaryButtonText": "Learn More",
+  "heroSecondaryButtonLink": "#about",
+  "servicesSectionTitle": "Our Services",
+  "servicesSectionSubtitle": "Comprehensive communication solutions tailored to the needs of the institution",
+  "services": [
+    {
+      "title": "Content Creation & Strategy",
+      "description": "We develop compelling content strategies and create high-quality materials including brochures, newsletters, digital content, and multimedia presentations that effectively communicate the university's message to target audiences.",
+      "_id": "692634ea11cceee9f37e7219"
+    },
+    {
+      "title": "Media Relations & Outreach",
+      "description": "Building and maintaining strong relationships with media outlets, managing press releases, coordinating interviews, and ensuring positive coverage of university events and achievements.",
+      "_id": "692634ea11cceee9f37e721a"
+    },
+    {
+      "title": "Digital Marketing & Social Media",
+      "description": "Comprehensive digital marketing strategies including social media management, website content, online campaigns, and digital advertising to enhance the university's online presence.",
+      "_id": "692634ea11cceee9f37e721b"
+    },
+    {
+      "title": "Brand Management & Design",
+      "description": "Ensuring consistent brand representation across all communication materials, developing visual identity guidelines, and creating professional designs that uphold the university's image.",
+      "_id": "692634ea11cceee9f37e721c"
+    },
+    {
+      "title": "Event Communication",
+      "description": "Complete communication support for university events including promotional materials, media coverage coordination, live event documentation, and post-event reporting.",
+      "_id": "692634ea11cceee9f37e721d"
+    },
+    {
+      "title": "Crisis Communication",
+      "description": "Strategic communication planning for sensitive situations, reputation management, and coordinated response strategies to maintain the university's positive image during challenging times.",
+      "_id": "692634ea11cceee9f37e721e"
+    }
+  ],
+  "teamSectionTitle": "Meet Our Team",
+  "teamSectionSubtitle": "Dedicated professionals committed to excellence in communication",
+  "teamMembers": [
+    {
+      "name": "Wynne Angelyne O. Chui, MDMG",
+      "role": "SCO Director",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e721f"
+    },
+    {
+      "name": "Ma. Carmila R. Ferrer",
+      "role": "Institutional Secretary",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7220"
+    },
+    {
+      "name": "Amvher A. Pamaran",
+      "role": "Social Media Manager",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7221"
+    },
+    {
+      "name": "Jacquelyn M. Torres",
+      "role": "Public Relations Officer",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7222"
+    },
+    {
+      "name": "Christopher John B. Catapang",
+      "role": "Graphics/Design and Layout Artist",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7223"
+    },
+    {
+      "name": "Zildjian Malachi M. Periodico",
+      "role": "Graphics/Design and Layout Artist",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7224"
+    },
+    {
+      "name": "Joseph Neil P. Romerosa",
+      "role": "Multimedia Artist",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7225"
+    },
+    {
+      "name": "Evie Rose C. San Jose",
+      "role": "Multimedia Artist",
+      "email": "sco@dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7226"
+    }
+  ],
+  "footerTagline": "Committed to Excellence in Communication | Building Stronger Communities",
+  "footerText": "Strategic Communications Office, De La Salle University-Dasmariñas",
+  "footerLinks": [
+    {
+      "text": "DLSU-D Main Site",
+      "url": "https://dlsud.edu.ph",
+      "_id": "692634ea11cceee9f37e7227"
+    },
+    {
+      "text": "Privacy Policy",
+      "url": "#",
+      "_id": "692634ea11cceee9f37e7228"
+    }
+  ]
+}

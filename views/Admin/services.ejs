@@ -1114,8 +1114,8 @@ async function openTrashModal() {
     const data = await response.json();
 
     if (data.success) {
-      if (data.archivedRequests.length > 0) {
-        tableBody.innerHTML = data.archivedRequests.map(request => `
+      if (data.deletedRequests.length > 0) {
+        tableBody.innerHTML = data.deletedRequests.map(request => `
           <tr class="trash-request-row" 
               data-request-id="${request._id}" 
               data-request-type="${request.type}">

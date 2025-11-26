@@ -7,6 +7,7 @@ const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
+const Page = require('../models/Page');
 const { requireLogin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
@@ -58,13 +59,40 @@ function getAutoAssignedUnit(specificRequestType) {
  * Homepage route - serves the public homepage with SCO information
  * If user is logged in, redirects to dashboard
  */
-router.get('/', (req, res) => {
-  if (req.session.userId) {
-    // If user is logged in, redirect to their dashboard
-    return res.redirect('/dashboard');
+router.get('/', async (req, res) => {
+  try {
+    if (req.session.userId) {
+      // If user is logged in, redirect to their dashboard
+      return res.redirect('/dashboard');
+    }
+    
+    // Try to get homepage content from database
+    let pageContent = await Page.findOne({ slug: 'home' });
+    
+    // If no content exists in database, try to load from JSON file
+    if (!pageContent) {
+      try {
+        const dataPath = path.join(__dirname, '..', 'data', 'homepage.json');
+        if (fs.existsSync(dataPath)) {
+          const jsonData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+          pageContent = { content: jsonData };
+          console.log('[HOMEPAGE] Loaded content from JSON fallback');
+        }
+      } catch (jsonError) {
+        console.log('[HOMEPAGE] No JSON fallback found, using defaults');
+      }
+    }
+    
+    // If still no content, use empty object (homepage will use defaults)
+    const content = pageContent?.content || {};
+    
+    // If not logged in, show the public homepage with content
+    res.render('homepage', { content });
+  } catch (error) {
+    console.error('[HOMEPAGE] Error loading homepage:', error);
+    // Render with empty content on error
+    res.render('homepage', { content: {} });
   }
-  // If not logged in, show the public homepage
-  res.render('homepage');
 });
 
 /**

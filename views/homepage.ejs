@@ -61,32 +61,26 @@
   <section class="hero" id="home">
     <div class="hero-container">
       <div class="hero-content fade-in">
-        <h1>Empowering Communication, <span class="hero-highlight">Building Connections</span></h1>
-        <p>The Strategic Communications Office identifies the information needs of the different offices of the academic community and develops appropriate communication strategies to meet those needs. It produces institutional information materials, establishes linkages with the mass media and formulates marketing strategies that create an accurate image of the University.</p>
+        <h1><%= content.heroTitle %> <span class="hero-highlight"><%= content.heroTitleHighlight %></span></h1>
+        <p><%= content.heroSubtitle %></p>
         <div class="hero-buttons">
-          <a href="#contact" class="btn-primary">
-            Connect With Us →
+          <a href="<%= content.heroPrimaryButtonLink %>" class="btn-primary">
+            <%= content.heroPrimaryButtonText %> →
           </a>
-          <a href="#about" class="btn-secondary">
-            Learn More →
+          <a href="<%= content.heroSecondaryButtonLink %>" class="btn-secondary">
+            <%= content.heroSecondaryButtonText %> →
           </a>
         </div>
       </div>
       <div class="hero-visual fade-in">
         <div class="hero-card">
-          <h3 class="pledge-title">Our SCO Pledge</h3>
+          <h3 class="pledge-title"><%= content.pledgeSectionTitle %></h3>
+          <% content.pledgeItems.forEach(item => { %>
           <div class="pledge-item">
-            <h4>Creativity</h4>
-            <p>To bring out the best of the community through projects of high aesthetic quality</p>
+            <h4><%= item.name %></h4>
+            <p><%= item.description %></p>
           </div>
-          <div class="pledge-item">
-            <h4>Efficiency</h4>
-            <p>To operate resourcefully and accurately in upholding the image of the University</p>
-          </div>
-          <div class="pledge-item">
-            <h4>Dedication</h4>
-            <p>To commit ourselves in fulfilling the communication needs of the Institution</p>
-          </div>
+          <% }); %>
         </div>
       </div>
     </div>
@@ -95,37 +89,24 @@
   <section class="about-section" id="about">
     <div class="section-container">
       <div class="section-header fade-in">
-        <h2 class="section-title">About Our Office</h2>
-        <p class="section-subtitle">Dedicated to excellence in institutional communication and community engagement</p>
+        <h2 class="section-title"><%= content.aboutSectionTitle || 'About Our Office' %></h2>
+        <p class="section-subtitle"><%= content.aboutSectionSubtitle || 'Strategic Communications Office' %></p>
       </div>
       <div class="about-grid">
         <div class="about-content fade-in">
           <h3>Our Mission</h3>
-          <p>The Strategic Communications Office serves as the primary hub for institutional communication at De La Salle University-Dasmariñas. We identify the diverse information needs of different offices within our academic community and develop comprehensive communication strategies to meet those needs effectively.</p>
-          <p>Through innovative approaches and creative solutions, we produce high-quality institutional information materials, establish meaningful linkages with mass media, and formulate strategic marketing initiatives that accurately represent our University's values and achievements.</p>
+          <p><%= content.aboutMission %></p>
+          <p><%= content.aboutVision %></p>
         </div>
         <div class="about-visual fade-in">
           <div class="feature-grid">
+            <% content.aboutFeatures.forEach(feature => { %>
             <div class="feature-card">
-              <div class="feature-icon">📱</div>
-              <h4>Digital Excellence</h4>
-              <p>Leveraging cutting-edge digital platforms for maximum reach and engagement</p>
+              <div class="feature-icon"><%= feature.icon %></div>
+              <h4><%= feature.title %></h4>
+              <p><%= feature.description %></p>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon">🎨</div>
-              <h4>Creative Design</h4>
-              <p>Producing visually stunning materials that reflect our institution's prestige</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">📊</div>
-              <h4>Strategic Planning</h4>
-              <p>Data-driven communication strategies for measurable impact</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">🤝</div>
-              <h4>Community Focus</h4>
-              <p>Building stronger connections within our academic community</p>
-            </div>
+            <% }); %>
           </div>
         </div>
       </div>
@@ -135,40 +116,17 @@
   <section class="services-section" id="services">
     <div class="section-container">
       <div class="section-header fade-in">
-        <h2 class="section-title">Our Services</h2>
-        <p class="section-subtitle">Comprehensive communication solutions tailored to the needs of the institution</p>
+        <h2 class="section-title"><%= content.servicesSectionTitle %></h2>
+        <p class="section-subtitle"><%= content.servicesSectionSubtitle %></p>
       </div>
       <div class="services-grid">
+        <% content.services.forEach((service, index) => { %>
         <div class="service-card fade-in">
-          <span class="service-number">01</span>
-          <h3>Content Creation & Strategy</h3>
-          <p>We develop compelling content strategies and create high-quality materials including brochures, newsletters, digital content, and multimedia presentations that effectively communicate the university's message to target audiences.</p>
+          <span class="service-number"><%= String(index + 1).padStart(2, '0') %></span>
+          <h3><%= service.title %></h3>
+          <p><%= service.description %></p>
         </div>
-        <div class="service-card fade-in">
-          <span class="service-number">02</span>
-          <h3>Media Relations & Outreach</h3>
-          <p>Building and maintaining strong relationships with media outlets, managing press releases, coordinating interviews, and ensuring positive coverage of university events and achievements.</p>
-        </div>
-        <div class="service-card fade-in">
-          <span class="service-number">03</span>
-          <h3>Digital Marketing & Social Media</h3>
-          <p>Comprehensive digital marketing strategies including social media management, website content, online campaigns, and digital advertising to enhance the university's online presence.</p>
-        </div>
-        <div class="service-card fade-in">
-          <span class="service-number">04</span>
-          <h3>Brand Management & Design</h3>
-          <p>Ensuring consistent brand representation across all communication materials, developing visual identity guidelines, and creating professional designs that uphold the university's image.</p>
-        </div>
-        <div class="service-card fade-in">
-          <span class="service-number">05</span>
-          <h3>Event Communication</h3>
-          <p>Complete communication support for university events including promotional materials, media coverage coordination, live event documentation, and post-event reporting.</p>
-        </div>
-        <div class="service-card fade-in">
-          <span class="service-number">06</span>
-          <h3>Crisis Communication</h3>
-          <p>Strategic communication planning for sensitive situations, reputation management, and coordinated response strategies to maintain the university's positive image during challenging times.</p>
-        </div>
+        <% }); %>
       </div>
     </div>
   </section>
@@ -176,82 +134,21 @@
   <section class="team-section" id="team">
     <div class="section-container">
       <div class="section-header fade-in">
-        <h2 class="section-title">Meet Our Team</h2>
-        <p class="section-subtitle">Dedicated professionals committed to excellence in communication</p>
+        <h2 class="section-title"><%= content.teamSectionTitle %></h2>
+        <p class="section-subtitle"><%= content.teamSectionSubtitle %></p>
       </div>
       <div class="team-grid">
+        <% content.teamMembers.forEach(member => { %>
         <div class="team-card fade-in">
           <div class="team-info">
-            <h4>Wynne Angelyne O. Chui, MDMG</h4>
-            <div class="team-role">SCO Director</div>
+            <h4><%= member.name %></h4>
+            <div class="team-role"><%= member.role %></div>
             <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:scodirector@dlsud.edu.ph">scodirector@dlsud.edu.ph</a></p>
+              <p><strong>Email:</strong> <a href="mailto:<%= member.email %>"><%= member.email %></a></p>
             </div>
           </div>
         </div>
-        <div class="team-card fade-in">
-          <div class="team-info">
-            <h4>Ma. Carmila R. Ferrer</h4>
-            <div class="team-role">Institutional Secretary</div>
-            <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:scosecretary@dlsud.edu.ph">scosecretary@dlsud.edu.ph</a></p>
-            </div>
-          </div>
-        </div>
-        <div class="team-card fade-in">
-          <div class="team-info">
-            <h4>Amvher A. Pamaran</h4>
-            <div class="team-role">Social Media Manager</div>
-            <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:"></a></p>
-            </div>
-          </div>
-        </div>
-        <div class="team-card fade-in">
-          <div class="team-info">
-            <h4>Jacquelyn M. Torres</h4>
-            <div class="team-role">Public Relations Officer</div>
-            <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:"></a></p>
-            </div>
-          </div>
-        </div>
-        <div class="team-card fade-in">
-          <div class="team-info">
-            <h4>Christopher John B. Catapang</h4>
-            <div class="team-role">Graphics/Design and Layout Artist</div>
-            <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:"></a></p>
-            </div>
-          </div>
-        </div>
-        <div class="team-card fade-in">
-          <div class="team-info">
-            <h4>Zildjian Malachi M. Periodico</h4>
-            <div class="team-role">Graphics/Design and Layout Artist</div>
-            <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:"></a></p>
-            </div>
-          </div>
-        </div>
-        <div class="team-card fade-in">
-          <div class="team-info">
-            <h4>Joseph Neil P. Romerosa</h4>
-            <div class="team-role">Multimedia Artist</div>
-            <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:"></a></p>
-            </div>
-          </div>
-        </div>
-        <div class="team-card fade-in">
-          <div class="team-info">
-            <h4>Evie Rose C. San Jose</h4>
-            <div class="team-role">Multimedia Artist</div>
-            <div class="team-contact">
-              <p><strong>Email:</strong> <a href="mailto:"></a></p>
-            </div>
-          </div>
-        </div>
+        <% }); %>
       </div>
     </div>
   </section>
@@ -259,45 +156,33 @@
   <section class="contact-section" id="contact">
     <div class="section-container">
       <div class="contact-content fade-in">
-        <h2>Contact Us</h2>
-        <p class="intro-text">Let us know if you have concerns.</p>
+        <h2><%= content.contactSectionTitle %></h2>
+        <p class="intro-text"><%= content.contactIntroText %></p>
         
         <div class="contact-cards">
+        <% content.contactCards.forEach(card => { %>
           <div class="contact-card fade-in">
-            <div class="contact-card-icon">📧</div>
-            <h3>Email Us</h3>
-            <p>Get in touch with our team for inquiries, collaboration opportunities, or communication support.</p>
-            <a href="mailto:sco@dlsud.edu.ph">sco@dlsud.edu.ph</a>
+            <div class="contact-card-icon"><%= card.icon %></div>
+            <h3><%= card.title %></h3>
+            <p><%= card.description %></p>
+            <p style="white-space: pre-line;"><strong style="color: #FFD700;"><%= card.contactInfo %></strong></p>
           </div>
-          
-          <div class="contact-card fade-in">
-            <div class="contact-card-icon">📞</div>
-            <h3>Call Us</h3>
-            <p>Speak directly with us for immediate assistance and consultation.</p>
-            <a href="tel:+6346481190">(046) 481-1900 local 3031</a>
-          </div>
-          
-          <div class="contact-card fade-in">
-            <div class="contact-card-icon">📍</div>
-            <h3>Visit Us</h3>
-            <p>Meet us in person at our office for detailed discussions and strategic planning sessions.</p>
-            <p>2nd Floor, Ayuntamiento De Gonzalez Building<br>DLSU-Dasmariñas, Cavite</p>
-          </div>
-          
-          <div class="contact-card fade-in">
-            <div class="contact-card-icon">⏰</div>
-            <h3>Office Hours</h3>
-            <p>We're available during regular business hours to serve you better.</p>
-            <p><strong>Monday - Friday:</strong> 8:00 AM - 5:00 PM</p>
-          </div>
+          <% }); %>
         </div>
 
         <div class="social-section fade-in">
-          <h3>Follow Us on Social Media</h3>
+          <h3><%= content.socialSectionTitle %></h3>
           <div class="social-links">
-            <a href="https://facebook.com/DLSU.Dasmarinas" target="_blank" class="social-link" title="Facebook">f</a>
-            <a href="https://facebook.com/dlsudsco" target="_blank" class="social-link" title="Facebook">f</a>
-            <a href="https://youtube.com/@DLSUDasmaOfficial" target="_blank" class="social-link" title="YouTube">▶</a>
+            <% if (content.socialMedia && content.socialMedia.length > 0) { %>
+              <% content.socialMedia.forEach(function(social) { %>
+                <a href="<%= social.url %>" target="_blank" class="social-link" title="<%= social.title %>"><%= social.icon %></a>
+              <% }); %>
+            <% } else { %>
+              <!-- Fallback for old data structure -->
+              <a href="<%= content.socialFacebookMain || 'https://facebook.com/DLSU.Dasmarinas' %>" target="_blank" class="social-link" title="Facebook">f</a>
+              <a href="<%= content.socialFacebookSCO || 'https://facebook.com/dlsudsco' %>" target="_blank" class="social-link" title="Facebook">f</a>
+              <a href="<%= content.socialYoutube || 'https://youtube.com/@DLSUDasmaOfficial' %>" target="_blank" class="social-link" title="YouTube">▶</a>
+            <% } %>
           </div>
         </div>
       </div>
@@ -306,11 +191,17 @@
 
   <footer class="footer">
     <div class="footer-content">
-      <div class="footer-links">
-        <a href="https://dlsud.edu.ph" target="_blank">DLSU-D Main Site</a>
+      <div class="footer-tagline">
+        <%= content.footerTagline %>
       </div>
-      <p>&copy; <span id="currentYear"></span> Strategic Communications Office, De La Salle University-Dasmariñas</p>
-      <p>Committed to Excellence in Communication | Building Stronger Communities</p>
+      <div class="footer-links">
+        <% content.footerLinks.forEach(function(link) { %>
+          <a href="<%= link.url %>"><%= link.text %></a>
+        <% }); %>
+      </div>
+      <div class="footer-copyright">
+        <p>&copy; <%= new Date().getFullYear() %> <%= content.footerText %>. All rights reserved.</p>
+      </div>
     </div>
   </footer>
 
