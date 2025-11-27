@@ -220,7 +220,7 @@
                   <input type="text" id="cysFilter" class="filter-input" placeholder="Search CYS...">
                 </div>
                 <div class="filter-item">
-                  <label for="roleFilter" class="filter-sublabel">Role</label>
+                  <label class="filter-sublabel">Role</label>
                   <div class="enhanced-multi-select-wrapper">
                     <div class="enhanced-multi-select" id="roleFilter">
                       <div class="select-display" data-placeholder="Select Roles">
@@ -238,7 +238,7 @@
               <!-- Third Row: Office/Department and Student Organization ONLY - with dropdown-row class -->
               <div class="filter-controls dropdown-row">
                 <div class="filter-item">
-                  <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
+                  <label class="filter-sublabel">Student Organization</label>
                   <div class="enhanced-multi-select-wrapper">
                     <div class="enhanced-multi-select" id="studentOrgFilter">
                       <div class="select-display" data-placeholder="Select Student Organizations">
@@ -247,7 +247,7 @@
                       </div>
                       <div class="select-dropdown" id="studentOrgDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search organizations...">
+                          <input type="text" id="studentOrgSearch" class="search-input" placeholder="Search organizations..." aria-label="Search student organizations">
                         </div>
                         <div class="options-container"></div>
                       </div>
@@ -255,7 +255,7 @@
                   </div>
                 </div>
                 <div class="filter-item">
-                  <label for="affiliationFilter" class="filter-sublabel">Office/Department</label>
+                  <label class="filter-sublabel">Office/Department</label>
                   <div class="enhanced-multi-select-wrapper">
                     <div class="enhanced-multi-select" id="affiliationFilter">
                       <div class="select-display" data-placeholder="Select Offices/Departments">
@@ -264,7 +264,7 @@
                       </div>
                       <div class="select-dropdown" id="affiliationDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search offices/departments...">
+                          <input type="text" id="affiliationSearch" class="search-input" placeholder="Search offices/departments..." aria-label="Search offices/departments">
                         </div>
                         <div class="options-container"></div>
                       </div>
@@ -557,28 +557,58 @@
                   </div>
                   
                   <div class="dropdown-options" id="customDropdownOptions" style="display: none;">
-                    <div class="dropdown-option" data-value="user" onclick="selectCustomRole('user', 'Requestor (User) - Submits requests')">
-                      <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                      </svg>
-                      <span>Requestor (User) - Submits requests</span>
-                    </div>
-                    <div class="dropdown-option" data-value="unit" onclick="selectCustomRole('unit', 'Unit Member - Works on tasks')">
-                      <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                      </svg>
-                      <span>Unit Member - Works on tasks</span>
-                    </div>
-                    <div class="dropdown-option" data-value="admin" onclick="selectCustomRole('admin', 'Administrator - Full System Access')">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                      </svg>
-                      <span>Administrator - Full System Access</span>
-                    </div>
+                    <% if (typeof userRoles !== 'undefined' && userRoles.length > 0) { %>
+                      <% userRoles.forEach(role => { %>
+                        <% const roleName = typeof role === 'string' ? role : role.name; %>
+                        <% const rolePerms = typeof role === 'string' ? [] : (role.permissions || []); %>
+                        <% const displayText = roleName; %>
+                        <% const value = rolePerms.includes('admin') ? 'admin' : (rolePerms.includes('unit') ? 'unit' : 'user'); %>
+                        <div class="dropdown-option" data-value="<%= value %>" onclick="selectCustomRole('<%= value %>', '<%= displayText %>')">
+                          <% if (value === 'user') { %>
+                            <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                              <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                          <% } else if (value === 'unit') { %>
+                            <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="9" cy="7" r="4"></circle>
+                              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                          <% } else if (value === 'admin') { %>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
+                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                            </svg>
+                          <% } %>
+                          <span><%= displayText %></span>
+                        </div>
+                      <% }) %>
+                    <% } else { %>
+                      <!-- Fallback to hardcoded if not loaded -->
+                      <div class="dropdown-option" data-value="user" onclick="selectCustomRole('user', 'Requestor (User) - Submits requests')">
+                        <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <span>Requestor (User) - Submits requests</span>
+                      </div>
+                      <div class="dropdown-option" data-value="unit" onclick="selectCustomRole('unit', 'Unit Member - Works on tasks')">
+                        <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Unit Member - Works on tasks</span>
+                      </div>
+                      <div class="dropdown-option" data-value="admin" onclick="selectCustomRole('admin', 'Administrator - Full System Access')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
+                          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                        </svg>
+                        <span>Administrator - Full System Access</span>
+                      </div>
+                    <% } %>
                   </div>
           
           <input type="hidden" name="role" id="editRole" value="user">
@@ -791,7 +821,10 @@
 
 
 <!-- Shared Data Arrays -->
-<script src="/javascripts/shared-data.js"></script>
+<script>
+  const userRolesData = <%- JSON.stringify(userRoles || []) %>;
+  const unitsData = <%- JSON.stringify(units || []) %>;
+</script>
 
 <!-- External JavaScript File -->
 <script src="/javascripts/ejs/users.js"></script>

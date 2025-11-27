@@ -1115,10 +1115,12 @@ const NavigationManager = {
   },
 
   handleResize() {
-    if (window.innerWidth > 768) {
-      this.sidebar.classList.remove('mobile-active');
-      this.mobileOverlay.classList.remove('active');
-      document.body.style.overflow = '';
+    if (this.sidebar && this.mobileOverlay) {
+      if (window.innerWidth > 768) {
+        this.sidebar.classList.remove('mobile-active');
+        this.mobileOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
     }
   },
 
@@ -1145,6 +1147,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 DOMContentLoaded - Initializing grid row click listeners...');
+  
+  // Initialize DOM cache
+  DOMCache.init();
   
   const gridBody = document.getElementById('gridBody');
   console.log('📋 Grid Body Element:', gridBody ? 'FOUND ✓' : 'NOT FOUND ✗');
@@ -1581,11 +1586,21 @@ function openUserModal(row, scrollTo = null) {
   const userRole = row.dataset.role || 'user';
   document.getElementById('editRole').value = userRole;
   
-  const roleTextMap = {
-    'user': 'Requestor (User) - Submits requests',
-    'unit': 'Unit Member - Works on tasks',
-    'admin': 'Administrator - Full System Access'
-  };
+  // Build role text map from userRolesData
+  const roleTextMap = {};
+  if (typeof userRolesData !== 'undefined' && userRolesData.length > 0) {
+    userRolesData.forEach(role => {
+      const roleName = typeof role === 'string' ? role : role.name;
+      const rolePerms = typeof role === 'string' ? [] : (role.permissions || []);
+      const value = rolePerms.includes('admin') ? 'admin' : (rolePerms.includes('unit') ? 'unit' : 'user');
+      roleTextMap[value] = roleName;
+    });
+  } else {
+    // Fallback
+    roleTextMap['user'] = 'Requestor (User) - Submits requests';
+    roleTextMap['unit'] = 'Unit Member - Works on tasks';
+    roleTextMap['admin'] = 'Administrator - Full System Access';
+  }
   document.getElementById('selectedRoleText').textContent = roleTextMap[userRole] || roleTextMap['user'];
   updateCurrentRoleDisplay(userRole);
 
@@ -1603,7 +1618,7 @@ function openUserModal(row, scrollTo = null) {
   }
 
   // Open modal and handle scrolling
-  userModal.style.display = 'flex';
+  userModal().style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
   // Scroll modal content based on scrollTo parameter
@@ -1906,3 +1921,40 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
+
+// ========================================
+// CUSTOM DROPDOWN FUNCTIONS
+// ========================================
+function toggleCustomDropdown() {
+  const options = document.getElementById('customDropdownOptions');
+  if (options) {
+    options.style.display = options.style.display === 'none' || options.style.display === '' ? 'block' : 'none';
+  }
+}
+
+function selectCustomRole(value, text) {
+  document.getElementById('editRole').value = value;
+  document.getElementById('selectedRoleText').textContent = text;
+  toggleCustomDropdown(); // Close the dropdown
+  
+  // Update unit assignment visibility
+  const unitContainer = document.getElementById('unitAssignmentContainer');
+  const unitDropdown = document.getElementById('editUnitTeam');
+  if (unitContainer && unitDropdown) {
+    if (value === 'unit') {
+      unitContainer.style.display = 'block';
+      // Set default unit if not already set or if it's 'N/A'
+      if (!unitDropdown.value || unitDropdown.value === 'N/A') {
+        if (typeof unitsData !== 'undefined' && unitsData.length > 0) {
+          unitDropdown.value = unitsData[0];
+        }
+      }
+    } else {
+      unitContainer.style.display = 'none';
+      unitDropdown.value = 'N/A';
+    }
+  }
+  
+  // Update current role display
+  updateCurrentRoleDisplay(value);
+}

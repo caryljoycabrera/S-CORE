@@ -863,7 +863,8 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
   res.render('Admin/users', { 
     users: usersWithDisplay, 
     user: req.user,
-    units: settingsHelpers.getUnits()
+    units: settingsHelpers.getUnits(),
+    userRoles: settingsHelpers.getUserRoles()
   });
 });
 
@@ -1671,7 +1672,7 @@ router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => 
  */
 router.post('/admin/user/update', requireAdmin, async (req, res) => {
   try {
-    const { userId, role } = req.body;
+    const { userId, role, unitTeam } = req.body;
 
     if (!userId || !role) {
       return res.status(400).json({
@@ -1680,11 +1681,30 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
-    if (!['user', 'admin'].includes(role)) {
+    if (!['user', 'admin', 'unit'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be either "user" or "admin".'
+        message: 'Invalid role. Must be "user", "admin", or "unit".'
       });
+    }
+
+    // If role is unit, unitTeam is required
+    if (role === 'unit') {
+      if (!unitTeam) {
+        unitTeam = 'N/A'; // Allow empty, will set to first unit
+      }
+      if (unitTeam === 'N/A') {
+        // Set to first available unit
+        const availableUnits = settingsHelpers.getUnits();
+        if (availableUnits.length > 0) {
+          unitTeam = availableUnits[0];
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'No units configured. Please configure units in the admin settings first.'
+          });
+        }
+      }
     }
 
     const user = await User.findById(userId);
@@ -1695,9 +1715,17 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
+    // Prepare update object
+    const updateData = { role: role };
+    if (role === 'unit') {
+      updateData.unitTeam = unitTeam;
+    } else {
+      updateData.unitTeam = 'N/A';
+    }
+
     const result = await User.findByIdAndUpdate(
       userId,
-      { role: role },
+      updateData,
       { new: true, runValidators: false }
     );
 
@@ -1714,7 +1742,8 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       user: {
         id: result._id,
         name: `${result.fName} ${result.lName}`,
-        role: result.role
+        role: result.role,
+        unitTeam: result.unitTeam
       }
     });
 
