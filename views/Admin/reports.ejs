@@ -29,17 +29,19 @@
     <div class="sidebar-profile">
       <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
         <div class="sidebar-profile-icon-container">
+          <!-- SVG Icon (shows when collapsed) -->
           <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
+          <!-- Profile Avatar (shows when expanded) -->
           <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
         <div class="sidebar-profile-info">
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
-          <p class="sidebar-profile-role"><%= user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
         </div>
         <span class="sidebar-profile-arrow">→</span>
       </a>
@@ -55,7 +57,7 @@
         </svg>
         <span class="sidebar-label">Dashboard</span>
       </a>
-
+      
       <a href="/admin/analytics" class="sidebar-item" title="Analytics">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="20" x2="12" y2="10"></line>
@@ -64,7 +66,7 @@
         </svg>
         <span class="sidebar-label">Analytics</span>
       </a>
-
+      
       <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 11l3 3L22 4"></path>
@@ -72,7 +74,7 @@
         </svg>
         <span class="sidebar-label">Track All Requests</span>
       </a>
-
+      
       <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
@@ -83,14 +85,14 @@
         </svg>
         <span class="sidebar-label">Manage Approvals</span>
       </a>
-
+      
       <a href="/admin/services" class="sidebar-item" title="Manage Services">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
         </svg>
         <span class="sidebar-label">Manage Services</span>
       </a>
-
+      
       <a href="/admin/users" class="sidebar-item" title="User Accounts">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
@@ -106,6 +108,14 @@
           <path d="M3 11v2a7 7 0 0 0 7 7v-2a5 5 0 0 1-5-5v-2H3z"></path>
         </svg>
         <span class="sidebar-label">Announcements</span>
+      </a>
+
+      <a href="/admin/configuration" class="sidebar-item" title="Configuration">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v6m0 6v6m8.66-12.66l-4.24 4.24m-6.84 6.84l-4.24 4.24M23 12h-6m-6 0H5m17.66 4.66l-4.24-4.24m-6.84-6.84L6.34 1.42"></path>
+        </svg>
+        <span class="sidebar-label">Configuration</span>
       </a>
 
       <a href="/admin/reports" class="sidebar-item active" title="Generate Reports">
