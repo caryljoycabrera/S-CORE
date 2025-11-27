@@ -38,8 +38,8 @@ router.get('/admin', requireAdmin, async (req, res) => {
     const approvals = await RequestApproval.find().populate('userId').lean();
     const serviceRequests = await ServiceRequest.find().populate('userId').lean();
 
-    // Filter by status
-    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending')
+    // Filter by status - only pending AND unassigned for pending assignment KPI
+    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending' && (!a.assignedUnits || a.assignedUnits === 'Not yet assigned'))
       .map(a => {
         // Determine display organization
         let displayOrganization = a.organization || 'N/A';
@@ -56,7 +56,7 @@ router.get('/admin', requireAdmin, async (req, res) => {
         }
         return { ...a, requestType: 'approval', displayOrganization };
       });
-    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending')
+    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending' && (!s.assignedUnits || s.assignedUnits === 'Not yet assigned'))
       .map(s => {
         // Determine display organization
         let displayOrganization = s.organization || 'N/A';
@@ -87,11 +87,11 @@ router.get('/admin', requireAdmin, async (req, res) => {
     const totalRequests = approvals.length + serviceRequests.length;
     const totalPending = totalRequests - completedReqs.length;
 
-    // Get pending requests for admin action list (sorted by most recent)
+    // Get pending requests for admin action list (sorted by oldest first)
     // Convert any pending status to approved
   const allPendingRequests = [...pendingApprovals, ...pendingServices]
       .map(req => ({ ...req, status: 'approved' }))
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     // Calculate requests by unit (from user's organization)
     const allRequests = [...approvals, ...serviceRequests];
@@ -122,8 +122,13 @@ router.get('/admin', requireAdmin, async (req, res) => {
       let priorityLabel = 'No Deadline';
       let priorityColor = '#6b7280';
       
-      if (deadline && deadline >= now) {
-        if (deadline <= oneDayFromNow) {
+      if (deadline) {
+        if (deadline < now) {
+          // Overdue tasks are critical priority
+          priority = 'critical';
+          priorityLabel = 'Overdue';
+          priorityColor = '#dc2626';
+        } else if (deadline <= oneDayFromNow) {
           priority = 'critical';
           priorityLabel = 'Critical';
           priorityColor = '#dc2626';
@@ -170,9 +175,17 @@ router.get('/admin', requireAdmin, async (req, res) => {
       if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
         return priorityOrder[a.priority] - priorityOrder[b.priority];
       }
-      // If same priority, sort by deadline (earliest first)
+      // If same priority, sort by deadline (earliest first for upcoming, most overdue first for past due)
       if (a.deadline && b.deadline) {
-        return new Date(a.deadline) - new Date(b.deadline);
+        const aDeadline = new Date(a.deadline);
+        const bDeadline = new Date(b.deadline);
+        if (aDeadline < now && bDeadline < now) {
+          // Both overdue - most overdue (earliest deadline) first
+          return aDeadline - bDeadline;
+        } else {
+          // At least one not overdue - earliest deadline first
+          return aDeadline - bDeadline;
+        }
       }
       if (a.deadline) return -1;
       if (b.deadline) return 1;
@@ -317,14 +330,17 @@ router.get('/admin', requireAdmin, async (req, res) => {
  */
 router.get('/admin/analytics', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find().populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    // Filter by last month for consistency with auto-applied monthly filter
+    const now = new Date();
+    const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
+    
+    const approvals = await RequestApproval.find({ createdAt: { $gte: lastMonth } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ createdAt: { $gte: lastMonth } }).populate('userId').lean();
 
     const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending');
     const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending');
 
     // Get ALL unassigned tasks with priority classification
-    const now = new Date();
     const oneDayFromNow = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
     const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
     const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
@@ -427,6 +443,7 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
 
     // Calculate Average Response Time (hours from creation to first assignment/status change)
     let avgResponseTime = 4.2; // default
+    let responseTimeUnit = 'hrs';
     const responseTimesInHours = allRequests
       .filter(r => r.createdAt && r.updatedAt)
       .map(r => {
@@ -435,7 +452,14 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
         return (firstUpdateDate - createdDate) / (1000 * 60 * 60); // convert to hours
       });
     if (responseTimesInHours.length > 0) {
-      avgResponseTime = (responseTimesInHours.reduce((a, b) => a + b, 0) / responseTimesInHours.length).toFixed(1);
+      const avgHours = responseTimesInHours.reduce((a, b) => a + b, 0) / responseTimesInHours.length;
+      if (avgHours >= 24) {
+        avgResponseTime = (avgHours / 24).toFixed(1);
+        responseTimeUnit = 'days';
+      } else {
+        avgResponseTime = avgHours.toFixed(1);
+        responseTimeUnit = 'hrs';
+      }
     }
 
     // Count overdue tasks
@@ -443,6 +467,9 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
       return r.deadline && new Date(r.deadline) < now && 
              (r.status?.toLowerCase() !== 'completed');
     }).length;
+
+    // Count active requests (in progress + in revision)
+    const activeRequests = inProgressRequests.length + inRevisionRequests.length;
 
     const stats = {
       totalApprovals: approvals.length,
@@ -455,22 +482,26 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
       avgTurnaroundTime: parseFloat(avgTurnaroundTime),
       completionRate: completionRate,
       avgResponseTime: parseFloat(avgResponseTime),
+      responseTimeUnit: responseTimeUnit,
       overdueTasks: overdueTasks,
+      activeRequests: activeRequests,
       completedRequests: completedRequests.length,
       inProgressRequests: inProgressRequests.length,
       inRevisionRequests: inRevisionRequests.length
     };
 
-    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    const { getUnits, getRequestStatuses, getRequestTypes } = require('../utils/settingsHelpers');
     const units = getUnits();
     const requestStatuses = getRequestStatuses();
+    const requestTypes = getRequestTypes();
 
     res.render('Admin/analytics', {
       user: req.user,
       stats,
       unassignedTasks,
       units,
-      requestStatuses
+      requestStatuses,
+      requestTypes
     });
   } catch (err) {
     console.error('Error loading analytics page:', err);
@@ -2085,8 +2116,12 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
     // Build query based on filters
     let query = {};
     
-    // Date range filter
-    if (dateRange || (startDate && endDate)) {
+    // Date range filter - skip if all other filters are default
+    const isDefaultFilters = (!units || units.includes('all')) && 
+                            (!requestType || requestType === 'all') && 
+                            (!status || status === 'all');
+    
+    if (dateRange && dateRange !== 'monthly' || (startDate && endDate) || !isDefaultFilters) {
       let dateFilter = {};
       const now = new Date();
       
@@ -2133,24 +2168,32 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
     let approvals = [];
     let services = [];
     
-    if (!requestType || requestType === 'all' || requestType === 'approval') {
+    if (!requestType || requestType === 'all') {
+      // Fetch all requests
       approvals = await RequestApproval.find(query).populate('userId').lean();
-    }
-    
-    if (!requestType || requestType === 'all' || requestType === 'service') {
+      approvals = approvals.map(req => ({ ...req, requestType: 'approval' }));
       services = await ServiceRequest.find(query).populate('userId').lean();
+      services = services.map(req => ({ ...req, requestType: 'service' }));
+    } else {
+      // Filter by specific request type
+      const approvalQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      const serviceQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      
+      approvals = await RequestApproval.find(approvalQuery).populate('userId').lean();
+      approvals = approvals.map(req => ({ ...req, requestType: 'approval' }));
+      services = await ServiceRequest.find(serviceQuery).populate('userId').lean();
+      services = services.map(req => ({ ...req, requestType: 'service' }));
     }
     
-    // Calculate KPIs
+    // Calculate KPIs based on filtered data
     const totalRequests = approvals.length + services.length;
     const pendingRequests = [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length;
     const inRevision = [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'for revision').length;
-    
-    // Calculate average turnaround time (placeholder calculation)
     const completedRequests = [...approvals, ...services].filter(r => 
       r.status?.toLowerCase() === 'completed' || r.status?.toLowerCase() === 'approved'
     );
     
+    // Calculate average turnaround time
     let totalDays = 0;
     completedRequests.forEach(req => {
       if (req.updatedAt && req.createdAt) {
@@ -2158,8 +2201,33 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
         totalDays += days;
       }
     });
-    
     const avgTurnaround = completedRequests.length > 0 ? (totalDays / completedRequests.length).toFixed(1) : 0;
+    
+    // Calculate average response time (hours from creation to first update)
+    let totalResponseHours = 0;
+    const responseTimeRequests = [...approvals, ...services].filter(r => r.createdAt && r.updatedAt);
+    responseTimeRequests.forEach(req => {
+      const hours = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60);
+      totalResponseHours += hours;
+    });
+    const avgResponseTimeHours = responseTimeRequests.length > 0 ? (totalResponseHours / responseTimeRequests.length) : 0;
+    
+    // Convert to appropriate unit (days if >= 24 hours)
+    let avgResponseTime, responseTimeUnit;
+    if (avgResponseTimeHours >= 24) {
+      avgResponseTime = (avgResponseTimeHours / 24).toFixed(1);
+      responseTimeUnit = 'days';
+    } else {
+      avgResponseTime = avgResponseTimeHours.toFixed(1);
+      responseTimeUnit = 'hrs';
+    }
+    
+    // Count overdue tasks
+    const now = new Date();
+    const overdueTasks = [...approvals, ...services].filter(r => {
+      return r.deadline && new Date(r.deadline) < now && 
+             (r.status?.toLowerCase() !== 'completed' && r.status?.toLowerCase() !== 'rejected');
+    }).length;
     
     // Top requestors calculation
     const orgCounts = {};
@@ -2184,24 +2252,131 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
       }
     });
     
+    // Turnaround time by unit calculation
+    const unitTurnaround = {};
+    const unitRequestCount = {};
+    [...approvals, ...services].forEach(req => {
+      if (req.assignedUnits && req.updatedAt && req.createdAt && 
+          (req.status?.toLowerCase() === 'completed' || req.status?.toLowerCase() === 'approved')) {
+        const days = Math.ceil((new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60 * 24));
+        if (!unitTurnaround[req.assignedUnits]) {
+          unitTurnaround[req.assignedUnits] = 0;
+          unitRequestCount[req.assignedUnits] = 0;
+        }
+        unitTurnaround[req.assignedUnits] += days;
+        unitRequestCount[req.assignedUnits] += 1;
+      }
+    });
+    
+    // Calculate average turnaround by unit
+    const turnaroundByUnit = {};
+    Object.keys(unitTurnaround).forEach(unit => {
+      turnaroundByUnit[unit] = unitRequestCount[unit] > 0 ? 
+        Math.round(unitTurnaround[unit] / unitRequestCount[unit]) : 0;
+    });
+    
+    // Total workload by unit calculation (all requests assigned to each unit)
+    const totalWorkload = {};
+    [...approvals, ...services].forEach(req => {
+      if (req.assignedUnits) {
+        totalWorkload[req.assignedUnits] = (totalWorkload[req.assignedUnits] || 0) + 1;
+      }
+    });
+    
+    // Response time by unit calculation (time from assignment to first update)
+    const unitResponseTime = {};
+    const unitResponseCount = {};
+    [...approvals, ...services].forEach(req => {
+      if (req.assignedUnits && req.updatedAt && req.createdAt) {
+        // For response time, we want time from creation to first meaningful update
+        // This approximates when the unit started working on it
+        const hours = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60);
+        if (!unitResponseTime[req.assignedUnits]) {
+          unitResponseTime[req.assignedUnits] = 0;
+          unitResponseCount[req.assignedUnits] = 0;
+        }
+        unitResponseTime[req.assignedUnits] += hours;
+        unitResponseCount[req.assignedUnits] += 1;
+      }
+    });
+    
+    // Calculate average response time by unit
+    const responseTimeByUnit = {};
+    Object.keys(unitResponseTime).forEach(unit => {
+      responseTimeByUnit[unit] = unitResponseCount[unit] > 0 ? 
+        Math.round(unitResponseTime[unit] / unitResponseCount[unit]) : 0;
+    });
+    
+    // Filtered results data
+    const allFilteredRequests = [...approvals, ...services];
+    
+    // Status breakdown for filtered data
+    const statusBreakdown = {};
+    allFilteredRequests.forEach(req => {
+      const status = req.status || 'Unknown';
+      statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+    });
+    
+    // Type breakdown for filtered data
+    const typeBreakdown = {
+      'Approval': approvals.length,
+      'Service': services.length
+    };
+    
     // Send response
     res.json({
       success: true,
       kpis: {
         totalRequests,
-        avgTurnaround,
+        avgTurnaround: parseFloat(avgTurnaround),
         pendingAssignment: pendingRequests,
-        inRevision
+        inRevision,
+        completed: completedRequests.length,
+        overdue: overdueTasks,
+        activeRequests: [...approvals, ...services].filter(r => 
+          r.status?.toLowerCase() === 'in progress' || r.status?.toLowerCase() === 'for revision'
+        ).length,
+        avgResponseTime: parseFloat(avgResponseTime),
+        responseTimeUnit
       },
       charts: {
         topRequestors: topOrgs,
-        unitWorkload,
+        unitWorkload: {
+          labels: Object.keys(unitWorkload),
+          data: Object.values(unitWorkload)
+        },
+        turnaroundByUnit: {
+          labels: Object.keys(turnaroundByUnit),
+          data: Object.values(turnaroundByUnit)
+        },
+        totalWorkload: {
+          labels: Object.keys(totalWorkload),
+          data: Object.values(totalWorkload)
+        },
+        responseTimeByUnit: {
+          labels: Object.keys(responseTimeByUnit),
+          data: Object.values(responseTimeByUnit)
+        },
         statusBreakdown: {
-          pending: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length,
-          inProgress: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'in progress').length,
-          awaiting: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'awaiting approval' || r.status?.toLowerCase() === 'approved').length,
-          revision: inRevision,
-          completed: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'completed').length
+          labels: ['Pending', 'In Progress', 'Awaiting', 'Revision', 'Completed'],
+          data: [
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length,
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'in progress').length,
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'awaiting approval' || r.status?.toLowerCase() === 'approved').length,
+            inRevision,
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'completed').length
+          ]
+        }
+      },
+      filtered: {
+        requests: allFilteredRequests.slice(0, 100), // Limit to 100 for performance
+        statusBreakdown: {
+          labels: Object.keys(statusBreakdown),
+          data: Object.values(statusBreakdown)
+        },
+        typeBreakdown: {
+          labels: Object.keys(typeBreakdown),
+          data: Object.values(typeBreakdown)
         }
       }
     });
@@ -2215,62 +2390,7 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * GET /api/admin/revision-hotspot
- * Get top requests by revision count
- */
-router.get('/api/admin/revision-hotspot', requireAdmin, async (req, res) => {
-  try {
-    // Fetch all requests with populated user data
-    const approvals = await RequestApproval.find()
-      .populate('userId', 'fName lName')
-      .lean();
-    
-    const services = await ServiceRequest.find()
-      .populate('userId', 'fName lName')
-      .lean();
-    
-    // Combine and calculate total revisions (placeholder - you may need to add revision tracking)
-    const allRequests = [
-      ...approvals.map(r => ({
-        ...r,
-        type: 'Approval Request',
-        // Placeholder revision counts - replace with actual revision tracking
-        majorRevisions: Math.floor(Math.random() * 4),
-        minorRevisions: Math.floor(Math.random() * 3),
-        userName: r.userId ? `${r.userId.fName} ${r.userId.lName}` : 'Unknown'
-      })),
-      ...services.map(r => ({
-        ...r,
-        type: 'Service Request',
-        majorRevisions: Math.floor(Math.random() * 4),
-        minorRevisions: Math.floor(Math.random() * 3),
-        userName: r.userId ? `${r.userId.fName} ${r.userId.lName}` : 'Unknown'
-      }))
-    ];
-    
-    // Sort by total revisions
-    allRequests.forEach(r => {
-      r.totalRevisions = r.majorRevisions + r.minorRevisions;
-    });
-    
-    const topRevisions = allRequests
-      .sort((a, b) => b.totalRevisions - a.totalRevisions)
-      .slice(0, 10);
-    
-    res.json({
-      success: true,
-      data: topRevisions
-    });
-    
-  } catch (err) {
-    console.error('Error fetching revision hotspot data:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch revision data'
-    });
-  }
-});
+
 
 // ==================== REPORTS ROUTES ====================
 
@@ -3447,42 +3567,8 @@ router.get('/admin/reports/summary', requireAdmin, async (req, res) => {
 });
 
 /**
- * POST /admin/reports/export-csv
- * Export report data as CSV
- */
-router.post('/admin/reports/export-csv', requireAdmin, async (req, res) => {
-  try {
-    const {
-      startDate,
-      endDate,
-      units,
-      requestType,
-      statuses
-    } = req.body;
-
-    const filters = {
-      startDate,
-      endDate,
-      units: units && Array.isArray(units) ? units : (units ? [units] : []),
-      requestType,
-      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : [])
-    };
-
-    const reportData = await reportService.generateReport(filters);
-    const csv = reportService.exportToCSV(reportData);
-
-    res.setHeader('Content-Type', 'text/csv;charset=utf-8;');
-    res.setHeader('Content-Disposition', `attachment;filename=report-${Date.now()}.csv`);
-    res.send(csv);
-  } catch (error) {
-    console.error('Error exporting CSV:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
  * POST /admin/reports/export-pdf
- * Export report data as PDF (returns HTML for client-side PDF generation)
+ * Export report data as PDF
  */
 router.post('/admin/reports/export-pdf', requireAdmin, async (req, res) => {
   try {
@@ -3504,10 +3590,30 @@ router.post('/admin/reports/export-pdf', requireAdmin, async (req, res) => {
 
     const reportData = await reportService.generateReport(filters);
     const summary = await reportService.getReportSummary(filters);
-    const html = reportService.exportToPDF(reportData, summary);
 
-    res.setHeader('Content-Type', 'text/html;charset=utf-8;');
-    res.send(html);
+    // Generate PDF buffer
+    const pdfBuffer = await reportService.generatePDF(reportData, summary);
+
+    // Save to ReportHistory in MongoDB
+    const ReportHistory = require('../models/ReportHistory');
+
+    const fileName = `report-${Date.now()}.pdf`;
+
+    // Save to database with PDF data
+    const reportHistory = new ReportHistory({
+      reportType: 'report_pdf',
+      generatedBy: req.user._id,
+      fileName,
+      pdfData: pdfBuffer,
+      fileSize: pdfBuffer.length,
+      filters
+    });
+
+    await reportHistory.save();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
+    res.send(pdfBuffer);
   } catch (error) {
     console.error('Error exporting PDF:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -3527,6 +3633,109 @@ router.get('/admin/reports/filters', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching filters:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/analytics/export-pdf
+ * Export analytics data as PDF
+ */
+router.post('/admin/analytics/export-pdf', requireAdmin, async (req, res) => {
+  try {
+    const { analyticsData } = req.body;
+
+    console.log('📊 Received analytics data for PDF export:', JSON.stringify(analyticsData, null, 2));
+
+    // Generate PDF using the report service
+    const pdfBuffer = await reportService.generateAnalyticsPDF(analyticsData);
+
+    // Save to ReportHistory in MongoDB
+    const ReportHistory = require('../models/ReportHistory');
+
+    const fileName = `analytics-report-${Date.now()}.pdf`;
+
+    // Save to database with PDF data
+    const reportHistory = new ReportHistory({
+      reportType: 'analytics_pdf',
+      generatedBy: req.user._id,
+      fileName,
+      pdfData: pdfBuffer,
+      fileSize: pdfBuffer.length,
+      filters: analyticsData.filters || {}
+    });
+
+    await reportHistory.save();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error exporting analytics PDF:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/reports/history
+ * Get reports history for current user
+ */
+router.get('/admin/analytics/reports/history', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+
+    const reports = await ReportHistory.find({
+      generatedBy: req.user._id
+    })
+    .sort({ generatedAt: -1 })
+    .limit(50); // Limit to last 50 reports
+
+    res.json({
+      success: true,
+      reports: reports.map(report => ({
+        _id: report._id,
+        reportType: report.reportType,
+        fileName: report.fileName,
+        generatedAt: report.generatedAt,
+        fileSize: report.fileSize,
+        downloadCount: report.downloadCount,
+        filters: report.filters
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching reports history:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/reports/download/:reportId
+ * Download a specific report
+ */
+router.get('/admin/analytics/reports/download/:reportId', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.reportId,
+      generatedBy: req.user._id
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // Increment download count
+    report.downloadCount += 1;
+    await report.save();
+
+    // Send PDF data from MongoDB
+    const fileName = report.fileName;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
+    res.send(report.pdfData);
+  } catch (error) {
+    console.error('Error downloading report:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -3835,13 +4044,29 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     const unitAnalytics = await reportService.getUnitAnalytics();
     const userAnalytics = await reportService.getUserAnalytics();
 
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    const units = getUnits();
+    const requestStatuses = getRequestStatuses();
+    
+    // Get actual request types from database
+    const serviceRequestTypes = await ServiceRequest.distinct('specificRequestType', { 
+      specificRequestType: { $exists: true, $ne: null, $ne: '' } 
+    });
+    const approvalRequestTypes = await RequestApproval.distinct('specificRequestType', { 
+      specificRequestType: { $exists: true, $ne: null, $ne: '' } 
+    });
+    const requestTypes = [...new Set([...serviceRequestTypes, ...approvalRequestTypes])].filter(type => type);
+
     res.render('Admin/analytics', {
       user: req.user,
       title: 'Analytics',
       analytics: analytics,
       requestTypeAnalytics: requestTypeAnalytics,
       unitAnalytics: unitAnalytics,
-      userAnalytics: userAnalytics
+      userAnalytics: userAnalytics,
+      units,
+      requestStatuses,
+      requestTypes
     });
   } catch (error) {
     console.error('Error loading analytics page:', error);
@@ -4626,21 +4851,114 @@ router.get('/admin/analytics-data/top-requestors', requireAdmin, async (req, res
 
 /**
  * GET /admin/analytics-data/request-volume
- * Get request volume over time
+ * Get request volume over time with optional filters
  */
 router.get('/admin/analytics-data/request-volume', requireAdmin, async (req, res) => {
   try {
+    console.log('Request volume query:', req.query);
+    
     const days = parseInt(req.query.days) || 30;
-    const approvals = await RequestApproval.find().populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    const { dateRange, units, requestType, status, startDate, endDate } = req.query;
+    
+    // Build query based on filters
+    let query = {};
+    
+    // Date range filter
+    if (dateRange && dateRange !== 'monthly' || (startDate && endDate) || days !== 30) {
+      let dateFilter = {};
+      const now = new Date();
+      
+      if (startDate && endDate) {
+        // Custom date range
+        dateFilter.$gte = new Date(startDate);
+        dateFilter.$lte = new Date(endDate);
+      } else {
+        // Standard date ranges
+        switch (dateRange) {
+          case 'daily':
+            dateFilter.$gte = new Date(now.setHours(0, 0, 0, 0));
+            break;
+          case 'weekly':
+            dateFilter.$gte = new Date(now.setDate(now.getDate() - 7));
+            break;
+          case 'monthly':
+            dateFilter.$gte = new Date(now.setMonth(now.getMonth() - 1));
+            break;
+          case 'quarterly':
+            dateFilter.$gte = new Date(now.setMonth(now.getMonth() - 3));
+            break;
+          case 'annually':
+            dateFilter.$gte = new Date(now.setFullYear(now.getFullYear() - 1));
+            break;
+          default:
+            // Default to days parameter
+            dateFilter.$gte = new Date(now.setDate(now.getDate() - days));
+        }
+      }
+      
+      if (Object.keys(dateFilter).length > 0) {
+        query.createdAt = dateFilter;
+      }
+    }
+    
+    // Unit filter
+    if (units && units !== 'all') {
+      const unitArray = units.split(',');
+      query.assignedUnits = { $in: unitArray };
+    }
+    
+    // Status filter
+    if (status && status !== 'all') {
+      query.status = new RegExp(status, 'i');
+    }
+    
+    // Fetch data based on request type
+    let approvals = [];
+    let services = [];
+    
+    console.log('Final query:', query);
+    console.log('Request type filter:', requestType);
+    
+    if (!requestType || requestType === 'all') {
+      // Fetch all requests
+      console.log('Fetching all requests');
+      approvals = await RequestApproval.find(query).populate('userId').lean();
+      services = await ServiceRequest.find(query).populate('userId').lean();
+    } else {
+      // Filter by specific request type
+      console.log('Filtering by request type:', requestType);
+      const approvalQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      const serviceQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      
+      console.log('Approval query:', approvalQuery);
+      console.log('Service query:', serviceQuery);
+      
+      approvals = await RequestApproval.find(approvalQuery).populate('userId').lean();
+      services = await ServiceRequest.find(serviceQuery).populate('userId').lean();
+    }
+    
+    console.log('Found approvals:', approvals.length);
+    console.log('Found services:', services.length);
+
+    // Calculate date range for the chart
+    let startDateFilter, endDateFilter;
+    if (query.createdAt && query.createdAt.$gte) {
+      startDateFilter = new Date(query.createdAt.$gte);
+      endDateFilter = query.createdAt.$lte || new Date();
+    } else {
+      // Default to last N days
+      endDateFilter = new Date();
+      startDateFilter = new Date(endDateFilter);
+      startDateFilter.setDate(startDateFilter.getDate() - days);
+    }
 
     const dateMap = {};
-    const now = new Date();
-
-    // Initialize date map
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
+    
+    // Initialize date map for the filtered date range
+    const totalDays = Math.ceil((endDateFilter - startDateFilter) / (1000 * 60 * 60 * 24));
+    for (let i = 0; i <= totalDays; i++) {
+      const date = new Date(startDateFilter);
+      date.setDate(date.getDate() + i);
       const key = date.toISOString().split('T')[0];
       dateMap[key] = { approvals: 0, services: 0 };
     }
@@ -4652,7 +4970,7 @@ router.get('/admin/analytics-data/request-volume', requireAdmin, async (req, res
     });
 
     // Count services by date
-    serviceRequests.forEach(s => {
+    services.forEach(s => {
       const date = new Date(s.createdAt).toISOString().split('T')[0];
       if (dateMap[date]) dateMap[date].services++;
     });
@@ -4660,6 +4978,10 @@ router.get('/admin/analytics-data/request-volume', requireAdmin, async (req, res
     const labels = Object.keys(dateMap).sort();
     const approvalData = labels.map(d => dateMap[d].approvals);
     const serviceData = labels.map(d => dateMap[d].services);
+
+    console.log('Response data - labels:', labels);
+    console.log('Response data - approvals:', approvalData);
+    console.log('Response data - services:', serviceData);
 
     res.json({
       success: true,
@@ -4779,108 +5101,108 @@ router.get('/admin/analytics-data/turnaround-by-unit', requireAdmin, async (req,
   }
 });
 
+
+
+
+
 /**
- * GET /admin/analytics-data/current-status
- * Get current request status distribution
+ * GET /admin/analytics-data/total-workload
+ * Get total workload by unit
  */
-router.get('/admin/analytics-data/current-status', requireAdmin, async (req, res) => {
+router.get('/admin/analytics-data/total-workload', requireAdmin, async (req, res) => {
   try {
     const approvals = await RequestApproval.find().lean();
     const serviceRequests = await ServiceRequest.find().lean();
-    const allRequests = [...approvals, ...serviceRequests];
 
-    const statusMap = {};
-    const { getRequestStatuses } = require('../utils/settingsHelpers');
-    const statuses = getRequestStatuses();
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
 
-    // Initialize status counts
-    statuses.forEach(status => {
-      statusMap[status] = 0;
-    });
-    statusMap['Unassigned'] = 0;
-
-    // Count by status
-    allRequests.forEach(req => {
-      const status = req.status ? req.status.charAt(0).toUpperCase() + req.status.slice(1) : 'pending';
-      const statusKey = Object.keys(statusMap).find(s => s.toLowerCase() === status.toLowerCase());
-      if (statusKey) {
-        statusMap[statusKey]++;
-      } else {
-        statusMap[status] = (statusMap[status] || 0) + 1;
-      }
-
-      // Check if unassigned
-      if (!req.assignedUnits || req.assignedUnits === 'Not yet assigned') {
-        statusMap['Unassigned']++;
-      }
+    // Initialize unit counts
+    units.forEach(unit => {
+      unitMap[unit] = 0;
     });
 
-    const labels = Object.keys(statusMap).filter(s => statusMap[s] > 0);
-    const data = labels.map(label => statusMap[label]);
+    // Count requests by unit
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned') {
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit] !== undefined) {
+              unitMap[unit]++;
+            }
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits] !== undefined) {
+            unitMap[req.assignedUnits]++;
+          }
+        }
+      }
+    });
 
     res.json({
       success: true,
-      labels,
-      data
+      labels: Object.keys(unitMap),
+      data: Object.values(unitMap)
     });
   } catch (error) {
-    console.error('Error loading current status:', error);
+    console.error('Error loading total workload:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 /**
- * GET /admin/analytics-data/revision-hotspot
- * Get requests with most revisions
+ * GET /admin/analytics-data/response-time-by-unit
+ * Get average response time by unit
  */
-router.get('/admin/analytics-data/revision-hotspot', requireAdmin, async (req, res) => {
+router.get('/admin/analytics-data/response-time-by-unit', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find()
-      .populate('userId')
-      .lean();
-    const serviceRequests = await ServiceRequest.find()
-      .populate('userId')
-      .lean();
+    const approvals = await RequestApproval.find().lean();
+    const serviceRequests = await ServiceRequest.find().lean();
 
-    const allRequests = [...approvals, ...serviceRequests];
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
 
-    // Filter requests with revisions and sort by revision count
-    const revisionsMap = {};
-    const majorRevisionsMap = {};
+    // Initialize unit response times
+    units.forEach(unit => {
+      unitMap[unit] = { total: 0, count: 0 };
+    });
 
-    allRequests.forEach(req => {
-      if (req.revisionHistory && req.revisionHistory.length > 0) {
-        const major = req.revisionHistory.filter(r => r.type === 'major').length;
-        const minor = req.revisionHistory.filter(r => r.type === 'minor').length;
-        const total = req.revisionHistory.length;
-
-        if (total > 0) {
-          revisionsMap[req._id.toString()] = {
-            title: req.title || req.description || 'Untitled',
-            type: serviceRequests.some(s => s._id.toString() === req._id.toString()) ? 'Service' : 'Approval',
-            requester: req.userId ? `${req.userId.fName} ${req.userId.lName}` : 'Unknown',
-            unit: req.assignedUnits || 'Unassigned',
-            major,
-            minor,
-            total,
-            status: req.status,
-            id: req._id
-          };
+    // Calculate response times (time from creation to first update)
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned' && req.createdAt && req.updatedAt) {
+        const responseHours = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60);
+        
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit]) {
+              unitMap[unit].total += responseHours;
+              unitMap[unit].count++;
+            }
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits]) {
+            unitMap[req.assignedUnits].total += responseHours;
+            unitMap[req.assignedUnits].count++;
+          }
         }
       }
     });
 
-    // Sort by total revisions descending and get top 10
-    const topRevisions = Object.values(revisionsMap)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 10);
+    // Calculate averages
+    const averages = {};
+    Object.entries(unitMap).forEach(([unit, data]) => {
+      averages[unit] = data.count > 0 ? Math.round(data.total / data.count) : 0;
+    });
 
     res.json({
       success: true,
-      data: topRevisions
+      labels: Object.keys(averages),
+      data: Object.values(averages)
     });
   } catch (error) {
-    console.error('Error loading revision hotspot:', error);
+    console.error('Error loading response time by unit:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -4891,15 +5213,53 @@ router.get('/admin/analytics-data/revision-hotspot', requireAdmin, async (req, r
  */
 router.get('/api/admin/dashboard-kpis', requireAdmin, async (req, res) => {
   try {
+    console.log('[API] Dashboard KPIs requested by user:', req.user._id);
     const approvals = await RequestApproval.find().lean();
     const serviceRequests = await ServiceRequest.find().lean();
     const allRequests = [...approvals, ...serviceRequests];
     
-    // Count in revision
-    const inRevision = allRequests.filter(r => r.status?.toLowerCase() === 'for-revision' || r.status?.toLowerCase() === 'in revision').length;
+    // Count pending assignments (pending requests that are not yet assigned to a unit)
+    const pendingAssignment = allRequests.filter(r => 
+      r.status?.toLowerCase() === 'pending' && 
+      (!r.assignedUnits || r.assignedUnits === 'Not yet assigned')
+    ).length;
+    
+    // Count awaiting approval (requests that are completed/approved by units and waiting for final admin approval)
+    // For ServiceRequest: 'For Checking' or 'Approved' status
+    // For RequestApproval: 'Approved' status (since they go directly to approved)
+    const awaitingApproval = [
+      ...serviceRequests.filter(r => r.status?.toLowerCase() === 'for checking' || r.status?.toLowerCase() === 'approved'),
+      ...approvals.filter(r => r.status?.toLowerCase() === 'approved')
+    ].length;
+    
+    // Count in revision (requests sent back for changes)
+    const inRevision = allRequests.filter(r => r.status?.toLowerCase() === 'for revision' || r.status?.toLowerCase() === 'for-revision').length;
+    
+    // Count unassigned tasks with priority breakdown
+    const now = new Date();
+    const unassignedApprovals = approvals.filter(a => 
+      (!a.assignedUnits || a.assignedUnits === 'Not yet assigned') && 
+      a.status?.toLowerCase() !== 'completed' && a.status?.toLowerCase() !== 'cancelled' &&
+      a.status?.toLowerCase() !== 'rejected' && a.status?.toLowerCase() !== 'archived'
+    );
+    const unassignedServices = serviceRequests.filter(s => 
+      (!s.assignedUnits || s.assignedUnits === 'Not yet assigned') && 
+      s.status?.toLowerCase() !== 'completed' && s.status?.toLowerCase() !== 'cancelled' &&
+      s.status?.toLowerCase() !== 'rejected' && s.status?.toLowerCase() !== 'archived'
+    );
+    const allUnassigned = [...unassignedApprovals, ...unassignedServices];
+    
+    // Calculate urgent unassigned (deadline within 3 days OR overdue - all treated as urgent)
+    const urgentUnassigned = allUnassigned.filter(task => {
+      if (!task.deadline) return false;
+      const deadline = new Date(task.deadline);
+      const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+      return daysLeft <= 3; // Includes overdue tasks (negative days)
+    }).length;
+    
+    const totalUnassigned = allUnassigned.length;
     
     // Count completed this month
-    const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const completedThisMonth = allRequests.filter(r => {
       const updatedAt = new Date(r.updatedAt);
@@ -4919,9 +5279,24 @@ router.get('/api/admin/dashboard-kpis', requireAdmin, async (req, res) => {
       return deadline < now && r.status?.toLowerCase() !== 'completed';
     }).length;
     
+    console.log('Real-time KPI data:', {
+      pendingAssignment,
+      awaitingApproval,
+      inRevision,
+      urgentUnassigned,
+      totalUnassigned,
+      completedThisMonth,
+      upcomingDeadlines,
+      overdue
+    });
+    
     res.json({
       success: true,
+      pendingAssignment,
+      awaitingApproval,
       inRevision,
+      urgentUnassigned,
+      totalUnassigned,
       completedThisMonth,
       upcomingDeadlines,
       overdue

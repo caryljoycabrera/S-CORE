@@ -1167,6 +1167,10 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
     
     await task.save();
 
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
+
     // Send notification to the requestor
     try {
       await notificationService.notifyApprovalApproved(task._id, task.userId._id, user._id);
@@ -1233,6 +1237,10 @@ router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
     });
     
     await task.save();
+
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
 
     // Note: Revocation details are stored in revisionHistory only, not in conversation
     // This keeps the chat clean and focuses revision details in the revision history section
@@ -1337,6 +1345,10 @@ router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('rev
     task.status = 'For Revision';
     task.awaitingResubmission = true;
     await task.save();
+
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
 
     // Note: Revision notes are stored in revisionHistory only, not in conversation
     // This keeps the chat clean and focuses revision details in the revision history section
@@ -1484,6 +1496,10 @@ router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
     
     await task.save();
 
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
+
     // Send notification to the requestor
     try {
       await notificationService.notifyServiceCompleted(task._id, task.userId._id, user._id);
@@ -1542,6 +1558,10 @@ router.post('/unit/task/acknowledge/:id', requireUnit, async (req, res) => {
     // Update task status to In Progress
     task.status = 'In Progress';
     await task.save();
+
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
 
     // Send notification to the requestor that their task is now being worked on
     try {

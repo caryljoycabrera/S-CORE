@@ -948,8 +948,12 @@ router.get('/admin/request-volume', async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
     const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999); // End of today
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0); // Start of the day
+
+    console.log('Request volume query:', { days, startDate, endDate });
 
     // Generate date labels
     const labels = [];
@@ -957,17 +961,21 @@ router.get('/admin/request-volume', async (req, res) => {
     const serviceCounts = [];
 
     for (let i = 0; i < days; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
+      const currentDate = new Date(startDate);
+      currentDate.setDate(currentDate.getDate() + i);
+      currentDate.setHours(0, 0, 0, 0);
       
-      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      const nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+      nextDate.setHours(0, 0, 0, 0);
+      
+      labels.push(currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
 
       // Count approvals for this date
-      const approvalCount = await ApprovalRequest.countDocuments({
+      const approvalCount = await RequestApproval.countDocuments({
         createdAt: {
-          $gte: new Date(dateStr),
-          $lt: new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1))
+          $gte: currentDate,
+          $lt: nextDate
         }
       });
       approvalCounts.push(approvalCount);
@@ -975,12 +983,18 @@ router.get('/admin/request-volume', async (req, res) => {
       // Count services for this date
       const serviceCount = await ServiceRequest.countDocuments({
         createdAt: {
-          $gte: new Date(dateStr),
-          $lt: new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1))
+          $gte: currentDate,
+          $lt: nextDate
         }
       });
       serviceCounts.push(serviceCount);
     }
+
+    console.log('Request volume results:', { 
+      totalApprovals: approvalCounts.reduce((a, b) => a + b, 0),
+      totalServices: serviceCounts.reduce((a, b) => a + b, 0),
+      labels: labels.length
+    });
 
     res.json({
       success: true,
@@ -990,6 +1004,69 @@ router.get('/admin/request-volume', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching request volume:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get active tasks by unit
+router.get('/admin/active-tasks-by-unit', async (req, res) => {
+  try {
+    // Get active tasks by unit from service requests
+    const requestsByUnit = await ServiceRequest.aggregate([
+      {
+        $match: {
+          assignedUnit: { $exists: true, $ne: null, $ne: 'Not yet assigned' },
+          status: { $nin: ['completed', 'cancelled'] }
+        }
+      },
+      { $group: { _id: '$assignedUnit', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Also include approval requests
+    const approvalByUnit = await RequestApproval.aggregate([
+      {
+        $match: {
+          assignedUnits: { $exists: true, $ne: null, $ne: 'Not yet assigned' },
+          status: { $nin: ['completed', 'cancelled'] }
+        }
+      },
+      { $group: { _id: '$assignedUnits', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Combine and merge counts
+    const unitMap = new Map();
+
+    // Add service request counts
+    requestsByUnit.forEach(item => {
+      unitMap.set(item._id, (unitMap.get(item._id) || 0) + item.count);
+    });
+
+    // Add approval request counts
+    approvalByUnit.forEach(item => {
+      unitMap.set(item._id, (unitMap.get(item._id) || 0) + item.count);
+    });
+
+    // Convert to sorted array
+    const sortedUnits = Array.from(unitMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    const labels = sortedUnits.map(([unit]) => unit);
+    const data = sortedUnits.map(([, count]) => count);
+
+    console.log('Active tasks by unit:', { labels, data, totalUnits: labels.length });
+
+    res.json({
+      success: true,
+      labels: labels.length > 0 ? labels : ['No Active Tasks'],
+      data: labels.length > 0 ? data : [0]
+    });
+  } catch (error) {
+    console.error('Error fetching active tasks by unit:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

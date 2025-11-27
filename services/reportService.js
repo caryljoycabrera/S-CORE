@@ -194,10 +194,6 @@ class ReportService {
    */
   exportToCSV(records) {
     try {
-      if (!records || records.length === 0) {
-        return 'No data to export';
-      }
-
       const headers = [
         'Request ID',
         'Type',
@@ -211,23 +207,26 @@ class ReportService {
         'Assigned To'
       ];
 
-      const rows = records.map(record => [
-        record.requestId || '',
-        record.type || '',
-        record.requester || '',
-        record.unit || '',
-        record.service || '',
-        record.status || '',
-        this._formatDate(record.dateSubmitted),
-        this._formatDate(record.deadline),
-        record.revisionsCount || 0,
-        record.assignedTo || ''
-      ]);
-
       let csv = headers.join(',') + '\n';
-      rows.forEach(row => {
-        csv += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
-      });
+
+      if (records && records.length > 0) {
+        const rows = records.map(record => [
+          record.requestId || '',
+          record.type || '',
+          record.requester || '',
+          record.unit || '',
+          record.service || '',
+          record.status || '',
+          this._formatDate(record.dateSubmitted),
+          this._formatDate(record.deadline),
+          record.revisionsCount || 0,
+          record.assignedTo || ''
+        ]);
+
+        rows.forEach(row => {
+          csv += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+        });
+      }
 
       return csv;
     } catch (error) {
@@ -334,6 +333,95 @@ class ReportService {
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       throw new Error('Failed to export to PDF');
+    }
+  }
+
+  /**
+   * Generate PDF buffer using PDFKit
+   * @param {Array} records - Report records
+   * @param {Object} summary - Report summary
+   * @returns {Promise<Buffer>} - PDF buffer
+   */
+  async generatePDF(records, summary = {}) {
+    try {
+      const PDFDocument = require('pdfkit');
+
+      return new Promise((resolve, reject) => {
+        const doc = new PDFDocument();
+        const chunks = [];
+
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+
+        // Add title
+        doc.fontSize(20).text('S-CORE Analytics Report', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' });
+        doc.moveDown(2);
+
+        // Add summary if available
+        if (Object.keys(summary).length > 0) {
+          doc.fontSize(16).text('Summary', { underline: true });
+          doc.moveDown();
+
+          if (summary.totalRequests) {
+            doc.fontSize(12).text(`Total Requests: ${summary.totalRequests}`);
+          }
+          if (summary.completionRate) {
+            doc.text(`Completion Rate: ${summary.completionRate}%`);
+          }
+
+          doc.moveDown();
+        }
+
+        // Add table headers
+        const tableTop = doc.y;
+        const headers = ['Request ID', 'Type', 'Requester', 'Unit', 'Status', 'Date Submitted'];
+
+        doc.fontSize(10);
+        headers.forEach((header, i) => {
+          doc.text(header, 50 + (i * 80), tableTop, { width: 70, align: 'left' });
+        });
+
+        doc.moveDown();
+
+        // Add table rows
+        if (records && records.length > 0) {
+          records.forEach((record, index) => {
+            if (doc.y > 700) { // Check if we need a new page
+              doc.addPage();
+            }
+
+            const y = doc.y;
+            const rowData = [
+              record.requestId || '',
+              record.type || '',
+              record.requester || '',
+              record.unit || '',
+              record.status || '',
+              this._formatDate(record.dateSubmitted)
+            ];
+
+            rowData.forEach((data, i) => {
+              doc.text(data.toString(), 50 + (i * 80), y, { width: 70, align: 'left' });
+            });
+
+            doc.moveDown();
+          });
+        } else {
+          doc.text('No data available', 50, doc.y);
+        }
+
+        // Add footer
+        doc.moveDown(2);
+        doc.fontSize(8).text('This is an automatically generated report from S-CORE System.', { align: 'center' });
+
+        doc.end();
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new Error('Failed to generate PDF');
     }
   }
 
@@ -603,6 +691,101 @@ class ReportService {
     } catch (error) {
       console.error('Error generating user analytics:', error);
       return [];
+    }
+  }
+
+  /**
+   * Generate PDF from analytics dashboard data
+   * @param {Object} analyticsData - Analytics data from dashboard
+   * @returns {Promise<Buffer>} - PDF buffer
+   */
+  async generateAnalyticsPDF(analyticsData) {
+    try {
+      const puppeteer = require('puppeteer');
+
+      return new Promise(async (resolve, reject) => {
+        try {
+          // Launch browser
+          const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+          });
+
+          const page = await browser.newPage();
+
+          // Set content
+          let htmlContent;
+          if (analyticsData.printHTML) {
+            // Use the HTML content sent from frontend
+            htmlContent = analyticsData.printHTML;
+          } else {
+            // Fallback to simple text-based PDF
+            htmlContent = `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <title>S-CORE Analytics Report</title>
+                <style>
+                  body { font-family: Arial, sans-serif; margin: 20px; }
+                  h1 { color: #333; }
+                  h2 { color: #666; margin-top: 30px; }
+                  .kpi { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+                </style>
+              </head>
+              <body>
+                <h1>S-CORE Analytics Report</h1>
+                <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+
+                ${analyticsData.kpis ? `
+                  <h2>Key Performance Indicators</h2>
+                  ${Object.entries(analyticsData.kpis).map(([key, value]) =>
+                    `<div class="kpi"><strong>${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> ${value}</div>`
+                  ).join('')}
+                ` : ''}
+
+                ${analyticsData.filters ? `
+                  <h2>Applied Filters</h2>
+                  ${Object.entries(analyticsData.filters).map(([key, value]) =>
+                    `<div><strong>${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> ${Array.isArray(value) ? value.join(', ') : value}</div>`
+                  ).join('')}
+                ` : ''}
+
+                ${analyticsData.charts ? `
+                  <h2>Available Charts</h2>
+                  ${Object.entries(analyticsData.charts).map(([key, chart]) =>
+                    `<div><strong>${chart.title}:</strong> ${chart.description}</div>`
+                  ).join('')}
+                ` : ''}
+              </body>
+              </html>
+            `;
+          }
+
+          await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+          // Generate PDF
+          const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: {
+              top: '20px',
+              right: '20px',
+              bottom: '20px',
+              left: '20px'
+            }
+          });
+
+          await browser.close();
+          resolve(pdfBuffer);
+
+        } catch (error) {
+          console.error('Error generating analytics PDF with puppeteer:', error);
+          reject(error);
+        }
+      });
+    } catch (error) {
+      console.error('Error generating analytics PDF:', error);
+      throw new Error('Failed to generate analytics PDF');
     }
   }
 }

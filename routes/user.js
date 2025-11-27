@@ -1381,6 +1381,10 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     // Save the request
     await request.save();
 
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
+
     // Add message to conversation
     const Conversation = require('../models/Conversation');
     let conversation = await Conversation.findOne({ serviceRequestId: id });
@@ -1451,6 +1455,10 @@ router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) =>
     request.status = 'Completed';
     await request.save();
 
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
+
     // Notify unit team that request was marked complete
     try {
       await notificationService.notifyServiceCompleted(request._id, userId, request.assignedUnits);
@@ -1513,6 +1521,10 @@ router.post('/user/approval/request-revision/:id', requireLogin, async (req, res
     request.revisionCount += 1;
     request.status = 'For Revision';
     await request.save();
+
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
 
     // Add message to conversation
     const Conversation = require('../models/Conversation');

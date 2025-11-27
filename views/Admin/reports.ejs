@@ -300,15 +300,6 @@
         <div class="preview-header">
           <h2>Report Preview</h2>
           <div class="export-buttons">
-            <button id="exportExcelBtn" class="btn-export btn-excel" disabled>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <path d="M9 13h6"></path>
-                <path d="M9 17h3"></path>
-              </svg>
-              Export CSV
-            </button>
             <button id="exportPdfBtn" class="btn-export btn-pdf" disabled>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
@@ -425,7 +416,6 @@
             this.displayStats(result.summary);
             
             // Enable export buttons
-            document.getElementById('exportExcelBtn').disabled = false;
             document.getElementById('exportPdfBtn').disabled = false;
             
             showAlert(`Report generated with ${result.recordCount || 0} records`, 'success');
@@ -503,53 +493,7 @@
         document.getElementById('sortOrderFilter').value = 'desc';
         document.getElementById('reportTableBody').innerHTML = '<tr class="no-data-row"><td colspan="9" style="text-align: center; padding: 2rem;">Click "Generate Preview" to load data</td></tr>';
         document.getElementById('reportStats').style.display = 'none';
-        document.getElementById('exportExcelBtn').disabled = true;
         document.getElementById('exportPdfBtn').disabled = true;
-      },
-
-      /**
-       * Export to CSV
-       */
-      async exportCSV() {
-        if (!this.currentData || this.currentData.length === 0) {
-          showAlert('No data to export', 'error');
-          return;
-        }
-
-        const filters = this.getFilters();
-        const loading = document.getElementById('loadingIndicator');
-        loading.style.display = 'flex';
-        
-        try {
-          const response = await fetch('/admin/reports/export-csv', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(filters)
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `report-${new Date().toISOString().split('T')[0]}.csv`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-
-          showAlert('Report exported successfully', 'success');
-        } catch (error) {
-          console.error('Error exporting CSV:', error);
-          showAlert('Failed to export CSV', 'error');
-        } finally {
-          loading.style.display = 'none';
-        }
       },
 
       /**
@@ -618,14 +562,6 @@
       if (clearFiltersBtn) {
         clearFiltersBtn.addEventListener('click', () => {
           reportHandler.clearFilters();
-        });
-      }
-
-      // Export CSV Button
-      const exportExcelBtn = document.getElementById('exportExcelBtn');
-      if (exportExcelBtn) {
-        exportExcelBtn.addEventListener('click', () => {
-          reportHandler.exportCSV();
         });
       }
 

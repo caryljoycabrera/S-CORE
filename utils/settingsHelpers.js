@@ -81,6 +81,16 @@ function getRequestTypeMappings() {
 }
 
 /**
+ * Get all unique request types from mappings
+ * @returns {Array} Array of unique request type names
+ */
+function getRequestTypes() {
+  const mappings = getRequestTypeMappings();
+  const uniqueTypes = [...new Set(mappings.map(m => m.requestType))];
+  return uniqueTypes.filter(type => type && type.trim() !== '');
+}
+
+/**
  * Get auto-assigned unit for a specific request type
  * @param {string} specificRequestType - The type of request
  * @returns {string} The assigned unit name or empty string if not found
@@ -181,6 +191,7 @@ module.exports = {
   getAnnouncementPriorities,
   getAnnouncementTypes,
   getRequestTypeMappings,
+  getRequestTypes,
   getAutoAssignedUnit,
   getMaxFileSize,
   getAllowedFileTypes,

@@ -3,6 +3,8 @@
 // Manages user connections and enables real-time notification delivery
 
 const socketIo = require('socket.io');
+const ServiceRequest = require('../models/ServiceRequest');
+const RequestApproval = require('../models/RequestApproval');
 
 class SocketService {
   constructor() {
@@ -375,6 +377,64 @@ class SocketService {
     }
     
     return presence;
+  }
+
+  /**
+   * Calculate and broadcast current active requests count to admins
+   */
+  async updateActiveRequestsCount() {
+    try {
+      // Count in-progress service requests
+      const inProgressServices = await ServiceRequest.countDocuments({
+        status: { $regex: /^in.progress$/i }
+      });
+
+      // Count in-progress approval requests
+      const inProgressApprovals = await RequestApproval.countDocuments({
+        status: { $regex: /^in.progress$/i }
+      });
+
+      // Count requests in revision (for revision, revision required, etc.)
+      const revisionServices = await ServiceRequest.countDocuments({
+        status: { $regex: /revision/i }
+      });
+
+      const revisionApprovals = await RequestApproval.countDocuments({
+        status: { $regex: /revision/i }
+      });
+
+      const activeRequestsCount = inProgressServices + inProgressApprovals + revisionServices + revisionApprovals;
+      
+      // Broadcast to all admin users
+      this.broadcastActiveRequestsUpdate(activeRequestsCount);
+      
+      return activeRequestsCount;
+    } catch (error) {
+      console.error('Error calculating active requests count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Broadcast active requests count update to all admin users
+   * @param {Number} activeRequestsCount - Current active requests count
+   */
+  broadcastActiveRequestsUpdate(activeRequestsCount) {
+    if (!this.io) return false;
+    
+    const updateData = {
+      activeRequests: activeRequestsCount,
+      timestamp: new Date()
+    };
+    
+    let sentCount = 0;
+    this.adminSockets.forEach(socketId => {
+      this.io.to(socketId).emit('activeRequestsUpdate', updateData);
+      sentCount++;
+    });
+    
+    console.log(`📊 Active requests update sent to ${sentCount} admin(s): ${activeRequestsCount}`);
+    return sentCount > 0;
   }
 
   /**
