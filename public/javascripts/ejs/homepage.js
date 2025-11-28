@@ -15,17 +15,23 @@ window.addEventListener('load', function() {
     }, 500);
 });
 
-// Set current year in footer
-document.getElementById('currentYear').textContent = new Date().getFullYear();
+// Set current year in footer (commented out as it's handled in EJS)
+// const currentYearElement = document.getElementById('currentYear');
+// if (currentYearElement) {
+//   currentYearElement.textContent = new Date().getFullYear();
+// }
 
 // Mobile menu toggle functionality
 const mobileMenuToggle = document.getElementById('mobileMenuToggle');
 const mobileNav = document.getElementById('mobileNav');
 
-mobileMenuToggle.addEventListener('click', function() {
-    this.classList.toggle('active');
-    mobileNav.classList.toggle('active');
-});
+// Check if elements exist and add event listener
+if (mobileMenuToggle && mobileNav) {
+    mobileMenuToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        mobileNav.classList.toggle('active');
+    });
+}
 
 // Active navigation link highlighting based on scroll position
 function updateActiveNavLink() {

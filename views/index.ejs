@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1280, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login Page</title>
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
@@ -383,19 +383,111 @@
       10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
     }
 
-    @media (max-width: 500px) {
+    /* Tablet Large (1024px and down) */
+    @media (max-width: 1024px) {
       .login-container {
-        padding: 30px 24px;
-        margin: 20px;
-        border-radius: 20px;
+        max-width: 420px;
+        padding: 28px;
+      }
+
+      .welcome-text {
+        font-size: 26px;
+      }
+
+      .subtitle {
+        margin-bottom: 35px;
+      }
+    }
+
+    /* Tablet Medium (768px and down) */
+    @media (max-width: 768px) {
+      .login-container {
+        max-width: 400px;
+        padding: 26px;
+        border-radius: 22px;
+      }
+
+      .login-container img.logo {
+        width: 110px;
+        margin-bottom: 25px;
       }
 
       .welcome-text {
         font-size: 24px;
+        margin-bottom: 6px;
+      }
+
+      .subtitle {
+        font-size: 15px;
+        margin-bottom: 32px;
+      }
+
+      .input-group {
+        padding: 15px 18px;
+        margin-bottom: 20px;
+      }
+
+      .input-group img {
+        width: 30px;
+        height: 30px;
+        margin-right: 14px;
+      }
+
+      .input-group input {
+        font-size: 15px;
+      }
+
+      .remember-section {
+        margin-bottom: 28px;
+      }
+
+      .login-button {
+        height: 54px;
+        font-size: 17px;
+      }
+
+      .register-text {
+        margin-top: 28px;
+        font-size: 15px;
+      }
+
+      .register-text,
+      .forgot-link {
+        font-size: 14px;
+      }
+    }
+
+    /* Mobile Large (480px and down) */
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .login-container {
+        max-width: none;
+        width: 100%;
+        padding: 24px 20px;
+        margin: 0;
+        border-radius: 20px;
+      }
+
+      .login-container img.logo {
+        width: 100px;
+        margin-bottom: 20px;
+      }
+
+      .welcome-text {
+        font-size: 22px;
+      }
+
+      .subtitle {
+        margin-bottom: 28px;
+        font-size: 14px;
       }
 
       .input-group {
         padding: 14px 16px;
+        margin-bottom: 18px;
       }
 
       .input-group img {
@@ -405,12 +497,96 @@
       }
 
       .input-group input {
-        font-size: 16px;
+        font-size: 14px;
+      }
+
+      .remember-section {
+        margin-bottom: 24px;
+        gap: 10px;
+      }
+
+      .text-wrapper-3 {
+        font-size: 14px;
       }
 
       .login-button {
-        height: 52px;
-        font-size: 17px;
+        height: 50px;
+        font-size: 16px;
+      }
+
+      .register-text {
+        margin-top: 24px;
+        font-size: 14px;
+      }
+
+      .forgot-link {
+        margin-top: 12px;
+        font-size: 13px;
+      }
+    }
+
+    /* Mobile Small (360px and down) */
+    @media (max-width: 360px) {
+      body {
+        padding: 8px;
+      }
+
+      .login-container {
+        padding: 20px 16px;
+        border-radius: 16px;
+      }
+
+      .login-container img.logo {
+        width: 80px;
+        margin-bottom: 16px;
+      }
+
+      .welcome-text {
+        font-size: 20px;
+        margin-bottom: 4px;
+      }
+
+      .subtitle {
+        margin-bottom: 24px;
+        font-size: 13px;
+      }
+
+      .input-group {
+        padding: 12px 14px;
+        margin-bottom: 16px;
+      }
+
+      .input-group img {
+        width: 24px;
+        height: 24px;
+        margin-right: 10px;
+      }
+
+      .input-group input {
+        font-size: 14px;
+      }
+
+      .remember-section {
+        margin-bottom: 20px;
+      }
+
+      .text-wrapper-3 {
+        font-size: 13px;
+      }
+
+      .login-button {
+        height: 48px;
+        font-size: 15px;
+      }
+
+      .register-text {
+        margin-top: 20px;
+        font-size: 13px;
+      }
+
+      .forgot-link {
+        margin-top: 10px;
+        font-size: 12px;
       }
     }
   </style>
