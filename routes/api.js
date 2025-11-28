@@ -566,12 +566,6 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
       for (const revision of approvalRequest.revisionHistory) {
         // Check action types based on fields and revision type
         const isUnitAction = revision.requestedBy && !revision.respondedBy;
-<<<<<<< Updated upstream
-        const isUserRevisionRequest = revision.respondedBy && !revision.requestedBy && 
-                                     (revision.revisionType === 'revision_requested' || revision.type === 'revision_requested');
-        const isUserResubmission = revision.respondedBy && !revision.requestedBy && 
-                                  (revision.revisionType !== 'revision_requested' && revision.type !== 'revision_requested');
-=======
         const isUserResubmission = revision.respondedBy && !revision.requestedBy;
         const isCombined = revision.requestedBy && revision.respondedBy;
         
