@@ -20,8 +20,10 @@ class AnnouncementService {
         title,
         content,
         priority = 'medium',
+        type = 'News',
         recipientType = 'all',
         organization = null,
+        office = null,
         recipients = [],
         scheduledTime = null,
         createdBy = null,
@@ -46,6 +48,15 @@ class AnnouncementService {
         }).select('_id');
         recipientIds = orgUsers.map(u => u._id);
         recipientCount = orgUsers.length;
+      } else if (recipientType === 'office' && office) {
+        const officeUsers = await User.find({ 
+          $or: [
+            { affiliation: office }, // non-students have affiliation array
+            { studentOrganization: office } // students have studentOrganization array
+          ]
+        }).select('_id');
+        recipientIds = officeUsers.map(u => u._id);
+        recipientCount = officeUsers.length;
       } else if (recipientType === 'specific' && recipients.length > 0) {
         recipientIds = recipients;
         recipientCount = recipients.length;
@@ -55,6 +66,7 @@ class AnnouncementService {
         title,
         content,
         priority,
+        type,
         isVisibleToAll: recipientType === 'all',
         recipients: recipientIds.map(id => ({ userId: id })),
         sentBy: sentBy || createdBy,
@@ -88,25 +100,29 @@ class AnnouncementService {
         throw new Error('Announcement not found');
       }
 
-      // Get recipient details for email sending
-      const recipients = await User.find({ _id: { $in: recipientIds } }).select('_id email fName lName settings');
+      // Get recipient details for email sending and role checking
+      const recipients = await User.find({ _id: { $in: recipientIds } }).select('_id email fName lName settings role');
 
       // Send in-app notifications
-      const notificationPromises = recipientIds.map(recipientId =>
-        notificationService.createNotification({
+      const notificationPromises = recipientIds.map(recipientId => {
+        const recipient = recipients.find(r => r._id.toString() === recipientId.toString());
+        const isAdmin = recipient && recipient.role === 'admin';
+        const actionUrl = isAdmin ? '/admin/announcement' : '/dashboard';
+        
+        return notificationService.createNotification({
           recipient: recipientId,
           title: `📢 ${announcement.title}`,
           message: announcement.content.substring(0, 200) + (announcement.content.length > 200 ? '...' : ''),
           type: 'announcement',
           priority: announcement.priority,
-          actionUrl: '/dashboard',
+          actionUrl: actionUrl,
           relatedId: announcement._id,
           relatedModel: 'BroadcastMessage'
         }).catch(err => {
           console.error(`Failed to send announcement to user ${recipientId}:`, err);
           return null;
-        })
-      );
+        });
+      });
 
       await Promise.allSettled(notificationPromises);
 

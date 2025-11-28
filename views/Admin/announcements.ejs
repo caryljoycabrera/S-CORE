@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Announcements Management - S-CORE Admin</title>
+  <title>Announcements</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css">
   <link rel="stylesheet" href="/stylesheets/modal-centered.css">
@@ -463,9 +463,18 @@
         <div class="form-group">
           <label class="form-label" for="announcementPriority">Priority</label>
           <select id="announcementPriority" class="form-input">
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
+            <% announcementPriorities.forEach(priority => { %>
+            <option value="<%= priority %>" <%= priority === 'medium' ? 'selected' : '' %>><%= priority.charAt(0).toUpperCase() + priority.slice(1) %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="announcementType">Announcement Type</label>
+          <select id="announcementType" class="form-input">
+            <% announcementTypes.forEach(type => { %>
+            <option value="<%= type %>"><%= type %></option>
+            <% }); %>
           </select>
         </div>
 
@@ -481,6 +490,10 @@
               <label for="recipientOrg">By Organization</label>
             </div>
             <div class="checkbox-item">
+              <input type="radio" id="recipientOffice" name="recipientType" value="office" onchange="toggleRecipientOptions()">
+              <label for="recipientOffice">By Office/Department</label>
+            </div>
+            <div class="checkbox-item">
               <input type="radio" id="recipientSpecific" name="recipientType" value="specific" onchange="toggleRecipientOptions()">
               <label for="recipientSpecific">Specific Users</label>
             </div>
@@ -491,8 +504,18 @@
           <label class="form-label" for="organizationSelect">Select Organization</label>
           <select id="organizationSelect" class="form-input">
             <option value="">-- Select organization --</option>
-            <% units.forEach(unit => { %>
-            <option value="<%= unit %>"><%= unit %></option>
+            <% organizations.forEach(org => { %>
+            <option value="<%= org %>"><%= org %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div id="officeSelectBlock" class="form-group" style="display: none;">
+          <label class="form-label" for="officeSelect">Select Office/Department</label>
+          <select id="officeSelect" class="form-input">
+            <option value="">-- Select office/department --</option>
+            <% offices.forEach(office => { %>
+            <option value="<%= office %>"><%= office %></option>
             <% }); %>
           </select>
         </div>
@@ -530,6 +553,7 @@
         <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
           <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Recipients:</strong> <span id="viewRecipients"></span></p>
           <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Priority:</strong> <span id="viewPriority"></span></p>
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Type:</strong> <span id="viewType"></span></p>
           <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Created:</strong> <span id="viewCreated"></span></p>
         </div>
       </div>
@@ -781,6 +805,7 @@
     function toggleRecipientOptions() {
       const type = document.querySelector('input[name="recipientType"]:checked').value;
       document.getElementById('orgSelectBlock').style.display = type === 'organization' ? 'block' : 'none';
+      document.getElementById('officeSelectBlock').style.display = type === 'office' ? 'block' : 'none';
       document.getElementById('userSelectBlock').style.display = type === 'specific' ? 'block' : 'none';
     }
 
@@ -795,6 +820,7 @@
       document.getElementById('announcementTitle').value = '';
       announcementQuill.setContents([]);
       document.getElementById('announcementPriority').value = 'medium';
+      document.getElementById('announcementType').value = '';
       document.getElementById('recipientAll').checked = true;
       document.getElementById('scheduledTime').value = '';
       toggleRecipientOptions();
@@ -813,6 +839,7 @@
           document.getElementById('announcementTitle').value = data.announcement.title;
           announcementQuill.root.innerHTML = data.announcement.content;
           document.getElementById('announcementPriority').value = data.announcement.priority || 'medium';
+          document.getElementById('announcementType').value = data.announcement.type || 'News';
           
           // Populate scheduledTime if it exists
           if (data.announcement.scheduledTime) {
@@ -859,6 +886,7 @@
           document.getElementById('viewRecipients').textContent = 
             data.announcement.isVisibleToAll ? 'All Users' : `${data.announcement.recipients?.length || 0} users`;
           document.getElementById('viewPriority').textContent = data.announcement.priority || 'medium';
+          document.getElementById('viewType').textContent = data.announcement.type || 'News';
           document.getElementById('viewCreated').textContent = new Date(data.announcement.createdAt).toLocaleString();
         }
       } catch (error) {
@@ -898,7 +926,8 @@
     async function submitAnnouncement() {
       const title = document.getElementById('announcementTitle').value.trim();
       const content = announcementQuill.root.innerHTML;
-      const priority = document.getElementById('announcementPriority').value;
+      const priority = document.getElementById('announcementPriority').value.toLowerCase();
+      const type = document.getElementById('announcementType').value;
       const recipientType = document.querySelector('input[name="recipientType"]:checked').value;
       const scheduledTimeInput = document.getElementById('scheduledTime').value;
 
@@ -935,6 +964,7 @@
         title,
         content,
         priority,
+        type,
         recipientType,
         scheduledTime
       };
@@ -943,6 +973,12 @@
         data.organization = document.getElementById('organizationSelect').value;
         if (!data.organization) {
           showAlert('Please select an organization', 'error');
+          return;
+        }
+      } else if (recipientType === 'office') {
+        data.office = document.getElementById('officeSelect').value;
+        if (!data.office) {
+          showAlert('Please select an office/department', 'error');
           return;
         }
       } else if (recipientType === 'specific') {

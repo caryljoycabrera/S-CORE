@@ -14,6 +14,14 @@
 
 console.log('🚀 Starting Approvals Admin script...');
 
+// Global variable to store available units from database
+let availableUnits = [];
+// Global variable to store available request statuses from database
+let availableStatuses = [];
+// Global variables for organizations and offices
+let availableOrganizations = [];
+let availableOffices = [];
+
 // ==================================
 // HELPER FUNCTIONS FOR CONVERSATION
 // ==================================
@@ -147,188 +155,7 @@ const DropdownManager = {
   }
 };
 
-// Organization and Office data arrays (shortened for brevity)
-const studentOrganizations = [
- "University Student Government (USG)",
-        "Internal Audit Service (IAS)",
-        "University Student Election Commission (USEC)",
-        "Office of the Solicitor General (OSG)",
-        "College of Business Administration and Accountancy Student Government (CBAASG)",
-        "Business Management Program Council (BMPC)",
-        "Junior Philippine Institute of Accountants (JPIA)",
-        "Marketing Management Program Council (MMPC)",
-        "College of Education Student Government (COEdSG)",
-        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-        "Architecture Program Council (ArchPC)",
-        "Civil Engineering Program Council (CEEPC)",
-        "Computer Engineering Program Council (CpEPC)",
-        "Electrical Engineering Program Council (EEEPC)",
-        "Electronics Engineering Program Council (ECEPC)",
-        "Industrial Engineering Program Council (IEEPC)",
-        "Mechanical Engineering Program Council (MEEPC)",
-        "Multimedia Arts Program Council (MMAPC)",
-        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-        "College of Criminal Justice Education Student Government (CCJESG)",
-        "Criminology Program Council (CrimPC)",
-        "Forensic Science Program Council (FScPC)",
-        "College of Liberal Arts and Communication Student Government (CLACSG)",
-        "Communication Program Council (CPC)",
-        "International Development Program Council (IDPC)",
-        "Political Science Program Council (PSPC)",
-        "Psychology Program Council (PPC)",
-        "College of Science Student Government (COSSG)",
-        "Applied Mathematics Program Council (AMPC)",
-        "Biology Program Council (BioPC)",
-        "College of Information and Computer Studies Student Government (CICSSG)",
-        "Computer Science Program Council (CSPC)",
-        "Information Technology Program Council (ITPC)",
-        "DLSU-D Chorale (CHORALE)",
-        "Lasallian Symphony Orchestra (LSO)",
-        "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-        "Lasallian Pop Band (LPB)",
-        "Teatro Lasalliana (TEATRO)",
-        "Visual and Performing Arts Production Unit (VPAPU)",
-        "Heraldo Filipino",
-        "Vicissitude",
-        "Council of Student Organizations (CSO)",
-        "Business Operations Management Society (BOMS)",
-        "Junior Marketing Association (JMA)",
-        "DLSU-D Psychological Society (DPS)",
-        "DLSU-D Pre-Medical Society (DPMS)",
-        "Hotel and Restaurant Management Society (HRMS)",
-        "Turismo Lasalleño Society (TLS)",
-        "Lasallian Educators Society (LES)",
-        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-        "DLSU-D Pre-Law Society (DPLS)",
-        "Astraeus Literary and Arts Guild",
-        "Accounting Enrichment Society (ACES)",
-        "Circle of Student Assistants (COSA)",
-        "DLSU-D Lifters",
-        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-        "DLSU-D United Patriots Football Club",
-        "Junior Financial Executives Institute of the Philippines (JFINEX)",
-        "Marché Société (MS)",
-        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-        "SINAG Society of Leaders (SISOL)",
-        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-        "LS Verde of Campus Sustainability Office",
-        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-        "Green FM of Communications and Journalism Department",
-        "International Students' Association (ISA) of International Students Office",
-        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
-];
-
-const officesDepartments = [
-  "Office of the President",
-          "Office of the Chief Administrative Officer",
-          "Office of the Provost",
-          "Office of the Chief Lasallian Mission Officer",
-          "Office of the Principal",
-          "Corporate and Executive Management Office",
-          "Center for Heritage Conservation",
-          "Museo De La Salle",
-          "Risk, Compliance and Audit Office",
-          "University Chaplain",
-          "Office of the Vice President for Administrative Services",
-          "Office of the Vice President for Finance",
-          "Office of the Vice President for Global Engagement and External Relations",
-          "Human Resource Management Office",
-          "Strategic Communications Office",
-          "Ancillary and Asset Management Office",
-          "Legal Counsel",
-          "Data Protection Office",
-          "Campus Development Office",
-          "Buildings and Facilities Maintenance Office",
-          "Campus Sustainability Office",
-          "General Services Office",
-          "Green Architecture and Campus Planning Office",
-          "Information and Communications Technology Center",
-          "Accounting Office",
-          "Treasury Office",
-          "Advancement and Alumni Relations Office",
-          "Lasallian Community Development Center",
-          "Linkages and Scholarship Office",
-          "Office of the Vice Provost for Academics",
-          "Office of the Deputy Provost for Research",
-          "Academic Planning and Quality Management",
-          "College of Law",
-          "College of Professional and Graduate Studies",
-          "School of Innovative and Flexible Learning",
-          "School of Governance, Public Service, and Corporate Leadership",
-          "Aklatang Emilio Aguinaldo-Information Resource Center",
-          "Center for Student Admissions",
-          "University Registrar",
-          "Cavite Studies Center",
-          "University Research Office",
-          "Herminia D. Torres Quality Assurance Office",
-          "Center for Innovative Learning Program",
-          "Center for Curriculum Development and Instruction",
-          "Language Learning Center",
-          "Center for Artificial Intelligence",
-          "Center for Creative Program",
-          "Academy of Continuing Education",
-          "College of Business Administration and Accountancy",
-          "Accountancy Department",
-          "Allied Business Department",
-          "Business Management Department",
-          "Marketing Department",
-          "College of Criminal Justice Education",
-          "College of Education",
-          "Physical Education Department",
-          "Professional Education Department",
-          "Religious Education Department",
-          "College of Engineering, Architecture and Technology",
-          "Architecture Department",
-          "Engineering Department",
-          "Graphics Design and Multimedia Department",
-          "Center of Technology",
-          "College of Information and Computer Studies",
-          "Computer Studies Department",
-          "Information Technology Department",
-          "College of Liberal Arts and Communication",
-          "Communication and Journalism Department",
-          "Languages and Literature Department",
-          "Social Sciences Department",
-          "Philosophy and Psychology Department",
-          "College of Tourism and Hospitality Management",
-          "Hospitality Management Department",
-          "Tourism Management Department",
-          "College of Science",
-          "Biological Sciences Department",
-          "Mathematics & Statistics Department",
-          "Physical Sciences Department",
-          "Office of Student Services",
-          "Student Development and Activities Office",
-          "Student Welfare and Formation Office",
-          "Student Wellness Center",
-          "NSTP-CWTS",
-          "Campus Ministry Office",
-          "DLS Bahay Pag-asa Dasmariñas",
-          "Night College",
-          "Sports Development Office",
-          "University Lasallian Family Office",
-          "Basic Education",
-          "Office of the Associate Principal for Academics and Research",
-          "Office of the Associate Principal for Administrative Services and Student Affairs",
-          "Dormitory",
-          "Materials Reproduction Office / Food Services Office",
-          "Retreat and Conference Center / Sports & Recreation Complex",
-          "Warehouse Office",
-          "Safety & Health Office",
-          "Purchasing Office",
-          "Transportation Office",
-          "Facilities Maintenance Office",
-          "Housekeeping & Grounds",
-          "De La Salle Dasmariñas Alumni Association",
-          "DLSU-D Development Cooperative",
-          "Faculty Organization",
-          "KABALIKAT ng DLSU-D Inc.",
-          "Parents Organization La Salle Cavite",
-          "Human Resource Management Office"
-];
+// Organization and Office data arrays (now loaded from database)
 
 // Enhanced Multi-Select Class
 class EnhancedMultiSelect {
@@ -556,31 +383,64 @@ class EnhancedMultiSelect {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
   
-  // Debug: Check all rows for allowAdditionalUpload data
-  console.log('🚀 Page loaded - checking all data attributes...');
-  const allRows = document.querySelectorAll('.request-row');
-  allRows.forEach((row, index) => {
-    const debugInfo = row.getAttribute('data-debug-allow');
-    const allowUpload = row.getAttribute('data-allow-additional-upload');
-    console.log(`Row ${index + 1}:`, {
-      requestId: row.dataset.requestId,
-      allowAdditionalUpload: allowUpload,
-      debugInfo: debugInfo ? JSON.parse(debugInfo) : 'No debug info'
+  // Fetch available units and statuses from database
+  fetch('/api/system-data')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.data) {
+        availableUnits = data.data.units || [];
+        availableStatuses = data.data.requestStatuses || [];
+        availableOrganizations = data.data.organizations || [];
+        availableOffices = data.data.offices || [];
+        console.log('✅ Loaded data from database:', { 
+          units: availableUnits, 
+          statuses: availableStatuses,
+          organizations: availableOrganizations,
+          offices: availableOffices
+        });
+      } else {
+        console.error('❌ Failed to load data from API');
+        // Fallbacks
+        availableUnits = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
+        availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived'];
+        availableOrganizations = [];
+        availableOffices = [];
+      }
+      
+      // Initialize enhanced multi-select dropdowns after data is loaded
+      const statusFilter = new EnhancedMultiSelect('statusFilter', 
+        availableStatuses.map(s => s.toLowerCase()), 
+        'Select Status', false);
+        
+      const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
+        availableOrganizations, 
+        'Select Student Organizations', true);
+        
+      const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
+        availableOffices, 
+        'Select Offices/Departments', true);
+    })
+    .catch(error => {
+      console.error('❌ Error fetching data:', error);
+      // Fallbacks
+      availableUnits = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
+      availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived'];
+      availableOrganizations = [];
+      availableOffices = [];
+      
+      // Initialize enhanced multi-select dropdowns with fallbacks
+      const statusFilter = new EnhancedMultiSelect('statusFilter', 
+        availableStatuses.map(s => s.toLowerCase()), 
+        'Select Status', false);
+        
+      const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
+        availableOrganizations, 
+        'Select Student Organizations', true);
+        
+      const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
+        availableOffices, 
+        'Select Offices/Departments', true);
     });
-  });
-  
-  // Initialize enhanced multi-select dropdowns
-  const statusFilter = new EnhancedMultiSelect('statusFilter', 
-    ['pending', 'queued', 'in progress', 'for revision', 'approved', 'rejected', 'archived'], 
-    'Select Status', false);
-    
-  const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
-    studentOrganizations, 
-    'Select Student Organizations', true);
-    
-  const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
-    officesDepartments, 
-    'Select Offices/Departments', true);
 
   // Global variables
   let detailModal = document.getElementById("detailsModal");
@@ -614,6 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
       student: row.dataset.student.toLowerCase(),
       datetime: row.dataset.datetime,
       date: row.dataset.date,
+      deadline: row.dataset.deadline,
       description: row.dataset.description.toLowerCase()
     }));
 
@@ -1422,9 +1283,11 @@ document.addEventListener('DOMContentLoaded', function() {
   function resetFormToOriginalValues() {
     const statusSelect = document.getElementById('adminStatusSelect');
     const unitsSelect = document.getElementById('adminUnitsSelect');
+    const deadlineInput = document.getElementById('adminDeadlineInput');
     
     if (statusSelect) statusSelect.value = originalValues.status || '';
     if (unitsSelect) unitsSelect.value = originalValues.units || '';
+    if (deadlineInput) deadlineInput.value = originalValues.deadline || '';
     
     showNotification('Changes cancelled - form reset to original values', 'info');
   }
@@ -1448,6 +1311,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const statusSelect = document.getElementById('adminStatusSelect');
     const unitsSelect = document.getElementById('adminUnitsSelect');
+    const deadlineInput = document.getElementById('adminDeadlineInput');
     
     if (statusSelect && statusSelect.value !== originalValues.status) {
       changes.push({
@@ -1462,6 +1326,14 @@ document.addEventListener('DOMContentLoaded', function() {
         field: 'Assigned Unit',
         oldValue: originalValues.units || 'Not yet assigned',
         newValue: unitsSelect.value || 'Not yet assigned'
+      });
+    }
+    
+    if (deadlineInput && deadlineInput.value !== originalValues.deadline) {
+      changes.push({
+        field: 'Deadline',
+        oldValue: originalValues.deadline ? new Date(originalValues.deadline).toLocaleDateString() : 'No deadline',
+        newValue: deadlineInput.value ? new Date(deadlineInput.value).toLocaleDateString() : 'No deadline'
       });
     }
     
@@ -1486,97 +1358,78 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Perform the actual update
   async function performUpdate() {
-    const confirmBtn = document.getElementById('confirmUpdateBtn');
-    confirmBtn.classList.add('loading');
-    confirmBtn.textContent = 'Updating...';
-    
-    try {
-        const statusSelect = document.getElementById('adminStatusSelect');
-        const unitsSelect = document.getElementById('adminUnitsSelect');
-        const newStatus = statusSelect ? statusSelect.value : '';
-        const newUnits = unitsSelect ? unitsSelect.value : '';
-        
-        // Single update call with both status and units
-        const success = await updateRequestStatus(currentRequestId, newStatus, currentRequestType);
-        
-        if (success) {
-            updateConfirmationModal.classList.remove('show');
-            showNotification('All changes applied successfully!', 'success');
-            
-            // Update original values
-            originalValues = {
-                status: newStatus,
-                units: newUnits
-            };
-            
-            // Reopen modal with updated data
-            setTimeout(() => {
-                reopenModalAfterUpdate(currentRequestId);
-            }, 1000);
-        }
-        
-    } catch (error) {
-      console.error('Error during update:', error);
-      showNotification('Update failed: ' + error.message, 'error');
-    } finally {
-      confirmBtn.classList.remove('loading');
-      confirmBtn.textContent = 'Confirm Update';
-    }
-  }
-  
-  // Perform the actual update
-  async function updateRequestStatus(requestId, newStatus, requestType) {
-    console.log('🔄 Updating status:', { requestId, newStatus, requestType });
-    
-    try {
-        // Get current assigned units
-        const unitsSelect = document.getElementById('adminUnitsSelect');
-        const currentUnits = unitsSelect ? unitsSelect.value : '';
+    console.log('Performing update...');
 
-        const endpoint = '/admin/approval/update-status';
-        
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                requestId: requestId,
-                status: newStatus,
-                assignedUnits: currentUnits // Include units with status update
-            })
+    // Gather form data
+    const statusSelect = document.getElementById('adminStatusSelect');
+    const unitsSelect = document.getElementById('adminUnitsSelect');
+    const deadlineInput = document.getElementById('adminDeadlineInput');
+
+    const updateData = {
+      requestId: currentRequestId,
+      status: statusSelect?.value || '',
+      assignedUnits: unitsSelect?.value || 'Not yet assigned',
+      deadline: deadlineInput?.value || null
+    };
+
+    console.log('Update data:', updateData);
+
+    try {
+      const response = await fetch('/admin/approval/update-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(updateData)
+      });
+
+      const result = await response.json();
+      console.log('Update response:', result);
+
+      if (result.success) {
+        // Update the table row with the updated data
+        const updatedDisplayUnits = updateData.assignedUnits || 'Not yet assigned';
+        const formattedDeadline = updateData.deadline ?
+          new Date(updateData.deadline).toLocaleDateString() : 'N/A';
+
+        updateTableRowData(currentRequestId, {
+          status: updateData.status,
+          units: updatedDisplayUnits,
+          deadline: updateData.deadline,
+          formattedDeadline: formattedDeadline
         });
 
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            // Update both status and units in display
-            const statusElement = document.getElementById('detailStatus');
-            const currentStatusValue = document.getElementById('currentStatusValue');
-            const currentUnitsValue = document.getElementById('currentUnitsValue');
-            
-            if (statusElement) statusElement.innerText = newStatus;
-            if (currentStatusValue) currentStatusValue.innerText = newStatus;
-            if (currentUnitsValue) currentUnitsValue.innerText = currentUnits || 'Not yet assigned';
-            
-            // Update table row with both status and units
-            updateTableRowData(requestId, {
-                status: newStatus,
-                units: currentUnits || 'Not yet assigned'
-            });
-            
-            return true;
-        } else {
-            console.error('Update failed:', result.message);
-            showNotification('Failed to update: ' + result.message, 'error');
-            return false;
-        }
+        // Close modals
+        updateConfirmationModal.style.display = 'none';
+        showNotification('All changes applied successfully!', 'success');
+
+        // Update original values
+        originalValues = {
+          status: updateData.status,
+          units: updateData.assignedUnits,
+          deadline: updateData.deadline
+        };
+
+        // Reopen modal
+        setTimeout(() => {
+          reopenModalAfterUpdate(currentRequestId);
+        }, 1000);
+      } else {
+        showNotification('Update failed: ' + result.message, 'error');
+      }
     } catch (error) {
-        console.error('Error updating:', error);
-        showNotification('Failed to update: ' + error.message, 'error');
-        return false;
+      console.error('Error performing update:', error);
+      showNotification('Update failed: ' + error.message, 'error');
+    } finally {
+      const confirmBtn = document.getElementById('confirmUpdateBtn');
+      if (confirmBtn) {
+        confirmBtn.classList.remove('loading');
+        confirmBtn.textContent = 'Confirm Update';
+      }
     }
   }
+
 
   async function updateRequestUnits(requestId, newUnit, requestType) {
     console.log('🔄 Updating units:', { requestId, newUnit, requestType });
@@ -1605,6 +1458,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const displayValue = newUnit || 'Not yet assigned';
         if (unitsElement) unitsElement.innerText = displayValue;
         if (currentUnitsValue) currentUnitsValue.innerText = displayValue;
+        
+        // Update table row
+        updateTableRowData(requestId, {
+          units: displayValue
+        });
         
         return true;
       } else {
@@ -1731,7 +1589,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Store original values
     originalValues = {
       status: rowData.status,
-      units: rowData.units
+      units: rowData.units,
+      deadline: rowData.deadline || null
     };
     
     // Helper function to safely set element text
@@ -1839,15 +1698,15 @@ if (specificRequestType) {
     const currentStatusValue = document.getElementById('currentStatusValue');
     
     if (statusSelect && currentStatusValue) {
-      const statusOptions = [
-        { value: 'Pending', label: 'Pending' },
-        { value: 'Queued', label: 'Queued' },
-        { value: 'In Progress', label: 'In Progress' },
-        { value: 'For Revision', label: 'For Revision' },
-        { value: 'Approved', label: 'Approved' },
-        { value: 'Rejected', label: 'Rejected' },
-        { value: 'Archived', label: 'Archived' }
-      ];
+      // Ensure statuses are loaded
+      if (availableStatuses.length === 0) {
+        availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived'];
+      }
+      
+      const statusOptions = availableStatuses.map(status => ({
+        value: status,
+        label: status
+      }));
       
       statusSelect.innerHTML = statusOptions.map(option => 
         `<option value="${option.value}" ${option.value === rowData.status ? 'selected' : ''}>${option.label}</option>`
@@ -1861,13 +1720,18 @@ if (specificRequestType) {
     const currentUnitsValue = document.getElementById('currentUnitsValue');
 
     if (unitsSelect && currentUnitsValue) {
+      // Ensure units are loaded
+      if (availableUnits.length === 0) {
+        availableUnits = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
+      }
+      
       // Define recommendation mapping for approval requests
       const recommendationMapping = {
-        'Social Media Post Content/Caption': ['Social Media Unit', 'Public Relations Unit'],
-        'Draft Official Letter/Advisory': ['Public Relations Unit'],
-        'Publication Material/Pubmat Design Vetting': ['Graphics Unit'],
-        'Publication Wording/Content Check': ['Public Relations Unit', 'Social Media Unit'],
-        'Logo/Merchandise Design Vetting': ['Graphics Unit']
+        'Social Media Post Content/Caption': ['Social Media', 'Public Relations'],
+        'Draft Official Letter/Advisory': ['Public Relations'],
+        'Publication Material/Pubmat Design Vetting': ['Graphics'],
+        'Publication Wording/Content Check': ['Public Relations', 'Social Media'],
+        'Logo/Merchandise Design Vetting': ['Graphics']
       };
 
       // Get recommended units for this request type
@@ -1878,13 +1742,15 @@ if (specificRequestType) {
 
       if (unitsSelect) {
         // Clear existing options
-        unitsSelect.innerHTML = `
-          <option value="">Not yet assigned</option>
-          <option value="Social Media Unit" ${recommendedUnits.includes('Social Media Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Social Media Unit') ? '★ ' : ''}Social Media Unit</option>
-          <option value="Graphics Unit" ${recommendedUnits.includes('Graphics Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Graphics Unit') ? '★ ' : ''}Graphics Unit</option>
-          <option value="Multimedia Unit" ${recommendedUnits.includes('Multimedia Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Multimedia Unit') ? '★ ' : ''}Multimedia Unit</option>
-          <option value="Public Relations Unit" ${recommendedUnits.includes('Public Relations Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Public Relations Unit') ? '★ ' : ''}Public Relations Unit</option>
-        `;
+        let optionsHtml = '<option value="">Not yet assigned</option>';
+        
+        // Add units from database
+        availableUnits.forEach(unit => {
+          const isRecommended = recommendedUnits.includes(unit);
+          optionsHtml += `<option value="${unit}" ${isRecommended ? 'class="recommended-unit"' : ''}>${isRecommended ? '★ ' : ''}${unit}</option>`;
+        });
+        
+        unitsSelect.innerHTML = optionsHtml;
 
         // Set the current value
         unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
@@ -1898,6 +1764,21 @@ if (specificRequestType) {
       const detailUnits = document.getElementById('detailUnits');
       if (detailUnits) {
         detailUnits.textContent = rowData.units || 'Not yet assigned';
+      }
+    }
+    
+    // Populate deadline
+    const deadlineInput = document.getElementById('adminDeadlineInput');
+    const currentDeadlineValue = document.getElementById('currentDeadlineValue');
+    
+    if (deadlineInput && currentDeadlineValue) {
+      // Set the deadline value
+      if (rowData.deadline) {
+        deadlineInput.value = rowData.deadline;
+        currentDeadlineValue.textContent = rowData.formattedDeadline || rowData.deadline;
+      } else {
+        deadlineInput.value = '';
+        currentDeadlineValue.textContent = 'No deadline set';
       }
     }
   }
@@ -2215,10 +2096,11 @@ window.openImagePreview = function(imageUrl, fileName) {
         specificRequestType: updatedRow.dataset.specifictype,
         units: updatedRow.dataset.units,
         datetime: updatedRow.dataset.datetime,
+        deadline: updatedRow.dataset.deadline,
+        formattedDeadline: updatedRow.dataset.formattedDeadline,
         description: updatedRow.dataset.description,
         file: updatedRow.dataset.file,
         files: updatedRow.dataset.files,
-        formattedDeadline: updatedRow.dataset.formattedDeadline,
         allowAdditionalUpload: updatedRow.dataset.allowAdditionalUpload,
         student: updatedRow.dataset.student
       };
@@ -2262,6 +2144,19 @@ window.openImagePreview = function(imageUrl, fileName) {
       }
     }
 
+    if (updatedData.formattedDeadline) {
+      row.dataset.deadline = updatedData.deadline;
+      row.dataset.formattedDeadline = updatedData.formattedDeadline;
+      // Update deadline display in table if exists
+      const cells = row.querySelectorAll('td');
+      if (cells[7]) { // Deadline column
+        const deadlineCell = cells[7];
+        deadlineCell.innerHTML = updatedData.formattedDeadline !== 'N/A' ? 
+          `<span class="deadline-badge">${updatedData.formattedDeadline}</span>` : 
+          '<span class="deadline-badge">N/A</span>';
+      }
+    }
+
     // Update the allRequestsData array for filtering
     const requestIndex = allRequestsData.findIndex(req => req.element === row);
     if (requestIndex !== -1) {
@@ -2270,6 +2165,9 @@ window.openImagePreview = function(imageUrl, fileName) {
       }
       if (updatedData.units !== undefined) {
         allRequestsData[requestIndex].units = updatedData.units.toLowerCase();
+      }
+      if (updatedData.deadline !== undefined) {
+        allRequestsData[requestIndex].deadline = updatedData.deadline;
       }
     }
   }
@@ -2381,10 +2279,11 @@ window.openImagePreview = function(imageUrl, fileName) {
           specificRequestType: row.dataset.specifictype,
           units: row.dataset.units,
           datetime: row.dataset.datetime,
+          deadline: row.dataset.deadline,
+          formattedDeadline: row.dataset.formattedDeadline,
           description: row.dataset.description,
           file: row.dataset.file,
           files: row.dataset.files,
-          formattedDeadline: row.dataset.formattedDeadline,
           allowAdditionalUpload: row.dataset.allowAdditionalUpload,
           student: row.dataset.student
         };

@@ -6,6 +6,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const router = express.Router();
 const User = require('../models/User');
+const BroadcastMessage = require('../models/BroadcastMessage');
 const notificationService = require('../services/notificationService');
 const { authLimiter } = require('../middleware/rateLimiter');
 const { getOrganizations, getOffices } = require('../utils/settingsHelpers');
@@ -243,6 +244,34 @@ router.post('/register', authLimiter, async (req, res) => {
         console.log('📧 ===== ADMIN NOTIFICATION COMPLETE =====');
       } else {
         console.error('⚠️ User not found after save - cannot send notification');
+      }
+
+      // Add new user to all existing "all users" announcements
+      try {
+        console.log('📢 Adding new user to existing "all users" announcements...');
+        const allUsersAnnouncements = await BroadcastMessage.find({ isVisibleToAll: true });
+        console.log(`📢 Found ${allUsersAnnouncements.length} "all users" announcements`);
+
+        for (const announcement of allUsersAnnouncements) {
+          // Check if user is already in recipients
+          const existingRecipient = announcement.recipients.find(
+            r => r.userId.toString() === savedUser._id.toString()
+          );
+
+          if (!existingRecipient) {
+            announcement.recipients.push({
+              userId: savedUser._id,
+              isRead: false
+            });
+            await announcement.save();
+            console.log(`📢 Added user to announcement: ${announcement.title}`);
+          }
+        }
+
+        console.log('✅ Successfully added new user to all existing "all users" announcements');
+      } catch (announcementError) {
+        console.error('❌ Error adding user to announcements:', announcementError);
+        // Don't fail registration if this fails
       }
       
       // Redirect to login on successful registration

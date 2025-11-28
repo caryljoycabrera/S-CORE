@@ -1478,13 +1478,18 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
  * Updates approval request status and assigned units
  */
 router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
-  const { requestId, status, assignedUnits } = req.body;
+  const { requestId, status, assignedUnits, deadline } = req.body;
 
   try {
     const update = {
       status: status || 'Pending',
       assignedUnits: assignedUnits || 'Not yet assigned'
     };
+
+    // Add deadline if provided
+    if (deadline) {
+      update.deadline = new Date(deadline);
+    }
 
     // Set allowAdditionalFileUpload to true when status is set to "For revision"
     if (status?.toLowerCase() === 'for revision') {
@@ -2422,35 +2427,6 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
 
 
 // ==================== REPORTS ROUTES ====================
-
-/**
- * GET /admin/reports
- * Render the Report Generation Page
- * Accessible by admin users only
- */
-router.get('/admin/reports', requireAdmin, async (req, res) => {
-  try {
-    // Get unread notification count for the user
-    const unreadCount = await Notification.countDocuments({
-      recipient: req.user._id,
-      read: false
-    });
-
-    // Get available filters for report page
-    const availableFilters = await reportService.getAvailableFilters();
-
-    res.render('admin/reports', {
-      user: req.user,
-      unreadCount: unreadCount,
-      availableFilters: availableFilters
-    });
-  } catch (error) {
-    console.error('Error rendering reports page:', error);
-    res.status(500).render('error', {
-      message: 'Error loading reports page'
-    });
-  }
-});
 
 /**
  * GET /api/admin/report-data
@@ -3780,10 +3756,12 @@ router.get('/admin/analytics/reports/download/:reportId', requireAdmin, async (r
 router.get('/admin/announcement', requireAdmin, async (req, res) => {
   try {
     const { getUnits } = require('../utils/settingsHelpers');
+    const settingsService = require('../services/settingsService');
     const user = await User.findById(req.session.userId);
     const result = await announcementService.getAnnouncements(1, 50);
     const stats = await announcementService.getStatistics();
     const units = getUnits();
+    const settings = await settingsService.getSettings();
     const unreadCount = await Notification.countDocuments({
       recipient: req.session.userId,
       isRead: false
@@ -3794,6 +3772,10 @@ router.get('/admin/announcement', requireAdmin, async (req, res) => {
       announcements: result.announcements,
       stats: stats,
       units: units,
+      announcementPriorities: (settings.announcementPriorities || ['low', 'medium', 'high']).map(p => p.toLowerCase()),
+      announcementTypes: settings.announcementTypes || ['Event', 'News', 'Reminder', 'Update', 'Maintenance'],
+      organizations: settings.organizations || [],
+      offices: settings.offices || [],
       unreadCount: unreadCount
     });
   } catch (error) {
@@ -3829,8 +3811,10 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
       title,
       content,
       priority,
+      type,
       recipientType,
       organization,
+      office,
       recipients,
       scheduledTime
     } = req.body;
@@ -3843,8 +3827,10 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
       title,
       content,
       priority: priority || 'medium',
+      type: type || 'News',
       recipientType: recipientType || 'all',
       organization,
+      office,
       recipients: recipients && Array.isArray(recipients) ? recipients : [],
       scheduledTime,
       sentBy: req.session.userId
@@ -3898,12 +3884,17 @@ router.post('/admin/announcement/upload', requireAdmin, upload.single('file'), a
  */
 router.put('/admin/announcement/:id', requireAdmin, async (req, res) => {
   try {
-    const { title, content, priority, scheduledTime } = req.body;
+    const { title, content, priority, type, recipientType, organization, office, recipients, scheduledTime } = req.body;
 
     const announcement = await announcementService.updateAnnouncement(req.params.id, {
       title,
       content,
       priority,
+      type,
+      recipientType,
+      organization,
+      office,
+      recipients: recipients && Array.isArray(recipients) ? recipients : undefined,
       scheduledTime: scheduledTime ? new Date(scheduledTime) : null
     });
 

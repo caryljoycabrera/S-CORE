@@ -29,6 +29,12 @@ const broadcastMessageSchema = new mongoose.Schema({
     default: 'medium'
   },
 
+  // Announcement type
+  type: {
+    type: String,
+    default: 'News'
+  },
+
   // Recipients and their read status
   recipients: [{
     // Reference to each recipient user
