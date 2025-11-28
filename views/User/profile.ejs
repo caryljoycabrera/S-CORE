@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/unitprofile.css" />
 <script src="/javascripts/alert-handler.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="/javascripts/shared-data.js"></script>
@@ -1473,7 +1474,7 @@ body > .select2-container--default {
       </div>
     </div>
 
-  <main class="student-side">
+  <main class="unit-main-content student-side">
     <div class="div">
       <!-- LEFT SIDEBAR - Profile Card -->
       <div class="section-header">
@@ -1643,6 +1644,18 @@ body > .select2-container--default {
             <div class="stat-content">
               <div class="stat-label">Member Since</div>
               <div class="stat-value"><%= new Date(user.createdAt || Date.now()).getFullYear() %></div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon user-accent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-label">Access Level</div>
+              <div class="stat-value"><%= user.role === 'admin' ? 'Full Access' : 'Standard Access' %></div>
             </div>
           </div>
         </div>
