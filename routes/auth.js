@@ -310,6 +310,14 @@ router.post('/login', authLimiter, async (req, res) => {
       return res.status(401).render('index', { message: 'Invalid credentials.' });
     }
 
+    // Check if user account is deleted
+    if (user.isDeleted) {
+      console.log('Login blocked - User account deleted:', username);
+      return res.status(403).render('index', { 
+        error: 'Your account has been deactivated. Please contact an administrator for assistance.' 
+      });
+    }
+
     const passwordMatch = await bcrypt.compare(password, user.password);
     console.log('Password match result:', passwordMatch);
 

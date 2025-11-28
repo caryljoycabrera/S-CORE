@@ -13,7 +13,7 @@ const BroadcastMessage = require('../models/BroadcastMessage');
 const SystemSettings = require('../models/SystemSettings');
 const RequestType = require('../models/RequestType');
 const Page = require('../models/Page');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requireAdminAPI } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const settingsService = require('../services/settingsService');
@@ -850,7 +850,7 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
  * Admin view of all users for management
  */
 router.get('/admin/users', requireAdmin, async (req, res) => {
-  const users = await User.find().lean();
+  const users = await User.find({ isDeleted: { $ne: true } }).lean();
   const settingsHelpers = require('../utils/settingsHelpers');
 
   const usersWithDisplay = users.map(user => ({
@@ -1277,6 +1277,69 @@ router.get('/api/admin/deleted-users', requireAdmin, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch deleted users.'
+    });
+  }
+});
+
+/**
+ * POST /api/admin/delete-user
+ * Soft delete a user (move to trash)
+ */
+router.post('/api/admin/delete-user', requireAdminAPI, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if user is already deleted
+    if (user.isDeleted) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is already deleted'
+      });
+    }
+
+    // Soft delete the user
+    const deletedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: req.user._id
+      },
+      { new: true }
+    );
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User moved to trash successfully',
+      user: deletedUser
+    });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete user'
     });
   }
 });

@@ -1715,38 +1715,349 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
 // ========================================
-// CUSTOM DROPDOWN FUNCTIONS
+// USER EDIT AND DELETE FUNCTIONS
 // ========================================
-function toggleCustomDropdown() {
-  const options = document.getElementById('customDropdownOptions');
-  if (options) {
-    options.style.display = options.style.display === 'none' || options.style.display === '' ? 'block' : 'none';
+
+// ========================================
+// OPEN EDIT MODE FOR USER MODAL
+// ========================================
+function openEditMode() {
+  console.log('🔄 openEditMode called for user modal');
+  
+  // Get the user modal
+  const userModal = document.getElementById('userModal');
+  if (!userModal) {
+    console.error('❌ User modal not found');
+    return;
+  }
+  
+  // Switch to edit mode by showing/hiding sections
+  const viewSections = document.querySelectorAll('.user-info-section, .user-admin-form-section');
+  const editSections = document.querySelectorAll('.user-admin-form-section');
+  
+  // Show edit controls and hide view-only sections
+  viewSections.forEach(section => {
+    if (!section.classList.contains('user-admin-form-section')) {
+      section.style.display = 'none';
+    }
+  });
+  
+  // Make sure admin controls are visible
+  const adminControls = document.getElementById('adminControlsSection');
+  if (adminControls) {
+    adminControls.style.display = 'block';
+  }
+  
+  // Update modal title to indicate edit mode
+  const modalTitle = document.querySelector('.modal-title');
+  if (modalTitle) {
+    modalTitle.innerHTML = `
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+      </svg>
+      Edit User Profile
+    `;
+  }
+  
+  // Update action buttons
+  const cancelBtn = document.getElementById('cancelUpdateBtn');
+  const saveBtn = document.querySelector('.user-admin-btn.user-admin-btn-primary');
+  
+  if (cancelBtn) {
+    cancelBtn.textContent = 'Cancel Edit';
+    cancelBtn.onclick = closeEditMode;
+  }
+  
+  if (saveBtn) {
+    saveBtn.textContent = 'Save Changes';
+  }
+  
+  // Scroll to the edit form
+  const modalBody = document.querySelector('.user-details-modal-body');
+  if (modalBody) {
+    setTimeout(() => {
+      modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }
+  
+  console.log('✅ User modal switched to edit mode');
+}
+
+// ========================================
+// CLOSE EDIT MODE FOR USER MODAL
+// ========================================
+function closeEditMode() {
+  console.log('🔄 closeEditMode called for user modal');
+  
+  // Reset modal title
+  const modalTitle = document.querySelector('.modal-title');
+  if (modalTitle) {
+    modalTitle.innerHTML = `
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      User Profile Management
+    `;
+  }
+  
+  // Reset action buttons
+  const cancelBtn = document.getElementById('cancelUpdateBtn');
+  const saveBtn = document.querySelector('.user-admin-btn.user-admin-btn-primary');
+  
+  if (cancelBtn) {
+    cancelBtn.textContent = 'Cancel Changes';
+    cancelBtn.onclick = () => {
+      document.getElementById('userModal').style.display = 'none';
+    };
+  }
+  
+  if (saveBtn) {
+    saveBtn.textContent = 'Save Changes';
+  }
+  
+  console.log('✅ User modal edit mode closed');
+}
+
+// ========================================
+// OPEN DELETE CONFIRMATION FOR USER
+// ========================================
+function openDeleteConfirm() {
+  console.log('🗑️ openDeleteConfirm called for user');
+  
+  // Get current user ID from the modal
+  const userId = document.getElementById('editUserId')?.value;
+  const userName = document.getElementById('viewFullName')?.textContent;
+  
+  if (!userId) {
+    console.error('❌ No user ID found for deletion');
+    showToast('Error', 'No user selected for deletion', 'error');
+    return;
+  }
+  
+  // Create or show delete confirmation modal
+  let deleteModal = document.getElementById('userDeleteConfirmModal');
+  
+  if (!deleteModal) {
+    // Create the modal if it doesn't exist
+    deleteModal = document.createElement('div');
+    deleteModal.id = 'userDeleteConfirmModal';
+    deleteModal.className = 'confirmation-modal';
+    deleteModal.innerHTML = `
+      <div class="confirmation-modal-content">
+        <div class="confirmation-header" style="background-color: #dc2626; color: white;">
+          <h3>
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            Delete User
+          </h3>
+          <button class="modal-close" onclick="closeUserDeleteConfirm()">✕</button>
+        </div>
+        <div class="confirmation-body">
+          <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+            <p style="margin: 0; color: #991b1b; font-size: 0.95rem;">
+              <strong>Warning:</strong> This action will move the user to trash. The user will be hidden from active views but can be restored later.
+            </p>
+          </div>
+          <p>Are you sure you want to delete this user?</p>
+          <div class="confirmation-actions" style="margin-top: 24px;">
+            <button class="btn-cancel" onclick="closeUserDeleteConfirm()">Cancel</button>
+            <button class="btn-danger" onclick="confirmUserDelete()">Delete User</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(deleteModal);
+    
+    // Add event listeners for backdrop click
+    deleteModal.addEventListener('click', function(e) {
+      if (e.target === deleteModal) {
+        closeUserDeleteConfirm();
+      }
+    });
+  }
+  
+  // Update modal content (no dynamic content needed)
+  
+  // Store user ID for deletion
+  deleteModal.dataset.userId = userId;
+  
+  // Show modal
+  deleteModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  
+  console.log('✅ User delete confirmation modal shown');
+}
+
+// ========================================
+// CLOSE DELETE CONFIRMATION MODAL
+// ========================================
+function closeUserDeleteConfirm() {
+  const deleteModal = document.getElementById('userDeleteConfirmModal');
+  if (deleteModal) {
+    deleteModal.style.display = 'none';
+    document.body.style.overflow = '';
   }
 }
 
-function selectCustomRole(value, text) {
-  document.getElementById('editRole').value = value;
-  document.getElementById('selectedRoleText').textContent = text;
-  toggleCustomDropdown(); // Close the dropdown
+// ========================================
+// CONFIRM USER DELETION
+// ========================================
+async function confirmUserDelete() {
+  const deleteModal = document.getElementById('userDeleteConfirmModal');
+  const userId = deleteModal?.dataset.userId;
   
-  // Update unit assignment visibility
-  const unitContainer = document.getElementById('unitAssignmentContainer');
-  const unitDropdown = document.getElementById('editUnitTeam');
-  if (unitContainer && unitDropdown) {
-    if (value === 'unit') {
-      unitContainer.style.display = 'block';
-      // Set default unit if not already set or if it's 'N/A'
-      if (!unitDropdown.value || unitDropdown.value === 'N/A') {
-        if (typeof unitsData !== 'undefined' && unitsData.length > 0) {
-          unitDropdown.value = unitsData[0];
-        }
-      }
-    } else {
-      unitContainer.style.display = 'none';
-      unitDropdown.value = 'N/A';
-    }
+  if (!userId) {
+    console.error('❌ No user ID found for deletion');
+    showToast('Error', 'No user selected', 'error');
+    return;
   }
   
-  // Update current role display
-  updateCurrentRoleDisplay(value);
+  try {
+    console.log('🗑️ Deleting user:', userId);
+    
+    const response = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      console.log('✅ User deleted successfully');
+      
+      // Close modals
+      closeUserDeleteConfirm();
+      document.getElementById('userModal').style.display = 'none';
+      
+      // Remove user from grid
+      const userRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
+      if (userRow) {
+        userRow.remove();
+        
+        // Update results count
+        const remainingRows = document.querySelectorAll('.grid-row');
+        const resultsCount = document.getElementById('resultsCount');
+        if (resultsCount) {
+          const totalRows = remainingRows.length;
+          resultsCount.textContent = `Showing ${totalRows} users`;
+        }
+      }
+      
+      showToast('Success', 'User moved to trash successfully', 'success');
+    } else {
+      console.error('❌ Failed to delete user:', result.message);
+      showToast('Error', result.message || 'Failed to delete user', 'error');
+    }
+  } catch (error) {
+    console.error('❌ Error deleting user:', error);
+    showToast('Error', 'Network error while deleting user', 'error');
+  }
 }
+
+// ========================================
+// DELETE SELECTED USERS FUNCTION
+// ========================================
+async function deleteSelectedUsers() {
+  // Get all selected checkboxes
+  const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+  
+  if (selectedCheckboxes.length === 0) {
+    showToast('No Selection', 'Please select at least one user to delete.', 'info');
+    return;
+  }
+
+  // Collect user IDs
+  const userIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+  
+  // Show confirmation dialog
+  const confirmed = confirm(`Are you sure you want to delete ${userIds.length} selected user(s)? This action cannot be undone.`);
+  
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    // Show loading state
+    const trashBtn = document.getElementById('trashBtn');
+    const originalText = trashBtn.innerHTML;
+    trashBtn.disabled = true;
+    trashBtn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Deleting...';
+
+    const response = await fetch('/api/admin/delete-users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userIds })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Remove deleted users from the grid
+      userIds.forEach(userId => {
+        const row = document.querySelector(`.grid-row[data-id="${userId}"]`);
+        if (row) {
+          row.remove();
+        }
+      });
+
+      // Update results count
+      const remainingRows = document.querySelectorAll('.grid-row');
+      const resultsCount = document.getElementById('resultsCount');
+      if (resultsCount) {
+        resultsCount.textContent = `Showing ${remainingRows.length} users`;
+      }
+
+      // Reset select all checkbox
+      const selectAllCheckbox = document.getElementById('selectAllUsers');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+      }
+
+      showToast('Success', `Successfully deleted ${userIds.length} user(s).`, 'success');
+    } else {
+      throw new Error(result.message || 'Failed to delete users');
+    }
+
+  } catch (error) {
+    console.error('Error deleting users:', error);
+    showToast('Error', 'Failed to delete selected users. Please try again.', 'error');
+  } finally {
+    // Reset button state
+    const trashBtn = document.getElementById('trashBtn');
+    trashBtn.disabled = false;
+    trashBtn.innerHTML = originalText;
+  }
+}
+
+// ========================================
+// SELECT ALL USERS FUNCTION
+// ========================================
+function selectAllUsers() {
+  const selectAllCheckbox = document.getElementById('selectAllUsers');
+  const userCheckboxes = document.querySelectorAll('.user-checkbox');
+  
+  userCheckboxes.forEach(checkbox => {
+    checkbox.checked = selectAllCheckbox.checked;
+  });
+}
+
+// ========================================
+// SETUP SELECT ALL EVENT LISTENER
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAllCheckbox = document.getElementById('selectAllUsers');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', selectAllUsers);
+  }
+});

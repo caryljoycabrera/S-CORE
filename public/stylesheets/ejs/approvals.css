@@ -140,8 +140,8 @@ hr {
 .back-to-dashboard-container {
   margin: 2rem 3rem 1.5rem 3rem;
   display: flex;
-  justify-content: flex-end;
-  gap: 64rem;
+  justify-content: space-between;
+  gap: 1rem;
   align-items: center;
 }
 
