@@ -183,12 +183,20 @@
     <!-- REPORTS PAGE CONTENT -->
     <div class="main-content-area" style="padding: 2rem;">
       <div class="reports-page-header">
-        <h1>Generate Reports</h1>
-        <p>Filter and export service requests and approval data</p>
+        <h1>Reports Management</h1>
+        <p>Generate new reports and manage report history</p>
       </div>
 
-      <!-- FILTER PANEL -->
-      <div class="report-filters-container">
+      <!-- TABS -->
+      <div class="reports-tabs">
+        <button class="tab-button active" data-tab="generate">Generate Report</button>
+        <button class="tab-button" data-tab="history">Report History</button>
+      </div>
+
+      <!-- GENERATE REPORT TAB -->
+      <div id="generateTab" class="tab-content active">
+        <!-- FILTER PANEL -->
+        <div class="report-filters-container">
         <div class="filter-group">
           <label for="datePresetFilter">Quick Date Range</label>
           <select id="datePresetFilter" class="filter-input">
@@ -309,23 +317,50 @@
       <div class="report-preview-container">
         <div class="preview-header">
           <h2>Report Preview</h2>
-          <div class="export-buttons">
-            <button id="exportPdfBtn" class="btn-export btn-pdf" disabled>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <text x="9" y="17" font-size="8">PDF</text>
-              </svg>
-              Download PDF
-            </button>
-            <button id="exportExcelBtn" class="btn-export btn-excel" disabled>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <text x="9" y="17" font-size="8">XLS</text>
-              </svg>
-              Download Excel
-            </button>
+          <div class="export-options">
+            <div class="export-format-selector">
+              <label for="pdfTitle">Report Title:</label>
+              <input type="text" id="pdfTitle" class="format-input" placeholder="S-CORE Analytics Report" value="S-CORE Analytics Report">
+            </div>
+            <div class="export-format-selector">
+              <label for="pdfHeaderColor">Header Color:</label>
+              <input type="color" id="pdfHeaderColor" class="format-input" value="#10b981">
+            </div>
+            <div class="export-format-selector">
+              <label for="pdfPaperSize">Paper Size:</label>
+              <select id="pdfPaperSize" class="format-select">
+                <option value="A4">A4</option>
+                <option value="A3">A3</option>
+                <option value="LETTER">Letter</option>
+                <option value="LEGAL">Legal</option>
+                <option value="TABLOID">Tabloid</option>
+              </select>
+            </div>
+            <div class="export-format-selector">
+              <label for="pdfOrientation">Orientation:</label>
+              <select id="pdfOrientation" class="format-select">
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+            </div>
+            <div class="export-buttons">
+              <button id="exportPdfBtn" class="btn-export btn-pdf" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <text x="9" y="17" font-size="8">PDF</text>
+                </svg>
+                Download PDF
+              </button>
+              <button id="exportExcelBtn" class="btn-export btn-excel" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <text x="9" y="17" font-size="8">XLS</text>
+                </svg>
+                Download Excel
+              </button>
+            </div>
           </div>
         </div>
 
@@ -337,7 +372,7 @@
                 <th>Type</th>
                 <th>Requester</th>
                 <th>Unit</th>
-                <th>Service/Purpose</th>
+                <th>Request Name</th>
                 <th>Status</th>
                 <th>Date Submitted</th>
                 <th>Deadline</th>
@@ -355,6 +390,61 @@
           </table>
         </div>
       </div>
+
+      <!-- REPORT HISTORY TAB -->
+      <div id="historyTab" class="tab-content">
+        <div class="history-container">
+          <div class="history-header">
+            <h2>Generated Reports History</h2>
+            <p>View and download previously generated reports</p>
+          </div>
+
+          <div class="history-filters">
+            <div class="filter-group">
+              <label for="historyTypeFilter">Report Type</label>
+              <select id="historyTypeFilter" class="filter-input">
+                <option value="">All Types</option>
+                <option value="report_pdf">PDF Reports</option>
+                <option value="report_excel">Excel Reports</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="showDeletedFilter"> Show Deleted Reports
+              </label>
+            </div>
+            <button id="refreshHistoryBtn" class="btn-secondary">Refresh</button>
+          </div>
+
+          <div class="history-table-container">
+            <table class="history-table" id="historyTable">
+              <thead>
+                <tr>
+                  <th>Report Type</th>
+                  <th>File Name</th>
+                  <th>Generated</th>
+                  <th>Records</th>
+                  <th>Size</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <tr class="no-data-row">
+                  <td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    Loading report history...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination-container" id="historyPagination" style="display: none;">
+            <button id="prevPageBtn" class="btn-secondary">Previous</button>
+            <span id="pageInfo">Page 1</span>
+            <button id="nextPageBtn" class="btn-secondary">Next</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -365,376 +455,7 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/javascripts/notifications.js"></script>
   <script src="/javascripts/ejs/reports.js"></script>
-  <script>
-    // ===== Report Generation Handler =====
-    const reportHandler = {
-      currentData: null,
-
-      /**
-       * Get filter values from form
-       */
-      getFilters() {
-        const statuses = Array.from(document.getElementById('statusFilter').selectedOptions)
-          .map(opt => opt.value)
-          .filter(v => v);
-        const units = Array.from(document.getElementById('unitFilter').selectedOptions)
-          .map(opt => opt.value)
-          .filter(v => v);
-        
-        return {
-          startDate: document.getElementById('startDateFilter').value,
-          endDate: document.getElementById('endDateFilter').value,
-          units: units,
-          requestType: document.getElementById('requestTypeFilter').value,
-          statuses: statuses,
-          sortBy: document.getElementById('sortByFilter').value,
-          sortOrder: document.getElementById('sortOrderFilter').value
-        };
-      },
-
-      /**
-       * Generate preview report
-       */
-      async generatePreview() {
-        const loading = document.getElementById('loadingIndicator');
-        loading.style.display = 'flex';
-
-        try {
-          const filters = this.getFilters();
-          
-          // Validate date range if both dates are provided
-          if (filters.startDate && filters.endDate) {
-            const start = new Date(filters.startDate);
-            const end = new Date(filters.endDate);
-            if (start > end) {
-              showAlert('Start date must be before end date', 'error');
-              loading.style.display = 'none';
-              return;
-            }
-          }
-          
-          const response = await fetch('/admin/reports/generate', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(filters)
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-
-          if (result.success) {
-            this.currentData = result.data;
-            this.displayTable(result.data);
-            this.displayStats(result.summary);
-            
-            // Enable export buttons
-            document.getElementById('exportPdfBtn').disabled = false;
-            document.getElementById('exportExcelBtn').disabled = false;
-            
-            showAlert(`Report generated with ${result.recordCount || 0} records`, 'success');
-          } else {
-            showAlert(result.message || 'Failed to generate report', 'error');
-          }
-        } catch (error) {
-          console.error('Error generating preview:', error);
-          showAlert('An error occurred while generating the report', 'error');
-        } finally {
-          loading.style.display = 'none';
-        }
-      },
-
-      /**
-       * Display table data
-       */
-      displayTable(data) {
-        const tbody = document.getElementById('reportTableBody');
-        
-        if (!data || data.length === 0) {
-          tbody.innerHTML = '<tr class="no-data-row"><td colspan="10" style="text-align: center; padding: 2rem;">No records found</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = data.map(record => {
-          const dateSubmitted = record.dateSubmitted ? new Date(record.dateSubmitted).toLocaleDateString() : 'N/A';
-          const deadline = record.deadline ? new Date(record.deadline).toLocaleDateString() : 'N/A';
-          const statusClass = (record.status || '').toLowerCase().replace(/\s+/g, '-');
-          
-          return `
-            <tr>
-              <td><strong>${this.escapeHtml(record.requestId || 'N/A')}</strong></td>
-              <td>${this.escapeHtml(record.type || 'N/A')}</td>
-              <td>${this.escapeHtml(record.requester || 'N/A')}</td>
-              <td>${this.escapeHtml(record.unit || 'N/A')}</td>
-              <td>${this.escapeHtml(record.service || 'N/A')}</td>
-              <td>
-                <span class="status-badge status-${statusClass}">
-                  ${this.escapeHtml(record.status || 'N/A')}
-                </span>
-              </td>
-              <td>${dateSubmitted}</td>
-              <td>${deadline}</td>
-              <td>${record.revisionsCount || 0}</td>
-              <td>${this.escapeHtml(record.finalRemarks || 'N/A')}</td>
-            </tr>
-          `;
-        }).join('');
-      },
-
-      /**
-       * Display statistics
-       */
-      displayStats(summary) {
-        if (!summary) return;
-
-        document.getElementById('reportStats').style.display = 'block';
-        document.getElementById('statTotal').textContent = summary.totalRequests || 0;
-        document.getElementById('statCompletionRate').textContent = (summary.completionRate || 0) + '%';
-        document.getElementById('statPending').textContent = (summary.byStatus && summary.byStatus['Pending']) || 0;
-        document.getElementById('statInProgress').textContent = (summary.byStatus && summary.byStatus['In Progress']) || 0;
-      },
-
-      /**
-       * Clear all filters
-       */
-      clearFilters() {
-        document.getElementById('startDateFilter').value = '';
-        document.getElementById('endDateFilter').value = '';
-        document.getElementById('datePresetFilter').value = '';
-        document.getElementById('unitFilter').selectedIndex = 0;
-        document.getElementById('requestTypeFilter').value = '';
-        document.getElementById('statusFilter').selectedIndex = 0;
-        document.getElementById('sortByFilter').value = 'createdAt';
-        document.getElementById('sortOrderFilter').value = 'desc';
-        document.getElementById('reportTableBody').innerHTML = '<tr class="no-data-row"><td colspan="10" style="text-align: center; padding: 2rem;">Click "Generate Preview" to load data</td></tr>';
-        document.getElementById('reportStats').style.display = 'none';
-        document.getElementById('exportPdfBtn').disabled = true;
-        document.getElementById('exportExcelBtn').disabled = true;
-      },
-
-      /**
-       * Export to PDF (downloads the file)
-       */
-      async exportPDF() {
-        if (!this.currentData || this.currentData.length === 0) {
-          showAlert('No data to export', 'error');
-          return;
-        }
-
-        const filters = this.getFilters();
-        const loading = document.getElementById('loadingIndicator');
-        const exportBtn = document.getElementById('exportPdfBtn');
-        const originalText = exportBtn.innerHTML;
-        
-        loading.style.display = 'flex';
-        exportBtn.innerHTML = 'Downloading...';
-        
-        try {
-          const response = await fetch('/admin/reports/export', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ ...filters, format: 'pdf' })
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `s-core-report-${new Date().toISOString().split('T')[0]}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-
-          exportBtn.innerHTML = 'Success';
-          showAlert('PDF report downloaded successfully', 'success');
-          
-          // Reset button text after 3 seconds
-          setTimeout(() => {
-            exportBtn.innerHTML = originalText;
-          }, 3000);
-          
-        } catch (error) {
-          console.error('Error exporting PDF report:', error);
-          showAlert('Failed to export PDF report', 'error');
-          exportBtn.innerHTML = originalText;
-        } finally {
-          loading.style.display = 'none';
-        }
-      },
-
-      /**
-       * Export to Excel (downloads the file)
-       */
-      async exportExcel() {
-        if (!this.currentData || this.currentData.length === 0) {
-          showAlert('No data to export', 'error');
-          return;
-        }
-
-        const filters = this.getFilters();
-        const loading = document.getElementById('loadingIndicator');
-        const exportBtn = document.getElementById('exportExcelBtn');
-        const originalText = exportBtn.innerHTML;
-        
-        loading.style.display = 'flex';
-        exportBtn.innerHTML = 'Downloading...';
-        
-        try {
-          const response = await fetch('/admin/reports/export', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ ...filters, format: 'excel' })
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `s-core-report-${new Date().toISOString().split('T')[0]}.xlsx`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-
-          exportBtn.innerHTML = 'Success';
-          showAlert('Excel report downloaded successfully', 'success');
-          
-          // Reset button text after 3 seconds
-          setTimeout(() => {
-            exportBtn.innerHTML = originalText;
-          }, 3000);
-          
-        } catch (error) {
-          console.error('Error exporting Excel report:', error);
-          showAlert('Failed to export Excel report', 'error');
-          exportBtn.innerHTML = originalText;
-        } finally {
-          loading.style.display = 'none';
-        }
-      },
-
-      /**
-       * Escapes HTML to prevent XSS
-       */
-      escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-    };
-
-    // ===== Event Listeners =====
-    document.addEventListener('DOMContentLoaded', () => {
-      // Generate Preview Button
-      const generatePreviewBtn = document.getElementById('generatePreviewBtn');
-      if (generatePreviewBtn) {
-        generatePreviewBtn.addEventListener('click', () => {
-          reportHandler.generatePreview();
-        });
-      }
-
-      // Clear Filters Button
-      const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-      if (clearFiltersBtn) {
-        clearFiltersBtn.addEventListener('click', () => {
-          reportHandler.clearFilters();
-        });
-      }
-
-      // Export PDF Button
-      const exportPdfBtn = document.getElementById('exportPdfBtn');
-      if (exportPdfBtn) {
-        exportPdfBtn.addEventListener('click', () => {
-          reportHandler.exportPDF();
-        });
-      }
-
-      // Export Excel Button
-      const exportExcelBtn = document.getElementById('exportExcelBtn');
-      if (exportExcelBtn) {
-        exportExcelBtn.addEventListener('click', () => {
-          reportHandler.exportExcel();
-        });
-      }
-
-      // Date Preset Quick Select
-      const datePresetFilter = document.getElementById('datePresetFilter');
-      if (datePresetFilter) {
-        datePresetFilter.addEventListener('change', (e) => {
-          const days = parseInt(e.target.value);
-          if (days) {
-            const endDate = new Date();
-            const startDate = new Date(endDate);
-            startDate.setDate(startDate.getDate() - days);
-            
-            document.getElementById('startDateFilter').value = startDate.toISOString().split('T')[0];
-            document.getElementById('endDateFilter').value = endDate.toISOString().split('T')[0];
-          }
-        });
-      }
-
-      // Sidebar hover
-      const sidebar = document.getElementById('adminSidebar');
-      if (sidebar) {
-        sidebar.addEventListener('mouseenter', function() {
-          this.classList.add('expanded');
-        });
-        sidebar.addEventListener('mouseleave', function() {
-          this.classList.remove('expanded');
-        });
-      }
-
-      // Mobile menu toggle
-      const menuToggle = document.getElementById('adminMenuToggle');
-      if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          sidebar.classList.toggle('mobile-active');
-        });
-      }
-
-      // Dropdown toggle
-      const dropdownToggle = document.querySelector('.dropdown-toggle');
-      const dropdownMenu = document.getElementById('dropdownMenu');
-      if (dropdownToggle && dropdownMenu) {
-        dropdownToggle.addEventListener('click', (e) => {
-          e.preventDefault();
-          dropdownMenu.classList.toggle('show');
-        });
-      }
-    });
-
-    // Close dropdown on outside click
-    window.addEventListener('click', function(e) {
-      if (!e.target.closest('.dropdown-wrapper')) {
-        const dropdown = document.getElementById('dropdownMenu');
-        if (dropdown && dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-        }
-      }
-    });
-  </script>
 
   <style>
     /* Report-specific styles */
@@ -767,6 +488,55 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+
+    .report-filters-container {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .filter-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+
+    .filter-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: #374151;
+      background: white;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .filter-input[size] {
+      height: auto;
+    }
+
+    .filter-group small {
+      display: block;
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
     }
 
     .report-stats-container {
@@ -834,6 +604,485 @@
     .status-badge.status-rejected {
       background: #fecaca;
       color: #dc2626;
+    }
+
+    /* Filter action buttons */
+    .filter-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      min-height: 44px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-secondary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669, #047857);
+    }
+
+    .btn-primary svg {
+      color: #d1fae5;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      color: white;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #4b5563, #374151);
+    }
+
+    .btn-secondary svg {
+      color: #e5e7eb;
+    }
+
+    .report-preview-container {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .preview-header {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      padding: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .preview-header h2 {
+      margin: 0 0 0.5rem 0;
+      color: #1f2937;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .export-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .export-options {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .export-buttons {
+        justify-content: center;
+      }
+    }
+
+    .export-format-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .export-format-selector label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      white-space: nowrap;
+    }
+
+    .format-select {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      font-size: 0.875rem;
+      color: #374151;
+      cursor: pointer;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      min-width: 120px;
+    }
+
+    .format-select:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .export-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-export {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      min-height: 44px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-export:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-export:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-export:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-pdf {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+    }
+
+    .btn-pdf:hover:not(:disabled) {
+      background: linear-gradient(135deg, #b91c1c, #991b1b);
+    }
+
+    .btn-pdf svg {
+      color: #fee2e2;
+    }
+
+    .btn-excel {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: white;
+    }
+
+    .btn-excel:hover:not(:disabled) {
+      background: linear-gradient(135deg, #15803d, #166534);
+    }
+
+    .btn-excel svg {
+      color: #dcfce7;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      background: white;
+    }
+
+    .report-table th {
+      background: #10b981;
+      color: white;
+      padding: 1.2rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid #059669;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .report-table td {
+      padding: 1rem 0.75rem;
+      border: 1px solid #e5e7eb;
+      vertical-align: middle;
+    }
+
+    .report-table tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .report-table tbody tr:hover {
+      background: #f3f4f6;
+      transition: background-color 0.2s ease;
+    }
+
+    .report-table tbody tr.no-data-row {
+      background: #f9fafb;
+    }
+
+    .report-table tbody tr.no-data-row td {
+      text-align: center;
+      color: #6b7280;
+      font-style: italic;
+      padding: 3rem 1rem;
+    }
+
+    /* Responsive table adjustments */
+    @media (max-width: 1200px) {
+      .report-table th,
+      .report-table td {
+        padding: 0.8rem 0.4rem;
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .table-container {
+        max-height: 400px;
+      }
+
+      .report-table th,
+      .report-table td {
+        padding: 0.6rem 0.3rem;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+
+  <!-- TAB STYLES -->
+  <style>
+    .reports-tabs {
+      display: flex;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 2rem;
+    }
+
+    .tab-button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      background: none;
+      color: #6b7280;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab-button.active {
+      color: #10b981;
+      border-bottom-color: #10b981;
+    }
+
+    .tab-button:hover {
+      color: #10b981;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* HISTORY STYLES */
+    .history-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+    }
+
+    .history-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .history-header h2 {
+      color: #1f2937;
+      margin: 0 0 0.5rem 0;
+      font-size: 1.5rem;
+    }
+
+    .history-header p {
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .history-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: end;
+    }
+
+    .history-table-container {
+      overflow-x: auto;
+      margin-bottom: 1rem;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .history-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .history-table tbody tr:hover {
+      background: #f3f4f6;
+    }
+
+    .history-table tbody tr.deleted-report {
+      background: #fef2f2;
+      opacity: 0.7;
+    }
+
+    .history-table tbody tr.deleted-report:hover {
+      background: #fee2e2;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-small {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #374151;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-small:hover {
+      background: #f3f4f6;
+    }
+
+    .btn-download {
+      border-color: #10b981;
+      color: #10b981;
+    }
+
+    .btn-download:hover {
+      background: #d1fae5;
+    }
+
+    .btn-restore {
+      border-color: #f59e0b;
+      color: #f59e0b;
+    }
+
+    .btn-restore:hover {
+      background: #fef3c7;
+    }
+
+    .btn-delete {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+
+    .btn-delete:hover {
+      background: #fecaca;
+    }
+
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .pagination-container button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      margin: 0;
     }
   </style>
 </body>

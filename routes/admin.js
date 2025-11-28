@@ -3576,14 +3576,22 @@ router.get('/admin/reports/summary', requireAdmin, async (req, res) => {
  * Export report data as PDF or Excel
  */
 router.post('/admin/reports/export', requireAdmin, async (req, res) => {
+  console.log('Export route called');
   try {
+    console.log('Export request received:', req.body);
+    console.log('User:', req.user ? req.user._id : 'No user');
+    console.log('User role:', req.user ? req.user.role : 'No role');
     const {
       startDate,
       endDate,
       units,
       requestType,
       statuses,
-      format = 'pdf' // Default to PDF, can be 'pdf' or 'excel'
+      format = 'pdf', // Default to PDF, can be 'pdf' or 'excel'
+      orientation = 'portrait', // Default to portrait, can be 'portrait' or 'landscape'
+      title,
+      headerColor,
+      paperSize
     } = req.body;
 
     const filters = {
@@ -3591,22 +3599,27 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
       endDate,
       units: units && Array.isArray(units) ? units : (units ? [units] : []),
       requestType,
-      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : [])
+      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : []),
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
     };
 
     const reportData = await reportService.generateReport(filters);
     const summary = await reportService.getReportSummary(filters);
 
+    console.log('Report data generated:', reportData.length, 'records');
+    console.log('Summary:', summary);
+
     let buffer, contentType, fileName, fileExtension;
 
     if (format === 'excel') {
       // Generate Excel
-      buffer = await reportService.exportToExcel(reportData);
+      buffer = await reportService.exportToExcel(reportData, summary, { headerColor, title });
       contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       fileExtension = 'xlsx';
     } else {
       // Generate PDF (default)
-      buffer = await reportService.generatePDF(reportData, summary);
+      buffer = await reportService.generatePDF(reportData, summary, orientation, { title, headerColor, paperSize });
       contentType = 'application/pdf';
       fileExtension = 'pdf';
     }
@@ -3616,23 +3629,37 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
 
     fileName = `s-core-report-${Date.now()}.${fileExtension}`;
 
-    // Save to database
-    const reportHistory = new ReportHistory({
-      reportType: format === 'excel' ? 'report_excel' : 'report_pdf',
-      generatedBy: req.user._id,
-      fileName,
-      pdfData: buffer,
-      fileSize: buffer.length,
-      filters
-    });
+    console.log('Attempting to save report to history...');
 
-    await reportHistory.save();
+    try {
+      // Save to database
+      const reportHistory = new ReportHistory({
+        reportType: format === 'excel' ? 'report_excel' : 'report_pdf',
+        generatedBy: req.user._id,
+        fileName,
+        fileData: buffer,
+        fileSize: buffer.length,
+        filters,
+        options: { title, headerColor, paperSize, orientation },
+        recordCount: reportData.length
+      });
+
+      console.log('Created ReportHistory instance, generatedBy:', req.user._id, 'fileSize:', buffer.length);
+      await reportHistory.save();
+      console.log('Report saved to history successfully with ID:', reportHistory._id);
+    } catch (saveError) {
+      console.error('Error saving report to history:', saveError);
+      console.error('Save error details:', saveError.message, saveError.stack);
+      // Don't fail the export if history save fails
+    }
+
+    console.log('Buffer generated, size:', buffer.length);
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(buffer);
   } catch (error) {
-    console.error('Error exporting HTML:', error);
+    console.error('Error exporting report:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -3650,6 +3677,136 @@ router.get('/admin/reports/filters', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching filters:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/history
+ * Get report history for all admin users
+ */
+router.get('/admin/reports/history', requireAdmin, async (req, res) => {
+  try {
+    console.log('Fetching report history for admins');
+    const ReportHistory = require('../models/ReportHistory');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Build query - show all reports for admins
+    const query = {};
+    if (req.query.type) {
+      query.reportType = req.query.type;
+    }
+    // Temporarily show all reports including deleted for debugging
+    // if (req.query.includeDeleted !== 'true') {
+    //   query.isDeleted = false;
+    // }
+
+    console.log('History query:', query);
+
+    const reports = await ReportHistory.find(query)
+      .sort({ generatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-fileData')
+      .lean();
+
+    const total = await ReportHistory.countDocuments(query);
+
+    console.log('Found', reports.length, 'reports, total:', total);
+    console.log('Sample report:', reports[0] ? { _id: reports[0]._id, fileName: reports[0].fileName, generatedAt: reports[0].generatedAt } : 'No reports');
+
+    res.json({
+      success: true,
+      reports,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching report history:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/download/:id
+ * Download a report from history
+ */
+router.get('/admin/reports/download/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id,
+      isDeleted: false
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    const contentType = report.reportType === 'report_excel' 
+      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      : 'application/pdf';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${report.fileName}"`);
+    res.send(report.fileData);
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/reports/history/:id
+ * Soft delete a report from history
+ */
+router.delete('/admin/reports/history/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id,
+      isDeleted: false
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    await report.softDelete();
+
+    res.json({ success: true, message: 'Report deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/reports/history/:id/hard
+ * Permanently delete a report from history
+ */
+router.delete('/admin/reports/history/:id/hard', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    await ReportHistory.deleteOne({ _id: req.params.id });
+
+    res.json({ success: true, message: 'Report permanently deleted successfully' });
+  } catch (error) {
+    console.error('Error permanently deleting report:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
