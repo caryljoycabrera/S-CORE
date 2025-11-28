@@ -577,6 +577,31 @@ document.addEventListener('DOMContentLoaded', function() {
   if (fileInput && uploadContainer) {
     let selectedFile = null;
 
+    // Drag and drop functionality
+    uploadContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadContainer.classList.add('dragover');
+    });
+
+    uploadContainer.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      uploadContainer.classList.remove('dragover');
+    });
+
+    uploadContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadContainer.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelection(files[0]);
+      }
+    });
+
+    // Click to browse
+    uploadContainer.addEventListener('click', () => {
+      fileInput.click();
+    });
+
     // File input change
     fileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
