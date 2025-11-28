@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Service Requests - <%= unitTeam %> Unit</title>
+  <title>Service Tasks - S-CORE</title>
 
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
@@ -22,7 +22,7 @@
 <body>
   <%- include('../partials/unit-navbar', { user: user, activePage: 'task-services' }) %>
 
-  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="unit-main-content">
     <!-- HEADER -->
     <div class="overlap">
@@ -43,7 +43,7 @@
         <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
       </div>
       
-      <span class="text-wrapper-2">Service Requests</span>
+      <span class="text-wrapper-2">Service Tasks</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
