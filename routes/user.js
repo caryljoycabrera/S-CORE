@@ -23,13 +23,20 @@ const { requestLimiter } = require('../middleware/rateLimiter');
 /**
  * GET /
  * Homepage route - serves the public homepage with SCO information
- * If user is logged in, redirects to dashboard
+ * If user is logged in, redirects to appropriate dashboard based on role
  */
 router.get('/', async (req, res) => {
   try {
     if (req.session.userId) {
-      // If user is logged in, redirect to their dashboard
-      return res.redirect('/dashboard');
+      // If user is logged in, redirect to their appropriate dashboard based on role
+      const role = req.session.role;
+      if (role === 'admin') {
+        return res.redirect('/admin');
+      } else if (role === 'unit') {
+        return res.redirect('/unit/dashboard');
+      } else {
+        return res.redirect('/dashboard');
+      }
     }
     
     // Load default content from JSON file
@@ -63,10 +70,18 @@ router.get('/', async (req, res) => {
 /**
  * GET /dashboard
  * User dashboard with statistics and recent activity
+ * Redirects admin and unit users to their proper dashboards
  */
 router.get('/dashboard', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
+
+    // Redirect admin and unit users to their proper dashboards
+    if (user.role === 'admin') {
+      return res.redirect('/admin');
+    } else if (user.role === 'unit') {
+      return res.redirect('/unit/dashboard');
+    }
 
     // Get approval request statistics
     const totalApprovals = await RequestApproval.countDocuments({ userId: user._id });
