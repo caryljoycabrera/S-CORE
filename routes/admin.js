@@ -3572,17 +3572,18 @@ router.get('/admin/reports/summary', requireAdmin, async (req, res) => {
 });
 
 /**
- * POST /admin/reports/export-pdf
- * Export report data as PDF
+ * POST /admin/reports/export
+ * Export report data as PDF or Excel
  */
-router.post('/admin/reports/export-pdf', requireAdmin, async (req, res) => {
+router.post('/admin/reports/export', requireAdmin, async (req, res) => {
   try {
     const {
       startDate,
       endDate,
       units,
       requestType,
-      statuses
+      statuses,
+      format = 'pdf' // Default to PDF, can be 'pdf' or 'excel'
     } = req.body;
 
     const filters = {
@@ -3596,31 +3597,42 @@ router.post('/admin/reports/export-pdf', requireAdmin, async (req, res) => {
     const reportData = await reportService.generateReport(filters);
     const summary = await reportService.getReportSummary(filters);
 
-    // Generate PDF buffer
-    const pdfBuffer = await reportService.generatePDF(reportData, summary);
+    let buffer, contentType, fileName, fileExtension;
+
+    if (format === 'excel') {
+      // Generate Excel
+      buffer = await reportService.exportToExcel(reportData);
+      contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      fileExtension = 'xlsx';
+    } else {
+      // Generate PDF (default)
+      buffer = await reportService.generatePDF(reportData, summary);
+      contentType = 'application/pdf';
+      fileExtension = 'pdf';
+    }
 
     // Save to ReportHistory in MongoDB
     const ReportHistory = require('../models/ReportHistory');
 
-    const fileName = `report-${Date.now()}.pdf`;
+    fileName = `s-core-report-${Date.now()}.${fileExtension}`;
 
-    // Save to database with PDF data
+    // Save to database
     const reportHistory = new ReportHistory({
-      reportType: 'report_pdf',
+      reportType: format === 'excel' ? 'report_excel' : 'report_pdf',
       generatedBy: req.user._id,
       fileName,
-      pdfData: pdfBuffer,
-      fileSize: pdfBuffer.length,
+      pdfData: buffer,
+      fileSize: buffer.length,
       filters
     });
 
     await reportHistory.save();
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
-    res.send(pdfBuffer);
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(buffer);
   } catch (error) {
-    console.error('Error exporting PDF:', error);
+    console.error('Error exporting HTML:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

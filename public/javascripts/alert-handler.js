@@ -46,4 +46,27 @@ window.logInfo = function(message, data = null) {
   if (data) console.log('Data:', data);
 };
 
+// Custom alert function for UI feedback
+window.showAlert = function(message, type = 'info') {
+  // For now, just log to console with appropriate styling
+  const styles = {
+    success: 'color: #10b981; font-weight: bold;',
+    error: 'color: #ef4444; font-weight: bold;',
+    warning: 'color: #f59e0b; font-weight: bold;',
+    info: 'color: #3b82f6; font-weight: bold;'
+  };
+  
+  const prefix = {
+    success: '✓ SUCCESS',
+    error: '✗ ERROR', 
+    warning: '⚠ WARNING',
+    info: 'ℹ INFO'
+  };
+  
+  console.log(`%c${prefix[type] || 'ℹ INFO'}`, styles[type] || styles.info, message);
+  
+  // You could extend this to show actual UI alerts later
+  // For example: create a toast notification system
+};
+
 console.log('%c[S-CORE] Alert Handler Loaded', 'color: #10b981; font-weight: bold; font-size: 12px;');

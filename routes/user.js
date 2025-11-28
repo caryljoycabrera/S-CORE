@@ -32,25 +32,24 @@ router.get('/', async (req, res) => {
       return res.redirect('/dashboard');
     }
     
-    // Try to get homepage content from database
-    let pageContent = await Page.findOne({ slug: 'home' });
-    
-    // If no content exists in database, try to load from JSON file
-    if (!pageContent) {
-      try {
-        const dataPath = path.join(__dirname, '..', 'data', 'homepage.json');
-        if (fs.existsSync(dataPath)) {
-          const jsonData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-          pageContent = { content: jsonData };
-          console.log('[HOMEPAGE] Loaded content from JSON fallback');
-        }
-      } catch (jsonError) {
-        console.log('[HOMEPAGE] No JSON fallback found, using defaults');
+    // Load default content from JSON file
+    let content = {};
+    try {
+      const dataPath = path.join(__dirname, '..', 'data', 'homepage.json');
+      if (fs.existsSync(dataPath)) {
+        content = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        console.log('[HOMEPAGE] Loaded default content from JSON');
       }
+    } catch (jsonError) {
+      console.log('[HOMEPAGE] Error loading JSON defaults:', jsonError);
     }
     
-    // If still no content, use empty object (homepage will use defaults)
-    const content = pageContent?.content || {};
+    // Try to get homepage content from database and merge (database overrides defaults)
+    const pageContent = await Page.findOne({ slug: 'home' });
+    if (pageContent?.content) {
+      content = { ...content, ...pageContent.content };
+      console.log('[HOMEPAGE] Merged content from database');
+    }
     
     // If not logged in, show the public homepage with content
     res.render('homepage', { content });

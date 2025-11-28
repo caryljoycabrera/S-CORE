@@ -49,10 +49,7 @@ class ReportService {
 
       // Unit filter - can apply to Service Request assigned unit or Approval assigned to
       if (units && units.length > 0) {
-        query.$or = [
-          { assignedUnit: { $in: units } },
-          { 'assignedTo.unit': { $in: units } }
-        ];
+        query.assignedUnits = { $in: units };
       }
 
       // Status filter
@@ -66,25 +63,41 @@ class ReportService {
       if (!requestType || requestType === 'ServiceRequest') {
         const serviceRequests = await ServiceRequest.find(query)
           .populate('userId', 'fName lName email')
-          .populate('assignedTo', 'fName lName email')
           .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
           .lean();
 
         results = results.concat(
-          serviceRequests.map(req => ({
-            _id: req._id,
-            requestId: req.requestID,
-            type: 'Service Request',
-            requester: `${req.userId?.fName || ''} ${req.userId?.lName || ''}`,
-            requesterId: req.userId?._id,
-            unit: req.assignedUnit || 'Unassigned',
-            service: req.serviceType || req.title,
-            status: req.status,
-            dateSubmitted: req.createdAt,
-            deadline: req.deadline,
-            description: req.description,
-            revisionsCount: req.revisions?.length || 0,
-            assignedTo: req.assignedTo?.fName + ' ' + req.assignedTo?.lName || 'Unassigned'
+          await Promise.all(serviceRequests.map(async req => {
+            // Get final remarks for completed/approved requests (only from unit responses)
+            let finalRemarks = 'N/A';
+            if ((req.status === 'Completed' || req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
+              // Find the last response notes from unit users only
+              for (const rev of req.revisionHistory.slice().reverse()) {
+                if (rev.responseNotes && rev.responseNotes.trim() && rev.respondedBy) {
+                  const responder = await User.findById(rev.respondedBy);
+                  if (responder && responder.role === 'unit') {
+                    finalRemarks = rev.responseNotes;
+                    break; // Take the most recent unit response
+                  }
+                }
+              }
+            }
+
+            return {
+              _id: req._id,
+              requestId: req._id.toString().slice(-6),
+              type: 'Service Request',
+              requester: `${req.userId?.fName || ''} ${req.userId?.lName || ''}`,
+              requesterId: req.userId?._id,
+              unit: req.assignedUnits || 'Unassigned',
+              service: req.serviceType || req.title,
+              status: req.status,
+              dateSubmitted: req.createdAt,
+              deadline: req.deadline,
+              description: req.description,
+              revisionsCount: req.revisionHistory?.length || 0,
+              finalRemarks: finalRemarks
+            };
           }))
         );
       }
@@ -94,25 +107,41 @@ class ReportService {
         const approvalQuery = { ...query };
         const requestApprovals = await RequestApproval.find(approvalQuery)
           .populate('userId', 'fName lName email')
-          .populate('assignedTo', 'fName lName email')
           .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
           .lean();
 
         results = results.concat(
-          requestApprovals.map(req => ({
-            _id: req._id,
-            requestId: req.requestID,
-            type: 'Request for Approval',
-            requester: `${req.userId?.fName || ''} ${req.userId?.lName || ''}`,
-            requesterId: req.userId?._id,
-            unit: req.assignedTo?.unit || 'Unassigned',
-            service: req.purpose || req.title,
-            status: req.status,
-            dateSubmitted: req.createdAt,
-            deadline: req.deadline,
-            description: req.description,
-            revisionsCount: req.revisions?.length || 0,
-            assignedTo: req.assignedTo?.fName + ' ' + req.assignedTo?.lName || 'Unassigned'
+          await Promise.all(requestApprovals.map(async req => {
+            // Get final remarks for completed/approved requests (only from unit responses)
+            let finalRemarks = 'N/A';
+            if ((req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
+              // Find the last response notes from unit users only
+              for (const rev of req.revisionHistory.slice().reverse()) {
+                if (rev.responseNotes && rev.responseNotes.trim() && rev.respondedBy) {
+                  const responder = await User.findById(rev.respondedBy);
+                  if (responder && responder.role === 'unit') {
+                    finalRemarks = rev.responseNotes;
+                    break; // Take the most recent unit response
+                  }
+                }
+              }
+            }
+
+            return {
+              _id: req._id,
+              requestId: req._id.toString().slice(-6),
+              type: 'Request for Approval',
+              requester: `${req.userId?.fName || ''} ${req.userId?.lName || ''}`,
+              requesterId: req.userId?._id,
+              unit: req.assignedUnits || 'Unassigned',
+              service: req.purpose || req.title,
+              status: req.status,
+              dateSubmitted: req.createdAt,
+              deadline: req.deadline,
+              description: req.description,
+              revisionsCount: req.revisionHistory?.length || 0,
+              finalRemarks: finalRemarks
+            };
           }))
         );
       }
@@ -188,12 +217,31 @@ class ReportService {
   }
 
   /**
-   * Export report to CSV format
+   * Export report to Excel format
    * @param {Array} records - Report records
-   * @returns {String} - CSV content
+   * @returns {Buffer} - Excel file buffer
    */
-  exportToCSV(records) {
+  exportToExcel(records) {
     try {
+      const ExcelJS = require('exceljs');
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('S-CORE Report');
+
+      // Add title
+      worksheet.mergeCells('A1:J1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = 'S-CORE Analytics Report';
+      titleCell.font = { size: 16, bold: true };
+      titleCell.alignment = { horizontal: 'center' };
+
+      // Add generation timestamp
+      worksheet.mergeCells('A2:J2');
+      const timestampCell = worksheet.getCell('A2');
+      timestampCell.value = `Generated: ${new Date().toLocaleString()}`;
+      timestampCell.alignment = { horizontal: 'center' };
+
+      // Add headers
       const headers = [
         'Request ID',
         'Type',
@@ -204,34 +252,52 @@ class ReportService {
         'Date Submitted',
         'Deadline',
         'Revisions',
-        'Assigned To'
+        'Final Remarks'
       ];
 
-      let csv = headers.join(',') + '\n';
+      worksheet.addRow([]);
+      worksheet.addRow(headers);
 
+      // Style headers
+      const headerRow = worksheet.getRow(4);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF10B981' }
+      };
+      headerRow.font = { color: { argb: 'FFFFFFFF' }, bold: true };
+
+      // Add data rows
       if (records && records.length > 0) {
-        const rows = records.map(record => [
-          record.requestId || '',
-          record.type || '',
-          record.requester || '',
-          record.unit || '',
-          record.service || '',
-          record.status || '',
-          this._formatDate(record.dateSubmitted),
-          this._formatDate(record.deadline),
-          record.revisionsCount || 0,
-          record.assignedTo || ''
-        ]);
-
-        rows.forEach(row => {
-          csv += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+        records.forEach(record => {
+          worksheet.addRow([
+            record.requestId || 'N/A',
+            record.type || 'N/A',
+            record.requester || 'N/A',
+            record.unit || 'N/A',
+            record.service || 'N/A',
+            record.status || 'N/A',
+            record.dateSubmitted ? new Date(record.dateSubmitted).toLocaleDateString() : 'N/A',
+            record.deadline ? new Date(record.deadline).toLocaleDateString() : 'N/A',
+            record.revisionsCount || 0,
+            record.finalRemarks || 'N/A'
+          ]);
         });
       }
 
-      return csv;
+      // Auto-fit columns
+      worksheet.columns.forEach(column => {
+        column.width = 15;
+      });
+
+      // Special width for remarks column
+      worksheet.getColumn(10).width = 30;
+
+      return workbook.xlsx.writeBuffer();
     } catch (error) {
-      console.error('Error exporting to CSV:', error);
-      throw new Error('Failed to export to CSV');
+      console.error('Error exporting to Excel:', error);
+      throw new Error('Failed to export to Excel');
     }
   }
 
@@ -426,6 +492,111 @@ class ReportService {
   }
 
   /**
+   * Generate HTML report for display
+   * @param {Array} records - Report records
+   * @param {Object} summary - Statistics object
+   * @returns {String} - HTML content
+   */
+  generateHTML(records, summary = {}) {
+    try {
+      let html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S-CORE Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; text-align: center; }
+    .summary { background: #f0f0f0; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-in-progress { background: #bfdbfe; color: #1e40af; }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-rejected { background: #fecaca; color: #dc2626; }
+  </style>
+</head>
+<body>
+  <h1>S-CORE Analytics Report</h1>
+  <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+`;
+
+      if (Object.keys(summary).length > 0) {
+        html += `
+  <div class="summary">
+    <h2>Summary</h2>
+    <p><strong>Total Requests:</strong> ${summary.totalRequests || 0}</p>
+    <p><strong>Completion Rate:</strong> ${summary.completionRate || 0}%</p>
+  </div>
+`;
+      }
+
+      html += `
+  <table>
+    <thead>
+      <tr>
+        <th>Request ID</th>
+        <th>Type</th>
+        <th>Requester</th>
+        <th>Unit</th>
+        <th>Service/Purpose</th>
+        <th>Status</th>
+        <th>Date Submitted</th>
+        <th>Deadline</th>
+        <th>Revisions</th>
+        <th>Final Remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+`;
+
+      if (records && records.length > 0) {
+        records.forEach(record => {
+          const dateSubmitted = record.dateSubmitted ? new Date(record.dateSubmitted).toLocaleDateString() : 'N/A';
+          const deadline = record.deadline ? new Date(record.deadline).toLocaleDateString() : 'N/A';
+          const statusClass = (record.status || '').toLowerCase().replace(/\s+/g, '-');
+
+          html += `
+      <tr>
+        <td>${this.escapeHtml(record.requestId || 'N/A')}</td>
+        <td>${this.escapeHtml(record.type || 'N/A')}</td>
+        <td>${this.escapeHtml(record.requester || 'N/A')}</td>
+        <td>${this.escapeHtml(record.unit || 'N/A')}</td>
+        <td>${this.escapeHtml(record.service || 'N/A')}</td>
+        <td><span class="status-badge status-${statusClass}">${this.escapeHtml(record.status || 'N/A')}</span></td>
+        <td>${dateSubmitted}</td>
+        <td>${deadline}</td>
+        <td>${record.revisionsCount || 0}</td>
+        <td>${this.escapeHtml(record.finalRemarks || 'N/A')}</td>
+      </tr>
+`;
+        });
+      } else {
+        html += `<tr><td colspan="10" style="text-align: center;">No data available</td></tr>`;
+      }
+
+      html += `
+    </tbody>
+  </table>
+  <p style="margin-top: 20px; text-align: center; color: #666;">
+    This is an automatically generated report from S-CORE System.
+  </p>
+</body>
+</html>`;
+
+      return html;
+    } catch (error) {
+      console.error('Error generating HTML:', error);
+      throw new Error('Failed to generate HTML report');
+    }
+  }
+
+  /**
    * Helper function to format dates
    * @param {Date|String} date - Date to format
    * @returns {String} - Formatted date
@@ -437,19 +608,35 @@ class ReportService {
   }
 
   /**
+   * Escape HTML characters to prevent XSS
+   * @param {String} text - Text to escape
+   * @returns {String} - Escaped text
+   */
+  escapeHtml(text) {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /**
    * Get available filters for dropdown
    * @returns {Promise<Object>} - Available filter options
    */
   async getAvailableFilters() {
     try {
-      const units = await ServiceRequest.distinct('assignedUnit');
+      const units = await ServiceRequest.distinct('assignedUnits');
+      const approvalUnits = await RequestApproval.distinct('assignedUnits');
+      const allUnits = [...new Set([...units, ...approvalUnits])];
       const statuses = await ServiceRequest.distinct('status');
-      
       const approvalStatuses = await RequestApproval.distinct('status');
       const allStatuses = [...new Set([...statuses, ...approvalStatuses])];
 
       return {
-        units: units.filter(u => u && u !== 'Unassigned'),
+        units: allUnits.filter(u => u && u !== 'Not yet assigned'),
         statuses: allStatuses.sort(),
         requestTypes: ['ServiceRequest', 'RequestApproval'],
         dateRangePresets: [
