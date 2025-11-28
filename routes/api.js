@@ -574,10 +574,6 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
 =======
         const isUserResubmission = revision.respondedBy && !revision.requestedBy;
         const isCombined = revision.requestedBy && revision.respondedBy;
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         
         if (isUnitAction) {
           // This is a unit requesting revision
