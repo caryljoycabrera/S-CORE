@@ -154,6 +154,7 @@ hr {
   font-size: 1rem;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  margin-right: 20rem;
 }
 
 .back-to-dashboard-btn:hover {
@@ -1127,7 +1128,7 @@ hr {
 }
 
 .modal-header.unit-modal-header {
-  background: #0891b2 !important;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
   color: white !important;
 }
 

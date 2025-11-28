@@ -204,7 +204,7 @@ router.get('/request-approvals', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    let approvals = await RequestApproval.find({ userId: user._id }).lean();
+    let approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
 
     // Status priority for sorting approvals
     const statusPriority = {
@@ -278,7 +278,7 @@ router.get('/service-requests', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    let serviceRequests = await ServiceRequest.find({ userId: user._id })
+    let serviceRequests = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true } })
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
       .lean();
 
@@ -356,8 +356,8 @@ router.get('/all-requests', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    const approvals = await RequestApproval.find({ userId: user._id }).lean();
-    const services = await ServiceRequest.find({ userId: user._id }).lean();
+    const approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
+    const services = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
 
     // Combine all requests
     const allRequests = [

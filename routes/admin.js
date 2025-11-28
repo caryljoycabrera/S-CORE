@@ -35,8 +35,8 @@ console.log('[routes/admin] admin routes module loaded');
 router.get('/admin', requireAdmin, async (req, res) => {
   try {
     const users = await User.find().lean();
-    const approvals = await RequestApproval.find().populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } }).populate('userId').lean();
 
     // Filter by status - only pending AND unassigned for pending assignment KPI
     const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending' && (!a.assignedUnits || a.assignedUnits === 'Not yet assigned'))
@@ -334,8 +334,8 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     const now = new Date();
     const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
     
-    const approvals = await RequestApproval.find({ createdAt: { $gte: lastMonth } }).populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find({ createdAt: { $gte: lastMonth } }).populate('userId').lean();
+    const approvals = await RequestApproval.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true } }).populate('userId').lean();
 
     const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending');
     const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending');
@@ -641,7 +641,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
 router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    let approvals = await RequestApproval.find()
+    let approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
       .populate('userId')
       .lean();
 
@@ -707,7 +707,7 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
  */
 router.get('/admin/services', requireAdmin, async (req, res) => {
   try {
-    let serviceRequests = await ServiceRequest.find()
+    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -783,7 +783,7 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
 router.get('/admin/services/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    let serviceRequests = await ServiceRequest.find()
+    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -4841,8 +4841,8 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
  */
 router.get('/admin/analytics-data/top-requestors', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find().populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } }).populate('userId').lean();
     const allRequests = [...approvals, ...serviceRequests];
 
     // Group by organization
@@ -4935,6 +4935,9 @@ router.get('/admin/analytics-data/request-volume', requireAdmin, async (req, res
     // Fetch data based on request type
     let approvals = [];
     let services = [];
+    
+    // Add isDeleted filter to exclude soft-deleted items
+    query.isDeleted = { $ne: true };
     
     console.log('Final query:', query);
     console.log('Request type filter:', requestType);

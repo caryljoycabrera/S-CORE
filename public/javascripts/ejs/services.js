@@ -1408,10 +1408,17 @@ document.addEventListener('DOMContentLoaded', function() {
           if (success) updatedData.units = unitsSelect.value || 'Not yet assigned';
         } else if (change.field === 'Deadline') {
           const deadlineInput = document.getElementById('adminDeadlineInput');
-          success = await updateRequestDeadline(currentRequestId, deadlineInput.value);
-          if (success) {
-            const newDate = new Date(deadlineInput.value);
-            updatedData.formattedDeadline = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
+          // Use local date (YYYY-MM-DD or datetime-local) as-is, no manual UTC+8 conversion
+          let deadlineValue = deadlineInput.value;
+          if (deadlineValue) {
+            // If input type is date, convert to Date object for formatting
+            const newDate = new Date(deadlineValue);
+            success = await updateRequestDeadline(currentRequestId, deadlineValue);
+            if (success) {
+              updatedData.formattedDeadline = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
+            }
+          } else {
+            success = await updateRequestDeadline(currentRequestId, '');
           }
         }
         
@@ -1557,14 +1564,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update display elements
         const deadlineElement = document.getElementById('detailDeadlineInfo');
         const currentDeadlineValue = document.getElementById('currentDeadlineValue');
-        
-        if (deadlineElement && currentDeadlineValue) {
-          const newDate = new Date(newDeadline);
-          const formattedDate = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
-          deadlineElement.innerText = formattedDate;
-          currentDeadlineValue.innerText = newDate.toLocaleString();
+        const deadlineInput = document.getElementById('adminDeadlineInput');
+        const newDate = new Date(newDeadline);
+        const formattedDate = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
+        if (deadlineElement) deadlineElement.innerText = formattedDate;
+        if (currentDeadlineValue) currentDeadlineValue.innerText = newDate.toLocaleString();
+        if (deadlineInput) {
+          // Set input value as local datetime-local string
+          const year = newDate.getFullYear();
+          const month = String(newDate.getMonth() + 1).padStart(2, '0');
+          const day = String(newDate.getDate()).padStart(2, '0');
+          const hours = String(newDate.getHours()).padStart(2, '0');
+          const minutes = String(newDate.getMinutes()).padStart(2, '0');
+          deadlineInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-        
         return true;
       } else {
         console.error('Deadline update failed:', result.message);

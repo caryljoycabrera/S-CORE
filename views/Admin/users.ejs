@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/stylesheets/ejs/users.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-trash-modal.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
 </head>
@@ -396,7 +397,7 @@
             </svg>
             Back to Dashboard
           </a>
-          <button class="trash-btn" id="trashBtn" title="View Deleted Users">
+          <button class="trash-btn" id="trashBtn" title="View Deleted Users" style="margin-left: 20rem;" onclick="openTrashModal()">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -411,6 +412,60 @@
   </div>
 
 
+  
+<!-- Trash Modal - View Deleted Users -->
+<div id="trashModal" class="modal" style="display:none;">
+  <div class="modal-content trash-modal-content">
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <h2>Deleted Users</h2>
+      </div>
+      <button class="close-modal-btn" onclick="closeTrashModal()" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="trash-modal-body">
+      <div class="trash-info-banner">
+        <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
+        </svg>
+        <span>These users are hidden from active views. You can restore or permanently delete them.</span>
+      </div>
+
+      <div class="trash-table-container">
+        <table class="trash-requests-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Deleted By</th>
+              <th>Deleted On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="trashTableBody">
+            <!-- Populated by JavaScript -->
+          </tbody>
+        </table>
+        <div id="trashEmptyState" class="trash-empty-state" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
+            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+          </svg>
+          <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No deleted users</p>
+          <p style="color: #6b7280;">Deleted users will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Enhanced User Details Modal - Inspired by profile.ejs -->
 <div id="userModal" class="modal" style="display:none;">
@@ -705,60 +760,6 @@
   </div>
 </div>
 
-<!-- Trash Modal - View Deleted Users -->
-<div id="trashModal" class="modal" style="display:none;">
-  <div class="modal-content trash-modal-content">
-    <div class="modal-header unit-modal-header">
-      <div class="modal-title-section">
-        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        <h2>Deleted Users</h2>
-      </div>
-      <button class="close-modal-btn" onclick="closeTrashModal()" aria-label="Close">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="trash-modal-body">
-      <div class="trash-info-banner">
-        <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
-        </svg>
-        <span>These users are hidden from active views. You can restore or permanently delete them.</span>
-      </div>
-
-      <div class="trash-table-container">
-        <table class="trash-requests-table">
-          <thead>
-            <tr>
-              <th>User ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Deleted By</th>
-              <th>Deleted On</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="trashTableBody">
-            <!-- Populated by JavaScript -->
-          </tbody>
-        </table>
-        <div id="trashEmptyState" class="trash-empty-state" style="display: none;">
-          <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
-            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
-          </svg>
-          <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No deleted users</p>
-          <p style="color: #6b7280;">Deleted users will appear here</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Restore Confirmation Modal -->
 <div id="restoreConfirmModal" class="modal" style="display: none;">
   <div class="modal-content" style="max-width: 500px; margin: auto;">
@@ -824,6 +825,27 @@
 <script>
   const userRolesData = <%- JSON.stringify(userRoles || []) %>;
   const unitsData = <%- JSON.stringify(units || []) %>;
+</script>
+
+<!-- ===========================================
+   SHARED ADMIN TRASH MODAL FUNCTIONALITY
+   File: public/javascripts/ejs/admin-trash-modal.js
+   Purpose: Provides shared trash modal functionality for all admin pages
+   =========================================== -->
+<script src="/javascripts/ejs/admin-trash-modal.js"></script>
+<script>
+  // Initialize trash modal for users page
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.AdminTrashModal) {
+      window.AdminTrashModal.init({
+        entityType: 'users',
+        fetchEndpoint: '/api/admin/deleted-users',
+        restoreEndpoint: '/api/admin/restore-user',
+        permanentDeleteEndpoint: '/api/admin/delete-user-permanently',
+        reloadOnRestore: true
+      });
+    }
+  });
 </script>
 
 <!-- External JavaScript File -->
