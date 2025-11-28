@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="/stylesheets/ejs/admin-modal-two-column.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/Admin/approvals-conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-edit-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-trash-modal.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
 </head>
@@ -924,7 +926,7 @@
 <!-- Trash Modal -->
 <div id="trashModal" class="modal" style="display:none;">
   <div class="modal-content trash-modal-content">
-    <div class="modal-header unit-modal-header">
+    <div class="modal-header unit-modal-header trash-header-color">
       <div class="modal-title-section">
         <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -1012,6 +1014,20 @@
 
 </body>
 <!-- ===========================================
+   SHARED ADMIN EDIT MODAL FUNCTIONALITY
+   File: public/javascripts/ejs/admin-edit-modal.js
+   Purpose: Provides shared edit/delete modal functionality for all admin pages
+   =========================================== -->
+<script src="/javascripts/ejs/admin-edit-modal.js"></script>
+<script>
+  // Initialize with default request type for approvals page
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.AdminEditModal) {
+      window.AdminEditModal.setDefaultRequestType('Request Approval');
+    }
+  });
+</script>
+<!-- ===========================================
    APPROVALS PAGE JAVASCRIPT CONNECTION
    File: public/javascripts/approvals.js
    Purpose: Provides client-side functionality for the admin approvals management page
@@ -1066,442 +1082,47 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 // EDIT AND DELETE REQUEST FUNCTIONALITY
 // ==========================================
+// Now handled by admin-edit-modal.js (shared module)
+// The shared module auto-initializes and provides:
+// - window.openEditMode()
+// - window.closeEditModal()
+// - window.openDeleteConfirm()
+// - window.closeDeleteConfirm()
+// - window.confirmDelete()
+// - Row click handler for storing request ID/type in modal dataset
 
-let currentEditRequestId = null;
-let currentEditRequestType = 'Request Approval';
-
-// Open edit mode
-window.openEditMode = function() {
-  const modal = document.getElementById('detailsModal');
-  const editModal = document.getElementById('editRequestModal');
-  
-  // Get current request data from table
-  const requestRows = document.querySelectorAll('.request-row');
-  let currentRow = null;
-  
-  requestRows.forEach(row => {
-    if (row.classList.contains('selected') || row.dataset.selected === 'true') {
-      currentRow = row;
-    }
-  });
-  
-  if (!currentRow) {
-    console.error('No request row selected');
-    return;
-  }
-  
-  currentEditRequestId = currentRow.dataset.requestId;
-  
-  // Populate read-only requestor information from table cells
-  const requestorCell = currentRow.querySelector('td:nth-child(2)');
-  const titleCell = currentRow.querySelector('td:nth-child(3)');
-  const orgCell = currentRow.querySelector('td:nth-child(4)');
-  const statusCell = currentRow.querySelector('td:nth-child(5)');
-  const dateCell = currentRow.querySelector('td:nth-child(7)');
-  const deadlineCell = currentRow.querySelector('td:nth-child(8)');
-  
-  // Set read-only fields
-  document.getElementById('editRequestor').textContent = requestorCell?.textContent.trim() || 'N/A';
-  document.getElementById('editOrganizationReadonly').textContent = orgCell?.textContent.trim() || 'N/A';
-  document.getElementById('editRequestType').textContent = 'Request Approval';
-  document.getElementById('editDateSubmitted').textContent = dateCell?.textContent.trim() || 'N/A';
-  
-  // Check if there's specific request type info
-  const specificType = currentRow.dataset.specificType;
-  if (specificType && specificType !== 'Not specified') {
-    document.getElementById('editSpecificType').textContent = specificType;
-    document.getElementById('editSpecificTypeContainer').style.display = 'block';
-  } else {
-    document.getElementById('editSpecificTypeContainer').style.display = 'none';
-  }
-  
-  // Populate editable fields
-  document.getElementById('editTitle').value = titleCell?.textContent.trim() || '';
-  
-  // Get description from modal if it exists
-  const modalDescElement = document.getElementById('detailDescription');
-  if (modalDescElement && modalDescElement.textContent.trim()) {
-    document.getElementById('editDescription').value = modalDescElement.textContent.trim();
-  } else {
-    document.getElementById('editDescription').value = '';
-  }
-  
-  if (deadlineCell && deadlineCell.textContent.trim() !== 'N/A') {
-    const date = new Date(deadlineCell.textContent.trim());
-    if (!isNaN(date.getTime())) {
-      document.getElementById('editDeadline').value = date.toISOString().split('T')[0];
-    }
-  }
-  
-  // Check for links
-  const linksData = currentRow.dataset.links;
-  if (linksData && linksData !== '[]') {
-    try {
-      const links = JSON.parse(linksData);
-      if (links && links.length > 0) {
-        document.getElementById('editLinks').value = links.join(', ');
-        document.getElementById('editLinksContainer').style.display = 'block';
-      } else {
-        document.getElementById('editLinksContainer').style.display = 'none';
-      }
-    } catch (e) {
-      document.getElementById('editLinksContainer').style.display = 'none';
-    }
-  } else {
-    document.getElementById('editLinksContainer').style.display = 'none';
-  }
-  
-  editModal.style.display = 'flex';
-};
-
-// Close edit modal
-window.closeEditModal = function() {
-  document.getElementById('editRequestModal').style.display = 'none';
-  currentEditRequestId = null;
-};
-
-// Handle edit form submission
-document.getElementById('editRequestForm')?.addEventListener('submit', async function(e) {
-  e.preventDefault();
-  
-  if (!currentEditRequestId) {
-    console.error('No request selected for editing');
-    return;
-  }
-  
-  const linksValue = document.getElementById('editLinks').value.trim();
-  const linksArray = linksValue ? linksValue.split(',').map(link => link.trim()).filter(link => link) : [];
-  
-  const updates = {
-    title: document.getElementById('editTitle').value.trim(),
-    description: document.getElementById('editDescription').value.trim(),
-    deadline: document.getElementById('editDeadline').value || null,
-    links: linksArray
-  };
-  
-  try {
-    const response = await fetch('/admin/request/edit', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        requestId: currentEditRequestId,
-        requestType: currentEditRequestType,
-        updates
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      showNotification('Request updated successfully!', 'success');
-      closeEditModal();
-      document.getElementById('detailsModal').style.display = 'none';
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      showNotification(data.message || 'Failed to update request', 'error');
-    }
-  } catch (error) {
-    console.error('Error updating request:', error);
-    showNotification('An error occurred while updating the request', 'error');
-  }
-});
-
-// Open delete confirmation
-window.openDeleteConfirm = function() {
-  const deleteModal = document.getElementById('deleteConfirmModal');
-  
-  const requestRows = document.querySelectorAll('.request-row');
-  let currentRow = null;
-  
-  requestRows.forEach(row => {
-    if (row.classList.contains('selected') || row.dataset.selected === 'true') {
-      currentRow = row;
-    }
-  });
-  
-  if (!currentRow) {
-    console.error('No request row selected');
-    return;
-  }
-  
-  currentEditRequestId = currentRow.dataset.requestId;
-  deleteModal.style.display = 'flex';
-};
-
-// Close delete confirmation
-window.closeDeleteConfirm = function() {
-  document.getElementById('deleteConfirmModal').style.display = 'none';
-  currentEditRequestId = null;
-};
-
-// Confirm delete
-window.confirmDelete = async function() {
-  if (!currentEditRequestId) {
-    console.error('No request selected for deletion');
-    return;
-  }
-  
-  try {
-    const response = await fetch('/admin/request/delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        requestId: currentEditRequestId,
-        requestType: currentEditRequestType
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      showNotification('Request moved to archive successfully!', 'success');
-      closeDeleteConfirm();
-      document.getElementById('detailsModal').style.display = 'none';
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      showNotification(data.message || 'Failed to delete request', 'error');
-    }
-  } catch (error) {
-    console.error('Error deleting request:', error);
-    showNotification('An error occurred while deleting the request', 'error');
-  }
-};
-
-// Mark row as selected when clicked
-document.addEventListener('click', function(e) {
-  const row = e.target.closest('.request-row');
-  if (row) {
-    document.querySelectorAll('.request-row').forEach(r => {
-      r.classList.remove('selected');
-      r.dataset.selected = 'false';
-    });
-    row.classList.add('selected');
-    row.dataset.selected = 'true';
-  }
-});
-
-// Show notification helper
-function showNotification(message, type = 'success') {
-  let container = document.getElementById('notificationContainer');
-  
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'notificationContainer';
-    container.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    `;
-    document.body.appendChild(container);
-  }
-
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.style.cssText = `
-    min-width: 300px;
-    padding: 16px 20px;
-    background: ${type === 'success' ? '#10b981' : '#ef4444'};
-    color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    animation: slideInRight 0.3s ease-out;
-  `;
-
-  notification.innerHTML = `
-    <svg style="width: 20px; height: 20px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none">
-      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-    </svg>
-    <span style="flex: 1;">${message}</span>
-    <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; padding: 0; font-size: 20px; line-height: 1;">✕</button>
-  `;
-
-  container.appendChild(notification);
-
-  setTimeout(() => {
-    notification.style.animation = 'slideOutRight 0.3s ease-out';
-    setTimeout(() => notification.remove(), 300);
-  }, 5000);
+// Set default request type for this page
+if (window.AdminEditModal) {
+  window.AdminEditModal.setDefaultRequestType('Request Approval');
 }
 
 // ==========================================
-// TRASH MODAL FUNCTIONALITY
+// TRASH MODAL FUNCTIONALITY - Using Shared Module
 // ==========================================
+// Now handled by admin-trash-modal.js (shared module)
 
-let currentRestoreRequestId = null;
-let currentRestoreRequestType = null;
-let currentPermanentDeleteRequestId = null;
-let currentPermanentDeleteRequestType = null;
+</script>
 
-// Open trash modal
-async function openTrashModal() {
-  const modal = document.getElementById('trashModal');
-  const tableBody = document.getElementById('trashTableBody');
-  const emptyState = document.getElementById('trashEmptyState');
-
-  // Show loading
-  tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">Loading deleted requests...</td></tr>';
-  modal.style.display = 'flex';
-
-  try {
-    const response = await fetch('/api/admin/deleted-requests?type=Request%20Approval', {
-      credentials: 'include'
-    });
-    const data = await response.json();
-
-    if (data.success) {
-      if (data.deletedRequests.length > 0) {
-        tableBody.innerHTML = data.deletedRequests.map(request => `
-          <tr class="trash-request-row" 
-              data-request-id="${request._id}" 
-              data-request-type="${request.type}">
-            <td><span class="type-badge ${request.type === 'Request Approval' ? 'type-approval' : 'type-service'}">${request.type}</span></td>
-            <td>${request.title}</td>
-            <td>${request.displayOrganization}</td>
-            <td>${request.userName}</td>
-            <td>${request.deletedByName}</td>
-            <td>${new Date(request.deletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-            <td>
-              <button class="action-btn restore-btn" onclick="openRestoreConfirm('${request._id}', '${request.type}')" title="Restore">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" fill="currentColor"/>
-                </svg>
-                Restore
-              </button>
-              <button class="action-btn delete-btn-permanent" onclick="openPermanentDeleteConfirm('${request._id}', '${request.type}')" title="Permanent Delete">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                </svg>
-                Delete Forever
-              </button>
-            </td>
-          </tr>
-        `).join('');
-        emptyState.style.display = 'none';
-      } else {
-        tableBody.innerHTML = '';
-        emptyState.style.display = 'block';
-      }
-    } else {
-      tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #dc2626;">Failed to load deleted requests</td></tr>';
+<!-- ===========================================
+   SHARED ADMIN TRASH MODAL FUNCTIONALITY
+   File: public/javascripts/ejs/admin-trash-modal.js
+   Purpose: Provides shared trash modal functionality for all admin pages
+   =========================================== -->
+<script src="/javascripts/ejs/admin-trash-modal.js"></script>
+<script>
+  // Initialize trash modal for approvals page
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.AdminTrashModal) {
+      window.AdminTrashModal.init({
+        entityType: 'requests',
+        fetchEndpoint: '/api/admin/deleted-requests',
+        restoreEndpoint: '/admin/request/restore',
+        permanentDeleteEndpoint: '/admin/request/permanent-delete',
+        typeFilter: 'Request Approval',
+        reloadOnRestore: true
+      });
     }
-  } catch (error) {
-    console.error('Error loading deleted requests:', error);
-    tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #dc2626;">Error loading deleted requests</td></tr>';
-  }
-}
-
-// Close trash modal
-function closeTrashModal() {
-  document.getElementById('trashModal').style.display = 'none';
-}
-
-// Open restore confirmation
-function openRestoreConfirm(requestId, requestType) {
-  currentRestoreRequestId = requestId;
-  currentRestoreRequestType = requestType;
-  document.getElementById('restoreConfirmModal').style.display = 'flex';
-}
-
-// Close restore confirmation
-function closeRestoreModal() {
-  document.getElementById('restoreConfirmModal').style.display = 'none';
-  currentRestoreRequestId = null;
-  currentRestoreRequestType = null;
-}
-
-// Confirm restore
-async function confirmRestore() {
-  if (!currentRestoreRequestId || !currentRestoreRequestType) return;
-
-  try {
-    const response = await fetch('/admin/request/restore', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        requestId: currentRestoreRequestId,
-        requestType: currentRestoreRequestType
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      showNotification('Request restored successfully!', 'success');
-      closeRestoreModal();
-      closeTrashModal();
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      showNotification(data.message || 'Failed to restore request', 'error');
-    }
-  } catch (error) {
-    console.error('Error restoring request:', error);
-    showNotification('An error occurred while restoring the request', 'error');
-  }
-}
-
-// Open permanent delete confirmation
-function openPermanentDeleteConfirm(requestId, requestType) {
-  currentPermanentDeleteRequestId = requestId;
-  currentPermanentDeleteRequestType = requestType;
-  document.getElementById('permanentDeleteModal').style.display = 'flex';
-}
-
-// Close permanent delete confirmation
-function closePermanentDeleteModal() {
-  document.getElementById('permanentDeleteModal').style.display = 'none';
-  currentPermanentDeleteRequestId = null;
-  currentPermanentDeleteRequestType = null;
-}
-
-// Confirm permanent delete
-async function confirmPermanentDelete() {
-  if (!currentPermanentDeleteRequestId || !currentPermanentDeleteRequestType) return;
-
-  try {
-    const response = await fetch('/admin/request/permanent-delete', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        requestId: currentPermanentDeleteRequestId,
-        requestType: currentPermanentDeleteRequestType
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      showNotification('Request permanently deleted!', 'success');
-      closePermanentDeleteModal();
-      // Refresh the trash modal
-      openTrashModal();
-    } else {
-      showNotification(data.message || 'Failed to delete request', 'error');
-    }
-  } catch (error) {
-    console.error('Error deleting request:', error);
-    showNotification('An error occurred while deleting the request', 'error');
-  }
-}
-
+  });
 </script>
 
 <!-- Edit Request Modal -->

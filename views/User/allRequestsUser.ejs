@@ -4779,11 +4779,15 @@ function createRevisionEntry(revision, index, total) {
             </div>
             
             <div class="message-content-section">
-                <div class="content-label">${isUnitAction ? 'UNIT FEEDBACK:' : 'YOUR RESPONSE:'}</div>
                 <div class="content-text">${(() => {
-                    const content = isUnitAction ? revision.revisionNotes : revision.responseNotes;
+                    let content = '';
+                    if (isUnitAction) {
+                        content = revision.revisionNotes;
+                    } else {
+                        content = revision.revisionNotes || revision.responseNotes;
+                    }
                     console.log('🎯 Rendering content:', { isUnitAction, content, type: typeof content });
-                    return displayFormattedText(content || 'No feedback provided');
+                    return displayFormattedText(content || 'No content provided');
                 })()}</div>
             </div>
             
@@ -5187,7 +5191,8 @@ function createServiceRevisionEntry(revision, index, total) {
                           revision.type === 'message');
     const isRequestorAction = revision.respondedBy || 
                               (revision.type === 'revision_requested' && !revision.requestedBy) ||
-                              (revision.type === 'message' && !revision.requestedBy);
+                              (revision.type === 'message' && !revision.requestedBy) ||
+                              revision.type === 'initial';
     
     entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
@@ -5233,6 +5238,9 @@ function createServiceRevisionEntry(revision, index, total) {
     } else if (revision.type === 'message') {
         typeLabel = 'Message';
         badgeClass = 'badge-revision';
+    } else if (revision.type === 'initial') {
+        typeLabel = 'Initial Request';
+        badgeClass = 'badge-revision';
     } else {
         typeLabel = 'Update';
         badgeClass = 'badge-revision';
@@ -5255,6 +5263,9 @@ function createServiceRevisionEntry(revision, index, total) {
             authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
             authorUnit = ' (User)';
         }
+    } else if (revision.type === 'initial' && revision.by) {
+        authorName = revision.by;
+        authorUnit = ' (User)';
     }
     
     const isLast = index === total - 1;
@@ -5296,6 +5307,8 @@ function createServiceRevisionEntry(revision, index, total) {
     
     const content = revision.type === 'message' ? 
         (revision.revisionNotes || revision.responseNotes || 'Message') :
+        revision.type === 'initial' ?
+        (revision.description || 'Initial request submitted') :
         (isUnitAction ? 
             (revision.revisionNotes || 'Deliverables submitted') : 
             (revision.responseNotes || 'Revision requested'));
@@ -5317,7 +5330,7 @@ function createServiceRevisionEntry(revision, index, total) {
             </div>
             
             <div class="message-content-section">
-                <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
+                <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : revision.type === 'initial' ? 'REQUEST:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
                 <div class="content-text">${displayFormattedText(content)}</div>
             </div>
             

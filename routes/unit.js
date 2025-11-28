@@ -140,7 +140,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     console.log('[/unit/dashboard] Fetching recent activity...');
     const recentApprovalActivity = await RequestApproval
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') }
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -150,7 +151,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
 
     const recentServiceActivity = await ServiceRequest
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') }
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -177,13 +179,15 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const upcomingApprovalDeadlines = await RequestApproval.countDocuments({
       assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
       deadline: { $lte: sevenDaysFromNow, $gte: new Date() },
-      status: { $nin: ['completed', 'cancelled', 'Archived'] }
+      status: { $nin: ['completed', 'cancelled', 'Archived'] },
+      isDeleted: { $ne: true }
     });
 
     const upcomingServiceDeadlines = await ServiceRequest.countDocuments({
       assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
       deadline: { $lte: sevenDaysFromNow, $gte: new Date() },
-      status: { $nin: ['completed', 'cancelled', 'Archived'] }
+      status: { $nin: ['completed', 'cancelled', 'Archived'] },
+      isDeleted: { $ne: true }
     });
 
     const upcomingDeadlines = upcomingApprovalDeadlines + upcomingServiceDeadlines;
@@ -193,7 +197,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       .find({
         assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
-        deadline: { $exists: true }
+        deadline: { $exists: true },
+        isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
       .sort({ deadline: 1 })
@@ -204,7 +209,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       .find({
         assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
-        deadline: { $exists: true }
+        deadline: { $exists: true },
+        isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
       .sort({ deadline: 1 })
@@ -219,7 +225,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const recentlyCompletedApprovals = await RequestApproval
       .find({
         assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
-        status: 'completed'
+        status: 'completed',
+        isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -229,7 +236,8 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const recentlyCompletedServices = await ServiceRequest
       .find({
         assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
-        status: 'completed'
+        status: 'completed',
+        isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -576,14 +584,20 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
 
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
-      .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
+      .find({ 
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
+      })
       .populate('userId', 'fName lName email')
       .sort({ createdAt: -1 })
       .lean();
 
     // Get all service requests assigned to their unit
     const serviceRequests = await ServiceRequest
-      .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
+      .find({ 
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
+      })
       .populate('userId', 'fName lName email')
       .sort({ createdAt: -1 })
       .lean();
@@ -662,14 +676,20 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
 
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
-      .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
+      .find({ 
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
+      })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
 
     // Get all service requests assigned to their unit
     const serviceRequests = await ServiceRequest
-      .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
+      .find({ 
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
+      })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
@@ -706,7 +726,10 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
 
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
-      .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
+      .find({ 
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
+      })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
@@ -742,14 +765,20 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
 
     // Get service requests currently assigned to their unit (can process)
     const currentServiceRequests = await ServiceRequest
-      .find({ assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') } })
+      .find({ 
+        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        isDeleted: { $ne: true }
+      })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
 
     // Get service requests they were ever auto-assigned to (can view)
     const viewableServiceRequests = await ServiceRequest
-      .find({ originalAssignedUnits: user.unitTeam })
+      .find({ 
+        originalAssignedUnits: user.unitTeam,
+        isDeleted: { $ne: true }
+      })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
       .lean();
