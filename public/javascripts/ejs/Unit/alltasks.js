@@ -935,9 +935,10 @@ function createServiceRevisionEntry(revision, index, total) {
     
     // Determine if this is a unit action or requestor action
     const isUnitAction = revision.requestedBy || 
-                         revision.type === 'deliverable_submitted' || 
-                         revision.type === 'completed';
-    const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+                         (revision.type === 'deliverable_submitted' || 
+                          revision.type === 'completed');
+    const isRequestorAction = revision.respondedBy || 
+                              (revision.type === 'revision_requested' && !revision.requestedBy);
     
     entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     

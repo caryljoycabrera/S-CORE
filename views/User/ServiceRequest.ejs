@@ -6165,9 +6165,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const entry = document.createElement('div');
         
         const isUnitAction = revision.requestedBy || 
-                             revision.type === 'deliverable_submitted' || 
-                             revision.type === 'completed';
-        const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+                             (revision.type === 'deliverable_submitted' || 
+                              revision.type === 'completed');
+        const isRequestorAction = revision.respondedBy || 
+                                  (revision.type === 'revision_requested' && !revision.requestedBy);
         
         entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
         
@@ -6218,13 +6219,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (revision.requestedBy) {
             if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
                 authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
-                if (revision.requestedBy.unitTeam) {
+                if (revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A') {
                     authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+                } else {
+                    authorUnit = ' (User)';
                 }
             }
         } else if (revision.respondedBy) {
             if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
                 authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+                authorUnit = ' (User)';
             }
         }
         
