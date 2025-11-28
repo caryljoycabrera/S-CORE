@@ -6165,9 +6165,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const entry = document.createElement('div');
         
         const isUnitAction = revision.requestedBy || 
-                             revision.type === 'deliverable_submitted' || 
-                             revision.type === 'completed';
-        const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+                             (revision.type === 'deliverable_submitted' || 
+                              revision.type === 'completed' ||
+                              revision.type === 'message');
+        const isRequestorAction = revision.respondedBy || 
+                                  (revision.type === 'revision_requested' && !revision.requestedBy) ||
+                                  (revision.type === 'message' && !revision.requestedBy);
         
         entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
         
@@ -6207,6 +6210,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (revision.type === 'revision_requested') {
             typeLabel = 'Revision Requested';
             badgeClass = 'badge-revision';
+        } else if (revision.type === 'message') {
+            typeLabel = 'Message';
+            badgeClass = 'badge-revision';
         } else {
             typeLabel = 'Update';
             badgeClass = 'badge-revision';
@@ -6218,13 +6224,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (revision.requestedBy) {
             if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
                 authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
-                if (revision.requestedBy.unitTeam) {
+                if (revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A') {
                     authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+                } else {
+                    authorUnit = ' (User)';
                 }
             }
         } else if (revision.respondedBy) {
             if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
                 authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+                authorUnit = ' (User)';
             }
         }
         
@@ -6265,9 +6274,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        const content = isUnitAction ? 
-            (revision.revisionNotes || 'Deliverables submitted') : 
-            (revision.responseNotes || 'Revision requested');
+        const content = revision.type === 'message' ? 
+            (revision.revisionNotes || revision.responseNotes || 'Message') :
+            (isUnitAction ? 
+                (revision.revisionNotes || 'Deliverables submitted') : 
+                (revision.responseNotes || 'Revision requested'));
         
         const files = revision.deliverableFiles || revision.responseFiles || [];
         
@@ -6291,7 +6302,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <div class="message-content-section">
-                    <div class="content-label">${isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:'}</div>
+                    <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
                     <div class="content-text">${displayFormattedText(content)}</div>
                 </div>
                 
