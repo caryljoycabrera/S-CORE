@@ -777,6 +777,51 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
       }
     }
 
+    // Add conversation messages to revision history
+    const conversation = await Conversation.findOne({ serviceRequestId: requestId });
+    if (conversation && conversation.messages && conversation.messages.length > 0) {
+      for (const message of conversation.messages) {
+        // Populate sender information
+        let senderUser = null;
+        try {
+          senderUser = await User.findById(message.senderId).select('fName lName unitTeam');
+        } catch (err) {
+          console.log('Error populating message sender:', err);
+        }
+        
+        // Add message as a revision entry
+        if (message.senderRole === 'unit') {
+          revisions.push({
+            requestedBy: senderUser ? {
+              _id: senderUser._id,
+              fName: senderUser.fName,
+              lName: senderUser.lName,
+              unitTeam: senderUser.unitTeam
+            } : null,
+            requestedAt: message.timestamp,
+            revisionNotes: message.content || '',
+            type: 'message',
+            status: 'message'
+          });
+        } else if (message.senderRole === 'user') {
+          revisions.push({
+            respondedBy: senderUser ? {
+              _id: senderUser._id,
+              fName: senderUser.fName,
+              lName: senderUser.lName
+            } : null,
+            respondedAt: message.timestamp,
+            responseNotes: message.content || '',
+            type: 'message',
+            status: 'message'
+          });
+        }
+      }
+    }
+
+    // Sort by timestamp
+    revisions.sort((a, b) => new Date(a.requestedAt || a.respondedAt || a.timestamp) - new Date(b.requestedAt || b.respondedAt || b.timestamp));
+
     res.json({
       success: true,
       revisions: revisions
