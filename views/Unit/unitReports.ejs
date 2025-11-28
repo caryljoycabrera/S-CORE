@@ -38,25 +38,22 @@
         </div>
         <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
       </div>
-
-      <span class="text-wrapper-2">Welcome, <%= user.fName %> <%= user.lName %>!</span>
+      
+      <span class="text-wrapper-2"><%= unitTeam %> Unit Reports</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
-
+        
         <div class="dropdown-wrapper">
-          <div class="dropdown">
-            <button class="dropbtn">
-              <img src="<%= user.profilePicture || '/Picture/default-profile.png' %>" alt="Profile" class="profile-pic">
-              <span class="profile-name"><%= user.fName %> <%= user.lName %></span>
-              <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6,9 12,15 18,9"></polyline>
-              </svg>
-            </button>
-            <div class="dropdown-content">
-              <a href="/unit/profile">Profile</a>
-              <a href="/logout">Logout</a>
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
             </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/unit/profile">My Profile</a>
+            <a href="/logout">Logout</a>
           </div>
         </div>
       </div>

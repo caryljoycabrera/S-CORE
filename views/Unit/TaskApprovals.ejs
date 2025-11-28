@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Approval Requests - <%= unitTeam %> Unit</title>
+  <title>Approval Tasks - S-CORE</title>
 
   <!-- Base Stylesheet and Google Fonts (same as AllTasks) -->
   <link rel="stylesheet" href="/style.css" />
@@ -24,11 +24,13 @@
   <!-- Unit Sidebar Navigation -->
   <%- include('../partials/unit-navbar', { user: user, activePage: 'task-approvals' }) %>
 
-  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="unit-main-content">
     <!-- HEADER -->
     <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
       <div class="header-left-group">
+        <!-- Hamburger Menu Button for Mobile -->
         <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -43,7 +45,7 @@
         <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
       </div>
       
-      <span class="text-wrapper-2">Approval Requests</span>
+      <span class="text-wrapper-2">Approval Tasks</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>

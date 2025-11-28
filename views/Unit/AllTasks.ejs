@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>All Assigned Tasks - <%= unitTeam %> Unit</title>
+  <title>All Tasks - S-CORE</title>
 
   <!-- Base Stylesheet and Google Fonts -->
   <link rel="stylesheet" href="/style.css" />
@@ -24,7 +24,7 @@
   <!-- Unit Sidebar Navigation -->
   <%- include('../partials/unit-navbar', { user: user, activePage: 'all-tasks' }) %>
 
-  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="unit-main-content">
     <!-- HEADER -->
     <div class="overlap">
@@ -45,7 +45,7 @@
         <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
       </div>
       
-      <span class="text-wrapper-2">All Assigned Tasks</span>
+      <span class="text-wrapper-2">All Tasks</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>

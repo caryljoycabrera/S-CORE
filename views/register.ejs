@@ -1658,7 +1658,8 @@ $(document).ready(function () {
     placeholder: "Search or select organizations",
     allowClear: true,
     width: '100%',
-    closeOnSelect: false,
+    closeOnSelect: true,
+    minimumResultsForSearch: Infinity,
     templateResult: function(data) {
       if (!data.id) return data.text;
       return $(`<div style="padding: 4px 0;">${data.text}</div>`);
@@ -1690,7 +1691,8 @@ $(document).ready(function () {
     placeholder: "Select office(s)/department(s)",
     allowClear: true,
     width: "100%",
-    closeOnSelect: false
+    closeOnSelect: true,
+    minimumResultsForSearch: Infinity
   });
 
   // Set up office counter and click handlers
