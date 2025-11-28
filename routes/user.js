@@ -1231,18 +1231,7 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
       request.files = [...(request.files || []), ...additionalFilePaths];
     }
 
-    // Update the most recent revision history entry with response
-    if (request.revisionHistory && request.revisionHistory.length > 0) {
-      const latestRevision = request.revisionHistory[request.revisionHistory.length - 1];
-      latestRevision.respondedBy = req.session.userId;
-      latestRevision.respondedAt = new Date();
-      latestRevision.responseNotes = resubmissionNotes || 'Resubmitted with updates';
-      latestRevision.responseFiles = additionalFilePaths;
-      latestRevision.status = 'responded';
-    }
-
-    // CREATE NEW REVISION HISTORY ENTRY for the resubmission (visible to user)
-    // Use the existing schema structure - this represents a "responded" revision
+    // CREATE NEW REVISION HISTORY ENTRY for the resubmission (separate from unit feedback)
     const newResubmission = {
       respondedBy: req.session.userId,
       respondedAt: new Date(),
@@ -1260,37 +1249,6 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
     request.awaitingResubmission = false;
     await request.save();
     console.log('✅ Request saved with new resubmission entry');
-
-    // Add message to conversation
-    const Conversation = require('../models/Conversation');
-    let conversation = await Conversation.findOne({ approvalRequestId: requestId });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        approvalRequestId: requestId,
-        requestType: 'approval',
-        messages: []
-      });
-    }
-
-    // Add resubmission message with attachments
-    const attachments = additionalFilePaths.map(filename => ({
-      filename: filename,
-      originalname: filename,
-      mimetype: 'application/octet-stream',
-      size: 0,
-      path: `/uploads/${filename}`
-    }));
-
-    conversation.messages.push({
-      senderId: req.session.userId,
-      senderRole: 'user',
-      content: `✅ **Revision Response**\n\nI have addressed the revision feedback and resubmitted the request.\n\n${resubmissionNotes || 'No additional notes provided.'}`,
-      attachments: attachments,
-      timestamp: new Date()
-    });
-
-    await conversation.save();
 
     // Notify unit members and admins
     try {
@@ -1384,27 +1342,6 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     // Broadcast active requests update to admins
     const socketService = require('../services/socketService');
     socketService.updateActiveRequestsCount();
-
-    // Add message to conversation
-    const Conversation = require('../models/Conversation');
-    let conversation = await Conversation.findOne({ serviceRequestId: id });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        serviceRequestId: id,
-        requestType: 'service',
-        messages: []
-      });
-    }
-
-    conversation.messages.push({
-      senderId: userId,
-      senderRole: 'user',
-      content: `🔄 **Revision Request #${request.revisionCount}**\n\n${revisionNotes}\n\n_Revisions remaining: ${2 - request.revisionCount}_`,
-      timestamp: new Date()
-    });
-
-    await conversation.save();
 
     // Notify unit team about the revision request
     try {
@@ -1550,27 +1487,6 @@ router.post('/user/approval/request-revision/:id', upload.array('revisionFiles',
     // Broadcast active requests update to admins
     const socketService = require('../services/socketService');
     socketService.updateActiveRequestsCount();
-
-    // Add message to conversation
-    const Conversation = require('../models/Conversation');
-    let conversation = await Conversation.findOne({ approvalRequestId: id });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        approvalRequestId: id,
-        requestType: 'approval',
-        messages: []
-      });
-    }
-
-    conversation.messages.push({
-      senderId: userId,
-      senderRole: 'user',
-      content: `🔄 **Revision Request #${request.revisionCount}**\n\n${revisionNotes}\n\n_Revisions remaining: ${2 - request.revisionCount}_`,
-      timestamp: new Date()
-    });
-
-    await conversation.save();
 
     // Notify unit team about the revision request
     try {

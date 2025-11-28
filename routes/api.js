@@ -561,24 +561,20 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
     // Build revision history from revisionHistory field in the request
     const revisions = [];
 
-    // Add initial submission
-    revisions.push({
-      type: 'initial',
-      timestamp: approvalRequest.createdAt,
-      by: approvalRequest.userId ? `${approvalRequest.userId.fName} ${approvalRequest.userId.lName}` : 'Unknown',
-      description: approvalRequest.description || '',
-      files: approvalRequest.files || []
-    });
-
     // Add all revisions from revisionHistory array
     if (approvalRequest.revisionHistory && approvalRequest.revisionHistory.length > 0) {
       for (const revision of approvalRequest.revisionHistory) {
         // Check action types based on fields and revision type
         const isUnitAction = revision.requestedBy && !revision.respondedBy;
+<<<<<<< Updated upstream
         const isUserRevisionRequest = revision.respondedBy && !revision.requestedBy && 
                                      (revision.revisionType === 'revision_requested' || revision.type === 'revision_requested');
         const isUserResubmission = revision.respondedBy && !revision.requestedBy && 
                                   (revision.revisionType !== 'revision_requested' && revision.type !== 'revision_requested');
+=======
+        const isUserResubmission = revision.respondedBy && !revision.requestedBy;
+        const isCombined = revision.requestedBy && revision.respondedBy;
+>>>>>>> Stashed changes
         
         if (isUnitAction) {
           // This is a unit requesting revision
@@ -657,6 +653,45 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
             type: 'resubmitted',
             status: revision.status
           });
+        } else if (isCombined) {
+          // Handle combined entries (unit feedback + user response in same object)
+          let requestedByUser = await User.findById(revision.requestedBy).select('fName lName unitTeam');
+          
+          console.log('🔍 [API] Combined revision:', {
+            revisionNotes: revision.revisionNotes,
+            responseNotes: revision.responseNotes,
+            requestedByUser
+          });
+          
+          // Push unit action first
+          revisions.push({
+            requestedBy: requestedByUser ? {
+              _id: requestedByUser._id,
+              fName: requestedByUser.fName,
+              lName: requestedByUser.lName,
+              unitTeam: requestedByUser.unitTeam
+            } : revision.requestedBy,
+            requestedAt: revision.requestedAt,
+            revisionNotes: revision.revisionNotes || revision.notes || revision.description || '',
+            revisionFiles: revision.revisionFiles || revision.files || [],
+            status: revision.status,
+            type: 'revision'
+          });
+          
+          // Then push user response
+          let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
+          revisions.push({
+            respondedBy: respondedByUser ? {
+              _id: respondedByUser._id,
+              fName: respondedByUser.fName,
+              lName: respondedByUser.lName
+            } : revision.respondedBy,
+            respondedAt: revision.respondedAt,
+            responseNotes: revision.responseNotes || revision.notes || revision.description || '',
+            responseFiles: revision.responseFiles || revision.files || [],
+            type: 'resubmitted',
+            status: revision.status
+          });
         }
       }
     }
@@ -721,15 +756,6 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
 
     // Build revision history
     const revisions = [];
-
-    // Add initial submission
-    revisions.push({
-      type: 'initial',
-      timestamp: serviceRequest.createdAt,
-      by: serviceRequest.userId ? `${serviceRequest.userId.fName} ${serviceRequest.userId.lName}` : 'Unknown',
-      description: serviceRequest.description || '',
-      files: serviceRequest.files || []
-    });
 
     // LEGACY SUPPORT: If deliverables exist but no revisionHistory, create a synthetic entry
     if (serviceRequest.deliverables && serviceRequest.deliverables.length > 0 && 
@@ -810,6 +836,15 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
     const conversation = await Conversation.findOne({ serviceRequestId: requestId });
     if (conversation && conversation.messages && conversation.messages.length > 0) {
       for (const message of conversation.messages) {
+        // Skip messages that are actually revision requests or responses (they start with specific patterns)
+        // These are already included as revision history entries above
+        if (message.content && (
+          message.content.startsWith('🔄 **Revision Request #') ||
+          message.content.startsWith('✅ **Revision Response**')
+        )) {
+          continue;
+        }
+
         // Populate sender information
         let senderUser = null;
         try {
