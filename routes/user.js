@@ -1366,10 +1366,10 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     // Create the revision entry with proper types
     const mongoose = require('mongoose');
     const revisionEntry = {
-      requestedBy: new mongoose.Types.ObjectId(userId),
-      requestedAt: new Date(),
-      revisionNotes: String(revisionNotes),
-      revisionFiles: revisionFiles,
+      respondedBy: new mongoose.Types.ObjectId(userId),
+      respondedAt: new Date(),
+      responseNotes: String(revisionNotes),
+      responseFiles: revisionFiles,
       status: 'for_revision',
       revisionType: 'revision_requested',
       revisionNumber: request.revisionCount // Track which revision cycle this belongs to
@@ -1479,9 +1479,9 @@ router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) =>
 /**
  * POST /user/approval/request-revision/:id
  * User-initiated revision request for completed approval requests
- * Allows users to request changes with specific feedback (2 revision limit)
+ * Allows users to request changes with specific feedback and file uploads (2 revision limit)
  */
-router.post('/user/approval/request-revision/:id', requireLogin, async (req, res) => {
+router.post('/user/approval/request-revision/:id', upload.array('revisionFiles', 10), requireLogin, async (req, res) => {
   try {
     const { id } = req.params;
     const { revisionNotes } = req.body;
@@ -1517,9 +1517,34 @@ router.post('/user/approval/request-revision/:id', requireLogin, async (req, res
       return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
     }
 
+    // Get uploaded file names
+    const revisionFiles = req.files ? req.files.map(file => file.filename) : [];
+
+    // Ensure revisionHistory is initialized as an array
+    if (!Array.isArray(request.revisionHistory)) {
+      request.revisionHistory = [];
+    }
+
     // Increment revision count
     request.revisionCount += 1;
     request.status = 'For Revision';
+    
+    // Create the revision entry with proper types
+    const mongoose = require('mongoose');
+    const revisionEntry = {
+      respondedBy: new mongoose.Types.ObjectId(userId),
+      respondedAt: new Date(),
+      responseNotes: String(revisionNotes),
+      responseFiles: revisionFiles,
+      status: 'for_revision',
+      revisionType: 'revision_requested',
+      revisionNumber: request.revisionCount // Track which revision cycle this belongs to
+    };
+    
+    // Add to revision history
+    request.revisionHistory.push(revisionEntry);
+    
+    // Save the request
     await request.save();
 
     // Broadcast active requests update to admins

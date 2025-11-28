@@ -573,9 +573,12 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
     // Add all revisions from revisionHistory array
     if (approvalRequest.revisionHistory && approvalRequest.revisionHistory.length > 0) {
       for (const revision of approvalRequest.revisionHistory) {
-        // Check if this is a unit action (requestedBy) or user resubmission (respondedBy only)
+        // Check action types based on fields and revision type
         const isUnitAction = revision.requestedBy && !revision.respondedBy;
-        const isUserResubmission = revision.respondedBy && !revision.requestedBy;
+        const isUserRevisionRequest = revision.respondedBy && !revision.requestedBy && 
+                                     (revision.revisionType === 'revision_requested' || revision.type === 'revision_requested');
+        const isUserResubmission = revision.respondedBy && !revision.requestedBy && 
+                                  (revision.revisionType !== 'revision_requested' && revision.type !== 'revision_requested');
         
         if (isUnitAction) {
           // This is a unit requesting revision
@@ -602,6 +605,32 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
             revisionFiles: revision.revisionFiles || revision.files || [],
             status: revision.status,
             type: revision.revisionNotes && revision.revisionNotes.includes('approved') ? 'approved' : 'revision'
+          });
+        } else if (isUserRevisionRequest) {
+          // This is a user requesting revision
+          let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
+          
+          console.log('🔍 [API] User revision request:', {
+            responseNotes: revision.responseNotes,
+            notes: revision.notes,
+            description: revision.description,
+            hasResponseNotes: !!revision.responseNotes,
+            responseNotesType: typeof revision.responseNotes,
+            respondedByUser
+          });
+          
+          revisions.push({
+            respondedBy: respondedByUser ? {
+              _id: respondedByUser._id,
+              fName: respondedByUser.fName,
+              lName: respondedByUser.lName
+            } : revision.respondedBy,
+            respondedAt: revision.respondedAt,
+            responseNotes: revision.responseNotes || revision.notes || revision.description || '',
+            responseFiles: revision.responseFiles || revision.files || [],
+            type: 'revision_requested',
+            status: revision.status,
+            revisionNumber: revision.revisionNumber || 0
           });
         } else if (isUserResubmission) {
           // This is a user resubmitting after revision

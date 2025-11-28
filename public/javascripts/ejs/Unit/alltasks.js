@@ -181,17 +181,57 @@ function initializeTableFilters() {
 }
 
 function initializeCustomDropdowns() {
+    // Define available options
+    const statusOptions = [
+        'Pending', 'Queued', 'In Progress', 'Approved',
+        'For Revision', 'Completed', 'Rejected', 'Archived'
+    ];
+
+    const typeOptions = ['approval', 'service'];
+
     // Initialize Type filter dropdown (if exists)
     const typeFilterDropdown = document.getElementById('typeFilter');
     if (typeFilterDropdown) {
+        populateDropdownOptions('typeDropdown', typeOptions);
         initializeCustomDropdown(typeFilterDropdown, 'typeDropdown', applyTableFilters);
     }
-    
+
     // Initialize Status filter dropdown
     const statusFilterDropdown = document.getElementById('statusFilter');
     if (statusFilterDropdown) {
+        populateDropdownOptions('statusDropdown', statusOptions);
         initializeCustomDropdown(statusFilterDropdown, 'statusDropdown', applyTableFilters);
     }
+}
+
+function populateDropdownOptions(dropdownId, options) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+
+    const optionsContainer = dropdown.querySelector('.options-container');
+    if (!optionsContainer) return;
+
+    // Create "All" option
+    const allLabel = document.createElement('label');
+    allLabel.className = 'option-item';
+    allLabel.innerHTML = `
+        <input type="checkbox" value="all" checked>
+        <span class="checkmark"></span>
+        <span class="option-text">All ${dropdownId === 'typeDropdown' ? 'Types' : 'Statuses'}</span>
+    `;
+    optionsContainer.appendChild(allLabel);
+
+    // Create individual options
+    options.forEach(option => {
+        const label = document.createElement('label');
+        label.className = 'option-item';
+        label.innerHTML = `
+            <input type="checkbox" value="${option.toLowerCase()}" name="${dropdownId}">
+            <span class="checkmark"></span>
+            <span class="option-text">${option}</span>
+        `;
+        optionsContainer.appendChild(label);
+    });
 }
 
 function initializeCustomDropdown(customSelectElement, dropdownId, onChangeCallback) {
@@ -644,6 +684,14 @@ function openRequestDetails(requestId, requestType) {
         const serviceActionsPanel = document.getElementById('serviceActionsPanel');
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
         loadServiceRevisionHistory(requestId);
+        
+        // Hide approve button for service requests
+        const adminApproveBtn = document.getElementById('adminApproveBtn');
+        if (adminApproveBtn) adminApproveBtn.style.display = 'none';
+    } else if (requestType === 'approval') {
+        // Show approve button for approval requests
+        const adminApproveBtn = document.getElementById('adminApproveBtn');
+        if (adminApproveBtn) adminApproveBtn.style.display = 'inline-block';
     }
 
     // Populate admin form with current status and units
@@ -652,6 +700,14 @@ function openRequestDetails(requestId, requestType) {
         units: ''  // Will be populated from the server or set as 'Not yet assigned'
     };
     populateAdminForm(rowData);
+
+    // Hide admin actions if request is already approved
+    if (status.toLowerCase() === 'approved') {
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) {
+            adminFormSection.style.display = 'none';
+        }
+    }
 
     // Handle Queued status - show Start Task button
     handleQueuedStatus(status, requestId, requestType);
@@ -868,19 +924,30 @@ async function loadServiceRevisionHistory(requestId) {
                     console.log('[Service Revision History] ✅ Set right column display to flex');
                 }
                 
-                // Check if deliverables have been submitted
+                // Check if deliverables have been submitted and if revisions are requested
                 const hasDeliverable = revisionsToShow.some(rev => 
                     rev.type === 'deliverable_submitted' || 
                     rev.type === 'completed' ||
                     (rev.deliverableFiles && rev.deliverableFiles.length > 0)
                 );
                 
-                console.log('[Service Revision History] Has deliverable:', hasDeliverable);
+                const hasRevisionRequest = revisionsToShow.some(rev => 
+                    rev.type === 'revision_requested' ||
+                    rev.status === 'pending'
+                );
                 
-                // Hide upload panel if deliverables submitted, show revision history instead
-                if (hasDeliverable && serviceActionsPanel) {
-                    serviceActionsPanel.style.display = 'none';
-                    console.log('[Service Revision History] ✅ Hid service actions panel');
+                console.log('[Service Revision History] Has deliverable:', hasDeliverable);
+                console.log('[Service Revision History] Has revision request:', hasRevisionRequest);
+                
+                // Show upload panel if no deliverables submitted OR if revisions are requested
+                if (serviceActionsPanel) {
+                    if (!hasDeliverable || hasRevisionRequest) {
+                        serviceActionsPanel.style.display = 'block';
+                        console.log('[Service Revision History] ✅ Showed service actions panel');
+                    } else {
+                        serviceActionsPanel.style.display = 'none';
+                        console.log('[Service Revision History] ✅ Hid service actions panel');
+                    }
                 }
                 
                 // Show action buttons for non-completed requests
@@ -1017,13 +1084,17 @@ function createServiceRevisionEntry(revision, index, total) {
         `;
     } else if (isLast) {
         if (isUnitAction) {
+            let statusText = 'Awaiting Requestor Review';
+            if (revision.type === 'deliverable_submitted') {
+                statusText = 'Deliverables Uploaded - Awaiting Requestor Review';
+            }
             statusIndicator = `
                 <div class="status-indicator waiting">
                     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 16 14"/>
+                        <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    Awaiting Requestor Review
+                    ${statusText}
                 </div>
             `;
         } else {
@@ -1112,9 +1183,9 @@ function createRevisionEntry(revision, index, total) {
     
     // Determine if this is a unit action or requestor action
     // Unit action: has requestedBy (unit requests revision)
-    // Requestor action: has respondedBy (user resubmits)  OR type is 'initial'
-    const isUnitAction = revision.requestedBy || revision.type === 'revision' || revision.type === 'revoked' || revision.type === 'approved';
+    // Requestor action: has respondedBy (user resubmits)  OR type is 'initial' or 'resubmitted'
     const isRequestorAction = revision.respondedBy || revision.type === 'initial' || revision.type === 'resubmitted';
+    const isUnitAction = !isRequestorAction;
     
     entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
@@ -1162,6 +1233,9 @@ function createRevisionEntry(revision, index, total) {
     } else if (revision.type === 'approved') {
         typeLabel = '✓ Approved';
         badgeClass = 'badge-approved';
+    } else if (revision.type === 'revision_requested') {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
     } else if (isUnitAction) {
         // Unit requested revision
         typeLabel = 'Revision Requested';
@@ -1276,7 +1350,7 @@ function createRevisionEntry(revision, index, total) {
             
             <div class="message-content-section">
                 <div class="content-label">${(() => {
-                    if (revision.type === 'approved') return 'APPROVAL DETAILS:';
+                    if (revision.type === 'approved') return 'APPROVAL REMARKS:';
                     if (revision.type === 'initial') return 'REQUEST DESCRIPTION:';
                     if (isUnitAction) return 'UNIT FEEDBACK:';
                     return 'USER RESPONSE:';
@@ -1284,7 +1358,7 @@ function createRevisionEntry(revision, index, total) {
                 <div class="content-text">${(() => {
                     let content;
                     if (revision.type === 'approved') {
-                        content = 'The request has been reviewed and approved by the unit team. All requirements have been met.';
+                        content = revision.revisionNotes || 'The request has been reviewed and approved by the unit team. All requirements have been met.';
                     } else if (revision.type === 'initial') {
                         content = revision.description || 'No description provided';
                     } else if (isUnitAction) {
@@ -1543,6 +1617,12 @@ function approveRequest() {
         return;
     }
 
+    // Only allow approval for approval requests
+    if (currentRequestType !== 'approval') {
+        showErrorMessage('Approval is only available for approval requests');
+        return;
+    }
+
     // Show inline confirmation panel
     showInlineApprovalConfirmation();
 }
@@ -1589,6 +1669,11 @@ function showInlineApprovalConfirmation() {
                     <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin: 0 0 0.5rem 0;">Confirm Approval</h3>
                     <p style="font-size: 0.9375rem; color: #6b7280; margin: 0; line-height: 1.6;">Are you sure you want to approve this request? The requestor and all administrators will be notified.</p>
                 </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label for="approvalRemarks" style="font-size: 0.9375rem; font-weight: 600; color: #374151;">Final Report / Remarks <span style="color: #dc2626;">*</span></label>
+                <textarea id="approvalRemarks" placeholder="Provide your final report or remarks for this approval..." rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9375rem; line-height: 1.5; resize: vertical; font-family: inherit;" required></textarea>
+                <small style="color: #6b7280; font-size: 0.8125rem;">These remarks will be saved to the request and visible in the revision history for transparency.</small>
             </div>
             <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.5rem;">
                 <button onclick="closeApprovalConfirmModal()" style="background: #f3f4f6; color: #374151; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9375rem; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
@@ -1640,6 +1725,16 @@ window.closeApprovalConfirmModal = closeApprovalConfirmModal;
 async function confirmApproveRequest() {
     console.log('[DEBUG] Confirming approval');
     
+    // Get remarks from textarea
+    const remarksTextarea = document.getElementById('approvalRemarks');
+    const remarks = remarksTextarea ? remarksTextarea.value.trim() : '';
+    
+    // Validate that remarks are provided
+    if (!remarks) {
+        showErrorMessage('Please provide final remarks or report before approving');
+        return;
+    }
+    
     // Close modal
     closeApprovalConfirmModal();
     
@@ -1653,7 +1748,10 @@ async function confirmApproveRequest() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                remarks: remarks
+            })
         });
 
         const result = await response.json();
@@ -1691,16 +1789,22 @@ async function confirmApproveRequest() {
                 approvalActionsPanel.style.display = 'none';
             }
             
+            // Hide the entire admin form section (unit actions)
+            const adminFormSection = document.querySelector('.admin-form-section');
+            if (adminFormSection) {
+                adminFormSection.style.display = 'none';
+            }
+            
             // Reload revision history to show the approval entry
             await loadRevisionHistory(currentRequestId);
             
             // Update table row status in background without reload
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
             if (tableRow) {
-                const statusCell = tableRow.querySelector('.status');
+                const statusCell = tableRow.querySelector('.status-badge');
                 if (statusCell) {
-                    statusCell.textContent = 'APPROVED';
-                    statusCell.className = 'status approved';
+                    statusCell.textContent = 'Approved';
+                    statusCell.className = 'status-badge approved';
                 }
             }
         } else {
@@ -3609,6 +3713,297 @@ function handleQueuedStatus(status, requestId, requestType) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeChatFileFeatures();
     
+    // Initialize admin action buttons
+    initializeAdminActionButtons();
+    
     // Keyboard shortcuts are now handled in AllTasks.ejs to avoid duplication
 });
+
+// Function: initializeAdminActionButtons - Initialize admin action button event handlers
+function initializeAdminActionButtons() {
+    // Approve Request Button
+    const adminApproveBtn = document.getElementById('adminApproveBtn');
+    if (adminApproveBtn) {
+        adminApproveBtn.addEventListener('click', function() {
+            approveRequest();
+        });
+    }
+
+    // Ask for Revisions Button
+    const adminRevisionBtn = document.getElementById('adminRevisionBtn');
+    if (adminRevisionBtn) {
+        adminRevisionBtn.addEventListener('click', function() {
+            showAdminRevisionForm();
+        });
+    }
+
+    // Cancel Revision Button
+    const cancelRevisionBtn = document.getElementById('cancelRevisionBtn');
+    if (cancelRevisionBtn) {
+        cancelRevisionBtn.addEventListener('click', function() {
+            hideAdminRevisionForm();
+        });
+    }
+
+    // Submit Revision Button
+    const submitRevisionBtn = document.getElementById('submitRevisionBtn');
+    if (submitRevisionBtn) {
+        submitRevisionBtn.addEventListener('click', function() {
+            submitAdminRevision();
+        });
+    }
+
+    // Revision File Attachment Button
+    const revisionAttachBtn = document.getElementById('revisionAttachBtn');
+    const revisionFileInput = document.getElementById('revisionFileInput');
+    if (revisionAttachBtn && revisionFileInput) {
+        revisionAttachBtn.addEventListener('click', function() {
+            revisionFileInput.click();
+        });
+
+        revisionFileInput.addEventListener('change', function(e) {
+            handleRevisionFileSelection(e.target.files);
+        });
+    }
+
+    // Revision Text Formatting Buttons
+    initializeRevisionFormatting();
+}
+
+// Function: showAdminRevisionForm - Show the admin revision form
+function showAdminRevisionForm() {
+    const revisionForm = document.getElementById('revisionForm');
+    if (revisionForm) {
+        revisionForm.style.display = 'block';
+        // Scroll to the form
+        revisionForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Function: hideAdminRevisionForm - Hide the admin revision form
+function hideAdminRevisionForm() {
+    const revisionForm = document.getElementById('revisionForm');
+    if (revisionForm) {
+        revisionForm.style.display = 'none';
+        // Clear the form
+        const revisionComments = document.getElementById('revisionComments');
+        if (revisionComments) {
+            revisionComments.value = '';
+        }
+        clearRevisionFiles();
+    }
+}
+
+// Function: submitAdminRevision - Submit admin revision request
+async function submitAdminRevision() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    const revisionComments = document.getElementById('revisionComments')?.value.trim();
+    if (!revisionComments) {
+        showErrorMessage('Please enter revision feedback');
+        return;
+    }
+
+    try {
+        // Create FormData to handle both text and files
+        const formData = new FormData();
+        formData.append('revisionNotes', revisionComments);
+
+        // Add files if any
+        revisionFiles.forEach((file, index) => {
+            formData.append('revisionFiles', file);
+        });
+
+        const response = await fetch(`/unit/task/revise/${currentRequestId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Revision request submitted successfully');
+
+            // Clear and hide revision form
+            hideAdminRevisionForm();
+
+            // Reload the page to show updated status
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showErrorMessage(result.message || 'Failed to submit revision request');
+        }
+    } catch (error) {
+        console.error('Error submitting revision:', error);
+        showErrorMessage('An error occurred while submitting the revision request');
+    }
+}
+
+// Function: handleRevisionFileSelection - Handle file selection for revisions
+function handleRevisionFileSelection(files) {
+    Array.from(files).forEach(file => {
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            showErrorMessage(`File "${file.name}" is too large. Maximum size is 10MB.`);
+            return;
+        }
+
+        // Check if file already exists
+        const exists = revisionFiles.some(existingFile => existingFile.name === file.name && existingFile.size === file.size);
+        if (exists) {
+            showErrorMessage(`File "${file.name}" is already attached.`);
+            return;
+        }
+
+        revisionFiles.push(file);
+    });
+
+    updateRevisionFilesPreview();
+}
+
+// Function: clearRevisionFiles - Clear all revision files
+function clearRevisionFiles() {
+    revisionFiles = [];
+    const revisionFileInput = document.getElementById('revisionFileInput');
+    if (revisionFileInput) {
+        revisionFileInput.value = '';
+    }
+    updateRevisionFilesPreview();
+}
+
+// Function: updateRevisionFilesPreview - Update the revision files preview
+function updateRevisionFilesPreview() {
+    const revisionFilesPreview = document.getElementById('revisionFilesPreview');
+    const revisionFilesContainer = document.getElementById('revisionFilesContainer');
+    const filesCount = document.querySelector('.files-count');
+
+    if (!revisionFilesPreview || !revisionFilesContainer) return;
+
+    if (revisionFiles.length > 0) {
+        revisionFilesPreview.style.display = 'block';
+        if (filesCount) {
+            filesCount.textContent = `${revisionFiles.length} file${revisionFiles.length > 1 ? 's' : ''} attached`;
+        }
+
+        revisionFilesContainer.innerHTML = revisionFiles.map((file, index) => `
+            <div class="file-item" data-index="${index}">
+                <div class="file-info">
+                    <div class="file-icon">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                </div>
+                <button type="button" class="remove-file-btn" onclick="removeRevisionFile(${index})">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        `).join('');
+    } else {
+        revisionFilesPreview.style.display = 'none';
+    }
+}
+
+// Function: removeRevisionFile - Remove a specific revision file
+function removeRevisionFile(index) {
+    if (index >= 0 && index < revisionFiles.length) {
+        revisionFiles.splice(index, 1);
+        updateRevisionFilesPreview();
+    }
+}
+
+// Function: initializeRevisionFormatting - Initialize text formatting for revision comments
+function initializeRevisionFormatting() {
+    // Use event delegation for revision formatting buttons
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('[data-revision-format]');
+        if (target) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const revisionComments = document.getElementById('revisionComments');
+            if (!revisionComments) return;
+
+            const format = target.getAttribute('data-revision-format');
+            applyTextFormatting(revisionComments, format);
+        }
+    });
+
+    // Keyboard shortcuts for revision comments
+    document.addEventListener('keydown', function(e) {
+        const revisionComments = document.getElementById('revisionComments');
+        if (revisionComments && document.activeElement === revisionComments) {
+            if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'b':
+                        e.preventDefault();
+                        applyTextFormatting(revisionComments, 'bold');
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        applyTextFormatting(revisionComments, 'italic');
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        applyTextFormatting(revisionComments, 'underline');
+                        break;
+                }
+            }
+        }
+    });
+}
+
+// Function: applyTextFormatting - Apply text formatting to textarea
+function applyTextFormatting(textarea, format) {
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    let formattedText = '';
+    if (format === 'bold') {
+        formattedText = `**${selectedText}**`;
+    } else if (format === 'italic') {
+        formattedText = `*${selectedText}*`;
+    } else if (format === 'underline') {
+        formattedText = `<u>${selectedText}</u>`;
+    }
+
+    // Insert formatted text
+    textarea.value = beforeText + formattedText + afterText;
+
+    // Position cursor - if no text selected, place between tags; if text selected, place after
+    let newPosition;
+    if (selectedText.length === 0) {
+        newPosition = start + (format === 'bold' ? 2 : 1);
+    } else {
+        newPosition = start + formattedText.length;
+    }
+    textarea.setSelectionRange(newPosition, newPosition);
+    textarea.focus();
+}
+
+// Function: formatFileSize - Format file size for display
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 

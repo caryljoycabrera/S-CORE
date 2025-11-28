@@ -1135,6 +1135,12 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     const taskId = req.params.id;
+    const { remarks } = req.body;
+
+    // Validate remarks
+    if (!remarks || remarks.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'Final remarks are required for approval' });
+    }
 
     // Find the approval request
     const task = await RequestApproval.findById(taskId).populate('userId');
@@ -1144,7 +1150,7 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
     }
 
     // Verify the unit member's team is assigned to this task
-    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
@@ -1160,7 +1166,7 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
     task.revisionHistory.push({
       requestedBy: user._id,
       requestedAt: new Date(),
-      revisionNotes: `Request approved by ${user.fName} ${user.lName} (${user.unitTeam} Unit)`,
+      revisionNotes: `Request approved by ${user.fName} ${user.lName} (${user.unitTeam} Unit)\n\nFinal Report/Remarks:\n${remarks.trim()}`,
       revisionFiles: [],
       status: 'resolved'
     });
@@ -1210,7 +1216,7 @@ router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
     }
 
     // Verify the unit member's team is assigned to this task
-    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
@@ -1321,7 +1327,7 @@ router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('rev
     }
 
     // Verify the unit member's team is assigned to this task
-    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
@@ -1395,7 +1401,7 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
     }
 
     // Verify the unit member's team is assigned to this task
-    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+    if (!task.assignedUnits || task.assignedUnits !== user.unitTeam) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
@@ -1466,7 +1472,7 @@ router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
     }
 
     // Verify the unit member's team is assigned to this task
-    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
@@ -1546,7 +1552,7 @@ router.post('/unit/task/acknowledge/:id', requireUnit, async (req, res) => {
     }
 
     // Verify the unit member's team is assigned to this task
-    if (!task.assignedUnits || !task.assignedUnits.includes(user.unitTeam)) {
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
