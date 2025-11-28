@@ -835,6 +835,50 @@ It's already a flex container, but we need to add two key properties:
   white-space: nowrap;
 }
 
+/* Calendar Navigation Fix - Ensure month navigation arrows are always visible */
+.calendar-nav-btn {
+  flex-shrink: 0 !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  width: 38px !important;
+}
+
+.calendar-month-year {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+.calendar-month-controls {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  min-width: 0 !important;
+}
+
+.calendar-controls {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+.calendar-maximize-btn {
+  flex-shrink: 0 !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  width: 32px !important;
+}
+
+/* Additional Calendar Navigation Visibility for Mobile */
+.calendar-month-controls button {
+  visibility: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* Responsive Design - OPTIMIZED FOR ALL SCREEN SIZES */
 @media (max-width: 1200px) and (min-width: 769px) {
   .student-side {
