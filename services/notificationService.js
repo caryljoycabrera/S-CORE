@@ -481,6 +481,13 @@ class NotificationService {
         } else if (requestType === 'approval') {
           actionUrl = `/admin/approvals?conversation=true&requestId=${requestId}&type=approval`;
         }
+      } else if (recipient.role === 'unit') {
+        // Unit recipients - open conversation modal in unit pages
+        if (requestType === 'service') {
+          actionUrl = `/unit/task-services?conversation=true&requestId=${requestId}&type=service`;
+        } else if (requestType === 'approval') {
+          actionUrl = `/unit/task-approvals?conversation=true&requestId=${requestId}&type=approval`;
+        }
       } else {
         // User recipients - open conversation modal in user pages
         if (requestType === 'service') {

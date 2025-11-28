@@ -602,7 +602,7 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    res.render('Unit/unittasks', {
+    res.render('Unit/AllTasks', {
       user,
       unitTeam: user.unitTeam,
       approvalRequests,

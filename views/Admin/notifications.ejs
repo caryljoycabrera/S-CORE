@@ -6,465 +6,21 @@
   <title>Notifications - S-CORE Admin</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/stylesheets/notifications.css">
+  <link rel="stylesheet" href="/stylesheets/notifications-page.css">
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css">
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
   <style>
-    /* Page-specific styles */
-    .notifications-page-container {
-      padding: 2rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .page-header {
-      margin-bottom: 2rem;
-    }
-
-    .page-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0 0 0.5rem 0;
-    }
-
-    .page-subtitle {
-      font-size: 1rem;
-      color: #6b7280;
-      margin: 0;
-    }
-
-    .notifications-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .notifications-filters {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .filter-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      background: white;
-      color: #6b7280;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .filter-btn:hover {
-      background: #f9fafb;
-      border-color: #9ca3af;
-    }
-
-    .filter-btn.active {
-      background: #43a047;
-      color: white;
-      border-color: #43a047;
-    }
-
-    .notifications-actions {
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    .action-btn {
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      background: white;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .action-btn:hover {
-      background: #f9fafb;
-      border-color: #9ca3af;
-    }
-
-    .action-btn.primary {
-      background: #43a047;
-      color: white;
-      border-color: #43a047;
-    }
-
-    .action-btn.primary:hover {
-      background: #2c5d31;
-      border-color: #2c5d31;
-    }
-
-    .notifications-list-container {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-
-    .notification-page-item {
-      padding: 1.5rem;
-      border-bottom: 1px solid #f3f4f6;
-      transition: background-color 0.2s ease;
-      display: flex;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .notification-page-item:hover {
-      background-color: #f9fafb;
-    }
-
-    .notification-page-item:last-child {
-      border-bottom: none;
-    }
-
-    .notification-page-item.unread {
-      background-color: #f0fdf4;
-      border-left: 4px solid #43a047;
-    }
-
-    .notification-page-item.unread:hover {
-      background-color: #dcfce7;
-    }
-
-    .notification-page-content {
-      flex: 1;
-      cursor: pointer;
-    }
-
-    .notification-page-title {
-      font-weight: 600;
-      color: #111827;
-      margin: 0 0 0.5rem 0;
-      font-size: 16px;
-    }
-
-    .notification-page-item.unread .notification-page-title {
-      color: #065f46;
-    }
-
-    .notification-page-message {
-      color: #6b7280;
-      margin: 0 0 0.75rem 0;
-      line-height: 1.5;
-      font-size: 14px;
-    }
-
-    .notification-page-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      color: #9ca3af;
-      gap: 1rem;
-    }
-
-    .notification-page-sender {
-      font-style: italic;
-      color: #6b7280;
-    }
-
-    .notification-page-actions {
-      display: flex;
-      gap: 0.5rem;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-    }
-
-    .notification-page-item:hover .notification-page-actions {
-      opacity: 1;
-    }
-
-    .notification-action-btn {
-      background: none;
-      border: 1px solid #d1d5db;
-      color: #6b7280;
-      cursor: pointer;
-      padding: 0.5rem 0.75rem;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    .notification-action-btn:hover {
-      background-color: #f3f4f6;
-      border-color: #9ca3af;
-    }
-
-    .notification-action-btn.mark-read:hover {
-      background-color: #e8f5e9;
-      color: #43a047;
-      border-color: #43a047;
-    }
-
-    .notification-action-btn.delete:hover {
-      background-color: #fef2f2;
-      color: #dc2626;
-      border-color: #dc2626;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #6b7280;
-    }
-
-    .empty-state svg {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 1.5rem;
-      opacity: 0.3;
-    }
-
-    .empty-state h3 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.25rem;
-      color: #374151;
-    }
-
-    .empty-state p {
-      margin: 0;
-      font-size: 14px;
-    }
-
-    .loading-state {
-      text-align: center;
-      padding: 3rem 2rem;
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    .pagination-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.5rem 2rem;
-      background: #f9fafb;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .pagination-info {
-      font-size: 14px;
-      color: #6b7280;
-    }
-
-    .pagination-controls {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .pagination-btn {
-      padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
-      background: white;
-      color: #374151;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .pagination-btn:hover:not(:disabled) {
-      background: #f9fafb;
-      border-color: #9ca3af;
-    }
-
-    .pagination-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .pagination-page-info {
-      font-size: 14px;
-      color: #6b7280;
-      min-width: 100px;
-      text-align: center;
-    }
-
-    @media (max-width: 768px) {
-      .notifications-page-container {
-        padding: 1rem;
-      }
-
-      .page-title {
-        font-size: 1.5rem;
-      }
-
-      .notifications-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .notifications-filters,
-      .notifications-actions {
-        width: 100%;
-        justify-content: center;
-      }
-      
-      .notifications-actions {
-        gap: 0.5rem;
-      }
-      
-      .action-btn {
-        flex: 1;
-        justify-content: center;
-        padding: 0.75rem 0.75rem;
-        font-size: 13px;
-      }
-      
-      .action-btn svg {
-        width: 14px;
-        height: 14px;
-      }
-      
-      .filter-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 13px;
-      }
-
-      .notification-page-item {
-        padding: 1rem;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      
-      .notification-icon {
-        width: 36px;
-        height: 36px;
-      }
-      
-      .notification-icon svg {
-        width: 18px;
-        height: 18px;
-      }
-      
-      .notification-page-content {
-        width: 100%;
-      }
-
-      .notification-page-title {
-        font-size: 15px;
-      }
-
-      .notification-page-message {
-        font-size: 13px;
-      }
-
-      .notification-page-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-        font-size: 12px;
-      }
-      
-      .notification-page-sender {
-        max-width: 100%;
-      }
-
-      .notification-page-actions {
-        width: 100%;
-        flex-direction: column;
-        opacity: 1;
-      }
-      
-      .notification-action-btn {
-        width: 100%;
-        justify-content: center;
-        padding: 0.75rem;
-        font-size: 13px;
-      }
-
-      .pagination-container {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-      }
-      
-      .pagination-controls {
-        width: 100%;
-        justify-content: space-between;
-      }
-      
-      .pagination-btn {
-        flex: 1;
-        max-width: 100px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .notifications-page-container {
-        padding: 0.75rem;
-      }
-      
-      .page-title {
-        font-size: 1.25rem;
-      }
-      
-      .page-subtitle {
-        font-size: 0.875rem;
-      }
-      
-      .notifications-filters {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding-bottom: 0.5rem;
-        scrollbar-width: thin;
-      }
-      
-      .notifications-filters::-webkit-scrollbar {
-        height: 4px;
-      }
-      
-      .filter-btn {
-        flex-shrink: 0;
-        font-size: 12px;
-        padding: 0.5rem 0.75rem;
-      }
-      
-      .action-btn {
-        font-size: 12px;
-        padding: 0.75rem 0.5rem;
-      }
-      
-      .notification-page-item {
-        padding: 0.75rem;
-      }
-      
-      .notification-page-title {
-        font-size: 14px;
-      }
-      
-      .notification-page-message {
-        font-size: 12px;
-      }
-      
-      .notification-action-btn {
-        font-size: 12px;
-        padding: 0.625rem;
-      }
-    }
+    /* Admin page-specific overrides - styles now in notifications-page.css */
+    .page-header { margin-bottom: 2rem; }
+    .page-title { font-size: 2rem; font-weight: 700; color: #111827; margin: 0 0 0.5rem 0; }
+    .page-subtitle { font-size: 1rem; color: #6b7280; margin: 0; }
+    /* Use unified class names from notifications-page.css */
+    .filter-btn { /* inherits from .notifications-filter-btn */ }
+    .action-btn { /* inherits from .notifications-action-btn */ }
+    .loading-state { text-align: center; padding: 3rem 2rem; color: #6b7280; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -613,14 +169,14 @@
         </div>
 
         <div class="notifications-actions">
-          <button class="action-btn primary" id="mark-all-read-btn">
+          <button class="action-btn primary" id="mark-all-read-btn" onclick="handleMarkAllRead()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="9,11 12,14 22,4"></polyline>
               <path d="M21,12c0,4.97-4.03,9-9,9s-9-4.03-9-9s4.03-9,9-9c1.84,0,3.55,0.56,4.96,1.51"></path>
             </svg>
             Mark All Read
           </button>
-          <button class="action-btn" id="refresh-btn">
+          <button class="action-btn" id="refresh-btn" onclick="handleRefresh()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23,4 23,10 17,10"></polyline>
               <polyline points="1,20 1,14 7,14"></polyline>
@@ -693,334 +249,65 @@
     });
   </script>
 
+  <!-- Notifications Page JavaScript (unified) -->
+  <script src="/javascripts/notifications-page.js"></script>
   <script>
-    let currentPage = 1;
-    let totalPages = 1;
-    let currentFilter = 'all';
-    let notifications = [];
-
-    // Load notifications on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadNotifications();
-      setupFilters();
-      setupActions();
+    // Initialize the unified notifications page manager
+    const notificationsPage = new NotificationsPageManager({
+      containerId: 'notifications-list',
+      paginationContainerId: 'pagination-container',
+      filterBtnClass: 'filter-btn',
+      userRole: 'admin'
     });
 
-    function setupFilters() {
-      const filterButtons = document.querySelectorAll('.filter-btn');
-      filterButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          filterButtons.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentFilter = btn.dataset.filter;
-          currentPage = 1;
-          loadNotifications();
-        });
-      });
-    }
-
-    function setupActions() {
-      document.getElementById('mark-all-read-btn')?.addEventListener('click', markAllAsRead);
-      document.getElementById('refresh-btn')?.addEventListener('click', () => loadNotifications());
-      document.getElementById('prev-btn')?.addEventListener('click', previousPage);
-      document.getElementById('next-btn')?.addEventListener('click', nextPage);
-    }
-
-    async function loadNotifications() {
-      try {
-        const list = document.getElementById('notifications-list');
-        list.innerHTML = '<div class="loading-state">Loading notifications...</div>';
-
-        let url = `/api/notifications?page=${currentPage}&limit=20`;
-        if (currentFilter === 'unread') {
-          url += '&unreadOnly=true';
-        }
-
-        const response = await fetch(url, { credentials: 'include' });
-        if (!response.ok) throw new Error('Failed to load notifications');
-
-        const result = await response.json();
-        notifications = result.data.notifications;
-        totalPages = result.data.totalPages;
-        const totalCount = result.data.total;
-
-        // Filter by type if needed
-        let filteredNotifications = notifications;
-        if (currentFilter !== 'all' && currentFilter !== 'unread') {
-          filteredNotifications = notifications.filter(n => {
-            if (currentFilter === 'service') return n.type.includes('service');
-            if (currentFilter === 'approval') return n.type.includes('approval');
-            if (currentFilter === 'message') return n.type === 'new_message';
-            if (currentFilter === 'system') return n.type === 'system';
-            return true;
-          });
-        }
-
-        renderNotifications(filteredNotifications);
-        updatePagination(totalCount);
-
-      } catch (error) {
-        console.error('Error loading notifications:', error);
-        document.getElementById('notifications-list').innerHTML = `
-          <div class="empty-state">
-            <h3>Error</h3>
-            <p>Failed to load notifications. Please try again.</p>
-          </div>
-        `;
-      }
-    }
-
-    function renderNotifications(notifications) {
-      const list = document.getElementById('notifications-list');
-
-      if (notifications.length === 0) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <h3>No notifications</h3>
-            <p>You don't have any notifications yet.</p>
-          </div>
-        `;
-        return;
-      }
-
-      const notificationsHTML = notifications.map(notification => {
-        const isUnread = !notification.isRead;
-        const timeAgo = formatTimeAgo(new Date(notification.createdAt));
-        const icon = getNotificationIcon(notification.type);
-        const notifId = notification._id || notification.id;
-        
-        // Get sender name from notification
-        let senderName = 'System';
-        if (notification.sender) {
-          if (typeof notification.sender === 'object') {
-            if (notification.sender.fName || notification.sender.lName) {
-              senderName = `${notification.sender.fName || ''} ${notification.sender.lName || ''}`.trim();
-            } else if (notification.sender.name) {
-              senderName = notification.sender.name;
-            }
-          } else if (typeof notification.sender === 'string') {
-            senderName = notification.sender;
-          }
-        }
-        
-        return `
-          <div class="notification-page-item ${isUnread ? 'unread' : ''}" data-id="${notifId}">
-            <div class="notification-icon ${notification.type}">
-              ${icon}
-            </div>
-            <div class="notification-page-content" data-id="${notifId}" data-type="${notification.type}" data-url="${notification.actionUrl || ''}" style="cursor: ${notification.actionUrl ? 'pointer' : 'default'};">
-              <h4 class="notification-page-title">${escapeHtml(notification.title)}</h4>
-              <p class="notification-page-message">${escapeHtml(notification.message)}</p>
-              <div class="notification-page-meta">
-                <span>${timeAgo}</span>
-                <span class="notification-page-sender">from ${escapeHtml(senderName)}</span>
-              </div>
-            </div>
-            <div class="notification-page-actions">
-              ${isUnread ? `
-                <button class="notification-action-btn mark-read" data-id="${notifId}" title="Mark as read">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20,6 9,17 4,12"></polyline>
-                  </svg>
-                  Read
-                </button>
-              ` : ''}
-              <button class="notification-action-btn delete" data-id="${notifId}" title="Delete">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3,6 5,6 21,6"></polyline>
-                  <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-                </svg>
-                Delete
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      list.innerHTML = notificationsHTML;
-      attachNotificationListeners();
-    }
-
-    function attachNotificationListeners() {
-      // Click on notification content to navigate
-      document.querySelectorAll('.notification-page-content').forEach(content => {
-        content.addEventListener('click', () => {
-          const notifId = content.dataset.id;
-          const type = content.dataset.type;
-          const url = content.dataset.url;
-          
-          if (!url) {
-            console.log('No action URL for this notification');
-            return;
-          }
-          
-          // Mark as read first
-          markAsRead(notifId);
-          
-          // Use the notification system's navigation handler if available
-          if (window.notificationSystem && typeof window.notificationSystem.handleNotificationNavigation === 'function') {
-            window.notificationSystem.handleNotificationNavigation(url, type);
-          } else {
-            // Fallback: direct navigation
-            window.location.href = url;
-          }
-        });
-      });
-
-      // Mark as read buttons
-      document.querySelectorAll('.notification-action-btn.mark-read').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const notifId = btn.dataset.id;
-          markAsRead(notifId);
-        });
-      });
-
-      // Delete buttons
-      document.querySelectorAll('.notification-action-btn.delete').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const notifId = btn.dataset.id;
-          if (confirm('Are you sure you want to delete this notification?')) {
-            await deleteNotification(notifId);
-          }
-        });
-      });
-    }
-
-    function updatePagination(totalCount) {
-      const container = document.getElementById('pagination-container');
-      const pageInfo = document.getElementById('page-info');
-      const prevBtn = document.getElementById('prev-btn');
-      const nextBtn = document.getElementById('next-btn');
-      const countEl = document.getElementById('notification-count');
-
-      container.style.display = totalPages > 1 || totalCount > 0 ? 'flex' : 'none';
-
-      if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-      if (prevBtn) prevBtn.disabled = currentPage === 1;
-      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
-      if (countEl) countEl.textContent = `${totalCount} notification${totalCount !== 1 ? 's' : ''}`;
-    }
-
-    function previousPage() {
-      if (currentPage > 1) {
-        currentPage--;
-        loadNotifications();
-      }
-    }
-
-    function nextPage() {
-      if (currentPage < totalPages) {
-        currentPage++;
-        loadNotifications();
-      }
-    }
-
-    async function markAsRead(notificationId) {
-      try {
-        const response = await fetch(`/api/notifications/${notificationId}/read`, {
-          method: 'PATCH',
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const item = document.querySelector(`[data-id="${notificationId}"]`);
-          if (item) {
-            item.classList.remove('unread');
-            const button = item.querySelector('.notification-action-btn.mark-read');
-            if (button) button.remove();
-          }
-          // Update bell badge
-          if (window.notificationSystem) {
-            window.notificationSystem.refreshNotifications();
-          }
-        }
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
-    }
-
-    async function markAllAsRead() {
+    // Global function for Mark All Read button
+    async function handleMarkAllRead() {
+      console.log('🔘 Mark All Read clicked');
+      const btn = document.getElementById('mark-all-read-btn');
+      if (btn) btn.disabled = true;
+      
       try {
         const response = await fetch('/api/notifications/read-all', {
           method: 'PATCH',
-          credentials: 'include'
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }
         });
-
+        
+        console.log('📡 Response status:', response.status);
+        
         if (response.ok) {
-          loadNotifications();
-          if (window.notificationSystem) {
-            window.notificationSystem.refreshNotifications();
-          }
+          const result = await response.json();
+          console.log('✅ All notifications marked as read:', result);
+          
+          // Remove unread class from all items immediately
+          document.querySelectorAll('.notification-page-item.unread').forEach(item => {
+            item.classList.remove('unread');
+            const markReadBtn = item.querySelector('.notification-page-action-btn.mark-read');
+            if (markReadBtn) markReadBtn.remove();
+          });
+          
+          // Reload to refresh the list
+          if (notificationsPage) notificationsPage.loadNotifications();
+          
+          // Update bell icon
+          if (window.notificationSystem) window.notificationSystem.refreshNotifications();
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Failed to mark all as read:', response.status, errorText);
+          alert('Failed to mark notifications as read. Please try again.');
         }
       } catch (error) {
-        console.error('Error marking all notifications as read:', error);
+        console.error('❌ Error marking all as read:', error);
+        alert('Error: ' + error.message);
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
-    async function deleteNotification(notificationId) {
-      try {
-        const response = await fetch(`/api/notifications/${notificationId}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          loadNotifications();
-          if (window.notificationSystem) {
-            window.notificationSystem.refreshNotifications();
-          }
-        }
-      } catch (error) {
-        console.error('Error deleting notification:', error);
-      }
-    }
-
-    function getNotificationIcon(type) {
-      const icons = {
-        'service_created': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10,9 9,9 8,9"></polyline></svg>',
-        'service_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
-        'service_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
-        'service_completed': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
-        'approval_created': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline></svg>',
-        'approval_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22,4 12,14.01 9,11.01"></polyline></svg>',
-        'approval_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
-        'approval_revision': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
-        'new_message': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
-        'system': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'
-      };
-      return icons[type] || icons['system'];
-    }
-
-    function formatTimeAgo(date) {
-      const now = new Date();
-      const diffInSeconds = Math.floor((now - date) / 1000);
-
-      if (diffInSeconds < 60) return 'just now';
-      if (diffInSeconds < 3600) {
-        const minutes = Math.floor(diffInSeconds / 60);
-        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-      }
-      if (diffInSeconds < 86400) {
-        const hours = Math.floor(diffInSeconds / 3600);
-        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-      }
-      if (diffInSeconds < 604800) {
-        const days = Math.floor(diffInSeconds / 86400);
-        return `${days} day${days !== 1 ? 's' : ''} ago`;
-      }
-      return date.toLocaleDateString();
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    // Global function for Refresh button
+    function handleRefresh() {
+      console.log('🔄 Refresh clicked');
+      if (notificationsPage) notificationsPage.loadNotifications();
     }
 
     // Dropdown toggle

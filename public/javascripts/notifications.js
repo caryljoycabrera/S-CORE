@@ -691,10 +691,64 @@ class NotificationSystem {
   }
 
   /**
+   * Rewrite notification URL based on user role
+   * Ensures notifications redirect to the correct role-specific pages
+   */
+  rewriteUrlForRole(url) {
+    if (!url || !this.userRole) return url;
+
+    try {
+      const urlObj = new URL(url, window.location.origin);
+      const params = urlObj.searchParams;
+      const path = urlObj.pathname;
+
+      // Define URL mappings for each role
+      const urlMappings = {
+        // Unit role mappings - redirect from user/admin pages to unit equivalents
+        unit: {
+          '/request-approvals': '/unit/task-approvals',
+          '/service-requests': '/unit/task-services',
+          '/admin/approvals': '/unit/task-approvals',
+          '/admin/services': '/unit/task-services'
+        },
+        // Admin role mappings - redirect from user pages to admin equivalents
+        admin: {
+          '/request-approvals': '/admin/approvals',
+          '/service-requests': '/admin/services'
+        },
+        // User role mappings - redirect from admin/unit pages to user equivalents
+        user: {
+          '/admin/approvals': '/request-approvals',
+          '/admin/services': '/service-requests',
+          '/unit/task-approvals': '/request-approvals',
+          '/unit/task-services': '/service-requests'
+        }
+      };
+
+      const roleMappings = urlMappings[this.userRole];
+      if (roleMappings && roleMappings[path]) {
+        const newPath = roleMappings[path];
+        console.log(`🔀 Rewriting URL path for ${this.userRole} role: ${path} → ${newPath}`);
+        urlObj.pathname = newPath;
+        return urlObj.toString();
+      }
+
+      return url;
+    } catch (error) {
+      console.error('Error rewriting URL for role:', error);
+      return url;
+    }
+  }
+
+  /**
    * Handle notification navigation - opens modals or navigates to pages
    */
   handleNotificationNavigation(url, type) {
-    console.log('🚀 Starting notification navigation:', { url, type });
+    console.log('🚀 Starting notification navigation:', { url, type, userRole: this.userRole });
+    
+    // Rewrite URL based on user role to ensure navigation to correct role-specific page
+    url = this.rewriteUrlForRole(url);
+    console.log('🔄 URL after role rewrite:', url);
     
     try {
       const urlObj = new URL(url, window.location.origin);
