@@ -217,7 +217,11 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       .limit(3)
       .lean();
 
-    const urgentTasks = [...urgentApprovalTasks, ...urgentServiceTasks]
+    // Add requestType markers for proper filtering in views
+    const markedApprovalTasks = urgentApprovalTasks.map(task => ({ ...task, requestType: 'approval' }));
+    const markedServiceTasks = urgentServiceTasks.map(task => ({ ...task, requestType: 'service', serviceType: task.specificRequestType || 'Service Request' }));
+
+    const urgentTasks = [...markedApprovalTasks, ...markedServiceTasks]
       .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
       .slice(0, 5);
 
@@ -336,7 +340,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const allPendingApprovals = await RequestApproval
       .find({
         assignedUnits: user.unitTeam,
-        status: { $nin: ['Completed', 'Rejected', 'Archived'] }
+        status: { $nin: [/^completed$/i, /^rejected$/i, /^archived$/i] }
       })
       .populate('userId', 'studentOrg office')
       .lean();
@@ -344,7 +348,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const allPendingServices = await ServiceRequest
       .find({
         assignedUnits: user.unitTeam,
-        status: { $nin: ['Completed', 'Rejected', 'Archived'] }
+        status: { $nin: [/^completed$/i, /^rejected$/i, /^archived$/i] }
       })
       .populate('userId', 'studentOrg office')
       .lean();
@@ -353,13 +357,13 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const completedApprovals = await RequestApproval
       .countDocuments({
         assignedUnits: user.unitTeam,
-        status: 'Approved' // Approval requests are "completed" when Approved
+        status: /^approved$/i
       });
     
     const completedServices = await ServiceRequest
       .countDocuments({
         assignedUnits: user.unitTeam,
-        status: 'Completed'
+        status: /^completed$/i
       });
 
     // Create breakdown by status
@@ -375,19 +379,26 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     
     // Process approval requests
     allPendingApprovals.forEach(task => {
-      const status = task.status || 'Pending';
+      const status = (task.status || 'Pending').toLowerCase().trim();
       const deadline = task.deadline ? new Date(task.deadline) : null;
       const isOverdue = deadline && deadline < now;
+      
+      // Skip approved/completed/archived/rejected statuses from active count
+      if (status === 'approved' || status === 'completed' || status === 'archived' || status === 'rejected') {
+        return;
+      }
       
       // Check if overdue first
       if (isOverdue) {
         statusBreakdown.overdue++;
-      } else if (status === 'Pending') {
+      } else if (status === 'pending') {
         statusBreakdown.pending++;
-      } else if (status === 'For Revision') {
+      } else if (status === 'queued') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'in progress') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'for revision') {
         statusBreakdown.revision++;
-      } else if (status === 'Approved') {
-        statusBreakdown.approved++;
       } else {
         statusBreakdown.pending++; // Default to pending
       }
@@ -395,19 +406,26 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     
     // Process service requests
     allPendingServices.forEach(task => {
-      const status = task.status || 'Pending';
+      const status = (task.status || 'Pending').toLowerCase().trim();
       const deadline = task.deadline ? new Date(task.deadline) : null;
       const isOverdue = deadline && deadline < now;
+      
+      // Skip approved/completed/archived/rejected statuses from active count
+      if (status === 'approved' || status === 'completed' || status === 'archived' || status === 'rejected') {
+        return;
+      }
       
       // Check if overdue first
       if (isOverdue) {
         statusBreakdown.overdue++;
-      } else if (status === 'Pending') {
+      } else if (status === 'pending') {
         statusBreakdown.pending++;
-      } else if (status === 'For Revision') {
+      } else if (status === 'queued') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'in progress') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'for revision') {
         statusBreakdown.revision++;
-      } else if (status === 'Approved') {
-        statusBreakdown.approved++;
       } else {
         statusBreakdown.pending++; // Default to pending
       }
@@ -420,10 +438,10 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
         statusBreakdown.pending,
         statusBreakdown['in-review'],
         statusBreakdown.revision,
-        statusBreakdown.approved,
+        completedApprovals + completedServices,  // Merge approved and completed
         statusBreakdown.overdue
       ],
-      totalActive: allPendingApprovals.length + allPendingServices.length,
+      totalActive: statusBreakdown.pending + statusBreakdown['in-review'] + statusBreakdown.revision + statusBreakdown.overdue,
       totalCompleted: completedApprovals + completedServices
     };
     
@@ -444,6 +462,14 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     console.log('[/unit/dashboard] All pending services count:', allPendingServices.length);
     console.log('[/unit/dashboard] Completed approvals count:', completedApprovals);
     console.log('[/unit/dashboard] Completed services count:', completedServices);
+    console.log('[/unit/dashboard] Status breakdown details:', {
+      pending: statusBreakdown.pending,
+      'in-review': statusBreakdown['in-review'],
+      revision: statusBreakdown.revision,
+      approved: statusBreakdown.approved,
+      overdue: statusBreakdown.overdue
+    });
+    console.log('[/unit/dashboard] Sample task statuses:', allPendingApprovals.slice(0, 3).map(t => t.status).concat(allPendingServices.slice(0, 3).map(t => t.status)));
     
     // Calculate requester compliance (organizations with submission/response stats)
     const allTasks = [...allPendingApprovals, ...allPendingServices];
@@ -842,7 +868,19 @@ router.get('/api/unit-deadlines', requireUnit, async (req, res) => {
 
     approvalRequests.forEach(request => {
       if (request.deadline) {
-        const dateStr = new Date(request.deadline).toISOString().split('T')[0];
+        // Format date in Asia/Manila timezone (UTC+8)
+        const deadlineDate = new Date(request.deadline);
+        const year = deadlineDate.getUTCFullYear();
+        const month = String(deadlineDate.getUTCMonth() + 1).padStart(2, '0');
+        let day = deadlineDate.getUTCDate();
+        let hours = deadlineDate.getUTCHours() + 8; // Add 8 hours for UTC+8
+        
+        // Handle day rollover
+        if (hours >= 24) {
+          day += 1;
+        }
+        
+        const dateStr = `${year}-${month}-${String(day).padStart(2, '0')}`;
         if (!deadlinesByDate[dateStr]) {
           deadlinesByDate[dateStr] = { approvals: 0, services: 0 };
         }
@@ -852,7 +890,19 @@ router.get('/api/unit-deadlines', requireUnit, async (req, res) => {
 
     serviceRequests.forEach(request => {
       if (request.deadline) {
-        const dateStr = new Date(request.deadline).toISOString().split('T')[0];
+        // Format date in Asia/Manila timezone (UTC+8)
+        const deadlineDate = new Date(request.deadline);
+        const year = deadlineDate.getUTCFullYear();
+        const month = String(deadlineDate.getUTCMonth() + 1).padStart(2, '0');
+        let day = deadlineDate.getUTCDate();
+        let hours = deadlineDate.getUTCHours() + 8; // Add 8 hours for UTC+8
+        
+        // Handle day rollover
+        if (hours >= 24) {
+          day += 1;
+        }
+        
+        const dateStr = `${year}-${month}-${String(day).padStart(2, '0')}`;
         if (!deadlinesByDate[dateStr]) {
           deadlinesByDate[dateStr] = { approvals: 0, services: 0 };
         }
@@ -879,9 +929,15 @@ router.get('/api/unit-deadlines/:date/details', requireUnit, async (req, res) =>
       return res.status(403).json({ error: 'Not assigned to a unit team' });
     }
 
-    const targetDate = new Date(req.params.date + 'T00:00:00');
-    const nextDate = new Date(targetDate);
-    nextDate.setDate(nextDate.getDate() + 1);
+    // Parse the date and adjust for Asia/Manila timezone (UTC+8)
+    // Date comes as YYYY-MM-DD, represents a day in Asia/Manila timezone
+    const [year, month, day] = req.params.date.split('-').map(Number);
+    
+    // Create date range in UTC that corresponds to the full day in UTC+8
+    // Start: midnight in UTC+8 = 4pm previous day in UTC (midnight - 8 hours)
+    // End: midnight next day in UTC+8 = 4pm current day in UTC
+    const targetDate = new Date(Date.UTC(year, month - 1, day - 1, 16, 0, 0)); // 4pm previous day UTC = midnight current day UTC+8
+    const nextDate = new Date(Date.UTC(year, month - 1, day, 16, 0, 0)); // 4pm current day UTC = midnight next day UTC+8
 
     // Get approval requests with deadline on this date (excluding completed/archived)
     const approvalRequests = await RequestApproval
@@ -1710,7 +1766,7 @@ router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
     const allPendingApprovals = await RequestApproval
       .find({
         assignedUnits: user.unitTeam,
-        status: { $nin: ['Completed', 'Rejected', 'Archived'] }
+        status: { $nin: [/^completed$/i, /^rejected$/i, /^archived$/i] }
       })
       .populate('userId', 'studentOrg office')
       .lean();
@@ -1718,7 +1774,7 @@ router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
     const allPendingServices = await ServiceRequest
       .find({
         assignedUnits: user.unitTeam,
-        status: { $nin: ['Completed', 'Rejected', 'Archived'] }
+        status: { $nin: [/^completed$/i, /^rejected$/i, /^archived$/i] }
       })
       .populate('userId', 'studentOrg office')
       .lean();
@@ -1727,13 +1783,13 @@ router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
     const completedApprovals = await RequestApproval
       .countDocuments({
         assignedUnits: user.unitTeam,
-        status: 'Approved'
+        status: /^approved$/i
       });
     
     const completedServices = await ServiceRequest
       .countDocuments({
         assignedUnits: user.unitTeam,
-        status: 'Completed'
+        status: /^completed$/i
       });
 
     // Create breakdown by status
@@ -1749,18 +1805,25 @@ router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
     
     // Process approval requests
     allPendingApprovals.forEach(task => {
-      const status = task.status || 'Pending';
+      const status = (task.status || 'Pending').toLowerCase().trim();
       const deadline = task.deadline ? new Date(task.deadline) : null;
       const isOverdue = deadline && deadline < now;
       
+      // Skip approved/completed/archived/rejected statuses from active count
+      if (status === 'approved' || status === 'completed' || status === 'archived' || status === 'rejected') {
+        return;
+      }
+      
       if (isOverdue) {
         statusBreakdown.overdue++;
-      } else if (status === 'Pending') {
+      } else if (status === 'pending') {
         statusBreakdown.pending++;
-      } else if (status === 'For Revision') {
+      } else if (status === 'queued') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'in progress') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'for revision') {
         statusBreakdown.revision++;
-      } else if (status === 'Approved') {
-        statusBreakdown.approved++;
       } else {
         statusBreakdown.pending++;
       }
@@ -1768,18 +1831,25 @@ router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
     
     // Process service requests
     allPendingServices.forEach(task => {
-      const status = task.status || 'Pending';
+      const status = (task.status || 'Pending').toLowerCase().trim();
       const deadline = task.deadline ? new Date(task.deadline) : null;
       const isOverdue = deadline && deadline < now;
       
+      // Skip approved/completed/archived/rejected statuses from active count
+      if (status === 'approved' || status === 'completed' || status === 'archived' || status === 'rejected') {
+        return;
+      }
+      
       if (isOverdue) {
         statusBreakdown.overdue++;
-      } else if (status === 'Pending') {
+      } else if (status === 'pending') {
         statusBreakdown.pending++;
-      } else if (status === 'For Revision') {
+      } else if (status === 'queued') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'in progress') {
+        statusBreakdown['in-review']++;
+      } else if (status === 'for revision') {
         statusBreakdown.revision++;
-      } else if (status === 'Approved') {
-        statusBreakdown.approved++;
       } else {
         statusBreakdown.pending++;
       }
@@ -1792,10 +1862,10 @@ router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
         statusBreakdown.pending,
         statusBreakdown['in-review'],
         statusBreakdown.revision,
-        statusBreakdown.approved,
+        completedApprovals + completedServices,  // Merge approved and completed
         statusBreakdown.overdue
       ],
-      totalActive: allPendingApprovals.length + allPendingServices.length,
+      totalActive: statusBreakdown.pending + statusBreakdown['in-review'] + statusBreakdown.revision + statusBreakdown.overdue,
       totalCompleted: completedApprovals + completedServices
     };
     

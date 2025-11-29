@@ -2257,7 +2257,9 @@ document.querySelectorAll('.action-card').forEach(card => {
         month === today.getMonth() &&
         year === today.getFullYear();
       
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      // Create date and extract ISO format to match API response format
+      const localDate = new Date(year, month, day);
+      const dateStr = localDate.toISOString().split('T')[0];
       const deadlineClasses = getDeadlineClasses(dateStr);
       const deadlineIndicators = createDeadlineIndicators(dateStr);
       

@@ -279,6 +279,135 @@ router.get('/api/deadlines/:date/details', requireLogin, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/calendar-requests
+ * Admin calendar endpoint to get all requests with deadlines grouped by date
+ */
+router.get('/api/admin/calendar-requests', apiLimiter, requireAdmin, async (req, res) => {
+  try {
+    console.log('Admin fetching calendar requests from database...');
+
+    // Fetch all approval requests and service requests with deadlines
+    const approvalRequests = await RequestApproval.find({
+      deadline: { $exists: true, $ne: null }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    const serviceRequests = await ServiceRequest.find({
+      deadline: { $exists: true, $ne: null }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    console.log(`Found ${approvalRequests.length} approval requests and ${serviceRequests.length} service requests with deadlines`);
+
+    res.json({
+      success: true,
+      approvalRequests: approvalRequests,
+      serviceRequests: serviceRequests
+    });
+  } catch (error) {
+    console.error('Error fetching admin calendar requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch admin calendar requests',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/admin/calendar-requests/:date/details
+ * Admin calendar endpoint for detailed request info for a specific date
+ */
+router.get('/api/admin/calendar-requests/:date/details', requireAdmin, async (req, res) => {
+  try {
+    const { date } = req.params;
+    console.log(`Fetching detailed admin calendar requests for date: ${date}`);
+
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date format. Use YYYY-MM-DD',
+        date: date,
+        approvals: [],
+        services: [],
+        totalCount: 0
+      });
+    }
+
+    // Create date range for the entire day (Asia/Manila timezone)
+    // Parse date string as local date to avoid timezone conversion issues
+    const [year, month, day] = date.split('-').map(Number);
+    const startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    console.log(`Searching between ${startDate.toISOString()} and ${endDate.toISOString()}`);
+
+    // Fetch detailed requests
+    const approvals = await RequestApproval.find({
+      deadline: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    const services = await ServiceRequest.find({
+      deadline: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    console.log(`Found ${approvals.length} approvals, ${services.length} services for ${date}`);
+
+    // Process the data
+    const processedApprovals = approvals.map(approval => ({
+      ...approval,
+      displayOrganization: approval.userId?.userType === 'nonstudent'
+        ? (Array.isArray(approval.userId.affiliation) ? approval.userId.affiliation.join(', ') : approval.userId.affiliation)
+        : approval.organization || 'N/A'
+    }));
+
+    const processedServices = services.map(service => ({
+      ...service,
+      displayOrganization: service.userId?.userType === 'nonstudent'
+        ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
+        : service.organization || 'N/A'
+    }));
+
+    const response = {
+      success: true,
+      date: date,
+      approvals: processedApprovals,
+      services: processedServices,
+      totalCount: processedApprovals.length + processedServices.length
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching detailed admin calendar requests:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch detailed admin calendar requests',
+      date: req.params.date || 'unknown',
+      approvals: [],
+      services: [],
+      totalCount: 0
+    });
+  }
+});
+
+/**
  * GET /api/conversation/:requestId
  * API endpoint to get conversation for a specific request
  */

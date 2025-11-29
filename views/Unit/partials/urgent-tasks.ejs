@@ -9,8 +9,9 @@
 
 <% if (urgentTasks && urgentTasks.length > 0) { %>
   <%
-    const approvalTasks = urgentTasks.filter(t => !t.serviceType);
-    const serviceTasks = urgentTasks.filter(t => t.serviceType);
+    const excludedStatuses = ['completed', 'approved', 'archived', 'deleted'];
+    const approvalTasks = urgentTasks.filter(t => !t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
+    const serviceTasks = urgentTasks.filter(t => t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
     const hasApprovals = approvalTasks.length > 0;
     const hasServices = serviceTasks.length > 0;
   %>

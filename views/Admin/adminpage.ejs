@@ -2823,7 +2823,8 @@
             if (calendarData.approvalRequests && Array.isArray(calendarData.approvalRequests)) {
               calendarData.approvalRequests.forEach(req => {
                 if (req.deadline) {
-                  const dateStr = new Date(req.deadline).toISOString().split('T')[0];
+                  const date = new Date(req.deadline);
+                  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                   if (!deadlinesData[dateStr]) {
                     deadlinesData[dateStr] = { approvals: 0, services: 0 };
                   }
@@ -2836,7 +2837,8 @@
             if (calendarData.serviceRequests && Array.isArray(calendarData.serviceRequests)) {
               calendarData.serviceRequests.forEach(req => {
                 if (req.deadline) {
-                  const dateStr = new Date(req.deadline).toISOString().split('T')[0];
+                  const date = new Date(req.deadline);
+                  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
                   if (!deadlinesData[dateStr]) {
                     deadlinesData[dateStr] = { approvals: 0, services: 0 };
                   }
@@ -2927,6 +2929,8 @@
             month === today.getMonth() &&
             year === today.getFullYear();
           
+          // Create date and extract local date format to match Asia/Manila timezone
+          const localDate = new Date(year, month, day);
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const deadlineClasses = getDeadlineClasses(dateStr);
           const deadlineIndicators = createDeadlineIndicators(dateStr);

@@ -1262,8 +1262,11 @@
       `;
       dayCell.appendChild(dayNumber);
       
-      // Add data attribute for date
-      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      // Add data attribute for date - format as YYYY-MM-DD in local timezone (Asia/Manila)
+      const year = currentYear;
+      const month = String(currentMonth + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
+      const dateStr = `${year}-${month}-${dayStr}`;
       dayCell.setAttribute('data-date', dateStr);
       
       // Hover effect
