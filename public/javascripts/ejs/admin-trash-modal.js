@@ -93,6 +93,13 @@
   }
 
   /**
+   * Escape text for use in JavaScript strings
+   */
+  function escapeJsString(text) {
+    return (text || '').replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/"/g, '\\"');
+  }
+
+  /**
    * Show notification
    */
   function showNotification(message, type = 'success') {
@@ -177,11 +184,11 @@
         <td>${escapeHtml(request.deletedByName || 'N/A')}</td>
         <td>${formatDate(request.deletedAt)}</td>
         <td>
-          <button class="action-btn restore-btn" onclick="AdminTrashModal.openRestoreConfirm('${request._id}', '${escapeHtml(request.type)}', '${escapeHtml(request.title)}')" title="Restore">
+          <button class="action-btn restore-btn" onclick="AdminTrashModal.openRestoreConfirm('${escapeHtml(request._id)}', '${escapeJsString(request.type)}', '${escapeJsString(request.title)}')" title="Restore">
             ${icons.restore}
             Restore
           </button>
-          <button class="action-btn delete-btn-permanent" onclick="AdminTrashModal.openPermanentDeleteConfirm('${request._id}', '${escapeHtml(request.type)}', '${escapeHtml(request.title)}')" title="Permanently Delete">
+          <button class="action-btn delete-btn-permanent" onclick="AdminTrashModal.openPermanentDeleteConfirm('${escapeHtml(request._id)}', '${escapeJsString(request.type)}', '${escapeJsString(request.title)}')" title="Permanently Delete">
             ${icons.deletePermanent}
             Delete Forever
           </button>
@@ -210,11 +217,11 @@
         <td>${escapeHtml(user.deletedByName || 'N/A')}</td>
         <td>${formatDate(user.deletedAt)}</td>
         <td>
-          <button class="action-btn restore-btn" onclick="AdminTrashModal.openRestoreConfirm('${user._id}', 'user', '${escapeHtml(fullName)}')" title="Restore">
+          <button class="action-btn restore-btn" onclick="AdminTrashModal.openRestoreConfirm('${escapeHtml(user._id)}', 'user', '${escapeJsString(fullName)}')" title="Restore">
             ${icons.restore}
             Restore
           </button>
-          <button class="action-btn delete-btn-permanent" onclick="AdminTrashModal.openPermanentDeleteConfirm('${user._id}', 'user', '${escapeHtml(fullName)}')" title="Permanently Delete">
+          <button class="action-btn delete-btn-permanent" onclick="AdminTrashModal.openPermanentDeleteConfirm('${escapeHtml(user._id)}', 'user', '${escapeJsString(fullName)}')" title="Permanently Delete">
             ${icons.deletePermanent}
             Delete Forever
           </button>

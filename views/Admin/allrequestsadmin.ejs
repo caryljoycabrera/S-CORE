@@ -1014,7 +1014,7 @@
       <p>Are you sure you want to delete this request?</p>
       <div class="confirmation-actions" style="margin-top: 24px;">
         <button class="btn-cancel" onclick="closeDeleteConfirm()">Cancel</button>
-        <button class="btn-danger" onclick="openDeleteConfirm()">Delete Request</button>
+        <button class="btn-danger" onclick="confirmDelete()">Delete Request</button>
       </div>
     </div>
   </div>
@@ -1027,7 +1027,7 @@
       <button class="modal-close" onclick="closeRestoreModal()">✕</button>
     </div>
     <div class="confirmation-body">
-      <p>Are you sure you want to restore this request? It will be moved back to the active requests list.</p>
+      <p id="restoreConfirmMessage">Are you sure you want to restore this request? It will be moved back to the active requests list.</p>
       <div class="confirmation-actions">
         <button class="btn-cancel" onclick="closeRestoreModal()">Cancel</button>
         <button class="btn-confirm" onclick="confirmRestore()">Restore Request</button>
@@ -1045,7 +1045,7 @@
     </div>
     <div class="confirmation-body">
       <p style="color: #dc2626; font-weight: 600;">This action cannot be undone!</p>
-      <p>Are you sure you want to permanently delete this request? All associated data will be lost forever.</p>
+      <p id="permanentDeleteMessage">Are you sure you want to permanently delete this request? All associated data will be lost forever.</p>
       <div class="confirmation-actions">
         <button class="btn-cancel" onclick="closePermanentDeleteModal()">Cancel</button>
         <button class="btn-danger" onclick="confirmPermanentDelete()">Delete Forever</button>

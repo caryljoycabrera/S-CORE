@@ -113,22 +113,29 @@ const updateSettings = async (updates, userId = null) => {
  * Get specific setting value
  */
 const getSetting = (key, defaultValue = null) => {
-  if (!cachedSettings) {
-    return defaultValue;
-  }
-  
-  const keys = key.split('.');
-  let value = cachedSettings;
-  
-  for (let i = 0; i < keys.length; i++) {
-    if (value && typeof value === 'object') {
-      value = value[keys[i]];
-    } else {
+  try {
+    if (!cachedSettings) {
+      console.warn(`[Settings Service] Settings not loaded yet, returning default for ${key}`);
       return defaultValue;
     }
+    
+    const keys = key.split('.');
+    let value = cachedSettings;
+    
+    for (let i = 0; i < keys.length; i++) {
+      if (value && typeof value === 'object') {
+        value = value[keys[i]];
+      } else {
+        console.warn(`[Settings Service] Key ${keys[i]} not found in settings, returning default for ${key}`);
+        return defaultValue;
+      }
+    }
+    
+    return value !== undefined ? value : defaultValue;
+  } catch (error) {
+    console.error(`[Settings Service] Error getting setting ${key}:`, error);
+    return defaultValue;
   }
-  
-  return value !== undefined ? value : defaultValue;
 };
 
 /**

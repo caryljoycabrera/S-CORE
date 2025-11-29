@@ -856,15 +856,17 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
   const usersWithDisplay = users.map(user => ({
     ...user,
     displayOrganization: user.userType === 'nonstudent'
-  ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
-  : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
+      ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
+      : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
   }));
 
-  res.render('Admin/users', { 
-    users: usersWithDisplay, 
+  res.render('Admin/users', {
+    users: usersWithDisplay,
     user: req.user,
     units: settingsHelpers.getUnits(),
-    userRoles: settingsHelpers.getUserRoles()
+    userRoles: settingsHelpers.getUserRoles(),
+    organizations: settingsHelpers.getOrganizations(),
+    offices: settingsHelpers.getOffices()
   });
 });
 

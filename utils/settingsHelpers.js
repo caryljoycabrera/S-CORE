@@ -8,9 +8,14 @@ const settingsService = require('../services/settingsService');
  * @returns {Array} Array of organization names
  */
 function getOrganizations() {
-  const orgs = settingsService.getSetting('organizations', []);
-  // Return empty array if not loaded yet, to prevent errors
-  return Array.isArray(orgs) ? orgs : [];
+  try {
+    const orgs = settingsService.getSetting('organizations', []);
+    // Return empty array if not loaded yet, to prevent errors
+    return Array.isArray(orgs) ? orgs : [];
+  } catch (error) {
+    console.error('[Settings Helpers] Error getting organizations:', error);
+    return [];
+  }
 }
 
 /**
@@ -18,9 +23,14 @@ function getOrganizations() {
  * @returns {Array} Array of office names
  */
 function getOffices() {
-  const offices = settingsService.getSetting('offices', []);
-  // Return empty array if not loaded yet, to prevent errors
-  return Array.isArray(offices) ? offices : [];
+  try {
+    const offices = settingsService.getSetting('offices', []);
+    // Return empty array if not loaded yet, to prevent errors
+    return Array.isArray(offices) ? offices : [];
+  } catch (error) {
+    console.error('[Settings Helpers] Error getting offices:', error);
+    return [];
+  }
 }
 
 /**
