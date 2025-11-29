@@ -63,6 +63,11 @@ const ModalUtility = {
     if (modal) {
       modal.style.display = 'none';
       document.body.style.overflow = '';
+      // Also restore admin-main-content scrolling
+      const adminMainContent = document.querySelector('.admin-main-content');
+      if (adminMainContent) {
+        adminMainContent.style.overflow = '';
+      }
     }
   },
 
@@ -71,6 +76,11 @@ const ModalUtility = {
     if (modal) {
       modal.style.display = 'flex';
       document.body.style.overflow = 'hidden';
+      // Also prevent admin-main-content from scrolling
+      const adminMainContent = document.querySelector('.admin-main-content');
+      if (adminMainContent) {
+        adminMainContent.style.overflow = 'hidden';
+      }
     }
   },
 
@@ -92,6 +102,16 @@ function setupModalHandlers() {
   
   // Confirm status modal handlers
   ModalUtility.setupCloseHandlers(confirmStatusModal, closeConfirmModal, cancelConfirmBtn);
+}
+
+// ========================================
+// CLOSE USER DETAILS MODAL FUNCTION
+// ========================================
+function closeUserDetailsModal() {
+  const userModal = document.getElementById('userModal');
+  if (userModal) {
+    ModalUtility.closeModal(userModal);
+  }
 }
 
 // ========================================
@@ -1305,8 +1325,7 @@ function handleModalAction(action, userId, buttonElement) {
   
   // Close modal function
   function closeModal() {
-    confirmStatusModal.style.display = 'none';
-    document.body.style.overflow = '';
+    ModalUtility.closeModal(confirmStatusModal);
   }
   
   // Confirm button - execute action
@@ -1321,8 +1340,7 @@ function handleModalAction(action, userId, buttonElement) {
   newCloseBtn.onclick = closeModal;
   
   // Show modal
-  confirmStatusModal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+  ModalUtility.openModal(confirmStatusModal);
   
   console.log('✅ Modal confirmation dialog displayed');
 }
@@ -1618,8 +1636,7 @@ function openUserModal(row, scrollTo = null) {
   }
 
   // Open modal and handle scrolling
-  userModal().style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+  ModalUtility.openModal(userModal());
 
   // Scroll modal content based on scrollTo parameter
   const modalBody = document.querySelector('.user-details-modal-body');
@@ -1888,8 +1905,7 @@ function openDeleteConfirm() {
   deleteModal.dataset.userId = userId;
   
   // Show modal
-  deleteModal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
+  ModalUtility.openModal(deleteModal);
   
   console.log('✅ User delete confirmation modal shown');
 }
@@ -1900,8 +1916,7 @@ function openDeleteConfirm() {
 function closeUserDeleteConfirm() {
   const deleteModal = document.getElementById('userDeleteConfirmModal');
   if (deleteModal) {
-    deleteModal.style.display = 'none';
-    document.body.style.overflow = '';
+    ModalUtility.closeModal(deleteModal);
   }
 }
 

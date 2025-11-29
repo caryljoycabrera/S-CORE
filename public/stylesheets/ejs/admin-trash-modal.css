@@ -23,6 +23,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+  margin-left: 25rem;
 }
 
 .trash-btn:hover {
@@ -307,17 +308,21 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.2s ease;
   border: none;
   white-space: nowrap;
   vertical-align: middle;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
 }
 
 .trash-requests-table .action-btn svg {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  pointer-events: none; /* Prevent SVG from capturing clicks */
 }
 
 /* Restore Button */

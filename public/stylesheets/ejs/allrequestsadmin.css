@@ -1082,18 +1082,20 @@ hr {
   z-index: 100200 !important; /* Higher than conversation modal */
 }
 
-#trashModal .modal-content {
+#trashModal .modal-content,
+#trashModal .trash-modal-content {
   z-index: 100201 !important;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative !important;
+  pointer-events: auto !important;
 }
 
-/* Restore and Delete confirmation modals - Above trash modal */
-#restoreConfirmModal,
-#permanentDeleteModal {
-  z-index: 100300 !important;
+/* Ensure trash modal body and table allow clicks */
+#trashModal .trash-modal-body,
+#trashModal .trash-table-container,
+#trashModal .trash-requests-table,
+#trashModal .trash-requests-table tbody,
+#trashModal .trash-requests-table td {
+  pointer-events: auto !important;
 }
 
 .modal.show,
@@ -1348,7 +1350,7 @@ hr {
 .confirmation-modal {
   display: none;
   position: fixed;
-  z-index: 99999;
+  z-index: 999999 !important;
   left: 0;
   top: 0;
   width: 100%;
@@ -1357,9 +1359,44 @@ hr {
 }
 
 .confirmation-modal.show {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
+}
+
+.confirmation-modal .confirmation-modal-content {
+  position: relative;
+  z-index: 1000000 !important;
+  pointer-events: auto !important;
+}
+
+.confirmation-modal .confirmation-actions button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Explicitly style restore and permanent delete confirmation modals */
+#restoreConfirmModal,
+#permanentDeleteModal {
+  z-index: 100300 !important;
+}
+
+#restoreConfirmModal .confirmation-modal-content,
+#permanentDeleteModal .confirmation-modal-content {
+  z-index: 100301 !important;
+  pointer-events: auto !important;
+}
+
+#restoreConfirmModal .btn-confirm,
+#restoreConfirmModal .btn-cancel,
+#permanentDeleteModal .btn-danger,
+#permanentDeleteModal .btn-cancel,
+#confirmRestoreBtn,
+#confirmPermanentDeleteBtn {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative;
+  z-index: 100302 !important;
 }
 
 @keyframes fadeIn {
@@ -4864,9 +4901,23 @@ input:checked + .toggle-slider:before {
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.2s ease;
   margin-right: 0.5rem;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+}
+
+/* Ensure trash modal table buttons are always clickable */
+#trashModal .action-btn,
+.trash-requests-table .action-btn,
+.trash-requests-table .restore-btn,
+.trash-requests-table .delete-btn-permanent {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative;
+  z-index: 100;
 }
 
 .restore-btn {

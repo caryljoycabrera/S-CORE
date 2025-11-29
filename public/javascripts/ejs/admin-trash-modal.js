@@ -184,11 +184,21 @@
         <td>${escapeHtml(request.deletedByName || 'N/A')}</td>
         <td>${formatDate(request.deletedAt)}</td>
         <td>
-          <button class="action-btn restore-btn" onclick="AdminTrashModal.openRestoreConfirm('${escapeHtml(request._id)}', '${escapeJsString(request.type)}', '${escapeJsString(request.title)}')" title="Restore">
+          <button class="action-btn restore-btn" 
+                  data-action="restore"
+                  data-item-id="${escapeHtml(request._id)}"
+                  data-item-type="${escapeHtml(request.type)}"
+                  data-item-name="${escapeHtml(request.title)}"
+                  title="Restore">
             ${icons.restore}
             Restore
           </button>
-          <button class="action-btn delete-btn-permanent" onclick="AdminTrashModal.openPermanentDeleteConfirm('${escapeHtml(request._id)}', '${escapeJsString(request.type)}', '${escapeJsString(request.title)}')" title="Permanently Delete">
+          <button class="action-btn delete-btn-permanent" 
+                  data-action="permanent-delete"
+                  data-item-id="${escapeHtml(request._id)}"
+                  data-item-type="${escapeHtml(request.type)}"
+                  data-item-name="${escapeHtml(request.title)}"
+                  title="Permanently Delete">
             ${icons.deletePermanent}
             Delete Forever
           </button>
@@ -217,11 +227,21 @@
         <td>${escapeHtml(user.deletedByName || 'N/A')}</td>
         <td>${formatDate(user.deletedAt)}</td>
         <td>
-          <button class="action-btn restore-btn" onclick="AdminTrashModal.openRestoreConfirm('${escapeHtml(user._id)}', 'user', '${escapeJsString(fullName)}')" title="Restore">
+          <button class="action-btn restore-btn" 
+                  data-action="restore"
+                  data-item-id="${escapeHtml(user._id)}"
+                  data-item-type="user"
+                  data-item-name="${escapeHtml(fullName)}"
+                  title="Restore">
             ${icons.restore}
             Restore
           </button>
-          <button class="action-btn delete-btn-permanent" onclick="AdminTrashModal.openPermanentDeleteConfirm('${escapeHtml(user._id)}', 'user', '${escapeJsString(fullName)}')" title="Permanently Delete">
+          <button class="action-btn delete-btn-permanent" 
+                  data-action="permanent-delete"
+                  data-item-id="${escapeHtml(user._id)}"
+                  data-item-type="user"
+                  data-item-name="${escapeHtml(fullName)}"
+                  title="Permanently Delete">
             ${icons.deletePermanent}
             Delete Forever
           </button>
@@ -337,6 +357,49 @@
       console.error('Error loading deleted items:', error);
       tableBody.innerHTML = renderError(`Error: ${error.message}`);
     }
+    
+    // Setup event delegation for trash modal action buttons
+    setupTrashModalEventDelegation();
+  }
+
+  /**
+   * Setup event delegation for trash modal buttons
+   * This handles clicks on dynamically generated restore and delete buttons
+   */
+  function setupTrashModalEventDelegation() {
+    const tableBody = document.getElementById('trashTableBody');
+    if (!tableBody) return;
+
+    // Remove existing listener if any (to prevent duplicates)
+    const existingListener = tableBody._trashModalListener;
+    if (existingListener) {
+      tableBody.removeEventListener('click', existingListener);
+    }
+
+    // Create new listener
+    const listener = function(e) {
+      const button = e.target.closest('button[data-action]');
+      if (!button) return;
+
+      const action = button.dataset.action;
+      const itemId = button.dataset.itemId;
+      const itemType = button.dataset.itemType;
+      const itemName = button.dataset.itemName || '';
+
+      console.log('🗑️ Trash action button clicked:', { action, itemId, itemType, itemName });
+
+      if (action === 'restore') {
+        openRestoreConfirm(itemId, itemType, itemName);
+      } else if (action === 'permanent-delete') {
+        openPermanentDeleteConfirm(itemId, itemType, itemName);
+      }
+    };
+
+    // Attach listener
+    tableBody.addEventListener('click', listener);
+    tableBody._trashModalListener = listener;
+    
+    console.log('✅ Event delegation setup for trash modal buttons');
   }
 
   /**

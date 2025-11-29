@@ -490,6 +490,41 @@
   </div>
 </div>
 
+<!-- Restore Confirmation Modal -->
+<div id="restoreConfirmModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header">
+      <h3>Confirm Restore</h3>
+      <button class="modal-close" onclick="closeRestoreModal()">✕</button>
+    </div>
+    <div class="confirmation-body">
+      <p id="restoreConfirmMessage">Are you sure you want to restore this request? It will be moved back to the active requests list.</p>
+      <div class="confirmation-actions">
+        <button class="btn-cancel" onclick="closeRestoreModal()">Cancel</button>
+        <button id="confirmRestoreBtn" class="btn-confirm" onclick="confirmRestore()">Restore Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Permanent Delete Confirmation Modal -->
+<div id="permanentDeleteModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header warning">
+      <h3>⚠️ Confirm Permanent Deletion</h3>
+      <button class="modal-close" onclick="closePermanentDeleteModal()">✕</button>
+    </div>
+    <div class="confirmation-body">
+      <p style="color: #dc2626; font-weight: 600;">This action cannot be undone!</p>
+      <p id="permanentDeleteMessage">Are you sure you want to permanently delete this request? All associated data will be lost forever.</p>
+      <div class="confirmation-actions">
+        <button class="btn-cancel" onclick="closePermanentDeleteModal()">Cancel</button>
+        <button id="confirmPermanentDeleteBtn" class="btn-danger" onclick="confirmPermanentDelete()">Delete Forever</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   <!-- Enhanced Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
     <div class="modal-content unit-modal-wide">
@@ -1015,40 +1050,6 @@
       <div class="confirmation-actions" style="margin-top: 24px;">
         <button class="btn-cancel" onclick="closeDeleteConfirm()">Cancel</button>
         <button class="btn-danger" onclick="confirmDelete()">Delete Request</button>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Restore Confirmation Modal -->
-<div id="restoreConfirmModal" class="confirmation-modal">
-  <div class="confirmation-modal-content">
-    <div class="confirmation-header">
-      <h3>Confirm Restore</h3>
-      <button class="modal-close" onclick="closeRestoreModal()">✕</button>
-    </div>
-    <div class="confirmation-body">
-      <p id="restoreConfirmMessage">Are you sure you want to restore this request? It will be moved back to the active requests list.</p>
-      <div class="confirmation-actions">
-        <button class="btn-cancel" onclick="closeRestoreModal()">Cancel</button>
-        <button class="btn-confirm" onclick="confirmRestore()">Restore Request</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Permanent Delete Confirmation Modal -->
-<div id="permanentDeleteModal" class="confirmation-modal">
-  <div class="confirmation-modal-content">
-    <div class="confirmation-header warning">
-      <h3>⚠️ Confirm Permanent Deletion</h3>
-      <button class="modal-close" onclick="closePermanentDeleteModal()">✕</button>
-    </div>
-    <div class="confirmation-body">
-      <p style="color: #dc2626; font-weight: 600;">This action cannot be undone!</p>
-      <p id="permanentDeleteMessage">Are you sure you want to permanently delete this request? All associated data will be lost forever.</p>
-      <div class="confirmation-actions">
-        <button class="btn-cancel" onclick="closePermanentDeleteModal()">Cancel</button>
-        <button class="btn-danger" onclick="confirmPermanentDelete()">Delete Forever</button>
       </div>
     </div>
   </div>
