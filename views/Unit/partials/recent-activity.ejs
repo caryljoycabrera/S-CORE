@@ -1,0 +1,18 @@
+<% if (recentActivity && recentActivity.length > 0) { %>
+  <% recentActivity.slice(0, 5).forEach(activity => { %>
+    <tr>
+      <td>
+        <div class="task-title-cell"><%= activity.title %></div>
+        <div class="task-desc-cell"><%- activity.description.substring(0, 50) %>...</div>
+      </td>
+      <td><span class="type-badge <%= activity.type %>"><%= activity.type === 'approval' ? 'Approval' : 'Service' %></span></td>
+      <td><span class="status-badge <%= activity.status.toLowerCase().replace(/\s+/g, '-') %>"><%= activity.status %></span></td>
+      <td class="date-cell"><%= new Date(activity.updatedAt).toLocaleDateString() %></td>
+      <td><button class="action-btn-small" onclick="location.href='/unit/<%= activity.type === 'approval' ? 'task-approvals' : 'task-services' %>'">View</button></td>
+    </tr>
+  <% }) %>
+<% } else { %>
+  <tr>
+    <td colspan="5" class="no-data-cell">No recent activity</td>
+  </tr>
+<% } %>

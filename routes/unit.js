@@ -48,31 +48,31 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     // Approval requests assigned to their unit (check if unit name is in assignedUnits string)
     console.log('[/unit/dashboard] Querying RequestApproval tasks...');
     const totalApprovalTasks = await RequestApproval.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $nin: ['completed', 'cancelled', 'Archived'] }
     });
     console.log('[/unit/dashboard] Total approval tasks:', totalApprovalTasks);
 
     const pendingApprovalTasks = await RequestApproval.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^pending$/i }
     });
     console.log('[/unit/dashboard] Pending approval tasks:', pendingApprovalTasks);
     
     const queuedApprovalTasks = await RequestApproval.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^queued$/i }
     });
     console.log('[/unit/dashboard] Queued approval tasks:', queuedApprovalTasks);
     
     const inProgressApprovalTasks = await RequestApproval.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^in progress$/i }
     });
     console.log('[/unit/dashboard] In Progress approval tasks:', inProgressApprovalTasks);
 
     const revisionApprovalTasks = await RequestApproval.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^(revision|for revision)$/i }
     });
     console.log('[/unit/dashboard] Revision approval tasks:', revisionApprovalTasks);
@@ -80,31 +80,31 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     // Service requests assigned to their unit (for processing - current assignments)
     console.log('[/unit/dashboard] Querying ServiceRequest tasks...');
     const totalServiceTasks = await ServiceRequest.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $nin: ['completed', 'cancelled', 'Archived'] }
     });
     console.log('[/unit/dashboard] Total service tasks:', totalServiceTasks);
 
     const pendingServiceTasks = await ServiceRequest.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^pending$/i }
     });
     console.log('[/unit/dashboard] Pending service tasks:', pendingServiceTasks);
     
     const queuedServiceTasks = await ServiceRequest.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^queued$/i }
     });
     console.log('[/unit/dashboard] Queued service tasks:', queuedServiceTasks);
     
     const inProgressServiceTasks = await ServiceRequest.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^in progress$/i }
     });
     console.log('[/unit/dashboard] In Progress service tasks:', inProgressServiceTasks);
 
     const revisionServiceTasks = await ServiceRequest.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^(revision|for revision)$/i }
     });
     console.log('[/unit/dashboard] Revision service tasks:', revisionServiceTasks);
@@ -125,12 +125,12 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
 
     // Get approved tasks count
     const approvedApprovalTasks = await RequestApproval.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^approved$/i }
     });
 
     const approvedServiceTasks = await ServiceRequest.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       status: { $regex: /^approved$/i }
     });
 
@@ -140,7 +140,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     console.log('[/unit/dashboard] Fetching recent activity...');
     const recentApprovalActivity = await RequestApproval
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
@@ -151,7 +151,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
 
     const recentServiceActivity = await ServiceRequest
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName')
@@ -177,14 +177,14 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
     const upcomingApprovalDeadlines = await RequestApproval.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       deadline: { $lte: sevenDaysFromNow, $gte: new Date() },
       status: { $nin: ['completed', 'cancelled', 'Archived'] },
       isDeleted: { $ne: true }
     });
 
     const upcomingServiceDeadlines = await ServiceRequest.countDocuments({
-      assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+      assignedUnits: user.unitTeam,
       deadline: { $lte: sevenDaysFromNow, $gte: new Date() },
       status: { $nin: ['completed', 'cancelled', 'Archived'] },
       isDeleted: { $ne: true }
@@ -195,7 +195,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     // Get urgent tasks (top 5 tasks with nearest deadlines)
     const urgentApprovalTasks = await RequestApproval
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
         deadline: { $exists: true },
         isDeleted: { $ne: true }
@@ -207,7 +207,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
 
     const urgentServiceTasks = await ServiceRequest
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
         deadline: { $exists: true },
         isDeleted: { $ne: true }
@@ -224,7 +224,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     // Get recently completed tasks (for smart panel)
     const recentlyCompletedApprovals = await RequestApproval
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: 'completed',
         isDeleted: { $ne: true }
       })
@@ -235,7 +235,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
 
     const recentlyCompletedServices = await ServiceRequest
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: 'completed',
         isDeleted: { $ne: true }
       })
@@ -335,7 +335,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     // Calculate task breakdown for pie chart - STATUS-BASED
     const allPendingApprovals = await RequestApproval
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: { $nin: ['Completed', 'Rejected', 'Archived'] }
       })
       .populate('userId', 'studentOrg office')
@@ -343,7 +343,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     
     const allPendingServices = await ServiceRequest
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: { $nin: ['Completed', 'Rejected', 'Archived'] }
       })
       .populate('userId', 'studentOrg office')
@@ -352,13 +352,13 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     // Get completed tasks for completion rate
     const completedApprovals = await RequestApproval
       .countDocuments({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: 'Approved' // Approval requests are "completed" when Approved
       });
     
     const completedServices = await ServiceRequest
       .countDocuments({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: 'Completed'
       });
 
@@ -508,21 +508,21 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       nextDate.setDate(nextDate.getDate() + 1);
       
       const dayApprovals = await RequestApproval.countDocuments({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         createdAt: { $gte: date, $lt: nextDate }
       });
       
       const dayServices = await ServiceRequest.countDocuments({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         createdAt: { $gte: date, $lt: nextDate }
       });
       
       const dayCompleted = await RequestApproval.countDocuments({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: 'Approved',
         updatedAt: { $gte: date, $lt: nextDate }
       }) + await ServiceRequest.countDocuments({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         status: 'Completed',
         updatedAt: { $gte: date, $lt: nextDate }
       });
@@ -585,7 +585,7 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
       .find({ 
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName email')
@@ -595,7 +595,7 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
     // Get all service requests assigned to their unit
     const serviceRequests = await ServiceRequest
       .find({ 
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName email')
@@ -677,7 +677,7 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
       .find({ 
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
@@ -687,7 +687,7 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
     // Get all service requests assigned to their unit
     const serviceRequests = await ServiceRequest
       .find({ 
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
@@ -727,7 +727,7 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
     // Get all approval requests assigned to their unit
     const approvalRequests = await RequestApproval
       .find({ 
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
@@ -766,7 +766,7 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
     // Get service requests currently assigned to their unit (can process)
     const currentServiceRequests = await ServiceRequest
       .find({ 
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         isDeleted: { $ne: true }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
@@ -820,7 +820,7 @@ router.get('/api/unit-deadlines', requireUnit, async (req, res) => {
     // Get all approval requests with deadlines for this unit (excluding completed/archived)
     const approvalRequests = await RequestApproval
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         deadline: { $exists: true },
         status: { $nin: ['Approved', 'Rejected', 'Archived'] }
       })
@@ -830,7 +830,7 @@ router.get('/api/unit-deadlines', requireUnit, async (req, res) => {
     // Get all service requests with deadlines for this unit (excluding completed/archived)
     const serviceRequests = await ServiceRequest
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         deadline: { $exists: true },
         status: { $nin: ['Completed', 'Rejected', 'Archived'] }
       })
@@ -886,7 +886,7 @@ router.get('/api/unit-deadlines/:date/details', requireUnit, async (req, res) =>
     // Get approval requests with deadline on this date (excluding completed/archived)
     const approvalRequests = await RequestApproval
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         deadline: {
           $gte: targetDate,
           $lt: nextDate
@@ -900,7 +900,7 @@ router.get('/api/unit-deadlines/:date/details', requireUnit, async (req, res) =>
     // Get service requests with deadline on this date (excluding completed/archived)
     const serviceRequests = await ServiceRequest
       .find({
-        assignedUnits: { $regex: new RegExp(user.unitTeam, 'i') },
+        assignedUnits: user.unitTeam,
         deadline: {
           $gte: targetDate,
           $lt: nextDate
@@ -1639,6 +1639,498 @@ router.get('/unit/reports', requireUnit, async (req, res) => {
     res.status(500).render('error', {
       message: 'Error loading reports page'
     });
+  }
+});
+
+/**
+ * GET /unit/dashboard/urgent-tasks
+ * Get urgent tasks HTML for real-time updates
+ */
+router.get('/unit/dashboard/urgent-tasks', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user || !user.unitTeam || user.unitTeam === 'N/A') {
+      return res.status(403).json({ error: 'Not assigned to a unit team' });
+    }
+
+    // Get urgent tasks (top 5 tasks with nearest deadlines)
+    const urgentApprovalTasks = await RequestApproval
+      .find({
+        assignedUnits: user.unitTeam,
+        status: { $nin: ['completed', 'cancelled', 'Archived'] },
+        deadline: { $exists: true },
+        isDeleted: { $ne: true }
+      })
+      .populate('userId', 'fName lName')
+      .sort({ deadline: 1 })
+      .limit(3)
+      .lean();
+
+    const urgentServiceTasks = await ServiceRequest
+      .find({
+        assignedUnits: user.unitTeam,
+        status: { $nin: ['completed', 'cancelled', 'Archived'] },
+        deadline: { $exists: true },
+        isDeleted: { $ne: true }
+      })
+      .populate('userId', 'fName lName')
+      .sort({ deadline: 1 })
+      .limit(3)
+      .lean();
+
+    const urgentTasks = [...urgentApprovalTasks, ...urgentServiceTasks]
+      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+      .slice(0, 5);
+
+    // Render the urgent tasks panel HTML
+    res.render('Unit/partials/urgent-tasks', {
+      urgentTasks,
+      layout: false
+    });
+  } catch (error) {
+    console.error('Error fetching urgent tasks:', error);
+    res.status(500).json({ error: 'Failed to fetch urgent tasks' });
+  }
+});
+
+/**
+ * GET /unit/dashboard/task-breakdown
+ * Get task breakdown data for real-time updates
+ */
+router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user || !user.unitTeam || user.unitTeam === 'N/A') {
+      return res.status(403).json({ error: 'Not assigned to a unit team' });
+    }
+
+    // Calculate task breakdown for pie chart - STATUS-BASED
+    const allPendingApprovals = await RequestApproval
+      .find({
+        assignedUnits: user.unitTeam,
+        status: { $nin: ['Completed', 'Rejected', 'Archived'] }
+      })
+      .populate('userId', 'studentOrg office')
+      .lean();
+    
+    const allPendingServices = await ServiceRequest
+      .find({
+        assignedUnits: user.unitTeam,
+        status: { $nin: ['Completed', 'Rejected', 'Archived'] }
+      })
+      .populate('userId', 'studentOrg office')
+      .lean();
+
+    // Get completed tasks for completion rate
+    const completedApprovals = await RequestApproval
+      .countDocuments({
+        assignedUnits: user.unitTeam,
+        status: 'Approved'
+      });
+    
+    const completedServices = await ServiceRequest
+      .countDocuments({
+        assignedUnits: user.unitTeam,
+        status: 'Completed'
+      });
+
+    // Create breakdown by status
+    const statusBreakdown = {
+      pending: 0,
+      'in-review': 0,
+      revision: 0,
+      approved: 0,
+      overdue: 0
+    };
+    
+    const now = new Date();
+    
+    // Process approval requests
+    allPendingApprovals.forEach(task => {
+      const status = task.status || 'Pending';
+      const deadline = task.deadline ? new Date(task.deadline) : null;
+      const isOverdue = deadline && deadline < now;
+      
+      if (isOverdue) {
+        statusBreakdown.overdue++;
+      } else if (status === 'Pending') {
+        statusBreakdown.pending++;
+      } else if (status === 'For Revision') {
+        statusBreakdown.revision++;
+      } else if (status === 'Approved') {
+        statusBreakdown.approved++;
+      } else {
+        statusBreakdown.pending++;
+      }
+    });
+    
+    // Process service requests
+    allPendingServices.forEach(task => {
+      const status = task.status || 'Pending';
+      const deadline = task.deadline ? new Date(task.deadline) : null;
+      const isOverdue = deadline && deadline < now;
+      
+      if (isOverdue) {
+        statusBreakdown.overdue++;
+      } else if (status === 'Pending') {
+        statusBreakdown.pending++;
+      } else if (status === 'For Revision') {
+        statusBreakdown.revision++;
+      } else if (status === 'Approved') {
+        statusBreakdown.approved++;
+      } else {
+        statusBreakdown.pending++;
+      }
+    });
+
+    // Convert to Chart.js format
+    const taskBreakdown = {
+      labels: ['Pending', 'In Review', 'Needs Revision', 'Approved', 'Overdue'],
+      data: [
+        statusBreakdown.pending,
+        statusBreakdown['in-review'],
+        statusBreakdown.revision,
+        statusBreakdown.approved,
+        statusBreakdown.overdue
+      ],
+      totalActive: allPendingApprovals.length + allPendingServices.length,
+      totalCompleted: completedApprovals + completedServices
+    };
+    
+    // Calculate completion rate
+    const totalAllTasks = taskBreakdown.totalActive + taskBreakdown.totalCompleted;
+    taskBreakdown.completionRate = totalAllTasks > 0 
+      ? Math.round((taskBreakdown.totalCompleted / totalAllTasks) * 100)
+      : 0;
+
+    // If no tasks, show placeholder
+    if (taskBreakdown.totalActive === 0) {
+      taskBreakdown.labels = ['No Active Tasks'];
+      taskBreakdown.data = [1];
+    }
+
+    res.json(taskBreakdown);
+  } catch (error) {
+    console.error('Error fetching task breakdown:', error);
+    res.status(500).json({ error: 'Failed to fetch task breakdown' });
+  }
+});
+
+/**
+ * GET /unit/dashboard/announcements
+ * Get announcements HTML for real-time updates
+ */
+router.get('/unit/dashboard/announcements', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user) {
+      return res.status(403).json({ error: 'User not found' });
+    }
+
+    // Get announcements from admins (if BroadcastMessage model exists)
+    let announcements = [];
+    try {
+      const now = new Date();
+      
+      announcements = await BroadcastMessage
+        .find({
+          $and: [
+            {
+              $or: [
+                { expiresAt: { $gte: now } },
+                { expiresAt: { $exists: false } },
+                { expiresAt: null }
+              ]
+            },
+            {
+              $or: [
+                { isVisibleToAll: true },
+                { 'recipients.userId': user._id }
+              ]
+            },
+            {
+              $or: [
+                { scheduledTime: { $exists: false } },
+                { scheduledTime: null },
+                { scheduledTime: { $lte: now } }
+              ]
+            }
+          ]
+        })
+        .populate('sentBy', 'fName lName role')
+        .sort({ priority: -1, createdAt: -1 })
+        .limit(10)
+        .lean();
+      
+      // Add isRead status for the current user
+      announcements = announcements.map(announcement => {
+        const recipientEntry = announcement.recipients?.find(
+          r => r.userId && r.userId.toString() === user._id.toString()
+        );
+        return {
+          ...announcement,
+          isRead: recipientEntry ? recipientEntry.isRead : false,
+          readAt: recipientEntry ? recipientEntry.readAt : null
+        };
+      });
+    } catch (error) {
+      console.log('BroadcastMessage query error:', error.message);
+    }
+
+    // Render the announcements content HTML
+    res.render('Unit/partials/announcements', {
+      announcements,
+      layout: false
+    });
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    res.status(500).json({ error: 'Failed to fetch announcements' });
+  }
+});
+
+/**
+ * GET /unit/dashboard/workload-snapshot
+ * Get workload snapshot data for real-time updates
+ */
+router.get('/unit/dashboard/workload-snapshot', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user || !user.unitTeam || user.unitTeam === 'N/A') {
+      return res.status(403).json({ error: 'Not assigned to a unit team' });
+    }
+
+    // Get pending requests count
+    const pendingRequests = await RequestApproval.countDocuments({
+      assignedUnits: user.unitTeam,
+      status: { $regex: /^pending$/i }
+    }) + await ServiceRequest.countDocuments({
+      assignedUnits: user.unitTeam,
+      status: { $regex: /^pending$/i }
+    });
+
+    // Get in-review requests count
+    const inReviewRequests = await RequestApproval.countDocuments({
+      assignedUnits: user.unitTeam,
+      status: { $regex: /^(in review|for revision)$/i }
+    }) + await ServiceRequest.countDocuments({
+      assignedUnits: user.unitTeam,
+      status: { $regex: /^(in review|for revision)$/i }
+    });
+
+    // Get approved requests count (this week)
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const approvedRequests = await RequestApproval.countDocuments({
+      assignedUnits: user.unitTeam,
+      status: { $regex: /^approved$/i },
+      updatedAt: { $gte: oneWeekAgo }
+    }) + await ServiceRequest.countDocuments({
+      assignedUnits: user.unitTeam,
+      status: { $regex: /^completed$/i },
+      updatedAt: { $gte: oneWeekAgo }
+    });
+
+    res.json({
+      pendingRequests,
+      inReviewRequests,
+      approvedRequests
+    });
+  } catch (error) {
+    console.error('Error fetching workload snapshot:', error);
+    res.status(500).json({ error: 'Failed to fetch workload snapshot' });
+  }
+});
+
+/**
+ * GET /unit/dashboard/recent-activity
+ * Get recent activity HTML for real-time updates
+ */
+router.get('/unit/dashboard/recent-activity', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user || !user.unitTeam || user.unitTeam === 'N/A') {
+      return res.status(403).json({ error: 'Not assigned to a unit team' });
+    }
+
+    // Get recent activity (recent tasks assigned to the unit)
+    const recentApprovalActivity = await RequestApproval
+      .find({
+        assignedUnits: user.unitTeam,
+        isDeleted: { $ne: true }
+      })
+      .populate('userId', 'fName lName')
+      .sort({ updatedAt: -1 })
+      .limit(3)
+      .lean();
+
+    const recentServiceActivity = await ServiceRequest
+      .find({
+        assignedUnits: user.unitTeam,
+        isDeleted: { $ne: true }
+      })
+      .populate('userId', 'fName lName')
+      .sort({ updatedAt: -1 })
+      .limit(3)
+      .lean();
+
+    // Combine and sort recent activity
+    const recentActivity = [...recentApprovalActivity, ...recentServiceActivity]
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, 6)
+      .map(item => ({
+        title: item.title || item.serviceType || 'Untitled',
+        description: item.description || item.details || 'No description',
+        status: item.status || 'Pending',
+        updatedAt: item.updatedAt || item.createdAt,
+        type: item.serviceType ? 'service' : 'approval'
+      }));
+
+    // Render the recent activity table rows HTML
+    res.render('Unit/partials/recent-activity', {
+      recentActivity,
+      layout: false
+    });
+  } catch (error) {
+    console.error('Error fetching recent activity:', error);
+    res.status(500).json({ error: 'Failed to fetch recent activity' });
+  }
+});
+
+/**
+ * GET /unit/dashboard/requester-compliance
+ * Get requester compliance data for real-time updates
+ */
+router.get('/unit/dashboard/requester-compliance', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user || !user.unitTeam || user.unitTeam === 'N/A') {
+      return res.status(403).json({ error: 'Not assigned to a unit team' });
+    }
+
+    // Calculate requester compliance (organizations with submission/response stats)
+    const allTasks = [
+      ...(await RequestApproval.find({
+        assignedUnits: user.unitTeam
+      }).populate('userId', 'studentOrg office').lean()),
+      ...(await ServiceRequest.find({
+        assignedUnits: user.unitTeam
+      }).populate('userId', 'studentOrg office').lean())
+    ];
+
+    const orgCompliance = {};
+    
+    // Collect all tasks by organization
+    for (const task of allTasks) {
+      let org = task.organization || 'Unspecified';
+      if ((!task.organization || task.organization === 'N/A') && task.userId) {
+        org = task.userId.studentOrg || task.userId.office || 'Unspecified';
+      }
+      
+      if (!orgCompliance[org]) {
+        orgCompliance[org] = {
+          total: 0,
+          onTime: 0,
+          overdue: 0,
+          pending: 0
+        };
+      }
+      
+      orgCompliance[org].total++;
+      
+      const deadline = task.deadline ? new Date(task.deadline) : null;
+      const now = new Date();
+      const isOverdue = deadline && deadline < now;
+      const status = task.status?.toLowerCase() || 'pending';
+      
+      if (isOverdue && status !== 'completed' && status !== 'approved') {
+        orgCompliance[org].overdue++;
+      } else if (status === 'pending') {
+        orgCompliance[org].pending++;
+      } else {
+        orgCompliance[org].onTime++;
+      }
+    }
+    
+    // Convert to array and calculate compliance rate
+    const requesterCompliance = Object.entries(orgCompliance)
+      .map(([org, stats]) => ({
+        organization: org,
+        total: stats.total,
+        onTime: stats.onTime,
+        overdue: stats.overdue,
+        pending: stats.pending,
+        complianceRate: stats.total > 0 ? Math.round(((stats.total - stats.overdue) / stats.total) * 100) : 100
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 8);
+
+    res.json(requesterCompliance);
+  } catch (error) {
+    console.error('Error fetching requester compliance:', error);
+    res.status(500).json({ error: 'Failed to fetch requester compliance' });
+  }
+});
+
+/**
+ * GET /unit/dashboard/task-timeline
+ * Get task timeline data for real-time updates
+ */
+router.get('/unit/dashboard/task-timeline', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user || !user.unitTeam || user.unitTeam === 'N/A') {
+      return res.status(403).json({ error: 'Not assigned to a unit team' });
+    }
+
+    // Calculate task timeline for last 7 days
+    const taskTimeline = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      
+      const dayApprovals = await RequestApproval.countDocuments({
+        assignedUnits: user.unitTeam,
+        createdAt: { $gte: date, $lt: nextDate }
+      });
+      
+      const dayServices = await ServiceRequest.countDocuments({
+        assignedUnits: user.unitTeam,
+        createdAt: { $gte: date, $lt: nextDate }
+      });
+      
+      const dayCompleted = await RequestApproval.countDocuments({
+        assignedUnits: user.unitTeam,
+        status: 'Approved',
+        updatedAt: { $gte: date, $lt: nextDate }
+      }) + await ServiceRequest.countDocuments({
+        assignedUnits: user.unitTeam,
+        status: 'Completed',
+        updatedAt: { $gte: date, $lt: nextDate }
+      });
+      
+      taskTimeline.push({
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        newTasks: dayApprovals + dayServices,
+        completed: dayCompleted
+      });
+    }
+    
+    res.json(taskTimeline);
+  } catch (error) {
+    console.error('Error fetching task timeline:', error);
+    res.status(500).json({ error: 'Failed to fetch task timeline' });
   }
 });
 

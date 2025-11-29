@@ -1,0 +1,299 @@
+[{
+  "_id": {
+    "$oid": "691ef79b8d7f0c0e0ea7e356"
+  },
+  "title": "Chasing Victoryy",
+  "organization": "Strategic Communications Office",
+  "description": "Event main publication",
+  "specificRequestType": "Graphics Design",
+  "deadline": {
+    "$date": "2025-11-18T00:00:00.000Z"
+  },
+  "userId": {
+    "$oid": "691dfcacd46d6473d31c2287"
+  },
+  "status": "Approved",
+  "assignedUnits": "Graphics",
+  "originalAssignedUnits": "Graphics",
+  "file": "Pg4. Floor Plan.png",
+  "files": [
+    "Pg4. Floor Plan.png"
+  ],
+  "links": [],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "awaitingResubmission": false,
+  "datetime": {
+    "$date": "2025-11-20T11:12:27.506Z"
+  },
+  "revisionHistory": [
+    {
+      "requestedBy": {
+        "$oid": "691e0c6d8ecd2c65989f76c7"
+      },
+      "requestedAt": {
+        "$date": "2025-11-20T12:44:40.212Z"
+      },
+      "revisionNotes": "Hello! Please use the correct logo",
+      "revisionFiles": [],
+      "responseFiles": [],
+      "status": "responded",
+      "_id": {
+        "$oid": "691f0d383eeef0722e9decf0"
+      },
+      "respondedAt": {
+        "$date": "2025-11-28T05:50:59.610Z"
+      }
+    },
+    {
+      "revisionFiles": [],
+      "respondedBy": {
+        "$oid": "691dfcacd46d6473d31c2287"
+      },
+      "respondedAt": {
+        "$date": "2025-11-28T05:50:59.611Z"
+      },
+      "responseNotes": "<p>we already used correct logo po</p>",
+      "responseFiles": [],
+      "status": "responded",
+      "_id": {
+        "$oid": "69293843382df812290ab0ff"
+      },
+      "requestedAt": {
+        "$date": "2025-11-28T05:50:59.613Z"
+      }
+    },
+    {
+      "requestedBy": {
+        "$oid": "691e0c6d8ecd2c65989f76c7"
+      },
+      "requestedAt": {
+        "$date": "2025-11-28T06:16:31.120Z"
+      },
+      "revisionNotes": "Request approved by Rovic Rodriguez (Graphics Unit)",
+      "revisionFiles": [],
+      "responseFiles": [],
+      "status": "resolved",
+      "_id": {
+        "$oid": "69293e3fda7d6d182eabed53"
+      }
+    },
+    {
+      "requestedBy": {
+        "$oid": "691e0c6d8ecd2c65989f76c7"
+      },
+      "requestedAt": {
+        "$date": "2025-11-28T06:25:51.236Z"
+      },
+      "revisionNotes": "Request approved by Rovic Rodriguez (Graphics Unit)\n\nFinal Report/Remarks:\nyes done",
+      "revisionFiles": [],
+      "responseFiles": [],
+      "status": "resolved",
+      "_id": {
+        "$oid": "6929406f92a1252d2ef82f94"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2025-11-20T11:12:27.511Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-28T22:21:23.546Z"
+  },
+  "__v": 4,
+  "isDeleted": false
+},
+{
+  "_id": {
+    "$oid": "692012b94fe9bdc16ca30df9"
+  },
+  "title": "Sample Approval",
+  "organization": "College of Information and Computer Studies Student Government (CICSSG)",
+  "description": "<p>Sample\t</p>",
+  "specificRequestType": "Graphics Design",
+  "deadline": {
+    "$date": "2025-11-26T07:20:25.262Z"
+  },
+  "userId": {
+    "$oid": "6920127112a6342312c80eeb"
+  },
+  "status": "approved",
+  "assignedUnits": "Not yet assigned",
+  "originalAssignedUnits": "Graphics",
+  "file": "Screenshot 2025-04-03 114408.png",
+  "files": [
+    "Screenshot 2025-04-03 114408.png"
+  ],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "awaitingResubmission": false,
+  "datetime": {
+    "$date": "2025-11-21T07:20:25.271Z"
+  },
+  "revisionHistory": [],
+  "createdAt": {
+    "$date": "2025-11-21T07:20:25.282Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-26T22:23:58.867Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6927a36a7c4ae4d64d49928a"
+  },
+  "title": "Test Event",
+  "organization": "Strategic Communications Office",
+  "description": "<p>placeholder</p>",
+  "specificRequestType": "Content Posting",
+  "deadline": {
+    "$date": "2025-12-08T01:03:38.284Z"
+  },
+  "userId": {
+    "$oid": "691dfcacd46d6473d31c2287"
+  },
+  "status": "Queued",
+  "assignedUnits": "Public Relations",
+  "originalAssignedUnits": "Public Relations",
+  "file": "Couche-EndorsementForm.pdf",
+  "files": [
+    "Couche-EndorsementForm.pdf"
+  ],
+  "links": [],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "awaitingResubmission": false,
+  "isDeleted": false,
+  "datetime": {
+    "$date": "2025-11-27T01:03:38.288Z"
+  },
+  "revisionHistory": [],
+  "createdAt": {
+    "$date": "2025-11-27T01:03:38.293Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-29T04:05:03.015Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6929411c7004df5d431dbe53"
+  },
+  "title": "jsdnvjds",
+  "organization": "Strategic Communications Office",
+  "description": "<p>zjdfnsvj</p>",
+  "specificRequestType": "Caption Approval",
+  "deadline": {
+    "$date": "2025-12-09T00:00:00.000Z"
+  },
+  "userId": {
+    "$oid": "691dfcacd46d6473d31c2287"
+  },
+  "status": "In Progress",
+  "assignedUnits": "Public Relations",
+  "originalAssignedUnits": "Public Relations",
+  "file": "maxresdefault.jpg",
+  "files": [
+    "maxresdefault.jpg"
+  ],
+  "links": [],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "awaitingResubmission": false,
+  "isDeleted": false,
+  "datetime": {
+    "$date": "2025-11-28T06:28:44.601Z"
+  },
+  "revisionHistory": [],
+  "createdAt": {
+    "$date": "2025-11-28T06:28:44.605Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-28T06:29:54.391Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6929950e780eca5def6b43b3"
+  },
+  "title": "testTitle",
+  "organization": "College of Information and Computer Studies Student Government (CICSSG)",
+  "description": "<p><br></p>",
+  "specificRequestType": "Publication Design",
+  "deadline": {
+    "$date": "2025-12-09T12:26:54.883Z"
+  },
+  "userId": {
+    "$oid": "692983e8780eca5def6b31dd"
+  },
+  "status": "Queued",
+  "assignedUnits": "Graphics",
+  "originalAssignedUnits": "Graphics",
+  "file": "IMG_4654.jpeg",
+  "files": [
+    "IMG_4654.jpeg"
+  ],
+  "links": [],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "awaitingResubmission": false,
+  "isDeleted": false,
+  "datetime": {
+    "$date": "2025-11-28T12:26:54.892Z"
+  },
+  "revisionHistory": [],
+  "createdAt": {
+    "$date": "2025-11-28T12:26:54.896Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-28T12:26:54.896Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "692a90b18cec201bf3204040"
+  },
+  "title": "New request",
+  "organization": "Strategic Communications Office",
+  "description": "<p>Sample request</p>",
+  "specificRequestType": "Graphics Design",
+  "deadline": {
+    "$date": "2025-12-09T00:00:00.000Z"
+  },
+  "userId": {
+    "$oid": "691dfcacd46d6473d31c2287"
+  },
+  "status": "Approved",
+  "assignedUnits": "Graphics",
+  "originalAssignedUnits": "Graphics",
+  "file": "Screenshot (2).png",
+  "files": [
+    "Screenshot (2).png"
+  ],
+  "links": [],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "awaitingResubmission": false,
+  "isDeleted": false,
+  "datetime": {
+    "$date": "2025-11-29T06:20:33.252Z"
+  },
+  "revisionHistory": [],
+  "createdAt": {
+    "$date": "2025-11-29T06:20:33.258Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-29T06:21:00.225Z"
+  },
+  "__v": 0
+}]

@@ -2803,8 +2803,8 @@
       // Fetch admin deadlines data from server
       async function fetchDeadlines() {
         try {
-          console.log('Fetching admin deadlines from /api/deadlines...');
-          const response = await fetch('/api/deadlines', {
+          console.log('Fetching admin deadlines from /api/admin/calendar-requests...');
+          const response = await fetch('/api/admin/calendar-requests', {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
@@ -2813,14 +2813,39 @@
           });
           
           if (response.ok) {
-            const responseText = await response.text();
-            try {
-              deadlinesData = JSON.parse(responseText);
-              console.log('Admin deadlines data received:', deadlinesData);
-            } catch (parseError) {
-              console.error('Error parsing JSON:', parseError);
-              deadlinesData = {};
+            const calendarData = await response.json();
+            console.log('Admin calendar data received:', calendarData);
+            
+            // Convert calendar data to deadlinesData format
+            deadlinesData = {};
+            
+            // Process approval requests
+            if (calendarData.approvalRequests && Array.isArray(calendarData.approvalRequests)) {
+              calendarData.approvalRequests.forEach(req => {
+                if (req.deadline) {
+                  const dateStr = new Date(req.deadline).toISOString().split('T')[0];
+                  if (!deadlinesData[dateStr]) {
+                    deadlinesData[dateStr] = { approvals: 0, services: 0 };
+                  }
+                  deadlinesData[dateStr].approvals++;
+                }
+              });
             }
+            
+            // Process service requests
+            if (calendarData.serviceRequests && Array.isArray(calendarData.serviceRequests)) {
+              calendarData.serviceRequests.forEach(req => {
+                if (req.deadline) {
+                  const dateStr = new Date(req.deadline).toISOString().split('T')[0];
+                  if (!deadlinesData[dateStr]) {
+                    deadlinesData[dateStr] = { approvals: 0, services: 0 };
+                  }
+                  deadlinesData[dateStr].services++;
+                }
+              });
+            }
+            
+            console.log('Processed deadlines data:', deadlinesData);
           } else {
             console.error('Failed to fetch admin deadlines, status:', response.status);
             deadlinesData = {};
@@ -2985,7 +3010,7 @@
         
         try {
           console.log(`Fetching admin details for date: ${dateStr}`);
-          const response = await fetch(`/api/deadlines/${dateStr}/details`, {
+          const response = await fetch(`/api/admin/calendar-requests/${dateStr}/details`, {
             method: 'GET',
             credentials: 'same-origin',
             headers: {

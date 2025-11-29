@@ -1,0 +1,241 @@
+[{
+  "_id": {
+    "$oid": "692012de4fe9bdc16ca30e1b"
+  },
+  "title": "Sample Service",
+  "organization": "College of Information and Computer Studies Student Government (CICSSG)",
+  "description": "<p>Sample</p>",
+  "specificRequestType": "Creation of New Graphics/Pubmat",
+  "deadline": {
+    "$date": "2025-11-29T16:00:00.000Z"
+  },
+  "userId": {
+    "$oid": "6920127112a6342312c80eeb"
+  },
+  "status": "completed",
+  "assignedUnits": "Graphics",
+  "originalAssignedUnits": "Graphics",
+  "file": null,
+  "files": [],
+  "deliverables": [],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "datetime": {
+    "$date": "2025-11-21T07:21:02.429Z"
+  },
+  "revisionHistory": [],
+  "createdAt": {
+    "$date": "2025-11-21T07:21:02.430Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-28T22:20:30.400Z"
+  },
+  "__v": 0,
+  "isDeleted": false
+},
+{
+  "_id": {
+    "$oid": "6927abf07c4ae4d64d49bf32"
+  },
+  "title": "Test Service",
+  "organization": "Strategic Communications Office",
+  "description": "<p>yo </p>",
+  "specificRequestType": "Creation of New Graphics/Pubmat",
+  "deadline": {
+    "$date": "2025-12-04T00:00:00.000Z"
+  },
+  "userId": {
+    "$oid": "691dfcacd46d6473d31c2287"
+  },
+  "status": "For Revision",
+  "assignedUnits": "Graphics",
+  "originalAssignedUnits": "Graphics",
+  "file": "Sales_Performance_Last_7_Days.pdf",
+  "files": [
+    "Sales_Performance_Last_7_Days.pdf"
+  ],
+  "links": [],
+  "deliverables": [
+    "serviceprocess2-1764311884852-432010466.png"
+  ],
+  "revisionCount": 1,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "isDeleted": false,
+  "datetime": {
+    "$date": "2025-11-27T01:40:00.179Z"
+  },
+  "revisionHistory": [
+    {
+      "requestedBy": {
+        "$oid": "691e0c6d8ecd2c65989f76c7"
+      },
+      "requestedAt": {
+        "$date": "2025-11-28T06:38:05.010Z"
+      },
+      "revisionNotes": "Deliverables uploaded by Rovic Rodriguez (Graphics Unit)",
+      "revisionFiles": [],
+      "responseFiles": [],
+      "deliverableFiles": [
+        "serviceprocess2-1764311884852-432010466.png"
+      ],
+      "status": "for_checking",
+      "revisionType": "deliverable_submitted",
+      "revisionNumber": 0,
+      "_id": {
+        "$oid": "6929434d987ac05368eb2ad8"
+      }
+    },
+    {
+      "requestedBy": {
+        "$oid": "691dfcacd46d6473d31c2287"
+      },
+      "requestedAt": {
+        "$date": "2025-11-28T06:49:31.608Z"
+      },
+      "revisionNotes": "<p>pangetpo sorry</p>",
+      "revisionFiles": [],
+      "responseFiles": [],
+      "deliverableFiles": [],
+      "status": "for_revision",
+      "revisionType": "revision_requested",
+      "revisionNumber": 1,
+      "_id": {
+        "$oid": "692945fb8f1f3500a2728bb0"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2025-11-27T01:40:00.180Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-29T02:02:24.345Z"
+  },
+  "__v": 2,
+  "deletedAt": {
+    "$date": "2025-11-29T02:02:24.344Z"
+  },
+  "deletedBy": {
+    "$oid": "691d947e1b976c3604b8c9ae"
+  }
+},
+{
+  "_id": {
+    "$oid": "692928f2779b4d3b0fd0f720"
+  },
+  "title": "Graphics service",
+  "organization": "Strategic Communications Office",
+  "description": "<p>Sample service</p>",
+  "specificRequestType": "Creation of New Logo/Branding Element",
+  "deadline": {
+    "$date": "2025-12-11T00:00:00.000Z"
+  },
+  "userId": {
+    "$oid": "691dfcacd46d6473d31c2287"
+  },
+  "status": "For Revision",
+  "assignedUnits": "Graphics",
+  "originalAssignedUnits": "Graphics",
+  "file": null,
+  "files": [],
+  "links": [
+    "https://www.pinterest.com/index.html"
+  ],
+  "deliverables": [
+    "serviceprocess2-1764306166392-794770672.png"
+  ],
+  "revisionCount": 1,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "isDeleted": false,
+  "datetime": {
+    "$date": "2025-11-28T04:45:38.853Z"
+  },
+  "revisionHistory": [
+    {
+      "requestedBy": {
+        "$oid": "691e0c6d8ecd2c65989f76c7"
+      },
+      "requestedAt": {
+        "$date": "2025-11-28T05:02:47.468Z"
+      },
+      "revisionNotes": "Deliverables uploaded by Rovic Rodriguez (Graphics Unit)",
+      "revisionFiles": [],
+      "responseFiles": [],
+      "deliverableFiles": [
+        "serviceprocess2-1764306166392-794770672.png"
+      ],
+      "status": "for_checking",
+      "revisionType": "deliverable_submitted",
+      "revisionNumber": 0,
+      "_id": {
+        "$oid": "69292cf704d654434f59cd97"
+      }
+    },
+    {
+      "requestedBy": {
+        "$oid": "691dfcacd46d6473d31c2287"
+      },
+      "requestedAt": {
+        "$date": "2025-11-28T06:04:16.279Z"
+      },
+      "revisionNotes": "<p>hello</p>",
+      "revisionFiles": [],
+      "responseFiles": [],
+      "deliverableFiles": [],
+      "status": "for_revision",
+      "revisionType": "revision_requested",
+      "revisionNumber": 1,
+      "_id": {
+        "$oid": "69293b60d9eed49d7bfe2456"
+      }
+    }
+  ],
+  "createdAt": {
+    "$date": "2025-11-28T04:45:38.854Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-28T06:04:16.284Z"
+  },
+  "__v": 2
+},
+{
+  "_id": {
+    "$oid": "6929b40c780eca5def6b4e10"
+  },
+  "title": "Eya",
+  "organization": "DLSU-D Psychological Society (DPS)",
+  "description": "<p>Happy Birthday</p>",
+  "specificRequestType": "Photo/Video Editing Service",
+  "deadline": {
+    "$date": "2026-10-01T00:00:00.000Z"
+  },
+  "userId": {
+    "$oid": "6929b297780eca5def6b4cde"
+  },
+  "status": "Queued",
+  "assignedUnits": "Multimedia",
+  "originalAssignedUnits": "Multimedia",
+  "file": "836c1077-d731-4065-b900-472dbc11b6fe.jpg",
+  "files": [
+    "836c1077-d731-4065-b900-472dbc11b6fe.jpg"
+  ],
+  "links": [],
+  "deliverables": [],
+  "revisionCount": 0,
+  "allowAdditionalFileUpload": true,
+  "viewed": false,
+  "isDeleted": false,
+  "datetime": {
+    "$date": "2025-11-28T14:39:08.527Z"
+  },
+  "revisionHistory": [],
+  "createdAt": {
+    "$date": "2025-11-28T14:39:08.530Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-28T14:39:08.530Z"
+  },
+  "__v": 0
+}]
