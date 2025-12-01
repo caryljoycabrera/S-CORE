@@ -281,6 +281,15 @@ body.modal-open {
   z-index: 100001 !important; /* Above modal backdrop, below Select2 */
 }
 
+/* Confirmation modals should appear above other modals */
+.confirmation-modal {
+  z-index: 100500 !important; /* Above regular modals */
+}
+
+.confirmation-modal-content {
+  z-index: 100501 !important; /* Above confirmation modal backdrop */
+}
+
 /* ========================================
    SELECT2 IN MODALS - CRITICAL FIXES
    ======================================== */

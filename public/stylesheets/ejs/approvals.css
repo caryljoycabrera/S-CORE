@@ -139,6 +139,10 @@ hr {
 
 .back-to-dashboard-container {
   margin: 2rem 3rem 1.5rem 3rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  align-items: center;
 }
 
 .back-to-dashboard-btn {
@@ -164,6 +168,34 @@ hr {
 }
 
 .back-to-dashboard-btn svg {
+  flex-shrink: 0;
+}
+
+/* Trash button styling */
+.trash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #fef3c7;
+  color: #92400e;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.trash-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3);
+  background: #92400e;
+  color: #ffffff;
+}
+
+.trash-btn svg {
   flex-shrink: 0;
 }
 
@@ -956,6 +988,21 @@ hr {
   border-bottom: 1px solid #e2e8f0;
 }
 
+.modal-header.unit-modal-header {
+  background: #0891b2 !important;
+  color: white !important;
+}
+
+.modal-header.unit-modal-header.approval-header-color {
+  background: #0891b2 !important;
+  color: white !important;
+}
+
+.modal-header.unit-modal-header.service-header-color {
+  background: #f97316 !important;
+  color: white !important;
+}
+
 .modal-title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -1202,7 +1249,9 @@ hr {
   background: var(--primary-green);
   color: white;
   padding: 1.5rem;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   border-radius: 12px 12px 0 0;
 }
 
@@ -1212,7 +1261,6 @@ hr {
   font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
 }
 
@@ -1980,8 +2028,8 @@ hr {
 }
 
 .admin-modal-header {
-  background: #dbeafe;
-  color: #1e3a8a;
+  background: #0891b2 !important;
+  color: #ffffff !important;
   padding: 1.5rem;
   border-bottom: none;
   display: flex;
@@ -1989,19 +2037,15 @@ hr {
   justify-content: space-between;
 }
 
-/* Header colors for different request types - Light backgrounds */
+/* Header colors for different request types - Dynamic based on type */
 .admin-modal-header.approval-header-color {
-  background: #dbeafe;
-  color: #1e3a8a;
+  background: #0891b2 !important;
+  color: #ffffff !important;
 }
 
 .admin-modal-header.service-header-color {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.admin-modal-header.approval-header-color {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #f97316 !important;
+  color: #ffffff !important;
 }
 
 .modal-title-section {
@@ -2012,14 +2056,14 @@ hr {
 }
 
 .modal-title-icon {
-  color: #1e3a8a;
+  color: #ffffff;
 }
 
 .modal-title-section h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #ffffff;
 }
 
 .type-badge {
@@ -2028,9 +2072,9 @@ hr {
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  background: rgba(30, 58, 138, 0.15);
-  color: #1e3a8a;
-  border: 1.5px solid rgba(30, 58, 138, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
 }
 
 .admin-chat-button {
@@ -2619,5 +2663,526 @@ hr {
   .admin-modal-body.has-revisions {
     padding: 1rem !important;
     gap: 1rem !important;
+  }
+}
+
+/* ==========================================
+   TWO-COLUMN MODAL LAYOUT
+   Applied to: .unit-modal-wide modals
+   ========================================== */
+.unit-modal-wide {
+  max-width: 1600px !important;
+  width: 95% !important;
+  max-height: 95vh !important;
+  overflow: hidden;
+}
+
+.unit-modal-body {
+  display: grid !important;
+  grid-template-columns: 1fr 700px !important;
+  gap: 2rem !important;
+  padding: 2rem !important;
+  max-height: calc(95vh - 120px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scroll-behavior: smooth !important;
+}
+
+/* Prevent scrolling in child columns */
+.unit-left-column,
+.unit-right-column {
+  overflow: visible !important;
+  min-height: 0 !important;
+}
+
+.unit-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: visible;
+  min-height: fit-content;
+}
+
+.unit-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow: visible;
+  min-height: fit-content;
+}
+
+/* Responsive: Single column on smaller screens */
+@media (max-width: 1400px) {
+  .unit-modal-body {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+}
+
+/* ========================================
+   UNIT CHAT BUTTON - THEME ALIGNED
+   ======================================== */
+
+.unit-info-card.unit-conversation-trigger {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 1.5rem;
+}
+
+.unit-info-card.unit-conversation-trigger:hover {
+  border-color: #86efac;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.25);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+}
+
+.unit-chat-button {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.unit-chat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border-radius: 10px;
+  flex-shrink: 0;
+  color: white;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.unit-chat-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.unit-chat-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.unit-chat-text strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #166534;
+  letter-spacing: 0.3px;
+}
+
+.unit-chat-text small {
+  font-size: 0.8rem;
+  color: #15803d;
+  font-weight: 500;
+}
+
+.unit-chat-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #22c55e;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.unit-chat-arrow svg {
+  width: 20px;
+  height: 20px;
+  stroke: #22c55e;
+  stroke-width: 2.5;
+}
+
+.unit-chat-button:hover .unit-chat-arrow {
+  transform: translateX(6px);
+  color: #16a34a;
+}
+
+.unit-chat-button:hover .unit-chat-arrow svg {
+  stroke: #16a34a;
+}
+
+.unit-info-card.unit-conversation-trigger:hover .unit-chat-icon {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+/* ========================================
+   EDIT AND DELETE BUTTON STYLES
+   ======================================== */
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.modal-action-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.modal-action-btn.edit-btn:hover {
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.modal-action-btn.delete-btn:hover {
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.modal-action-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+/* Edit Modal Specific Styles */
+.edit-modal-content {
+  max-width: 600px;
+  width: 90%;
+}
+
+.edit-modal-body {
+  padding: 24px;
+}
+
+.edit-form-group {
+  margin-bottom: 20px;
+}
+
+.edit-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.edit-form-group .required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.edit-input,
+.edit-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+
+.edit-input:focus,
+.edit-textarea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.edit-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* Read-only Information Section */
+.edit-info-section {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.edit-readonly-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.edit-readonly-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.edit-readonly-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.edit-readonly-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #064e3b;
+  background: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #d1fae5;
+}
+
+/* Form row for side-by-side fields */
+.edit-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .edit-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .edit-readonly-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Delete Modal Warning Style */
+.confirmation-header.warning {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-bottom: 2px solid #fecaca;
+}
+
+.confirmation-header.warning h3 {
+  color: #991b1b;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-cancel,
+.btn-confirm,
+.btn-danger {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm {
+  background: #10b981;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: #059669;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+/* ==========================================
+   TRASH MODAL STYLES
+   ========================================== */
+
+.trash-modal-content {
+  max-width: 1200px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.trash-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.trash-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 1rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.trash-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.trash-requests-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trash-requests-table thead {
+  background: #f8f9fa;
+}
+
+.trash-requests-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.trash-requests-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.trash-request-row:hover {
+  background: #f9fafb;
+}
+
+.trash-empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.trash-empty-state svg {
+  margin-bottom: 1rem;
+}
+
+.trash-empty-state p {
+  margin: 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.trash-empty-state p:last-child {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+/* Action buttons in trash modal */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+}
+
+.restore-btn {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.restore-btn:hover {
+  background: #1e40af;
+  color: white;
+}
+
+.delete-btn-permanent {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.delete-btn-permanent:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-header-actions {
+    gap: 4px;
+  }
+
+  .modal-action-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .modal-action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .modal-action-btn span {
+    display: none;
   }
 }

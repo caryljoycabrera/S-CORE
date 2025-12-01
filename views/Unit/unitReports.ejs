@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= unitTeam %> Unit Reports - S-CORE</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/notifications.css" />
+  <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/announcements-shared.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+  <script src="/javascripts/unit-navbar.js"></script>
+</head>
+<body>
+  <!-- Unit Sidebar Navigation -->
+  <%- include('../partials/unit-navbar', { user: user, activePage: 'reports' }) %>
+
+  <!-- MAIN CONTENT WITH HEADER -->
+  <div class="unit-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
+      <div class="header-left-group">
+        <!-- Hamburger Menu Button for Mobile -->
+        <button class="unit-menu-toggle" id="unitMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
+      </div>
+
+      <span class="text-wrapper-2">Welcome, <%= user.fName %> <%= user.lName %>!</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+
+        <div class="dropdown-wrapper">
+          <div class="dropdown">
+            <button class="dropbtn">
+              <img src="<%= user.profilePicture || '/Picture/default-profile.png' %>" alt="Profile" class="profile-pic">
+              <span class="profile-name"><%= user.fName %> <%= user.lName %></span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </button>
+            <div class="dropdown-content">
+              <a href="/unit/profile">Profile</a>
+              <a href="/logout">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="unit-content-area">
+      <div class="unit-page-header">
+        <h1>Unit Reports</h1>
+        <p>Generate and view reports for your unit's tasks and activities.</p>
+      </div>
+
+      <div class="reports-container">
+        <div class="reports-grid">
+          <!-- Task Summary Report -->
+          <div class="report-card">
+            <div class="report-header">
+              <h3>Task Summary Report</h3>
+              <p>Overview of all tasks assigned to your unit</p>
+            </div>
+            <div class="report-actions">
+              <button class="btn-primary" onclick="generateTaskSummary()">Generate Report</button>
+            </div>
+          </div>
+
+          <!-- Deadline Report -->
+          <div class="report-card">
+            <div class="report-header">
+              <h3>Deadline Report</h3>
+              <p>Tasks approaching or past their deadlines</p>
+            </div>
+            <div class="report-actions">
+              <button class="btn-primary" onclick="generateDeadlineReport()">Generate Report</button>
+            </div>
+          </div>
+
+          <!-- Performance Report -->
+          <div class="report-card">
+            <div class="report-header">
+              <h3>Performance Report</h3>
+              <p>Unit performance metrics and statistics</p>
+            </div>
+            <div class="report-actions">
+              <button class="btn-primary" onclick="generatePerformanceReport()">Generate Report</button>
+            </div>
+          </div>
+
+          <!-- Activity Report -->
+          <div class="report-card">
+            <div class="report-header">
+              <h3>Activity Report</h3>
+              <p>Recent activities and task updates</p>
+            </div>
+            <div class="report-actions">
+              <button class="btn-primary" onclick="generateActivityReport()">Generate Report</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function generateTaskSummary() {
+      alert('Task Summary Report generation coming soon!');
+    }
+
+    function generateDeadlineReport() {
+      alert('Deadline Report generation coming soon!');
+    }
+
+    function generatePerformanceReport() {
+      alert('Performance Report generation coming soon!');
+    }
+
+    function generateActivityReport() {
+      alert('Activity Report generation coming soon!');
+    }
+  </script>
+</body>
+</html>

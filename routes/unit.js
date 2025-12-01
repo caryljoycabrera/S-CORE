@@ -8,6 +8,7 @@ const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const BroadcastMessage = require('../models/BroadcastMessage');
+const Notification = require('../models/Notification');
 const { requireUnit } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const uploadConfig = require('../config/upload');
@@ -1483,6 +1484,30 @@ router.post('/unit/task/acknowledge/:id', requireUnit, async (req, res) => {
   } catch (error) {
     console.error('Error acknowledging task:', error);
     res.status(500).json({ success: false, message: 'Error acknowledging task: ' + error.message });
+  }
+});
+
+/**
+ * GET /unit/reports
+ * Unit member reports page
+ */
+router.get('/unit/reports', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const unreadCount = await Notification.countDocuments({
+      recipient: req.user._id,
+      read: false
+    });
+    res.render('Unit/unitReports', {
+      user: user,
+      unreadCount: unreadCount,
+      unitTeam: user.unitTeam // Pass unitTeam to the view
+    });
+  } catch (error) {
+    console.error('Error rendering reports page:', error);
+    res.status(500).render('error', {
+      message: 'Error loading reports page'
+    });
   }
 });
 

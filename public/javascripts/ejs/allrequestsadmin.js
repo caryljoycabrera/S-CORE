@@ -1007,7 +1007,7 @@ function populateModalData(rowData) {
   setDetailText('detailSpecificRequest', rowData.specifictype);
   setDetailText('detailOrganization', rowData.organization);
   setDetailText('detailDatetime', rowData.datetime);
-  setDetailText('detailDescription', rowData.description || 'No description provided');
+  setElementHTML('detailDescription', rowData.description || 'No description provided');
 
   // Handle deadline visibility
   const deadlineElements = ['deadlineInfo', 'adminDeadlineField'];
@@ -1022,13 +1022,19 @@ function populateModalData(rowData) {
 
   populateAdminForm(rowData);
   populateFilePreview(rowData);
-  loadRevisionHistory(currentRequestId);
+  
+  // Load revision history based on request type
+  if (currentRequestType === 'Service Request') {
+    loadServiceRevisionHistory(currentRequestId);
+  } else {
+    loadRevisionHistory(currentRequestId);
+  }
   
   // Setup chat button click handler
   const chatButton = document.getElementById('openChatFromModal');
   if (chatButton) {
     chatButton.onclick = function() {
-      openTeamConversationModal(currentRequestId);
+      window.openConversation(currentRequestId);
     };
   }
 }
@@ -1036,6 +1042,11 @@ function populateModalData(rowData) {
 function setDetailText(id, value) {
   const element = document.getElementById(id);
   if (element) element.textContent = value || 'N/A';
+}
+
+function setElementHTML(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.innerHTML = value || 'N/A';
 }
 
 // Admin form population
@@ -1091,7 +1102,10 @@ function populateAdminForm(rowData) {
   const statusSelect = document.getElementById('adminStatusSelect');
   if (statusSelect) {
     const options = getStatusOptions(rowData.type);
-    statusSelect.innerHTML = options.map(opt => `<option value="${opt}" ${opt === rowData.status ? 'selected' : ''}>${opt}</option>`).join('');
+    // Add current value as first option with special label
+    const currentOption = `<option value="${rowData.status}" selected>${rowData.status}</option>`;
+    const otherOptions = options.filter(opt => opt !== rowData.status).map(opt => `<option value="${opt}">${opt}</option>`).join('');
+    statusSelect.innerHTML = currentOption + otherOptions;
     document.getElementById('currentStatusValue').textContent = rowData.status;
   }
 
@@ -1147,28 +1161,37 @@ function populateUnitsDropdown(rowData) {
 
   const recommendations = specificRecommendations[rowData.specifictype || rowData.specificRequestType] || [];
   const unitsSelect = document.getElementById('adminUnitsSelect');
+  const currentUnitsValue = rowData.units === 'Not yet assigned' ? '' : rowData.units;
 
-  // Create recommended units optgroup (only recommended ones)
+  // Create current unit option at the top
+  let currentUnitOption = '';
+  if (currentUnitsValue) {
+    currentUnitOption = `<option value="${currentUnitsValue}" selected>${currentUnitsValue}</option>`;
+  }
+
+  // Create recommended units optgroup (excluding current unit if it's recommended)
   const recommendedUnitsHTML = recommendations.length > 0 ?
-    `<optgroup label="Recommended Units">${recommendations.map(unit =>
+    `<optgroup label="Recommended Units">${recommendations.filter(unit => unit !== currentUnitsValue).map(unit =>
       `<option value="${unit}" class="recommended-unit">★ ${unit}</option>`
     ).join('')}</optgroup>` :
     `<optgroup label="Recommended Units"><option value="" disabled>No recommendations available</option></optgroup>`;
 
-  // Create other units optgroup (units not in recommendations)
-  const otherUnits = unitNames.filter(unit => !recommendations.includes(unit));
+  // Create other units optgroup (units not in recommendations and not current)
+  const otherUnits = unitNames.filter(unit => !recommendations.includes(unit) && unit !== currentUnitsValue);
   const otherUnitsHTML = otherUnits.length > 0 ?
     `<optgroup label="Other Units">${otherUnits.map(unit =>
       `<option value="${unit}">${unit}</option>`
     ).join('')}</optgroup>` : '';
 
   unitsSelect.innerHTML = `
-    <option value="">Not yet assigned</option>
+    <option value="" ${currentUnitsValue === '' ? 'selected' : ''}>Not yet assigned</option>
+    ${currentUnitOption}
     ${recommendedUnitsHTML}
     ${otherUnitsHTML}
   `;
 
-  unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
+  // Also set the value programmatically as backup
+  unitsSelect.value = currentUnitsValue;
 }
 
 function formatDateForInput(dateStr) {
@@ -2364,6 +2387,198 @@ function formatText(text) {
     return formatted;
 }
 
+// ==========================================
+// APPROVAL REQUEST REVISION HISTORY FUNCTIONS (Admin View)
+// ==========================================
+
+async function loadRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    console.log('[Approval Revision History] Starting load for request:', requestId);
+    
+    if (!historyContainer) {
+        console.warn('[Approval Revision History] Container not found');
+        return;
+    }
+    
+    try {
+        // Try to fetch approval revision history from API
+        const response = await fetch(`/api/approval-revision-history/${requestId}`);
+        const contentType = response.headers.get('content-type');
+        
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('[Approval Revision History] API returned non-JSON response');
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('[Approval Revision History] API Response:', result);
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            // Filter out initial submission for revision display
+            const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+            
+            if (revisionsToShow.length > 0) {
+                // Show the revision history section
+                if (historySection) {
+                    historySection.style.display = 'block';
+                }
+                
+                // Clear container
+                historyContainer.innerHTML = '';
+                
+                // Render each revision entry
+                revisionsToShow.forEach((revision, index) => {
+                    const entry = createRevisionEntry(revision, index, revisionsToShow.length);
+                    historyContainer.appendChild(entry);
+                });
+                
+                // Enable two-column layout
+                const modalContent = document.querySelector('#detailsModal .modal-content');
+                const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+                const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+                
+                if (modalContent && modalBody) {
+                    modalContent.style.maxWidth = '1600px';
+                    modalBody.classList.add('has-revisions');
+                }
+                if (rightColumn) {
+                    rightColumn.style.display = 'flex';
+                }
+            } else {
+                // No revisions to show
+                if (historySection) historySection.style.display = 'none';
+                resetModalLayout();
+            }
+        } else {
+            console.log('[Approval Revision History] No revisions available');
+            if (historySection) historySection.style.display = 'none';
+            resetModalLayout();
+        }
+    } catch (error) {
+        console.error('[Approval Revision History] Error loading:', error);
+        // Don't show error to user, just hide the section
+        if (historySection) historySection.style.display = 'none';
+        resetModalLayout();
+    }
+}
+
+function resetModalLayout() {
+    const modalContent = document.querySelector('#detailsModal .modal-content');
+    const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+    const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+    
+    if (modalContent && modalBody) {
+        modalContent.style.maxWidth = '900px';
+        modalBody.classList.remove('has-revisions');
+    }
+    if (rightColumn) rightColumn.style.display = 'none';
+}
+
+function createRevisionEntry(revision, index, total) {
+    const entry = document.createElement('div');
+    entry.className = 'revision-conversation-item';
+    
+    // Format timestamp
+    const timestamp = new Date(revision.timestamp || revision.createdAt || Date.now());
+    const fullTimestamp = timestamp.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    // Get relative time
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let relativeTime;
+    if (diffMins < 1) relativeTime = 'Just now';
+    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    else relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    // Determine badge and label
+    let typeLabel = 'Update';
+    let badgeClass = 'badge-revision';
+    
+    if (revision.type === 'approved') {
+        typeLabel = '✓ Approved';
+        badgeClass = 'badge-approved';
+    } else if (revision.type === 'rejected') {
+        typeLabel = '✕ Rejected';
+        badgeClass = 'badge-rejection';
+    } else if (revision.type === 'revision_requested') {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    }
+    
+    const isLast = index === total - 1;
+    let statusIndicator = '';
+    
+    if (revision.type === 'approved') {
+        statusIndicator = `
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <span style="color: #10b981; font-weight: 600;">Request Approved</span>
+            </div>
+        `;
+    } else if (revision.type === 'rejected') {
+        statusIndicator = `
+            <div class="status-indicator rejected">
+                <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="8" y1="8" x2="16" y2="16"/>
+                    <line x1="16" y1="8" x2="8" y2="16"/>
+                </svg>
+                <span style="color: #ef4444; font-weight: 600;">Request Rejected</span>
+            </div>
+        `;
+    }
+    
+    const authorName = revision.by || revision.authorName || 'Admin';
+    const content = revision.notes || revision.description || 'No details provided';
+    
+    entry.innerHTML = `
+        <div class="revision-number-badge">#${index + 1}</div>
+        <div class="revision-message-bubble">
+            <div class="revision-bubble-header">
+                <div>
+                    <span class="revision-author">${escapeHtml(authorName)}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
+                <div class="revision-timestamp">
+                    <span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
+                </div>
+            </div>
+            
+            <div class="message-content-section">
+                <div class="content-label">APPROVAL DETAILS:</div>
+                <div class="content-text">${displayFormattedText(content)}</div>
+            </div>
+            
+            ${statusIndicator}
+        </div>
+    `;
+    
+    return entry;
+}
+
+
+
 // Send team message
 window.sendTeamMessage = function() {
     console.log('[AllRequestsAdmin] Send team message triggered');
@@ -2924,4 +3139,343 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ==========================================
+// SERVICE REVISION HISTORY FUNCTIONS (Admin View)
+// ==========================================
+
+async function loadServiceRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    console.log('[Service Revision History] ===== STARTING LOAD =====');
+    console.log('[Service Revision History] Request ID:', requestId);
+    console.log('[Service Revision History] History section element:', !!historySection);
+    console.log('[Service Revision History] History container element:', !!historyContainer);
+    
+    if (!historyContainer) {
+        console.warn('[Service Revision History] ❌ Container not found!');
+        return;
+    }
+    
+    try {
+        console.log('[Service Revision History] Fetching from API...');
+        const response = await fetch(`/api/service-revision-history/${requestId}`);
+        console.log('[Service Revision History] Response status:', response.status);
+        console.log('[Service Revision History] Response OK:', response.ok);
+        
+        const contentType = response.headers.get('content-type');
+        console.log('[Service Revision History] Content-Type:', contentType);
+        
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('[Service Revision History] ❌ API returned non-JSON response');
+            if (historySection) historySection.style.display = 'none';
+            return;
+        }
+        
+        const result = await response.json();
+        console.log('[Service Revision History] ===== API RESPONSE =====');
+        console.log('[Service Revision History] Success:', result.success);
+        console.log('[Service Revision History] Revisions count:', result.revisions ? result.revisions.length : 0);
+        console.log('[Service Revision History] Full response:', result);
+        
+        if (result.success && result.revisions && result.revisions.length > 0) {
+            // Log each revision before filtering
+            result.revisions.forEach((rev, idx) => {
+                console.log(`[Service Revision History] ===== REVISION ${idx} DETAILS =====`);
+                console.log('[Service Revision History] Type:', rev.type);
+                console.log('[Service Revision History] Has requestedBy:', !!rev.requestedBy);
+                console.log('[Service Revision History] Has respondedBy:', !!rev.respondedBy);
+                console.log('[Service Revision History] Deliverable files:', rev.deliverableFiles ? rev.deliverableFiles.length : 0);
+                console.log('[Service Revision History] Response files:', rev.responseFiles ? rev.responseFiles.length : 0);
+                console.log('[Service Revision History] Timestamp:', rev.timestamp || rev.requestedAt || rev.respondedAt);
+                console.log('[Service Revision History] Full object:', rev);
+                console.log('[Service Revision History] =====================================');
+            });
+            
+            // Filter out initial submission
+            const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+            
+            console.log('[Service Revision History] Filtered revisions count:', revisionsToShow.length);
+            console.log('[Service Revision History] Revisions to show:', revisionsToShow);
+            
+            if (revisionsToShow.length > 0) {
+                console.log('[Service Revision History] ✅ Showing section with', revisionsToShow.length, 'revisions');
+                
+                // Show the revision history section
+                if (historySection) {
+                    historySection.style.display = 'block';
+                }
+                
+                // Clear container
+                historyContainer.innerHTML = '';
+                
+                // Render each revision entry
+                revisionsToShow.forEach((revision, index) => {
+                    console.log('[Service Revision History] Creating entry', index + 1, 'of', revisionsToShow.length);
+                    console.log('[Service Revision History] Revision type:', revision.type);
+                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                    historyContainer.appendChild(entry);
+                });
+                
+                // Enable two-column layout for revision history
+                const modalContent = document.querySelector('#detailsModal .modal-content');
+                const modalBody = document.querySelector('#detailsModal .unit-modal-body');
+                const rightColumn = document.querySelector('#detailsModal .unit-right-column');
+                
+                console.log('[Service Revision History] Modal content element:', !!modalContent);
+                console.log('[Service Revision History] Modal body element:', !!modalBody);
+                console.log('[Service Revision History] Right column element:', !!rightColumn);
+                
+                if (modalContent && modalBody) {
+                    modalContent.style.maxWidth = '1600px';
+                    modalBody.classList.add('has-revisions');
+                }
+                if (rightColumn) {
+                    rightColumn.style.display = 'flex';
+                    console.log('[Service Revision History] ✅ Set right column display to flex');
+                }
+                
+                console.log('[Service Revision History] ✅ Two-column layout enabled');
+            } else {
+                // No revisions to show, but keep section visible for service requests
+                console.log('[Service Revision History] No revisions after filtering');
+                if (historySection) historySection.style.display = 'block'; // Keep visible even without revisions
+                const modalContent = document.querySelector('#detailsModal .modal-content');
+                const modalBody = document.querySelector('#detailsModal .unit-modal-body');
+                const rightColumn = document.querySelector('#detailsModal .unit-right-column');
+                if (modalContent && modalBody) {
+                    modalContent.style.maxWidth = '900px';
+                    modalBody.classList.remove('has-revisions');
+                }
+                if (rightColumn) rightColumn.style.display = 'none';
+            }
+        } else {
+            console.log('[Service Revision History] No revisions to display');
+            if (historySection) historySection.style.display = 'none';
+            const modalContent = document.querySelector('#detailsModal .modal-content');
+            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+            if (modalContent && modalBody) {
+                modalContent.style.maxWidth = '900px';
+                modalBody.classList.remove('has-revisions');
+            }
+            if (rightColumn) rightColumn.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('[Service Revision History] ❌ ERROR:', error);
+        console.error('[Service Revision History] Error stack:', error.stack);
+        if (historySection) historySection.style.display = 'none';
+        const modalContent = document.querySelector('#detailsModal .modal-content');
+        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
+        if (modalContent && modalBody) {
+            modalContent.style.maxWidth = '900px';
+            modalBody.classList.remove('has-revisions');
+        }
+        if (rightColumn) rightColumn.style.display = 'none';
+    }
+}
+
+function createServiceRevisionEntry(revision, index, total) {
+    console.log('🔍 [Service Admin] Creating revision entry:', {
+        index,
+        total,
+        type: revision.type,
+        hasDeliverableFiles: !!(revision.deliverableFiles && revision.deliverableFiles.length),
+        hasResponseFiles: !!(revision.responseFiles && revision.responseFiles.length)
+    });
+    
+    const entry = document.createElement('div');
+    
+    // Determine if this is a unit action or requestor action
+    const isUnitAction = revision.requestedBy || 
+                         revision.type === 'deliverable_submitted' || 
+                         revision.type === 'completed';
+    const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+    
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
+    
+    // Format timestamp
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt);
+    const fullTimestamp = timestamp.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    // Get relative time
+    const now = new Date();
+    const diffMs = now - timestamp;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let relativeTime;
+    if (diffMins < 1) relativeTime = 'Just now';
+    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    else relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    // Determine message type and styling
+    let typeLabel, badgeClass;
+    
+    if (revision.type === 'deliverable_submitted') {
+        typeLabel = 'Deliverables Uploaded';
+        badgeClass = 'badge-resubmitted';
+    } else if (revision.type === 'completed') {
+        typeLabel = '✓ Completed';
+        badgeClass = 'badge-approved';
+    } else if (revision.type === 'revision_requested') {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
+    } else {
+        typeLabel = 'Update';
+        badgeClass = 'badge-revision';
+    }
+    
+    // Get author name
+    let authorName = 'Unknown';
+    let authorUnit = '';
+    
+    if (revision.requestedBy) {
+        if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
+            authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
+            if (revision.requestedBy.unitTeam) {
+                authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+            }
+        }
+    } else if (revision.respondedBy) {
+        if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
+            authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+        }
+    }
+    
+    // Status indicator for last message
+    const isLast = index === total - 1;
+    let statusIndicator = '';
+    
+    if (revision.type === 'completed') {
+        statusIndicator = `
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <span style="color: #10b981; font-weight: 600;">Service Request Completed</span>
+            </div>
+        `;
+    } else if (isLast) {
+        if (isUnitAction) {
+            statusIndicator = `
+                <div class="status-indicator waiting">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 16 14"/>
+                    </svg>
+                    Awaiting Requestor Review
+                </div>
+            `;
+        } else {
+            statusIndicator = `
+                <div class="status-indicator under-review">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Under Unit Review
+                </div>
+            `;
+        }
+    }
+    
+    // Get content
+    let content = '';
+    if (isUnitAction) {
+        content = revision.revisionNotes || 'Deliverables submitted';
+    } else {
+        content = revision.responseNotes || 'Revision requested';
+    }
+    
+    // Get files
+    const files = revision.deliverableFiles || revision.responseFiles || [];
+    
+    // Show revision number for completed entries, otherwise just sequential number
+    const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) 
+        ? `REV #${revision.revisionNumber}` 
+        : `#${index + 1}`;
+    
+    entry.innerHTML = `
+        <div class="revision-number-badge">${badgeNumber}</div>
+        <div class="revision-message-bubble">
+            <div class="revision-bubble-header">
+                <div>
+                    <span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span>
+                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
+                </div>
+                <div class="revision-timestamp">
+                    <span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
+                </div>
+            </div>
+            
+            <div class="message-content-section">
+                <div class="content-label">${isUnitAction ? 'UNIT UPDATE:' : 'REQUESTOR FEEDBACK:'}</div>
+                <div class="content-text">${displayFormattedText(content)}</div>
+            </div>
+            
+            ${files && files.length > 0 ? `
+                <div class="message-attachments-section">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        <span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div class="attachments-grid">
+                        ${files.map(file => createAdminRevisionFileCard(file, revision.requestedAt || revision.respondedAt)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${statusIndicator}
+        </div>
+    `;
+    
+    return entry;
+}
+
+// Helper function to display formatted text (supports HTML from Quill and markdown-style formatting)
+function displayFormattedText(text) {
+    if (!text) return '';
+    
+    // Check if the text is already HTML (from Quill editor)
+    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
+    if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
+        // It's HTML content from Quill, return as-is
+        return text;
+    }
+    
+    // It's plain text, escape HTML first
+    let formatted = escapeHtml(text);
+    
+    // Bold: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    
+    // Italic: *text* -> <em>text</em> (but not ** which is bold)
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    
+    // Underline: __text__ -> <u>text</u>
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    
+    // Preserve line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
 }

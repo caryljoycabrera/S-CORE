@@ -132,6 +132,19 @@ const serviceRequestSchema = new mongoose.Schema({
   viewedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+
+  // Soft delete tracking (Archive/Trash functionality)
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields
