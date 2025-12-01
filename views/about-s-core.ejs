@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About S-CORE</title>
+  <link rel="stylesheet" href="/stylesheets/ejs/homepage.css">
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="loading" id="loading">
+    <div class="loader"></div>
+  </div>
+
+  <div class="bg-animation"></div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <div class="logo-area">
+        <img src="Picture/logo.jpg" alt="DLSU-D Logo">
+        <span class="logo-text">Strategic Communications Office</span>
+      </div>
+      <div class="nav-links">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/#about" class="nav-link">About</a>
+          <a href="/#gallery" class="nav-link">Gallery</a>
+          <a href="/#services" class="nav-link">Services</a>
+          <a href="/#team" class="nav-link">Team</a>
+          <a href="/#contact" class="nav-link">Contact</a>
+          <a href="/about-s-core" class="nav-link cta-nav active">Access S-CORE</a>
+      </div>
+      <div class="mobile-menu-toggle" id="mobileMenuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/#about" class="nav-link">About</a>
+      <a href="/#gallery" class="nav-link">Gallery</a>
+      <a href="/#services" class="nav-link">Services</a>
+      <a href="/#team" class="nav-link">Team</a>
+      <a href="/#contact" class="nav-link">Contact</a>
+      <a href="/about-s-core" class="nav-link cta-nav active">Access S-CORE</a>
+    </div>
+  </div>
+
+  <section class="hero" id="about-s-core" style="position: relative; background: linear-gradient(120deg, #e8f5e8 60%, #f0f8f0 100%); color: #1a2e1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden;">
+    <div style="position: absolute; left: 0; right: 0; top: 0; height: 900px; background: linear-gradient(120deg, #e8f5e8 60%, #f0f8f0 100%); z-index: 0; pointer-events: none;"></div>
+    <div class="hero-grid" style="display: grid; grid-template-columns: 1fr 1.3fr; grid-template-rows: auto 1fr; column-gap: 64px; row-gap: 32px; width: 100%; max-width: 1300px; margin-top: 18px; position: relative; z-index: 2;">
+      <div style="grid-column: 1; grid-row: 1; margin-bottom: 10px; align-self: flex-start; width: 100%; max-width: 520px; margin-top: 0;">
+        <div class="about-s-core-header-card fade-in" style="background: #fff; border-radius: 28px; box-shadow: 0 4px 32px rgba(20,83,45,0.10); padding: 8px 28px 12px 28px; margin-bottom: 10px;">
+          <h1 class="hero-highlight" style="font-size: 2.3rem; margin-bottom: 8px; letter-spacing: 2px; margin-left: 0;">S-CORE</h1>
+          <p style="font-size: 1.2rem; color: #4a5d4a; margin-bottom: 0; font-weight: 500; max-width: 600px;">
+            <%= pageContent.sCorePlatformDescription %>
+          </p>
+        </div>
+        <div class="hero-content fade-in" style="background: #fff; border-radius: 28px; box-shadow: 0 4px 32px rgba(20,83,45,0.10); padding: 32px 28px; color: #14532d; width: 100%; max-width: 520px; min-height: 260px;">
+          <h2 style="font-family: 'Inter', sans-serif; font-size: 1.7rem; color: #14532d; margin-bottom: 14px; text-align: left;">
+            <%= pageContent.sCoreWhatIsTitle %>
+          </h2>
+          <p style="font-size: 1.05rem; margin-bottom: 18px; color: #1a2e1a; text-align: left;">
+            <%= pageContent.sCoreWhatIsDescription %>
+          </p>
+          <div class="hero-buttons" style="margin-top: 18px; display: flex; gap: 18px; justify-content: flex-start;">
+            <a href="<%= pageContent.sCoreLoginButtonLink %>" class="btn-primary" style="background: linear-gradient(90deg, #2e7d32 60%, #43a047 100%); color: #fff; font-weight: 700; padding: 14px 36px; border-radius: 10px; text-decoration: none; font-size: 1.08rem; box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10); border: none; transition: box-shadow 0.2s, transform 0.2s; display: flex; align-items: center; gap: 8px;">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px;"><circle cx="11" cy="11" r="10" stroke="#fff" stroke-width="2" fill="#2e7d32"/><path d="M11 13.5C13.4853 13.5 15.5 11.4853 15.5 9C15.5 6.51472 13.4853 4.5 11 4.5C8.51472 4.5 6.5 6.51472 6.5 9C6.5 11.4853 8.51472 13.5 11 13.5Z" stroke="#fff" stroke-width="1.5"/><path d="M4.5 17.5C4.5 15.0147 7.01472 13 11 13C14.9853 13 17.5 15.0147 17.5 17.5" stroke="#fff" stroke-width="1.5"/></svg>
+              <%= pageContent.sCoreLoginButtonText %>
+            </a>
+            <a href="<%= pageContent.sCoreSignupButtonLink %>" class="btn-secondary" style="background: #fff; color: #2e7d32; font-weight: 700; padding: 14px 36px; border: 2px solid #43a047; border-radius: 10px; text-decoration: none; font-size: 1.08rem; box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10); transition: box-shadow 0.2s, transform 0.2s; display: flex; align-items: center; gap: 8px;">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px;"><rect x="3" y="6" width="16" height="10" rx="3" stroke="#43a047" stroke-width="2" fill="#fff"/><path d="M3 6L11 13L19 6" stroke="#43a047" stroke-width="1.5"/></svg>
+              <%= pageContent.sCoreSignupButtonText %>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div style="grid-column: 2; grid-row: 1 / span 2; align-self: stretch; display: flex; align-items: flex-start; justify-content: flex-end; min-width: 0;">
+        <div class="hero-card" style="background: #f0f8f0; border-radius: 28px; padding: 30px 20px 30px 20px; box-shadow: 0 10px 30px rgba(26,93,26,0.08); text-align: left; color: #14532d; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 900px; min-width: 400px; min-height: 420px;">
+          <h3 class="pledge-title" style="color: #14532d; font-size: 1.3rem; margin-bottom: 8px; margin-top: 0; text-align: left; width: 100%;">
+            <%= pageContent.sCoreWhyTitle %>
+          </h3>
+          <img src="<%= pageContent.sCoreDashboardImage %>" alt="S-CORE Dashboard Screenshot" style="width: 99%; max-width: 850px; border-radius: 16px; margin-bottom: 20px; margin-top: 10px; box-shadow: 0 2px 12px rgba(20,83,45,0.10);" />
+          <p style="font-size: 1rem; color: #1a2e1a; margin-bottom: 0; margin-top: 0; text-align: justify; width: 100%;">
+            <%= pageContent.sCoreWhyDescription %>
+          </p>
+        </div>
+      </div>
+    </div>
+    <canvas id="sCoreAnim" style="position: absolute; inset: 0; z-index: 0; pointer-events: auto;"></canvas>
+    <!-- Removed separate visual section, now background image is used -->
+  </section>
+
+  <script>
+    // Interactive floating dots animation
+    const canvas = document.getElementById('sCoreAnim');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let dots = [];
+    const DOTS_COUNT = Math.max(30, Math.floor(width / 40));
+    function resizeCanvas() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    function randomDot() {
+      return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 8 + 4,
+        dx: (Math.random() - 0.5) * 0.3, // slower speed
+        dy: (Math.random() - 0.5) * 0.3, // slower speed
+        color: ['#FFD700', '#fff', '#1a2e1a', '#14532d'][Math.floor(Math.random()*4)]
+      };
+    }
+    function initDots() {
+      dots = [];
+      for (let i = 0; i < DOTS_COUNT; i++) {
+        dots.push(randomDot());
+      }
+    }
+    initDots();
+    function drawDots() {
+      ctx.clearRect(0, 0, width, height);
+      dots.forEach(dot => {
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.r, 0, 2 * Math.PI);
+        ctx.fillStyle = dot.color;
+        ctx.globalAlpha = 0.7;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+    }
+    function updateDots() {
+      dots.forEach(dot => {
+        dot.x += dot.dx;
+        dot.y += dot.dy;
+        // Wrap around instead of bouncing
+        if (dot.x < -dot.r) dot.x = width + dot.r;
+        if (dot.x > width + dot.r) dot.x = -dot.r;
+        if (dot.y < -dot.r) dot.y = height + dot.r;
+        if (dot.y > height + dot.r) dot.y = -dot.r;
+      });
+    }
+    function animate() {
+      updateDots();
+      drawDots();
+      requestAnimationFrame(animate);
+    }
+    animate();
+    // Mouse interaction: dots move away from cursor
+    const heroSection = document.getElementById('about-s-core');
+    function handleMouseMove(e) {
+      let mx, my;
+      if (e.touches && e.touches.length > 0) {
+        mx = e.touches[0].clientX;
+        my = e.touches[0].clientY;
+      } else {
+        mx = e.clientX;
+        my = e.clientY;
+      }
+      dots.forEach(dot => {
+        const dist = Math.hypot(dot.x - mx, dot.y - my);
+        if (dist < 80) {
+          // Limit the speed change to prevent fast acceleration
+          const maxChange = 0.12;
+          let dxChange = (dot.x - mx) / dist * 0.08;
+          let dyChange = (dot.y - my) / dist * 0.08;
+          dxChange = Math.max(-maxChange, Math.min(maxChange, dxChange));
+          dyChange = Math.max(-maxChange, Math.min(maxChange, dyChange));
+          dot.dx += dxChange;
+          dot.dy += dyChange;
+        }
+      });
+    }
+    heroSection.addEventListener('mousemove', handleMouseMove);
+    heroSection.addEventListener('touchmove', handleMouseMove);
+  </script>
+
+  <script src="javascripts/ejs/homepage.js"></script>
+</body>
+</html>

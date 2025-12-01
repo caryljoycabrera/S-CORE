@@ -32,6 +32,52 @@ const pageSchema = new mongoose.Schema({
       type: String,
       default: 'The Strategic Communications Office identifies the information needs of the different offices of the academic community and develops appropriate communication strategies to meet those needs.'
     },
+
+    // S-CORE Section
+    sCoreSectionTitle: {
+      type: String,
+      default: 'S-CORE Platform Introduction'
+    },
+    sCorePlatformDescription: {
+      type: String,
+      default: 'SCO Creative Optimization for Requests and Engagement System'
+    },
+    sCoreWhatIsTitle: {
+      type: String,
+      default: 'What is S-CORE?'
+    },
+    sCoreWhatIsDescription: {
+      type: String,
+      default: 'S-CORE is the official platform for managing communications, service requests, and engagement activities at DLSU-D. It streamlines the process for students, staff, and units to submit requests, track progress, and collaborate efficiently with the Strategic Communications Office.'
+    },
+    sCoreWhyTitle: {
+      type: String,
+      default: 'Why use S-CORE?'
+    },
+    sCoreWhyDescription: {
+      type: String,
+      default: 'S-CORE features a user-friendly dashboard, real-time notifications, secure request tracking, and collaborative tools. It empowers users to efficiently submit requests, monitor progress, communicate with the SCO, and more, all in one integrated platform.'
+    },
+    sCoreDashboardImage: {
+      type: String,
+      default: '/Picture/dashboard_ss.png'
+    },
+    sCoreLoginButtonText: {
+      type: String,
+      default: 'Login'
+    },
+    sCoreLoginButtonLink: {
+      type: String,
+      default: '/login'
+    },
+    sCoreSignupButtonText: {
+      type: String,
+      default: 'Sign Up'
+    },
+    sCoreSignupButtonLink: {
+      type: String,
+      default: '/register'
+    },
     
     // SCO Pledge
     pledgeSectionTitle: {

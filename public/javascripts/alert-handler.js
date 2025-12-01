@@ -48,25 +48,35 @@ window.logInfo = function(message, data = null) {
 
 // Custom alert function for UI feedback
 window.showAlert = function(message, type = 'info') {
-  // For now, just log to console with appropriate styling
-  const styles = {
-    success: 'color: #10b981; font-weight: bold;',
-    error: 'color: #ef4444; font-weight: bold;',
-    warning: 'color: #f59e0b; font-weight: bold;',
-    info: 'color: #3b82f6; font-weight: bold;'
-  };
-  
-  const prefix = {
-    success: '✓ SUCCESS',
-    error: '✗ ERROR', 
-    warning: '⚠ WARNING',
-    info: 'ℹ INFO'
-  };
-  
-  console.log(`%c${prefix[type] || 'ℹ INFO'}`, styles[type] || styles.info, message);
-  
-  // You could extend this to show actual UI alerts later
-  // For example: create a toast notification system
+  // Show toast popup in #toastContainer
+  const toastContainer = document.getElementById('toastContainer');
+  if (!toastContainer) {
+    console.log('[Toast]', message);
+    return;
+  }
+  // Remove any existing toast
+  toastContainer.innerHTML = '';
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = 'toast-popup toast-' + type;
+  toast.style.cssText = 'min-width:220px;max-width:400px;padding:1rem 1.5rem;margin-bottom:1rem;border-radius:0.5rem;font-weight:600;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,0.12);display:flex;align-items:center;gap:0.75rem;';
+  let bg, color, icon;
+  switch(type) {
+    case 'success': bg = '#d1fae5'; color = '#065f46'; icon = '✓'; break;
+    case 'error': bg = '#fee2e2'; color = '#991b1b'; icon = '✗'; break;
+    case 'warning': bg = '#fef3c7'; color = '#92400e'; icon = '⚠'; break;
+    default: bg = '#e0e7ff'; color = '#3730a3'; icon = 'ℹ';
+  }
+  toast.style.background = bg;
+  toast.style.color = color;
+  toast.innerHTML = `<span style="font-size:1.5rem;">${icon}</span> <span>${message}</span>`;
+  toastContainer.appendChild(toast);
+  toastContainer.style.display = 'block';
+  // Auto-hide after 2.5s
+  setTimeout(() => {
+    toastContainer.style.display = 'none';
+    toastContainer.innerHTML = '';
+  }, 2500);
 };
 
 console.log('%c[S-CORE] Alert Handler Loaded', 'color: #10b981; font-weight: bold; font-size: 12px;');

@@ -4740,7 +4740,13 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       socialSectionTitle,
       footerTagline, footerText,
       heroPrimaryButtonText, heroPrimaryButtonLink,
-      heroSecondaryButtonText, heroSecondaryButtonLink
+      heroSecondaryButtonText, heroSecondaryButtonLink,
+      // S-CORE Section
+      sCoreSectionTitle,
+      sCorePlatformDescription, sCoreWhatIsTitle, sCoreWhatIsDescription,
+      sCoreWhyTitle, sCoreWhyDescription, sCoreDashboardImage,
+      sCoreLoginButtonText, sCoreLoginButtonLink, sCoreLoginButtonStyle,
+      sCoreSignupButtonText, sCoreSignupButtonLink, sCoreSignupButtonStyle
     } = req.body;
     
     // Handle array fields
@@ -4873,7 +4879,21 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       heroPrimaryButtonText: heroPrimaryButtonText || pageContent.content?.heroPrimaryButtonText,
       heroPrimaryButtonLink: heroPrimaryButtonLink || pageContent.content?.heroPrimaryButtonLink,
       heroSecondaryButtonText: heroSecondaryButtonText || pageContent.content?.heroSecondaryButtonText,
-      heroSecondaryButtonLink: heroSecondaryButtonLink || pageContent.content?.heroSecondaryButtonLink
+      heroSecondaryButtonLink: heroSecondaryButtonLink || pageContent.content?.heroSecondaryButtonLink,
+      // S-CORE Section
+      sCoreSectionTitle: sCoreSectionTitle || pageContent.content?.sCoreSectionTitle,
+      sCorePlatformDescription: sCorePlatformDescription || pageContent.content?.sCorePlatformDescription,
+      sCoreWhatIsTitle: sCoreWhatIsTitle || pageContent.content?.sCoreWhatIsTitle,
+      sCoreWhatIsDescription: sCoreWhatIsDescription || pageContent.content?.sCoreWhatIsDescription,
+      sCoreWhyTitle: sCoreWhyTitle || pageContent.content?.sCoreWhyTitle,
+      sCoreWhyDescription: sCoreWhyDescription || pageContent.content?.sCoreWhyDescription,
+      sCoreDashboardImage: sCoreDashboardImage || pageContent.content?.sCoreDashboardImage,
+      sCoreLoginButtonText: sCoreLoginButtonText || pageContent.content?.sCoreLoginButtonText,
+      sCoreLoginButtonLink: sCoreLoginButtonLink || pageContent.content?.sCoreLoginButtonLink,
+      sCoreLoginButtonStyle: sCoreLoginButtonStyle || pageContent.content?.sCoreLoginButtonStyle,
+      sCoreSignupButtonText: sCoreSignupButtonText || pageContent.content?.sCoreSignupButtonText,
+      sCoreSignupButtonLink: sCoreSignupButtonLink || pageContent.content?.sCoreSignupButtonLink,
+      sCoreSignupButtonStyle: sCoreSignupButtonStyle || pageContent.content?.sCoreSignupButtonStyle
     };
     
     pageContent.updatedBy = req.session.userId;
@@ -4892,10 +4912,18 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       console.error('[ADMIN] Failed to save JSON backup:', jsonError);
     }
     
-    res.redirect('/admin/configuration?success=Homepage content updated successfully');
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, message: 'Homepage content updated successfully' });
+    } else {
+      return res.redirect('/admin/configuration?success=Homepage content updated successfully');
+    }
   } catch (error) {
     console.error('[ADMIN] Error saving configuration:', error);
-    res.redirect('/admin/configuration?error=Failed to save homepage content');
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, message: 'Failed to save homepage content' });
+    } else {
+      return res.redirect('/admin/configuration?error=Failed to save homepage content');
+    }
   }
 });
 
@@ -5062,10 +5090,18 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
     
     await settingsService.updateSettings(updateData);
     
-    res.redirect('/admin/configuration?success=System configuration updated successfully');
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, message: 'System configuration updated successfully' });
+    } else {
+      return res.redirect('/admin/configuration?success=System configuration updated successfully');
+    }
   } catch (error) {
     console.error('[ADMIN] Error saving system configuration:', error);
-    res.redirect('/admin/configuration?error=Failed to save system configuration');
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, message: 'Failed to save system configuration' });
+    } else {
+      return res.redirect('/admin/configuration?error=Failed to save system configuration');
+    }
   }
 });
 

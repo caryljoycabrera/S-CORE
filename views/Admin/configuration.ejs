@@ -542,6 +542,152 @@
     .tab-content.active {
       display: block;
     }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: modalFadeIn 0.3s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: 24px 24px 0 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      color: #fff;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 0 24px;
+    }
+
+    .modal-body p {
+      margin: 0 0 24px 0;
+      color: #6b7280;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    .modal-footer {
+      padding: 24px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #f9fafb;
+      border-radius: 0 0 16px 16px;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
   </style>
 </head>
 <body>
@@ -704,18 +850,8 @@
 
     <!-- CONFIGURATION CONTENT -->
     <div class="config-container">
-      <!-- Success/Error Messages -->
-      <% if (success) { %>
-        <div class="alert alert-success">
-          ✓ <%= success %>
-        </div>
-      <% } %>
-      
-      <% if (error) { %>
-        <div class="alert alert-error">
-          ✗ <%= error %>
-        </div>
-      <% } %>
+      <!-- Toast Notification Area -->
+      <div id="configToast" style="position:fixed;top:2rem;right:2rem;z-index:99999;min-width:200px;background:#10b981;color:white;padding:1rem 2rem;border-radius:0.5rem;box-shadow:0 2px 8px rgba(16,185,129,0.2);font-weight:600;display:none;"></div>
 
       <!-- Tab Navigation -->
       <div class="config-tabs">
@@ -733,21 +869,35 @@
         <div class="config-header">
           <h1>Homepage Configuration</h1>
           <div class="config-header-actions">
-            <button type="button" class="btn-preview" onclick="showPreview()">
+            <button type="button" id="previewBtn" class="btn-preview">
               👁️ Preview Changes
             </button>
-            <button type="submit" form="configForm" class="btn-save">
+            <button type="button" id="saveBtn" class="btn-save">
               💾 Save Changes
             </button>
-            <button type="button" class="btn-reset" onclick="resetForm()">
+            <button type="button" id="cancelBtn" class="btn-reset">
               🔄 Reset Form
             </button>
           </div>
         </div>
 
         <!-- Configuration Form -->
-        <form id="configForm" method="POST" action="/admin/configuration">
-          <div class="config-sections">
+        <form id="configurationForm" action="/admin/configuration" method="POST">
+          <div class="config-sections" id="configForm">
+                  <!-- Modal for Preview -->
+                  <div id="configModal" class="preview-modal">
+                    <div class="preview-content">
+                      <div class="preview-header">
+                        <h2>Preview Changes</h2>
+                        <button type="button" class="btn-close-preview" onclick="closePreview()">Close</button>
+                      </div>
+                      <div class="preview-body" id="modalContent">
+                        <!-- Preview content will be injected here -->
+                      </div>
+                    </div>
+                  </div>
+            <!-- Homepage Preview Area -->
+            <div id="homepagePreview" style="display:none;padding:1rem;background:#f9fafb;border-radius:0.5rem;margin-bottom:1rem;"></div>
 
           <!-- Hero Section -->
           <div class="config-section">
@@ -1063,6 +1213,57 @@
                 </div>
                 <% }); %>
               </div>
+            </div>
+          </div>
+
+          <!-- Gallery Section -->
+          <div class="config-section">
+            <h2 class="section-title">
+              <span class="section-icon">🖼️</span>
+              Gallery Section
+            </h2>
+            <p class="section-description">
+              Gallery section that displays SCO events and highlights via embedded iframe.
+            </p>
+
+            <div class="form-group">
+              <label for="gallerySectionTitle">Section Title</label>
+              <input
+                type="text"
+                id="gallerySectionTitle"
+                name="gallerySectionTitle"
+                value="<%= pageContent.gallerySectionTitle || 'Gallery' %>"
+                maxlength="50"
+                oninput="updateCharCount(this, 'gallerySectionTitleCount', 50)"
+              >
+              <div class="char-count" id="gallerySectionTitleCount"></div>
+              <p class="form-hint">Title that appears above the gallery section</p>
+            </div>
+
+            <div class="form-group">
+              <label for="gallerySectionSubtitle">Section Subtitle</label>
+              <input
+                type="text"
+                id="gallerySectionSubtitle"
+                name="gallerySectionSubtitle"
+                value="<%= pageContent.gallerySectionSubtitle || 'See our latest events and highlights' %>"
+                maxlength="100"
+                oninput="updateCharCount(this, 'gallerySectionSubtitleCount', 100)"
+              >
+              <div class="char-count" id="gallerySectionSubtitleCount"></div>
+              <p class="form-hint">Subtitle that appears below the section title</p>
+            </div>
+
+            <div class="form-group">
+              <label for="galleryEmbedUrl">Gallery Embed URL</label>
+              <input
+                type="url"
+                id="galleryEmbedUrl"
+                name="galleryEmbedUrl"
+                value="<%= pageContent.galleryEmbedUrl || 'https://www.dlsud.edu.ph/sco/gallery/' %>"
+                maxlength="500"
+              >
+              <p class="form-hint">URL of the gallery page to embed in an iframe</p>
             </div>
           </div>
 
@@ -1509,1792 +1710,1335 @@
             </div>
           </div>
 
-        </div>
-      </form>
-      </div> <!-- End homepage-tab -->
-
-      <!-- System Configuration Tab -->
-      <div id="system-tab" class="tab-content active">
-        <!-- Header -->
-        <div class="config-header">
-          <h1>System Configuration</h1>
-          <div class="config-header-actions">
-            <button type="submit" form="systemConfigForm" class="btn-save">
-              💾 Save Changes
-            </button>
-            <button type="button" class="btn-reset" onclick="resetSystemForm()">
-              🔄 Reset Form
-            </button>
+          <!-- S-CORE Platform Introduction Section -->
+          <div class="config-section">
+            <h2 class="section-title">
+              <span class="section-icon">📝</span>
+              S-CORE Section
+            </h2>
+            <div class="form-group">
+              <label for="sCoreSectionTitle">S-CORE Section Title</label>
+              <textarea id="sCoreSectionTitle" name="sCoreSectionTitle" maxlength="100" oninput="updateCharCount(this, 'sCoreSectionTitleCount', 100)"><%= pageContent.sCoreSectionTitle %></textarea>
+              <div class="char-count" id="sCoreSectionTitleCount"></div>
+              <p class="form-hint">Main section title for S-CORE (e.g. 'S-CORE Platform Introduction')</p>
+            </div>
+            <h3 style="font-size:1.25rem;font-weight:700;color:#1f2937;margin-bottom:1rem;">Section Title</h3>
+            <p class="section-description">
+              Information about the S-CORE platform, its purpose, key features, and button configuration for the about-s-core page.
+            </p>
+            <div class="form-group">
+              <label for="sCorePlatformDescription">S-CORE Acronym Meaning</label>
+              <input type="text" id="sCorePlatformDescription" name="sCorePlatformDescription" value="<%= pageContent.sCorePlatformDescription %>" maxlength="150" oninput="updateCharCount(this, 'sCorePlatformDescriptionCount', 150)">
+              <div class="char-count" id="sCorePlatformDescriptionCount"></div>
+              <p class="form-hint">Short description under the S-CORE header (e.g. 'SCO Creative Optimization for Requests and Engagement System')</p>
+            </div>
+            <div class="form-group">
+              <label for="sCoreWhatIsTitle">System Overview</label>
+              <input type="text" id="sCoreWhatIsTitle" name="sCoreWhatIsTitle" value="<%= pageContent.sCoreWhatIsTitle %>" maxlength="50">
+              <p class="form-hint">Section header (default: 'What is S-CORE?')</p>
+            </div>
+            <div class="form-group">
+              <label for="sCoreWhatIsDescription">System Overview Description</label>
+              <textarea id="sCoreWhatIsDescription" name="sCoreWhatIsDescription" maxlength="500" oninput="updateCharCount(this, 'sCoreWhatIsDescriptionCount', 500)"><%= pageContent.sCoreWhatIsDescription %></textarea>
+              <div class="char-count" id="sCoreWhatIsDescriptionCount"></div>
+              <p class="form-hint">Description text for system overview</p>
+            </div>
+            <div class="form-group">
+              <label for="sCoreWhyTitle">Platform Features</label>
+              <input type="text" id="sCoreWhyTitle" name="sCoreWhyTitle" value="<%= pageContent.sCoreWhyTitle %>" maxlength="50">
+              <p class="form-hint">Section header (default: 'Why use S-CORE?')</p>
+            </div>
+            <div class="form-group">
+              <label for="sCoreWhyDescription">Platform Features Description</label>
+              <textarea id="sCoreWhyDescription" name="sCoreWhyDescription" maxlength="500" oninput="updateCharCount(this, 'sCoreWhyDescriptionCount', 500)"><%= pageContent.sCoreWhyDescription %></textarea>
+              <div class="char-count" id="sCoreWhyDescriptionCount"></div>
+              <p class="form-hint">Description text for platform features</p>
+            </div>
+            <div class="form-group">
+              <label for="sCoreDashboardImage">Dashboard Screenshot Image URL</label>
+              <input type="text" id="sCoreDashboardImage" name="sCoreDashboardImage" value="<%= pageContent.sCoreDashboardImage %>" maxlength="200">
+              <p class="form-hint">Image URL for dashboard screenshot (e.g. /Picture/dashboard_ss.png)</p>
+            </div>
+            <div class="form-group">
+              <label for="sCoreLoginButtonText">Login Button Text</label>
+              <input type="text" id="sCoreLoginButtonText" name="sCoreLoginButtonText" value="<%= pageContent.sCoreLoginButtonText %>" maxlength="30">
+            </div>
+            <div class="form-group">
+              <label for="sCoreLoginButtonLink">Login Button Link</label>
+              <input type="text" id="sCoreLoginButtonLink" name="sCoreLoginButtonLink" value="<%= pageContent.sCoreLoginButtonLink %>" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label for="sCoreSignupButtonText">Sign Up Button Text</label>
+              <input type="text" id="sCoreSignupButtonText" name="sCoreSignupButtonText" value="<%= pageContent.sCoreSignupButtonText %>" maxlength="30">
+            </div>
+            <div class="form-group">
+              <label for="sCoreSignupButtonLink">Sign Up Button Link</label>
+              <input type="text" id="sCoreSignupButtonLink" name="sCoreSignupButtonLink" value="<%= pageContent.sCoreSignupButtonLink %>" maxlength="100">
+            </div>
           </div>
-        </div>
-
-        <!-- Info Banner -->
-        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
-          <p style="margin: 0; color: #1e40af; font-weight: 500;">
-            <strong>ℹ️ System Configuration:</strong> All settings configured here are stored in the database and dynamically control the system behavior. Changes take effect immediately after saving.
-          </p>
-        </div>
-
-        <!-- System Configuration Form -->
-        <form id="systemConfigForm" method="POST" action="/admin/system-configuration">
-          <div class="config-sections">
-
-            <!-- Organizations Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">🏢</span>
-                Organizations
-              </h2>
-              <p class="section-description">
-                Manage the list of student organizations that users can select from.
-              </p>
-              <div class="form-group">
-                <label for="organizationsList">Student Organizations (one per line)</label>
-                <textarea
-                  id="organizationsList"
-                  name="organizationsList"
-                  class="tall"
-                  placeholder="University Student Government (USG)&#10;College of Business Administration and Accountancy Student Government (CBAASG)&#10;etc."
-                  rows="10"
-                ><%= (settings && settings.organizations && settings.organizations.length > 0) ? (Array.isArray(settings.organizations) ? settings.organizations.map(org => typeof org === 'string' ? org : org.name).join('\n') : '') : '' %></textarea>
-                <p class="form-hint">Enter each organization on a new line</p>
-              </div>
-            </div>
-
-            <!-- Offices/Departments Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">🏛️</span>
-                Offices/Departments
-              </h2>
-              <p class="section-description">
-                Manage the list of offices and departments for non-student users.
-              </p>
-              <div class="form-group">
-                <label for="officesList">Offices/Departments (one per line)</label>
-                <textarea
-                  id="officesList"
-                  name="officesList"
-                  class="tall"
-                  placeholder="Academic Affairs&#10;Student Services&#10;Administration&#10;etc."
-                  rows="10"
-                ><%= (settings && settings.offices && settings.offices.length > 0) ? settings.offices.join('\n') : '' %></textarea>
-                <p class="form-hint">Enter each office/department on a new line</p>
-              </div>
-            </div>
-
-            <!-- Units and Request Types Management Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">🔗</span>
-                Units & Request Types Management
-              </h2>
-              <p class="section-description">
-                Manage units and their associated request types. Each unit can handle multiple types of requests.
-              </p>
-              <div class="dynamic-items-section">
-                <div class="dynamic-items-header">
-                  <h3>Units</h3>
-                  <button type="button" class="btn-add-item" onclick="addUnitWithRequestTypes()">
-                    <span>+</span> Add Unit
-                  </button>
-                </div>
-                <div id="unitsWithRequestTypesContainer" class="dynamic-items-container">
-                  <% 
-                  // Get existing units and mappings from database
-                  const existingUnits = (settings && settings.units) || [];
-                  const mappings = (settings && settings.requestTypeMappings) || [];
-                  
-                  // Group request types by unit
-                  const unitRequestTypes = {};
-                  existingUnits.forEach(unit => {
-                    const unitName = typeof unit === 'string' ? unit : unit.name || unit;
-                    unitRequestTypes[unitName] = [];
-                  });
-                  
-                  mappings.forEach(mapping => {
-                    const unit = mapping.recommendedUnit;
-                    if (!unitRequestTypes[unit]) {
-                      unitRequestTypes[unit] = [];
-                    }
-                    unitRequestTypes[unit].push(mapping.requestType);
-                  });
-                  
-                  Object.keys(unitRequestTypes).forEach((unitName, index) => { %>
-                  <div class="dynamic-item unit-request-item" data-index="<%= index %>">
-                    <div class="item-header">
-                      <span class="item-number">Unit <%= index + 1 %>: <strong><%= unitName %></strong></span>
-                      <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
-                        <span>×</span>
-                      </button>
-                    </div>
-                    <div class="item-content">
-                      <div class="form-group">
-                        <label>Unit Name</label>
-                        <input
-                          type="text"
-                          name="unitName[]"
-                          value="<%= unitName %>"
-                          maxlength="100"
-                          required
-                          onchange="updateUnitLabel(this)"
-                        >
-                      </div>
-                      <div class="form-group">
-                        <label>Request Types for this Unit (one per line)</label>
-                        <textarea
-                          name="unitRequestTypes[]"
-                          class="tall"
-                          placeholder="Enter request types that this unit handles (one per line)"
-                          rows="8"
-                        ><%= unitRequestTypes[unitName].join('\n') %></textarea>
-                        <p class="form-hint">Enter each request type on a new line</p>
-                      </div>
-                    </div>
-                  </div>
-                  <% }); %>
-                </div>
-              </div>
-            </div>
-
-            <!-- Request Statuses Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">📊</span>
-                Request Statuses
-              </h2>
-              <p class="section-description">
-                Manage the possible statuses for service requests.
-              </p>
-              <div class="form-group">
-                <label for="requestStatuses">Request Statuses (one per line)</label>
-                <textarea
-                  id="requestStatuses"
-                  name="requestStatuses"
-                  class="tall"
-                  placeholder="Pending&#10;Queued&#10;In Progress&#10;etc."
-                  rows="8"
-                ><%= (settings && settings.requestStatuses && settings.requestStatuses.length > 0) ? settings.requestStatuses.join('\n') : '' %></textarea>
-                <p class="form-hint">Enter each status on a new line</p>
-              </div>
-            </div>
-
-            <!-- User Roles Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">👤</span>
-                User Roles & Permissions
-              </h2>
-              <p class="section-description">
-                Manage user roles and configure their access permissions.
-              </p>
-              <div class="dynamic-items-section">
-                <div class="dynamic-items-header">
-                  <h3>User Roles</h3>
-                  <button type="button" class="btn-add-item" onclick="addUserRole()">
-                    <span>+</span> Add Role
-                  </button>
-                </div>
-                <div id="userRolesContainer" class="dynamic-items-container">
-                  <% 
-                  // Get user roles from database only
-                  const userRoles = (settings && settings.userRoles) || [];
-                  
-                  userRoles.forEach((role, index) => { 
-                    const roleName = typeof role === 'string' ? role : role.name;
-                    const rolePerms = typeof role === 'string' ? [] : (role.permissions || []);
-                  %>
-                  <div class="dynamic-item" data-index="<%= index %>">
-                    <div class="item-header">
-                      <span class="item-number">Role <%= index + 1 %>: <strong><%= roleName %></strong></span>
-                      <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
-                        <span>×</span>
-                      </button>
-                    </div>
-                    <div class="item-content">
-                      <div class="form-group">
-                        <label>Role Name</label>
-                        <input
-                          type="text"
-                          name="roleName[]"
-                          value="<%= roleName %>"
-                          maxlength="50"
-                          required
-                          onchange="updateRoleLabel(this)"
-                        >
-                      </div>
-                      <div class="form-group">
-                        <label>Access Level</label>
-                        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
-                          <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
-                            <input type="radio" name="roleAccessLevel_<%= index %>" value="user" <%= rolePerms.includes('user') || (!rolePerms.includes('unit') && !rolePerms.includes('admin')) ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
-                            <div style="flex: 1;">
-                              <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
-                                <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
-                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                  <circle cx="12" cy="7" r="4"/>
-                                </svg>
-                                Requestor (User) - Submits Requests
-                              </div>
-                              <div style="font-size: 0.875rem; color: #6b7280;">Can create and view their own requests</div>
-                            </div>
-                          </label>
-                          
-                          <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
-                            <input type="radio" name="roleAccessLevel_<%= index %>" value="unit" <%= rolePerms.includes('unit') ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
-                            <div style="flex: 1;">
-                              <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
-                                <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
-                                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="9" cy="7" r="4"></circle>
-                                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                </svg>
-                                Unit Member - Works on Tasks
-                              </div>
-                              <div style="font-size: 0.875rem; color: #6b7280;">Can view all requests, work on assigned tasks, and upload deliverables</div>
-                            </div>
-                          </label>
-                          
-                          <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
-                            <input type="radio" name="roleAccessLevel_<%= index %>" value="admin" <%= rolePerms.includes('admin') ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
-                            <div style="flex: 1;">
-                              <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
-                                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                                </svg>
-                                Administrator - Full System Access
-                              </div>
-                              <div style="font-size: 0.875rem; color: #6b7280;">Complete administrative access to all system features</div>
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <% }); %>
-                </div>
-              </div>
-            </div>
-
-            <!-- Announcement Priority Levels Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">🎯</span>
-                Announcement Priority Levels
-              </h2>
-              <p class="section-description">
-                Manage the priority levels for announcements (e.g., low, medium, high, urgent).
-              </p>
-              <div class="form-group">
-                <label for="announcementPriorities">Priority Levels (one per line)</label>
-                <textarea
-                  id="announcementPriorities"
-                  name="announcementPriorities"
-                  class="tall"
-                  placeholder="low&#10;medium&#10;high&#10;urgent"
-                  rows="5"
-                ><%= (settings && settings.announcementPriorities && settings.announcementPriorities.length > 0) ? settings.announcementPriorities.join('\n') : '' %></textarea>
-                <p class="form-hint">Enter each priority level on a new line</p>
-              </div>
-            </div>
-
-            <!-- Announcement Types Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">📢</span>
-                Announcement Types
-              </h2>
-              <p class="section-description">
-                Manage the types/categories of announcements (e.g., Event, News, Reminder, Update).
-              </p>
-              <div class="form-group">
-                <label for="announcementTypes">Announcement Types (one per line)</label>
-                <textarea
-                  id="announcementTypes"
-                  name="announcementTypes"
-                  class="tall"
-                  placeholder="Event&#10;News&#10;Reminder&#10;Update&#10;Maintenance"
-                  rows="6"
-                ><%= (settings && settings.announcementTypes && settings.announcementTypes.length > 0) ? settings.announcementTypes.join('\n') : '' %></textarea>
-                <p class="form-hint">Enter each announcement type on a new line</p>
-              </div>
-            </div>
-
-            <!-- General Settings Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">⚙️</span>
-                General Settings
-              </h2>
-              <p class="section-description">
-                Configure basic system settings and branding.
-              </p>
-              <div class="form-group">
-                <label for="siteTitle">Site Title</label>
-                <input
-                  type="text"
-                  id="siteTitle"
-                  name="siteTitle"
-                  value="<%= settings.siteTitle || 'S-CORE - Student Communications Office Request & Engagement System' %>"
-                  maxlength="200"
-                >
-              </div>
-              <div class="form-group">
-                <label for="siteDescription">Site Description</label>
-                <textarea
-                  id="siteDescription"
-                  name="siteDescription"
-                  maxlength="500"
-                  rows="3"
-                ><%= settings.siteDescription || 'A comprehensive request management portal for DLSU-D Student Communications Office' %></textarea>
-              </div>
-              <div class="form-group">
-                <label for="timezone">Timezone</label>
-                <select id="timezone" name="timezone">
-                  <option value="Asia/Manila" <%= settings.timezone === 'Asia/Manila' ? 'selected' : '' %>>Asia/Manila</option>
-                  <option value="UTC" <%= settings.timezone === 'UTC' ? 'selected' : '' %>>UTC</option>
-                  <option value="America/New_York" <%= settings.timezone === 'America/New_York' ? 'selected' : '' %>>America/New York</option>
-                  <option value="Europe/London" <%= settings.timezone === 'Europe/London' ? 'selected' : '' %>>Europe/London</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="dateFormat">Date Format</label>
-                <select id="dateFormat" name="dateFormat">
-                  <option value="MM/DD/YYYY" <%= settings.dateFormat === 'MM/DD/YYYY' ? 'selected' : '' %>>MM/DD/YYYY</option>
-                  <option value="DD/MM/YYYY" <%= settings.dateFormat === 'DD/MM/YYYY' ? 'selected' : '' %>>DD/MM/YYYY</option>
-                  <option value="YYYY-MM-DD" <%= settings.dateFormat === 'YYYY-MM-DD' ? 'selected' : '' %>>YYYY-MM-DD</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="logo">Logo URL (optional)</label>
-                <input
-                  type="text"
-                  id="logo"
-                  name="logo"
-                  value="<%= settings.logo || '' %>"
-                  placeholder="https://example.com/logo.png"
-                >
-              </div>
-              <div class="form-group">
-                <label for="favicon">Favicon URL (optional)</label>
-                <input
-                  type="text"
-                  id="favicon"
-                  name="favicon"
-                  value="<%= settings.favicon || '' %>"
-                  placeholder="https://example.com/favicon.ico"
-                >
-              </div>
-            </div>
-
-            <!-- Request Management Settings Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">📋</span>
-                Request Management Settings
-              </h2>
-              <p class="section-description">
-                Configure how requests are handled and processed. These settings control revision limits, default deadlines, and workflow automation.
-              </p>
-              <div class="form-group">
-                <label for="maxRevisions">Maximum Major Revisions</label>
-                <input
-                  type="number"
-                  id="maxRevisions"
-                  name="maxRevisions"
-                  value="<%= settings.maxRevisions || 3 %>"
-                  min="1"
-                  max="10"
-                >
-                <p class="form-hint">Maximum number of major revisions allowed per request</p>
-              </div>
-              <div class="form-group">
-                <label for="maxMinorRevisions">Maximum Minor Revisions</label>
-                <input
-                  type="number"
-                  id="maxMinorRevisions"
-                  name="maxMinorRevisions"
-                  value="<%= settings.maxMinorRevisions || 2 %>"
-                  min="1"
-                  max="10"
-                >
-                <p class="form-hint">Maximum number of minor revisions allowed per request</p>
-              </div>
-              <div class="form-group">
-                <label for="defaultDeadlineDays">Default Deadline (Days)</label>
-                <input
-                  type="number"
-                  id="defaultDeadlineDays"
-                  name="defaultDeadlineDays"
-                  value="<%= settings.defaultDeadlineDays || 7 %>"
-                  min="1"
-                  max="365"
-                >
-                <p class="form-hint">Default number of days for request deadlines</p>
-              </div>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="autoApproveAfterRevisions"
-                    name="autoApproveAfterRevisions"
-                    <%= settings.autoApproveAfterRevisions ? 'checked' : '' %>
-                  >
-                  Auto-approve requests after all revisions
-                </label>
-              </div>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="requireUnitReview"
-                    name="requireUnitReview"
-                    <%= settings.requireUnitReview !== false ? 'checked' : '' %>
-                  >
-                  Require unit review for all requests
-                </label>
-              </div>
-            </div>
-
-            <!-- File Storage Settings Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">📁</span>
-                File Storage Settings
-              </h2>
-              <p class="section-description">
-                Configure file upload and storage settings. These control the maximum file size and allowed file types for all file uploads in the system.
-              </p>
-              <div class="form-group">
-                <label for="maxFileSize">Maximum File Size (MB)</label>
-                <input
-                  type="number"
-                  id="maxFileSize"
-                  name="maxFileSize"
-                  value="<%= settings.maxFileSize || 50 %>"
-                  min="1"
-                  max="500"
-                >
-              </div>
-              <div class="form-group">
-                <label for="allowedFileTypes">Allowed File Types (one per line)</label>
-                <textarea
-                  id="allowedFileTypes"
-                  name="allowedFileTypes"
-                  rows="5"
-                  placeholder="pdf&#10;jpg&#10;png&#10;docx"
-                ><%= (settings.allowedFileTypes && settings.allowedFileTypes.length > 0) ? settings.allowedFileTypes.join('\n') : 'pdf\njpg\njpeg\npng\ngif\ndoc\ndocx\nxlsx\nxls\ntxt\npptx' %></textarea>
-                <p class="form-hint">Enter each file extension without the dot</p>
-              </div>
-              <div class="form-group">
-                <label for="storageType">Storage Type</label>
-                <select id="storageType" name="storageType">
-                  <option value="local" <%= settings.storageType === 'local' || !settings.storageType ? 'selected' : '' %>>Local Storage</option>
-                  <option value="aws" <%= settings.storageType === 'aws' ? 'selected' : '' %>>AWS S3</option>
-                  <option value="gcs" <%= settings.storageType === 'gcs' ? 'selected' : '' %>>Google Cloud Storage</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="retainAllRevisionFiles"
-                    name="retainAllRevisionFiles"
-                    <%= settings.retainAllRevisionFiles !== false ? 'checked' : '' %>
-                  >
-                  Retain all revision files
-                </label>
-              </div>
-              <div class="form-group">
-                <label for="autoDeleteOldFilesAfterDays">Auto-delete old files after (days)</label>
-                <input
-                  type="number"
-                  id="autoDeleteOldFilesAfterDays"
-                  name="autoDeleteOldFilesAfterDays"
-                  value="<%= settings.autoDeleteOldFilesAfterDays || '' %>"
-                  min="30"
-                  max="3650"
-                  placeholder="Leave empty to never auto-delete"
-                >
-                <p class="form-hint">Leave empty to never auto-delete old files</p>
-              </div>
-            </div>
-
-            <!-- Notification Settings Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">🔔</span>
-                Notification Settings
-              </h2>
-              <p class="section-description">
-                Configure email notifications and notification frequency.
-              </p>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="enableEmailNotifications"
-                    name="enableEmailNotifications"
-                    <%= settings.enableEmailNotifications !== false ? 'checked' : '' %>
-                  >
-                  Enable email notifications
-                </label>
-              </div>
-              <div class="form-group">
-                <label for="notificationFrequency">Notification Frequency</label>
-                <select id="notificationFrequency" name="notificationFrequency">
-                  <option value="immediate" <%= settings.notificationFrequency === 'immediate' || !settings.notificationFrequency ? 'selected' : '' %>>Immediate</option>
-                  <option value="daily" <%= settings.notificationFrequency === 'daily' ? 'selected' : '' %>>Daily Digest</option>
-                  <option value="weekly" <%= settings.notificationFrequency === 'weekly' ? 'selected' : '' %>>Weekly Digest</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="emailFrom">Email From Address</label>
-                <input
-                  type="email"
-                  id="emailFrom"
-                  name="emailFrom"
-                  value="<%= settings.emailFrom || 'noreply@dlsud.edu.ph' %>"
-                >
-              </div>
-              <div class="form-group">
-                <label for="smtpHost">SMTP Host</label>
-                <input
-                  type="text"
-                  id="smtpHost"
-                  name="smtpHost"
-                  value="<%= settings.smtpHost || 'smtp.gmail.com' %>"
-                  placeholder="smtp.gmail.com"
-                >
-              </div>
-              <div class="form-group">
-                <label for="smtpPort">SMTP Port</label>
-                <input
-                  type="number"
-                  id="smtpPort"
-                  name="smtpPort"
-                  value="<%= settings.smtpPort || 587 %>"
-                  min="1"
-                  max="65535"
-                >
-              </div>
-            </div>
-
-            <!-- Maintenance & Backup Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">🔧</span>
-                Maintenance & Backup
-              </h2>
-              <p class="section-description">
-                Configure system maintenance and backup settings.
-              </p>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="maintenanceMode"
-                    name="maintenanceMode"
-                    <%= settings.maintenanceMode ? 'checked' : '' %>
-                  >
-                  Maintenance Mode
-                </label>
-              </div>
-              <div class="form-group">
-                <label for="maintenanceMessage">Maintenance Message</label>
-                <textarea
-                  id="maintenanceMessage"
-                  name="maintenanceMessage"
-                  rows="3"
-                ><%= settings.maintenanceMessage || 'System is under maintenance. Please try again later.' %></textarea>
-              </div>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="backupEnabled"
-                    name="backupEnabled"
-                    <%= settings.backupEnabled !== false ? 'checked' : '' %>
-                  >
-                  Enable Automatic Backups
-                </label>
-              </div>
-              <div class="form-group">
-                <label for="backupFrequency">Backup Frequency</label>
-                <select id="backupFrequency" name="backupFrequency">
-                  <option value="daily" <%= settings.backupFrequency === 'daily' ? 'selected' : '' %>>Daily</option>
-                  <option value="weekly" <%= settings.backupFrequency === 'weekly' || !settings.backupFrequency ? 'selected' : '' %>>Weekly</option>
-                  <option value="monthly" <%= settings.backupFrequency === 'monthly' ? 'selected' : '' %>>Monthly</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="backupRetentionDays">Backup Retention (Days)</label>
-                <input
-                  type="number"
-                  id="backupRetentionDays"
-                  name="backupRetentionDays"
-                  value="<%= settings.backupRetentionDays || 90 %>"
-                  min="7"
-                  max="3650"
-                >
-              </div>
-            </div>
-
-            <!-- Audit & Logging Section -->
-            <div class="config-section">
-              <h2 class="section-title">
-                <span class="section-icon">📊</span>
-                Audit & Logging
-              </h2>
-              <p class="section-description">
-                Configure system logging and audit trail settings.
-              </p>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="enableDetailedLogs"
-                    name="enableDetailedLogs"
-                    <%= settings.enableDetailedLogs !== false ? 'checked' : '' %>
-                  >
-                  Enable Detailed Logs
-                </label>
-              </div>
-              <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                  <input
-                    type="checkbox"
-                    id="trackUserActions"
-                    name="trackUserActions"
-                    <%= settings.trackUserActions !== false ? 'checked' : '' %>
-                  >
-                  Track User Actions
-                </label>
-              </div>
-              <div class="form-group">
-                <label for="logRetentionDays">Log Retention (Days)</label>
-                <input
-                  type="number"
-                  id="logRetentionDays"
-                  name="logRetentionDays"
-                  value="<%= settings.logRetentionDays || 90 %>"
-                  min="7"
-                  max="3650"
-                >
-              </div>
-            </div>
 
           </div>
         </form>
-      </div> <!-- End system-tab -->
-    </div>
-  </div>
+      </div> <!-- End homepage-tab -->
 
+              <!-- System Configuration Tab -->
+              <div id="system-tab" class="tab-content active">
+                <!-- Header -->
+                <div class="config-header">
+                  <h1>System Configuration</h1>
+                  <div class="config-header-actions">
+                    <button type="button" id="systemSaveBtn" class="btn-save">
+                      💾 Save Changes
+                    </button>
+                    <button type="button" class="btn-reset" onclick="resetSystemForm()">
+                      🔄 Reset Form
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Info Banner -->
+                <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+                  <p style="margin: 0; color: #1e40af; font-weight: 500;">
+                    <strong>ℹ️ System Configuration:</strong> All settings configured here are stored in the database and dynamically control the system behavior. Changes take effect immediately after saving.
+                  </p>
+                </div>
+
+                <!-- System Configuration Form -->
+                <form id="systemConfigForm" method="POST" action="/admin/system-configuration">
+                  <div class="config-sections">
+
+                    <!-- Organizations Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">🏢</span>
+                        Organizations
+                      </h2>
+                      <p class="section-description">
+                        Manage the list of student organizations that users can select from.
+                      </p>
+                      <div class="form-group">
+                        <label for="organizationsList">Student Organizations (one per line)</label>
+                        <textarea
+                          id="organizationsList"
+                          name="organizationsList"
+                          class="tall"
+                          placeholder="University Student Government (USG)&#10;College of Business Administration and Accountancy Student Government (CBAASG)&#10;etc."
+                          rows="10"
+                        ><%= (settings && settings.organizations && settings.organizations.length > 0) ? (Array.isArray(settings.organizations) ? settings.organizations.map(org => typeof org === 'string' ? org : org.name).join('\n') : '') : '' %></textarea>
+                        <p class="form-hint">Enter each organization on a new line</p>
+                      </div>
+                    </div>
+
+                    <!-- Offices/Departments Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">🏛️</span>
+                        Offices/Departments
+                      </h2>
+                      <p class="section-description">
+                        Manage the list of offices and departments for non-student users.
+                      </p>
+                      <div class="form-group">
+                        <label for="officesList">Offices/Departments (one per line)</label>
+                        <textarea
+                          id="officesList"
+                          name="officesList"
+                          class="tall"
+                          placeholder="Academic Affairs&#10;Student Services&#10;Administration&#10;etc."
+                          rows="10"
+                        ><%= (settings && settings.offices && settings.offices.length > 0) ? settings.offices.join('\n') : '' %></textarea>
+                        <p class="form-hint">Enter each office/department on a new line</p>
+                      </div>
+                    </div>
+
+                    <!-- Units and Request Types Management Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">🔗</span>
+                        Units & Request Types Management
+                      </h2>
+                      <p class="section-description">
+                        Manage units and their associated request types. Each unit can handle multiple types of requests.
+                      </p>
+                      <div class="dynamic-items-section">
+                        <div class="dynamic-items-header">
+                          <h3>Units</h3>
+                          <button type="button" class="btn-add-item" onclick="addUnitWithRequestTypes()">
+                            <span>+</span> Add Unit
+                          </button>
+                        </div>
+                        <div id="unitsWithRequestTypesContainer" class="dynamic-items-container">
+                          <% 
+                          // Get existing units and mappings from database
+                          const existingUnits = (settings && settings.units) || [];
+                          const mappings = (settings && settings.requestTypeMappings) || [];
+                          
+                          // Group request types by unit
+                          const unitRequestTypes = {};
+                          existingUnits.forEach(unit => {
+                            const unitName = typeof unit === 'string' ? unit : unit.name || unit;
+                            unitRequestTypes[unitName] = [];
+                          });
+                          
+                          mappings.forEach(mapping => {
+                            const unit = mapping.recommendedUnit;
+                            if (!unitRequestTypes[unit]) {
+                              unitRequestTypes[unit] = [];
+                            }
+                            unitRequestTypes[unit].push(mapping.requestType);
+                          });
+                          
+                          Object.keys(unitRequestTypes).forEach((unitName, index) => { %>
+                          <div class="dynamic-item unit-request-item" data-index="<%= index %>">
+                            <div class="item-header">
+                              <span class="item-number">Unit <%= index + 1 %>: <strong><%= unitName %></strong></span>
+                              <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
+                                <span>×</span>
+                              </button>
+                            </div>
+                            <div class="item-content">
+                              <div class="form-group">
+                                <label>Unit Name</label>
+                                <input
+                                  type="text"
+                                  name="unitName[]"
+                                  value="<%= unitName %>"
+                                  maxlength="100"
+                                  required
+                                  onchange="updateUnitLabel(this)"
+                                >
+                              </div>
+                              <div class="form-group">
+                                <label>Request Types for this Unit (one per line)</label>
+                                <textarea
+                                  name="unitRequestTypes[]"
+                                  class="tall"
+                                  placeholder="Enter request types that this unit handles (one per line)"
+                                  rows="8"
+                                ><%= unitRequestTypes[unitName].join('\n') %></textarea>
+                                <p class="form-hint">Enter each request type on a new line</p>
+                              </div>
+                            </div>
+                          </div>
+                          <% }); %>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Request Statuses Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">📊</span>
+                        Request Statuses
+                      </h2>
+                      <p class="section-description">
+                        Manage the possible statuses for service requests.
+                      </p>
+                      <div class="form-group">
+                        <label for="requestStatuses">Request Statuses (one per line)</label>
+                        <textarea
+                          id="requestStatuses"
+                          name="requestStatuses"
+                          class="tall"
+                          placeholder="Pending&#10;Queued&#10;In Progress&#10;etc."
+                          rows="8"
+                        ><%= (settings && settings.requestStatuses && settings.requestStatuses.length > 0) ? settings.requestStatuses.join('\n') : '' %></textarea>
+                        <p class="form-hint">Enter each status on a new line</p>
+                      </div>
+                    </div>
+
+                    <!-- User Roles Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">👤</span>
+                        User Roles & Permissions
+                      </h2>
+                      <p class="section-description">
+                        Manage user roles and configure their access permissions.
+                      </p>
+                      <div class="dynamic-items-section">
+                        <div class="dynamic-items-header">
+                          <h3>User Roles</h3>
+                          <button type="button" class="btn-add-item" onclick="addUserRole()">
+                            <span>+</span> Add Role
+                          </button>
+                        </div>
+                        <div id="userRolesContainer" class="dynamic-items-container">
+                          <% 
+                          // Get user roles from database only
+                          const userRoles = (settings && settings.userRoles) || [];
+                          
+                          userRoles.forEach((role, index) => { 
+                            const roleName = typeof role === 'string' ? role : role.name;
+                            const rolePerms = typeof role === 'string' ? [] : (role.permissions || []);
+                          %>
+                          <div class="dynamic-item" data-index="<%= index %>">
+                            <div class="item-header">
+                              <span class="item-number">Role <%= index + 1 %>: <strong><%= roleName %></strong></span>
+                              <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
+                                <span>×</span>
+                              </button>
+                            </div>
+                            <div class="item-content">
+                              <div class="form-group">
+                                <label>Role Name</label>
+                                <input
+                                  type="text"
+                                  name="roleName[]"
+                                  value="<%= roleName %>"
+                                  maxlength="50"
+                                  required
+                                  onchange="updateRoleLabel(this)"
+                                >
+                              </div>
+                              <div class="form-group">
+                                <label>Access Level</label>
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                                  <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                                    <input type="radio" name="roleAccessLevel_<%= index %>" value="user" <%= rolePerms.includes('user') || (!rolePerms.includes('unit') && !rolePerms.includes('admin')) ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
+                                    <div style="flex: 1;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                        <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                          <circle cx="12" cy="7" r="4"/>
+                                        </svg>
+                                        Requestor (User) - Submits Requests
+                                      </div>
+                                      <div style="font-size: 0.875rem; color: #6b7280;">Can create and view their own requests</div>
+                                    </div>
+                                  </label>
+                                  
+                                  <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                                    <input type="radio" name="roleAccessLevel_<%= index %>" value="unit" <%= rolePerms.includes('unit') ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
+                                    <div style="flex: 1;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                        <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                          <circle cx="9" cy="7" r="4"></circle>
+                                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                        Unit Member - Works on Tasks
+                                      </div>
+                                      <div style="font-size: 0.875rem; color: #6b7280;">Can view all requests, work on assigned tasks, and upload deliverables</div>
+                                    </div>
+                                  </label>
+                                  
+                                  <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                                    <input type="radio" name="roleAccessLevel_<%= index %>" value="admin" <%= rolePerms.includes('admin') ? 'checked' : '' %> style="margin-top: 0.25rem; cursor: pointer;">
+                                    <div style="flex: 1;">
+                                      <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                      </div>
+                                      <div style="font-size: 0.875rem; color: #6b7280;">Complete administrative access to all system features</div>
+                                    </div>
+                                  </label>
+                                </div>
+                              </div>
+                              <% }); %>
+                            </div>
+                          </div>
+                          </div>
+                          </div>
+                          </div>
+                          </div>
+                          </div>
+                          </div>
+                          </div>
+
+                          <!-- Announcement Priority Levels Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">🎯</span>
+                              Announcement Priority Levels
+                            </h2>
+                            <p class="section-description">
+                              Manage the priority levels for announcements (e.g., low, medium, high, urgent).
+                            </p>
+                            <div class="form-group">
+                              <label for="announcementPriorities">Priority Levels (one per line)</label>
+                              <textarea
+                                id="announcementPriorities"
+                                name="announcementPriorities"
+                                class="tall"
+                                placeholder="low&#10;medium&#10;high&#10;urgent"
+                                rows="5"
+                              ><%= (settings && settings.announcementPriorities && settings.announcementPriorities.length > 0) ? settings.announcementPriorities.join('\n') : '' %></textarea>
+                              <p class="form-hint">Enter each priority level on a new line</p>
+                            </div>
+                          </div>
+
+                          <!-- Announcement Types Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">📢</span>
+                              Announcement Types
+                            </h2>
+                            <p class="section-description">
+                              Manage the types/categories of announcements (e.g., Event, News, Reminder, Update).
+                            </p>
+                            <div class="form-group">
+                              <label for="announcementTypes">Announcement Types (one per line)</label>
+                              <textarea
+                                id="announcementTypes"
+                                name="announcementTypes"
+                                class="tall"
+                                placeholder="Event&#10;News&#10;Reminder&#10;Update&#10;Maintenance"
+                                rows="6"
+                              ><%= (settings && settings.announcementTypes && settings.announcementTypes.length > 0) ? settings.announcementTypes.join('\n') : '' %></textarea>
+                              <p class="form-hint">Enter each announcement type on a new line</p>
+                            </div>
+                          </div>
+
+                          <!-- General Settings Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">⚙️</span>
+                              General Settings
+                            </h2>
+                            <p class="section-description">
+                              Configure basic system settings and branding.
+                            </p>
+                            <div class="form-group">
+                              <label for="siteTitle">Site Title</label>
+                              <input
+                                type="text"
+                                id="siteTitle"
+                                name="siteTitle"
+                                value="<%= settings.siteTitle || 'S-CORE - Student Communications Office Request & Engagement System' %>"
+                                maxlength="200"
+                              >
+                            </div>
+                            <div class="form-group">
+                              <label for="siteDescription">Site Description</label>
+                              <textarea
+                                id="siteDescription"
+                                name="siteDescription"
+                                maxlength="500"
+                                rows="3"
+                              ><%= settings.siteDescription || 'A comprehensive request management portal for DLSU-D Student Communications Office' %></textarea>
+                            </div>
+                            <div class="form-group">
+                              <label for="timezone">Timezone</label>
+                              <select id="timezone" name="timezone">
+                                <option value="Asia/Manila" <%= settings.timezone === 'Asia/Manila' ? 'selected' : '' %>>Asia/Manila</option>
+                                <option value="UTC" <%= settings.timezone === 'UTC' ? 'selected' : '' %>>UTC</option>
+                                <option value="America/New_York" <%= settings.timezone === 'America/New_York' ? 'selected' : '' %>>America/New York</option>
+                                <option value="Europe/London" <%= settings.timezone === 'Europe/London' ? 'selected' : '' %>>Europe/London</option>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label for="dateFormat">Date Format</label>
+                              <select id="dateFormat" name="dateFormat">
+                                <option value="MM/DD/YYYY" <%= settings.dateFormat === 'MM/DD/YYYY' ? 'selected' : '' %>>MM/DD/YYYY</option>
+                                <option value="DD/MM/YYYY" <%= settings.dateFormat === 'DD/MM/YYYY' ? 'selected' : '' %>>DD/MM/YYYY</option>
+                                <option value="YYYY-MM-DD" <%= settings.dateFormat === 'YYYY-MM-DD' ? 'selected' : '' %>>YYYY-MM-DD</option>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label for="logo">Logo URL (optional)</label>
+                              <input
+                                type="text"
+                                id="logo"
+                                name="logo"
+                                value="<%= settings.logo || '' %>"
+                                placeholder="https://example.com/logo.png"
+                              >
+                            </div>
+                            <div class="form-group">
+                              <label for="favicon">Favicon URL (optional)</label>
+                              <input
+                                type="text"
+                                id="favicon"
+                                name="favicon"
+                                value="<%= settings.favicon || '' %>"
+                                placeholder="https://example.com/favicon.ico"
+                              >
+                            </div>
+                          </div>
+
+                          <!-- Request Management Settings Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">📋</span>
+                              Request Management Settings
+                            </h2>
+                            <p class="section-description">
+                              Configure how requests are handled and processed. These settings control revision limits, default deadlines, and workflow automation.
+                            </p>
+                            <div class="form-group">
+                              <label for="maxRevisions">Maximum Major Revisions</label>
+                              <input
+                                type="number"
+                                id="maxRevisions"
+                                name="maxRevisions"
+                                value="<%= settings.maxRevisions || 3 %>"
+                                min="1"
+                                max="10"
+                              >
+                              <p class="form-hint">Maximum number of major revisions allowed per request</p>
+                            </div>
+                            <div class="form-group">
+                              <label for="maxMinorRevisions">Maximum Minor Revisions</label>
+                              <input
+                                type="number"
+                                id="maxMinorRevisions"
+                                name="maxMinorRevisions"
+                                value="<%= settings.maxMinorRevisions || 2 %>"
+                                min="1"
+                                max="10"
+                              >
+                              <p class="form-hint">Maximum number of minor revisions allowed per request</p>
+                            </div>
+                            <div class="form-group">
+                              <label for="defaultDeadlineDays">Default Deadline (Days)</label>
+                              <input
+                                type="number"
+                                id="defaultDeadlineDays"
+                                name="defaultDeadlineDays"
+                                value="<%= settings.defaultDeadlineDays || 7 %>"
+                                min="1"
+                                max="365"
+                              >
+                              <p class="form-hint">Default number of days for request deadlines</p>
+                            </div>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="autoApproveAfterRevisions"
+                                  name="autoApproveAfterRevisions"
+                                  <%= settings.autoApproveAfterRevisions ? 'checked' : '' %>
+                                >
+                                Auto-approve requests after all revisions
+                              </label>
+                            </div>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="requireUnitReview"
+                                  name="requireUnitReview"
+                                  <%= settings.requireUnitReview !== false ? 'checked' : '' %>
+                                >
+                                Require unit review for all requests
+                              </label>
+                            </div>
+                          </div>
+
+                          <!-- File Storage Settings Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">📁</span>
+                              File Storage Settings
+                            </h2>
+                            <p class="section-description">
+                              Configure file upload and storage settings. These control the maximum file size and allowed file types for all file uploads in the system.
+                            </p>
+                            <div class="form-group">
+                              <label for="maxFileSize">Maximum File Size (MB)</label>
+                              <input
+                                type="number"
+                                id="maxFileSize"
+                                name="maxFileSize"
+                                value="<%= settings.maxFileSize || 50 %>"
+                                min="1"
+                                max="500"
+                              >
+                            </div>
+                            <div class="form-group">
+                              <label for="allowedFileTypes">Allowed File Types (one per line)</label>
+                              <textarea
+                                id="allowedFileTypes"
+                                name="allowedFileTypes"
+                                rows="5"
+                                placeholder="pdf&#10;jpg&#10;png&#10;docx"
+                              ><%= (settings.allowedFileTypes && settings.allowedFileTypes.length > 0) ? settings.allowedFileTypes.join('\n') : 'pdf\njpg\njpeg\npng\ngif\ndoc\ndocx\nxlsx\nxls\ntxt\npptx' %></textarea>
+                              <p class="form-hint">Enter each file extension without the dot</p>
+                            </div>
+                            <div class="form-group">
+                              <label for="storageType">Storage Type</label>
+                              <select id="storageType" name="storageType">
+                                <option value="local" <%= settings.storageType === 'local' || !settings.storageType ? 'selected' : '' %>>Local Storage</option>
+                                <option value="aws" <%= settings.storageType === 'aws' ? 'selected' : '' %>>AWS S3</option>
+                                <option value="gcs" <%= settings.storageType === 'gcs' ? 'selected' : '' %>>Google Cloud Storage</option>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="retainAllRevisionFiles"
+                                  name="retainAllRevisionFiles"
+                                  <%= settings.retainAllRevisionFiles !== false ? 'checked' : '' %>
+                                >
+                                Retain all revision files
+                              </label>
+                            </div>
+                            <div class="form-group">
+                              <label for="autoDeleteOldFilesAfterDays">Auto-delete old files after (days)</label>
+                              <input
+                                type="number"
+                                id="autoDeleteOldFilesAfterDays"
+                                name="autoDeleteOldFilesAfterDays"
+                                value="<%= settings.autoDeleteOldFilesAfterDays || '' %>"
+                                min="30"
+                                max="3650"
+                                placeholder="Leave empty to never auto-delete"
+                              >
+                              <p class="form-hint">Leave empty to never auto-delete old files</p>
+                            </div>
+                          </div>
+
+                          <!-- Notification Settings Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">🔔</span>
+                              Notification Settings
+                            </h2>
+                            <p class="section-description">
+                              Configure email notifications and notification frequency.
+                            </p>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="enableEmailNotifications"
+                                  name="enableEmailNotifications"
+                                  <%= settings.enableEmailNotifications !== false ? 'checked' : '' %>
+                                >
+                                Enable email notifications
+                              </label>
+                            </div>
+                            <div class="form-group">
+                              <label for="notificationFrequency">Notification Frequency</label>
+                              <select id="notificationFrequency" name="notificationFrequency">
+                                <option value="immediate" <%= settings.notificationFrequency === 'immediate' || !settings.notificationFrequency ? 'selected' : '' %>>Immediate</option>
+                                <option value="daily" <%= settings.notificationFrequency === 'daily' ? 'selected' : '' %>>Daily Digest</option>
+                                <option value="weekly" <%= settings.notificationFrequency === 'weekly' ? 'selected' : '' %>>Weekly Digest</option>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label for="emailFrom">Email From Address</label>
+                              <input
+                                type="email"
+                                id="emailFrom"
+                                name="emailFrom"
+                                value="<%= settings.emailFrom || 'noreply@dlsud.edu.ph' %>"
+                              >
+                            </div>
+                            <div class="form-group">
+                              <label for="smtpHost">SMTP Host</label>
+                              <input
+                                type="text"
+                                id="smtpHost"
+                                name="smtpHost"
+                                value="<%= settings.smtpHost || 'smtp.gmail.com' %>"
+                                placeholder="smtp.gmail.com"
+                              >
+                            </div>
+                            <div class="form-group">
+                              <label for="smtpPort">SMTP Port</label>
+                              <input
+                                type="number"
+                                id="smtpPort"
+                                name="smtpPort"
+                                value="<%= settings.smtpPort || 587 %>"
+                                min="1"
+                                max="65535"
+                              >
+                            </div>
+                          </div>
+
+                          <!-- Maintenance & Backup Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">🔧</span>
+                              Maintenance & Backup
+                            </h2>
+                            <p class="section-description">
+                              Configure system maintenance and backup settings.
+                            </p>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="maintenanceMode"
+                                  name="maintenanceMode"
+                                  <%= settings.maintenanceMode ? 'checked' : '' %>
+                                >
+                                Maintenance Mode
+                              </label>
+                            </div>
+                            <div class="form-group">
+                              <label for="maintenanceMessage">Maintenance Message</label>
+                              <textarea
+                                id="maintenanceMessage"
+                                name="maintenanceMessage"
+                                rows="3"
+                              ><%= settings.maintenanceMessage || 'System is under maintenance. Please try again later.' %></textarea>
+                            </div>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="backupEnabled"
+                                  name="backupEnabled"
+                                  <%= settings.backupEnabled !== false ? 'checked' : '' %>
+                                >
+                                Enable Automatic Backups
+                              </label>
+                            </div>
+                            <div class="form-group">
+                              <label for="backupFrequency">Backup Frequency</label>
+                              <select id="backupFrequency" name="backupFrequency">
+                                <option value="daily" <%= settings.backupFrequency === 'daily' ? 'selected' : '' %>>Daily</option>
+                                <option value="weekly" <%= settings.backupFrequency === 'weekly' || !settings.backupFrequency ? 'selected' : '' %>>Weekly</option>
+                                <option value="monthly" <%= settings.backupFrequency === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label for="backupRetentionDays">Backup Retention (Days)</label>
+                              <input
+                                type="number"
+                                id="backupRetentionDays"
+                                name="backupRetentionDays"
+                                value="<%= settings.backupRetentionDays || 90 %>"
+                                min="7"
+                                max="3650"
+                              >
+                            </div>
+                          </div>
+
+                          <!-- Audit & Logging Section -->
+                          <div class="config-section">
+                            <h2 class="section-title">
+                              <span class="section-icon">📊</span>
+                              Audit & Logging
+                            </h2>
+                            <p class="section-description">
+                              Configure system logging and audit trail settings.
+                            </p>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="enableDetailedLogs"
+                                  name="enableDetailedLogs"
+                                  <%= settings.enableDetailedLogs !== false ? 'checked' : '' %>
+                                >
+                                Enable Detailed Logs
+                              </label>
+                            </div>
+                            <div class="form-group">
+                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
+                                <input
+                                  type="checkbox"
+                                  id="trackUserActions"
+                                  name="trackUserActions"
+                                  <%= settings.trackUserActions !== false ? 'checked' : '' %>
+                                >
+                                Track User Actions
+                              </label>
+                            </div>
+                            <div class="form-group">
+                              <label for="logRetentionDays">Log Retention (Days)</label>
+                              <input
+                                type="number"
+                                id="logRetentionDays"
+                                name="logRetentionDays"
+                                value="<%= settings.logRetentionDays || 90 %>"
+                                min="7"
+                                max="3650"
+                              >
+                            </div>
+                          </div>
+
+                        </div>
+                      </form>
+                    </div> <!-- End system-tab -->
+                  </div>
+                </div>
+                <!-- Add global tab switching function at end of body -->
+                <script>
+                  // Tab switching function
+                  function switchTab(tabName) {
+                    // Hide all tabs
+                    const tabs = document.querySelectorAll('.tab-content');
+                    tabs.forEach(tab => tab.classList.remove('active'));
+
+                    // Remove active class from all tab buttons
+                    const tabButtons = document.querySelectorAll('.config-tab');
+                    tabButtons.forEach(button => button.classList.remove('active'));
+
+                    // Show selected tab
+                    const selectedTab = document.getElementById(tabName + '-tab');
+                    if (selectedTab) {
+                      selectedTab.classList.add('active');
+                    }
+
+                    // Add active class to clicked button
+                    const activeButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+                    if (activeButton) {
+                      activeButton.classList.add('active');
+                    }
+                  }
+
+                  // Character count function
+                  function updateCharCount(element, counterId, maxLength) {
+                    const counter = document.getElementById(counterId);
+                    if (counter) {
+                      const currentLength = element.value.length;
+                      counter.textContent = `${currentLength}/${maxLength}`;
+                      counter.style.color = currentLength > maxLength ? '#ef4444' : '#6b7280';
+                    }
+                  }
+
+                  // Preview function
+                  function showPreview() {
+                    // Open homepage in new tab for preview
+                    window.open('/', '_blank');
+                  }
+
+                  // Dropdown toggle function
+                  function toggleDropdown() {
+                    const dropdown = document.querySelector('.dropdown-menu');
+                    if (dropdown) {
+                      dropdown.classList.toggle('show');
+                    }
+                  }
+
+                  // Reset form functions
+                  function resetForm() {
+                    if (confirm('Are you sure you want to reset the homepage configuration form? All unsaved changes will be lost.')) {
+                      document.getElementById('configForm').reset();
+                      // Reset character counters
+                      const counters = document.querySelectorAll('.char-count');
+                      counters.forEach(counter => {
+                        const maxLength = counter.textContent.split('/')[1];
+                        if (maxLength) {
+                          counter.textContent = `0/${maxLength}`;
+                          counter.style.color = '#6b7280';
+                        }
+                      });
+                    }
+                  }
+
+                  function resetSystemForm() {
+                    if (confirm('Are you sure you want to reset the system configuration form? All unsaved changes will be lost.')) {
+                      document.getElementById('systemConfigForm').reset();
+                    }
+                  }
+
+                  // Dynamic item management functions
+                  function addPledgeItem() {
+                    const container = document.getElementById('pledgeItemsContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Pledge ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removePledgeItem(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="pledgeName[]" maxlength="50" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="pledgeDescription[]" maxlength="250" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removePledgeItem(button) {
+                    if (confirm('Are you sure you want to remove this pledge item?')) {
+                      button.closest('.dynamic-item').remove();
+                      updatePledgeItemNumbers();
+                    }
+                  }
+
+                  function updatePledgeItemNumbers() {
+                    const items = document.querySelectorAll('#pledgeItemsContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Pledge ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addAboutFeature() {
+                    const container = document.getElementById('aboutFeaturesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Feature ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeAboutFeature(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Icon</label>
+                            <input type="text" name="featureIcon[]" value="📱" maxlength="10" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="featureTitle[]" maxlength="50" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="featureDescription[]" maxlength="200" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeAboutFeature(button) {
+                    if (confirm('Are you sure you want to remove this feature?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateAboutFeatureNumbers();
+                    }
+                  }
+
+                  function updateAboutFeatureNumbers() {
+                    const items = document.querySelectorAll('#aboutFeaturesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Feature ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addServiceItem() {
+                    const container = document.getElementById('servicesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Service ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeServiceItem(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="serviceTitle[]" maxlength="100" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="serviceDescription[]" class="tall" maxlength="500" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeServiceItem(button) {
+                    if (confirm('Are you sure you want to remove this service?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateServiceItemNumbers();
+                    }
+                  }
+
+                  function updateServiceItemNumbers() {
+                    const items = document.querySelectorAll('#servicesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Service ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addTeamMember() {
+                    const container = document.getElementById('teamMembersContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Team Member ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeTeamMember(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="teamName[]" maxlength="100" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Role</label>
+                            <input type="text" name="teamRole[]" maxlength="100" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="teamEmail[]" required>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeTeamMember(button) {
+                    if (confirm('Are you sure you want to remove this team member?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateTeamMemberNumbers();
+                    }
+                  }
+
+                  function updateTeamMemberNumbers() {
+                    const items = document.querySelectorAll('#teamMembersContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Team Member ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addContactCard() {
+                    const container = document.getElementById('contactCardsContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Contact Card ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeContactCard(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Icon (Emoji)</label>
+                            <input type="text" name="contactIcon[]" maxlength="10" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="contactTitle[]" maxlength="50" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="contactDescription[]" maxlength="150" required></textarea>
+                          </div>
+                          <div class="form-group">
+                            <label>Contact Information</label>
+                            <textarea name="contactInfo[]" maxlength="500" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeContactCard(button) {
+                    if (confirm('Are you sure you want to remove this contact card?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateContactCardNumbers();
+                    }
+                  }
+
+                  function updateContactCardNumbers() {
+                    const items = document.querySelectorAll('#contactCardsContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Contact Card ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addSocialMedia() {
+                    const container = document.getElementById('socialMediaContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Social Media ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeSocialMedia(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Icon (Emoji/Symbol)</label>
+                            <input type="text" name="socialIcon[]" maxlength="10" placeholder="e.g., f, ▶, 📷, 🐦" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="socialTitle[]" maxlength="50" placeholder="e.g., Facebook, YouTube" required>
+                          </div>
+                          <div class="form-group">
+                            <label>URL</label>
+                            <input type="url" name="socialUrl[]" placeholder="https://" required>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeSocialMedia(button) {
+                    if (confirm('Are you sure you want to remove this social media link?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateSocialMediaNumbers();
+                    }
+                  }
+
+                  function updateSocialMediaNumbers() {
+                    const items = document.querySelectorAll('#socialMediaContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Social Media ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addFooterLink() {
+                    const container = document.getElementById('footerLinksContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Footer Link ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeFooterLink(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Link Text</label>
+                            <input type="text" name="footerLinkText[]" maxlength="50" placeholder="e.g., Privacy Policy, Contact Us" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Link URL</label>
+                            <input type="text" name="footerLinkUrl[]" placeholder="https://example.com or #section" required>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeFooterLink(button) {
+                    if (confirm('Are you sure you want to remove this footer link?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateFooterLinkNumbers();
+                    }
+                  }
+
+                  function updateFooterLinkNumbers() {
+                    const items = document.querySelectorAll('#footerLinksContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Footer Link ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addUnitWithRequestTypes() {
+                    const container = document.getElementById('unitsWithRequestTypesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item unit-request-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Unit ${index + 1}: <strong>New Unit</strong></span>
+                          <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Unit Name</label>
+                            <input type="text" name="unitName[]" maxlength="100" required onchange="updateUnitLabel(this)">
+                          </div>
+                          <div class="form-group">
+                            <label>Request Types for this Unit (one per line)</label>
+                            <textarea name="unitRequestTypes[]" class="tall" placeholder="Enter request types that this unit handles (one per line)" rows="8"></textarea>
+                            <p class="form-hint">Enter each request type on a new line</p>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeUnitWithRequestTypes(button) {
+                    if (confirm('Are you sure you want to remove this unit?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateUnitNumbers();
+                    }
+                  }
+
+                  function updateUnitNumbers() {
+                    const items = document.querySelectorAll('#unitsWithRequestTypesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      const unitName = item.querySelector('input[name="unitName[]"]').value || 'New Unit';
+                      item.querySelector('.item-number').innerHTML = `Unit ${index + 1}: <strong>${unitName}</strong>`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function updateUnitLabel(input) {
+                    const item = input.closest('.dynamic-item');
+                    const unitName = input.value || 'New Unit';
+                    item.querySelector('.item-number').innerHTML = `Unit ${item.getAttribute('data-index') + 1}: <strong>${unitName}</strong>`;
+                  }
+
+                  function addUserRole() {
+                    const container = document.getElementById('userRolesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Role ${index + 1}: <strong>New Role</strong></span>
+                          <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Role Name</label>
+                            <input type="text" name="roleName[]" maxlength="50" required onchange="updateRoleLabel(this)">
+                          </div>
+                          <div class="form-group">
+                            <label>Access Level</label>
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                              <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                                <input type="radio" name="roleAccessLevel_${index}" value="user" checked style="margin-top: 0.25rem; cursor: pointer;">
+                                <div style="flex: 1;">
+                                  <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                    <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                      <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                    Requestor (User) - Submits Requests
+                                  </div>
+                                  <div style="font-size: 0.875rem; color: #6b7280;">Can create and view their own requests</div>
+                                </div>
+                              </label>
+                              <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                                <input type="radio" name="roleAccessLevel_${index}" value="unit" style="margin-top: 0.25rem; cursor: pointer;">
+                                <div style="flex: 1;">
+                                  <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                    <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                      <circle cx="9" cy="7" r="4"></circle>
+                                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                    Unit Member - Works on Tasks
+                                  </div>
+                                  <div style="font-size: 0.875rem; color: #6b7280;">Can view all requests, work on assigned tasks, and upload deliverables</div>
+                                </div>
+                              </label>
+                              <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
+                                <input type="radio" name="roleAccessLevel_${index}" value="admin" style="margin-top: 0.25rem; cursor: pointer;">
+                                <div style="flex: 1;">
+                                  <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
+                                      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                    </svg>
+                                    Administrator - Full Access
+                                  </div>
+                                  <div style="font-size: 0.875rem; color: #6b7280;">Complete administrative access to all system features</div>
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeUserRole(button) {
+                    if (confirm('Are you sure you want to remove this user role?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateRoleNumbers();
+                    }
+                  }
+
+                  function updateRoleNumbers() {
+                    const items = document.querySelectorAll('#userRolesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      const roleName = item.querySelector('input[name="roleName[]"]').value || 'New Role';
+                      item.querySelector('.item-number').innerHTML = `Role ${index + 1}: <strong>${roleName}</strong>`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function updateRoleLabel(input) {
+                    const item = input.closest('.dynamic-item');
+                    const roleName = input.value || 'New Role';
+                    item.querySelector('.item-number').innerHTML = `Role ${item.getAttribute('data-index') + 1}: <strong>${roleName}</strong>`;
+                  }
+
+                  // Initialize character counters on page load
+                  document.addEventListener('DOMContentLoaded', function() {
+                    // Initialize all character counters
+                    const inputs = document.querySelectorAll('input[maxlength], textarea[maxlength]');
+                    inputs.forEach(input => {
+                      const counterId = input.id + 'Count';
+                      const counter = document.getElementById(counterId);
+                      if (counter) {
+                        const maxLength = input.getAttribute('maxlength');
+                        const currentLength = input.value.length;
+                        counter.textContent = `${currentLength}/${maxLength}`;
+                        counter.style.color = currentLength > maxLength ? '#ef4444' : '#6b7280';
+                      }
+                    });
+                  });
+                </script>
+</body>
   <!-- Preview Modal -->
-  <div class="preview-modal" id="previewModal">
+  <div id="configModal" class="preview-modal">
     <div class="preview-content">
       <div class="preview-header">
-        <h2>Homepage Preview</h2>
-        <button class="btn-close-preview" onclick="closePreview()">Close</button>
+        <h2>Preview Changes</h2>
+        <button type="button" class="btn-close-preview" onclick="closePreview()">Close</button>
       </div>
-      <div class="preview-body" id="previewBody">
-        <!-- Preview content will be populated by JavaScript -->
-      </div>
-    </div>
-  </div>
-
-  <!-- Reset Confirmation Modal -->
-  <div class="preview-modal" id="resetConfirmModal">
-    <div class="preview-content">
-      <div class="preview-header">
-        <h2>Confirm Reset</h2>
-        <button class="btn-close-preview" onclick="closeResetConfirm()">Cancel</button>
-      </div>
-      <div class="preview-body">
-        <p>Are you sure you want to reset all changes? This will restore the last saved values and any unsaved changes will be lost.</p>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-          <button class="btn-close-preview" onclick="closeResetConfirm()">Cancel</button>
-          <button class="btn-reset" onclick="confirmReset()" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">Reset Changes</button>
-        </div>
+      <div class="preview-body" id="modalContent">
+        <!-- Preview content will be injected here -->
       </div>
     </div>
   </div>
 
   <!-- Save Confirmation Modal -->
-  <div class="preview-modal" id="saveConfirmModal">
-    <div class="preview-content">
-      <div class="preview-header">
-        <h2>Confirm Save</h2>
-        <button class="btn-close-preview" onclick="closeSaveConfirm()">Cancel</button>
+  <div id="saveConfirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Confirm Save</h3>
       </div>
-      <div class="preview-body">
-        <p>Are you sure you want to save these changes to the homepage? This will update the live website content.</p>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-          <button class="btn-close-preview" onclick="closeSaveConfirm()">Cancel</button>
-          <button class="btn-save" onclick="confirmSave()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">Save Changes</button>
-        </div>
+      <div class="modal-body">
+        <p>Are you sure you want to save these changes? This will update the homepage configuration.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeSaveConfirm()">Cancel</button>
+        <button type="button" class="btn-primary" onclick="confirmSave()">Save Changes</button>
       </div>
     </div>
   </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  
-  <script>
-    // Sidebar hover effect
-    const sidebar = document.getElementById('adminSidebar');
-    sidebar.addEventListener('mouseenter', function() {
-      this.classList.add('expanded');
-    });
-    sidebar.addEventListener('mouseleave', function() {
-      this.classList.remove('expanded');
-    });
-
-    // Mobile Navigation Setup
-    document.addEventListener('DOMContentLoaded', () => {
-      const menuToggle = document.getElementById('adminMenuToggle');
-      const sidebarEl = document.getElementById('adminSidebar');
-      let touchStartX = 0;
-      let touchEndX = 0;
-
-      // Initialize Mobile Navigation
-      function initMobileNavigation() {
-        if (menuToggle && sidebarEl) {
-          menuToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sidebarEl.classList.toggle('mobile-open');
-          });
-
-          // Close sidebar when clicking outside
-          document.addEventListener('click', (e) => {
-            if (sidebarEl.classList.contains('mobile-open') && 
-                !sidebarEl.contains(e.target) && 
-                !menuToggle.contains(e.target)) {
-              sidebarEl.classList.remove('mobile-open');
-            }
-          });
-
-          // Swipe to close sidebar
-          document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-          }, false);
-
-          document.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-          }, false);
-        }
-      }
-
-      // Handle Swipe Gesture
-      function handleSwipe() {
-        const swipeThreshold = 50;
-        const diff = touchStartX - touchEndX;
-        
-        if (Math.abs(diff) > swipeThreshold) {
-          if (diff > 0 && sidebarEl.classList.contains('mobile-open')) {
-            sidebarEl.classList.remove('mobile-open');
-          }
-        }
-      }
-
-      // Initialize mobile navigation
-      initMobileNavigation();
-
-      // Initialize character counts
-      updateAllCharCounts();
-    });
-
-    // Header Dropdown Manager
-    const headerDropdown = {
-      menu: null,
-      isOpen: false,
-      
-      init() {
-        this.menu = document.getElementById("dropdownMenu");
-      },
-      
-      toggle() {
-        this.isOpen ? this.close() : this.open();
-      },
-      
-      open() {
-        if (!this.menu) return;
-        this.menu.style.display = "block";
-        this.isOpen = true;
-      },
-      
-      close() {
-        if (!this.menu) return;
-        this.menu.style.display = "none";
-        this.isOpen = false;
-      }
-    };
-
-    // Dropdown toggle
-    function toggleDropdown() {
-      if (!headerDropdown.menu) {
-        headerDropdown.init();
-      }
-      headerDropdown.toggle();
-    }
-
-    // Initialize on load
-    document.addEventListener('DOMContentLoaded', () => {
-      headerDropdown.init();
-    });
-
-    // Close dropdown when clicking outside
-    window.addEventListener('click', function(e) {
-      if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-toggle')) {
-        if (headerDropdown.menu && headerDropdown.isOpen) {
-          headerDropdown.close();
-        }
-      }
-    });
-
-    // Character count function
-    function updateCharCount(element, countId, maxLength) {
-      const count = element.value.length;
-      const countElement = document.getElementById(countId);
-      if (countElement) {
-        countElement.textContent = `${count} / ${maxLength} characters`;
-        if (count > maxLength * 0.9) {
-          countElement.style.color = '#ef4444';
-        } else {
-          countElement.style.color = '#9ca3af';
-        }
-      }
-    }
-
-    // Initialize all character counts
-    function updateAllCharCounts() {
-      const fields = [
-        { id: 'heroTitle', countId: 'heroTitleCount', max: 150 },
-        { id: 'heroTitleHighlight', countId: 'heroTitleHighlightCount', max: 50 },
-        { id: 'heroSubtitle', countId: 'heroSubtitleCount', max: 500 },
-        { id: 'heroPrimaryButtonText', countId: 'heroPrimaryButtonTextCount', max: 50 },
-        { id: 'heroSecondaryButtonText', countId: 'heroSecondaryButtonTextCount', max: 50 },
-        { id: 'pledgeSectionTitle', countId: 'pledgeSectionTitleCount', max: 50 },
-        { id: 'pledge1Name', countId: 'pledge1NameCount', max: 50 },
-        { id: 'pledge1Description', countId: 'pledge1DescriptionCount', max: 250 },
-        { id: 'pledge2Name', countId: 'pledge2NameCount', max: 50 },
-        { id: 'pledge2Description', countId: 'pledge2DescriptionCount', max: 250 },
-        { id: 'pledge3Name', countId: 'pledge3NameCount', max: 50 },
-        { id: 'pledge3Description', countId: 'pledge3DescriptionCount', max: 250 },
-        { id: 'aboutSectionTitle', countId: 'aboutSectionTitleCount', max: 50 },
-        { id: 'aboutSectionSubtitle', countId: 'aboutSectionSubtitleCount', max: 100 },
-        { id: 'aboutMissionTitle', countId: 'aboutMissionTitleCount', max: 50 },
-        { id: 'aboutMission', countId: 'aboutMissionCount', max: 600 },
-        { id: 'aboutVisionTitle', countId: 'aboutVisionTitleCount', max: 50 },
-        { id: 'aboutVision', countId: 'aboutVisionCount', max: 600 },
-        { id: 'servicesSectionTitle', countId: 'servicesSectionTitleCount', max: 50 },
-        { id: 'servicesSectionSubtitle', countId: 'servicesSectionSubtitleCount', max: 100 },
-        { id: 'service1Title', countId: 'service1TitleCount', max: 100 },
-        { id: 'service1Description', countId: 'service1DescriptionCount', max: 500 },
-        { id: 'service2Title', countId: 'service2TitleCount', max: 100 },
-        { id: 'service2Description', countId: 'service2DescriptionCount', max: 500 },
-        { id: 'service3Title', countId: 'service3TitleCount', max: 100 },
-        { id: 'service3Description', countId: 'service3DescriptionCount', max: 500 },
-        { id: 'service4Title', countId: 'service4TitleCount', max: 100 },
-        { id: 'service4Description', countId: 'service4DescriptionCount', max: 500 },
-        { id: 'service5Title', countId: 'service5TitleCount', max: 100 },
-        { id: 'service5Description', countId: 'service5DescriptionCount', max: 500 },
-        { id: 'service6Title', countId: 'service6TitleCount', max: 100 },
-        { id: 'service6Description', countId: 'service6DescriptionCount', max: 500 },
-        { id: 'teamSectionTitle', countId: 'teamSectionTitleCount', max: 50 },
-        { id: 'teamSectionSubtitle', countId: 'teamSectionSubtitleCount', max: 100 },
-        { id: 'contactSectionTitle', countId: 'contactSectionTitleCount', max: 50 },
-        { id: 'contactIntroText', countId: 'contactIntroTextCount', max: 200 },
-        { id: 'contact1Icon', countId: 'contact1IconCount', max: 10 },
-        { id: 'contact1Title', countId: 'contact1TitleCount', max: 50 },
-        { id: 'contact1Description', countId: 'contact1DescriptionCount', max: 150 },
-        { id: 'contact2Icon', countId: 'contact2IconCount', max: 10 },
-        { id: 'contact2Title', countId: 'contact2TitleCount', max: 50 },
-        { id: 'contact2Description', countId: 'contact2DescriptionCount', max: 150 },
-        { id: 'contact3Icon', countId: 'contact3IconCount', max: 10 },
-        { id: 'contact3Title', countId: 'contact3TitleCount', max: 50 },
-        { id: 'contact3Description', countId: 'contact3DescriptionCount', max: 150 },
-        { id: 'contact4Icon', countId: 'contact4IconCount', max: 10 },
-        { id: 'contact4Title', countId: 'contact4TitleCount', max: 50 },
-        { id: 'contact4Description', countId: 'contact4DescriptionCount', max: 150 },
-        { id: 'socialSectionTitle', countId: 'socialSectionTitleCount', max: 50 },
-        { id: 'footerTagline', countId: 'footerTaglineCount', max: 150 },
-        { id: 'footerText', countId: 'footerTextCount', max: 100 },
-      ];
-
-      fields.forEach(field => {
-        const element = document.getElementById(field.id);
-        if (element) {
-          updateCharCount(element, field.countId, field.max);
-        }
-      });
-    }
-
-    // Preview functionality
-    function showPreview() {
-      const previewBody = document.getElementById('previewBody');
-      const modal = document.getElementById('previewModal');
-
-      // Helper function to get dynamic item values
-      function getDynamicItems(containerId, namePrefix, fields) {
-        const container = document.getElementById(containerId);
-        if (!container) return [];
-        
-        const items = [];
-        const itemElements = container.querySelectorAll('.dynamic-item');
-        
-        itemElements.forEach((item, index) => {
-          const itemData = {};
-          fields.forEach(field => {
-            const input = item.querySelector(`[name="${namePrefix}${field}[]"]`);
-            if (input) {
-              itemData[field.toLowerCase()] = input.value;
-            }
-          });
-          if (Object.keys(itemData).length > 0) {
-            items.push(itemData);
-          }
-        });
-        
-        return items;
-      }
-
-      const content = {
-        heroTitle: document.getElementById('heroTitle')?.value || '',
-        heroTitleHighlight: document.getElementById('heroTitleHighlight')?.value || '',
-        heroSubtitle: document.getElementById('heroSubtitle')?.value || '',
-        heroPrimaryButtonText: document.getElementById('heroPrimaryButtonText')?.value || '',
-        heroPrimaryButtonLink: document.getElementById('heroPrimaryButtonLink')?.value || '',
-        heroSecondaryButtonText: document.getElementById('heroSecondaryButtonText')?.value || '',
-        heroSecondaryButtonLink: document.getElementById('heroSecondaryButtonLink')?.value || '',
-        pledgeSectionTitle: document.getElementById('pledgeSectionTitle')?.value || '',
-        aboutSectionTitle: document.getElementById('aboutSectionTitle')?.value || '',
-        aboutSectionSubtitle: document.getElementById('aboutSectionSubtitle')?.value || '',
-        aboutMissionTitle: document.getElementById('aboutMissionTitle')?.value || '',
-        aboutMission: document.getElementById('aboutMission')?.value || '',
-        aboutVisionTitle: document.getElementById('aboutVisionTitle')?.value || '',
-        aboutVision: document.getElementById('aboutVision')?.value || '',
-        servicesSectionTitle: document.getElementById('servicesSectionTitle')?.value || '',
-        servicesSectionSubtitle: document.getElementById('servicesSectionSubtitle')?.value || '',
-        teamSectionTitle: document.getElementById('teamSectionTitle')?.value || '',
-        teamSectionSubtitle: document.getElementById('teamSectionSubtitle')?.value || '',
-        contactSectionTitle: document.getElementById('contactSectionTitle')?.value || '',
-        contactIntroText: document.getElementById('contactIntroText')?.value || '',
-        socialSectionTitle: document.getElementById('socialSectionTitle')?.value || '',
-        footerTagline: document.getElementById('footerTagline')?.value || '',
-        footerText: document.getElementById('footerText')?.value || ''
-      };
-
-      // Get dynamic content
-      const pledges = getDynamicItems('pledgeItemsContainer', 'pledge', ['Name', 'Description']);
-      const services = getDynamicItems('servicesContainer', 'service', ['Title', 'Description']);
-      const teamMembers = getDynamicItems('teamMembersContainer', 'team', ['Name', 'Role', 'Email']);
-      const contactCards = getDynamicItems('contactCardsContainer', 'contact', ['Icon', 'Title', 'Description', 'Info']);
-      const socialMedia = getDynamicItems('socialMediaContainer', 'social', ['Icon', 'Title', 'Url']);
-      const footerLinks = getDynamicItems('footerLinksContainer', 'footerLink', ['Text', 'Url']);
-      const aboutFeatures = getDynamicItems('aboutFeaturesContainer', 'feature', ['Icon', 'Title', 'Description']);
-
-      previewBody.innerHTML = `
-        <style>
-          .preview-homepage { font-family: 'Inter', sans-serif; background: #fafcfa; color: #1a2e1a; line-height: 1.6; max-width: 100%; margin: 0 auto; }
-          .preview-hero { min-height: auto; display: flex; align-items: center; padding: 40px 20px; background: linear-gradient(45deg, #f0f8f0, #e8f5e8); position: relative; }
-          .preview-hero-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
-          .preview-hero-content h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 700; margin-bottom: 15px; line-height: 1.2; }
-          .preview-hero-highlight { background: linear-gradient(120deg, #4caf50 0%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-          .preview-hero-content p { font-size: 1.1rem; color: #4a5d4a; margin-bottom: 25px; }
-          .preview-hero-buttons { display: flex; gap: 15px; }
-          .preview-btn-primary { background: linear-gradient(135deg, #1a5d1a 0%, #2d7a2d 100%); color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600; }
-          .preview-btn-secondary { color: #1a5d1a; text-decoration: none; font-weight: 600; }
-          .preview-hero-card { background: rgba(255,255,255,0.9); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(26,93,26,0.1); }
-          .preview-pledge-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #1a5d1a; margin-bottom: 20px; text-align: center; }
-          .preview-pledge-item { margin-bottom: 15px; }
-          .preview-pledge-item h4 { color: #2d7a2d; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; margin-bottom: 5px; }
-          .preview-pledge-item p { color: #4a5d4a; font-size: 0.9rem; }
-          .preview-section { padding: 40px 20px; }
-          .preview-section-container { max-width: 1200px; margin: 0 auto; }
-          .preview-section-header { text-align: center; margin-bottom: 40px; }
-          .preview-section-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #1a2e1a; margin-bottom: 10px; }
-          .preview-section-subtitle { font-size: 1rem; color: #4a5d4a; }
-          .preview-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-          .preview-about-content h3 { font-size: 1.5rem; color: #1a2e1a; margin-bottom: 15px; }
-          .preview-about-content p { font-size: 1rem; color: #4a5d4a; margin-bottom: 15px; }
-          .preview-services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-          .preview-service-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 20px rgba(26,93,26,0.1); }
-          .preview-service-number { background: linear-gradient(135deg, #1a5d1a 0%, #2d7a2d 100%); color: white; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 15px; }
-          .preview-service-card h3 { font-size: 1.2rem; color: #1a2e1a; margin-bottom: 10px; }
-          .preview-service-card p { color: #4a5d4a; }
-          .preview-team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-          .preview-team-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(26,93,26,0.1); border: 2px solid #e8f5e8; }
-          .preview-team-info { padding: 30px; }
-          .preview-team-info h4 { font-size: 1.1rem; color: #1a2e1a; margin-bottom: 5px; }
-          .preview-team-role { color: #4caf50; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; font-size: 0.8rem; }
-          .preview-team-contact { font-size: 0.9rem; color: #4a5d4a; }
-          .preview-contact-section { background: #0d2818; color: white; padding: 40px 20px; }
-          .preview-contact-content { text-align: center; max-width: 800px; margin: 0 auto; }
-          .preview-contact-content h2 { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 15px; }
-          .preview-contact-intro { font-size: 1.1rem; color: rgba(255,255,255,0.9); margin-bottom: 30px; }
-          .preview-contact-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px; }
-          .preview-contact-card { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 30px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
-          .preview-contact-icon { width: 60px; height: 60px; background: #ffd700; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0d2818; margin-bottom: 15px; }
-          .preview-contact-card h3 { font-size: 1.2rem; margin-bottom: 10px; }
-          .preview-contact-card p { color: rgba(255,255,255,0.9); margin-bottom: 10px; }
-          .preview-social-section { padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
-          .preview-social-section h3 { font-size: 1.1rem; margin-bottom: 15px; color: rgba(255,255,255,0.9); }
-          .preview-social-links { display: flex; justify-content: center; gap: 10px; }
-          .preview-social-link { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: white; text-decoration: none; font-size: 1.2rem; }
-          .preview-footer { background: #1a2e1a; color: rgba(255,255,255,0.8); padding: 30px 20px; text-align: center; }
-          .preview-footer-content { max-width: 1200px; margin: 0 auto; }
-          .preview-footer-tagline { font-size: 1.2rem; margin-bottom: 15px; }
-          .preview-footer-links { display: flex; justify-content: center; gap: 20px; margin: 15px 0; }
-          .preview-footer-links a { color: rgba(255,255,255,0.8); text-decoration: none; }
-          .preview-footer-copyright p { margin: 0; }
-        </style>
-        <div class="preview-homepage">
-          <!-- Hero Section -->
-          <section class="preview-hero">
-            <div class="preview-hero-container">
-              <div class="preview-hero-content">
-                <h1>${content.heroTitle} <span class="preview-hero-highlight">${content.heroTitleHighlight}</span></h1>
-                <p>${content.heroSubtitle}</p>
-                <div class="preview-hero-buttons">
-                  <a href="${content.heroPrimaryButtonLink}" class="preview-btn-primary">${content.heroPrimaryButtonText} →</a>
-                  <a href="${content.heroSecondaryButtonLink}" class="preview-btn-secondary">${content.heroSecondaryButtonText} →</a>
-                </div>
-              </div>
-              <div class="preview-hero-visual">
-                <div class="preview-hero-card">
-                  <h3 class="preview-pledge-title">${content.pledgeSectionTitle}</h3>
-                  ${pledges.length > 0 ? pledges.map((pledge, index) => `
-                    <div class="preview-pledge-item">
-                      <h4>${pledge.name || `Pledge ${index + 1}`}</h4>
-                      <p>${pledge.description || 'No description'}</p>
-                    </div>
-                  `).join('') : '<p style="text-align: center; color: #4a5d4a;">No pledge items configured</p>'}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- About Section -->
-          <section class="preview-section">
-            <div class="preview-section-container">
-              <div class="preview-section-header">
-                <h2 class="preview-section-title">${content.aboutSectionTitle}</h2>
-                <p class="preview-section-subtitle">${content.aboutSectionSubtitle}</p>
-              </div>
-              <div class="preview-about-grid">
-                <div class="preview-about-content">
-                  <h3>${content.aboutMissionTitle}</h3>
-                  <p>${content.aboutMission}</p>
-                  <h3>${content.aboutVisionTitle}</h3>
-                  <p>${content.aboutVision}</p>
-                </div>
-                <div class="preview-about-visual">
-                  <div class="preview-feature-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                    ${aboutFeatures.length > 0 ? aboutFeatures.map((feature, index) => `
-                      <div class="preview-feature-card" style="background: #e8f5e8; padding: 20px; border-radius: 15px; text-align: center; transition: all 0.3s ease; border: 2px solid transparent;">
-                        <div class="preview-feature-icon" style="width: 40px; height: 40px; background: linear-gradient(135deg, #1a5d1a 0%, #2d7a2d 100%); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; margin-bottom: 10px;">${feature.icon || '📱'}</div>
-                        <h4 style="font-size: 1rem; color: #1a2e1a; margin-bottom: 8px;">${feature.title || 'Feature Title'}</h4>
-                        <p style="color: #4a5d4a; font-size: 0.9rem;">${feature.description || 'Feature description'}</p>
-                      </div>
-                    `).join('') : '<p style="color: #4a5d4a;">No features configured</p>'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Services Section -->
-          <section class="preview-section" style="background: #e8f5e8;">
-            <div class="preview-section-container">
-              <div class="preview-section-header">
-                <h2 class="preview-section-title">${content.servicesSectionTitle}</h2>
-                <p class="preview-section-subtitle">${content.servicesSectionSubtitle}</p>
-              </div>
-              <div class="preview-services-grid">
-                ${services.length > 0 ? services.map((service, index) => `
-                  <div class="preview-service-card">
-                    <span class="preview-service-number">${String(index + 1).padStart(2, '0')}</span>
-                    <h3>${service.title || `Service ${index + 1}`}</h3>
-                    <p>${service.description || 'No description'}</p>
-                  </div>
-                `).join('') : '<p style="grid-column: 1 / -1; text-align: center; color: #4a5d4a;">No services configured</p>'}
-              </div>
-            </div>
-          </section>
-
-          <!-- Team Section -->
-          <section class="preview-section">
-            <div class="preview-section-container">
-              <div class="preview-section-header">
-                <h2 class="preview-section-title">${content.teamSectionTitle}</h2>
-                <p class="preview-section-subtitle">${content.teamSectionSubtitle}</p>
-              </div>
-              <div class="preview-team-grid">
-                ${teamMembers.length > 0 ? teamMembers.map((member, index) => `
-                  <div class="preview-team-card">
-                    <div class="preview-team-info">
-                      <h4>${member.name || `Team Member ${index + 1}`}</h4>
-                      <div class="preview-team-role">${member.role || 'No role'}</div>
-                      <div class="preview-team-contact">
-                        <p><strong>Email:</strong> <a href="mailto:${member.email}" style="color: #1a5d1a;">${member.email || 'No email'}</a></p>
-                      </div>
-                    </div>
-                  </div>
-                `).join('') : '<p style="grid-column: 1 / -1; text-align: center; color: #4a5d4a;">No team members configured</p>'}
-              </div>
-            </div>
-          </section>
-
-          <!-- Contact Section -->
-          <section class="preview-contact-section">
-            <div class="preview-contact-content">
-              <h2>${content.contactSectionTitle}</h2>
-              <p class="preview-contact-intro">${content.contactIntroText}</p>
-              <div class="preview-contact-cards">
-                ${contactCards.length > 0 ? contactCards.map((card, index) => `
-                  <div class="preview-contact-card">
-                    <div class="preview-contact-icon">${card.icon || '📞'}</div>
-                    <h3>${card.title || `Contact ${index + 1}`}</h3>
-                    <p>${card.description || 'No description'}</p>
-                    <p style="color: #ffd700; font-weight: bold;">${card.info || 'No contact info'}</p>
-                  </div>
-                `).join('') : '<p style="grid-column: 1 / -1; text-align: center; color: rgba(255,255,255,0.9);">No contact cards configured</p>'}
-              </div>
-              <div class="preview-social-section">
-                <h3>${content.socialSectionTitle}</h3>
-                <div class="preview-social-links">
-                  ${socialMedia.length > 0 ? socialMedia.map((social, index) => `
-                    <a href="${social.url || '#'}" class="preview-social-link" title="${social.title || `Social ${index + 1}`}">${social.icon || '🔗'}</a>
-                  `).join('') : '<span style="color: rgba(255,255,255,0.9);">No social media links configured</span>'}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Footer -->
-          <footer class="preview-footer">
-            <div class="preview-footer-content">
-              <div class="preview-footer-tagline">${content.footerTagline}</div>
-              <div class="preview-footer-links">
-                ${footerLinks.length > 0 ? footerLinks.map(link => `<a href="${link.url || '#'}">${link.text || 'No text'}</a>`).join('') : '<span>No links configured</span>'}
-              </div>
-              <div class="preview-footer-copyright">
-                <p>&copy; ${new Date().getFullYear()} ${content.footerText}. All rights reserved.</p>
-              </div>
-            </div>
-          </footer>
-        </div>
-      `;
-
-      modal.classList.add('active');
-    }
-
-    function closePreview() {
-      const modal = document.getElementById('previewModal');
-      modal.classList.remove('active');
-    }
-
-    // Close preview when clicking outside
-    document.getElementById('previewModal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'previewModal') {
-        closePreview();
-      }
-    });
-
-    // Close reset confirmation when clicking outside
-    document.getElementById('resetConfirmModal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'resetConfirmModal') {
-        closeResetConfirm();
-      }
-    });
-
-    // Close save confirmation when clicking outside
-    document.getElementById('saveConfirmModal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'saveConfirmModal') {
-        closeSaveConfirm();
-      }
-    });
-
-    // Reset form
-    function resetForm() {
-      const modal = document.getElementById('resetConfirmModal');
-      modal.classList.add('active');
-    }
-
-    function closeResetConfirm() {
-      const modal = document.getElementById('resetConfirmModal');
-      modal.classList.remove('active');
-    }
-
-    function confirmReset() {
-      closeResetConfirm();
-      location.reload();
-    }
-
-    function closeSaveConfirm() {
-      const modal = document.getElementById('saveConfirmModal');
-      modal.classList.remove('active');
-    }
-
-    function confirmSave() {
-      closeSaveConfirm();
-      // Submit the form
-      document.getElementById('configForm').submit();
-    }
-
-    // Form submission validation
-    document.getElementById('configForm').addEventListener('submit', (e) => {
-      e.preventDefault(); // Always prevent default submission
-      
-      const requiredFields = ['heroTitle', 'heroSubtitle'];
-      let isValid = true;
-
-      requiredFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (!field.value.trim()) {
-          isValid = false;
-          field.style.borderColor = '#ef4444';
-        } else {
-          field.style.borderColor = '#e5e7eb';
-        }
-      });
-
-      if (!isValid) {
-        alert('Please fill in all required fields before saving.');
-        return false;
-      }
-
-      // Show confirmation modal instead of browser confirm
-      const modal = document.getElementById('saveConfirmModal');
-      modal.classList.add('active');
-    });
-
-    // Dynamic item management functions
-    function addPledgeItem() {
-      const container = document.getElementById('pledgeItemsContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Pledge ${itemCount}</span>
-            <button type="button" class="btn-remove-item" onclick="removePledgeItem(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Name</label>
-              <input type="text" name="pledgeName[]" maxlength="50" required>
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <textarea name="pledgeDescription[]" maxlength="250" required></textarea>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateItemNumbers(container, 'Pledge');
-    }
-
-    function removePledgeItem(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateItemNumbers(container, 'Pledge');
-    }
-
-    function addServiceItem() {
-      const container = document.getElementById('servicesContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Service ${itemCount}</span>
-            <button type="button" class="btn-remove-item" onclick="removeServiceItem(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Title</label>
-              <input type="text" name="serviceTitle[]" maxlength="100" required>
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <textarea name="serviceDescription[]" class="tall" maxlength="500" required></textarea>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateItemNumbers(container, 'Service');
-    }
-
-    function removeServiceItem(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateItemNumbers(container, 'Service');
-    }
-
-    function addTeamMember() {
-      const container = document.getElementById('teamMembersContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Team Member ${itemCount}</span>
-            <button type="button" class="btn-remove-item" onclick="removeTeamMember(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Name</label>
-              <input type="text" name="teamName[]" maxlength="100" required>
-            </div>
-            <div class="form-group">
-              <label>Role</label>
-              <input type="text" name="teamRole[]" maxlength="100" required>
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" name="teamEmail[]" required>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateItemNumbers(container, 'Team Member');
-    }
-
-    function removeTeamMember(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateItemNumbers(container, 'Team Member');
-    }
-
-    function addContactCard() {
-      const container = document.getElementById('contactCardsContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Contact Card ${itemCount}</span>
-            <button type="button" class="btn-remove-item" onclick="removeContactCard(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Icon (Emoji)</label>
-              <input type="text" name="contactIcon[]" maxlength="10" required>
-            </div>
-            <div class="form-group">
-              <label>Title</label>
-              <input type="text" name="contactTitle[]" maxlength="50" required>
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <textarea name="contactDescription[]" maxlength="150" required></textarea>
-            </div>
-            <div class="form-group">
-              <label>Contact Information</label>
-              <textarea name="contactInfo[]" maxlength="500" required></textarea>
-            </div>
-            <div class="form-group">
-              <label>Contact Type</label>
-              <select name="contactType[]" required>
-                <option value="email">Email</option>
-                <option value="phone">Phone</option>
-                <option value="address">Address</option>
-                <option value="hours">Office Hours</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateItemNumbers(container, 'Contact Card');
-    }
-
-    function removeContactCard(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateItemNumbers(container, 'Contact Card');
-    }
-
-    function addSocialMedia() {
-      const container = document.getElementById('socialMediaContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Social Media ${itemCount}</span>
-            <button type="button" class="btn-remove-item" onclick="removeSocialMedia(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Icon (Emoji/Symbol)</label>
-              <input type="text" name="socialIcon[]" maxlength="10" placeholder="e.g., f, ▶, 📷, 🐦" required>
-            </div>
-            <div class="form-group">
-              <label>Title</label>
-              <input type="text" name="socialTitle[]" maxlength="50" placeholder="e.g., Facebook, YouTube" required>
-            </div>
-            <div class="form-group">
-              <label>URL</label>
-              <input type="url" name="socialUrl[]" placeholder="https://..." required>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateItemNumbers(container, 'Social Media');
-    }
-
-    function removeSocialMedia(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateItemNumbers(container, 'Social Media');
-    }
-
-    function addFooterLink() {
-      const container = document.getElementById('footerLinksContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Footer Link ${itemCount}</span>
-            <button type="button" class="btn-remove-item" onclick="removeFooterLink(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Link Text</label>
-              <input type="text" name="footerLinkText[]" maxlength="50" placeholder="e.g., Privacy Policy, Contact Us" required>
-            </div>
-            <div class="form-group">
-              <label>Link URL</label>
-              <input type="text" name="footerLinkUrl[]" placeholder="https://example.com or #section" required>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateItemNumbers(container, 'Footer Link');
-    }
-
-    function removeFooterLink(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateItemNumbers(container, 'Footer Link');
-    }
-
-    function addAboutFeature() {
-      const container = document.getElementById('aboutFeaturesContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Feature ${itemCount}</span>
-            <button type="button" class="btn-remove-item" onclick="removeAboutFeature(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Icon</label>
-              <input type="text" name="featureIcon[]" maxlength="10" placeholder="📱" required>
-            </div>
-            <div class="form-group">
-              <label>Title</label>
-              <input type="text" name="featureTitle[]" maxlength="50" required>
-            </div>
-            <div class="form-group">
-              <label>Description</label>
-              <textarea name="featureDescription[]" maxlength="200" required></textarea>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateItemNumbers(container, 'Feature');
-    }
-
-    function removeAboutFeature(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateItemNumbers(container, 'Feature');
-    }
-
-    function updateItemNumbers(container, prefix) {
-      const items = container.querySelectorAll('.dynamic-item');
-      items.forEach((item, index) => {
-        const numberSpan = item.querySelector('.item-number');
-        numberSpan.textContent = `${prefix} ${index + 1}`;
-        item.setAttribute('data-index', index);
-      });
-    }
-
-    // Tab switching function
-    function switchTab(tabName) {
-      // Hide all tabs
-      const tabs = document.querySelectorAll('.tab-content');
-      tabs.forEach(tab => tab.classList.remove('active'));
-
-      // Remove active class from all tab buttons
-      const tabButtons = document.querySelectorAll('.config-tab');
-      tabButtons.forEach(button => button.classList.remove('active'));
-
-      // Show selected tab
-      const selectedTab = document.getElementById(tabName + '-tab');
-      if (selectedTab) {
-        selectedTab.classList.add('active');
-      }
-
-      // Add active class to clicked button
-      const activeButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
-      if (activeButton) {
-        activeButton.classList.add('active');
-      }
-    }
-
-    // System Configuration Functions
-
-
-
-
-    function addUnitWithRequestTypes() {
-      const container = document.getElementById('unitsWithRequestTypesContainer');
-      const itemCount = container.children.length + 1;
-      
-      const itemHtml = `
-        <div class="dynamic-item unit-request-item" data-index="${itemCount - 1}">
-          <div class="item-header">
-            <span class="item-number">Unit ${itemCount}: <strong>New Unit</strong></span>
-            <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Unit Name</label>
-              <input type="text" name="unitName[]" maxlength="100" required onchange="updateUnitLabel(this)">
-            </div>
-            <div class="form-group">
-              <label>Request Types for this Unit (one per line)</label>
-              <textarea name="unitRequestTypes[]" class="tall" placeholder="Enter request types that this unit handles (one per line)" rows="8"></textarea>
-              <p class="form-hint">Enter each request type on a new line</p>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateUnitNumbers(container);
-    }
-
-    function removeUnitWithRequestTypes(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateUnitNumbers(container);
-    }
-
-    function updateUnitLabel(input) {
-      const item = input.closest('.dynamic-item');
-      const label = item.querySelector('.item-number strong');
-      if (label) {
-        label.textContent = input.value || 'New Unit';
-      }
-    }
-
-    function updateUnitNumbers(container) {
-      const items = container.querySelectorAll('.unit-request-item');
-      items.forEach((item, index) => {
-        const numberSpan = item.querySelector('.item-number');
-        const unitName = item.querySelector('input[name="unitName[]"]').value || 'New Unit';
-        numberSpan.innerHTML = `Unit ${index + 1}: <strong>${unitName}</strong>`;
-        item.setAttribute('data-index', index);
-      });
-    }
-
-    function addUserRole() {
-      const container = document.getElementById('userRolesContainer');
-      const itemCount = container.children.length;
-      
-      const itemHtml = `
-        <div class="dynamic-item" data-index="${itemCount}">
-          <div class="item-header">
-            <span class="item-number">Role ${itemCount + 1}: <strong>New Role</strong></span>
-            <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
-              <span>×</span>
-            </button>
-          </div>
-          <div class="item-content">
-            <div class="form-group">
-              <label>Role Name</label>
-              <input type="text" name="roleName[]" maxlength="50" required onchange="updateRoleLabel(this)">
-            </div>
-            <div class="form-group">
-              <label>Access Level</label>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
-                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
-                  <input type="radio" name="roleAccessLevel_${itemCount}" value="user" checked style="margin-top: 0.25rem; cursor: pointer;">
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
-                      <svg width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                      </svg>
-                      Requestor (User) - Submits Requests
-                    </div>
-                    <div style="font-size: 0.875rem; color: #6b7280;">Can create and view their own requests</div>
-                  </div>
-                </label>
-                
-                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
-                  <input type="radio" name="roleAccessLevel_${itemCount}" value="unit" style="margin-top: 0.25rem; cursor: pointer;">
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
-                      <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                      </svg>
-                      Unit Member - Works on Tasks
-                    </div>
-                    <div style="font-size: 0.875rem; color: #6b7280;">Can view all requests, work on assigned tasks, and upload deliverables</div>
-                  </div>
-                </label>
-                
-                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" class="role-option">
-                  <input type="radio" name="roleAccessLevel_${itemCount}" value="admin" style="margin-top: 0.25rem; cursor: pointer;">
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                      </svg>
-                      Administrator - Full System Access
-                    </div>
-                    <div style="font-size: 0.875rem; color: #6b7280;">Complete administrative access to all system features</div>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.insertAdjacentHTML('beforeend', itemHtml);
-      updateRoleNumbers(container);
-    }
-
-    function removeUserRole(button) {
-      const item = button.closest('.dynamic-item');
-      const container = item.parentElement;
-      item.remove();
-      updateRoleNumbers(container);
-    }
-
-    function updateRoleLabel(input) {
-      const item = input.closest('.dynamic-item');
-      const label = item.querySelector('.item-number strong');
-      if (label) {
-        label.textContent = input.value || 'New Role';
-      }
-    }
-
-    function updateRoleNumbers(container) {
-      const items = container.querySelectorAll('.dynamic-item');
-      items.forEach((item, index) => {
-        const numberSpan = item.querySelector('.item-number');
-        const roleName = item.querySelector('input[name="roleName[]"]').value || 'New Role';
-        numberSpan.innerHTML = `Role ${index + 1}: <strong>${roleName}</strong>`;
-        item.setAttribute('data-index', index);
-      });
-    }
-
-    function resetSystemForm() {
-      if (confirm('Are you sure you want to reset the system configuration form? All unsaved changes will be lost.')) {
-        document.getElementById('systemConfigForm').reset();
-        // Reset dynamic containers
-        document.getElementById('unitsWithRequestTypesContainer').innerHTML = '';
-        document.getElementById('userRolesContainer').innerHTML = '';
-      }
-    }
-
-    // System Config Form submission handling
-    document.getElementById('systemConfigForm')?.addEventListener('submit', (e) => {
-      // Allow default form submission
-      const organizationsList = document.getElementById('organizationsList');
-      const officesList = document.getElementById('officesList');
-      
-      // Basic validation
-      if (organizationsList && !organizationsList.value.trim()) {
-        e.preventDefault();
-        alert('Please add at least one organization.');
-        organizationsList.focus();
-        return false;
-      }
-
-      // Form is valid, allow submission
-      return true;
-    });
-
-    // Initialize tab on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      // Check if there's a tab parameter in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab');
-      const success = urlParams.get('success');
-      const error = urlParams.get('error');
-      
-      // Show success or error messages
-      if (success) {
-        alert('✅ ' + success);
-        // Clean URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else if (error) {
-        alert('❌ ' + error);
-        // Clean URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-      
-      if (tab === 'homepage') {
-        switchTab('homepage');
-      } else {
-        // Default to system tab
-        switchTab('system');
-      }
-    });
-  </script>
+  <!-- Reset Confirmation Modal -->
+  <div id="resetConfirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Confirm Reset</h3>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to reset the form? All unsaved changes will be lost.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeResetConfirm()">Cancel</button>
+        <button type="button" class="btn-danger" onclick="confirmReset()">Reset Form</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/javascripts/ejs/configuration.js?v=4"></script>
 </body>
 </html>

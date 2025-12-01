@@ -36,6 +36,28 @@ router.get('/register', async (req, res) => {
   }
 });
 
+
+/**
+ * GET /about-s-core
+ * Renders the S-CORE info page with login and sign up buttons
+ */
+const Page = require('../models/Page');
+router.get('/about-s-core', async (req, res) => {
+  try {
+    // Fetch homepage content (S-CORE section fields)
+    let pageContent = await Page.findOne({ slug: 'home' });
+    if (!pageContent) {
+      pageContent = { content: {} };
+    }
+    res.render('about-s-core', {
+      pageContent: pageContent.content
+    });
+  } catch (error) {
+    console.error('[About S-CORE] Error loading page:', error);
+    res.render('about-s-core', { pageContent: {} });
+  }
+});
+
 /**
  * GET /login
  * Renders the login form
