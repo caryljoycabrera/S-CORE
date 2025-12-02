@@ -13,6 +13,60 @@ const { upload } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const { apiLimiter } = require('../middleware/rateLimiter');
 const { getOrganizations, getOffices, getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+const settingsService = require('../services/settingsService');
+const { sanitizeText, sanitizeMongoId, sanitizeString } = require('../utils/sanitize');
+
+/**
+ * POST /api/add-organization
+ * Adds a new organization to SystemSettings
+ */
+router.post('/api/add-organization', async (req, res) => {
+  // Sanitize the organization name input
+  const name = sanitizeText(req.body.name, 200);
+  if (!name || name.length < 3) {
+    return res.status(400).json({ success: false, message: 'Invalid organization name.' });
+  }
+  try {
+    let settings = await settingsService.getSettings();
+    if (!settings.organizations.includes(name)) {
+      settings.organizations.push(name);
+      await settings.save();
+      await settingsService.loadSettings(); // Refresh cache
+      return res.json({ success: true, message: 'Organization added.', name });
+    } else {
+      return res.status(409).json({ success: false, message: 'Organization already exists.' });
+    }
+  } catch (err) {
+    console.error('Error adding organization:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+/**
+ * POST /api/add-office
+ * Adds a new office/department to SystemSettings
+ */
+router.post('/api/add-office', async (req, res) => {
+  // Sanitize the office name input
+  const name = sanitizeText(req.body.name, 200);
+  if (!name || name.length < 3) {
+    return res.status(400).json({ success: false, message: 'Invalid office/department name.' });
+  }
+  try {
+    let settings = await settingsService.getSettings();
+    if (!settings.offices.includes(name)) {
+      settings.offices.push(name);
+      await settings.save();
+      await settingsService.loadSettings(); // Refresh cache
+      return res.json({ success: true, message: 'Office/Department added.', name });
+    } else {
+      return res.status(409).json({ success: false, message: 'Office/Department already exists.' });
+    }
+  } catch (err) {
+    console.error('Error adding office/department:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
 
 /**
  * POST /api/users/verify
@@ -20,12 +74,13 @@ const { getOrganizations, getOffices, getUnits, getRequestStatuses } = require('
  */
 router.post('/api/users/verify', requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
+    // Sanitize and validate userId to prevent NoSQL injection
+    const userId = sanitizeMongoId(req.body.userId);
 
     if (!userId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'User ID is required' 
+        message: 'Valid User ID is required' 
       });
     }
 
@@ -60,12 +115,13 @@ router.post('/api/users/verify', requireAdmin, async (req, res) => {
  */
 router.post('/api/users/deny', requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
+    // Sanitize and validate userId to prevent NoSQL injection
+    const userId = sanitizeMongoId(req.body.userId);
 
     if (!userId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'User ID is required' 
+        message: 'Valid User ID is required' 
       });
     }
 

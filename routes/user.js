@@ -19,6 +19,7 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { requestLimiter } = require('../middleware/rateLimiter');
+const { sanitizeText, sanitizeMongoId, sanitizeString, sanitizeName, sanitizeEmail, sanitizePhone, escapeHtml } = require('../utils/sanitize');
 
 /**
  * GET /

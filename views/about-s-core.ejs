@@ -53,15 +53,15 @@
 
   <section class="hero" id="about-s-core" style="position: relative; background: linear-gradient(120deg, #e8f5e8 60%, #f0f8f0 100%); color: #1a2e1a; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden;">
     <div style="position: absolute; left: 0; right: 0; top: 0; height: 900px; background: linear-gradient(120deg, #e8f5e8 60%, #f0f8f0 100%); z-index: 0; pointer-events: none;"></div>
-    <div class="hero-grid" style="display: grid; grid-template-columns: 1fr 1.3fr; grid-template-rows: auto 1fr; column-gap: 64px; row-gap: 32px; width: 100%; max-width: 1300px; margin-top: 18px; position: relative; z-index: 2;">
-      <div style="grid-column: 1; grid-row: 1; margin-bottom: 10px; align-self: flex-start; width: 100%; max-width: 520px; margin-top: 0;">
-        <div class="about-s-core-header-card fade-in" style="background: #fff; border-radius: 28px; box-shadow: 0 4px 32px rgba(20,83,45,0.10); padding: 8px 28px 12px 28px; margin-bottom: 10px;">
-          <h1 class="hero-highlight" style="font-size: 2.3rem; margin-bottom: 8px; letter-spacing: 2px; margin-left: 0;">S-CORE</h1>
-          <p style="font-size: 1.2rem; color: #4a5d4a; margin-bottom: 0; font-weight: 500; max-width: 600px;">
+    <div class="hero-grid">
+      <div class="about-s-core-left-column" style="grid-column: 1; grid-row: 1; margin-bottom: 10px; align-self: flex-start; width: 100%;">
+        <div class="about-s-core-header-card fade-in">
+          <h1 class="hero-highlight">S-CORE</h1>
+          <p>
             <%= pageContent.sCorePlatformDescription %>
           </p>
         </div>
-        <div class="hero-content fade-in" style="background: #fff; border-radius: 28px; box-shadow: 0 4px 32px rgba(20,83,45,0.10); padding: 32px 28px; color: #14532d; width: 100%; max-width: 520px; min-height: 260px;">
+        <div class="hero-content fade-in" style="background: #fff; border-radius: 28px; box-shadow: 0 4px 32px rgba(20,83,45,0.10); padding: 32px 28px; color: #14532d; width: 100%; min-height: 260px;">
           <h2 style="font-family: 'Inter', sans-serif; font-size: 1.7rem; color: #14532d; margin-bottom: 14px; text-align: left;">
             <%= pageContent.sCoreWhatIsTitle %>
           </h2>
@@ -80,7 +80,7 @@
           </div>
         </div>
       </div>
-      <div style="grid-column: 2; grid-row: 1 / span 2; align-self: stretch; display: flex; align-items: flex-start; justify-content: flex-end; min-width: 0;">
+      <div class="about-s-core-right-column" style="grid-column: 2; grid-row: 1 / span 2; align-self: stretch; display: flex; align-items: flex-start; justify-content: flex-end; min-width: 0;">
         <div class="hero-card" style="background: #f0f8f0; border-radius: 28px; padding: 30px 20px 30px 20px; box-shadow: 0 10px 30px rgba(26,93,26,0.08); text-align: left; color: #14532d; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 900px; min-width: 400px; min-height: 420px;">
           <h3 class="pledge-title" style="color: #14532d; font-size: 1.3rem; margin-bottom: 8px; margin-top: 0; text-align: left; width: 100%;">
             <%= pageContent.sCoreWhyTitle %>

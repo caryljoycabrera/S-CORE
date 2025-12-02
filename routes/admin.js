@@ -24,6 +24,7 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
+const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
 
 // Debug: indicate admin routes module loaded
 console.log('[routes/admin] admin routes module loaded');
@@ -4733,7 +4734,8 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       heroTitle, heroTitleHighlight, heroSubtitle,
       pledgeSectionTitle,
       aboutSectionTitle, aboutSectionSubtitle,
-      aboutMission, aboutVision,
+      aboutMissionTitle, aboutMission, aboutVisionTitle, aboutVision,
+      gallerySectionTitle, gallerySectionSubtitle, galleryEmbedUrl,
       servicesSectionTitle, servicesSectionSubtitle,
       teamSectionTitle, teamSectionSubtitle,
       contactSectionTitle, contactIntroText,
@@ -4859,9 +4861,14 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       pledgeItems: pledgeItems.length > 0 ? pledgeItems : pageContent.content?.pledgeItems || [],
       aboutSectionTitle: aboutSectionTitle || pageContent.content?.aboutSectionTitle,
       aboutSectionSubtitle: aboutSectionSubtitle || pageContent.content?.aboutSectionSubtitle,
+      aboutMissionTitle: aboutMissionTitle || pageContent.content?.aboutMissionTitle,
       aboutMission: aboutMission || pageContent.content?.aboutMission,
+      aboutVisionTitle: aboutVisionTitle || pageContent.content?.aboutVisionTitle,
       aboutVision: aboutVision || pageContent.content?.aboutVision,
       aboutFeatures: aboutFeatures.length > 0 ? aboutFeatures : pageContent.content?.aboutFeatures || [],
+      gallerySectionTitle: gallerySectionTitle || pageContent.content?.gallerySectionTitle,
+      gallerySectionSubtitle: gallerySectionSubtitle || pageContent.content?.gallerySectionSubtitle,
+      galleryEmbedUrl: galleryEmbedUrl || pageContent.content?.galleryEmbedUrl,
       servicesSectionTitle: servicesSectionTitle || pageContent.content?.servicesSectionTitle,
       servicesSectionSubtitle: servicesSectionSubtitle || pageContent.content?.servicesSectionSubtitle,
       services: services.length > 0 ? services : pageContent.content?.services || [],

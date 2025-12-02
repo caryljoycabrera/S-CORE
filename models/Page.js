@@ -135,6 +135,20 @@ const pageSchema = new mongoose.Schema({
       }
     }],
     
+    // Gallery Section
+    gallerySectionTitle: {
+      type: String,
+      default: 'Gallery'
+    },
+    gallerySectionSubtitle: {
+      type: String,
+      default: 'See our latest events and highlights'
+    },
+    galleryEmbedUrl: {
+      type: String,
+      default: 'https://www.dlsud.edu.ph/sco/gallery/'
+    },
+    
     // Contact Information
     contactSectionTitle: {
       type: String,

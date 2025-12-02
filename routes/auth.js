@@ -10,6 +10,7 @@ const BroadcastMessage = require('../models/BroadcastMessage');
 const notificationService = require('../services/notificationService');
 const { authLimiter } = require('../middleware/rateLimiter');
 const { getOrganizations, getOffices } = require('../utils/settingsHelpers');
+const { escapeRegex, sanitizeEmail, sanitizeName, sanitizePhone, sanitizeText, sanitizeString } = require('../utils/sanitize');
 
 /**
  * GET /register
@@ -17,17 +18,15 @@ const { getOrganizations, getOffices } = require('../utils/settingsHelpers');
  */
 router.get('/register', async (req, res) => {
   try {
-    const organizations = getOrganizations();
-    const offices = getOffices();
-    
+    const organizations = await require('../utils/settingsHelpers').getOrganizations();
+    const offices = await require('../utils/settingsHelpers').getOffices();
     res.render('register', {
       error: null,
-      organizations: organizations,
-      offices: offices
+      organizations,
+      offices
     });
   } catch (error) {
     console.error('[Register] Error loading registration page:', error);
-    // Fallback to empty arrays if settings not loaded
     res.render('register', {
       error: null,
       organizations: [],
@@ -75,130 +74,127 @@ router.get('/login', (req, res) => {
 router.post('/register', authLimiter, async (req, res) => {
   try {
     console.log('Registration attempt:', req.body);
-    const {
-      firstName, middleName, lastName,
-      email, username, password,
-      phoneNumber, studentId, cys,
-      terms, userType
-    } = req.body;
+    
+    // ===== INPUT SANITIZATION =====
+    // Sanitize all text inputs to prevent injection attacks
+    const firstName = sanitizeName(req.body.firstName);
+    const middleName = sanitizeName(req.body.middleName || '');
+    const lastName = sanitizeName(req.body.lastName);
+    const email = sanitizeEmail(req.body.email);
+    const username = sanitizeString(req.body.username);
+    const password = req.body.password; // Don't sanitize password - hash it instead
+    const phoneNumber = sanitizePhone(req.body.phoneNumber);
+    const studentId = sanitizeString(req.body.studentId || '');
+    const cys = sanitizeString(req.body.cys || '').toUpperCase();
+    const terms = req.body.terms;
+    const userType = sanitizeString(req.body.userType);
 
-    // Handle student organizations and affiliations as arrays
+    // Handle student organizations and affiliations as arrays with sanitization
     const studentOrganization = Array.isArray(req.body.studentOrganization)
-      ? req.body.studentOrganization
+      ? req.body.studentOrganization.map(org => sanitizeText(org)).filter(Boolean)
       : req.body.studentOrganization
-      ? [req.body.studentOrganization]
+      ? [sanitizeText(req.body.studentOrganization)]
       : [];
 
     const affiliation = Array.isArray(req.body.affiliation)
-      ? req.body.affiliation
+      ? req.body.affiliation.map(aff => sanitizeText(aff)).filter(Boolean)
       : req.body.affiliation
-      ? [req.body.affiliation]
+      ? [sanitizeText(req.body.affiliation)]
       : [];
 
     // ===== ENHANCED VALIDATION =====
-    
+    // Helper to send error as JSON for AJAX, or render for normal POST
+    function sendError(message) {
+      const acceptHeader = req.headers.accept || '';
+      const isAjax = req.xhr || acceptHeader.includes('json') || acceptHeader.includes('application/json');
+      
+      if (isAjax) {
+        return res.status(400).json({ error: message });
+      } else {
+        const organizations = require('../utils/settingsHelpers').getOrganizations();
+        const offices = require('../utils/settingsHelpers').getOffices();
+        Promise.all([organizations, offices]).then(([orgs, offs]) => {
+          res.status(400).render('register', {
+            error: message,
+            organizations: orgs,
+            offices: offs,
+            formData: req.body
+          });
+        });
+      }
+    }
+
     // Validate required fields first
     if (!firstName || !lastName || !username || !password || !phoneNumber || !userType) {
-      return res.status(400).render('register', {
-        error: 'All required fields must be filled. Please check and try again.',
-        formData: req.body
-      });
+      return sendError('All required fields must be filled. Please check and try again.');
     }
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
-      return res.status(400).render('register', {
-        error: 'Please provide a valid email address.',
-        formData: req.body
-      });
+      return sendError('Please provide a valid email address.');
     }
 
-    // Normalize email to lowercase for consistency
+    // Normalize email and username for consistency
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedUsername = username.trim().toLowerCase();
 
     // Username validation (minimum length)
     if (username.length < 4) {
-      return res.status(400).render('register', {
-        error: 'Username must be at least 4 characters long.',
-        formData: req.body
-      });
+      return sendError('Username must be at least 4 characters long.');
     }
 
     // Password strength validation
     if (password.length < 8) {
-      return res.status(400).render('register', {
-        error: 'Password must be at least 8 characters long.',
-        formData: req.body
-      });
+      return sendError('Password must be at least 8 characters long.');
     }
 
     if (!/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
-      return res.status(400).render('register', {
-        error: 'Password must contain at least one letter and one number.',
-        formData: req.body
-      });
+      return sendError('Password must contain at least one letter and one number.');
     }
 
-    // Check for duplicate email
-    const existingEmail = await User.findOne({ email: normalizedEmail });
+    // Check for duplicate email (case-insensitive)
+    // Use escapeRegex to prevent regex injection attacks
+    const escapedEmail = escapeRegex(normalizedEmail);
+    const existingEmail = await User.findOne({ email: { $regex: `^${escapedEmail}$`, $options: 'i' } });
     if (existingEmail) {
-      return res.status(400).render('register', {
-        error: 'This email is already registered. Please use a different email or try logging in.',
-        formData: req.body
-      });
+      return sendError('This email is already registered. Please use a different email or try logging in.');
     }
 
-    // Check for duplicate username
-    const existingUsername = await User.findOne({ username });
+    // Check for duplicate username (case-insensitive)
+    // Use escapeRegex to prevent regex injection attacks
+    const escapedUsername = escapeRegex(normalizedUsername);
+    const existingUsername = await User.findOne({ username: { $regex: `^${escapedUsername}$`, $options: 'i' } });
     if (existingUsername) {
-      return res.status(400).render('register', {
-        error: 'This username is already taken. Please choose a different username.',
-        formData: req.body
-      });
+      return sendError('This username is already taken. Please choose a different username.');
     }
 
     // Student-specific validation
     if (userType === 'student') {
       if (!studentId || !studentOrganization?.length || !cys) {
-        return res.status(400).render('register', {
-          error: 'All student fields (Student ID, Organization, Course/Year/Section) are required.',
-          formData: req.body
-        });
+        return sendError('All student fields (Student ID, Organization, Course/Year/Section) are required.');
       }
 
       // Student ID format validation
       if (!/^\d{9}$/.test(studentId)) {
-        return res.status(400).render('register', {
-          error: 'Student ID must be exactly 9 digits.',
-          formData: req.body
-        });
+        return sendError('Student ID must be exactly 9 digits.');
       }
 
       // Check for duplicate Student ID
       const existingStudentId = await User.findOne({ studentId });
       if (existingStudentId) {
-        return res.status(400).render('register', {
-          error: 'This Student ID is already registered. Please contact support if this is an error.',
-          formData: req.body
-        });
+        return sendError('This Student ID is already registered. Please contact support if this is an error.');
       }
     }
 
     // Non-student specific validation
     if (userType === 'nonstudent' && (!affiliation?.length)) {
-      return res.status(400).render('register', {
-        error: 'Please select at least one office/department.',
-        formData: req.body
-      });
+      return sendError('Please select at least one office/department.');
     }
 
     // Terms agreement validation
     if (!terms || terms !== 'on') {
-      return res.status(400).render('register', {
-        error: 'You must agree to the Terms and Conditions to register.',
-        formData: req.body
-      });
+      return sendError('You must agree to the Terms and Conditions to register.');
     }
 
     // Hash password
@@ -306,9 +302,22 @@ router.post('/register', authLimiter, async (req, res) => {
 
   } catch (err) {
     console.error('Registration error:', err);
+    
+    const acceptHeader = req.headers.accept || '';
+    const isAjax = req.xhr || acceptHeader.includes('json') || acceptHeader.includes('application/json');
+    
+    if (isAjax) {
+      return res.status(500).json({ error: 'Internal server error. Please try again.' });
+    }
+    
+    const organizations = await require('../utils/settingsHelpers').getOrganizations();
+    const offices = await require('../utils/settingsHelpers').getOffices();
     res.status(500).render('register', {
-
-      message: 'Internal server error', formData: req.body });
+      error: 'Internal server error',
+      organizations,
+      offices,
+      formData: req.body
+    });
   }
 });
 
@@ -319,13 +328,20 @@ router.post('/register', authLimiter, async (req, res) => {
  * Rate limited to prevent brute force attacks
  */
 router.post('/login', authLimiter, async (req, res) => {
-  const { username, password } = req.body;
+  // Sanitize username input to prevent NoSQL injection
+  const username = sanitizeString(req.body.username);
+  const password = req.body.password; // Don't sanitize password
 
   try {
+    // Validate inputs exist
+    if (!username || !password) {
+      return res.status(400).render('index', { error: 'Username and password are required.' });
+    }
+
     console.log('Login attempt for username:', username);
     
-    // Find user by username
-    const user = await User.findOne({ username });
+    // Find user by username (exact match, no regex needed)
+    const user = await User.findOne({ username: username });
     
     if (!user) {
       console.log('User not found:', username);
