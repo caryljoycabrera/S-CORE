@@ -431,6 +431,41 @@
       transform: translateY(-1px);
     }
 
+    /* Form Validation Error Styles */
+    .form-error-message {
+      color: #dc2626;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .form-error-message.show {
+      display: flex;
+    }
+
+    .form-group.has-error .form-input {
+      border-color: #dc2626 !important;
+      background-color: #fef2f2;
+    }
+
+    .form-group.has-error .form-label {
+      color: #dc2626;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     /* Empty State */
     .empty-state {
       text-align: center;
@@ -789,6 +824,14 @@
             <option value="<%= unit %>"><%= unit %></option>
             <% }); %>
           </select>
+          <div class="form-error-message" id="approveUnitError">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Please select an assigned unit</span>
+          </div>
         </div>
 
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
@@ -851,6 +894,14 @@
         <div class="form-group">
           <label class="form-label" for="editTypeName">Request Type Name:</label>
           <input type="text" id="editTypeName" class="form-input" required>
+          <div class="form-error-message" id="editTypeNameError">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Please enter a request type name</span>
+          </div>
         </div>
 
         <div class="form-group">
@@ -861,6 +912,14 @@
             <option value="<%= unit %>"><%= unit %></option>
             <% }); %>
           </select>
+          <div class="form-error-message" id="editAssignedUnitError">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>Please select an assigned unit</span>
+          </div>
         </div>
       </div>
       <div class="modal-actions">
@@ -914,14 +973,55 @@
     function approveRequestType(id, name) {
       currentRequestTypeId = id;
       document.getElementById('approveTypeName').textContent = name;
+      
+      // Clear previous errors and selections
+      const select = document.getElementById('approveAssignedUnit');
+      const formGroup = select.closest('.form-group');
+      const errorDiv = document.getElementById('approveUnitError');
+      
+      select.value = '';
+      if (formGroup) formGroup.classList.remove('has-error');
+      if (errorDiv) errorDiv.classList.remove('show');
+      
       document.getElementById('approveModal').style.display = 'flex';
     }
+    
+    // Clear error on select change for approve modal
+    document.getElementById('approveAssignedUnit').addEventListener('change', function() {
+      const formGroup = this.closest('.form-group');
+      const errorDiv = document.getElementById('approveUnitError');
+      if (formGroup) formGroup.classList.remove('has-error');
+      if (errorDiv) errorDiv.classList.remove('show');
+    });
+    
+    // Clear errors on input/change for edit modal
+    document.getElementById('editTypeName').addEventListener('input', function() {
+      const formGroup = this.closest('.form-group');
+      const errorDiv = document.getElementById('editTypeNameError');
+      if (formGroup) formGroup.classList.remove('has-error');
+      if (errorDiv) errorDiv.classList.remove('show');
+    });
+    
+    document.getElementById('editAssignedUnit').addEventListener('change', function() {
+      const formGroup = this.closest('.form-group');
+      const errorDiv = document.getElementById('editAssignedUnitError');
+      if (formGroup) formGroup.classList.remove('has-error');
+      if (errorDiv) errorDiv.classList.remove('show');
+    });
 
     async function submitApprove() {
       const assignedUnit = document.getElementById('approveAssignedUnit').value;
+      const unitError = document.getElementById('approveUnitError');
+      const formGroup = document.getElementById('approveAssignedUnit').closest('.form-group');
+
+      // Clear previous errors
+      if (formGroup) formGroup.classList.remove('has-error');
+      if (unitError) unitError.classList.remove('show');
 
       if (!assignedUnit) {
-        alert('Please select an assigned unit.');
+        if (formGroup) formGroup.classList.add('has-error');
+        if (unitError) unitError.classList.add('show');
+        document.getElementById('approveAssignedUnit').focus();
         return;
       }
 
@@ -947,6 +1047,18 @@
         console.error('Error approving request type:', error);
         showAlert('An error occurred while approving the request type', 'error');
       }
+    }
+
+    // Clear error on unit selection change
+    const approveUnitSelect = document.getElementById('approveAssignedUnit');
+    if (approveUnitSelect) {
+      approveUnitSelect.addEventListener('change', function() {
+        const formGroup = this.closest('.form-group');
+        if (formGroup) formGroup.classList.remove('has-error');
+        
+        const error = document.getElementById('approveUnitError');
+        if (error) error.classList.remove('show');
+      });
     }
 
     // Reject functions
@@ -1000,9 +1112,34 @@
     async function submitEdit() {
       const name = document.getElementById('editTypeName').value.trim();
       const assignedUnit = document.getElementById('editAssignedUnit').value;
-
-      if (!name || !assignedUnit) {
-        alert('Please fill in all required fields.');
+      
+      // Clear previous errors
+      document.querySelectorAll('#editModal .form-group.has-error').forEach(group => {
+        group.classList.remove('has-error');
+      });
+      document.querySelectorAll('#editModal .form-error-message.show').forEach(error => {
+        error.classList.remove('show');
+      });
+      
+      let hasErrors = false;
+      
+      if (!name) {
+        const formGroup = document.getElementById('editTypeName').closest('.form-group');
+        const error = document.getElementById('editTypeNameError');
+        if (formGroup) formGroup.classList.add('has-error');
+        if (error) error.classList.add('show');
+        hasErrors = true;
+      }
+      
+      if (!assignedUnit) {
+        const formGroup = document.getElementById('editAssignedUnit').closest('.form-group');
+        const error = document.getElementById('editAssignedUnitError');
+        if (formGroup) formGroup.classList.add('has-error');
+        if (error) error.classList.add('show');
+        hasErrors = true;
+      }
+      
+      if (hasErrors) {
         return;
       }
 
