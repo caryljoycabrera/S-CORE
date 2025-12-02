@@ -13,6 +13,7 @@ const { requireUnit } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const uploadConfig = require('../config/upload');
 const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
 
 /**
  * GET /unit/dashboard

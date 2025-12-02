@@ -2,8 +2,37 @@
 // Handles preview, save, and reset modals for configuration page
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('Configuration.js loaded');
-    
+        // Profile/Logout dropdown logic
+        const dropdownToggle = document.querySelector('.dropdown-toggle');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        if (dropdownToggle && dropdownMenu) {
+          dropdownToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('show');
+          });
+          document.addEventListener('click', function (e) {
+            if (!dropdownToggle.contains(e.target)) {
+              dropdownMenu.classList.remove('show');
+            }
+          });
+        }
+      // System tab modal logic
+      const systemSaveBtn = document.getElementById('systemSaveBtn');
+      const systemResetBtn = document.getElementById('systemResetBtn');
+
+      if (systemSaveBtn) {
+        systemSaveBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          const modal = document.getElementById('systemSaveConfirmModal');
+          modal.classList.add('active');
+        });
+      }
+      if (systemResetBtn) {
+        systemResetBtn.addEventListener('click', function () {
+          const modal = document.getElementById('systemResetConfirmModal');
+          modal.classList.add('active');
+        });
+      }
     // Modal logic
     const previewBtn = document.getElementById('previewBtn');
     const saveBtn = document.getElementById('saveBtn');
@@ -11,8 +40,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('configModal');
     const modalContent = document.getElementById('modalContent');
     const toast = document.getElementById('configToast');
+
+    // Check for success/error messages in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const successMsg = urlParams.get('success');
+    const errorMsg = urlParams.get('error');
     
-    console.log('Save button found:', saveBtn);
+    if (successMsg) {
+        showToast(successMsg);
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (errorMsg) {
+        showToast(errorMsg, true);
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     // Helper to get dynamic items
     function getDynamicItems(containerId, namePrefix, fields) {
@@ -67,8 +109,6 @@ document.addEventListener('DOMContentLoaded', function () {
             socialSectionTitle: document.getElementById('socialSectionTitle')?.value || '',
             footerTagline: document.getElementById('footerTagline')?.value || '',
             footerText: document.getElementById('footerText')?.value || '',
-            sCoreSectionTitle: document.getElementById('sCoreSectionTitle')?.value || '',
-            sCorePlatformDescription: document.getElementById('sCorePlatformDescription')?.value || '',
             sCoreWhatIsTitle: document.getElementById('sCoreWhatIsTitle')?.value || '',
             sCoreWhatIsDescription: document.getElementById('sCoreWhatIsDescription')?.value || '',
             sCoreWhyTitle: document.getElementById('sCoreWhyTitle')?.value || '',
@@ -308,46 +348,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Save changes via modal confirmation
     if (saveBtn) {
-        console.log('Attaching click handler to save button');
         saveBtn.addEventListener('click', function (e) {
-            console.log('Save button clicked!');
             e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            console.log('About to call confirmSave()');
-            confirmSave();
+            const modal = document.getElementById('saveConfirmModal');
+            modal.classList.add('active');
         });
-    } else {
-        console.error('Save button not found!');
     }
 
     // Cancel button opens reset confirm modal
     if (cancelBtn) {
-        cancelBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            confirmReset();
-        });
-    }
-
-    // Prevent form from submitting without confirmation
-    const configForm = document.getElementById('configurationForm');
-    if (configForm) {
-        configForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            return false;
-        });
-    }
-
-    // System save button with confirmation
-    const systemSaveBtn = document.getElementById('systemSaveBtn');
-    if (systemSaveBtn) {
-        systemSaveBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (confirm('Are you sure you want to save system configuration changes?')) {
-                const form = document.getElementById('systemConfigForm');
-                form.submit();
-            }
+        cancelBtn.addEventListener('click', function () {
+            const modal = document.getElementById('resetConfirmModal');
+            modal.classList.add('active');
         });
     }
 
@@ -358,11 +370,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Toast logic (for future use if needed)
-    function showToast(message) {
+    // Toast notification function
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('configToast');
         if (toast) {
             toast.textContent = message;
             toast.style.display = 'block';
+            toast.style.background = isError ? '#ef4444' : '#10b981';
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 3000);
@@ -370,20 +384,44 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Functions for modal confirmations
+      // System tab modal confirmation functions
+      function confirmSystemSave() {
+        closeSystemSaveConfirm();
+        showToast('Saving system configuration...');
+        // Submit system config form
+        document.getElementById('systemConfigForm').submit();
+      }
+      function closeSystemSaveConfirm() {
+        const modal = document.getElementById('systemSaveConfirmModal');
+        modal.classList.remove('active');
+      }
+      function confirmSystemReset() {
+        closeSystemResetConfirm();
+        showToast('Resetting system configuration...');
+        setTimeout(() => {
+          location.reload();
+        }, 500);
+      }
+      function closeSystemResetConfirm() {
+        const modal = document.getElementById('systemResetConfirmModal');
+        modal.classList.remove('active');
+      }
+      window.confirmSystemSave = confirmSystemSave;
+      window.closeSystemSaveConfirm = closeSystemSaveConfirm;
+      window.confirmSystemReset = confirmSystemReset;
+      window.closeSystemResetConfirm = closeSystemResetConfirm;
     function closePreview() {
         const modal = document.getElementById('configModal');
         modal.classList.remove('active');
     }
 
     function confirmSave() {
-        console.log('confirmSave() called');
-        const confirmed = confirm('Are you sure you want to save these changes? This will update the homepage configuration.');
-        console.log('User confirmed:', confirmed);
-        if (confirmed) {
-            const form = document.getElementById('configurationForm');
-            console.log('Submitting form:', form);
-            form.submit();
-        }
+        closeSaveConfirm();
+        showToast('Saving configuration...');
+        const form = document.getElementById('configurationForm');
+        
+        // Submit form normally - backend will handle redirect with success message
+        form.submit();
     }
 
     function closeSaveConfirm() {
@@ -392,9 +430,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function confirmReset() {
-        if (confirm('Are you sure you want to reset the form? All unsaved changes will be lost.')) {
+        closeResetConfirm();
+        showToast('Resetting form...');
+        setTimeout(() => {
             location.reload();
-        }
+        }, 500);
     }
 
     function closeResetConfirm() {
@@ -402,32 +442,10 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.classList.remove('active');
     }
 
-    // System config form validation
-    const systemConfigForm = document.getElementById('systemConfigForm');
-    if (systemConfigForm) {
-        systemConfigForm.addEventListener('submit', (e) => {
-            const organizationsList = document.getElementById('organizationsList');
-            if (organizationsList && !organizationsList.value.trim()) {
-                e.preventDefault();
-                alert('Please add at least one organization.');
-                organizationsList.focus();
-                return false;
-            }
-            return true;
-        });
-    }
-
-    // Tab logic
-    const urlParams = new URLSearchParams(window.location.search);
-    const tab = urlParams.get('tab');
-    if (tab === 'homepage') {
-        switchTab('homepage');
-    } else {
-        switchTab('system');
-    }
-
     // Attach to window for global access
     window.closePreview = closePreview;
     window.confirmSave = confirmSave;
+    window.closeSaveConfirm = closeSaveConfirm;
     window.confirmReset = confirmReset;
+    window.closeResetConfirm = closeResetConfirm;
 });

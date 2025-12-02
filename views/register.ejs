@@ -219,6 +219,15 @@ body::before {
   transition: color 0.3s ease;
 }
 
+/* Uppercase only the typed value for CYS field, not placeholder */
+#cys {
+  text-transform: uppercase;
+}
+
+#cys::placeholder {
+  text-transform: none;
+}
+
 .input-group:focus-within input::placeholder {
   color: #6b7280;
 }
@@ -840,7 +849,6 @@ body::before {
   font-weight: 500;
   border: 1px solid #fca5a5;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
-  animation: shake 0.5s ease-in-out;
 }
 
 .success-message {
@@ -1044,7 +1052,7 @@ body::before {
                   value="<%= typeof formData !== 'undefined' ? formData.firstName || '' : '' %>" required />
           </div>
           <div class="input-group">
-            <input type="text" name="middleName" placeholder="Middle Name" 
+            <input type="text" name="middleName" placeholder="Middle Name (Optional)" 
                   value="<%= typeof formData !== 'undefined' ? formData.middleName || '' : '' %>" />
           </div>
         </div>
@@ -1053,9 +1061,10 @@ body::before {
                 value="<%= typeof formData !== 'undefined' ? formData.lastName || '' : '' %>" required />
         </div>
         <div class="input-group">
-          <input type="text" name="studentId" id="studentId" placeholder="Student ID" 
+              <input type="text" name="studentId" id="studentId" placeholder="Student ID" 
                 value="<%= typeof formData !== 'undefined' ? formData.studentId || '' : '' %>" 
                 required title="Student ID must be exactly 9 digits"/>
+              <div id="studentIdError" style="color:#ef4444; font-size:13px; margin-top:4px; display:none;"></div>
         </div>
 
         <!-- Student Organization Selection -->
@@ -1086,8 +1095,8 @@ body::before {
         </div>
 
         <div class="input-group">
-          <input type="text" name="cys" placeholder="Course / Year / Section" 
-                value="<%= typeof formData !== 'undefined' ? formData.cys || '' : '' %>" required />
+          <input type="text" name="cys" id="cys" placeholder="Course / Year / Section (e.g., BIT43)" 
+                value="<%= typeof formData !== 'undefined' ? formData.cys || '' : '' %>" required maxlength="5" />
         </div>
       </div>
 
@@ -1099,7 +1108,7 @@ body::before {
                   value="<%= typeof formData !== 'undefined' ? formData.firstName || '' : '' %>" required />
           </div>
           <div class="input-group">
-            <input type="text" name="middleName" placeholder="Middle Name" 
+            <input type="text" name="middleName" placeholder="Middle Name (Optional)" 
                   value="<%= typeof formData !== 'undefined' ? formData.middleName || '' : '' %>" />
           </div>
         </div>
@@ -1239,7 +1248,49 @@ function toggleUserTypeFields() {
   // Update icon based on selection
   updateUserTypeIcon();
 
+  // Helper to clear all inputs/selects in a section
+  function clearFields(section) {
+    section.querySelectorAll('input').forEach(input => {
+      input.value = '';
+      input.style.borderColor = '';
+    });
+    section.querySelectorAll('select').forEach(select => {
+      if (select.multiple) {
+        $(select).val([]).trigger('change');
+      } else {
+        select.value = '';
+      }
+    });
+  }
+
+  // Clear common fields (phone, email, username, passwords)
+  function clearCommonFields() {
+    const commonInputs = commonFields.querySelectorAll('input');
+    commonInputs.forEach(input => {
+      if (input.name !== 'terms') { // Don't clear terms checkbox
+        input.value = '';
+        input.style.borderColor = '';
+      }
+    });
+    // Uncheck terms
+    const termsCheckbox = document.querySelector('input[name="terms"]');
+    if (termsCheckbox) termsCheckbox.checked = false;
+    // Clear password strength indicator
+    const strengthIndicator = document.getElementById('passwordStrength');
+    if (strengthIndicator) strengthIndicator.style.display = 'none';
+    // Clear any messages
+    const messageContainer = document.getElementById('messageContainer');
+    if (messageContainer) messageContainer.innerHTML = '';
+  }
+
   if (userType === 'student') {
+    clearFields(nonStudentFields);
+    clearFields(studentFields);
+    clearCommonFields();
+    // Update counters
+    if (typeof updateOrganizationCounter === 'function') updateOrganizationCounter();
+    if (typeof updateOfficeCounter === 'function') updateOfficeCounter();
+
     studentFields.style.display = 'block';
     nonStudentFields.style.display = 'none';
     commonFields.style.display = 'block';
@@ -1260,6 +1311,13 @@ function toggleUserTypeFields() {
     });
 
   } else if (userType === 'nonstudent') {
+    clearFields(studentFields);
+    clearFields(nonStudentFields);
+    clearCommonFields();
+    // Update counters
+    if (typeof updateOrganizationCounter === 'function') updateOrganizationCounter();
+    if (typeof updateOfficeCounter === 'function') updateOfficeCounter();
+
     studentFields.style.display = 'none';
     nonStudentFields.style.display = 'block';
     commonFields.style.display = 'block';
@@ -1280,6 +1338,9 @@ function toggleUserTypeFields() {
     });
   } else {
     // No user type selected
+    clearFields(studentFields);
+    clearFields(nonStudentFields);
+    clearCommonFields();
     studentFields.style.display = 'none';
     nonStudentFields.style.display = 'none';
     commonFields.style.display = 'none';
@@ -1340,10 +1401,25 @@ function checkPasswordStrength(password) {
 function showMessage(message, type = 'error') {
   const container = document.getElementById('messageContainer');
   container.innerHTML = `<div class="${type}-message">${message}</div>`;
-  
+
   setTimeout(() => {
     container.innerHTML = '';
   }, 5000);
+}
+
+// Function for instant validation messages that persist until fixed
+function showInstantMessage(message, type = 'error') {
+  const container = document.getElementById('messageContainer');
+  container.innerHTML = `<div class="${type}-message">${message}</div>`;
+  // Don't auto-clear - let user interaction clear it
+}
+
+// Function to clear instant messages when validation passes
+function clearInstantMessage() {
+  const container = document.getElementById('messageContainer');
+  if (container) {
+    container.innerHTML = '';
+  }
 }
 
 // Enhanced feedback system
@@ -1428,7 +1504,6 @@ function addCustomOrganization() {
     input.focus();
     return;
   }
-  
   if (orgName.length < 3) {
     showFeedback('Organization name must be at least 3 characters long.', 'error');
     input.focus();
@@ -1443,26 +1518,39 @@ function addCustomOrganization() {
     return;
   }
 
-  // Add new option
-  if (select.find(`option[value="${orgName}"]`).length === 0) {
-    const newOption = new Option(orgName, orgName, true, true);
-    select.append(newOption);
-  }
-
-  const current = select.val() || [];
-  if (!current.includes(orgName)) {
-    current.push(orgName);
-    select.val(current).trigger('change');
-  }
-
-  input.value = '';
-  showFeedback(`"${orgName}" has been added successfully!`, 'success');
-  updateOrganizationCounter();
-  
-  // Auto-hide feedback after 3 seconds
-  setTimeout(hideFeedback, 3000);
+  // Add to database via API
+  $.ajax({
+    url: '/api/add-organization',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ name: orgName }),
+    success: function(response) {
+      // Add new option to select2
+      if (select.find(`option[value="${orgName}"]`).length === 0) {
+        const newOption = new Option(orgName, orgName, true, true);
+        select.append(newOption);
+      }
+      const current = select.val() || [];
+      if (!current.includes(orgName)) {
+        current.push(orgName);
+        select.val(current).trigger('change');
+      }
+      input.value = '';
+      showFeedback(`"${orgName}" has been added successfully!`, 'success');
+      updateOrganizationCounter();
+      setTimeout(hideFeedback, 3000);
+    },
+    error: function(xhr) {
+      if (xhr.responseJSON && xhr.responseJSON.message) {
+        showFeedback(xhr.responseJSON.message, 'error');
+      } else {
+        showFeedback('Failed to add organization. Please try again.', 'error');
+      }
+    }
+  });
 }
 
+// Toggle custom organization input
 function toggleCustomOrg() {
   const customOrgContainer = document.getElementById('customOrgContainer');
   const isVisible = customOrgContainer.style.display !== 'none';
@@ -1496,17 +1584,71 @@ function checkPasswordRequirements(password) {
   };
 }
 
+// Name validation: only letters, spaces, hyphens, apostrophes allowed
+function isValidName(name) {
+  // Accepts letters, spaces, hyphens, apostrophes
+  return /^[a-zA-Z\s\-']+$/.test(name);
+}
+
+// Real-time validation for name fields
+['firstName', 'middleName', 'lastName'].forEach(function(field) {
+  document.querySelectorAll('input[name="' + field + '"]').forEach(function(input) {
+    input.addEventListener('input', function(e) {
+      if (e.target.value && !isValidName(e.target.value)) {
+        e.target.value = e.target.value.replace(/[^a-zA-Z\s\-']/g, '');
+        e.target.style.borderColor = '#ef4444';
+      } else {
+        e.target.style.borderColor = '';
+      }
+    });
+  });
+});
+
 // Real-time Student ID formatting
-document.getElementById('studentId')?.addEventListener('input', function(e) {
-  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9);
-  
-  // Real-time validation
-  if (this.value.length > 0 && this.value.length !== 9) {
+document.getElementById('studentId')?.addEventListener('blur', function(e) {
+  this.value = this.value.replace(/\D/g, '').slice(0, 9);
+  if (this.value && this.value.length !== 9) {
     this.style.borderColor = '#ef4444';
+    showMessage('Student ID must be exactly 9 digits.', 'error');
   } else if (this.value.length === 9) {
     this.style.borderColor = '#10b981';
   } else {
     this.style.borderColor = '';
+  }
+});
+
+// Real-time Course/Year/Section (CYS) formatting and validation
+// Format: 3 letters followed by 2 numbers (e.g., BCS21, BIT31)
+document.getElementById('cys')?.addEventListener('input', function(e) {
+  let value = e.target.value.toUpperCase();
+  
+  // Allow only letters for first 3 characters, then only numbers for next 2
+  let formatted = '';
+  for (let i = 0; i < value.length && i < 5; i++) {
+    const char = value[i];
+    if (i < 3) {
+      // First 3 characters must be letters
+      if (/[A-Z]/.test(char)) {
+        formatted += char;
+      }
+    } else {
+      // Last 2 characters must be numbers
+      if (/[0-9]/.test(char)) {
+        formatted += char;
+      }
+    }
+  }
+  
+  e.target.value = formatted;
+  
+  // Real-time validation feedback
+  const cysPattern = /^[A-Z]{3}[0-9]{2}$/;
+  if (formatted.length === 0) {
+    this.style.borderColor = '';
+  } else if (cysPattern.test(formatted)) {
+    this.style.borderColor = '#10b981'; // Valid - green
+  } else {
+    this.style.borderColor = '#ef4444'; // Invalid - red
   }
 });
 
@@ -1523,6 +1665,309 @@ document.querySelector('input[name="email"]')?.addEventListener('blur', function
 });
 
 // Enhanced form validation
+// Real-time required field validation
+// Show errors instantly as user types (input event)
+function addInstantValidation(selector, validateFn) {
+  const el = document.querySelector(selector);
+  if (el) {
+    el.addEventListener('input', function(e) {
+      validateFn(e);
+    });
+  }
+}
+
+addInstantValidation('input[name="firstName"]', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('First name is required.', 'error');
+  } else if (!isValidName(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('First name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+    clearInstantMessage();
+  }
+});
+
+addInstantValidation('input[name="lastName"]', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Last name is required.', 'error');
+  } else if (!isValidName(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Last name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+    clearInstantMessage();
+  }
+});
+
+addInstantValidation('input[name="middleName"]', function(e) {
+  if (e.target.value.trim() && !isValidName(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Middle name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+  } else {
+    e.target.style.borderColor = '';
+  }
+});
+
+addInstantValidation('input[name="email"]', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Email address is required.', 'error');
+  } else if (!isValidEmail(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Please enter a valid email address.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+addInstantValidation('input[name="username"]', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Username is required.', 'error');
+  } else if (e.target.value.trim().length < 4) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Username must be at least 4 characters long.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+addInstantValidation('input[name="password"]', function(e) {
+  const passwordCheck = checkPasswordRequirements(e.target.value);
+  if (!e.target.value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Password is required.', 'error');
+  } else if (!passwordCheck.isValid) {
+    e.target.style.borderColor = '#ef4444';
+    let errorMsg = 'Password must: ';
+    const errors = [];
+    if (!passwordCheck.length) errors.push('be at least 8 characters');
+    if (!passwordCheck.hasNumber) errors.push('contain at least one number');
+    if (!passwordCheck.hasLetter) errors.push('contain at least one letter');
+    errorMsg += errors.join(', ');
+    showInstantMessage(errorMsg, 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+addInstantValidation('input[name="confirmPassword"]', function(e) {
+  const password = document.querySelector('input[name="password"]').value;
+  if (!e.target.value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Please confirm your password.', 'error');
+  } else if (e.target.value !== password) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Passwords do not match. Please re-enter your password.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+addInstantValidation('input[name="phoneNumber"]', function(e) {
+  const value = e.target.value.trim();
+  if (!value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Phone number is required.', 'error');
+  } else if (!(value.length === 4 || value.length === 11)) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Phone number must be either 4 digits (telephone) or 11 digits (cellphone).', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+addInstantValidation('#studentId', function(e) {
+  const value = e.target.value.trim();
+  if (!value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Student ID is required for student registration.', 'error');
+  } else if (!/^\d{9}$/.test(value)) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Student ID must be exactly 9 digits.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+addInstantValidation('#cys', function(e) {
+  const value = e.target.value.trim();
+  if (!value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Course/Year/Section is required for student registration.', 'error');
+  } else if (!/^[A-Za-z]{3}[0-9]{2}$/.test(value)) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Course/Year/Section must be 3 letters followed by 2 numbers (e.g., BSN21, ICT31).', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+// Office/Department selection validation for faculty/staff
+$('#nonStudentOffice').on('change', function(e) {
+  const val = $(this).val();
+  if (!val || val.length === 0) {
+    showInstantMessage('Please select at least one office/department.', 'error');
+  } else {
+    // Clear any error message if selection is valid
+    const messageContainer = document.getElementById('messageContainer');
+    if (messageContainer && messageContainer.innerHTML.includes('office/department')) {
+      messageContainer.innerHTML = '';
+    }
+  }
+});
+document.querySelector('input[name="firstName"]').addEventListener('blur', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('First name is required.', 'error');
+  } else if (!isValidName(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('First name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.querySelector('input[name="lastName"]').addEventListener('blur', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Last name is required.', 'error');
+  } else if (!isValidName(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Last name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.querySelector('input[name="middleName"]').addEventListener('blur', function(e) {
+  if (e.target.value.trim() && !isValidName(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Middle name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+  } else {
+    e.target.style.borderColor = '';
+  }
+});
+
+document.querySelector('input[name="email"]').addEventListener('blur', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Email address is required.', 'error');
+  } else if (!isValidEmail(e.target.value.trim())) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Please enter a valid email address.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.querySelector('input[name="username"]').addEventListener('blur', function(e) {
+  if (!e.target.value.trim()) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Username is required.', 'error');
+  } else if (e.target.value.trim().length < 4) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Username must be at least 4 characters long.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.querySelector('input[name="password"]').addEventListener('blur', function(e) {
+  const passwordCheck = checkPasswordRequirements(e.target.value);
+  if (!e.target.value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Password is required.', 'error');
+  } else if (!passwordCheck.isValid) {
+    e.target.style.borderColor = '#ef4444';
+    let errorMsg = 'Password must: ';
+    const errors = [];
+    if (!passwordCheck.length) errors.push('be at least 8 characters');
+    if (!passwordCheck.hasNumber) errors.push('contain at least one number');
+    if (!passwordCheck.hasLetter) errors.push('contain at least one letter');
+    errorMsg += errors.join(', ');
+    showInstantMessage(errorMsg, 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.querySelector('input[name="confirmPassword"]').addEventListener('blur', function(e) {
+  const password = document.querySelector('input[name="password"]').value;
+  if (!e.target.value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Please confirm your password.', 'error');
+  } else if (e.target.value !== password) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Passwords do not match. Please re-enter your password.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.querySelector('input[name="phoneNumber"]').addEventListener('blur', function(e) {
+  const value = e.target.value.trim();
+  if (!value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Phone number is required.', 'error');
+  } else if (!(value.length === 4 || value.length === 11)) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Phone number must be either 4 digits (telephone) or 11 digits (cellphone).', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.getElementById('studentId')?.addEventListener('blur', function(e) {
+  const value = e.target.value.trim();
+  if (!value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Student ID is required for student registration.', 'error');
+  } else if (!/^\d{9}$/.test(value)) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Student ID must be exactly 9 digits.', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+document.getElementById('cys')?.addEventListener('blur', function(e) {
+  const value = e.target.value.trim();
+  if (!value) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Course/Year/Section is required for student registration.', 'error');
+  } else if (!/^[A-Za-z]{3}[0-9]{2}$/.test(value)) {
+    e.target.style.borderColor = '#ef4444';
+    showInstantMessage('Course/Year/Section must be 3 letters followed by 2 numbers (e.g., BSN21, ICT31).', 'error');
+  } else {
+    e.target.style.borderColor = '#10b981';
+  }
+});
+
+// Organization/Office selection validation (for select2)
+$('#studentOrganization').on('blur', function(e) {
+  const val = $(this).val();
+  if (!val || val.length === 0) {
+    showInstantMessage('Please select at least one student organization.', 'error');
+  }
+});
+
+$('#nonStudentOffice').on('blur', function(e) {
+  const val = $(this).val();
+  if (!val || val.length === 0) {
+    showInstantMessage('Please select at least one office/department.', 'error');
+  }
+});
+
+// Terms checkbox validation
+document.querySelector('input[name="terms"]').addEventListener('blur', function(e) {
+  if (!e.target.checked) {
+    showInstantMessage('You must agree to the Terms and Conditions to register.', 'error');
+  }
+});
 document.querySelector('form').addEventListener('submit', function(e) {
   const userType = document.getElementById('userType').value;
   const firstName = document.querySelector('input[name="firstName"]').value.trim();
@@ -1546,6 +1991,27 @@ document.querySelector('form').addEventListener('submit', function(e) {
   if (!firstName || !lastName) {
     e.preventDefault();
     showMessage('First name and last name are required.', 'error');
+    return false;
+  }
+  // Name fields must not contain numbers
+  if (!isValidName(firstName)) {
+    e.preventDefault();
+    showMessage('First name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+    document.querySelector('input[name="firstName"]').focus();
+    return false;
+  }
+  if (!isValidName(lastName)) {
+    e.preventDefault();
+    showMessage('Last name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+    document.querySelector('input[name="lastName"]').focus();
+    return false;
+  }
+  // Middle name (if provided) must not contain numbers
+  const middleName = document.querySelector('input[name="middleName"]').value.trim();
+  if (middleName && !isValidName(middleName)) {
+    e.preventDefault();
+    showMessage('Middle name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+    document.querySelector('input[name="middleName"]').focus();
     return false;
   }
 
@@ -1580,6 +2046,13 @@ document.querySelector('form').addEventListener('submit', function(e) {
   if (!phoneNumber) {
     e.preventDefault();
     showMessage('Phone number is required.', 'error');
+    document.querySelector('input[name="phoneNumber"]').focus();
+    return false;
+  }
+  if (!(phoneNumber.length === 4 || phoneNumber.length === 11)) {
+    e.preventDefault();
+    showMessage('Phone number must be either 4 digits (telephone) or 11 digits (cellphone).', 'error');
+    document.querySelector('input[name="phoneNumber"]').focus();
     return false;
   }
 
@@ -1612,6 +2085,15 @@ document.querySelector('form').addEventListener('submit', function(e) {
     if (!cys) {
       e.preventDefault();
       showMessage('Course/Year/Section is required for student registration.', 'error');
+      return false;
+    }
+
+    // Validate CYS format: exactly 3 letters followed by 2 numbers
+    const cysPattern = /^[A-Za-z]{3}[0-9]{2}$/;
+    if (!cysPattern.test(cys)) {
+      e.preventDefault();
+      showMessage('Course/Year/Section must be 3 letters followed by 2 numbers (e.g., BSN21, ICT31).', 'error');
+      document.getElementById('cys').focus();
       return false;
     }
   }
@@ -1660,14 +2142,104 @@ document.querySelector('form').addEventListener('submit', function(e) {
     return false;
   }
 
-  // If all validations pass, show loading state
+  // If all client-side validations pass, submit via AJAX to catch server errors
+  e.preventDefault();
+  
   const submitBtn = this.querySelector('button[type="submit"]');
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Creating Account...';
   }
 
-  return true;
+  // Collect form data as URLSearchParams for proper encoding
+  const formData = new FormData(this);
+  const urlEncodedData = new URLSearchParams();
+  
+  for (const [key, value] of formData.entries()) {
+    urlEncodedData.append(key, value);
+  }
+
+  // Submit via fetch to handle server-side errors
+  fetch('/register', {
+    method: 'POST',
+    body: urlEncodedData,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json'
+    }
+  })
+  .then(async response => {
+    // Check if redirected to login page (success)
+    if (response.redirected && response.url.includes('/login')) {
+      window.location.href = response.url;
+      return;
+    }
+    
+    // Check content type to determine how to parse response
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      // Success without redirect
+      window.location.href = '/login';
+    } else {
+      // Server returned HTML - check for error
+      const html = await response.text();
+      
+      // Try to extract error message from the HTML using multiple patterns
+      let errorMessage = null;
+      
+      // Pattern 1: error-message class
+      const errorMatch1 = html.match(/class="error-message"[^>]*>([^<]+)</);
+      if (errorMatch1 && errorMatch1[1]) {
+        errorMessage = errorMatch1[1].trim();
+      }
+      
+      // Pattern 2: Look for error in EJS rendered content
+      const errorMatch2 = html.match(/<div[^>]*class="[^"]*error[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+      if (!errorMessage && errorMatch2 && errorMatch2[1]) {
+        errorMessage = errorMatch2[1].replace(/<[^>]+>/g, '').trim();
+      }
+      
+      // Pattern 3: Check for common error keywords in content
+      if (!errorMessage) {
+        if (html.includes('already registered') || html.includes('already taken')) {
+          const emailMatch = html.match(/email[^.]*already[^.]*\./i);
+          const usernameMatch = html.match(/username[^.]*already[^.]*\./i);
+          if (emailMatch) errorMessage = 'This email is already registered. Please use a different email.';
+          else if (usernameMatch) errorMessage = 'This username is already taken. Please choose a different username.';
+        }
+      }
+      
+      // If we found an error, throw it
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+      
+      // Check response status - if not ok, it's an error
+      if (!response.ok) {
+        throw new Error('Registration failed. Please check your information and try again.');
+      }
+      
+      // If response is OK and no error found, assume success
+      window.location.href = '/login';
+    }
+  })
+  .catch(error => {
+    // Show the server error message
+    showInstantMessage(error.message || 'Registration failed. Please try again.', 'error');
+    
+    // Re-enable the submit button
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+    }
+  });
+
+  return false;
 });
 
 // Real-time password confirmation validation
@@ -1695,6 +2267,19 @@ confirmPasswordInput.addEventListener('input', validatePasswordMatch);
 document.querySelector('input[name="phoneNumber"]').addEventListener('input', function(e) {
   let value = e.target.value.replace(/\D/g, '');
   e.target.value = value;
+});
+
+// Phone number validation: only 4 digits (telephone) or 11 digits (cellphone)
+document.querySelector('input[name="phoneNumber"]').addEventListener('blur', function(e) {
+  const value = e.target.value.trim();
+  if (value && !(value.length === 4 || value.length === 11)) {
+    e.target.style.borderColor = '#ef4444';
+    showMessage('Phone number must be either 4 digits (telephone) or 11 digits (cellphone).', 'error');
+  } else if (value.length === 4 || value.length === 11) {
+    e.target.style.borderColor = '#10b981';
+  } else {
+    e.target.style.borderColor = '';
+  }
 });
 
 // Organization and office options from database
@@ -1857,7 +2442,6 @@ function addCustomOffice() {
     input.focus();
     return;
   }
-  
   if (officeName.length < 3) {
     showOfficeFeedback('Office/department name must be at least 3 characters long.', 'error');
     input.focus();
@@ -1872,24 +2456,36 @@ function addCustomOffice() {
     return;
   }
 
-  // Add new option
-  if (select.find(`option[value="${officeName}"]`).length === 0) {
-    const newOption = new Option(officeName, officeName, true, true);
-    select.append(newOption);
-  }
-
-  const current = select.val() || [];
-  if (!current.includes(officeName)) {
-    current.push(officeName);
-    select.val(current).trigger('change');
-  }
-
-  input.value = '';
-  showOfficeFeedback(`"${officeName}" has been added successfully!`, 'success');
-  updateOfficeCounter();
-  
-  // Auto-hide feedback after 3 seconds
-  setTimeout(hideOfficeFeedback, 3000);
+  // Add to database via API
+  $.ajax({
+    url: '/api/add-office',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ name: officeName }),
+    success: function(response) {
+      // Add new option to select2
+      if (select.find(`option[value="${officeName}"]`).length === 0) {
+        const newOption = new Option(officeName, officeName, true, true);
+        select.append(newOption);
+      }
+      const current = select.val() || [];
+      if (!current.includes(officeName)) {
+        current.push(officeName);
+        select.val(current).trigger('change');
+      }
+      input.value = '';
+      showOfficeFeedback(`"${officeName}" has been added successfully!`, 'success');
+      updateOfficeCounter();
+      setTimeout(hideOfficeFeedback, 3000);
+    },
+    error: function(xhr) {
+      if (xhr.responseJSON && xhr.responseJSON.message) {
+        showOfficeFeedback(xhr.responseJSON.message, 'error');
+      } else {
+        showOfficeFeedback('Failed to add office/department. Please try again.', 'error');
+      }
+    }
+  });
 }
 
 // Office feedback system

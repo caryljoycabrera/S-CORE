@@ -17,6 +17,7 @@ const { upload, ensureUploadsDirectory, UPLOADS_DIR } = require('./config/upload
 
 // Import middleware
 const { apiLimiter, authLimiter, messageLimiter, requestLimiter } = require('./middleware/rateLimiter');
+const { sanitizeAll } = require('./middleware/sanitize');
 
 // Import services
 const socketService = require('./services/socketService');
@@ -60,6 +61,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json({ limit: process.env.MAX_FILE_SIZE || '50mb' }));
 app.use(bodyParser.json());
+
+// ======= Security Middleware ========
+// Apply sanitization middleware to all routes to prevent NoSQL injection
+// This removes MongoDB operators ($) from request body, query, and params
+app.use(sanitizeAll);
 
 // Session handling with environment-based secret
 app.use(session({
