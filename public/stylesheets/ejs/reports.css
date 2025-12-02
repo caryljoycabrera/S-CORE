@@ -10,7 +10,7 @@
 .reports-page-title {
   font-size: 2.25rem;
   font-weight: 800;
-  color: var(--primary-green, #43a047);
+  color: var(--primary-green);
   margin-bottom: 0.5rem;
   margin-top: 0;
 }

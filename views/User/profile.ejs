@@ -90,6 +90,43 @@ body.profile-page .student-side > .div {
   gap: 1.5rem;
 }
 
+/* Form Validation Error Styles */
+.form-error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.form-error-message.show {
+  display: flex;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2;
+}
+
+.form-group.has-error label {
+  color: #dc2626;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Form Sections */
 .form-section {
   display: contents;
@@ -1889,6 +1926,14 @@ body > .select2-container--default {
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
               </button>
+            </div>
+            <div class="form-error-message" id="oldPasswordError">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>Please enter your current password</span>
             </div>
           </div>
           
