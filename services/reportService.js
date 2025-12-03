@@ -68,15 +68,21 @@ class ReportService {
 
         results = results.concat(
           await Promise.all(serviceRequests.map(async req => {
-            // Get final remarks for completed/approved requests (only from unit responses)
+            // Get final remarks - PRIORITY 1: Check dedicated finalRemark field, PRIORITY 2: Fallback to revisionHistory
             let finalRemarks = '';
-            if ((req.status === 'Completed' || req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
-              // Find the last response notes from unit users only
+            
+            // Check for dedicated finalRemark field first (future-proof for when schema is updated)
+            if (req.finalRemark && req.finalRemark.trim()) {
+              finalRemarks = req.finalRemark.trim();
+            }
+            // Fallback to revisionHistory for backward compatibility
+            else if ((req.status === 'Completed' || req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
+              // Find the last revision notes from unit users only
               for (const rev of req.revisionHistory.slice().reverse()) {
-                if (rev.responseNotes && rev.responseNotes.trim() && rev.respondedBy) {
-                  const responder = await User.findById(rev.respondedBy);
+                if (rev.revisionNotes && rev.revisionNotes.trim() && rev.requestedBy) {
+                  const responder = await User.findById(rev.requestedBy);
                   if (responder && responder.role === 'unit') {
-                    finalRemarks = rev.responseNotes.trim();
+                    finalRemarks = rev.revisionNotes.trim();
                     break; // Take the most recent unit response
                   }
                 }
@@ -112,15 +118,21 @@ class ReportService {
 
         results = results.concat(
           await Promise.all(requestApprovals.map(async req => {
-            // Get final remarks for completed/approved requests (only from unit responses)
+            // Get final remarks - PRIORITY 1: Check dedicated finalRemark field, PRIORITY 2: Fallback to revisionHistory
             let finalRemarks = '';
-            if ((req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
-              // Find the last response notes from unit users only
+            
+            // Check for dedicated finalRemark field first (future-proof for when schema is updated)
+            if (req.finalRemark && req.finalRemark.trim()) {
+              finalRemarks = req.finalRemark.trim();
+            }
+            // Fallback to revisionHistory for backward compatibility
+            else if ((req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
+              // Find the last revision notes from unit users only
               for (const rev of req.revisionHistory.slice().reverse()) {
-                if (rev.responseNotes && rev.responseNotes.trim() && rev.respondedBy) {
-                  const responder = await User.findById(rev.respondedBy);
+                if (rev.revisionNotes && rev.revisionNotes.trim() && rev.requestedBy) {
+                  const responder = await User.findById(rev.requestedBy);
                   if (responder && responder.role === 'unit') {
-                    finalRemarks = rev.responseNotes.trim();
+                    finalRemarks = rev.revisionNotes.trim();
                     break; // Take the most recent unit response
                   }
                 }

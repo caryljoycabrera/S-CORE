@@ -3655,7 +3655,9 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
       statuses,
       format = 'pdf', // Default to PDF, can be 'pdf' or 'excel'
       orientation = 'portrait', // Default to portrait, can be 'portrait' or 'landscape'
+      fileName,
       title,
+      description,
       headerColor,
       paperSize
     } = req.body;
@@ -3676,7 +3678,7 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
     console.log('Report data generated:', reportData.length, 'records');
     console.log('Summary:', summary);
 
-    let buffer, contentType, fileName, fileExtension;
+    let buffer, contentType, fileExtension;
 
     if (format === 'excel') {
       // Generate Excel
@@ -3693,7 +3695,7 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
     // Save to ReportHistory in MongoDB
     const ReportHistory = require('../models/ReportHistory');
 
-    fileName = `s-core-report-${Date.now()}.${fileExtension}`;
+    const fullFileName = fileName ? `${fileName}.${fileExtension}` : `s-core-report-${Date.now()}.${fileExtension}`;
 
     console.log('Attempting to save report to history...');
 
@@ -3702,11 +3704,12 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
       const reportHistory = new ReportHistory({
         reportType: format === 'excel' ? 'report_excel' : 'report_pdf',
         generatedBy: req.user._id,
-        fileName,
+        fileName: fullFileName,
         fileData: buffer,
         fileSize: buffer.length,
         filters,
-        options: { title, headerColor, paperSize, orientation },
+        options: { fileName: fileName || 's-core-report', title: title || 'S-CORE Analytics Report', description: description || '', headerColor: headerColor || '#10b981', paperSize: paperSize || 'A4', orientation: orientation || 'landscape' },
+        reportData: reportData,
         recordCount: reportData.length
       });
 
@@ -3764,10 +3767,10 @@ router.get('/admin/reports/history', requireAdmin, async (req, res) => {
     if (req.query.type) {
       query.reportType = req.query.type;
     }
-    // Temporarily show all reports including deleted for debugging
-    // if (req.query.includeDeleted !== 'true') {
-    //   query.isDeleted = false;
-    // }
+    // Filter out deleted reports unless explicitly requested
+    if (req.query.includeDeleted !== 'true') {
+      query.isDeleted = false;
+    }
 
     console.log('History query:', query);
 
@@ -3776,6 +3779,7 @@ router.get('/admin/reports/history', requireAdmin, async (req, res) => {
       .skip(skip)
       .limit(limit)
       .select('-fileData')
+      .populate('generatedBy', 'firstName lastName')
       .lean();
 
     const total = await ReportHistory.countDocuments(query);
@@ -3873,6 +3877,172 @@ router.delete('/admin/reports/history/:id/hard', requireAdmin, async (req, res) 
     res.json({ success: true, message: 'Report permanently deleted successfully' });
   } catch (error) {
     console.error('Error permanently deleting report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/reports/history/:id/restore
+ * Restore a soft-deleted report
+ */
+router.post('/admin/reports/history/:id/restore', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id,
+      isDeleted: true
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Deleted report not found' });
+    }
+
+    await report.restore();
+
+    res.json({ success: true, message: 'Report restored successfully' });
+  } catch (error) {
+    console.error('Error restoring report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/history/:id/details
+ * Get report details for viewing/editing
+ */
+router.get('/admin/reports/history/:id/details', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findById(req.params.id)
+      .select('-fileData')
+      .populate('generatedBy', 'firstName lastName')
+      .lean();
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error('Error fetching report details:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * PUT /admin/reports/history/:id
+ * Update report metadata (fileName, title, description, headerColor, paperSize, orientation)
+ */
+router.put('/admin/reports/history/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const { fileName, title, description, headerColor, paperSize, orientation } = req.body;
+
+    const report = await ReportHistory.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // Update options object
+    if (fileName !== undefined) report.options.fileName = fileName;
+    if (title !== undefined) report.options.title = title;
+    if (description !== undefined) report.options.description = description;
+    if (headerColor !== undefined) report.options.headerColor = headerColor;
+    if (paperSize !== undefined) report.options.paperSize = paperSize;
+    if (orientation !== undefined) report.options.orientation = orientation;
+
+    // Also update fileName at root level if provided
+    if (fileName) {
+      const fileExtension = report.fileName.split('.').pop();
+      report.fileName = `${fileName}.${fileExtension}`;
+    }
+
+    report.markModified('options');
+    await report.save();
+
+    res.json({ success: true, message: 'Report metadata updated successfully' });
+  } catch (error) {
+    console.error('Error updating report metadata:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/reports/history/:id/restore
+ * Restore a soft-deleted report
+ */
+router.post('/admin/reports/history/:id/restore', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id,
+      isDeleted: true
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Deleted report not found' });
+    }
+
+    await report.restore();
+
+    res.json({ success: true, message: 'Report restored successfully' });
+  } catch (error) {
+    console.error('Error restoring report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/history/:id/details
+ * Get report details for viewing/editing
+ */
+router.get('/admin/reports/history/:id/details', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findById(req.params.id)
+      .select('-fileData')
+      .populate('generatedBy', 'firstName lastName')
+      .lean();
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error('Error fetching report details:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * PUT /admin/reports/history/:id
+ * Update report metadata (title, headerColor, paperSize, orientation)
+ */
+router.put('/admin/reports/history/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const { title, headerColor, paperSize, orientation } = req.body;
+
+    const report = await ReportHistory.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // Update options object
+    if (title !== undefined) report.options.title = title;
+    if (headerColor !== undefined) report.options.headerColor = headerColor;
+    if (paperSize !== undefined) report.options.paperSize = paperSize;
+    if (orientation !== undefined) report.options.orientation = orientation;
+
+    report.markModified('options');
+    await report.save();
+
+    res.json({ success: true, message: 'Report metadata updated successfully' });
+  } catch (error) {
+    console.error('Error updating report metadata:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

@@ -20,6 +20,147 @@
   margin-left: 0;
   margin-right: 0;
 }
+
+/* Modal Styles for Edit Report Details */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.form-group .form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.form-group .form-control:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group .form-control:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.btn-info {
+  background-color: #0ea5e9;
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #0284c7;
+}
 </style>
 </head>
 <body>
@@ -317,33 +458,54 @@
       <div class="report-preview-container">
         <div class="preview-header">
           <h2>Report Preview</h2>
-          <div class="export-options">
-            <div class="export-format-selector">
-              <label for="pdfTitle">Report Title:</label>
-              <input type="text" id="pdfTitle" class="format-input" placeholder="S-CORE Analytics Report" value="S-CORE Analytics Report">
+          <div class="export-options-wrapper">
+            <!-- Row 1: File Name and Report Title -->
+            <div class="export-options-row">
+              <div class="export-format-selector">
+                <label for="pdfFileName">File Name:</label>
+                <input type="text" id="pdfFileName" class="format-input enhanced" placeholder="s-core-report" value="s-core-report">
+              </div>
+              <div class="export-format-selector">
+                <label for="pdfTitle">Report Title:</label>
+                <input type="text" id="pdfTitle" class="format-input enhanced" placeholder="S-CORE Analytics Report" value="S-CORE Analytics Report">
+              </div>
             </div>
-            <div class="export-format-selector">
-              <label for="pdfHeaderColor">Header Color:</label>
-              <input type="color" id="pdfHeaderColor" class="format-input" value="#10b981">
+            
+            <!-- Row 2: Description (Full Width) -->
+            <div class="export-options-row">
+              <div class="export-format-selector full-width">
+                <label for="pdfDescription">Description (Optional):</label>
+                <textarea id="pdfDescription" class="format-textarea enhanced" placeholder="Brief description of this report" rows="2"></textarea>
+              </div>
             </div>
-            <div class="export-format-selector">
-              <label for="pdfPaperSize">Paper Size:</label>
-              <select id="pdfPaperSize" class="format-select">
-                <option value="A4">A4</option>
-                <option value="A3">A3</option>
-                <option value="LETTER">Letter</option>
-                <option value="LEGAL">Legal</option>
-                <option value="TABLOID">Tabloid</option>
-              </select>
+            
+            <!-- Row 3: Header Color, Paper Size, Orientation -->
+            <div class="export-options-row">
+              <div class="export-format-selector">
+                <label for="pdfHeaderColor">Header Color:</label>
+                <input type="color" id="pdfHeaderColor" class="format-input" value="#10b981">
+              </div>
+              <div class="export-format-selector">
+                <label for="pdfPaperSize">Paper Size:</label>
+                <select id="pdfPaperSize" class="format-select enhanced">
+                  <option value="A4">A4</option>
+                  <option value="A3">A3</option>
+                  <option value="LETTER">Letter</option>
+                  <option value="LEGAL">Legal</option>
+                  <option value="TABLOID">Tabloid</option>
+                </select>
+              </div>
+              <div class="export-format-selector">
+                <label for="pdfOrientation">Orientation:</label>
+                <select id="pdfOrientation" class="format-select enhanced">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
             </div>
-            <div class="export-format-selector">
-              <label for="pdfOrientation">Orientation:</label>
-              <select id="pdfOrientation" class="format-select">
-                <option value="portrait">Portrait</option>
-                <option value="landscape">Landscape</option>
-              </select>
-            </div>
-            <div class="export-buttons">
+            
+            <!-- Row 4: Buttons -->
+            <div class="export-buttons-row">
               <button id="exportPdfBtn" class="btn-export btn-pdf" disabled>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
@@ -390,6 +552,8 @@
           </table>
         </div>
       </div>
+      </div>
+      <!-- END GENERATE REPORT TAB -->
 
       <!-- REPORT HISTORY TAB -->
       <div id="historyTab" class="tab-content">
@@ -442,6 +606,209 @@
             <button id="prevPageBtn" class="btn-secondary">Previous</button>
             <span id="pageInfo">Page 1</span>
             <button id="nextPageBtn" class="btn-secondary">Next</button>
+          </div>
+
+          <!-- Report Details Viewer -->
+          <div id="reportViewer" class="report-viewer" style="display: none;">
+            <div class="report-viewer-header">
+              <h3>Report Details</h3>
+              <button id="closeViewerBtn" class="btn-close">&times;</button>
+            </div>
+            
+            <div class="report-viewer-content">
+              <!-- Report Info Section -->
+              <div class="report-info-section">
+                <h4>Report Information</h4>
+                <div class="report-info-grid">
+                  <div class="info-item">
+                    <label>File Name:</label>
+                    <span id="viewFileName">-</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Report Type:</label>
+                    <span id="viewReportType">-</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Generated At:</label>
+                    <span id="viewGeneratedAt">-</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Generated By:</label>
+                    <span id="viewGeneratedBy">-</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Record Count:</label>
+                    <span id="viewRecordCount">-</span>
+                  </div>
+                  <div class="info-item">
+                    <label>File Size:</label>
+                    <span id="viewFileSize">-</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Settings Section - Styled like Generate Report -->
+              <div class="report-preview-container">
+                <div class="preview-header">
+                  <h2>Report Settings</h2>
+                  <div class="export-options-wrapper">
+                    <div id="reportSettingsDisplay">
+                      <!-- Row 1: File Name and Report Title -->
+                      <div class="export-options-row">
+                        <div class="export-format-selector">
+                          <label>File Name:</label>
+                          <input type="text" id="viewFileNameDisplay" class="format-input enhanced" disabled>
+                        </div>
+                        <div class="export-format-selector">
+                          <label>Report Title:</label>
+                          <input type="text" id="viewTitleDisplay" class="format-input enhanced" disabled>
+                        </div>
+                      </div>
+                      
+                      <!-- Row 2: Description (Full Width) -->
+                      <div class="export-options-row">
+                        <div class="export-format-selector full-width">
+                          <label>Description:</label>
+                          <textarea id="viewDescriptionDisplay" class="format-textarea enhanced" disabled rows="2"></textarea>
+                        </div>
+                      </div>
+                      
+                      <!-- Row 3: Header Color, Paper Size, Orientation -->
+                      <div class="export-options-row">
+                        <div class="export-format-selector">
+                          <label>Header Color:</label>
+                          <input type="color" id="viewHeaderColorDisplay" class="format-input" disabled>
+                        </div>
+                        <div class="export-format-selector">
+                          <label>Paper Size:</label>
+                          <select id="viewPaperSizeDisplay" class="format-select enhanced" disabled>
+                            <option value="A4">A4</option>
+                            <option value="A3">A3</option>
+                            <option value="LETTER">Letter</option>
+                            <option value="LEGAL">Legal</option>
+                            <option value="TABLOID">Tabloid</option>
+                          </select>
+                        </div>
+                        <div class="export-format-selector">
+                          <label>Orientation:</label>
+                          <select id="viewOrientationDisplay" class="format-select enhanced" disabled>
+                            <option value="portrait">Portrait</option>
+                            <option value="landscape">Landscape</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <!-- Row 4: Button -->
+                      <div class="export-buttons-row">
+                        <button id="editReportBtn" class="btn-export btn-primary">
+                          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                          </svg>
+                          Edit Settings
+                        </button>
+                      </div>
+                    </div>
+
+                    <div id="reportSettingsEdit" style="display: none;">
+                      <!-- Row 1: File Name and Report Title -->
+                      <div class="export-options-row">
+                        <div class="export-format-selector">
+                          <label for="editFileName">File Name:</label>
+                          <input type="text" id="editFileName" class="format-input enhanced" aria-label="File Name">
+                        </div>
+                        <div class="export-format-selector">
+                          <label for="editTitle">Report Title:</label>
+                          <input type="text" id="editTitle" class="format-input enhanced" aria-label="Report Title">
+                        </div>
+                      </div>
+                      
+                      <!-- Row 2: Description (Full Width) -->
+                      <div class="export-options-row">
+                        <div class="export-format-selector full-width">
+                          <label for="editDescription">Description (Optional):</label>
+                          <textarea id="editDescription" class="format-textarea enhanced" aria-label="Description" placeholder="Brief description of this report" rows="2"></textarea>
+                        </div>
+                      </div>
+                      
+                      <!-- Row 3: Header Color, Paper Size, Orientation -->
+                      <div class="export-options-row">
+                        <div class="export-format-selector">
+                          <label for="editHeaderColor">Header Color:</label>
+                          <input type="color" id="editHeaderColor" class="format-input" aria-label="Header Color">
+                        </div>
+                        <div class="export-format-selector">
+                          <label for="editPaperSize">Paper Size:</label>
+                          <select id="editPaperSize" class="format-select enhanced" aria-label="Paper Size">
+                            <option value="A4">A4</option>
+                            <option value="A3">A3</option>
+                            <option value="LETTER">Letter</option>
+                            <option value="LEGAL">Legal</option>
+                            <option value="TABLOID">Tabloid</option>
+                          </select>
+                        </div>
+                        <div class="export-format-selector">
+                          <label for="editOrientation">Orientation:</label>
+                          <select id="editOrientation" class="format-select enhanced" aria-label="Orientation">
+                            <option value="portrait">Portrait</option>
+                            <option value="landscape">Landscape</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <!-- Row 4: Buttons -->
+                      <div class="export-buttons-row">
+                        <button id="saveEditBtn" class="btn-export btn-excel">
+                          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/>
+                          </svg>
+                          Save Changes
+                        </button>
+                        <button id="cancelEditBtn" class="btn-export btn-secondary">
+                          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                          </svg>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Report Data Preview Section -->
+              <div class="report-preview-container" style="margin-top: 24px;">
+                <div class="preview-header">
+                  <h2>Report Data Preview</h2>
+                  <p style="font-size: 0.9rem; color: #6b7280; margin: 8px 0 0 0;">Showing records from this report</p>
+                </div>
+                <div class="table-container">
+                  <table class="report-table" id="viewReportTable">
+                    <thead>
+                      <tr>
+                        <th>Request ID</th>
+                        <th>Type</th>
+                        <th>Requester</th>
+                        <th>Unit</th>
+                        <th>Request Name</th>
+                        <th>Status</th>
+                        <th>Date Submitted</th>
+                        <th>Deadline</th>
+                        <th>Revisions</th>
+                        <th>Final Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody id="viewReportTableBody">
+                      <tr class="no-data-row">
+                        <td colspan="10" style="text-align: center; padding: 2rem; color: #6b7280;">
+                          Loading report data...
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

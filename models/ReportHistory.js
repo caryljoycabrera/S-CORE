@@ -36,6 +36,10 @@ const reportHistorySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
+  reportData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: []
+  },
   recordCount: {
     type: Number,
     default: 0

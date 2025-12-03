@@ -177,16 +177,19 @@ const reportHandler = {
     exportBtn.innerHTML = 'Downloading...';
 
     try {
-      const orientation = document.getElementById('pdfOrientation').value;
-      const title = document.getElementById('pdfTitle').value;
-      const headerColor = document.getElementById('pdfHeaderColor').value;
-      const paperSize = document.getElementById('pdfPaperSize').value;
+      const fileName = document.getElementById('pdfFileName').value || 's-core-report';
+      const title = document.getElementById('pdfTitle').value || 'S-CORE Analytics Report';
+      const description = document.getElementById('pdfDescription').value || '';
+      const headerColor = document.getElementById('pdfHeaderColor').value || '#10b981';
+      const paperSize = document.getElementById('pdfPaperSize').value || 'A4';
+      const orientation = document.getElementById('pdfOrientation').value || 'portrait';
+      
       const response = await fetch('/admin/reports/export', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ ...filters, format: 'pdf', orientation, title, headerColor, paperSize })
+        body: JSON.stringify({ ...filters, format: 'pdf', fileName, title, description, headerColor, paperSize, orientation })
       });
 
       if (!response.ok) {
@@ -238,14 +241,17 @@ const reportHandler = {
     exportBtn.innerHTML = 'Downloading...';
 
     try {
-      const headerColor = document.getElementById('pdfHeaderColor').value;
-      const title = document.getElementById('pdfTitle').value;
+      const fileName = document.getElementById('pdfFileName').value || 's-core-report';
+      const title = document.getElementById('pdfTitle').value || 'S-CORE Analytics Report';
+      const description = document.getElementById('pdfDescription').value || '';
+      const headerColor = document.getElementById('pdfHeaderColor').value || '#10b981';
+      
       const response = await fetch('/admin/reports/export', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ ...filters, format: 'excel', headerColor, title })
+        body: JSON.stringify({ ...filters, format: 'excel', fileName, title, description, headerColor })
       });
 
       if (!response.ok) {
@@ -529,6 +535,9 @@ const tabManager = {
           <button class="btn-small btn-download" onclick="tabManager.downloadReport('${report._id}')">
             Download
           </button>
+          <button class="btn-small btn-info" onclick="tabManager.viewReport('${report._id}')">
+            View/Edit
+          </button>
           <button class="btn-small btn-delete" onclick="tabManager.deleteReport('${report._id}')">
             Delete
           </button>
@@ -661,6 +670,316 @@ const tabManager = {
     }
   },
 
+  async viewReport(id) {
+    try {
+      const response = await fetch(`/admin/reports/history/${id}/details`);
+      const result = await response.json();
+
+      if (result.success) {
+        this.displayReportDetails(result.report);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Error fetching report details:', error);
+      showAlert('Failed to load report details', 'error');
+    }
+  },
+
+  displayReportDetails(report) {
+    // Store current report for editing
+    this.currentReport = report;
+
+    // Populate report info
+    document.getElementById('viewFileName').textContent = report.fileName || 'N/A';
+    document.getElementById('viewReportType').textContent = 
+      report.reportType === 'report_pdf' ? 'PDF Report' : 
+      report.reportType === 'report_excel' ? 'Excel Report' : 'N/A';
+    document.getElementById('viewGeneratedAt').textContent = 
+      report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 'N/A';
+    document.getElementById('viewGeneratedBy').textContent = 
+      report.generatedBy ? `${report.generatedBy.firstName} ${report.generatedBy.lastName}` : 'N/A';
+    document.getElementById('viewRecordCount').textContent = report.recordCount || 'N/A';
+    document.getElementById('viewFileSize').textContent = 
+      report.fileSize ? Math.round(report.fileSize / 1024) + ' KB' : 'N/A';
+
+    // Populate settings display fields (these show when not editing)
+    const displayFileName = report.options?.fileName || report.fileName || 's-core-report';
+    const displayTitle = report.options?.title || 'S-CORE Analytics Report';
+    const displayDescription = report.options?.description || '';
+    const displayColor = report.options?.headerColor || '#10b981';
+    const displayPaper = report.options?.paperSize || 'A4';
+    const displayOrientation = report.options?.orientation || 'portrait';
+    
+    document.getElementById('viewFileNameDisplay').value = displayFileName;
+    document.getElementById('viewTitleDisplay').value = displayTitle;
+    document.getElementById('viewDescriptionDisplay').value = displayDescription;
+    document.getElementById('viewHeaderColorDisplay').value = displayColor;
+    document.getElementById('viewPaperSizeDisplay').value = displayPaper;
+    document.getElementById('viewOrientationDisplay').value = displayOrientation;
+
+    // Also populate edit fields so they're ready when user clicks edit
+    document.getElementById('editFileName').value = displayFileName;
+    document.getElementById('editTitle').value = displayTitle;
+    document.getElementById('editDescription').value = displayDescription;
+    document.getElementById('editHeaderColor').value = displayColor;
+    document.getElementById('editPaperSize').value = displayPaper;
+    document.getElementById('editOrientation').value = displayOrientation;
+
+    // Show viewer, hide edit mode
+    document.getElementById('reportViewer').style.display = 'block';
+    document.getElementById('reportSettingsDisplay').style.display = 'flex';
+    document.getElementById('reportSettingsEdit').style.display = 'none';
+
+    // Load and display report data
+    console.log('Report object:', report);
+    console.log('Report has reportData?', !!report.reportData);
+    console.log('reportData length:', report.reportData ? report.reportData.length : 0);
+    
+    if (report.reportData && report.reportData.length > 0) {
+      console.log('Calling displayReportData with', report.reportData.length, 'records');
+      this.displayReportData(report.reportData);
+    } else {
+      console.log('No reportData found, showing message instead');
+      this.showReportDataMessage(report);
+    }
+
+    // Scroll to viewer
+    document.getElementById('reportViewer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  },
+
+  showReportDataMessage(report) {
+    // Since the report is already generated, we can't display the actual data
+    // Show a helpful message instead
+    const tbody = document.getElementById('viewReportTableBody');
+    const recordCount = report.recordCount || 0;
+    
+    tbody.innerHTML = `
+      <tr class="no-data-row">
+        <td colspan="10" style="text-align: center; padding: 2rem;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <div>
+              <p style="margin: 0; font-weight: 600; color: #111827; font-size: 1rem;">This report contains ${recordCount} record${recordCount !== 1 ? 's' : ''}</p>
+              <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 0.875rem;">Download the file to view the complete report data</p>
+            </div>
+            <button onclick="tabManager.downloadReport('${report._id}')" class="btn-export btn-excel" style="margin-top: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download Report
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  },
+
+  async loadReportData(report) {
+    // This method is deprecated - we now show a message instead
+    this.showReportDataMessage(report);
+  },
+
+  displayReportData(data) {
+    const tbody = document.getElementById('viewReportTableBody');
+
+    console.log('displayReportData called with:', data);
+    console.log('Data length:', data ? data.length : 0);
+    if (data && data.length > 0) {
+      console.log('First record sample:', data[0]);
+    }
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `
+        <tr class="no-data-row">
+          <td colspan="10" style="text-align: center; padding: 2rem; color: #6b7280;">
+            No records found in this report
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = data.map(record => {
+      // Handle different possible field names from the database
+      const recordId = record.requestId || (record._id ? record._id.toString().slice(-6) : 'N/A');
+      const type = record.type || 'Service Request';
+      const requester = record.requester || 'N/A';
+      const unit = record.unit || 'N/A';
+      const requestName = record.requestName || record.serviceName || 'N/A';
+      const status = record.status || 'N/A';
+      const dateSubmitted = record.dateSubmitted ? this.formatDate(record.dateSubmitted) : 'N/A';
+      const deadline = record.deadline ? this.formatDate(record.deadline) : 'N/A';
+      const revisions = record.revisionCount || record.revisions || 0;
+      const finalRemarks = record.finalRemarks || record.finalRemark || 'N/A';
+
+      return `
+        <tr>
+          <td>${this.escapeHtml(recordId)}</td>
+          <td>${this.escapeHtml(type)}</td>
+          <td>${this.escapeHtml(requester)}</td>
+          <td>${this.escapeHtml(unit)}</td>
+          <td>${this.escapeHtml(requestName)}</td>
+          <td><span class="status-badge status-${status.toLowerCase().replace(/\s+/g, '-')}">${this.escapeHtml(status)}</span></td>
+          <td>${dateSubmitted}</td>
+          <td>${deadline}</td>
+          <td>${revisions}</td>
+          <td>${this.escapeHtml(finalRemarks)}</td>
+        </tr>
+      `;
+    }).join('');
+  },
+
+  formatDate(date) {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  },
+
+  showEditModal(report) {
+    // This is now replaced by inline editing
+    this.displayReportDetails(report);
+    this.toggleEditMode();
+  },
+
+  toggleEditMode() {
+    const isEditing = document.getElementById('reportSettingsEdit').style.display === 'flex' || 
+                     document.getElementById('reportSettingsEdit').style.display === 'block';
+    
+    if (isEditing) {
+      // Cancel edit - show display mode
+      document.getElementById('reportSettingsDisplay').style.display = 'flex';
+      document.getElementById('reportSettingsEdit').style.display = 'none';
+    } else {
+      // Enter edit mode
+      const report = this.currentReport;
+      document.getElementById('editTitle').value = report.options?.title || '';
+      document.getElementById('editHeaderColor').value = report.options?.headerColor || '#4CAF50';
+      document.getElementById('editPaperSize').value = report.options?.paperSize || 'A4';
+      document.getElementById('editOrientation').value = report.options?.orientation || 'portrait';
+
+      document.getElementById('reportSettingsDisplay').style.display = 'none';
+      document.getElementById('reportSettingsEdit').style.display = 'flex';
+    }
+  },
+
+  async saveReportMetadata(id) {
+    const fileName = document.getElementById('editFileName').value;
+    const title = document.getElementById('editTitle').value;
+    const description = document.getElementById('editDescription').value;
+    const headerColor = document.getElementById('editHeaderColor').value;
+    const paperSize = document.getElementById('editPaperSize').value;
+    const orientation = document.getElementById('editOrientation').value;
+
+    try {
+      const response = await fetch(`/admin/reports/history/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fileName, title, description, headerColor, paperSize, orientation })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showAlert('Report metadata updated successfully', 'success');
+        
+        // Update the current report object
+        if (this.currentReport) {
+          this.currentReport.options = {
+            ...this.currentReport.options,
+            fileName,
+            title,
+            description,
+            headerColor,
+            paperSize,
+            orientation
+          };
+        }
+        
+        // Update display fields
+        document.getElementById('viewFileNameDisplay').value = fileName;
+        document.getElementById('viewTitleDisplay').value = title;
+        document.getElementById('viewDescriptionDisplay').value = description;
+        document.getElementById('viewHeaderColorDisplay').value = headerColor;
+        document.getElementById('viewPaperSizeDisplay').value = paperSize;
+        document.getElementById('viewOrientationDisplay').value = orientation;
+        
+        // Switch back to display mode
+        this.toggleEditMode();
+        
+        // Refresh the history list to show updated data
+        this.loadHistory();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Error saving report metadata:', error);
+      showAlert('Failed to update report metadata', 'error');
+    }
+  },
+
+  initializeReportViewer() {
+    // Close viewer button
+    const closeBtn = document.getElementById('closeViewerBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        document.getElementById('reportViewer').style.display = 'none';
+      });
+    }
+
+    // Edit button
+    const editBtn = document.getElementById('editReportBtn');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        this.toggleEditMode();
+      });
+    }
+
+    // Save edit button
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    if (saveEditBtn) {
+      saveEditBtn.addEventListener('click', () => {
+        if (this.currentReport) {
+          this.saveReportMetadata(this.currentReport._id);
+        }
+      });
+    }
+
+    // Cancel edit button
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    if (cancelEditBtn) {
+      cancelEditBtn.addEventListener('click', () => {
+        this.toggleEditMode();
+      });
+    }
+
+    // Add color picker live preview
+    const editColorInput = document.getElementById('editHeaderColor');
+    if (editColorInput) {
+      editColorInput.addEventListener('input', (e) => {
+        // Update the visual preview immediately as user picks colors
+        const viewReportTable = document.querySelector('#viewReportTable thead th');
+        if (viewReportTable) {
+          document.querySelectorAll('#viewReportTable thead th').forEach(th => {
+            th.style.backgroundColor = e.target.value;
+          });
+        }
+      });
+    }
+  },
+
   escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -671,6 +990,7 @@ const tabManager = {
 // Initialize tabs when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   tabManager.init();
+  tabManager.initializeReportViewer();
 
   // History event listeners
   document.getElementById('refreshHistoryBtn').addEventListener('click', () => {
