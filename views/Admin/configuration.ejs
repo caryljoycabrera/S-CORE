@@ -1227,57 +1227,6 @@
             </div>
           </div>
 
-          <!-- Gallery Section -->
-          <div class="config-section">
-            <h2 class="section-title">
-              <span class="section-icon">🖼️</span>
-              Gallery Section
-            </h2>
-            <p class="section-description">
-              Gallery section that displays SCO events and highlights via embedded iframe.
-            </p>
-
-            <div class="form-group">
-              <label for="gallerySectionTitle">Section Title</label>
-              <input
-                type="text"
-                id="gallerySectionTitle"
-                name="gallerySectionTitle"
-                value="<%= pageContent.gallerySectionTitle || 'Gallery' %>"
-                maxlength="50"
-                oninput="updateCharCount(this, 'gallerySectionTitleCount', 50)"
-              >
-              <div class="char-count" id="gallerySectionTitleCount"></div>
-              <p class="form-hint">Title that appears above the gallery section</p>
-            </div>
-
-            <div class="form-group">
-              <label for="gallerySectionSubtitle">Section Subtitle</label>
-              <input
-                type="text"
-                id="gallerySectionSubtitle"
-                name="gallerySectionSubtitle"
-                value="<%= pageContent.gallerySectionSubtitle || 'See our latest events and highlights' %>"
-                maxlength="100"
-                oninput="updateCharCount(this, 'gallerySectionSubtitleCount', 100)"
-              >
-              <div class="char-count" id="gallerySectionSubtitleCount"></div>
-              <p class="form-hint">Subtitle that appears below the section title</p>
-            </div>
-
-            <div class="form-group">
-              <label for="galleryEmbedUrl">Gallery Embed URL</label>
-              <input
-                type="url"
-                id="galleryEmbedUrl"
-                name="galleryEmbedUrl"
-                value="<%= pageContent.galleryEmbedUrl || 'https://www.dlsud.edu.ph/sco/gallery/' %>"
-                maxlength="500"
-              >
-              <p class="form-hint">URL of the gallery page to embed in an iframe</p>
-            </div>
-          </div>
-
           <!-- Services Section -->
           <div class="config-section">
             <h2 class="section-title">
