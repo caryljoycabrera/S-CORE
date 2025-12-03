@@ -14,21 +14,72 @@ const reportHandler = {
   currentData: null,
 
   /**
+   * Validate filter inputs in real-time
+   */
+  validateFilters() {
+    const startDate = document.getElementById('startDateFilter').value;
+    const endDate = document.getElementById('endDateFilter').value;
+    const dateRangeError = document.getElementById('dateRangeError');
+    const startDateInput = document.getElementById('startDateFilter');
+    const endDateInput = document.getElementById('endDateFilter');
+    const generateBtn = document.getElementById('generatePreviewBtn');
+    
+    // Reset errors
+    dateRangeError.style.display = 'none';
+    startDateInput.classList.remove('error');
+    endDateInput.classList.remove('error');
+    
+    let hasError = false;
+
+    // Validate date range only if both dates are provided
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (start > end) {
+        hasError = true;
+        dateRangeError.textContent = 'End date must be after start date';
+        dateRangeError.style.display = 'block';
+        startDateInput.classList.add('error');
+        endDateInput.classList.add('error');
+      }
+    }
+
+    // Enable/disable generate button based on validation
+    if (hasError) {
+      generateBtn.disabled = true;
+      return false;
+    } else {
+      generateBtn.disabled = false;
+      return true;
+    }
+  },
+
+  /**
    * Get filter values from form
    */
   getFilters() {
-    const statuses = Array.from(document.getElementById('statusFilter').selectedOptions)
-      .map(opt => opt.value)
-      .filter(v => v);
-    const units = Array.from(document.getElementById('unitFilter').selectedOptions)
-      .map(opt => opt.value)
-      .filter(v => v);
+    // Get checked units
+    const unitCheckboxes = document.querySelectorAll('input[data-filter=\"unit\"]:checked');
+    const units = Array.from(unitCheckboxes)
+      .map(cb => cb.value)
+      .filter(v => v); // Remove empty values (from "All Units")
+
+    // Get checked statuses
+    const statusCheckboxes = document.querySelectorAll('input[data-filter=\"status\"]:checked');
+    const statuses = Array.from(statusCheckboxes)
+      .map(cb => cb.value)
+      .filter(v => v); // Remove empty values (from "All Statuses")
+
+    // Get selected request type
+    const requestTypeRadio = document.querySelector('input[name=\"requestType\"]:checked');
+    const requestType = requestTypeRadio ? requestTypeRadio.value : '';
 
     return {
       startDate: document.getElementById('startDateFilter').value,
       endDate: document.getElementById('endDateFilter').value,
       units: units,
-      requestType: document.getElementById('requestTypeFilter').value,
+      requestType: requestType,
       statuses: statuses,
       sortBy: document.getElementById('sortByFilter').value,
       sortOrder: document.getElementById('sortOrderFilter').value
@@ -39,22 +90,17 @@ const reportHandler = {
    * Generate preview report
    */
   async generatePreview() {
+    // Validate filters first
+    if (!this.validateFilters()) {
+      showAlert('Please fix the date range errors before generating the report', 'error');
+      return;
+    }
+
     const loading = document.getElementById('loadingIndicator');
     loading.style.display = 'flex';
 
     try {
       const filters = this.getFilters();
-
-      // Validate date range if both dates are provided
-      if (filters.startDate && filters.endDate) {
-        const start = new Date(filters.startDate);
-        const end = new Date(filters.endDate);
-        if (start > end) {
-          showAlert('Start date must be before end date', 'error');
-          loading.style.display = 'none';
-          return;
-        }
-      }
 
       const response = await fetch('/admin/reports/generate', {
         method: 'POST',
@@ -145,14 +191,42 @@ const reportHandler = {
    * Clear all filters
    */
   clearFilters() {
+    // Clear date fields
     document.getElementById('startDateFilter').value = '';
     document.getElementById('endDateFilter').value = '';
     document.getElementById('datePresetFilter').value = '';
-    document.getElementById('unitFilter').selectedIndex = 0;
-    document.getElementById('requestTypeFilter').value = '';
-    document.getElementById('statusFilter').selectedIndex = 0;
+    
+    // Reset unit checkboxes - check "All Units" and uncheck others
+    document.getElementById('allUnitsCheckbox').checked = true;
+    document.querySelectorAll('input[data-filter="unit"]').forEach(cb => {
+      if (cb.id !== 'allUnitsCheckbox') cb.checked = false;
+    });
+    if (typeof updateDropdownText === 'function') updateDropdownText('unit');
+    
+    // Reset request type
+    const requestTypeFilter = document.getElementById('requestTypeFilter');
+    if (requestTypeFilter) requestTypeFilter.value = '';
+    
+    // Reset status checkboxes - check "All Statuses" and uncheck others
+    document.getElementById('allStatusesCheckbox').checked = true;
+    document.querySelectorAll('input[data-filter="status"]').forEach(cb => {
+      if (cb.id !== 'allStatusesCheckbox') cb.checked = false;
+    });
+    if (typeof updateDropdownText === 'function') updateDropdownText('status');
+    
+    // Reset sort options
     document.getElementById('sortByFilter').value = 'createdAt';
     document.getElementById('sortOrderFilter').value = 'desc';
+    
+    // Clear validation errors
+    const dateRangeError = document.getElementById('dateRangeError');
+    if (dateRangeError) dateRangeError.style.display = 'none';
+    document.getElementById('startDateFilter').classList.remove('error');
+    document.getElementById('endDateFilter').classList.remove('error');
+    const generateBtn = document.getElementById('generatePreviewBtn');
+    if (generateBtn) generateBtn.disabled = false;
+    
+    // Clear table
     document.getElementById('reportTableBody').innerHTML = '<tr class="no-data-row"><td colspan="10" style="text-align: center; padding: 2rem;">Click "Generate Preview" to load data</td></tr>';
     document.getElementById('reportStats').style.display = 'none';
     document.getElementById('exportPdfBtn').disabled = true;
@@ -358,6 +432,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('startDateFilter').value = startDate.toISOString().split('T')[0];
         document.getElementById('endDateFilter').value = endDate.toISOString().split('T')[0];
+        
+        // Validate after setting dates
+        reportHandler.validateFilters();
       }
     });
   }
@@ -1187,6 +1264,95 @@ document.addEventListener('DOMContentLoaded', () => {
   tabManager.init();
   tabManager.initializeReportViewer();
 
+  // Initialize default date range (Last 90 Days)
+  const datePresetFilter = document.getElementById('datePresetFilter');
+  if (datePresetFilter && datePresetFilter.value === '90') {
+    const endDate = new Date();
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 90);
+    
+    document.getElementById('startDateFilter').value = startDate.toISOString().split('T')[0];
+    document.getElementById('endDateFilter').value = endDate.toISOString().split('T')[0];
+  }
+
+  // Real-time date validation
+  const startDateInput = document.getElementById('startDateFilter');
+  const endDateInput = document.getElementById('endDateFilter');
+  
+  if (startDateInput) {
+    startDateInput.addEventListener('change', () => reportHandler.validateFilters());
+    startDateInput.addEventListener('input', () => reportHandler.validateFilters());
+  }
+  
+  if (endDateInput) {
+    endDateInput.addEventListener('change', () => reportHandler.validateFilters());
+    endDateInput.addEventListener('input', () => reportHandler.validateFilters());
+  }
+
+  // Multi-select dropdown handlers
+  setupMultiSelectDropdown('unit', 'unitDropdownTrigger', 'unitDropdownMenu', 'unitDropdownText');
+  setupMultiSelectDropdown('status', 'statusDropdownTrigger', 'statusDropdownMenu', 'statusDropdownText');
+
+  // Initialize checkbox "All" handlers for units
+  const allUnitsCheckbox = document.getElementById('allUnitsCheckbox');
+  if (allUnitsCheckbox) {
+    allUnitsCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        document.querySelectorAll('input[data-filter="unit"]').forEach(cb => {
+          if (cb.id !== 'allUnitsCheckbox') cb.checked = false;
+        });
+        updateDropdownText('unit');
+      }
+    });
+  }
+
+  // Unit checkboxes - uncheck "All" when individual selected
+  document.querySelectorAll('input[data-filter="unit"]').forEach(cb => {
+    if (cb.id !== 'allUnitsCheckbox') {
+      cb.addEventListener('change', function() {
+        if (this.checked) {
+          allUnitsCheckbox.checked = false;
+        }
+        // If no units are selected, auto-check "All Units"
+        const anyChecked = Array.from(document.querySelectorAll('input[data-filter="unit"]')).some(c => c.checked);
+        if (!anyChecked) {
+          allUnitsCheckbox.checked = true;
+        }
+        updateDropdownText('unit');
+      });
+    }
+  });
+
+  // Initialize checkbox "All" handlers for statuses
+  const allStatusesCheckbox = document.getElementById('allStatusesCheckbox');
+  if (allStatusesCheckbox) {
+    allStatusesCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        document.querySelectorAll('input[data-filter="status"]').forEach(cb => {
+          if (cb.id !== 'allStatusesCheckbox') cb.checked = false;
+        });
+        updateDropdownText('status');
+      }
+    });
+  }
+
+  // Status checkboxes - uncheck "All" when individual selected
+  document.querySelectorAll('input[data-filter="status"]').forEach(cb => {
+    if (cb.id !== 'allStatusesCheckbox') {
+      cb.addEventListener('change', function() {
+        if (this.checked) {
+          allStatusesCheckbox.checked = false;
+        }
+        // If no statuses are selected, auto-check "All Statuses"
+        const anyChecked = Array.from(document.querySelectorAll('input[data-filter="status"]')).some(c => c.checked);
+        if (!anyChecked) {
+          allStatusesCheckbox.checked = true;
+        }
+        updateDropdownText('status');
+      });
+    }
+  });
+
   // History event listeners
   document.getElementById('refreshHistoryBtn').addEventListener('click', () => {
     tabManager.loadHistory();
@@ -1598,4 +1764,80 @@ document.addEventListener('click', function(event) {
   if (!event.target.closest('.download-dropdown')) {
     closeAllDownloadMenus();
   }
+  
+  // Close multi-select dropdowns when clicking outside
+  if (!event.target.closest('.multi-select-dropdown')) {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.style.display = 'none';
+    });
+    document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+      trigger.classList.remove('open');
+    });
+  }
 });
+
+/**
+ * Setup multi-select dropdown functionality
+ */
+function setupMultiSelectDropdown(filterType, triggerId, menuId, textId) {
+  const trigger = document.getElementById(triggerId);
+  const menu = document.getElementById(menuId);
+  
+  if (trigger && menu) {
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isOpen = menu.style.display === 'block';
+      
+      // Close all other dropdowns
+      document.querySelectorAll('.dropdown-menu').forEach(m => {
+        if (m !== menu) m.style.display = 'none';
+      });
+      document.querySelectorAll('.dropdown-trigger').forEach(t => {
+        if (t !== trigger) t.classList.remove('open');
+      });
+      
+      // Toggle this dropdown
+      if (isOpen) {
+        menu.style.display = 'none';
+        trigger.classList.remove('open');
+      } else {
+        menu.style.display = 'block';
+        trigger.classList.add('open');
+      }
+    });
+    
+    // Prevent dropdown from closing when clicking inside
+    menu.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+}
+
+/**
+ * Update dropdown trigger text based on selections
+ */
+function updateDropdownText(filterType) {
+  const allCheckbox = filterType === 'unit' ? 
+    document.getElementById('allUnitsCheckbox') : 
+    document.getElementById('allStatusesCheckbox');
+  const dropdownText = filterType === 'unit' ? 
+    document.getElementById('unitDropdownText') : 
+    document.getElementById('statusDropdownText');
+  
+  if (!dropdownText) return;
+  
+  if (allCheckbox && allCheckbox.checked) {
+    dropdownText.textContent = filterType === 'unit' ? 'All Units' : 'All Statuses';
+  } else {
+    const checked = Array.from(document.querySelectorAll(`input[data-filter="${filterType}"]:checked`))
+      .filter(cb => cb.value) // Filter out empty values
+      .map(cb => cb.nextElementSibling.textContent);
+    
+    if (checked.length === 0) {
+      dropdownText.textContent = filterType === 'unit' ? 'All Units' : 'All Statuses';
+    } else {
+      dropdownText.textContent = checked.join(', ');
+    }
+  }
+}
+
