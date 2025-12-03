@@ -181,6 +181,7 @@ const reportHandler = {
       const title = document.getElementById('pdfTitle').value || 'S-CORE Analytics Report';
       const description = document.getElementById('pdfDescription').value || '';
       const headerColor = document.getElementById('pdfHeaderColor').value || '#10b981';
+      const headerTextsColor = document.getElementById('pdfHeaderTextsColor').value || '#ffffff';
       const paperSize = document.getElementById('pdfPaperSize').value || 'A4';
       const orientation = document.getElementById('pdfOrientation').value || 'portrait';
       
@@ -189,7 +190,7 @@ const reportHandler = {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ ...filters, format: 'pdf', fileName, title, description, headerColor, paperSize, orientation })
+        body: JSON.stringify({ ...filters, format: 'pdf', fileName, title, description, headerColor, headerTextsColor, paperSize, orientation })
       });
 
       if (!response.ok) {
@@ -200,7 +201,7 @@ const reportHandler = {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `s-core-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = `${fileName}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -245,13 +246,14 @@ const reportHandler = {
       const title = document.getElementById('pdfTitle').value || 'S-CORE Analytics Report';
       const description = document.getElementById('pdfDescription').value || '';
       const headerColor = document.getElementById('pdfHeaderColor').value || '#10b981';
+      const headerTextsColor = document.getElementById('pdfHeaderTextsColor').value || '#ffffff';
       
       const response = await fetch('/admin/reports/export', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ ...filters, format: 'excel', fileName, title, description, headerColor })
+        body: JSON.stringify({ ...filters, format: 'excel', fileName, title, description, headerColor, headerTextsColor })
       });
 
       if (!response.ok) {
@@ -262,7 +264,7 @@ const reportHandler = {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `s-core-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = `${fileName}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -402,6 +404,18 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  // Header text color change listener for preview
+  const headerTextsColorInput = document.getElementById('pdfHeaderTextsColor');
+  if (headerTextsColorInput) {
+    headerTextsColorInput.addEventListener('input', (e) => {
+      const color = e.target.value;
+      const tableHeaders = document.querySelectorAll('.report-table th');
+      tableHeaders.forEach(th => {
+        th.style.color = color;
+      });
+    });
+  }
 });
 
 // Close dropdown on outside click
@@ -459,7 +473,7 @@ const tabManager = {
   async loadHistory(page = 1) {
     const loadingRow = `
       <tr class="no-data-row">
-        <td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">
+        <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">
           Loading report history...
         </td>
       </tr>
@@ -467,11 +481,9 @@ const tabManager = {
     document.getElementById('historyTableBody').innerHTML = loadingRow;
 
     try {
-      const typeFilter = document.getElementById('historyTypeFilter').value;
-      const showDeleted = document.getElementById('showDeletedFilter').checked;
       const params = new URLSearchParams({ page, limit: 20 });
-      if (typeFilter) params.append('type', typeFilter);
-      if (showDeleted) params.append('includeDeleted', 'true');
+      // Only fetch non-deleted reports for main history
+      params.append('includeDeleted', 'false');
 
       console.log('Loading history with params:', params.toString());
       const response = await fetch(`/admin/reports/history?${params}`);
@@ -489,7 +501,7 @@ const tabManager = {
       console.error('Error loading history:', error);
       document.getElementById('historyTableBody').innerHTML = `
         <tr class="no-data-row">
-          <td colspan="6" style="text-align: center; padding: 2rem; color: #dc2626;">
+          <td colspan="5" style="text-align: center; padding: 2rem; color: #dc2626;">
             Error loading history: ${error.message}
           </td>
         </tr>
@@ -503,7 +515,7 @@ const tabManager = {
       console.log('No reports to render');
       document.getElementById('historyTableBody').innerHTML = `
         <tr class="no-data-row">
-          <td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">
+          <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">
             No reports found
           </td>
         </tr>
@@ -515,45 +527,74 @@ const tabManager = {
     console.log('Building rows for reports');
     const rows = reports.map(report => {
       console.log('Processing report:', report._id, report.fileName);
-      const typeLabel = report.reportType === 'report_pdf' ? 'PDF' : report.reportType === 'report_excel' ? 'Excel' : 'N/A';
       const generatedDate = report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 'N/A';
       const sizeKB = report.fileSize ? Math.round(report.fileSize / 1024) : 'N/A';
-      const isDeleted = report.isDeleted;
 
-      let actions = '';
-      if (isDeleted) {
-        actions = `
-          <button class="btn-small btn-restore" onclick="tabManager.restoreReport('${report._id}')">
-            Restore
-          </button>
-          <button class="btn-small btn-delete" onclick="tabManager.hardDeleteReport('${report._id}')">
-            Hard Delete
-          </button>
-        `;
-      } else {
-        actions = `
-          <button class="btn-small btn-download" onclick="tabManager.downloadReport('${report._id}')">
-            Download
+      // Only show active (non-deleted) reports
+      const actions = `
+        <div class="history-actions" style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+          <div class="download-dropdown" style="position: relative;">
+            <button class="btn-small btn-download" onclick="event.stopPropagation(); toggleDownloadMenu(this);" style="display: flex; align-items: center; gap: 4px;">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download
+              <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+              </svg>
+            </button>
+            <div class="download-menu" style="display: none; position: absolute; left: 0; top: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 140px; z-index: 1000; margin-top: 4px; overflow: hidden;">
+              <button class="download-option" onclick="event.stopPropagation(); tabManager.downloadReport('${report._id}'); closeAllDownloadMenus();" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: none; background: white; text-align: left; cursor: pointer; font-size: 0.875rem; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                <svg width="16" height="16" fill="#dc2626" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <text x="7" y="17" font-size="7" fill="white">PDF</text>
+                </svg>
+                <span>PDF</span>
+              </button>
+              <button class="download-option" onclick="event.stopPropagation(); tabManager.downloadReportAsExcel('${report._id}'); closeAllDownloadMenus();" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: none; background: white; text-align: left; cursor: pointer; font-size: 0.875rem; border-top: 1px solid #e5e7eb; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                <svg width="16" height="16" fill="#16a34a" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <text x="6" y="17" font-size="7" fill="white">XLS</text>
+                </svg>
+                <span>Excel</span>
+              </button>
+            </div>
+          </div>
+          <button class="btn-small btn-copy" onclick="tabManager.duplicateReport('${report._id}')" title="Make a copy">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+            </svg>
+            Copy
           </button>
           <button class="btn-small btn-info" onclick="tabManager.viewReport('${report._id}')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
             View/Edit
           </button>
           <button class="btn-small btn-delete" onclick="tabManager.deleteReport('${report._id}')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+            </svg>
             Delete
           </button>
-        `;
-      }
-
-      const rowClass = isDeleted ? 'deleted-report' : '';
+        </div>
+      `;
 
       return `
-        <tr class="${rowClass}">
-          <td>${typeLabel}</td>
+        <tr>
           <td>${this.escapeHtml(report.fileName || 'N/A')}</td>
           <td>${generatedDate}</td>
           <td>${report.recordCount || 'N/A'}</td>
           <td>${report.fileSize ? Math.round(report.fileSize / 1024) + ' KB' : 'N/A'}</td>
-          <td class="history-actions">
+          <td>
             ${actions}
           </td>
         </tr>
@@ -595,6 +636,50 @@ const tabManager = {
     } catch (error) {
       console.error('Error downloading report:', error);
       showAlert('Failed to download report', 'error');
+    }
+  },
+
+  async downloadReportAsExcel(id) {
+    try {
+      const response = await fetch(`/admin/reports/history/${id}/download-excel`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      showAlert('Excel report downloaded successfully', 'success');
+    } catch (error) {
+      console.error('Error downloading Excel report:', error);
+      showAlert('Failed to download Excel report', 'error');
+    }
+  },
+
+  async duplicateReport(id) {
+    try {
+      const response = await fetch(`/admin/reports/duplicate/${id}`, {
+        method: 'POST'
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showAlert('Report duplicated successfully', 'success');
+        this.loadHistory();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Error duplicating report:', error);
+      showAlert('Failed to duplicate report', 'error');
     }
   },
 
@@ -690,17 +775,35 @@ const tabManager = {
     // Store current report for editing
     this.currentReport = report;
 
-    // Populate report info
-    document.getElementById('viewFileName').textContent = report.fileName || 'N/A';
-    document.getElementById('viewReportType').textContent = 
+    // Populate report info with correct IDs
+    document.getElementById('reportFileName').textContent = report.fileName || 'N/A';
+    document.getElementById('reportType').textContent = 
       report.reportType === 'report_pdf' ? 'PDF Report' : 
       report.reportType === 'report_excel' ? 'Excel Report' : 'N/A';
-    document.getElementById('viewGeneratedAt').textContent = 
+    document.getElementById('reportGeneratedAt').textContent = 
       report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 'N/A';
-    document.getElementById('viewGeneratedBy').textContent = 
-      report.generatedBy ? `${report.generatedBy.firstName} ${report.generatedBy.lastName}` : 'N/A';
-    document.getElementById('viewRecordCount').textContent = report.recordCount || 'N/A';
-    document.getElementById('viewFileSize').textContent = 
+    
+    // Properly handle admin name fetching - check all possible field combinations
+    let adminName = 'N/A';
+    if (report.generatedBy) {
+      // Check if generatedBy is populated as an object
+      if (typeof report.generatedBy === 'object') {
+        if (report.generatedBy.fName || report.generatedBy.lName) {
+          adminName = `${report.generatedBy.fName || ''} ${report.generatedBy.lName || ''}`.trim();
+        } else if (report.generatedBy.firstName || report.generatedBy.lastName) {
+          adminName = `${report.generatedBy.firstName || ''} ${report.generatedBy.lastName || ''}`.trim();
+        } else if (report.generatedBy.name) {
+          adminName = report.generatedBy.name;
+        }
+      } else {
+        // If generatedBy is just an ID, show the ID
+        adminName = `Admin (ID: ${report.generatedBy})`;
+      }
+    }
+    document.getElementById('reportGeneratedBy').textContent = adminName;
+    
+    document.getElementById('reportRecordCount').textContent = report.recordCount || 'N/A';
+    document.getElementById('reportFileSize').textContent = 
       report.fileSize ? Math.round(report.fileSize / 1024) + ' KB' : 'N/A';
 
     // Populate settings display fields (these show when not editing)
@@ -708,6 +811,7 @@ const tabManager = {
     const displayTitle = report.options?.title || 'S-CORE Analytics Report';
     const displayDescription = report.options?.description || '';
     const displayColor = report.options?.headerColor || '#10b981';
+    const displayTextsColor = report.options?.headerTextsColor || '#ffffff';
     const displayPaper = report.options?.paperSize || 'A4';
     const displayOrientation = report.options?.orientation || 'portrait';
     
@@ -715,6 +819,7 @@ const tabManager = {
     document.getElementById('viewTitleDisplay').value = displayTitle;
     document.getElementById('viewDescriptionDisplay').value = displayDescription;
     document.getElementById('viewHeaderColorDisplay').value = displayColor;
+    document.getElementById('viewHeaderTextsColorDisplay').value = displayTextsColor;
     document.getElementById('viewPaperSizeDisplay').value = displayPaper;
     document.getElementById('viewOrientationDisplay').value = displayOrientation;
 
@@ -723,12 +828,13 @@ const tabManager = {
     document.getElementById('editTitle').value = displayTitle;
     document.getElementById('editDescription').value = displayDescription;
     document.getElementById('editHeaderColor').value = displayColor;
+    document.getElementById('editHeaderTextsColor').value = displayTextsColor;
     document.getElementById('editPaperSize').value = displayPaper;
     document.getElementById('editOrientation').value = displayOrientation;
 
     // Show viewer, hide edit mode
     document.getElementById('reportViewer').style.display = 'block';
-    document.getElementById('reportSettingsDisplay').style.display = 'flex';
+    document.getElementById('reportSettingsDisplay').style.display = 'block';
     document.getElementById('reportSettingsEdit').style.display = 'none';
 
     // Load and display report data
@@ -743,6 +849,13 @@ const tabManager = {
       console.log('No reportData found, showing message instead');
       this.showReportDataMessage(report);
     }
+
+    // Apply the header colors to the preview table
+    const tableHeaders = document.querySelectorAll('#viewReportTable thead th');
+    tableHeaders.forEach(th => {
+      th.style.backgroundColor = displayColor;
+      th.style.color = displayTextsColor;
+    });
 
     // Scroll to viewer
     document.getElementById('reportViewer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -819,7 +932,7 @@ const tabManager = {
       const dateSubmitted = record.dateSubmitted ? this.formatDate(record.dateSubmitted) : 'N/A';
       const deadline = record.deadline ? this.formatDate(record.deadline) : 'N/A';
       const revisions = record.revisionCount || record.revisions || 0;
-      const finalRemarks = record.finalRemarks || record.finalRemark || 'N/A';
+      const finalRemarks = record.finalRemarks || record.finalRemark || '';
 
       return `
         <tr>
@@ -832,7 +945,7 @@ const tabManager = {
           <td>${dateSubmitted}</td>
           <td>${deadline}</td>
           <td>${revisions}</td>
-          <td>${this.escapeHtml(finalRemarks)}</td>
+          <td>${finalRemarks ? this.escapeHtml(finalRemarks) : ''}</td>
         </tr>
       `;
     }).join('');
@@ -858,18 +971,21 @@ const tabManager = {
     
     if (isEditing) {
       // Cancel edit - show display mode
-      document.getElementById('reportSettingsDisplay').style.display = 'flex';
+      document.getElementById('reportSettingsDisplay').style.display = 'block';
       document.getElementById('reportSettingsEdit').style.display = 'none';
     } else {
       // Enter edit mode
       const report = this.currentReport;
+      document.getElementById('editFileName').value = report.options?.fileName || report.fileName || '';
       document.getElementById('editTitle').value = report.options?.title || '';
-      document.getElementById('editHeaderColor').value = report.options?.headerColor || '#4CAF50';
+      document.getElementById('editDescription').value = report.options?.description || '';
+      document.getElementById('editHeaderColor').value = report.options?.headerColor || '#10b981';
+      document.getElementById('editHeaderTextsColor').value = report.options?.headerTextsColor || '#ffffff';
       document.getElementById('editPaperSize').value = report.options?.paperSize || 'A4';
       document.getElementById('editOrientation').value = report.options?.orientation || 'portrait';
 
       document.getElementById('reportSettingsDisplay').style.display = 'none';
-      document.getElementById('reportSettingsEdit').style.display = 'flex';
+      document.getElementById('reportSettingsEdit').style.display = 'block';
     }
   },
 
@@ -878,6 +994,7 @@ const tabManager = {
     const title = document.getElementById('editTitle').value;
     const description = document.getElementById('editDescription').value;
     const headerColor = document.getElementById('editHeaderColor').value;
+    const headerTextsColor = document.getElementById('editHeaderTextsColor').value;
     const paperSize = document.getElementById('editPaperSize').value;
     const orientation = document.getElementById('editOrientation').value;
 
@@ -887,13 +1004,13 @@ const tabManager = {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fileName, title, description, headerColor, paperSize, orientation })
+        body: JSON.stringify({ fileName, title, description, headerColor, headerTextsColor, paperSize, orientation, regenerate: true })
       });
 
       const result = await response.json();
 
       if (result.success) {
-        showAlert('Report metadata updated successfully', 'success');
+        showAlert('Report updated and regenerated successfully', 'success');
         
         // Update the current report object
         if (this.currentReport) {
@@ -903,6 +1020,7 @@ const tabManager = {
             title,
             description,
             headerColor,
+            headerTextsColor,
             paperSize,
             orientation
           };
@@ -913,6 +1031,7 @@ const tabManager = {
         document.getElementById('viewTitleDisplay').value = title;
         document.getElementById('viewDescriptionDisplay').value = description;
         document.getElementById('viewHeaderColorDisplay').value = headerColor;
+        document.getElementById('viewHeaderTextsColorDisplay').value = headerTextsColor;
         document.getElementById('viewPaperSizeDisplay').value = paperSize;
         document.getElementById('viewOrientationDisplay').value = orientation;
         
@@ -957,6 +1076,16 @@ const tabManager = {
       });
     }
 
+    // Duplicate report button
+    const duplicateReportBtn = document.getElementById('duplicateReportBtn');
+    if (duplicateReportBtn) {
+      duplicateReportBtn.addEventListener('click', () => {
+        if (this.currentReport) {
+          this.duplicateReport(this.currentReport._id);
+        }
+      });
+    }
+
     // Cancel edit button
     const cancelEditBtn = document.getElementById('cancelEditBtn');
     if (cancelEditBtn) {
@@ -975,6 +1104,72 @@ const tabManager = {
           document.querySelectorAll('#viewReportTable thead th').forEach(th => {
             th.style.backgroundColor = e.target.value;
           });
+        }
+      });
+    }
+
+    // Add header text color preview
+    const editTextsColorInput = document.getElementById('editHeaderTextsColor');
+    if (editTextsColorInput) {
+      editTextsColorInput.addEventListener('input', (e) => {
+        const viewReportTable = document.querySelector('#viewReportTable thead th');
+        if (viewReportTable) {
+          document.querySelectorAll('#viewReportTable thead th').forEach(th => {
+            th.style.color = e.target.value;
+          });
+        }
+      });
+    }
+
+    // Download PDF button in history
+    const downloadPdfFromHistoryBtn = document.getElementById('downloadPdfFromHistoryBtn');
+    if (downloadPdfFromHistoryBtn) {
+      downloadPdfFromHistoryBtn.addEventListener('click', () => {
+        if (this.currentReport) {
+          this.downloadReport(this.currentReport._id);
+        }
+      });
+    }
+
+    // Download Excel button in history
+    const downloadExcelFromHistoryBtn = document.getElementById('downloadExcelFromHistoryBtn');
+    if (downloadExcelFromHistoryBtn) {
+      downloadExcelFromHistoryBtn.addEventListener('click', () => {
+        if (this.currentReport) {
+          this.downloadReportAsExcel(this.currentReport._id);
+        }
+      });
+    }
+
+    // Reset edit button
+    const resetEditBtn = document.getElementById('resetEditBtn');
+    if (resetEditBtn) {
+      resetEditBtn.addEventListener('click', () => {
+        if (this.currentReport) {
+          // Reset to original values from currentReport
+          const originalFileName = this.currentReport.options?.fileName || this.currentReport.fileName || 's-core-report';
+          const originalTitle = this.currentReport.options?.title || 'S-CORE Analytics Report';
+          const originalDescription = this.currentReport.options?.description || '';
+          const originalColor = this.currentReport.options?.headerColor || '#10b981';
+          const originalTextsColor = this.currentReport.options?.headerTextsColor || '#ffffff';
+          const originalPaper = this.currentReport.options?.paperSize || 'A4';
+          const originalOrientation = this.currentReport.options?.orientation || 'portrait';
+
+          document.getElementById('editFileName').value = originalFileName;
+          document.getElementById('editTitle').value = originalTitle;
+          document.getElementById('editDescription').value = originalDescription;
+          document.getElementById('editHeaderColor').value = originalColor;
+          document.getElementById('editHeaderTextsColor').value = originalTextsColor;
+          document.getElementById('editPaperSize').value = originalPaper;
+          document.getElementById('editOrientation').value = originalOrientation;
+
+          // Update preview table colors
+          document.querySelectorAll('#viewReportTable thead th').forEach(th => {
+            th.style.backgroundColor = originalColor;
+            th.style.color = originalTextsColor;
+          });
+
+          showAlert('Settings reset to original values', 'info');
         }
       });
     }
@@ -997,12 +1192,9 @@ document.addEventListener('DOMContentLoaded', () => {
     tabManager.loadHistory();
   });
 
-  document.getElementById('historyTypeFilter').addEventListener('change', () => {
-    tabManager.loadHistory();
-  });
-
-  document.getElementById('showDeletedFilter').addEventListener('change', () => {
-    tabManager.loadHistory();
+  // View Deleted Reports Button
+  document.getElementById('viewDeletedBtn').addEventListener('click', () => {
+    openDeletedReportsModal();
   });
 
   document.getElementById('prevPageBtn').addEventListener('click', () => {
@@ -1020,4 +1212,390 @@ document.addEventListener('DOMContentLoaded', () => {
       tabManager.loadHistory(currentPage + 1);
     }
   });
+});
+
+/**
+ * Toggle description field visibility
+ */
+function toggleDescription() {
+  const descriptionRow = document.getElementById('descriptionRow');
+  const toggleBtn = document.querySelector('.description-toggle-btn');
+  
+  if (descriptionRow.style.display === 'none') {
+    descriptionRow.style.display = 'flex';
+    toggleBtn.classList.add('expanded');
+  } else {
+    descriptionRow.style.display = 'none';
+    toggleBtn.classList.remove('expanded');
+  }
+}
+
+/**
+ * Toggle view description in Report History
+ */
+function toggleViewDescription() {
+  const descriptionRow = document.getElementById('viewDescriptionRow');
+  const toggleBtn = document.querySelector('#reportSettingsDisplay .description-toggle-btn');
+  
+  if (descriptionRow.style.display === 'none') {
+    descriptionRow.style.display = 'flex';
+    toggleBtn.classList.add('expanded');
+  } else {
+    descriptionRow.style.display = 'none';
+    toggleBtn.classList.remove('expanded');
+  }
+}
+
+/**
+ * Toggle edit description in Report History
+ */
+function toggleEditDescription() {
+  const descriptionRow = document.getElementById('editDescriptionRow');
+  const toggleBtn = document.querySelector('#reportSettingsEdit .description-toggle-btn');
+  
+  if (descriptionRow.style.display === 'none') {
+    descriptionRow.style.display = 'flex';
+    toggleBtn.classList.add('expanded');
+  } else {
+    descriptionRow.style.display = 'none';
+    toggleBtn.classList.remove('expanded');
+  }
+}
+
+/**
+ * Reset export settings to default values
+ */
+function resetExportSettings() {
+  // Reset all form inputs to default values
+  document.getElementById('pdfFileName').value = 's-core-report';
+  document.getElementById('pdfTitle').value = 'S-CORE Analytics Report';
+  document.getElementById('pdfDescription').value = '';
+  document.getElementById('pdfHeaderColor').value = '#10b981';
+  document.getElementById('pdfHeaderTextsColor').value = '#ffffff';
+  document.getElementById('pdfPaperSize').value = 'A4';
+  document.getElementById('pdfOrientation').value = 'portrait';
+  
+  // Update preview table headers to default colors
+  const tableHeaders = document.querySelectorAll('.report-table th');
+  tableHeaders.forEach(th => {
+    th.style.backgroundColor = '#10b981';
+    th.style.color = '#ffffff';
+  });
+  
+  // Collapse description if expanded
+  const descriptionRow = document.getElementById('descriptionRow');
+  const toggleBtn = document.querySelector('.description-toggle-btn');
+  if (descriptionRow && descriptionRow.style.display !== 'none') {
+    descriptionRow.style.display = 'none';
+    toggleBtn.classList.remove('expanded');
+  }
+}
+
+/**
+ * Toggle download menu for a report row
+ */
+function toggleDownloadMenu(button) {
+  const menu = button.nextElementSibling;
+  const isOpen = menu.style.display === 'block';
+  
+  // Close all other menus first
+  closeAllDownloadMenus();
+  
+  // Toggle this menu
+  if (!isOpen) {
+    menu.style.display = 'block';
+  }
+}
+
+/**
+ * Close all download dropdown menus
+ */
+function closeAllDownloadMenus() {
+  document.querySelectorAll('.download-menu').forEach(menu => {
+    menu.style.display = 'none';
+  });
+}
+
+/**
+ * Open deleted reports modal
+ */
+async function openDeletedReportsModal() {
+  const modal = document.getElementById('deletedReportsModal');
+  modal.style.display = 'flex';
+  
+  // Load deleted reports
+  try {
+    console.log('Fetching deleted reports with params: includeDeleted=true&deletedOnly=true');
+    const response = await fetch('/admin/reports/history?includeDeleted=true&deletedOnly=true');
+    const data = await response.json();
+    
+    console.log('Deleted reports response:', data);
+    console.log('Number of deleted reports:', data.reports ? data.reports.length : 0);
+    
+    if (data.success && data.reports) {
+      renderDeletedReports(data.reports);
+    } else {
+      throw new Error(data.message || 'Failed to load deleted reports');
+    }
+  } catch (error) {
+    console.error('Error loading deleted reports:', error);
+    showAlert('Failed to load deleted reports', 'error');
+  }
+}
+
+/**
+ * Close deleted reports modal
+ */
+function closeDeletedReportsModal() {
+  document.getElementById('deletedReportsModal').style.display = 'none';
+}
+
+/**
+ * Render deleted reports in modal table
+ */
+function renderDeletedReports(reports) {
+  const tbody = document.getElementById('deletedReportsTableBody');
+  
+  if (!reports || reports.length === 0) {
+    tbody.innerHTML = `
+      <tr class="no-data-row">
+        <td colspan="6" style="text-align: center; padding: 2rem; color: #6b7280;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <p style="margin: 0; font-weight: 600;">No deleted reports</p>
+            <p style="margin: 0; color: #6b7280; font-size: 0.875rem;">All reports are active</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  const rows = reports.map(report => {
+    const generatedDate = report.generatedAt ? new Date(report.generatedAt).toLocaleString() : 'N/A';
+    const deletedDate = report.deletedAt ? new Date(report.deletedAt).toLocaleString() : 'N/A';
+    
+    return `
+      <tr>
+        <td>${tabManager.escapeHtml(report.fileName || 'N/A')}</td>
+        <td>${generatedDate}</td>
+        <td>${report.recordCount || 'N/A'}</td>
+        <td>${report.fileSize ? Math.round(report.fileSize / 1024) + ' KB' : 'N/A'}</td>
+        <td>${deletedDate}</td>
+        <td>
+          <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn-small btn-restore" onclick="restoreReportFromModal('${report._id}')" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
+              Restore
+            </button>
+            <button class="btn-small btn-delete" onclick="hardDeleteReportFromModal('${report._id}')" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+              Delete Forever
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  tbody.innerHTML = rows;
+}
+
+/**
+ * Restore report from deleted modal
+ */
+async function restoreReportFromModal(id) {
+  if (!confirm('Are you sure you want to restore this report?')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/admin/reports/history/${id}/restore`, {
+      method: 'POST'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showAlert('✓ Report restored successfully', 'success');
+      openDeletedReportsModal(); // Refresh the modal
+      tabManager.loadHistory(); // Refresh main history
+    } else {
+      throw new Error(data.message || 'Failed to restore report');
+    }
+  } catch (error) {
+    console.error('Error restoring report:', error);
+    showAlert('✗ Failed to restore report', 'error');
+  }
+}
+
+/**
+ * Permanently delete report from modal
+ */
+async function hardDeleteReportFromModal(id) {
+  if (!confirm('Are you sure you want to PERMANENTLY delete this report? This action cannot be undone!')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/admin/reports/history/${id}/hard`, {
+      method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showAlert('✓ Report permanently deleted', 'success');
+      openDeletedReportsModal(); // Refresh the modal
+    } else {
+      throw new Error(data.message || 'Failed to delete report');
+    }
+  } catch (error) {
+    console.error('Error deleting report:', error);
+    showAlert('✗ Failed to delete report', 'error');
+  }
+}
+
+/**
+ * Restore all deleted reports
+ */
+async function restoreAllReports() {
+  if (!confirm('Are you sure you want to restore ALL deleted reports?')) {
+    return;
+  }
+  
+  try {
+    // Show loading indicator
+    const loadingAlert = document.createElement('div');
+    loadingAlert.id = 'bulkLoadingAlert';
+    loadingAlert.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #3b82f6; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10001; display: flex; align-items: center; gap: 12px;';
+    loadingAlert.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></div> Restoring reports...';
+    document.body.appendChild(loadingAlert);
+    
+    const response = await fetch('/admin/reports/history?includeDeleted=true&deletedOnly=true');
+    const data = await response.json();
+    
+    if (!data.success || !data.reports || data.reports.length === 0) {
+      document.body.removeChild(loadingAlert);
+      showAlert('No deleted reports to restore', 'info');
+      return;
+    }
+    
+    const reportIds = data.reports.map(r => r._id);
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const id of reportIds) {
+      try {
+        const restoreResponse = await fetch(`/admin/reports/history/${id}/restore`, {
+          method: 'POST'
+        });
+        const restoreData = await restoreResponse.json();
+        if (restoreData.success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        failCount++;
+      }
+    }
+    
+    document.body.removeChild(loadingAlert);
+    
+    if (successCount > 0) {
+      showAlert(`✓ Successfully restored ${successCount} report(s)${failCount > 0 ? `, ${failCount} failed` : ''}`, 'success');
+      openDeletedReportsModal();
+      tabManager.loadHistory();
+    } else {
+      showAlert('✗ Failed to restore reports', 'error');
+    }
+  } catch (error) {
+    const loadingAlert = document.getElementById('bulkLoadingAlert');
+    if (loadingAlert) document.body.removeChild(loadingAlert);
+    console.error('Error restoring all reports:', error);
+    showAlert('✗ Failed to restore reports', 'error');
+  }
+}
+
+/**
+ * Permanently delete all deleted reports
+ */
+async function deleteAllReportsPermanently() {
+  if (!confirm('⚠️ WARNING: Are you sure you want to PERMANENTLY delete ALL deleted reports?\n\nThis action CANNOT be undone!')) {
+    return;
+  }
+  
+  if (!confirm('This is your final warning. All deleted reports will be permanently removed. Continue?')) {
+    return;
+  }
+  
+  try {
+    // Show loading indicator
+    const loadingAlert = document.createElement('div');
+    loadingAlert.id = 'bulkLoadingAlert';
+    loadingAlert.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #dc2626; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10001; display: flex; align-items: center; gap: 12px;';
+    loadingAlert.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite;"></div> Deleting reports permanently...';
+    document.body.appendChild(loadingAlert);
+    
+    const response = await fetch('/admin/reports/history?includeDeleted=true&deletedOnly=true');
+    const data = await response.json();
+    
+    if (!data.success || !data.reports || data.reports.length === 0) {
+      document.body.removeChild(loadingAlert);
+      showAlert('No deleted reports to remove', 'info');
+      return;
+    }
+    
+    const reportIds = data.reports.map(r => r._id);
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const id of reportIds) {
+      try {
+        const deleteResponse = await fetch(`/admin/reports/history/${id}/hard`, {
+          method: 'DELETE'
+        });
+        const deleteData = await deleteResponse.json();
+        if (deleteData.success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        failCount++;
+      }
+    }
+    
+    document.body.removeChild(loadingAlert);
+    
+    if (successCount > 0) {
+      showAlert(`✓ Successfully deleted ${successCount} report(s) permanently${failCount > 0 ? `, ${failCount} failed` : ''}`, 'success');
+      openDeletedReportsModal();
+    } else {
+      showAlert('✗ Failed to delete reports', 'error');
+    }
+  } catch (error) {
+    const loadingAlert = document.getElementById('bulkLoadingAlert');
+    if (loadingAlert) document.body.removeChild(loadingAlert);
+    console.error('Error deleting all reports:', error);
+    showAlert('✗ Failed to delete reports', 'error');
+  }
+}
+
+// Close dropdown menus when clicking outside
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('.download-dropdown')) {
+    closeAllDownloadMenus();
+  }
 });

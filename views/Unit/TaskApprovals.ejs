@@ -216,7 +216,7 @@
                       const requestor = request.userId ? `${request.userId.fName} ${request.userId.lName}` : 'Unknown';
                       
                       // Get organization/office/department - prioritize in this order
-                      let organization = 'N/A';
+                      let organization = '';
                       if (request.userId) {
                         if (request.userId.studentOrganization && Array.isArray(request.userId.studentOrganization) && request.userId.studentOrganization.length > 0) {
                           organization = request.userId.studentOrganization[0];
@@ -276,7 +276,7 @@
                             <%= new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
                           </span>
                         <% } else { %>
-                          <span class="deadline-badge">N/A</span>
+                          <span style="color: #94a3b8;">—</span>
                         <% } %>
                       </td>
                     </tr>
@@ -374,11 +374,11 @@
               </div>
               <div class="unit-info-item" id="approvedOnField" style="display: none;">
                 <span class="unit-info-label">Approved On</span>
-                <span class="unit-info-value" id="modalApprovedOn" style="color: #16a34a; font-weight: 600;">N/A</span>
+                <span class="unit-info-value" id="modalApprovedOn" style="color: #16a34a; font-weight: 600;">—</span>
               </div>
               <div class="unit-info-item" id="deadlineField" style="display: none;">
                 <span class="unit-info-label">Deadline</span>
-                <span class="unit-info-value" id="modalDeadline">N/A</span>
+                <span class="unit-info-value" id="modalDeadline">—</span>
               </div>
             </div>
           </div>

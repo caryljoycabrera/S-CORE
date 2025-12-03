@@ -597,7 +597,7 @@ function openRequestDetails(requestId, requestType) {
     const modalStatus = document.getElementById('modalStatus');
     if (modalStatus) {
         const statusLower = status.toLowerCase().replace(/\s+/g, '-');
-        modalStatus.textContent = status.toUpperCase();
+        modalStatus.textContent = status;
         modalStatus.className = 'status-badge ' + statusLower;
     }
     
@@ -620,7 +620,7 @@ function openRequestDetails(requestId, requestType) {
         if (deadline) {
             document.getElementById('modalDeadline').textContent = new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         } else {
-            document.getElementById('modalDeadline').textContent = 'Not specified';
+            document.getElementById('modalDeadline').textContent = '—';
         }
     } else if (requestType === 'service') {
         if (deadlineField) deadlineField.style.display = 'none';
@@ -628,7 +628,7 @@ function openRequestDetails(requestId, requestType) {
         if (serviceType || specificRequestType) {
             document.getElementById('modalServiceType').textContent = serviceType || specificRequestType;
         } else {
-            document.getElementById('modalServiceType').textContent = 'Not specified';
+            document.getElementById('modalServiceType').textContent = '—';
         }
     }
 

@@ -233,7 +233,7 @@ class ReportService {
       console.log('Starting Excel export for', records.length, 'records');
       const ExcelJS = require('exceljs');
 
-      const { headerColor = '#10b981', title = 'S-CORE Analytics Report' } = options;
+      const { headerColor = '#10b981', headerTextsColor = '#ffffff', title = 'S-CORE Analytics Report', description = '' } = options;
 
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('S-CORE Report');
@@ -250,7 +250,7 @@ class ReportService {
       worksheet.mergeCells('A1:J1');
       const titleCell = worksheet.getCell('A1');
       titleCell.value = title;
-      titleCell.font = { size: 18, bold: true, color: { argb: 'FFFFFFFF' } };
+      titleCell.font = { size: 18, bold: true, color: { argb: headerTextsColor.replace('#', 'FF') } };
       titleCell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -267,9 +267,22 @@ class ReportService {
       timestampCell.alignment = { horizontal: 'center' };
       worksheet.getRow(2).height = 20;
 
-      // Add summary section after timestamp
+      // Add description if provided (left-aligned, after timestamp)
+      let currentRow = 3;
+      if (description && description.trim()) {
+        worksheet.mergeCells(`A${currentRow}:J${currentRow}`);
+        const descCell = worksheet.getCell(`A${currentRow}`);
+        descCell.value = description;
+        descCell.font = { size: 11, italic: true };
+        descCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        worksheet.getRow(currentRow).height = 25;
+        currentRow++;
+      }
+
+      // Add summary section after description
       if (records && records.length > 0) {
         worksheet.addRow([]); // Empty row
+        currentRow++;
 
         // Summary header
         const summaryHeader = worksheet.addRow(['Report Summary']);
@@ -279,7 +292,7 @@ class ReportService {
           pattern: 'solid',
           fgColor: { argb: headerColor.replace('#', 'FF') }
         };
-        summaryHeader.getCell(1).font = { color: { argb: 'FFFFFFFF' } };
+        summaryHeader.getCell(1).font = { color: { argb: headerTextsColor.replace('#', 'FF') } };
 
         // Summary data
         const summary = await this.getReportSummary({}); // Get summary for all records
@@ -311,7 +324,7 @@ class ReportService {
       const headerRow = worksheet.addRow(headers);
 
       // Style headers
-      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.font = { bold: true, color: { argb: headerTextsColor.replace('#', 'FF') } };
       headerRow.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -491,7 +504,7 @@ class ReportService {
       console.log('Starting PDF export for', records.length, 'records using PDFKit');
       const PDFDocument = require('pdfkit');
 
-      const { title = 'S-CORE Analytics Report', headerColor = '#10b981', paperSize = 'A4' } = options;
+      const { title = 'S-CORE Analytics Report', description = '', headerColor = '#10b981', headerTextsColor = '#ffffff', paperSize = 'A4' } = options;
 
       return new Promise((resolve, reject) => {
         try {
@@ -511,7 +524,15 @@ class ReportService {
 
           // Timestamp
           doc.fillColor('black').fontSize(12).text(`Generated: ${this._formatHeaderDate(new Date())}`, { align: 'center' });
-          doc.moveDown(1.5);
+          doc.moveDown(1);
+
+          // Description (left-aligned, after timestamp)
+          if (description && description.trim()) {
+            doc.fillColor('#374151').fontSize(11).text(description, { align: 'left' });
+            doc.moveDown(1.5);
+          } else {
+            doc.moveDown(0.5);
+          }
 
           // Summary
           if (Object.keys(summary).length > 0) {
@@ -556,7 +577,7 @@ class ReportService {
 
           // Header row with background
           doc.rect(startX, tableTop - 2, colWidths.reduce((a, b) => a + b, 0), 30).fill(headerColor);
-          doc.fillColor('white').fontSize(10);
+          doc.fillColor(headerTextsColor).fontSize(10);
           let currentX = startX;
           headers.forEach((header, i) => {
             doc.text(header, currentX + 4, tableTop + 4, { width: colWidths[i] - 8, align: 'center' });
@@ -1123,6 +1144,156 @@ class ReportService {
     } catch (error) {
       console.error('Error generating analytics PDF:', error);
       throw new Error('Failed to generate analytics PDF');
+    }
+  }
+
+  /**
+   * Generate Excel report
+   * @param {Array} records - Report data records
+   * @param {Object} options - Export options
+   * @returns {Promise<Buffer>} - Excel buffer
+   */
+  async generateExcel(records, options = {}) {
+    try {
+      console.log('Starting Excel export for', records.length, 'records');
+      const ExcelJS = require('exceljs');
+
+      const { title = 'S-CORE Analytics Report', description = '', headerColor = '#10b981', headerTextsColor = '#ffffff' } = options;
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Report Data');
+
+      // Add title
+      worksheet.mergeCells('A1:J1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = title;
+      titleCell.font = { size: 16, bold: true };
+      titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+      titleCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: headerColor.replace('#', 'FF') }
+      };
+      titleCell.font = { ...titleCell.font, color: { argb: headerTextsColor.replace('#', 'FF') } };
+      worksheet.getRow(1).height = 30;
+
+      // Add timestamp
+      worksheet.mergeCells('A2:J2');
+      const timestampCell = worksheet.getCell('A2');
+      timestampCell.value = `Generated: ${this._formatHeaderDate(new Date())}`;
+      timestampCell.font = { size: 10, italic: true };
+      timestampCell.alignment = { vertical: 'middle', horizontal: 'center' };
+      worksheet.getRow(2).height = 20;
+
+      // Add description if provided
+      let currentRow = 3;
+      if (description && description.trim()) {
+        worksheet.mergeCells(`A${currentRow}:J${currentRow}`);
+        const descCell = worksheet.getCell(`A${currentRow}`);
+        descCell.value = description;
+        descCell.font = { size: 10 };
+        descCell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+        worksheet.getRow(currentRow).height = 25;
+        currentRow++;
+      }
+
+      // Add blank row
+      currentRow++;
+
+      // Define headers
+      const headers = [
+        'Request ID', 'Type', 'Requester', 'Unit', 'Request Name', 
+        'Status', 'Date Submitted', 'Deadline', 'Revisions', 'Final Remarks'
+      ];
+
+      // Add header row
+      const headerRow = worksheet.getRow(currentRow);
+      headers.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header;
+        cell.font = { bold: true, color: { argb: headerTextsColor.replace('#', 'FF') } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: headerColor.replace('#', 'FF') }
+        };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+      headerRow.height = 25;
+      currentRow++;
+
+      // Add data rows
+      records.forEach((record, rowIndex) => {
+        const row = worksheet.getRow(currentRow);
+        const rowData = [
+          record.requestId || '',
+          record.type || '',
+          record.requester || '',
+          record.unit || '',
+          record.requestName || '',
+          record.status || '',
+          this._formatDate(record.dateSubmitted),
+          this._formatDate(record.deadline),
+          record.revisions || '',
+          record.finalRemarks || ''
+        ];
+
+        rowData.forEach((data, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = data;
+          cell.alignment = { 
+            vertical: 'middle', 
+            horizontal: index === 0 || index === 5 || index === 8 ? 'center' : 'left',
+            wrapText: true
+          };
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+
+          // Alternate row colors
+          if (rowIndex % 2 === 1) {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFF9FAFB' }
+            };
+          }
+        });
+
+        row.height = 20;
+        currentRow++;
+      });
+
+      // Set column widths
+      worksheet.columns = [
+        { width: 15 },  // Request ID
+        { width: 12 },  // Type
+        { width: 20 },  // Requester
+        { width: 15 },  // Unit
+        { width: 30 },  // Request Name
+        { width: 12 },  // Status
+        { width: 15 },  // Date Submitted
+        { width: 15 },  // Deadline
+        { width: 12 },  // Revisions
+        { width: 35 }   // Final Remarks
+      ];
+
+      // Generate buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+      console.log('Excel generated successfully, buffer size:', buffer.length);
+      return buffer;
+    } catch (error) {
+      console.error('Error generating Excel:', error);
+      throw new Error('Failed to generate Excel report');
     }
   }
 

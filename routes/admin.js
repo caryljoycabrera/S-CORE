@@ -3659,6 +3659,7 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
       title,
       description,
       headerColor,
+      headerTextsColor,
       paperSize
     } = req.body;
 
@@ -3682,12 +3683,12 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
 
     if (format === 'excel') {
       // Generate Excel
-      buffer = await reportService.exportToExcel(reportData, summary, { headerColor, title });
+      buffer = await reportService.exportToExcel(reportData, summary, { headerColor, headerTextsColor, title, description });
       contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       fileExtension = 'xlsx';
     } else {
       // Generate PDF (default)
-      buffer = await reportService.generatePDF(reportData, summary, orientation, { title, headerColor, paperSize });
+      buffer = await reportService.generatePDF(reportData, summary, orientation, { title, description, headerColor, headerTextsColor, paperSize });
       contentType = 'application/pdf';
       fileExtension = 'pdf';
     }
@@ -3708,7 +3709,7 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
         fileData: buffer,
         fileSize: buffer.length,
         filters,
-        options: { fileName: fileName || 's-core-report', title: title || 'S-CORE Analytics Report', description: description || '', headerColor: headerColor || '#10b981', paperSize: paperSize || 'A4', orientation: orientation || 'landscape' },
+        options: { fileName: fileName || 's-core-report', title: title || 'S-CORE Analytics Report', description: description || '', headerColor: headerColor || '#10b981', headerTextsColor: headerTextsColor || '#ffffff', paperSize: paperSize || 'A4', orientation: orientation || 'landscape' },
         reportData: reportData,
         recordCount: reportData.length
       });
@@ -3725,7 +3726,7 @@ router.post('/admin/reports/export', requireAdmin, async (req, res) => {
     console.log('Buffer generated, size:', buffer.length);
 
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fullFileName}"`);
     res.send(buffer);
   } catch (error) {
     console.error('Error exporting report:', error);
@@ -3767,24 +3768,43 @@ router.get('/admin/reports/history', requireAdmin, async (req, res) => {
     if (req.query.type) {
       query.reportType = req.query.type;
     }
-    // Filter out deleted reports unless explicitly requested
-    if (req.query.includeDeleted !== 'true') {
+    
+    // Handle deleted reports filtering
+    if (req.query.deletedOnly === 'true') {
+      // Only show deleted reports
+      query.isDeleted = true;
+      console.log('🗑️  DELETED ONLY MODE - Filtering for isDeleted: true');
+    } else if (req.query.includeDeleted !== 'true') {
+      // Filter out deleted reports unless explicitly requested
       query.isDeleted = false;
+      console.log('📊 ACTIVE ONLY MODE - Filtering for isDeleted: false');
+    } else {
+      console.log('📋 ALL REPORTS MODE - No isDeleted filter');
     }
 
     console.log('History query:', query);
+    console.log('Query params received:', { 
+      deletedOnly: req.query.deletedOnly, 
+      includeDeleted: req.query.includeDeleted,
+      type: req.query.type 
+    });
 
     const reports = await ReportHistory.find(query)
       .sort({ generatedAt: -1 })
       .skip(skip)
       .limit(limit)
       .select('-fileData')
-      .populate('generatedBy', 'firstName lastName')
+      .populate('generatedBy', 'fName lName firstName lastName')
       .lean();
 
     const total = await ReportHistory.countDocuments(query);
 
     console.log('Found', reports.length, 'reports, total:', total);
+    console.log('Sample report isDeleted values:', reports.slice(0, 3).map(r => ({ 
+      _id: r._id, 
+      fileName: r.fileName, 
+      isDeleted: r.isDeleted 
+    })));
     console.log('Sample report:', reports[0] ? { _id: reports[0]._id, fileName: reports[0].fileName, generatedAt: reports[0].generatedAt } : 'No reports');
 
     res.json({
@@ -3799,6 +3819,35 @@ router.get('/admin/reports/history', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching report history:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/debug
+ * Debug endpoint to check database state
+ */
+router.get('/admin/reports/debug', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const allReports = await ReportHistory.find({}).select('_id fileName isDeleted deletedAt').lean();
+    const deletedReports = await ReportHistory.find({ isDeleted: true }).select('_id fileName isDeleted deletedAt').lean();
+    const activeReports = await ReportHistory.find({ isDeleted: false }).select('_id fileName isDeleted deletedAt').lean();
+    
+    res.json({
+      success: true,
+      total: allReports.length,
+      deleted: deletedReports.length,
+      active: activeReports.length,
+      allReports: allReports.map(r => ({
+        id: r._id.toString(),
+        fileName: r.fileName,
+        isDeleted: r.isDeleted,
+        deletedAt: r.deletedAt
+      }))
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -3819,12 +3868,25 @@ router.get('/admin/reports/download/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
 
+    if (!report.fileData || report.fileData.length === 0) {
+      console.error('Report file data is missing or empty:', report._id);
+      return res.status(500).json({ success: false, message: 'Report file data is corrupted or missing' });
+    }
+
     const contentType = report.reportType === 'report_excel' 
       ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       : 'application/pdf';
 
+    console.log('Downloading report:', {
+      id: report._id,
+      fileName: report.fileName,
+      fileSize: report.fileData.length,
+      contentType: contentType
+    });
+
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${report.fileName}"`);
+    res.setHeader('Content-Length', report.fileData.length);
     res.send(report.fileData);
   } catch (error) {
     console.error('Error downloading report:', error);
@@ -3915,7 +3977,7 @@ router.get('/admin/reports/history/:id/details', requireAdmin, async (req, res) 
     const ReportHistory = require('../models/ReportHistory');
     const report = await ReportHistory.findById(req.params.id)
       .select('-fileData')
-      .populate('generatedBy', 'firstName lastName')
+      .populate('generatedBy', 'fName lName firstName lastName email')
       .lean();
 
     if (!report) {
@@ -3931,17 +3993,22 @@ router.get('/admin/reports/history/:id/details', requireAdmin, async (req, res) 
 
 /**
  * PUT /admin/reports/history/:id
- * Update report metadata (fileName, title, description, headerColor, paperSize, orientation)
+ * Update report metadata and regenerate PDF/Excel with new settings
  */
 router.put('/admin/reports/history/:id', requireAdmin, async (req, res) => {
   try {
     const ReportHistory = require('../models/ReportHistory');
-    const { fileName, title, description, headerColor, paperSize, orientation } = req.body;
+    const { fileName, title, description, headerColor, headerTextsColor, paperSize, orientation, regenerate } = req.body;
 
     const report = await ReportHistory.findById(req.params.id);
 
     if (!report) {
       return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // Initialize options if it doesn't exist
+    if (!report.options) {
+      report.options = {};
     }
 
     // Update options object
@@ -3949,100 +4016,180 @@ router.put('/admin/reports/history/:id', requireAdmin, async (req, res) => {
     if (title !== undefined) report.options.title = title;
     if (description !== undefined) report.options.description = description;
     if (headerColor !== undefined) report.options.headerColor = headerColor;
+    if (headerTextsColor !== undefined) report.options.headerTextsColor = headerTextsColor;
     if (paperSize !== undefined) report.options.paperSize = paperSize;
     if (orientation !== undefined) report.options.orientation = orientation;
 
-    // Also update fileName at root level if provided
-    if (fileName) {
+    // Regenerate the file with new settings if requested
+    if (regenerate && report.reportData && report.reportData.length > 0) {
+      try {
+        const reportService = require('../services/reportService');
+        
+        console.log('Regenerating report with settings:', {
+          title: title || report.options.title,
+          orientation: orientation || report.options.orientation || 'landscape',
+          paperSize: paperSize || report.options.paperSize || 'A4',
+          reportType: report.reportType,
+          recordCount: report.reportData.length
+        });
+
+        if (report.reportType === 'report_pdf' || !report.reportType) {
+          const pdfBuffer = await reportService.generatePDF(
+            report.reportData, 
+            {}, 
+            orientation || report.options.orientation || 'landscape', 
+            {
+              title: title || report.options.title || 'S-CORE Report',
+              description: description !== undefined ? description : (report.options.description || ''),
+              headerColor: headerColor || report.options.headerColor || '#10b981',
+              headerTextsColor: headerTextsColor || report.options.headerTextsColor || '#ffffff',
+              paperSize: paperSize || report.options.paperSize || 'A4'
+            }
+          );
+          
+          if (!pdfBuffer || pdfBuffer.length === 0) {
+            throw new Error('Generated PDF buffer is empty');
+          }
+
+          report.fileData = pdfBuffer;
+          report.fileSize = pdfBuffer.length;
+          report.reportType = 'report_pdf';
+          
+          // Update fileName to have .pdf extension
+          if (fileName) {
+            report.fileName = `${fileName}.pdf`;
+          } else if (!report.fileName.endsWith('.pdf')) {
+            const baseFileName = report.fileName.replace(/\.[^/.]+$/, '');
+            report.fileName = `${baseFileName}.pdf`;
+          }
+          
+          console.log('PDF regenerated successfully, size:', pdfBuffer.length);
+        } else if (report.reportType === 'report_excel') {
+          const excelBuffer = await reportService.generateExcel(report.reportData, {
+            title: title || report.options.title || 'S-CORE Report',
+            description: description !== undefined ? description : (report.options.description || ''),
+            headerColor: headerColor || report.options.headerColor || '#10b981',
+            headerTextsColor: headerTextsColor || report.options.headerTextsColor || '#ffffff'
+          });
+          
+          if (!excelBuffer || excelBuffer.length === 0) {
+            throw new Error('Generated Excel buffer is empty');
+          }
+
+          report.fileData = excelBuffer;
+          report.fileSize = excelBuffer.length;
+          
+          // Update fileName to have .xlsx extension
+          if (fileName) {
+            report.fileName = `${fileName}.xlsx`;
+          } else if (!report.fileName.endsWith('.xlsx')) {
+            const baseFileName = report.fileName.replace(/\.[^/.]+$/, '');
+            report.fileName = `${baseFileName}.xlsx`;
+          }
+          
+          console.log('Excel regenerated successfully, size:', excelBuffer.length);
+        }
+      } catch (regenerateError) {
+        console.error('Error regenerating report file:', regenerateError);
+        console.error('Stack trace:', regenerateError.stack);
+        return res.status(500).json({ 
+          success: false, 
+          message: `Failed to regenerate report: ${regenerateError.message}` 
+        });
+      }
+    } else if (fileName) {
+      // Update fileName without regeneration - keep the existing extension
       const fileExtension = report.fileName.split('.').pop();
       report.fileName = `${fileName}.${fileExtension}`;
     }
 
     report.markModified('options');
+    report.markModified('fileData');
     await report.save();
 
-    res.json({ success: true, message: 'Report metadata updated successfully' });
+    res.json({ success: true, message: 'Report updated successfully' });
   } catch (error) {
-    console.error('Error updating report metadata:', error);
+    console.error('Error updating report:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 /**
- * POST /admin/reports/history/:id/restore
- * Restore a soft-deleted report
+ * POST /admin/reports/duplicate/:id
+ * Duplicate an existing report
  */
-router.post('/admin/reports/history/:id/restore', requireAdmin, async (req, res) => {
+router.post('/admin/reports/duplicate/:id', requireAdmin, async (req, res) => {
   try {
     const ReportHistory = require('../models/ReportHistory');
-    const report = await ReportHistory.findOne({
-      _id: req.params.id,
-      isDeleted: true
-    });
+    const originalReport = await ReportHistory.findById(req.params.id);
 
-    if (!report) {
-      return res.status(404).json({ success: false, message: 'Deleted report not found' });
-    }
-
-    await report.restore();
-
-    res.json({ success: true, message: 'Report restored successfully' });
-  } catch (error) {
-    console.error('Error restoring report:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * GET /admin/reports/history/:id/details
- * Get report details for viewing/editing
- */
-router.get('/admin/reports/history/:id/details', requireAdmin, async (req, res) => {
-  try {
-    const ReportHistory = require('../models/ReportHistory');
-    const report = await ReportHistory.findById(req.params.id)
-      .select('-fileData')
-      .populate('generatedBy', 'firstName lastName')
-      .lean();
-
-    if (!report) {
+    if (!originalReport) {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
 
-    res.json({ success: true, report });
+    // Create a new report with the same data
+    const duplicatedReport = new ReportHistory({
+      reportType: originalReport.reportType,
+      generatedBy: req.user._id,
+      fileName: `Copy of ${originalReport.fileName}`,
+      fileData: originalReport.fileData,
+      fileSize: originalReport.fileSize,
+      filters: originalReport.filters,
+      options: {
+        ...originalReport.options,
+        fileName: `Copy of ${originalReport.options.fileName || originalReport.fileName}`
+      },
+      reportData: originalReport.reportData,
+      recordCount: originalReport.recordCount
+    });
+
+    await duplicatedReport.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Report duplicated successfully',
+      reportId: duplicatedReport._id
+    });
   } catch (error) {
-    console.error('Error fetching report details:', error);
+    console.error('Error duplicating report:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 /**
- * PUT /admin/reports/history/:id
- * Update report metadata (title, headerColor, paperSize, orientation)
+ * GET /admin/reports/history/:id/download-excel
+ * Download report as Excel (converts if necessary)
  */
-router.put('/admin/reports/history/:id', requireAdmin, async (req, res) => {
+router.get('/admin/reports/history/:id/download-excel', requireAdmin, async (req, res) => {
   try {
     const ReportHistory = require('../models/ReportHistory');
-    const { title, headerColor, paperSize, orientation } = req.body;
-
+    const reportService = require('../services/reportService');
+    
     const report = await ReportHistory.findById(req.params.id);
 
     if (!report) {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
 
-    // Update options object
-    if (title !== undefined) report.options.title = title;
-    if (headerColor !== undefined) report.options.headerColor = headerColor;
-    if (paperSize !== undefined) report.options.paperSize = paperSize;
-    if (orientation !== undefined) report.options.orientation = orientation;
+    if (!report.reportData || report.reportData.length === 0) {
+      return res.status(400).json({ success: false, message: 'No report data available for Excel export' });
+    }
 
-    report.markModified('options');
-    await report.save();
+    // Generate Excel from the report data
+    const excelBuffer = await reportService.generateExcel(report.reportData, {
+      title: report.options.title || 'S-CORE Report',
+      description: report.options.description || '',
+      headerColor: report.options.headerColor || '#10b981',
+      headerTextsColor: report.options.headerTextsColor || '#ffffff'
+    });
 
-    res.json({ success: true, message: 'Report metadata updated successfully' });
+    const fileName = report.fileName.replace('.pdf', '.xlsx');
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(excelBuffer);
   } catch (error) {
-    console.error('Error updating report metadata:', error);
+    console.error('Error downloading Excel:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
