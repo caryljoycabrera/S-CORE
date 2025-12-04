@@ -351,9 +351,11 @@ hr {
    ======================================== */
 
 .back-to-dashboard-container {
-  margin: 0rem 3rem 1.5rem 3rem;
+  margin: 2rem 3rem 1.5rem 3rem;
   display: flex;
-  gap: 60rem;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
 }
 
 .back-to-dashboard-btn {
@@ -369,6 +371,7 @@ hr {
   font-size: 1rem;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  margin-right: 20rem;
 }
 
 .back-to-dashboard-btn:hover {

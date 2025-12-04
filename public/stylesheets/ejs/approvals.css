@@ -1826,10 +1826,20 @@ hr {
 }
 /* Reduce gap between "Filter by:" and the filters */
 .filter-label {
-  margin-bottom: 0.75rem; /* Reduced gap - adjust as needed */
+  margin-bottom: 0.75rem;
   display: block;
+  font-weight: 700;
+  color: var(--primary-green);
+  font-size: 1.125rem;
+}
+
+/* Filter sublabel styling */
+.filter-sublabel {
+  display: block;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #374151;
+  margin-bottom: 0.375rem;
 }
 
 /* Optional: Remove any extra spacing from the filter group */

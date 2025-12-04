@@ -28,204 +28,29 @@ const DropdownManager = {
   }
 };
 
-// Organization and Office data arrays (simplified for brevity)
-const studentOrganizations = [
- "University Student Government (USG)",
-        "Internal Audit Service (IAS)",
-        "University Student Election Commission (USEC)",
-        "Office of the Solicitor General (OSG)",
-        "College of Business Administration and Accountancy Student Government (CBAASG)",
-        "Business Management Program Council (BMPC)",
-        "Junior Philippine Institute of Accountants (JPIA)",
-        "Marketing Management Program Council (MMPC)",
-        "College of Education Student Government (COEdSG)",
-        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-        "Architecture Program Council (ArchPC)",
-        "Civil Engineering Program Council (CEEPC)",
-        "Computer Engineering Program Council (CpEPC)",
-        "Electrical Engineering Program Council (EEEPC)",
-        "Electronics Engineering Program Council (ECEPC)",
-        "Industrial Engineering Program Council (IEEPC)",
-        "Mechanical Engineering Program Council (MEEPC)",
-        "Multimedia Arts Program Council (MMAPC)",
-        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-        "College of Criminal Justice Education Student Government (CCJESG)",
-        "Criminology Program Council (CrimPC)",
-        "Forensic Science Program Council (FScPC)",
-        "College of Liberal Arts and Communication Student Government (CLACSG)",
-        "Communication Program Council (CPC)",
-        "International Development Program Council (IDPC)",
-        "Political Science Program Council (PSPC)",
-        "Psychology Program Council (PPC)",
-        "College of Science Student Government (COSSG)",
-        "Applied Mathematics Program Council (AMPC)",
-        "Biology Program Council (BioPC)",
-        "College of Information and Computer Studies Student Government (CICSSG)",
-        "Computer Science Program Council (CSPC)",
-        "Information Technology Program Council (ITPC)",
-        "DLSU-D Chorale (CHORALE)",
-        "Lasallian Symphony Orchestra (LSO)",
-        "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-        "Lasallian Pop Band (LPB)",
-        "Teatro Lasalliana (TEATRO)",
-        "Visual and Performing Arts Production Unit (VPAPU)",
-        "Heraldo Filipino",
-        "Vicissitude",
-        "Council of Student Organizations (CSO)",
-        "Business Operations Management Society (BOMS)",
-        "Junior Marketing Association (JMA)",
-        "DLSU-D Psychological Society (DPS)",
-        "DLSU-D Pre-Medical Society (DPMS)",
-        "Hotel and Restaurant Management Society (HRMS)",
-        "Turismo Lasalleño Society (TLS)",
-        "Lasallian Educators Society (LES)",
-        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-        "DLSU-D Pre-Law Society (DPLS)",
-        "Astraeus Literary and Arts Guild",
-        "Accounting Enrichment Society (ACES)",
-        "Circle of Student Assistants (COSA)",
-        "DLSU-D Lifters",
-        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-        "DLSU-D United Patriots Football Club",
-        "Junior Financial Executives Institute of the Philippines (JFINEX)",
-        "Marché Société (MS)",
-        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-        "SINAG Society of Leaders (SISOL)",
-        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-        "LS Verde of Campus Sustainability Office",
-        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-        "Green FM of Communications and Journalism Department",
-        "International Students' Association (ISA) of International Students Office",
-        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
-];
-
-const officesDepartments = [
-  "Office of the President",
-          "Office of the Chief Administrative Officer",
-          "Office of the Provost",
-          "Office of the Chief Lasallian Mission Officer",
-          "Office of the Principal",
-          "Corporate and Executive Management Office",
-          "Center for Heritage Conservation",
-          "Museo De La Salle",
-          "Risk, Compliance and Audit Office",
-          "University Chaplain",
-          "Office of the Vice President for Administrative Services",
-          "Office of the Vice President for Finance",
-          "Office of the Vice President for Global Engagement and External Relations",
-          "Human Resource Management Office",
-          "Strategic Communications Office",
-          "Ancillary and Asset Management Office",
-          "Legal Counsel",
-          "Data Protection Office",
-          "Campus Development Office",
-          "Buildings and Facilities Maintenance Office",
-          "Campus Sustainability Office",
-          "General Services Office",
-          "Green Architecture and Campus Planning Office",
-          "Information and Communications Technology Center",
-          "Accounting Office",
-          "Treasury Office",
-          "Advancement and Alumni Relations Office",
-          "Lasallian Community Development Center",
-          "Linkages and Scholarship Office",
-          "Office of the Vice Provost for Academics",
-          "Office of the Deputy Provost for Research",
-          "Academic Planning and Quality Management",
-          "College of Law",
-          "College of Professional and Graduate Studies",
-          "School of Innovative and Flexible Learning",
-          "School of Governance, Public Service, and Corporate Leadership",
-          "Aklatang Emilio Aguinaldo-Information Resource Center",
-          "Center for Student Admissions",
-          "University Registrar",
-          "Cavite Studies Center",
-          "University Research Office",
-          "Herminia D. Torres Quality Assurance Office",
-          "Center for Innovative Learning Program",
-          "Center for Curriculum Development and Instruction",
-          "Language Learning Center",
-          "Center for Artificial Intelligence",
-          "Center for Creative Program",
-          "Academy of Continuing Education",
-          "College of Business Administration and Accountancy",
-          "Accountancy Department",
-          "Allied Business Department",
-          "Business Management Department",
-          "Marketing Department",
-          "College of Criminal Justice Education",
-          "College of Education",
-          "Physical Education Department",
-          "Professional Education Department",
-          "Religious Education Department",
-          "College of Engineering, Architecture and Technology",
-          "Architecture Department",
-          "Engineering Department",
-          "Graphics Design and Multimedia Department",
-          "Center of Technology",
-          "College of Information and Computer Studies",
-          "Computer Studies Department",
-          "Information Technology Department",
-          "College of Liberal Arts and Communication",
-          "Communication and Journalism Department",
-          "Languages and Literature Department",
-          "Social Sciences Department",
-          "Philosophy and Psychology Department",
-          "College of Tourism and Hospitality Management",
-          "Hospitality Management Department",
-          "Tourism Management Department",
-          "College of Science",
-          "Biological Sciences Department",
-          "Mathematics & Statistics Department",
-          "Physical Sciences Department",
-          "Office of Student Services",
-          "Student Development and Activities Office",
-          "Student Welfare and Formation Office",
-          "Student Wellness Center",
-          "NSTP-CWTS",
-          "Campus Ministry Office",
-          "DLS Bahay Pag-asa Dasmariñas",
-          "Night College",
-          "Sports Development Office",
-          "University Lasallian Family Office",
-          "Basic Education",
-          "Office of the Associate Principal for Academics and Research",
-          "Office of the Associate Principal for Administrative Services and Student Affairs",
-          "Dormitory",
-          "Materials Reproduction Office / Food Services Office",
-          "Retreat and Conference Center / Sports & Recreation Complex",
-          "Warehouse Office",
-          "Safety & Health Office",
-          "Purchasing Office",
-          "Transportation Office",
-          "Facilities Maintenance Office",
-          "Housekeeping & Grounds",
-          "De La Salle Dasmariñas Alumni Association",
-          "DLSU-D Development Cooperative",
-          "Faculty Organization",
-          "KABALIKAT ng DLSU-D Inc.",
-          "Parents Organization La Salle Cavite",
-          "Human Resource Management Office"
-];
+// Note: Organization and Office data are now fetched from the database
+// and passed via window.filterDataFromDatabase from the EJS template
 
 // Enhanced Multi-Select Class
 class EnhancedMultiSelect {
   constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
     this.container = document.getElementById(containerId);
-    this.options = options;
+    if (!this.container) {
+      console.error(`EnhancedMultiSelect: Container with id '${containerId}' not found`);
+      return;
+    }
+    this.options = options || [];
     this.placeholder = placeholder;
     this.selectedValues = new Set(['all']);
     this.isOpen = false;
-    this.filteredOptions = [...options];
+    this.filteredOptions = [...this.options];
     this.hasSearch = hasSearch;
 
     this.init();
   }
 
   init() {
+    if (!this.container) return;
     this.setupElements();
     this.populateOptions();
     this.attachEventListeners();
@@ -235,17 +60,25 @@ class EnhancedMultiSelect {
   setupElements() {
     this.display = this.container.querySelector('.select-display');
     this.dropdown = this.container.querySelector('.select-dropdown');
-    this.searchInput = this.dropdown.querySelector('.search-input');
-    this.optionsContainer = this.dropdown.querySelector('.options-container');
-    this.selectedText = this.display.querySelector('.selected-text');
+    this.searchInput = this.dropdown?.querySelector('.search-input');
+    this.optionsContainer = this.dropdown?.querySelector('.options-container');
+    this.selectedText = this.display?.querySelector('.selected-text');
   }
 
   populateOptions() {
+    if (!this.optionsContainer) {
+      console.error('EnhancedMultiSelect: Options container not found');
+      return;
+    }
+    
+    // Clear existing options first
+    this.optionsContainer.innerHTML = '';
+    
     // Add "All" option
     const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
     this.optionsContainer.appendChild(allOption);
 
-    // Add other options
+    // Add other options from data
     this.options.forEach(option => {
       const optionElement = this.createOption(option, option);
       this.optionsContainer.appendChild(optionElement);
@@ -264,6 +97,11 @@ class EnhancedMultiSelect {
   }
 
   attachEventListeners() {
+    if (!this.display || !this.optionsContainer || !this.dropdown) {
+      console.error('EnhancedMultiSelect: Required elements not found for event listeners');
+      return;
+    }
+
     this.display.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toggle();
@@ -360,6 +198,8 @@ class EnhancedMultiSelect {
   }
 
   updateDisplay() {
+    if (!this.selectedText) return;
+    
     const selectedArray = Array.from(this.selectedValues);
 
     if (selectedArray.includes('all') || selectedArray.length === 0) {
@@ -581,7 +421,7 @@ let originalValues = {};
 let allRequestsData = [];
 
 // Global enhanced dropdown instances
-let typeFilter, statusFilter, studentOrgFilter, officeDeptFilter;
+let statusFilter, studentOrgFilter, officeDeptFilter;
 
 // Modal opening functions - MUST be global
 function openModalFromRow(row) {
@@ -643,20 +483,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Initialize enhanced multi-select for type filter (with checkboxes like Status)
-  typeFilter = new EnhancedMultiSelect('typeFilter',
-    ['Request Approval', 'Service Request'],
-    'Select Type', false);
-  
-  // Store instance reference on container
-  const typeFilterContainer = document.getElementById('typeFilter');
-  if (typeFilterContainer) {
-    typeFilterContainer.__instance = typeFilter;
-  }
+  // Get filter data from database (passed from server via EJS)
+  const dbData = window.filterDataFromDatabase || {};
+  const statusOptions = dbData.requestStatuses || [];
+  const orgOptions = dbData.organizations || [];
+  const officeOptions = dbData.offices || [];
+  const unitOptions = dbData.units || [];
 
-  // Initialize enhanced multi-select dropdowns
+  // Initialize enhanced multi-select dropdowns with database values
   statusFilter = new EnhancedMultiSelect('statusFilter',
-    ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'],
+    statusOptions,
     'Select Status', false);
   
   const statusFilterContainer = document.getElementById('statusFilter');
@@ -664,8 +500,18 @@ document.addEventListener('DOMContentLoaded', function() {
     statusFilterContainer.__instance = statusFilter;
   }
 
+  // Initialize assigned unit filter
+  const assignedUnitFilter = new EnhancedMultiSelect('assignedUnitFilter',
+    unitOptions,
+    'Select Assigned Unit', false);
+  
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.__instance = assignedUnitFilter;
+  }
+
   studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter',
-    studentOrganizations,
+    orgOptions,
     'Select Student Organizations', true);
   
   const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
@@ -674,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter',
-    officesDepartments,
+    officeOptions,
     'Select Offices/Departments', true);
   
   const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
@@ -726,20 +572,21 @@ function initializeFilters() {
 
   const requestIdFilter = document.getElementById('requestIdFilter');
   const studentFilter = document.getElementById('studentFilter');
+  const sortByFilter = document.getElementById('sortByFilter');
   const dateFromFilter = document.getElementById('dateFromFilter');
   const dateToFilter = document.getElementById('dateToFilter');
   const clearFiltersBtn = document.getElementById('clearFilters');
   const resultsCount = document.getElementById('resultsCount');
 
   // Event listeners setup
-  const typeFilterContainer = document.getElementById('typeFilter');
-  if (typeFilterContainer) {
-    typeFilterContainer.addEventListener('selectionChange', applyFilters);
-  }
-
   const statusFilterContainer = document.getElementById('statusFilter');
   if (statusFilterContainer) {
     statusFilterContainer.addEventListener('selectionChange', applyFilters);
+  }
+
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.addEventListener('selectionChange', applyFilters);
   }
 
   const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
@@ -761,35 +608,231 @@ function initializeFilters() {
   }
 
   if (dateFromFilter) {
-    dateFromFilter.addEventListener('change', applyFilters);
+    dateFromFilter.addEventListener('change', () => {
+      // Set minimum date for "Date To" based on "Date From" selection
+      if (dateToFilter && dateFromFilter.value) {
+        dateToFilter.min = dateFromFilter.value;
+        // If current "Date To" is earlier than "Date From", clear it
+        if (dateToFilter.value && dateToFilter.value < dateFromFilter.value) {
+          dateToFilter.value = '';
+        }
+      } else if (dateToFilter) {
+        dateToFilter.min = '';
+      }
+      applyFilters();
+    });
   }
 
   if (dateToFilter) {
     dateToFilter.addEventListener('change', applyFilters);
   }
 
+  if (sortByFilter) {
+    sortByFilter.addEventListener('change', applyFilters);
+  }
+
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener('click', clearAllFilters);
   }
 
+  // Pagination variables
+  const ITEMS_PER_PAGE = 10;
+  let currentPage = 1;
+  let filteredData = [];
+  
+  // Pagination elements
+  const prevPageBtn = document.getElementById('prevPageBtn');
+  const nextPageBtn = document.getElementById('nextPageBtn');
+  const paginationNumbers = document.getElementById('paginationNumbers');
+  
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        displayPage();
+      }
+    });
+  }
+  
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+      if (currentPage < totalPages) {
+        currentPage++;
+        displayPage();
+      }
+    });
+  }
+  
+  function goToPage(page) {
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+    if (page >= 1 && page <= totalPages) {
+      currentPage = page;
+      displayPage();
+    }
+  }
+  
+  function renderPaginationNumbers(totalPages) {
+    if (!paginationNumbers) return;
+    
+    paginationNumbers.innerHTML = '';
+    
+    // Determine which page numbers to show
+    const maxVisiblePages = 5;
+    let startPage = 1;
+    let endPage = totalPages;
+    
+    if (totalPages > maxVisiblePages) {
+      // Calculate start and end pages
+      const halfVisible = Math.floor(maxVisiblePages / 2);
+      
+      if (currentPage <= halfVisible + 1) {
+        // Near the beginning
+        startPage = 1;
+        endPage = maxVisiblePages;
+      } else if (currentPage >= totalPages - halfVisible) {
+        // Near the end
+        startPage = totalPages - maxVisiblePages + 1;
+        endPage = totalPages;
+      } else {
+        // In the middle
+        startPage = currentPage - halfVisible;
+        endPage = currentPage + halfVisible;
+      }
+    }
+    
+    // Add first page and ellipsis if needed
+    if (startPage > 1) {
+      paginationNumbers.appendChild(createPageButton(1));
+      if (startPage > 2) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'pagination-ellipsis';
+        ellipsis.textContent = '...';
+        paginationNumbers.appendChild(ellipsis);
+      }
+    }
+    
+    // Add page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      paginationNumbers.appendChild(createPageButton(i));
+    }
+    
+    // Add ellipsis and last page if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'pagination-ellipsis';
+        ellipsis.textContent = '...';
+        paginationNumbers.appendChild(ellipsis);
+      }
+      paginationNumbers.appendChild(createPageButton(totalPages));
+    }
+  }
+  
+  function createPageButton(pageNum) {
+    const btn = document.createElement('button');
+    btn.className = 'pagination-btn' + (pageNum === currentPage ? ' active' : '');
+    btn.textContent = pageNum;
+    btn.addEventListener('click', () => goToPage(pageNum));
+    return btn;
+  }
+
   function applyFilters() {
     const filters = getFilterValues();
-    let visibleCount = 0;
+    const sortValue = sortByFilter?.value || 'deadline-asc';
+    
+    // Reset to first page when filters change
+    currentPage = 1;
 
+    // First, filter the data
+    filteredData = allRequestsData.filter(request => testFilters(request, filters));
+    
+    // Then sort the filtered data
+    sortData(filteredData, sortValue);
+    
+    // Display the current page
+    displayPage();
+  }
+  
+  function displayPage() {
+    const tableBody = document.getElementById('requestsTableBody');
+    if (!tableBody) return;
+    
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    
+    // Hide all rows first
     allRequestsData.forEach(request => {
-      const shouldShow = testFilters(request, filters);
-      request.element.style.display = shouldShow ? '' : 'none';
-      if (shouldShow) visibleCount++;
+      request.element.style.display = 'none';
     });
+    
+    // Show only the rows for current page and reorder them
+    const pageData = filteredData.slice(startIndex, endIndex);
+    pageData.forEach(request => {
+      tableBody.appendChild(request.element);
+      request.element.style.display = '';
+    });
+    
+    // Update pagination controls
+    renderPaginationNumbers(totalPages);
+    if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+    if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+    
+    updateResultsCount(filteredData.length);
+  }
 
-    updateResultsCount(visibleCount);
+  function sortData(data, sortValue) {
+    // Statuses that should be sorted to the bottom (completed/closed requests)
+    const bottomStatuses = ['approved', 'completed', 'rejected', 'archived'];
+    
+    const [field, direction] = sortValue.split('-');
+    const isAsc = direction === 'asc';
+    
+    data.sort((a, b) => {
+      // Check if either request has a "completed" status
+      const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
+      const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
+      
+      // Always push completed statuses to the bottom
+      if (aIsBottom && !bIsBottom) return 1;
+      if (!aIsBottom && bIsBottom) return -1;
+      
+      // If both are in the same category (both bottom or both not), sort normally
+      let valA, valB;
+      
+      switch (field) {
+        case 'deadline':
+          // Get deadline from element's dataset
+          valA = a.element?.dataset?.deadline || '';
+          valB = b.element?.dataset?.deadline || '';
+          // Put items without deadline at the end (but before bottom statuses)
+          if (!valA && valB) return isAsc ? 1 : -1;
+          if (valA && !valB) return isAsc ? -1 : 1;
+          if (!valA && !valB) return 0;
+          break;
+        case 'date':
+          valA = a.date || '';
+          valB = b.date || '';
+          break;
+        default:
+          valA = a.date || '';
+          valB = b.date || '';
+      }
+      
+      if (valA < valB) return isAsc ? -1 : 1;
+      if (valA > valB) return isAsc ? 1 : -1;
+      return 0;
+    });
   }
 
   function getFilterValues() {
     return {
       requestId: requestIdFilter?.value?.toLowerCase().trim() || '',
-      type: typeFilterContainer?.__instance?.getSelectedValues() || ['all'],
       status: statusFilterContainer?.__instance?.getSelectedValues() || ['all'],
+      assignedUnit: assignedUnitFilterContainer?.__instance?.getSelectedValues() || ['all'],
       student: studentFilter?.value?.toLowerCase().trim() || '',
       studentOrg: studentOrgFilterContainer?.__instance?.getSelectedValues() || ['all'],
       officeDept: officeDeptFilterContainer?.__instance?.getSelectedValues() || ['all'],
@@ -804,14 +847,16 @@ function initializeFilters() {
       return false;
     }
 
-    // Type filter (multi-select with array)
-    if (filters.type.length > 0 && !filters.type.includes('all') && !filters.type.includes(request.type)) {
-      return false;
+    // Status filter (case-insensitive comparison)
+    if (filters.status.length > 0 && !filters.status.includes('all')) {
+      const statusMatch = filters.status.some(s => s.toLowerCase() === request.status?.toLowerCase());
+      if (!statusMatch) return false;
     }
 
-    // Status filter
-    if (filters.status.length > 0 && !filters.status.includes('all') && !filters.status.includes(request.status)) {
-      return false;
+    // Assigned Unit filter (case-insensitive comparison)
+    if (filters.assignedUnit.length > 0 && !filters.assignedUnit.includes('all')) {
+      const unitMatch = filters.assignedUnit.some(u => request.units?.toLowerCase().includes(u.toLowerCase()));
+      if (!unitMatch) return false;
     }
 
     // Student filter
@@ -819,18 +864,18 @@ function initializeFilters() {
       return false;
     }
 
-    // Organization filters (OR logic)
+    // Organization filters (OR logic, case-insensitive)
     const hasStudentOrgFilter = filters.studentOrg.length > 0 && !filters.studentOrg.includes('all');
     const hasOfficeDeptFilter = filters.officeDept.length > 0 && !filters.officeDept.includes('all');
 
     if (hasStudentOrgFilter || hasOfficeDeptFilter) {
       let matches = false;
 
-      if (hasStudentOrgFilter && filters.studentOrg.some(org => request.organization?.includes(org.toLowerCase()))) {
+      if (hasStudentOrgFilter && filters.studentOrg.some(org => request.organization?.toLowerCase().includes(org.toLowerCase()))) {
         matches = true;
       }
 
-      if (hasOfficeDeptFilter && filters.officeDept.some(dept => request.organization?.includes(dept.toLowerCase()))) {
+      if (hasOfficeDeptFilter && filters.officeDept.some(dept => request.organization?.toLowerCase().includes(dept.toLowerCase()))) {
         matches = true;
       }
 
@@ -847,19 +892,23 @@ function initializeFilters() {
   function clearAllFilters() {
     if (requestIdFilter) requestIdFilter.value = '';
     if (studentFilter) studentFilter.value = '';
-    if (dateFromFilter) dateFromFilter.value = '';
-    if (dateToFilter) dateToFilter.value = '';
+    if (sortByFilter) sortByFilter.value = 'deadline-asc';
+    if (dateFromFilter) {
+      dateFromFilter.value = '';
+    }
+    if (dateToFilter) {
+      dateToFilter.value = '';
+      dateToFilter.min = '';
+    }
 
-    typeFilterContainer?.__instance?.reset();
     statusFilterContainer?.__instance?.reset();
+    assignedUnitFilterContainer?.__instance?.reset();
     studentOrgFilterContainer?.__instance?.reset();
     officeDeptFilterContainer?.__instance?.reset();
 
-    allRequestsData.forEach(request => {
-      request.element.style.display = '';
-    });
-
-    updateResultsCount(allRequestsData.length);
+    // Reset pagination and apply filters
+    currentPage = 1;
+    applyFilters();
   }
 
   function updateResultsCount(count) {
@@ -877,7 +926,8 @@ function initializeFilters() {
     };
   }
 
-  updateResultsCount(allRequestsData.length);
+  // Initial sort and display with pagination
+  applyFilters();
 }
 
 // Modal system
@@ -1058,62 +1108,62 @@ function populateAdminForm(rowData) {
     deadlineDisplay: rowData.formattedDeadline
   };
 
-  // Show/hide additional file upload toggle based on status
+  // Show additional file upload toggle for all requests
   const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
   if (additionalFileToggleSection) {
-    if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
-      additionalFileToggleSection.style.display = 'block';
+    // Always show the toggle section so admins can configure it for any request
+    additionalFileToggleSection.style.display = 'block';
+    
+    // Initialize checkbox state based on allowAdditionalUpload data
+    // Check for both possible checkbox IDs
+    const checkbox = document.getElementById('allowAdditionalFileUpload') || 
+                    document.getElementById('toggleAdditionalFileUploadBtn');
+    if (checkbox) {
+      // Try multiple methods to get the allowAdditionalUpload value
+      let allowAdditionalUpload = 'false';
       
-      // Initialize checkbox state based on allowAdditionalUpload data
-      // Check for both possible checkbox IDs
-      const checkbox = document.getElementById('allowAdditionalFileUpload') || 
-                      document.getElementById('toggleAdditionalFileUploadBtn');
-      if (checkbox) {
-        // Try multiple methods to get the allowAdditionalUpload value
-        let allowAdditionalUpload = 'false';
-        
-        // Method 1: From rowData (converted from dataset)
-        if (rowData.allowAdditionalUpload !== undefined) {
-          allowAdditionalUpload = rowData.allowAdditionalUpload;
-        }
-        // Method 2: From HTML attribute directly
-        else {
-          const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
-          if (currentRow) {
-            allowAdditionalUpload = currentRow.getAttribute('data-allow-additional-upload') || 'false';
-          }
-        }
-        
-        console.log('🔍 Checkbox initialization:', {
-          currentRequestId,
-          'rowData.allowAdditionalUpload': rowData.allowAdditionalUpload,
-          'final allowAdditionalUpload': allowAdditionalUpload,
-          'will check': allowAdditionalUpload === 'true'
-        });
-        
-        checkbox.checked = allowAdditionalUpload === 'true';
+      // Method 1: From rowData (converted from dataset)
+      if (rowData.allowAdditionalUpload !== undefined) {
+        allowAdditionalUpload = rowData.allowAdditionalUpload;
       }
-    } else {
-      additionalFileToggleSection.style.display = 'none';
+      // Method 2: From HTML attribute directly
+      else {
+        const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
+        if (currentRow) {
+          allowAdditionalUpload = currentRow.getAttribute('data-allow-additional-upload') || 'false';
+        }
+      }
+      
+      console.log('🔍 Checkbox initialization:', {
+        currentRequestId,
+        'rowData.allowAdditionalUpload': rowData.allowAdditionalUpload,
+        'final allowAdditionalUpload': allowAdditionalUpload,
+        'will check': allowAdditionalUpload === 'true'
+      });
+      
+      checkbox.checked = allowAdditionalUpload === 'true';
     }
   }
 
-  // Status dropdown
+  // Status dropdown - set value from current request data (dropdown options are pre-populated from database)
   const statusSelect = document.getElementById('adminStatusSelect');
   if (statusSelect) {
-    const options = getStatusOptions(rowData.type);
-    // Add current value as first option with special label
-    const currentOption = `<option value="${rowData.status}" selected>${rowData.status}</option>`;
-    const otherOptions = options.filter(opt => opt !== rowData.status).map(opt => `<option value="${opt}">${opt}</option>`).join('');
-    statusSelect.innerHTML = currentOption + otherOptions;
-    document.getElementById('currentStatusValue').textContent = rowData.status;
+    statusSelect.value = rowData.status;
+    const currentStatusValue = document.getElementById('currentStatusValue');
+    if (currentStatusValue) {
+      currentStatusValue.textContent = rowData.status;
+    }
   }
 
-  // Units dropdown
+  // Units dropdown - set value from current request data (dropdown options are pre-populated from database)
   const unitsSelect = document.getElementById('adminUnitsSelect');
   if (unitsSelect) {
-    populateUnitsDropdown(rowData);
-    document.getElementById('currentUnitsValue').textContent = rowData.units;
+    const currentUnitsValue = rowData.units === 'Not yet assigned' ? '' : rowData.units;
+    unitsSelect.value = currentUnitsValue;
+    const currentUnitsValueEl = document.getElementById('currentUnitsValue');
+    if (currentUnitsValueEl) {
+      currentUnitsValueEl.textContent = rowData.units;
+    }
   }
 
   // Deadline (for service requests)
@@ -1594,9 +1644,14 @@ async function performUpdate() {
     requestId: currentRequestId,
     status: statusSelect?.value || '',
     assignedUnits: unitsSelect?.value || 'Not yet assigned',
-    deadline: deadlineInput?.value || null,
     requestType: currentRequestType
   };
+
+  // Only include deadline if it was actually changed from the original value
+  const currentDeadline = deadlineInput?.value || null;
+  if (currentDeadline && currentDeadline !== originalValues.deadline) {
+    updateData.deadline = currentDeadline;
+  }
 
   console.log('Update data:', updateData);
 
@@ -2402,6 +2457,25 @@ async function loadRevisionHistory(requestId) {
         return;
     }
     
+    // Helper function to show empty state
+    const showEmptyState = () => {
+        if (historySection) {
+            historySection.style.display = 'block';
+        }
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
+    };
+    
     try {
         // Try to fetch approval revision history from API
         const response = await fetch(`/api/approval-revision-history/${requestId}`);
@@ -2409,7 +2483,7 @@ async function loadRevisionHistory(requestId) {
         
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Approval Revision History] API returned non-JSON response');
-            if (historySection) historySection.style.display = 'none';
+            showEmptyState();
             return;
         }
         
@@ -2448,20 +2522,17 @@ async function loadRevisionHistory(requestId) {
                     rightColumn.style.display = 'flex';
                 }
             } else {
-                // No revisions to show
-                if (historySection) historySection.style.display = 'none';
-                resetModalLayout();
+                // No revisions to show - display empty state
+                showEmptyState();
             }
         } else {
             console.log('[Approval Revision History] No revisions available');
-            if (historySection) historySection.style.display = 'none';
-            resetModalLayout();
+            showEmptyState();
         }
     } catch (error) {
         console.error('[Approval Revision History] Error loading:', error);
-        // Don't show error to user, just hide the section
-        if (historySection) historySection.style.display = 'none';
-        resetModalLayout();
+        // Show empty state on error
+        showEmptyState();
     }
 }
 
@@ -2828,36 +2899,46 @@ async function loadRevisionHistory(requestId) {
         } else {
             console.log('[Admin Revision History] No revisions to display');
             
-            // Reset to single column layout when no revisions - keep original size
-            const modalContent = document.querySelector('#detailsModal .modal-content');
-            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-            
-            if (modalContent && modalBody) {
-                modalContent.style.maxWidth = '900px';
-                modalBody.classList.remove('has-revisions');
-            }
-            
+            // Always show revision history section with empty state message
             if (historySection) {
-                historySection.style.display = 'none';
+                historySection.style.display = 'block';
             }
+            
+            // Show empty state message
+            historyContainer.innerHTML = `
+                <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                    </svg>
+                    <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                    <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('[Admin Revision History] Error loading revision history:', error);
         
-        // Reset to single column layout on error - keep original size
-        const modalContent = document.querySelector('#detailsModal .modal-content');
-        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-        
-        if (modalContent && modalBody) {
-            modalContent.style.maxWidth = '900px';
-            modalBody.classList.remove('has-revisions');
-        }
-        
+        // Always show revision history section with error/empty state
         if (historySection) {
-            historySection.style.display = 'none';
+            historySection.style.display = 'block';
         }
+        
+        // Show empty state message
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
     }
 }
 
@@ -3239,42 +3320,56 @@ async function loadServiceRevisionHistory(requestId) {
                 
                 console.log('[Service Revision History] ✅ Two-column layout enabled');
             } else {
-                // No revisions to show, but keep section visible for service requests
+                // No revisions to show, but keep section visible with empty state
                 console.log('[Service Revision History] No revisions after filtering');
-                if (historySection) historySection.style.display = 'block'; // Keep visible even without revisions
-                const modalContent = document.querySelector('#detailsModal .modal-content');
-                const modalBody = document.querySelector('#detailsModal .unit-modal-body');
-                const rightColumn = document.querySelector('#detailsModal .unit-right-column');
-                if (modalContent && modalBody) {
-                    modalContent.style.maxWidth = '900px';
-                    modalBody.classList.remove('has-revisions');
-                }
-                if (rightColumn) rightColumn.style.display = 'none';
+                if (historySection) historySection.style.display = 'block';
+                historyContainer.innerHTML = `
+                    <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M3 21v-5h5"/>
+                        </svg>
+                        <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                        <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+                    </div>
+                `;
             }
         } else {
             console.log('[Service Revision History] No revisions to display');
-            if (historySection) historySection.style.display = 'none';
-            const modalContent = document.querySelector('#detailsModal .modal-content');
-            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-            if (modalContent && modalBody) {
-                modalContent.style.maxWidth = '900px';
-                modalBody.classList.remove('has-revisions');
-            }
-            if (rightColumn) rightColumn.style.display = 'none';
+            // Always show revision history section with empty state
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = `
+                <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                    </svg>
+                    <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                    <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('[Service Revision History] ❌ ERROR:', error);
         console.error('[Service Revision History] Error stack:', error.stack);
-        if (historySection) historySection.style.display = 'none';
-        const modalContent = document.querySelector('#detailsModal .modal-content');
-        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-        if (modalContent && modalBody) {
-            modalContent.style.maxWidth = '900px';
-            modalBody.classList.remove('has-revisions');
-        }
-        if (rightColumn) rightColumn.style.display = 'none';
+        // Always show revision history section with empty state
+        if (historySection) historySection.style.display = 'block';
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
     }
 }
 

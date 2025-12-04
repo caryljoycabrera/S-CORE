@@ -38,7 +38,8 @@ function getOffices() {
  * @returns {Array} Array of unit names
  */
 function getUnits() {
-  return settingsService.getSetting('units', []);
+  const units = settingsService.getSetting('units', []);
+  return Array.isArray(units) ? units : [];
 }
 
 /**
@@ -46,10 +47,8 @@ function getUnits() {
  * @returns {Array} Array of status names
  */
 function getRequestStatuses() {
-  return settingsService.getSetting('requestStatuses', [
-    'Pending', 'Queued', 'In Progress', 'For Revision', 
-    'For Checking', 'Approved', 'Completed', 'Rejected', 'Archived'
-  ]);
+  const statuses = settingsService.getSetting('requestStatuses', []);
+  return Array.isArray(statuses) ? statuses : [];
 }
 
 /**

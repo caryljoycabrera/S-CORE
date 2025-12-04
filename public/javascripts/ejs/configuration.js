@@ -33,6 +33,31 @@ document.addEventListener('DOMContentLoaded', function () {
           modal.classList.add('active');
         });
       }
+
+      // About S-CORE tab modal logic
+      const aboutScorePreviewBtn = document.getElementById('aboutScorePreviewBtn');
+      const aboutScoreSaveBtn = document.getElementById('aboutScoreSaveBtn');
+      const aboutScoreResetBtn = document.getElementById('aboutScoreResetBtn');
+
+      if (aboutScorePreviewBtn) {
+        aboutScorePreviewBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          showAboutScorePreview();
+        });
+      }
+      if (aboutScoreSaveBtn) {
+        aboutScoreSaveBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          const modal = document.getElementById('aboutScoreSaveConfirmModal');
+          modal.classList.add('active');
+        });
+      }
+      if (aboutScoreResetBtn) {
+        aboutScoreResetBtn.addEventListener('click', function () {
+          const modal = document.getElementById('aboutScoreResetConfirmModal');
+          modal.classList.add('active');
+        });
+      }
     // Modal logic
     const previewBtn = document.getElementById('previewBtn');
     const saveBtn = document.getElementById('saveBtn');
@@ -138,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .preview-hero-highlight { background: linear-gradient(120deg, #4caf50 0%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
             .preview-hero-content p { font-size: 1.1rem; color: #4a5d4a; margin-bottom: 25px; }
             .preview-hero-buttons { display: flex; gap: 15px; align-items: center; }
-            .preview-btn-primary { background: linear-gradient(135deg, #1a5d1a 0%, #2d7a2d 100%); color: white; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600; display: inline-block; }
+            .preview-btn-primary { background: linear-gradient(135deg, #1a5d1a 0%, #2d7a2d 100%); color: white !important; padding: 12px 25px; border-radius: 25px; text-decoration: none; font-weight: 600; display: inline-block; }
             .preview-btn-secondary { color: #1a5d1a; text-decoration: none; font-weight: 600; display: inline-block; padding: 12px 25px; }
             .preview-hero-card { background: rgba(255,255,255,0.9); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(26,93,26,0.1); }
             .preview-pledge-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #1a5d1a; margin-bottom: 20px; text-align: center; }
@@ -410,6 +435,299 @@ document.addEventListener('DOMContentLoaded', function () {
       window.closeSystemSaveConfirm = closeSystemSaveConfirm;
       window.confirmSystemReset = confirmSystemReset;
       window.closeSystemResetConfirm = closeSystemResetConfirm;
+
+      // About S-CORE tab modal confirmation functions
+      function showAboutScorePreview() {
+        const previewBody = document.getElementById('aboutScorePreviewContent');
+        const modal = document.getElementById('aboutScorePreviewModal');
+
+        const content = {
+          sCoreSectionTitle: document.getElementById('sCoreSectionTitle')?.value || 'S-CORE',
+          sCorePlatformDescription: document.getElementById('sCorePlatformDescription')?.value || '',
+          sCoreWhatIsTitle: document.getElementById('sCoreWhatIsTitle')?.value || 'What is S-CORE?',
+          sCoreWhatIsDescription: document.getElementById('sCoreWhatIsDescription')?.value || '',
+          sCoreWhyTitle: document.getElementById('sCoreWhyTitle')?.value || 'Why use S-CORE?',
+          sCoreWhyDescription: document.getElementById('sCoreWhyDescription')?.value || '',
+          sCoreDashboardImage: document.getElementById('sCoreDashboardImage')?.value || '/Picture/dashboard_ss.png',
+          sCoreLoginButtonText: document.getElementById('sCoreLoginButtonText')?.value || 'Login',
+          sCoreLoginButtonLink: document.getElementById('sCoreLoginButtonLink')?.value || '/index',
+          sCoreSignupButtonText: document.getElementById('sCoreSignupButtonText')?.value || 'Sign Up',
+          sCoreSignupButtonLink: document.getElementById('sCoreSignupButtonLink')?.value || '/register'
+        };
+
+        previewBody.innerHTML = `
+          <style>
+            .preview-score-page {
+              font-family: 'Inter', sans-serif;
+              background: linear-gradient(120deg, #e8f5e8 60%, #f0f8f0 100%);
+              color: #1a2e1a;
+              min-height: 550px;
+              position: relative;
+              overflow: hidden;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 40px 20px;
+            }
+            /* Hero Grid - matching homepage.css */
+            .preview-hero-grid {
+              display: grid;
+              grid-template-columns: 1fr 1.3fr;
+              column-gap: 64px;
+              row-gap: 32px;
+              width: 100%;
+              max-width: 1100px;
+              position: relative;
+              z-index: 2;
+            }
+            /* Left Column */
+            .preview-left-column {
+              max-width: 520px;
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            }
+            /* Header Card - White card with S-CORE title (matching .about-s-core-header-card) */
+            .preview-header-card {
+              background: #fff;
+              border-radius: 28px;
+              box-shadow: 0 4px 32px rgba(20,83,45,0.10);
+              padding: 8px 28px 12px 28px;
+            }
+            .preview-header-card h1 {
+              font-family: 'Playfair Display', serif;
+              font-size: 2.3rem;
+              margin: 0 0 8px 0;
+              letter-spacing: 2px;
+              background: linear-gradient(120deg, #14532d 0%, #22c55e 50%, #ffd700 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              font-weight: 700;
+            }
+            .preview-header-card p {
+              font-size: 1.2rem;
+              color: #4a5d4a;
+              margin: 0;
+              font-weight: 500;
+            }
+            /* Content Card - What is S-CORE (matching .hero-content) */
+            .preview-content-card {
+              background: #fff;
+              border-radius: 28px;
+              box-shadow: 0 4px 32px rgba(20,83,45,0.10);
+              padding: 32px 28px;
+              color: #14532d;
+              min-height: 260px;
+            }
+            .preview-content-card h2 {
+              font-family: 'Inter', sans-serif;
+              font-size: 1.7rem;
+              color: #14532d;
+              margin: 0 0 14px 0;
+              text-align: left;
+            }
+            .preview-content-card > p {
+              font-size: 1.05rem;
+              margin: 0 0 18px 0;
+              color: #1a2e1a;
+              text-align: left;
+              line-height: 1.6;
+            }
+            /* Buttons */
+            .preview-hero-buttons {
+              margin-top: 18px;
+              display: flex;
+              gap: 18px;
+              justify-content: flex-start;
+            }
+            .preview-btn-primary {
+              background: linear-gradient(90deg, #2e7d32 60%, #43a047 100%);
+              color: #fff !important;
+              font-weight: 700;
+              padding: 14px 36px;
+              border-radius: 10px;
+              text-decoration: none;
+              font-size: 1.08rem;
+              box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+              border: none;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .preview-btn-secondary {
+              background: #fff;
+              color: #2e7d32 !important;
+              font-weight: 700;
+              padding: 14px 36px;
+              border: 2px solid #43a047;
+              border-radius: 10px;
+              text-decoration: none;
+              font-size: 1.08rem;
+              box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            /* Right Column */
+            .preview-right-column {
+              display: flex;
+              align-items: flex-start;
+              justify-content: flex-end;
+            }
+            /* Visual Card - Why use S-CORE (matching .hero-card) */
+            .preview-visual-card {
+              background: #f0f8f0;
+              border-radius: 28px;
+              padding: 30px 20px;
+              box-shadow: 0 10px 30px rgba(26,93,26,0.08);
+              text-align: left;
+              color: #14532d;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              width: 100%;
+              min-height: 420px;
+            }
+            .preview-visual-card h3 {
+              color: #14532d;
+              font-size: 1.3rem;
+              margin: 0 0 8px 0;
+              text-align: left;
+              width: 100%;
+              font-weight: 600;
+            }
+            .preview-visual-card img {
+              width: 99%;
+              border-radius: 16px;
+              margin: 10px 0 20px 0;
+              box-shadow: 0 2px 12px rgba(20,83,45,0.10);
+            }
+            .preview-visual-card .img-placeholder {
+              width: 99%;
+              height: 180px;
+              background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+              border-radius: 16px;
+              margin: 10px 0 20px 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #166534;
+              font-weight: 500;
+              font-size: 0.95rem;
+            }
+            .preview-visual-card > p {
+              font-size: 1rem;
+              color: #1a2e1a;
+              margin: 0;
+              text-align: justify;
+              width: 100%;
+              line-height: 1.6;
+            }
+            /* Decorative dots */
+            .preview-dots-overlay {
+              position: absolute;
+              inset: 0;
+              pointer-events: none;
+              z-index: 1;
+            }
+            .preview-dot {
+              position: absolute;
+              border-radius: 50%;
+              opacity: 0.7;
+            }
+          </style>
+          <div class="preview-score-page">
+            <!-- Decorative dots -->
+            <div class="preview-dots-overlay">
+              <div class="preview-dot" style="width: 12px; height: 12px; background: #FFD700; top: 10%; left: 8%;"></div>
+              <div class="preview-dot" style="width: 8px; height: 8px; background: #fff; top: 20%; left: 92%;"></div>
+              <div class="preview-dot" style="width: 10px; height: 10px; background: #14532d; top: 70%; left: 3%;"></div>
+              <div class="preview-dot" style="width: 14px; height: 14px; background: #FFD700; top: 80%; left: 95%;"></div>
+              <div class="preview-dot" style="width: 6px; height: 6px; background: #fff; top: 45%; left: 50%;"></div>
+              <div class="preview-dot" style="width: 9px; height: 9px; background: #1a2e1a; top: 35%; left: 15%;"></div>
+              <div class="preview-dot" style="width: 7px; height: 7px; background: #FFD700; top: 55%; left: 88%;"></div>
+            </div>
+
+            <!-- Hero Grid -->
+            <div class="preview-hero-grid">
+              <!-- Left Column -->
+              <div class="preview-left-column">
+                <!-- Header Card -->
+                <div class="preview-header-card">
+                  <h1>${content.sCoreSectionTitle}</h1>
+                  <p>${content.sCorePlatformDescription}</p>
+                </div>
+                <!-- Content Card -->
+                <div class="preview-content-card">
+                  <h2>${content.sCoreWhatIsTitle}</h2>
+                  <p>${content.sCoreWhatIsDescription}</p>
+                  <div class="preview-hero-buttons">
+                    <a href="${content.sCoreLoginButtonLink}" class="preview-btn-primary">
+                      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px;"><circle cx="11" cy="11" r="10" stroke="#fff" stroke-width="2" fill="#2e7d32"/><path d="M11 13.5C13.4853 13.5 15.5 11.4853 15.5 9C15.5 6.51472 13.4853 4.5 11 4.5C8.51472 4.5 6.5 6.51472 6.5 9C6.5 11.4853 8.51472 13.5 11 13.5Z" stroke="#fff" stroke-width="1.5"/><path d="M4.5 17.5C4.5 15.0147 7.01472 13 11 13C14.9853 13 17.5 15.0147 17.5 17.5" stroke="#fff" stroke-width="1.5"/></svg>
+                      ${content.sCoreLoginButtonText}
+                    </a>
+                    <a href="${content.sCoreSignupButtonLink}" class="preview-btn-secondary">
+                      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px;"><rect x="3" y="6" width="16" height="10" rx="3" stroke="#43a047" stroke-width="2" fill="#fff"/><path d="M3 6L11 13L19 6" stroke="#43a047" stroke-width="1.5"/></svg>
+                      ${content.sCoreSignupButtonText}
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <!-- Right Column -->
+              <div class="preview-right-column">
+                <div class="preview-visual-card">
+                  <h3>${content.sCoreWhyTitle}</h3>
+                  <img src="${content.sCoreDashboardImage}" alt="S-CORE Dashboard Screenshot" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                  <div class="img-placeholder" style="display: none;">📊 Dashboard Screenshot Preview</div>
+                  <p>${content.sCoreWhyDescription}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        modal.classList.add('active');
+      }
+
+      function closeAboutScorePreview() {
+        const modal = document.getElementById('aboutScorePreviewModal');
+        modal.classList.remove('active');
+      }
+
+      function confirmAboutScoreSave() {
+        closeAboutScoreSaveConfirm();
+        showToast('Saving About S-CORE configuration...');
+        // Submit the about score config form
+        document.getElementById('aboutScoreConfigForm').submit();
+      }
+
+      function closeAboutScoreSaveConfirm() {
+        const modal = document.getElementById('aboutScoreSaveConfirmModal');
+        modal.classList.remove('active');
+      }
+
+      function confirmAboutScoreReset() {
+        closeAboutScoreResetConfirm();
+        showToast('Resetting About S-CORE form...');
+        setTimeout(() => {
+          location.reload();
+        }, 500);
+      }
+
+      function closeAboutScoreResetConfirm() {
+        const modal = document.getElementById('aboutScoreResetConfirmModal');
+        modal.classList.remove('active');
+      }
+
+      // Expose About S-CORE functions globally
+      window.showAboutScorePreview = showAboutScorePreview;
+      window.closeAboutScorePreview = closeAboutScorePreview;
+      window.confirmAboutScoreSave = confirmAboutScoreSave;
+      window.closeAboutScoreSaveConfirm = closeAboutScoreSaveConfirm;
+      window.confirmAboutScoreReset = confirmAboutScoreReset;
+      window.closeAboutScoreResetConfirm = closeAboutScoreResetConfirm;
+
     function closePreview() {
         const modal = document.getElementById('configModal');
         modal.classList.remove('active');
@@ -449,3 +767,45 @@ document.addEventListener('DOMContentLoaded', function () {
     window.confirmReset = confirmReset;
     window.closeResetConfirm = closeResetConfirm;
 });
+
+// Developer Credits functions (must be outside DOMContentLoaded for onclick handlers)
+function addDeveloperCredit() {
+    const container = document.getElementById('developerCreditsContainer');
+    const index = container.children.length;
+    const itemHtml = `
+      <div class="dynamic-item" data-index="${index}">
+        <div class="item-header">
+          <span class="item-number">Developer ${index + 1}</span>
+          <button type="button" class="btn-remove-item" onclick="removeDeveloperCredit(this)">
+            <span>×</span>
+          </button>
+        </div>
+        <div class="item-content">
+          <div class="form-group">
+            <label>Developer Name</label>
+            <input type="text" name="developerName[]" maxlength="100" placeholder="e.g., John Doe" required>
+          </div>
+          <div class="form-group">
+            <label>Portfolio URL or Email</label>
+            <input type="text" name="developerUrl[]" placeholder="https://portfolio.example.com or email@example.com" required>
+          </div>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', itemHtml);
+}
+
+function removeDeveloperCredit(button) {
+    if (confirm('Are you sure you want to remove this developer?')) {
+        button.closest('.dynamic-item').remove();
+        updateDeveloperCreditNumbers();
+    }
+}
+
+function updateDeveloperCreditNumbers() {
+    const items = document.querySelectorAll('#developerCreditsContainer .dynamic-item');
+    items.forEach((item, index) => {
+        item.querySelector('.item-number').textContent = `Developer ${index + 1}`;
+        item.setAttribute('data-index', index);
+    });
+}

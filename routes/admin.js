@@ -622,12 +622,14 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
       };
     });
 
-    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
     res.render('Admin/approvals', { 
       approvals: approvals, 
       user: req.user,
       units: getUnits(),
-      requestStatuses: getRequestStatuses()
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
     });
   } catch (err) {
     console.error('Error fetching admin approvals:', err);
@@ -695,7 +697,16 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
       return 0;
     });
 
-    res.render('Admin/approvals', { approvals, user: req.user, openModalId: id });
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    res.render('Admin/approvals', { 
+      approvals, 
+      user: req.user, 
+      openModalId: id,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
+    });
   } catch (err) {
     console.error('Error loading admin approvals:', err);
     res.status(500).send('Error loading approvals page');
@@ -764,12 +775,14 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
 
-    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
     res.render('Admin/services', { 
       serviceRequests: serviceRequestsWithDisplay, 
       user: req.user,
       units: getUnits(),
-      requestStatuses: getRequestStatuses()
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
     });
   } catch (err) {
     console.error('Error loading admin services:', err);
@@ -839,7 +852,16 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
 
-    res.render('Admin/services', { serviceRequests: serviceRequestsWithDisplay, user: req.user, openModalId: id });
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    res.render('Admin/services', { 
+      serviceRequests: serviceRequestsWithDisplay, 
+      user: req.user, 
+      openModalId: id,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
+    });
   } catch (err) {
     console.error('Error loading admin services:', err);
     res.status(500).send('Error loading services page');
@@ -1011,13 +1033,15 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       return 0;
     });
 
-    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
     
     res.render('Admin/allrequestsadmin', {
       allRequests,
       user: req.user,
       units: getUnits(),
-      requestStatuses: getRequestStatuses()
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
     });
   } catch (err) {
     console.error('Error loading all admin requests:', err);

@@ -872,6 +872,9 @@
         <button type="button" class="config-tab" onclick="switchTab('homepage')">
           🏠 Homepage Configuration
         </button>
+        <button type="button" class="config-tab" onclick="switchTab('aboutscore')">
+          📝 About S-CORE Page Configuration
+        </button>
       </div>
 
       <!-- Homepage Configuration Tab -->
@@ -890,6 +893,13 @@
               🔄 Reset Form
             </button>
           </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+          <p style="margin: 0; color: #92400e; font-weight: 500;">
+            <strong>🏠 Homepage Configuration:</strong> Customize the public-facing homepage content including hero section, about information, services, team members, and contact details. Changes will be visible to all visitors.
+          </p>
         </div>
 
         <!-- Configuration Form -->
@@ -1670,76 +1680,181 @@
             </div>
           </div>
 
-          <!-- S-CORE Platform Introduction Section -->
-          <div class="config-section">
-            <h2 class="section-title">
-              <span class="section-icon">📝</span>
-              S-CORE Section
-            </h2>
-            <div class="form-group">
-              <label for="sCoreSectionTitle">S-CORE Section Title</label>
-              <textarea id="sCoreSectionTitle" name="sCoreSectionTitle" maxlength="100" oninput="updateCharCount(this, 'sCoreSectionTitleCount', 100)"><%= pageContent.sCoreSectionTitle %></textarea>
-              <div class="char-count" id="sCoreSectionTitleCount"></div>
-              <p class="form-hint">Main section title for S-CORE (e.g. 'S-CORE Platform Introduction')</p>
-            </div>
-            <h3 style="font-size:1.25rem;font-weight:700;color:#1f2937;margin-bottom:1rem;">Section Title</h3>
-            <p class="section-description">
-              Information about the S-CORE platform, its purpose, key features, and button configuration for the about-s-core page.
-            </p>
-            <div class="form-group">
-              <label for="sCorePlatformDescription">S-CORE Acronym Meaning</label>
-              <input type="text" id="sCorePlatformDescription" name="sCorePlatformDescription" value="<%= pageContent.sCorePlatformDescription %>" maxlength="150" oninput="updateCharCount(this, 'sCorePlatformDescriptionCount', 150)">
-              <div class="char-count" id="sCorePlatformDescriptionCount"></div>
-              <p class="form-hint">Short description under the S-CORE header (e.g. 'SCO Creative Optimization for Requests and Engagement System')</p>
-            </div>
-            <div class="form-group">
-              <label for="sCoreWhatIsTitle">System Overview</label>
-              <input type="text" id="sCoreWhatIsTitle" name="sCoreWhatIsTitle" value="<%= pageContent.sCoreWhatIsTitle %>" maxlength="50">
-              <p class="form-hint">Section header (default: 'What is S-CORE?')</p>
-            </div>
-            <div class="form-group">
-              <label for="sCoreWhatIsDescription">System Overview Description</label>
-              <textarea id="sCoreWhatIsDescription" name="sCoreWhatIsDescription" maxlength="500" oninput="updateCharCount(this, 'sCoreWhatIsDescriptionCount', 500)"><%= pageContent.sCoreWhatIsDescription %></textarea>
-              <div class="char-count" id="sCoreWhatIsDescriptionCount"></div>
-              <p class="form-hint">Description text for system overview</p>
-            </div>
-            <div class="form-group">
-              <label for="sCoreWhyTitle">Platform Features</label>
-              <input type="text" id="sCoreWhyTitle" name="sCoreWhyTitle" value="<%= pageContent.sCoreWhyTitle %>" maxlength="50">
-              <p class="form-hint">Section header (default: 'Why use S-CORE?')</p>
-            </div>
-            <div class="form-group">
-              <label for="sCoreWhyDescription">Platform Features Description</label>
-              <textarea id="sCoreWhyDescription" name="sCoreWhyDescription" maxlength="500" oninput="updateCharCount(this, 'sCoreWhyDescriptionCount', 500)"><%= pageContent.sCoreWhyDescription %></textarea>
-              <div class="char-count" id="sCoreWhyDescriptionCount"></div>
-              <p class="form-hint">Description text for platform features</p>
-            </div>
-            <div class="form-group">
-              <label for="sCoreDashboardImage">Dashboard Screenshot Image URL</label>
-              <input type="text" id="sCoreDashboardImage" name="sCoreDashboardImage" value="<%= pageContent.sCoreDashboardImage %>" maxlength="200">
-              <p class="form-hint">Image URL for dashboard screenshot (e.g. /Picture/dashboard_ss.png)</p>
-            </div>
-            <div class="form-group">
-              <label for="sCoreLoginButtonText">Login Button Text</label>
-              <input type="text" id="sCoreLoginButtonText" name="sCoreLoginButtonText" value="<%= pageContent.sCoreLoginButtonText %>" maxlength="30">
-            </div>
-            <div class="form-group">
-              <label for="sCoreLoginButtonLink">Login Button Link</label>
-              <input type="text" id="sCoreLoginButtonLink" name="sCoreLoginButtonLink" value="<%= pageContent.sCoreLoginButtonLink %>" maxlength="100">
-            </div>
-            <div class="form-group">
-              <label for="sCoreSignupButtonText">Sign Up Button Text</label>
-              <input type="text" id="sCoreSignupButtonText" name="sCoreSignupButtonText" value="<%= pageContent.sCoreSignupButtonText %>" maxlength="30">
-            </div>
-            <div class="form-group">
-              <label for="sCoreSignupButtonLink">Sign Up Button Link</label>
-              <input type="text" id="sCoreSignupButtonLink" name="sCoreSignupButtonLink" value="<%= pageContent.sCoreSignupButtonLink %>" maxlength="100">
-            </div>
           </div>
 
+          <!-- Footer Actions -->
+          <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+            <button type="button" id="previewBtnFooter" class="btn-preview" onclick="document.getElementById('previewBtn').click()">
+              👁️ Preview Changes
+            </button>
+            <button type="button" id="saveBtnFooter" class="btn-save" onclick="document.getElementById('saveBtn').click()">
+              💾 Save Changes
+            </button>
+            <button type="button" id="cancelBtnFooter" class="btn-reset" onclick="document.getElementById('cancelBtn').click()">
+              🔄 Reset Form
+            </button>
           </div>
         </form>
       </div> <!-- End homepage-tab -->
+
+      <!-- About S-CORE Page Configuration Tab -->
+      <div id="aboutscore-tab" class="tab-content">
+        <!-- Header -->
+        <div class="config-header">
+          <h1>About S-CORE Page Configuration</h1>
+          <div class="config-header-actions">
+            <button type="button" id="aboutScorePreviewBtn" class="btn-preview">
+              👁️ Preview Changes
+            </button>
+            <button type="button" id="aboutScoreSaveBtn" class="btn-save">
+              💾 Save Changes
+            </button>
+            <button type="button" id="aboutScoreResetBtn" class="btn-reset">
+              🔄 Reset Form
+            </button>
+          </div>
+        </div>
+
+        <!-- Info Banner -->
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+          <p style="margin: 0; color: #166534; font-weight: 500;">
+            <strong>📝 About S-CORE Page:</strong> Configure the content displayed on the About S-CORE landing page. This page introduces visitors to the S-CORE platform before they access the login/signup.
+          </p>
+        </div>
+
+        <!-- About S-CORE Configuration Form -->
+        <form id="aboutScoreConfigForm" action="/admin/configuration" method="POST">
+          <div class="config-sections">
+
+            <!-- S-CORE Header Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🏷️</span>
+                Header Section
+              </h2>
+              <p class="section-description">
+                The main header area with the S-CORE title and platform description that appears at the top of the page.
+              </p>
+              <div class="form-group">
+                <label for="sCoreSectionTitle">S-CORE Section Title</label>
+                <input type="text" id="sCoreSectionTitle" name="sCoreSectionTitle" value="<%= pageContent.sCoreSectionTitle || 'S-CORE' %>" maxlength="50" oninput="updateCharCount(this, 'sCoreSectionTitleCount', 50)">
+                <div class="char-count" id="sCoreSectionTitleCount"></div>
+                <p class="form-hint">Main section title displayed on the S-CORE page (e.g. 'S-CORE')</p>
+              </div>
+              <div class="form-group">
+                <label for="sCorePlatformDescription">S-CORE Acronym Meaning</label>
+                <input type="text" id="sCorePlatformDescription" name="sCorePlatformDescription" value="<%= pageContent.sCorePlatformDescription %>" maxlength="150" oninput="updateCharCount(this, 'sCorePlatformDescriptionCount', 150)">
+                <div class="char-count" id="sCorePlatformDescriptionCount"></div>
+                <p class="form-hint">Short description under the S-CORE header (e.g. 'SCO Creative Optimization for Requests and Engagement System')</p>
+              </div>
+            </div>
+
+            <!-- System Overview Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">📋</span>
+                System Overview Section
+              </h2>
+              <p class="section-description">
+                The left content card that explains what S-CORE is and provides the main call-to-action buttons.
+              </p>
+              <div class="form-group">
+                <label for="sCoreWhatIsTitle">System Overview Title</label>
+                <input type="text" id="sCoreWhatIsTitle" name="sCoreWhatIsTitle" value="<%= pageContent.sCoreWhatIsTitle %>" maxlength="50" oninput="updateCharCount(this, 'sCoreWhatIsTitleCount', 50)">
+                <div class="char-count" id="sCoreWhatIsTitleCount"></div>
+                <p class="form-hint">Section header (default: 'What is S-CORE?')</p>
+              </div>
+              <div class="form-group">
+                <label for="sCoreWhatIsDescription">System Overview Description</label>
+                <textarea id="sCoreWhatIsDescription" name="sCoreWhatIsDescription" class="tall" maxlength="500" oninput="updateCharCount(this, 'sCoreWhatIsDescriptionCount', 500)"><%= pageContent.sCoreWhatIsDescription %></textarea>
+                <div class="char-count" id="sCoreWhatIsDescriptionCount"></div>
+                <p class="form-hint">Description text explaining what S-CORE is and its main purpose</p>
+              </div>
+            </div>
+
+            <!-- Platform Features Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">✨</span>
+                Platform Features Section
+              </h2>
+              <p class="section-description">
+                The right content card with dashboard screenshot and description of why users should use S-CORE.
+              </p>
+              <div class="form-group">
+                <label for="sCoreWhyTitle">Platform Features Title</label>
+                <input type="text" id="sCoreWhyTitle" name="sCoreWhyTitle" value="<%= pageContent.sCoreWhyTitle %>" maxlength="50" oninput="updateCharCount(this, 'sCoreWhyTitleCount', 50)">
+                <div class="char-count" id="sCoreWhyTitleCount"></div>
+                <p class="form-hint">Section header (default: 'Why use S-CORE?')</p>
+              </div>
+              <div class="form-group">
+                <label for="sCoreWhyDescription">Platform Features Description</label>
+                <textarea id="sCoreWhyDescription" name="sCoreWhyDescription" class="tall" maxlength="500" oninput="updateCharCount(this, 'sCoreWhyDescriptionCount', 500)"><%= pageContent.sCoreWhyDescription %></textarea>
+                <div class="char-count" id="sCoreWhyDescriptionCount"></div>
+                <p class="form-hint">Description text for platform features and benefits</p>
+              </div>
+              <div class="form-group">
+                <label for="sCoreDashboardImage">Dashboard Screenshot Image URL</label>
+                <input type="text" id="sCoreDashboardImage" name="sCoreDashboardImage" value="<%= pageContent.sCoreDashboardImage %>" maxlength="200">
+                <p class="form-hint">Image URL for dashboard screenshot (e.g. /Picture/dashboard_ss.png)</p>
+              </div>
+            </div>
+
+            <!-- Call-to-Action Buttons Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🔘</span>
+                Call-to-Action Buttons
+              </h2>
+              <p class="section-description">
+                Configure the login and signup buttons that direct users to the authentication pages.
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                  <h3 style="font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #22c55e;">Login Button</h3>
+                  <div class="form-group">
+                    <label for="sCoreLoginButtonText">Login Button Text</label>
+                    <input type="text" id="sCoreLoginButtonText" name="sCoreLoginButtonText" value="<%= pageContent.sCoreLoginButtonText %>" maxlength="30" oninput="updateCharCount(this, 'sCoreLoginButtonTextCount', 30)">
+                    <div class="char-count" id="sCoreLoginButtonTextCount"></div>
+                  </div>
+                  <div class="form-group">
+                    <label for="sCoreLoginButtonLink">Login Button Link</label>
+                    <input type="text" id="sCoreLoginButtonLink" name="sCoreLoginButtonLink" value="<%= pageContent.sCoreLoginButtonLink %>" maxlength="100">
+                    <p class="form-hint">URL for the login page (e.g. /index)</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 style="font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3b82f6;">Sign Up Button</h3>
+                  <div class="form-group">
+                    <label for="sCoreSignupButtonText">Sign Up Button Text</label>
+                    <input type="text" id="sCoreSignupButtonText" name="sCoreSignupButtonText" value="<%= pageContent.sCoreSignupButtonText %>" maxlength="30" oninput="updateCharCount(this, 'sCoreSignupButtonTextCount', 30)">
+                    <div class="char-count" id="sCoreSignupButtonTextCount"></div>
+                  </div>
+                  <div class="form-group">
+                    <label for="sCoreSignupButtonLink">Sign Up Button Link</label>
+                    <input type="text" id="sCoreSignupButtonLink" name="sCoreSignupButtonLink" value="<%= pageContent.sCoreSignupButtonLink %>" maxlength="100">
+                    <p class="form-hint">URL for the signup page (e.g. /register)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+            <button type="button" id="aboutScorePreviewBtnFooter" class="btn-preview" onclick="document.getElementById('aboutScorePreviewBtn').click()">
+              👁️ Preview Changes
+            </button>
+            <button type="button" id="aboutScoreSaveBtnFooter" class="btn-save" onclick="document.getElementById('aboutScoreSaveBtn').click()">
+              💾 Save Changes
+            </button>
+            <button type="button" id="aboutScoreResetBtnFooter" class="btn-reset" onclick="document.getElementById('aboutScoreResetBtn').click()">
+              🔄 Reset Form
+            </button>
+          </div>
+        </form>
+      </div> <!-- End aboutscore-tab -->
 
               <!-- System Configuration Tab -->
               <div id="system-tab" class="tab-content active">
@@ -2416,6 +2531,16 @@
                           </div>
 
                         </div>
+
+                        <!-- Footer Actions -->
+                        <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+                          <button type="button" id="systemSaveBtnFooter" class="btn-save" onclick="document.getElementById('systemSaveBtn').click()">
+                            💾 Save Changes
+                          </button>
+                          <button type="button" id="systemResetBtnFooter" class="btn-reset" onclick="document.getElementById('systemResetBtn').click()">
+                            🔄 Reset Form
+                          </button>
+                        </div>
                       </form>
                     </div> <!-- End system-tab -->
                   </div>
@@ -3035,6 +3160,54 @@
         </div>
       </div>
     </div>
+
+  <!-- About S-CORE Preview Modal -->
+  <div id="aboutScorePreviewModal" class="preview-modal">
+    <div class="preview-content">
+      <div class="preview-header">
+        <h2>Preview About S-CORE Page</h2>
+        <button type="button" class="btn-close-preview" onclick="closeAboutScorePreview()">Close</button>
+      </div>
+      <div class="preview-body" id="aboutScorePreviewContent">
+        <!-- Preview content will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- About S-CORE Save Confirmation Modal -->
+  <div id="aboutScoreSaveConfirmModal" class="preview-modal">
+    <div class="preview-content">
+      <div class="preview-header">
+        <h2>Confirm Save</h2>
+        <button type="button" class="btn-close-preview" onclick="closeAboutScoreSaveConfirm()">Cancel</button>
+      </div>
+      <div class="preview-body">
+        <p>Are you sure you want to save these changes to the About S-CORE page? This will update the live page content.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+          <button type="button" class="btn-close-preview" onclick="closeAboutScoreSaveConfirm()">Cancel</button>
+          <button type="button" class="btn-save" onclick="confirmAboutScoreSave()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About S-CORE Reset Confirmation Modal -->
+  <div id="aboutScoreResetConfirmModal" class="preview-modal">
+    <div class="preview-content">
+      <div class="preview-header">
+        <h2>Confirm Reset</h2>
+        <button type="button" class="btn-close-preview" onclick="closeAboutScoreResetConfirm()">Cancel</button>
+      </div>
+      <div class="preview-body">
+        <p>Are you sure you want to reset the About S-CORE form? All unsaved changes will be lost.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+          <button type="button" class="btn-close-preview" onclick="closeAboutScoreResetConfirm()">Cancel</button>
+          <button type="button" class="btn-danger" onclick="confirmAboutScoreReset()" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Reset Form</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Preview Modal -->
   <div id="configModal" class="preview-modal">
     <div class="preview-content">

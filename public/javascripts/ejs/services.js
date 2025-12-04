@@ -442,18 +442,50 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Initialize enhanced multi-select dropdowns
+  // Get filter data from database (passed from server via EJS)
+  const dbData = window.filterDataFromDatabase || {};
+  const statusOptions = dbData.requestStatuses || ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'];
+  const orgOptions = dbData.organizations || studentOrganizations;
+  const officeOptions = dbData.offices || officesDepartments;
+  const unitOptions = dbData.units || [];
+  
+  // Initialize enhanced multi-select dropdowns with database values
   const statusFilter = new EnhancedMultiSelect('statusFilter', 
-    ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'], 
+    statusOptions, 
     'Select Status', false);
+  
+  const statusFilterContainer = document.getElementById('statusFilter');
+  if (statusFilterContainer) {
+    statusFilterContainer.__instance = statusFilter;
+  }
+  
+  // Initialize assigned unit filter
+  const assignedUnitFilter = new EnhancedMultiSelect('assignedUnitFilter',
+    unitOptions,
+    'Select Assigned Unit', false);
+  
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.__instance = assignedUnitFilter;
+  }
     
   const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
-    studentOrganizations, 
+    orgOptions, 
     'Select Student Organizations', true);
+  
+  const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+  if (studentOrgFilterContainer) {
+    studentOrgFilterContainer.__instance = studentOrgFilter;
+  }
     
   const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
-    officesDepartments, 
+    officeOptions, 
     'Select Offices/Departments', true);
+  
+  const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+  if (officeDeptFilterContainer) {
+    officeDeptFilterContainer.__instance = officeDeptFilter;
+  }
 
   // Global variables
   let detailModal = document.getElementById("detailsModal");
@@ -480,19 +512,21 @@ document.addEventListener('DOMContentLoaded', function() {
       element: row,
       requestId: row.dataset.requestId,
       type: row.dataset.type,
-      title: row.dataset.title.toLowerCase(),
-      status: row.dataset.status.toLowerCase(),
-      organization: row.dataset.organization.toLowerCase(),
-      units: row.dataset.units.toLowerCase(),
-      student: row.dataset.student.toLowerCase(),
+      title: row.dataset.title?.toLowerCase() || '',
+      status: row.dataset.status?.toLowerCase() || '',
+      organization: row.dataset.organization?.toLowerCase() || '',
+      units: row.dataset.units?.toLowerCase() || '',
+      student: row.dataset.student?.toLowerCase() || '',
       datetime: row.dataset.datetime,
       date: row.dataset.date,
-      description: row.dataset.description.toLowerCase()
+      deadline: row.dataset.deadline,
+      description: row.dataset.description?.toLowerCase() || ''
     }));
 
     // Get filter elements
     const requestIdFilter = document.getElementById('requestIdFilter');
     const studentFilter = document.getElementById('studentFilter');
+    const sortByFilter = document.getElementById('sortByFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     const clearFiltersBtn = document.getElementById('clearFilters');
@@ -508,20 +542,198 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Enhanced dropdown change listeners
-    document.getElementById('statusFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('studentOrgFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('officeDeptFilter').addEventListener('selectionChange', applyFilters);
+    if (statusFilterContainer) {
+      statusFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (assignedUnitFilterContainer) {
+      assignedUnitFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (studentOrgFilterContainer) {
+      studentOrgFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (officeDeptFilterContainer) {
+      officeDeptFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
 
     if (dateFromFilter) {
-      dateFromFilter.addEventListener('change', applyFilters);
+      dateFromFilter.addEventListener('change', () => {
+        // Set minimum date for "Date To" based on "Date From" selection
+        if (dateToFilter && dateFromFilter.value) {
+          dateToFilter.min = dateFromFilter.value;
+          if (dateToFilter.value && dateToFilter.value < dateFromFilter.value) {
+            dateToFilter.value = '';
+          }
+        } else if (dateToFilter) {
+          dateToFilter.min = '';
+        }
+        applyFilters();
+      });
     }
 
     if (dateToFilter) {
       dateToFilter.addEventListener('change', applyFilters);
     }
+    
+    if (sortByFilter) {
+      sortByFilter.addEventListener('change', applyFilters);
+    }
 
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+    
+    // Pagination variables
+    const ITEMS_PER_PAGE = 10;
+    let currentPage = 1;
+    let filteredData = [];
+    
+    // Pagination elements
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    
+    if (prevPageBtn) {
+      prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          displayPage();
+        }
+      });
+    }
+    
+    if (nextPageBtn) {
+      nextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayPage();
+        }
+      });
+    }
+    
+    function displayPage() {
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      
+      // Hide all rows first
+      allRequestsData.forEach(request => {
+        request.element.style.display = 'none';
+      });
+      
+      // Show only rows for current page
+      filteredData.slice(startIndex, endIndex).forEach(request => {
+        request.element.style.display = '';
+      });
+      
+      // Update pagination controls
+      updatePaginationControls();
+    }
+    
+    function updatePaginationControls() {
+      const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+      
+      if (prevPageBtn) {
+        prevPageBtn.disabled = currentPage <= 1;
+      }
+      
+      if (nextPageBtn) {
+        nextPageBtn.disabled = currentPage >= totalPages;
+      }
+      
+      // Render pagination numbers
+      renderPaginationNumbers(totalPages);
+    }
+    
+    function renderPaginationNumbers(totalPages) {
+      if (!paginationNumbers) return;
+      
+      paginationNumbers.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      // First page button
+      if (startPage > 1) {
+        paginationNumbers.appendChild(createPageButton(1));
+        if (startPage > 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+      }
+      
+      // Page number buttons
+      for (let i = startPage; i <= endPage; i++) {
+        paginationNumbers.appendChild(createPageButton(i));
+      }
+      
+      // Last page button
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+        paginationNumbers.appendChild(createPageButton(totalPages));
+      }
+    }
+    
+    function createPageButton(pageNum) {
+      const btn = document.createElement('button');
+      btn.className = 'pagination-btn' + (pageNum === currentPage ? ' active' : '');
+      btn.textContent = pageNum;
+      btn.addEventListener('click', () => {
+        currentPage = pageNum;
+        displayPage();
+      });
+      return btn;
+    }
+    
+    // Sort data function
+    function sortData(data) {
+      const sortValue = sortByFilter?.value || 'deadline-asc';
+      const [field, direction] = sortValue.split('-');
+      const isAsc = direction === 'asc';
+      
+      // Define statuses that should always be at the bottom
+      const bottomStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      
+      return [...data].sort((a, b) => {
+        // First, separate bottom statuses from active statuses
+        const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
+        const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
+        
+        // If one is bottom status and one isn't, bottom goes last
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        
+        // Both are same category, sort by the selected field
+        let valA, valB;
+        
+        if (field === 'deadline') {
+          valA = a.deadline || '9999-12-31';
+          valB = b.deadline || '9999-12-31';
+        } else {
+          valA = a.date || '';
+          valB = b.date || '';
+        }
+        
+        if (valA < valB) return isAsc ? -1 : 1;
+        if (valA > valB) return isAsc ? 1 : -1;
+        return 0;
+      });
     }
 
     // Apply filters function
@@ -530,89 +742,81 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const filters = {
         requestId: requestIdFilter ? requestIdFilter.value.toLowerCase().trim() : '',
-        status: statusFilter.getSelectedValues(),
+        status: statusFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        assignedUnit: assignedUnitFilterContainer?.__instance?.getSelectedValues() || ['all'],
         student: studentFilter ? studentFilter.value.toLowerCase().trim() : '',
-        studentOrg: studentOrgFilter.getSelectedValues(),
-        officeDept: officeDeptFilter.getSelectedValues(),
+        studentOrg: studentOrgFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        officeDept: officeDeptFilterContainer?.__instance?.getSelectedValues() || ['all'],
         dateFrom: dateFromFilter ? dateFromFilter.value : '',
         dateTo: dateToFilter ? dateToFilter.value : ''
       };
 
       console.log('Applied filters:', filters);
 
-      let visibleCount = 0;
-
-      allRequestsData.forEach(request => {
-        let shouldShow = true;
-
+      // Filter the data
+      filteredData = allRequestsData.filter(request => {
         // Request ID filter
-        if (filters.requestId && !request.requestId.toLowerCase().includes(filters.requestId)) {
-          shouldShow = false;
+        if (filters.requestId && !request.requestId?.toLowerCase().includes(filters.requestId)) {
+          return false;
         }
 
-        // Status filter (multi-select)
+        // Status filter (multi-select, case-insensitive)
         if (filters.status.length > 0 && !filters.status.includes('all')) {
-          if (!filters.status.includes(request.status)) {
-            shouldShow = false;
-          }
+          const statusMatch = filters.status.some(s => s.toLowerCase() === request.status?.toLowerCase());
+          if (!statusMatch) return false;
+        }
+        
+        // Assigned Unit filter (case-insensitive)
+        if (filters.assignedUnit.length > 0 && !filters.assignedUnit.includes('all')) {
+          const unitMatch = filters.assignedUnit.some(u => request.units?.toLowerCase().includes(u.toLowerCase()));
+          if (!unitMatch) return false;
         }
 
         // Student filter
-        if (filters.student && !request.student.includes(filters.student)) {
-          shouldShow = false;
+        if (filters.student && !request.student?.includes(filters.student)) {
+          return false;
         }
 
         // Organization filter (multi-select)
-        let organizationMatch = true;
         const hasStudentOrgSelection = filters.studentOrg.length > 0 && !filters.studentOrg.includes('all');
         const hasOfficeDeptSelection = filters.officeDept.length > 0 && !filters.officeDept.includes('all');
         
         if (hasStudentOrgSelection || hasOfficeDeptSelection) {
-          organizationMatch = false;
+          let organizationMatch = false;
           
           // Check student organizations
           if (hasStudentOrgSelection) {
             organizationMatch = filters.studentOrg.some(org => 
-              request.organization.includes(org.toLowerCase())
+              request.organization?.includes(org.toLowerCase())
             );
           }
           
           // Check office/departments (OR logic with student orgs)
           if (!organizationMatch && hasOfficeDeptSelection) {
             organizationMatch = filters.officeDept.some(dept => 
-              request.organization.includes(dept.toLowerCase())
+              request.organization?.includes(dept.toLowerCase())
             );
           }
-        }
-
-        if (!organizationMatch) {
-          shouldShow = false;
+          
+          if (!organizationMatch) return false;
         }
 
         // Date range filter
-        if (filters.dateFrom || filters.dateTo) {
-          const requestDate = request.date;
-          
-          if (filters.dateFrom && requestDate < filters.dateFrom) {
-            shouldShow = false;
-          }
-          
-          if (filters.dateTo && requestDate > filters.dateTo) {
-            shouldShow = false;
-          }
-        }
+        if (filters.dateFrom && request.date && request.date < filters.dateFrom) return false;
+        if (filters.dateTo && request.date && request.date > filters.dateTo) return false;
 
-        // Show/hide row
-        if (shouldShow) {
-          request.element.style.display = '';
-          visibleCount++;
-        } else {
-          request.element.style.display = 'none';
-        }
+        return true;
       });
+      
+      // Sort the filtered data
+      filteredData = sortData(filteredData);
+      
+      // Reset to first page and display
+      currentPage = 1;
+      displayPage();
 
       // Update results count
-      updateResultsCount(visibleCount);
+      updateResultsCount(filteredData.length);
     }
 
     // Clear all filters
@@ -622,23 +826,24 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear text inputs
       if (requestIdFilter) requestIdFilter.value = '';
       if (studentFilter) studentFilter.value = '';
-      if (dateFromFilter) dateFromFilter.value = '';
-      if (dateToFilter) dateToFilter.value = '';
+      if (sortByFilter) sortByFilter.value = 'deadline-asc';
+      if (dateFromFilter) {
+        dateFromFilter.value = '';
+      }
+      if (dateToFilter) {
+        dateToFilter.value = '';
+        dateToFilter.min = '';
+      }
       
       // Reset enhanced dropdowns
-      statusFilter.reset();
-      studentOrgFilter.reset();
-      officeDeptFilter.reset();
+      statusFilterContainer?.__instance?.reset();
+      assignedUnitFilterContainer?.__instance?.reset();
+      studentOrgFilterContainer?.__instance?.reset();
+      officeDeptFilterContainer?.__instance?.reset();
 
-      // Show all rows
-      allRequestsData.forEach(request => {
-        request.element.style.display = '';
-      });
-
-      // Update results count
-      updateResultsCount(allRequestsData.length);
-      
-      showNotification('All filters cleared', 'info');
+      // Reset pagination and apply filters
+      currentPage = 1;
+      applyFilters();
     }
 
     // Update results count
@@ -666,8 +871,8 @@ document.addEventListener('DOMContentLoaded', function() {
       };
     }
 
-    // Initial results count
-    updateResultsCount(allRequestsData.length);
+    // Initial filter application (apply sort and show first page)
+    applyFilters();
     
     console.log('✅ Filters initialized successfully');
   }
@@ -1783,6 +1988,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     }
+    
+    // Load revision history
+    loadRevisionHistory(rowData.id);
   }
   
   // Populate admin form
@@ -2438,6 +2646,179 @@ window.openImagePreview = function(imageUrl, fileName) {
       // Revert the checkbox state
       toggleCheckbox.checked = !toggleCheckbox.checked;
     }
+  }
+
+  // ==========================================
+  // REVISION HISTORY FUNCTIONS (Admin Services)
+  // ==========================================
+  
+  async function loadRevisionHistory(requestId) {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    console.log('[Admin Services - Revision History] Loading for request:', requestId);
+    
+    if (!historyContainer) {
+      console.warn('[Admin Services - Revision History] Container not found!');
+      return;
+    }
+    
+    // Helper function to show empty state
+    const showEmptyState = () => {
+      if (historySection) {
+        historySection.style.display = 'block';
+      }
+      historyContainer.innerHTML = `
+        <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M3 21v-5h5"/>
+          </svg>
+          <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+          <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+        </div>
+      `;
+    };
+    
+    try {
+      const response = await fetch(`/api/revision-history/${requestId}`);
+      console.log('[Admin Services - Revision History] Response status:', response.status);
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('[Admin Services - Revision History] API returned non-JSON response');
+        showEmptyState();
+        return;
+      }
+      
+      const result = await response.json();
+      console.log('[Admin Services - Revision History] API Response:', result);
+      console.log('[Admin Services - Revision History] Revisions count:', result.revisions?.length || 0);
+      
+      if (result.success && result.revisions && result.revisions.length > 0) {
+        console.log('[Admin Services - Revision History] Showing section with', result.revisions.length, 'revisions');
+        
+        // Enable two-column layout when revisions exist
+        const modalContent = document.querySelector('#detailsModal .modal-content');
+        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+        
+        if (modalContent && modalBody) {
+          modalContent.style.maxWidth = '1600px';
+          modalBody.classList.add('has-revisions');
+        }
+        
+        if (historySection) {
+          historySection.style.display = 'block';
+        }
+        
+        historyContainer.innerHTML = '';
+        
+        // Filter out initial submission and render all revisions
+        const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+        
+        if (revisionsToShow.length > 0) {
+          revisionsToShow.forEach((revision, index) => {
+            console.log('[Admin Services - Revision History] Rendering revision', index, ':', revision.type);
+            const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+            historyContainer.appendChild(entry);
+          });
+          
+          console.log('[Admin Services - Revision History] All revisions rendered');
+        } else {
+          showEmptyState();
+        }
+      } else {
+        console.log('[Admin Services - Revision History] No revisions to display - showing empty state');
+        
+        // Reset to single column layout when no revisions
+        const modalContent = document.querySelector('#detailsModal .modal-content');
+        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+        
+        if (modalContent && modalBody) {
+          modalContent.style.maxWidth = '900px';
+          modalBody.classList.remove('has-revisions');
+        }
+        
+        showEmptyState();
+      }
+    } catch (error) {
+      console.error('[Admin Services - Revision History] Error loading revision history:', error);
+      showEmptyState();
+    }
+  }
+  
+  function createServiceRevisionEntry(revision, index, total) {
+    console.log('🔍 [Admin Services] Creating revision entry:', {
+      index,
+      total,
+      hasRequestedBy: !!revision.requestedBy,
+      hasRespondedBy: !!revision.respondedBy,
+      type: revision.type
+    });
+    
+    const entry = document.createElement('div');
+    entry.className = `revision-entry ${index === total - 1 ? 'latest' : ''}`;
+    
+    const isLatest = index === total - 1;
+    const entryNumber = total - index;
+    
+    // Format date
+    const formatDate = (dateStr) => {
+      if (!dateStr) return 'N/A';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+    
+    // Get type label and icon
+    const getTypeInfo = (type) => {
+      switch (type) {
+        case 'revision_request':
+          return { label: 'Revision Requested', icon: '🔄', color: '#f59e0b' };
+        case 'user_resubmit':
+          return { label: 'Resubmitted', icon: '📤', color: '#10b981' };
+        case 'admin_update':
+          return { label: 'Admin Update', icon: '✏️', color: '#6366f1' };
+        default:
+          return { label: type || 'Update', icon: '📋', color: '#6b7280' };
+      }
+    };
+    
+    const typeInfo = getTypeInfo(revision.type);
+    
+    entry.innerHTML = `
+      <div class="revision-header">
+        <span class="revision-number" style="background: ${typeInfo.color};">${typeInfo.icon} #${entryNumber}</span>
+        <span class="revision-type">${typeInfo.label}</span>
+        ${isLatest ? '<span class="revision-latest-badge">Latest</span>' : ''}
+      </div>
+      <div class="revision-meta">
+        <span class="revision-date">${formatDate(revision.timestamp || revision.createdAt)}</span>
+        ${revision.requestedBy ? `<span class="revision-by">By: ${revision.requestedBy.name || revision.requestedBy}</span>` : ''}
+      </div>
+      ${revision.reason || revision.message ? `
+        <div class="revision-reason">
+          <strong>Reason:</strong> ${revision.reason || revision.message}
+        </div>
+      ` : ''}
+      ${revision.changes && revision.changes.length > 0 ? `
+        <div class="revision-changes">
+          <strong>Changes:</strong>
+          <ul>
+            ${revision.changes.map(change => `<li>${change.field}: ${change.oldValue} → ${change.newValue}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''}
+    `;
+    
+    return entry;
   }
 
   // Initialize everything

@@ -212,27 +212,15 @@
             <div class="filter-group">
               <label class="filter-label">Filter by:</label>
 
-              <!-- First Row: Request ID, Type, Status, User -->
+              <!-- First Row: Request ID, User, Status, Assigned Unit -->
               <div class="filter-controls">
                 <div class="filter-item">
                   <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
                   <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
                 </div>
                 <div class="filter-item">
-                  <label class="filter-sublabel">Type</label>
-                  <div class="enhanced-multi-select-wrapper">
-                    <div class="enhanced-multi-select" id="typeFilter">
-                      <div class="select-display" data-placeholder="Select Type">
-                        <span class="selected-text">All Types</span>
-                        <span class="dropdown-arrow">▼</span>
-                      </div>
-                      <div class="select-dropdown" id="typeDropdown">
-                        <div class="options-container">
-                          <!-- JavaScript will populate this -->
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <label for="studentFilter" class="filter-sublabel">User</label>
+                  <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
                 </div>
                 <div class="filter-item">
                   <label class="filter-sublabel">Status</label>
@@ -249,8 +237,18 @@
                   </div>
                 </div>
                 <div class="filter-item">
-                  <label for="studentFilter" class="filter-sublabel">User</label>
-                  <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
+                  <label class="filter-sublabel">Assigned Unit</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="assignedUnitFilter">
+                      <div class="select-display" data-placeholder="Select Assigned Unit">
+                        <span class="selected-text">All Units</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="assignedUnitDropdown">
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -292,8 +290,17 @@
                 </div>
               </div>
 
-              <!-- Third Row: Date From and Date To -->
+              <!-- Third Row: Sort By, Date From and Date To -->
               <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="sortByFilter" class="filter-sublabel">Sort By</label>
+                  <select id="sortByFilter" class="filter-input">
+                    <option value="deadline-asc">Deadline (Soonest First)</option>
+                    <option value="deadline-desc">Deadline (Latest First)</option>
+                    <option value="date-desc">Date Submitted (Newest)</option>
+                    <option value="date-asc">Date Submitted (Oldest)</option>
+                  </select>
+                </div>
                 <div class="filter-item">
                   <label for="dateFromFilter" class="filter-sublabel">Date From</label>
                   <input type="date" id="dateFromFilter" class="filter-input">
@@ -302,7 +309,6 @@
                   <label for="dateToFilter" class="filter-sublabel">Date To</label>
                   <input type="date" id="dateToFilter" class="filter-input">
                 </div>
-                <div class="filter-item" style="visibility: hidden;"></div>
                 <div class="filter-item" style="visibility: hidden;"></div>
               </div>
             </div>
@@ -338,6 +344,7 @@
                 <th>Status</th>
                 <th>Assigned Units</th>
                 <th>Date Submitted</th>
+                <th>Deadline</th>
               </tr>
             </thead>
             <tbody id="requestsTableBody">
@@ -405,6 +412,7 @@
                 </td>
                 <td><%= request.assignedUnits || 'Not yet assigned' %></td>
                 <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
+                <td><%= formattedDeadline %></td>
               </tr>
               <% }); %>
             </tbody>
@@ -425,6 +433,24 @@
             </svg>
             Back to Dashboard
           </a>
+          
+          <!-- Pagination Controls -->
+          <div class="pagination-controls" id="paginationControls">
+            <button class="pagination-btn pagination-nav" id="prevPageBtn" disabled>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <div class="pagination-numbers" id="paginationNumbers">
+              <!-- Page numbers will be inserted here by JavaScript -->
+            </div>
+            <button class="pagination-btn pagination-nav" id="nextPageBtn" disabled>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+          
           <button class="trash-btn" onclick="openTrashModal()" title="View Deleted Requests">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -619,7 +645,11 @@
                 <!-- Status Field -->
                 <div class="form-field">
                   <label for="adminStatusSelect">Request Status</label>
-                  <select id="adminStatusSelect" name="status"></select>
+                  <select id="adminStatusSelect" name="status">
+                    <% (requestStatuses || []).forEach(function(status) { %>
+                      <option value="<%= status %>"><%= status %></option>
+                    <% }); %>
+                  </select>
                   <div class="current-value">
                     Current: <span id="currentStatusValue">Loading...</span>
                   </div>
@@ -630,16 +660,9 @@
                   <label for="adminUnitsSelect">Assigned Unit</label>
                   <select id="adminUnitsSelect" name="assignedUnits">
                     <option value="">Not yet assigned</option>
-                    <optgroup label="Recommended Units (based on request type)">
-                      <% units.forEach(unit => { %>
-                      <option value="<%= unit %>" class="recommended-unit">⭐ <%= unit %></option>
-                      <% }); %>
-                    </optgroup>
-                    <optgroup label="All Available Units">
-                      <% units.forEach(unit => { %>
+                    <% (units || []).forEach(function(unit) { %>
                       <option value="<%= unit %>"><%= unit %></option>
-                      <% }); %>
-                    </optgroup>
+                    <% }); %>
                   </select>
                   <div class="current-value">
                     Current: <span id="currentUnitsValue">Loading...</span>
@@ -1718,6 +1741,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 </script>
+
+<!-- Pass database values to JavaScript for filters -->
+<script>
+  // These values are fetched from the database and passed to the client
+  window.filterDataFromDatabase = {
+    requestStatuses: <%- JSON.stringify(requestStatuses || []) %>,
+    organizations: <%- JSON.stringify(organizations || []) %>,
+    offices: <%- JSON.stringify(offices || []) %>,
+    units: <%- JSON.stringify(units || []) %>
+  };
+</script>
+
 <!-- ===========================================
    ALL REQUESTS PAGE JAVASCRIPT CONNECTION
    File: public/javascripts/ejs/allrequestsadmin.js
