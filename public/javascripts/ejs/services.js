@@ -1,6 +1,11 @@
 
 console.log('🚀 Starting Services Admin script...');
 
+// Global variable to store available units from database
+let availableUnits = [];
+// Global variable to store available request statuses from database
+let availableStatuses = [];
+
 // Global dropdown manager to ensure only one dropdown is open at a time
 const DropdownManager = {
   activeDropdown: null,
@@ -615,6 +620,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function displayPage() {
+      const tableBody = document.getElementById('requestsTableBody');
+      if (!tableBody) return;
+      
+      const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
       const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
       const endIndex = startIndex + ITEMS_PER_PAGE;
       
@@ -623,28 +632,19 @@ document.addEventListener('DOMContentLoaded', function() {
         request.element.style.display = 'none';
       });
       
-      // Show only rows for current page
-      filteredData.slice(startIndex, endIndex).forEach(request => {
+      // Show only the rows for current page and reorder them
+      const pageData = filteredData.slice(startIndex, endIndex);
+      pageData.forEach(request => {
+        tableBody.appendChild(request.element);
         request.element.style.display = '';
       });
       
       // Update pagination controls
-      updatePaginationControls();
-    }
-    
-    function updatePaginationControls() {
-      const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-      
-      if (prevPageBtn) {
-        prevPageBtn.disabled = currentPage <= 1;
-      }
-      
-      if (nextPageBtn) {
-        nextPageBtn.disabled = currentPage >= totalPages;
-      }
-      
-      // Render pagination numbers
       renderPaginationNumbers(totalPages);
+      if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+      if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+      
+      updateResultsCount(filteredData.length);
     }
     
     function renderPaginationNumbers(totalPages) {
@@ -702,32 +702,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Sort data function
-    function sortData(data) {
-      const sortValue = sortByFilter?.value || 'deadline-asc';
+    function sortData(data, sortValue) {
+      // Statuses that should be sorted to the bottom (completed/closed requests)
+      const bottomStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      
       const [field, direction] = sortValue.split('-');
       const isAsc = direction === 'asc';
       
-      // Define statuses that should always be at the bottom
-      const bottomStatuses = ['approved', 'completed', 'rejected', 'archived'];
-      
-      return [...data].sort((a, b) => {
-        // First, separate bottom statuses from active statuses
+      data.sort((a, b) => {
+        // Check if either request has a "completed" status
         const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
         const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
         
-        // If one is bottom status and one isn't, bottom goes last
+        // Always push completed statuses to the bottom
         if (aIsBottom && !bIsBottom) return 1;
         if (!aIsBottom && bIsBottom) return -1;
         
-        // Both are same category, sort by the selected field
+        // If both are in the same category (both bottom or both not), sort normally
         let valA, valB;
         
-        if (field === 'deadline') {
-          valA = a.deadline || '9999-12-31';
-          valB = b.deadline || '9999-12-31';
-        } else {
-          valA = a.date || '';
-          valB = b.date || '';
+        switch (field) {
+          case 'deadline':
+            // Get deadline from element's dataset
+            valA = a.element?.dataset?.deadline || '';
+            valB = b.element?.dataset?.deadline || '';
+            // Put items without deadline at the end (but before bottom statuses)
+            if (!valA && valB) return isAsc ? 1 : -1;
+            if (valA && !valB) return isAsc ? -1 : 1;
+            if (!valA && !valB) return 0;
+            break;
+          case 'date':
+            valA = a.date || '';
+            valB = b.date || '';
+            break;
+          default:
+            valA = a.date || '';
+            valB = b.date || '';
         }
         
         if (valA < valB) return isAsc ? -1 : 1;
@@ -808,8 +818,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
       });
       
-      // Sort the filtered data
-      filteredData = sortData(filteredData);
+      // Then sort the filtered data
+      const sortValue = sortByFilter?.value || 'deadline-asc';
+      sortData(filteredData, sortValue);
       
       // Reset to first page and display
       currentPage = 1;
@@ -1942,9 +1953,13 @@ document.addEventListener('DOMContentLoaded', function() {
     populateFilePreview(rowData);
 
     // Show/hide additional file upload toggle based on status
+    // Hide for terminal statuses: Approved, Completed, Rejected, Archived
     const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
     if (additionalFileToggleSection) {
-      if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
+      const terminalStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      const currentStatusLower = (rowData.status || '').toLowerCase();
+      
+      if (!terminalStatuses.includes(currentStatusLower)) {
         additionalFileToggleSection.style.display = 'block';
         // Add event listener for the toggle
         const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
@@ -1989,8 +2004,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // Load revision history
-    loadRevisionHistory(rowData.id);
+    // Load revision history (pass status to determine visibility)
+    loadRevisionHistory(rowData.id, rowData.status);
   }
   
   // Populate admin form
@@ -2000,16 +2015,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentStatusValue = document.getElementById('currentStatusValue');
     
     if (statusSelect && currentStatusValue) {
-      const statusOptions = [
-        { value: 'Pending', label: 'Pending' },
-        { value: 'Queued', label: 'Queued' },
-        { value: 'In Progress', label: 'In Progress' },
-        { value: 'Approved', label: 'Approved' },
-        { value: 'For Revision', label: 'For Revision' },
-        { value: 'Completed', label: 'Completed' },
-        { value: 'Rejected', label: 'Rejected' },
-        { value: 'Archived', label: 'Archived' }
-      ];
+      // Ensure statuses are loaded from database
+      if (availableStatuses.length === 0) {
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.requestStatuses && dbData.requestStatuses.length > 0) {
+          availableStatuses = dbData.requestStatuses;
+        } else {
+          // Fallback to default statuses
+          availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', 'Approved', 'Completed', 'Rejected', 'Archived'];
+        }
+      }
+      
+      const statusOptions = availableStatuses.map(status => ({
+        value: status,
+        label: status
+      }));
       
       statusSelect.innerHTML = statusOptions.map(option => 
         `<option value="${option.value}" ${option.value === rowData.status ? 'selected' : ''}>${option.label}</option>`
@@ -2023,6 +2044,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentUnitsValue = document.getElementById('currentUnitsValue');
 
     if (unitsSelect && currentUnitsValue) {
+      // Ensure units are loaded from database (consistent with approvals.js)
+      if (availableUnits.length === 0) {
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.units && dbData.units.length > 0) {
+          availableUnits = dbData.units;
+        } else {
+          // Fallback to default units
+          availableUnits = ['Graphics Unit', 'Multimedia Unit', 'Public Relations Unit', 'Social Media Unit'];
+        }
+      }
+      
       // Define recommendation mapping for service requests
       const recommendationMapping = {
         'Creation of New Graphics/Pubmat': ['Graphics Unit'],
@@ -2040,15 +2073,16 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Service request type:', specificType, 'Recommended units:', recommendedUnits);
 
       if (unitsSelect) {
-        // Clear existing options and rebuild with recommendations
-        unitsSelect.innerHTML = `
-          <option value="">Not yet assigned</option>
-          <option value="Social Media Unit" ${recommendedUnits.includes('Social Media Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Social Media Unit') ? '★ ' : ''}Social Media Unit</option>
-          <option value="Graphics Unit" ${recommendedUnits.includes('Graphics Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Graphics Unit') ? '★ ' : ''}Graphics Unit</option>
-          <option value="Multimedia Unit" ${recommendedUnits.includes('Multimedia Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Multimedia Unit') ? '★ ' : ''}Multimedia Unit</option>
-          <option value="Public Relations Unit" ${recommendedUnits.includes('Public Relations Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Public Relations Unit') ? '★ ' : ''}Public Relations Unit</option>
-        `;
-
+        // Clear existing options and rebuild with recommendations from database
+        let optionsHtml = '<option value="">Not yet assigned</option>';
+        
+        // Add units from database
+        availableUnits.forEach(unit => {
+          const isRecommended = recommendedUnits.includes(unit);
+          optionsHtml += `<option value="${unit}" ${isRecommended ? 'class="recommended-unit"' : ''}>${isRecommended ? '★ ' : ''}${unit}</option>`;
+        });
+        
+        unitsSelect.innerHTML = optionsHtml;
         unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
       }
 
@@ -2652,11 +2686,11 @@ window.openImagePreview = function(imageUrl, fileName) {
   // REVISION HISTORY FUNCTIONS (Admin Services)
   // ==========================================
   
-  async function loadRevisionHistory(requestId) {
+  async function loadRevisionHistory(requestId, currentStatus = '') {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     
-    console.log('[Admin Services - Revision History] Loading for request:', requestId);
+    console.log('[Admin Services - Revision History] Loading for request:', requestId, 'Status:', currentStatus);
     
     if (!historyContainer) {
       console.warn('[Admin Services - Revision History] Container not found!');

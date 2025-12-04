@@ -383,64 +383,63 @@ class EnhancedMultiSelect {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
   
-  // Fetch available units and statuses from database
-  fetch('/api/system-data')
-    .then(response => response.json())
-    .then(data => {
-      if (data.success && data.data) {
-        availableUnits = data.data.units || [];
-        availableStatuses = data.data.requestStatuses || [];
-        availableOrganizations = data.data.organizations || [];
-        availableOffices = data.data.offices || [];
-        console.log('✅ Loaded data from database:', { 
-          units: availableUnits, 
-          statuses: availableStatuses,
-          organizations: availableOrganizations,
-          offices: availableOffices
-        });
-      } else {
-        console.error('❌ Failed to load data from API');
-        // Fallbacks
-        availableUnits = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
-        availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived'];
-        availableOrganizations = [];
-        availableOffices = [];
-      }
-      
-      // Initialize enhanced multi-select dropdowns after data is loaded
-      const statusFilter = new EnhancedMultiSelect('statusFilter', 
-        availableStatuses.map(s => s.toLowerCase()), 
-        'Select Status', false);
-        
-      const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
-        availableOrganizations, 
-        'Select Student Organizations', true);
-        
-      const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
-        availableOffices, 
-        'Select Offices/Departments', true);
-    })
-    .catch(error => {
-      console.error('❌ Error fetching data:', error);
-      // Fallbacks
-      availableUnits = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
-      availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived'];
-      availableOrganizations = [];
-      availableOffices = [];
-      
-      // Initialize enhanced multi-select dropdowns with fallbacks
-      const statusFilter = new EnhancedMultiSelect('statusFilter', 
-        availableStatuses.map(s => s.toLowerCase()), 
-        'Select Status', false);
-        
-      const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
-        availableOrganizations, 
-        'Select Student Organizations', true);
-        
-      const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
-        availableOffices, 
-        'Select Offices/Departments', true);
+  // Debug: Check all rows for allowAdditionalUpload data
+  console.log('🚀 Page loaded - checking all data attributes...');
+  const allRows = document.querySelectorAll('.request-row');
+  allRows.forEach((row, index) => {
+    const debugInfo = row.getAttribute('data-debug-allow');
+    const allowUpload = row.getAttribute('data-allow-additional-upload');
+    console.log(`Row ${index + 1}:`, {
+      requestId: row.dataset.requestId,
+      allowAdditionalUpload: allowUpload,
+      debugInfo: debugInfo ? JSON.parse(debugInfo) : 'No debug info'
     });
+  });
+  
+  // Get filter data from database (passed from server via EJS)
+  const dbData = window.filterDataFromDatabase || {};
+  const statusOptions = dbData.requestStatuses || ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'];
+  const orgOptions = dbData.organizations || [];
+  const officeOptions = dbData.offices || [];
+  const unitOptions = dbData.units || [];
+  
+  // Initialize enhanced multi-select dropdowns with database values
+  const statusFilter = new EnhancedMultiSelect('statusFilter', 
+    statusOptions, 
+    'Select Status', false);
+  
+  const statusFilterContainer = document.getElementById('statusFilter');
+  if (statusFilterContainer) {
+    statusFilterContainer.__instance = statusFilter;
+  }
+  
+  // Initialize assigned unit filter
+  const assignedUnitFilter = new EnhancedMultiSelect('assignedUnitFilter',
+    unitOptions,
+    'Select Assigned Unit', false);
+  
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.__instance = assignedUnitFilter;
+  }
+    
+  const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
+    orgOptions, 
+    'Select Student Organizations', true);
+  
+  const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+  if (studentOrgFilterContainer) {
+    studentOrgFilterContainer.__instance = studentOrgFilter;
+  }
+    
+  const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
+    officeOptions, 
+    'Select Offices/Departments', true);
+  
+  const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+  if (officeDeptFilterContainer) {
+    officeDeptFilterContainer.__instance = officeDeptFilter;
+  }
 
   // Global variables
   let detailModal = document.getElementById("detailsModal");
@@ -467,20 +466,21 @@ document.addEventListener('DOMContentLoaded', function() {
       element: row,
       requestId: row.dataset.requestId,
       type: row.dataset.type,
-      title: row.dataset.title.toLowerCase(),
-      status: row.dataset.status.toLowerCase(),
-      organization: row.dataset.organization.toLowerCase(),
-      units: row.dataset.units.toLowerCase(),
-      student: row.dataset.student.toLowerCase(),
+      title: row.dataset.title?.toLowerCase() || '',
+      status: row.dataset.status?.toLowerCase() || '',
+      organization: row.dataset.organization?.toLowerCase() || '',
+      units: row.dataset.units?.toLowerCase() || '',
+      student: row.dataset.student?.toLowerCase() || '',
       datetime: row.dataset.datetime,
       date: row.dataset.date,
       deadline: row.dataset.deadline,
-      description: row.dataset.description.toLowerCase()
+      description: row.dataset.description?.toLowerCase() || ''
     }));
 
     // Get filter elements
     const requestIdFilter = document.getElementById('requestIdFilter');
     const studentFilter = document.getElementById('studentFilter');
+    const sortByFilter = document.getElementById('sortByFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     const clearFiltersBtn = document.getElementById('clearFilters');
@@ -496,20 +496,203 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Enhanced dropdown change listeners
-    document.getElementById('statusFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('studentOrgFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('officeDeptFilter').addEventListener('selectionChange', applyFilters);
+    if (statusFilterContainer) {
+      statusFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (assignedUnitFilterContainer) {
+      assignedUnitFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (studentOrgFilterContainer) {
+      studentOrgFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (officeDeptFilterContainer) {
+      officeDeptFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
 
     if (dateFromFilter) {
-      dateFromFilter.addEventListener('change', applyFilters);
+      dateFromFilter.addEventListener('change', () => {
+        // Set minimum date for "Date To" based on "Date From" selection
+        if (dateToFilter && dateFromFilter.value) {
+          dateToFilter.min = dateFromFilter.value;
+          if (dateToFilter.value && dateToFilter.value < dateFromFilter.value) {
+            dateToFilter.value = '';
+          }
+        } else if (dateToFilter) {
+          dateToFilter.min = '';
+        }
+        applyFilters();
+      });
     }
 
     if (dateToFilter) {
       dateToFilter.addEventListener('change', applyFilters);
     }
+    
+    if (sortByFilter) {
+      sortByFilter.addEventListener('change', applyFilters);
+    }
 
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+    
+    // Pagination variables
+    const ITEMS_PER_PAGE = 10;
+    let currentPage = 1;
+    let filteredData = [];
+    
+    // Pagination elements
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    
+    if (prevPageBtn) {
+      prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          displayPage();
+        }
+      });
+    }
+    
+    if (nextPageBtn) {
+      nextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayPage();
+        }
+      });
+    }
+    
+    function displayPage() {
+      const tableBody = document.getElementById('requestsTableBody');
+      if (!tableBody) return;
+      
+      const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      
+      // Hide all rows first
+      allRequestsData.forEach(request => {
+        request.element.style.display = 'none';
+      });
+      
+      // Show only the rows for current page and reorder them
+      const pageData = filteredData.slice(startIndex, endIndex);
+      pageData.forEach(request => {
+        tableBody.appendChild(request.element);
+        request.element.style.display = '';
+      });
+      
+      // Update pagination controls
+      renderPaginationNumbers(totalPages);
+      if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+      if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+      
+      updateResultsCount(filteredData.length);
+    }
+    
+    function renderPaginationNumbers(totalPages) {
+      if (!paginationNumbers) return;
+      
+      paginationNumbers.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      // First page button
+      if (startPage > 1) {
+        paginationNumbers.appendChild(createPageButton(1));
+        if (startPage > 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+      }
+      
+      // Page number buttons
+      for (let i = startPage; i <= endPage; i++) {
+        paginationNumbers.appendChild(createPageButton(i));
+      }
+      
+      // Last page button
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+        paginationNumbers.appendChild(createPageButton(totalPages));
+      }
+    }
+    
+    function createPageButton(pageNum) {
+      const btn = document.createElement('button');
+      btn.className = 'pagination-btn' + (pageNum === currentPage ? ' active' : '');
+      btn.textContent = pageNum;
+      btn.addEventListener('click', () => {
+        currentPage = pageNum;
+        displayPage();
+      });
+      return btn;
+    }
+    
+    // Sort data function
+    function sortData(data, sortValue) {
+      // Statuses that should be sorted to the bottom (completed/closed requests)
+      const bottomStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      
+      const [field, direction] = sortValue.split('-');
+      const isAsc = direction === 'asc';
+      
+      data.sort((a, b) => {
+        // Check if either request has a "completed" status
+        const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
+        const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
+        
+        // Always push completed statuses to the bottom
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        
+        // If both are in the same category (both bottom or both not), sort normally
+        let valA, valB;
+        
+        switch (field) {
+          case 'deadline':
+            // Get deadline from element's dataset
+            valA = a.element?.dataset?.deadline || '';
+            valB = b.element?.dataset?.deadline || '';
+            // Put items without deadline at the end (but before bottom statuses)
+            if (!valA && valB) return isAsc ? 1 : -1;
+            if (valA && !valB) return isAsc ? -1 : 1;
+            if (!valA && !valB) return 0;
+            break;
+          case 'date':
+            valA = a.date || '';
+            valB = b.date || '';
+            break;
+          default:
+            valA = a.date || '';
+            valB = b.date || '';
+        }
+        
+        if (valA < valB) return isAsc ? -1 : 1;
+        if (valA > valB) return isAsc ? 1 : -1;
+        return 0;
+      });
     }
 
     // Apply filters function
@@ -518,89 +701,82 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const filters = {
         requestId: requestIdFilter ? requestIdFilter.value.toLowerCase().trim() : '',
-        status: statusFilter.getSelectedValues(),
+        status: statusFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        assignedUnit: assignedUnitFilterContainer?.__instance?.getSelectedValues() || ['all'],
         student: studentFilter ? studentFilter.value.toLowerCase().trim() : '',
-        studentOrg: studentOrgFilter.getSelectedValues(),
-        officeDept: officeDeptFilter.getSelectedValues(),
+        studentOrg: studentOrgFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        officeDept: officeDeptFilterContainer?.__instance?.getSelectedValues() || ['all'],
         dateFrom: dateFromFilter ? dateFromFilter.value : '',
         dateTo: dateToFilter ? dateToFilter.value : ''
       };
 
       console.log('Applied filters:', filters);
 
-      let visibleCount = 0;
-
-      allRequestsData.forEach(request => {
-        let shouldShow = true;
-
+      // Filter the data
+      filteredData = allRequestsData.filter(request => {
         // Request ID filter
-        if (filters.requestId && !request.requestId.toLowerCase().includes(filters.requestId)) {
-          shouldShow = false;
+        if (filters.requestId && !request.requestId?.toLowerCase().includes(filters.requestId)) {
+          return false;
         }
 
-        // Status filter (multi-select)
+        // Status filter (multi-select, case-insensitive)
         if (filters.status.length > 0 && !filters.status.includes('all')) {
-          if (!filters.status.includes(request.status)) {
-            shouldShow = false;
-          }
+          const statusMatch = filters.status.some(s => s.toLowerCase() === request.status?.toLowerCase());
+          if (!statusMatch) return false;
+        }
+        
+        // Assigned Unit filter (case-insensitive)
+        if (filters.assignedUnit.length > 0 && !filters.assignedUnit.includes('all')) {
+          const unitMatch = filters.assignedUnit.some(u => request.units?.toLowerCase().includes(u.toLowerCase()));
+          if (!unitMatch) return false;
         }
 
         // Student filter
-        if (filters.student && !request.student.includes(filters.student)) {
-          shouldShow = false;
+        if (filters.student && !request.student?.includes(filters.student)) {
+          return false;
         }
 
         // Organization filter (multi-select)
-        let organizationMatch = true;
         const hasStudentOrgSelection = filters.studentOrg.length > 0 && !filters.studentOrg.includes('all');
         const hasOfficeDeptSelection = filters.officeDept.length > 0 && !filters.officeDept.includes('all');
         
         if (hasStudentOrgSelection || hasOfficeDeptSelection) {
-          organizationMatch = false;
+          let organizationMatch = false;
           
           // Check student organizations
           if (hasStudentOrgSelection) {
             organizationMatch = filters.studentOrg.some(org => 
-              request.organization.includes(org.toLowerCase())
+              request.organization?.includes(org.toLowerCase())
             );
           }
           
           // Check office/departments (OR logic with student orgs)
           if (!organizationMatch && hasOfficeDeptSelection) {
             organizationMatch = filters.officeDept.some(dept => 
-              request.organization.includes(dept.toLowerCase())
+              request.organization?.includes(dept.toLowerCase())
             );
           }
-        }
-
-        if (!organizationMatch) {
-          shouldShow = false;
+          
+          if (!organizationMatch) return false;
         }
 
         // Date range filter
-        if (filters.dateFrom || filters.dateTo) {
-          const requestDate = request.date;
-          
-          if (filters.dateFrom && requestDate < filters.dateFrom) {
-            shouldShow = false;
-          }
-          
-          if (filters.dateTo && requestDate > filters.dateTo) {
-            shouldShow = false;
-          }
-        }
+        if (filters.dateFrom && request.date && request.date < filters.dateFrom) return false;
+        if (filters.dateTo && request.date && request.date > filters.dateTo) return false;
 
-        // Show/hide row
-        if (shouldShow) {
-          request.element.style.display = '';
-          visibleCount++;
-        } else {
-          request.element.style.display = 'none';
-        }
+        return true;
       });
+      
+      // Then sort the filtered data
+      const sortValue = sortByFilter?.value || 'deadline-asc';
+      sortData(filteredData, sortValue);
+      
+      // Reset to first page and display
+      currentPage = 1;
+      displayPage();
 
       // Update results count
-      updateResultsCount(visibleCount);
+      updateResultsCount(filteredData.length);
     }
 
     // Clear all filters
@@ -610,23 +786,24 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear text inputs
       if (requestIdFilter) requestIdFilter.value = '';
       if (studentFilter) studentFilter.value = '';
-      if (dateFromFilter) dateFromFilter.value = '';
-      if (dateToFilter) dateToFilter.value = '';
+      if (sortByFilter) sortByFilter.value = 'deadline-asc';
+      if (dateFromFilter) {
+        dateFromFilter.value = '';
+      }
+      if (dateToFilter) {
+        dateToFilter.value = '';
+        dateToFilter.min = '';
+      }
       
       // Reset enhanced dropdowns
-      statusFilter.reset();
-      studentOrgFilter.reset();
-      officeDeptFilter.reset();
+      statusFilterContainer?.__instance?.reset();
+      assignedUnitFilterContainer?.__instance?.reset();
+      studentOrgFilterContainer?.__instance?.reset();
+      officeDeptFilterContainer?.__instance?.reset();
 
-      // Show all rows
-      allRequestsData.forEach(request => {
-        request.element.style.display = '';
-      });
-
-      // Update results count
-      updateResultsCount(allRequestsData.length);
-      
-      showNotification('All filters cleared', 'info');
+      // Reset pagination and apply filters
+      currentPage = 1;
+      applyFilters();
     }
 
     // Update results count
@@ -654,8 +831,8 @@ document.addEventListener('DOMContentLoaded', function() {
       };
     }
 
-    // Initial results count
-    updateResultsCount(allRequestsData.length);
+    // Initial filter application (apply sort and show first page)
+    applyFilters();
     
     console.log('✅ Filters initialized successfully');
   }
@@ -1639,13 +1816,17 @@ if (specificRequestType) {
     // Handle file preview
     populateFilePreview(rowData);
     
-    // Load revision history
-    loadRevisionHistory(currentRequestId);
+    // Load revision history (pass status to determine visibility)
+    loadRevisionHistory(currentRequestId, rowData.status);
     
     // Show/hide additional file upload toggle based on status
+    // Hide for terminal statuses: Approved, Completed, Rejected, Archived
     const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
     if (additionalFileToggleSection) {
-      if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
+      const terminalStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      const currentStatusLower = (rowData.status || '').toLowerCase();
+      
+      if (!terminalStatuses.includes(currentStatusLower)) {
         additionalFileToggleSection.style.display = 'block';
         // Add event listener for the toggle
         const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
@@ -1698,9 +1879,16 @@ if (specificRequestType) {
     const currentStatusValue = document.getElementById('currentStatusValue');
     
     if (statusSelect && currentStatusValue) {
-      // Ensure statuses are loaded
+      // Ensure statuses are loaded from database
       if (availableStatuses.length === 0) {
-        availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived'];
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.requestStatuses && dbData.requestStatuses.length > 0) {
+          availableStatuses = dbData.requestStatuses;
+        } else {
+          // Fallback to default statuses
+          availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', 'Approved', 'Completed', 'Rejected', 'Archived'];
+        }
       }
       
       const statusOptions = availableStatuses.map(status => ({
@@ -1720,18 +1908,25 @@ if (specificRequestType) {
     const currentUnitsValue = document.getElementById('currentUnitsValue');
 
     if (unitsSelect && currentUnitsValue) {
-      // Ensure units are loaded
+      // Ensure units are loaded from database (consistent with services.js)
       if (availableUnits.length === 0) {
-        availableUnits = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.units && dbData.units.length > 0) {
+          availableUnits = dbData.units;
+        } else {
+          // Fallback to default units
+          availableUnits = ['Graphics Unit', 'Multimedia Unit', 'Public Relations Unit', 'Social Media Unit'];
+        }
       }
       
       // Define recommendation mapping for approval requests
       const recommendationMapping = {
-        'Social Media Post Content/Caption': ['Social Media', 'Public Relations'],
-        'Draft Official Letter/Advisory': ['Public Relations'],
-        'Publication Material/Pubmat Design Vetting': ['Graphics'],
-        'Publication Wording/Content Check': ['Public Relations', 'Social Media'],
-        'Logo/Merchandise Design Vetting': ['Graphics']
+        'Social Media Post Content/Caption': ['Social Media Unit', 'Public Relations Unit'],
+        'Draft Official Letter/Advisory': ['Public Relations Unit'],
+        'Publication Material/Pubmat Design Vetting': ['Graphics Unit'],
+        'Publication Wording/Content Check': ['Public Relations Unit', 'Social Media Unit'],
+        'Logo/Merchandise Design Vetting': ['Graphics Unit']
       };
 
       // Get recommended units for this request type
@@ -2723,16 +2918,35 @@ document.addEventListener("click", function(event) {
 // REVISION HISTORY FUNCTIONS (Admin Approvals - Observer Only)
 // ==========================================
 
-async function loadRevisionHistory(requestId) {
+async function loadRevisionHistory(requestId, currentStatus = '') {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     
-    console.log('[Admin Approvals - Revision History] Loading for request:', requestId);
+    console.log('[Admin Approvals - Revision History] Loading for request:', requestId, 'Status:', currentStatus);
     
     if (!historyContainer) {
         console.warn('[Admin Approvals - Revision History] Container not found!');
         return;
     }
+    
+    // Helper function to show empty state
+    const showEmptyState = () => {
+        if (historySection) {
+            historySection.style.display = 'block';
+        }
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
+    };
     
     try {
         const response = await fetch(`/api/revision-history/${requestId}`);
@@ -2741,7 +2955,7 @@ async function loadRevisionHistory(requestId) {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Admin Approvals - Revision History] API returned non-JSON response');
-            if (historySection) historySection.style.display = 'none';
+            showEmptyState();
             return;
         }
         
@@ -2771,46 +2985,24 @@ async function loadRevisionHistory(requestId) {
             // Filter out initial submission and render all revisions
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
             
-            revisionsToShow.forEach((revision, index) => {
-                console.log('[Admin Approvals - Revision History] Rendering revision', index, ':', revision.type);
-                const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length);
-                historyContainer.appendChild(entry);
-            });
-            
-            console.log('[Admin Approvals - Revision History] All revisions rendered');
+            if (revisionsToShow.length > 0) {
+                revisionsToShow.forEach((revision, index) => {
+                    console.log('[Admin Approvals - Revision History] Rendering revision', index, ':', revision.type);
+                    const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length);
+                    historyContainer.appendChild(entry);
+                });
+                
+                console.log('[Admin Approvals - Revision History] All revisions rendered');
+            } else {
+                showEmptyState();
+            }
         } else {
-            console.log('[Admin Approvals - Revision History] No revisions to display');
-            
-            // Reset to single column layout when no revisions - keep original size
-            const modalContent = document.querySelector('#detailsModal .modal-content');
-            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-            
-            if (modalContent && modalBody) {
-                modalContent.style.maxWidth = '900px';
-                modalBody.classList.remove('has-revisions');
-            }
-            
-            if (historySection) {
-                historySection.style.display = 'none';
-            }
+            console.log('[Admin Approvals - Revision History] No revisions to display - showing empty state');
+            showEmptyState();
         }
     } catch (error) {
         console.error('[Admin Approvals - Revision History] Error loading revision history:', error);
-        
-        // Reset to single column layout on error - keep original size
-        const modalContent = document.querySelector('#detailsModal .modal-content');
-        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-        
-        if (modalContent && modalBody) {
-            modalContent.style.maxWidth = '900px';
-            modalBody.classList.remove('has-revisions');
-        }
-        
-        if (historySection) {
-            historySection.style.display = 'none';
-        }
+        showEmptyState();
     }
 }
 

@@ -1108,12 +1108,10 @@ function populateAdminForm(rowData) {
     deadlineDisplay: rowData.formattedDeadline
   };
 
-  // Show additional file upload toggle for all requests
+  // Initialize additional file upload toggle checkbox state
+  // Note: Visibility is controlled by populateFilePreview() based on request status
   const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
   if (additionalFileToggleSection) {
-    // Always show the toggle section so admins can configure it for any request
-    additionalFileToggleSection.style.display = 'block';
-    
     // Initialize checkbox state based on allowAdditionalUpload data
     // Check for both possible checkbox IDs
     const checkbox = document.getElementById('allowAdditionalFileUpload') || 
@@ -1182,12 +1180,12 @@ function populateAdminForm(rowData) {
 }
 
 function getStatusOptions(type) {
-  const baseStatuses = ['approved', 'rejected', 'archived'];
+  const baseStatuses = ['Approved', 'Rejected', 'Archived'];
 
   if (type === 'Request Approval') {
-    return ['Pending', 'Queued', 'In Progress', 'For Revision', ...baseStatuses];
+    return ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', ...baseStatuses];
   } else {
-    return ['Pending', 'Queued', 'In Progress', 'For Revision', 'completed', ...baseStatuses];
+    return ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', 'Completed', ...baseStatuses];
   }
 }
 
@@ -1266,11 +1264,14 @@ function populateFilePreview(rowData) {
     allFiles = [rowData.file.trim()];
   }
 
-  // Show toggle section only when there are files and the request allows additional uploads
+  // Show toggle section based on status (case-insensitive) - show for statuses that allow revisions
   const toggleSection = document.getElementById('additionalFileToggleSection');
   if (toggleSection) {
-    // For now, show it when there are files (can be refined later based on request status)
-    toggleSection.style.display = allFiles.length > 0 ? 'block' : 'none';
+    const status = (rowData.status || '').toLowerCase();
+    // Show toggle for these statuses (case-insensitive comparison)
+    const revisionStatuses = ['pending', 'queued', 'in progress', 'for checking', 'for revision'];
+    const shouldShowToggle = revisionStatuses.includes(status);
+    toggleSection.style.display = shouldShowToggle ? 'block' : 'none';
   }
 
   if (allFiles.length > 0) {

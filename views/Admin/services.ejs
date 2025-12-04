@@ -21,7 +21,6 @@
   <link rel="stylesheet" href="/stylesheets/quill-custom.css">
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <script src="/javascripts/alert-handler.js"></script>
-
 </head>
 <body>
   <!-- SIDEBAR NAVIGATION -->
@@ -197,113 +196,129 @@
         <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
 
         <!-- Filter Options -->
-<div class="filter-section">
-  <div class="filter-container">
-    <div class="filter-group">
-      <label class="filter-label">Filter by:</label>
-      
-      <!-- First Row: Request ID, Status, User -->
-      <div class="filter-controls">
-        <div class="filter-item">
-          <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
-          <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
-        </div>
-        <div class="filter-item">
-          <label class="filter-sublabel">Status</label>
-          <div class="enhanced-multi-select-wrapper">
-            <div class="enhanced-multi-select" id="statusFilter">
-              <div class="select-display" data-placeholder="Select Status">
-                <span class="selected-text">All Status</span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              <div class="select-dropdown" id="statusDropdown">
-                <div class="options-container">
-                  <!-- JavaScript will populate this -->
+        <div class="filter-section">
+          <div class="filter-container">
+            <div class="filter-group">
+              <label class="filter-label">Filter by:</label>
+
+              <!-- First Row: Request ID, User, Status, Assigned Unit -->
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
+                  <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
                 </div>
+                <div class="filter-item">
+                  <label for="studentFilter" class="filter-sublabel">User</label>
+                  <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
+                </div>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Status</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="statusFilter">
+                      <div class="select-display" data-placeholder="Select Status">
+                        <span class="selected-text">All Status</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="statusDropdown">
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Assigned Unit</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="assignedUnitFilter">
+                      <div class="select-display" data-placeholder="Select Assigned Unit">
+                        <span class="selected-text">All Units</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="assignedUnitDropdown">
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Second Row: Student Organization and Office/Department -->
+              <div class="filter-controls dropdown-row">
+                <div class="filter-item">
+                  <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="studentOrgFilter">
+                      <div class="select-display" data-placeholder="Select Student Organizations">
+                        <span class="selected-text">All Student Organizations</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="studentOrgDropdown">
+                        <div class="search-container">
+                          <input type="text" class="search-input" placeholder="Search organizations...">
+                        </div>
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-item">
+                  <label for="officeDeptFilter" class="filter-sublabel">Office/Department</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="officeDeptFilter">
+                      <div class="select-display" data-placeholder="Select Offices/Departments">
+                        <span class="selected-text">All Offices/Departments</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="officeDeptDropdown">
+                        <div class="search-container">
+                          <input type="text" class="search-input" placeholder="Search offices/departments...">
+                        </div>
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Third Row: Sort By, Date From and Date To -->
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="sortByFilter" class="filter-sublabel">Sort By</label>
+                  <select id="sortByFilter" class="filter-input">
+                    <option value="deadline-asc">Deadline (Soonest First)</option>
+                    <option value="deadline-desc">Deadline (Latest First)</option>
+                    <option value="date-desc">Date Submitted (Newest)</option>
+                    <option value="date-asc">Date Submitted (Oldest)</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                  <input type="date" id="dateFromFilter" class="filter-input">
+                </div>
+                <div class="filter-item">
+                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                  <input type="date" id="dateToFilter" class="filter-input">
+                </div>
+                <div class="filter-item" style="visibility: hidden;"></div>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button id="clearFilters" class="clear-filters-btn">
+                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="6" width="18" height="14" rx="2"/>
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <line x1="1" y1="6" x2="23" y2="6"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                Clear All
+              </button>
+              <div class="results-count">
+                <span id="resultsCount">Showing all requests</span>
               </div>
             </div>
           </div>
         </div>
-        <div class="filter-item">
-          <label for="studentFilter" class="filter-sublabel">User</label>
-          <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
-        </div>
-      </div>
-      
-      <!-- Second Row: Student Organization and Office/Department Side by Side -->
-      <div class="filter-controls">
-        <div class="filter-item">
-          <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
-          <div class="enhanced-multi-select-wrapper">
-            <div class="enhanced-multi-select" id="studentOrgFilter">
-              <div class="select-display" data-placeholder="Select Student Organizations">
-                <span class="selected-text">All Student Organizations</span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              <div class="select-dropdown" id="studentOrgDropdown">
-                <div class="search-container">
-                  <input type="text" class="search-input" placeholder="Search organizations...">
-                </div>
-                <div class="options-container">
-                  <!-- JavaScript will populate this -->
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="filter-item">
-          <label for="officeDeptFilter" class="filter-sublabel">Office/Department</label>
-          <div class="enhanced-multi-select-wrapper">
-            <div class="enhanced-multi-select" id="officeDeptFilter">
-              <div class="select-display" data-placeholder="Select Offices/Departments">
-                <span class="selected-text">All Offices/Departments</span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              <div class="select-dropdown" id="officeDeptDropdown">
-                <div class="search-container">
-                  <input type="text" class="search-input" placeholder="Search offices/departments...">
-                </div>
-                <div class="options-container">
-                  <!-- JavaScript will populate this -->
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Third Row: Date From and Date To -->
-      <div class="filter-controls">
-        <div class="filter-item">
-          <label for="dateFromFilter" class="filter-sublabel">Date From</label>
-          <input type="date" id="dateFromFilter" class="filter-input">
-        </div>
-        <div class="filter-item">
-          <label for="dateToFilter" class="filter-sublabel">Date To</label>
-          <input type="date" id="dateToFilter" class="filter-input">
-        </div>
-        <!-- Empty divs to maintain grid alignment if needed -->
-        <div class="filter-item" style="visibility: hidden;"></div>
-      </div>
-      
-    </div>
-    <div class="filter-actions">
-      <button id="clearFilters" class="clear-filters-btn">
-        <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="6" width="18" height="14" rx="2"/>
-          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          <line x1="1" y1="6" x2="23" y2="6"/>
-          <line x1="10" y1="11" x2="10" y2="17"/>
-          <line x1="14" y1="11" x2="14" y2="17"/>
-        </svg>
-        Clear All
-      </button>
-      <div class="results-count">
-        <span id="resultsCount">Showing all requests</span>
-      </div>
-    </div>
-  </div>
-</div>
 
         <!-- Table -->
         <section class="table-section" style="overflow-x: auto;">
@@ -416,6 +431,24 @@
             </svg>
             Back to Dashboard
           </a>
+          
+          <!-- Pagination Controls -->
+          <div class="pagination-controls" id="paginationControls">
+            <button class="pagination-btn pagination-nav" id="prevPageBtn" disabled>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <div class="pagination-numbers" id="paginationNumbers">
+              <!-- Page numbers will be inserted here by JavaScript -->
+            </div>
+            <button class="pagination-btn pagination-nav" id="nextPageBtn" disabled>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+          
           <button class="trash-btn" onclick="openTrashModal()" title="View Deleted Requests">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -595,31 +628,64 @@
         <!-- Files Section -->
         <div id="file-preview"></div>
 
-        <!-- Revision History Section -->
-        <div id="revisionHistorySection" class="details-section" style="display: none;">
-          <h3>📋 Revision History</h3>
-          <div class="details-content">
-            <div id="revisionHistoryContainer" class="revision-history-timeline">
-              <!-- Dynamically populated by JavaScript -->
+        <!-- Quick Actions removed - Use button in left column instead -->
+      </div>
+
+      <!-- RIGHT COLUMN: Communication & History -->
+      <div class="unit-right-column">
+        <!-- Team Conversation Button -->
+        <div class="unit-info-card unit-conversation-trigger">
+          <button id="openTeamChatBtn" class="unit-chat-button">
+            <span class="unit-chat-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            <div class="unit-chat-text">
+              <strong>Open Request Discussion</strong>
+              <small>Communicate with users and units</small>
             </div>
+            <span class="unit-chat-arrow">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Revision History Section (appears in right column) -->
+        <div id="revisionHistorySection" class="unit-action-panel revision-history-panel">
+          <div class="unit-panel-header revision-header">
+            <h3>
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: -2px; margin-right: 8px;">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+              Revision History
+            </h3>
+            <p>Complete timeline of all revisions and resubmissions</p>
           </div>
+          <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
         </div>
 
         <!-- Additional File Upload Toggle -->
-        <div id="additionalFileToggleSection" style="display: none;">
+        <div id="additionalFileToggleSection" class="admin-action-panel" style="display: none;">
           <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <label class="toggle-switch" style="margin: 0;">
-              <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
-              <span class="toggle-slider"></span>
-            </label>
-            <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label class="toggle-switch" style="margin: 0;">
+                <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
             </div>
             <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
               This will permit users to add more files when revising their requests
             </div>
           </div>
-
+          
           <style>
             /* Toggle Switch Styles */
             .toggle-switch {
@@ -668,123 +734,7 @@
               width: 0;
               height: 0;
             }
-
-            /* Enhanced Conversation Message Styles */
-            .message {
-              margin-bottom: 1.5rem;
-              max-width: 70%;
-              display: flex;
-              flex-direction: column;
-            }
-
-            .admin-message {
-              align-self: flex-end;
-              margin-left: auto;
-              margin-right: 0;
-            }
-
-            .user-message {
-              align-self: flex-start;
-              margin-left: 0;
-              margin-right: auto;
-            }
-
-            .message-content {
-              padding: 0.75rem;
-              border-radius: 1rem;
-              background: #f3f4f6;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-              position: relative;
-            }
-
-            .admin-message .message-content {
-              background: var(--primary-green);
-              color: white;
-              border-bottom-right-radius: 0.25rem;
-            }
-
-            .user-message .message-content {
-              background: white;
-              color: #374151;
-              border: 1px solid #e5e7eb;
-              border-bottom-left-radius: 0.25rem;
-            }
-
-            .message-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 0.5rem;
-              font-size: 0.875rem;
-            }
-
-            .admin-message .message-header {
-              color: rgba(255, 255, 255, 0.9);
-            }
-
-            .user-message .message-header {
-              color: #6b7280;
-            }
-
-            .message-time {
-              opacity: 0.8;
-              font-size: 0.75rem;
-            }
-
-            .message-text {
-              word-wrap: break-word;
-              line-height: 1.5;
-            }
-
-            /* Format Button Hover Effects */
-            .format-btn:hover {
-              background: #f3f4f6;
-              border-color: var(--primary-green);
-            }
           </style>
-        </div>
-
-        <!-- Quick Actions removed - Use button in left column instead -->
-      </div>
-
-      <!-- RIGHT COLUMN: Communication & History -->
-      <div class="unit-right-column">
-        <!-- Team Conversation Button -->
-        <div class="unit-info-card unit-conversation-trigger">
-          <button id="openTeamChatBtn" class="unit-chat-button">
-            <span class="unit-chat-icon">
-              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </span>
-            <div class="unit-chat-text">
-              <strong>Open Request Discussion</strong>
-              <small>Communicate with users and units</small>
-            </div>
-            <span class="unit-chat-arrow">
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12 5 19 12 12 19"/>
-              </svg>
-            </span>
-          </button>
-        </div>
-
-        <!-- Revision History Section (appears in right column) -->
-        <div id="revisionHistorySection" class="unit-action-panel revision-history-panel">
-          <div class="unit-panel-header revision-header">
-            <h3>
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: -2px; margin-right: 8px;">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                <path d="M3 21v-5h5"/>
-              </svg>
-              Revision History
-            </h3>
-            <p>Complete timeline of all revisions and resubmissions</p>
-          </div>
-          <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
         </div>
       </div>
     </div>
@@ -1200,7 +1150,20 @@
     }
   });
 </script>
+
+<!-- Pass database values to JavaScript for filters -->
+<script>
+  // These values are fetched from the database and passed to the client
+  window.filterDataFromDatabase = {
+    requestStatuses: <%- JSON.stringify(requestStatuses || []) %>,
+    organizations: <%- JSON.stringify(organizations || []) %>,
+    offices: <%- JSON.stringify(offices || []) %>,
+    units: <%- JSON.stringify(units || []) %>
+  };
+</script>
+
 <script src="/javascripts/ejs/services.js"></script>
+<script src="/javascripts/status-handler.js"></script>
 <script>
 // Sidebar hover effect
 const sidebar = document.getElementById('adminSidebar');
