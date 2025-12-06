@@ -70,6 +70,20 @@ async function requireAdmin(req, res, next) {
       });
     }
 
+    // Check if user's email is verified
+    if (!user.emailVerified) {
+      return res.status(403).render('error', {
+        message: 'Please verify your email address before accessing the system.'
+      });
+    }
+
+    // Check if user is approved
+    if (user.status !== 'approved') {
+      return res.status(403).render('error', {
+        message: 'Your account is pending admin approval. Please wait for verification.'
+      });
+    }
+
     // User is authenticated and has admin privileges
     req.user = user; // Make user available to route handlers
     next();
@@ -124,6 +138,14 @@ async function requireUnit(req, res, next) {
       console.log('[requireUnit] ERROR: User does not have unit role. Role is:', user.role);
       return res.status(403).render('error', {
         message: 'Access denied. Unit members only.'
+      });
+    }
+
+    // Check if user's email is verified
+    if (!user.emailVerified) {
+      console.log('[requireUnit] ERROR: User email not verified');
+      return res.status(403).render('error', {
+        message: 'Please verify your email address before accessing the system.'
       });
     }
 

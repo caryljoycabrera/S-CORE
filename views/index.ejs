@@ -373,27 +373,30 @@
       display: inline-block;
       margin-top: 16px;
       font-size: 15px;
-      color: #6b7280;
+      color: #408b4e;
       text-decoration: none;
       font-weight: 500;
       transition: all 0.3s ease;
       position: relative;
+      padding: 2px 4px;
+      border-radius: 4px;
     }
 
     .forgot-link::after {
       content: '';
       position: absolute;
-      bottom: -2px;
+      bottom: 0;
       left: 0;
       width: 0;
-      height: 1px;
-      background: #6b7280;
+      height: 2px;
+      background: #408b4e;
       transition: width 0.3s ease;
+      border-radius: 1px;
     }
 
     .forgot-link:hover {
-      color: #374151;
-      transform: translateY(-1px);
+      color: #275730;
+      background: rgba(64, 139, 78, 0.05);
     }
 
     .forgot-link:hover::after {
@@ -668,7 +671,7 @@
     <form action="/login" method="POST">
       <div class="input-group">
         <img src="/Picture/usericon.png" alt="User Icon" />
-        <input type="text" name="username" placeholder="Username" required />
+        <input type="text" name="username" placeholder="Username or Email" required />
       </div>
       
       <div class="input-group">
@@ -687,19 +690,55 @@
         <label for="remember" class="text-wrapper-3">Remember me</label>
       </div>
 
-      <!-- Error Message if Login Fails -->
-      <% if (typeof error !== 'undefined' && error) { %>
-        <div class="error-message"><%= error %></div>
-      <% } %>
+    <!-- Success Message from Registration -->
+    <% if (typeof registrationSuccess !== 'undefined' && registrationSuccess) { %>
+      <div style="background: #e8f5e9; border: 2px solid #408b4e; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #275730; font-size: 14px; font-weight: 500; line-height: 1.5;">
+        <%= registrationSuccess.message %>
+      </div>
+    <% } %>
 
-      <button type="submit" class="login-button">Sign In</button>
+    <!-- Success Message from Password Reset -->
+    <% if (typeof passwordResetSuccess !== 'undefined' && passwordResetSuccess) { %>
+      <div style="background: #e8f5e9; border: 2px solid #408b4e; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #275730; font-size: 14px; font-weight: 500; line-height: 1.5;">
+        <%= passwordResetSuccess %>
+      </div>
+    <% } %>
+
+    <!-- Error Message if Login Fails -->
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error-message" style="background: #fee; border: 2px solid #c33; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #c33; font-size: 14px; font-weight: 500;"><%= error %></div>
+    <% } %>      <button type="submit" class="login-button">Sign In</button>
     </form>
 
-    <p class="register-text">
-      Don't have an account?
-      <a href="/register" class="link">Create one</a>
-    </p>
-    <a href="#" class="forgot-link">Forgot your password?</a>
+    <!-- OR Divider -->
+    <div style="display: flex; align-items: center; gap: 15px; margin: 25px 0;">
+      <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent);"></div>
+      <span style="color: #666; font-size: 13px; font-weight: 500; white-space: nowrap;">OR CONTINUE WITH</span>
+      <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent);"></div>
+    </div>
+
+    <!-- Microsoft OAuth Sign In Button -->
+    <a href="/clerk/sign-in" 
+       class="microsoft-oauth-button"
+       style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px; background: white; border: 2px solid #e0e0e0; border-radius: 10px; text-decoration: none; color: #333; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;"
+       onmouseover="this.style.background='#f8f9fa'; this.style.borderColor='#408b4e'; this.style.boxShadow='0 4px 12px rgba(64,139,78,0.15)';"
+       onmouseout="this.style.background='white'; this.style.borderColor='#e0e0e0'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)';">
+      <svg width="20" height="20" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 0H0v11h11V0z" fill="#F25022"/>
+        <path d="M23 0H12v11h11V0z" fill="#7FBA00"/>
+        <path d="M11 12H0v11h11V12z" fill="#00A4EF"/>
+        <path d="M23 12H12v11h11V12z" fill="#FFB900"/>
+      </svg>
+      <span>Continue with Microsoft Account</span>
+    </a>
+
+    <div style="text-align: center; margin-top: 10px;">
+      <small style="color: #666; font-size: 12px;">
+        Only @dlsud.edu.ph accounts are allowed
+      </small>
+    </div>
+
+    <a href="/forgot-password" class="forgot-link" style="margin-top: 20px; display: block;">Forgot your password?</a>
   </div>
 
   <script>
@@ -721,6 +760,22 @@
         `;
       }
     }
+
+    // Pre-fill username/email after successful registration
+    <% if (typeof registrationSuccess !== 'undefined' && registrationSuccess) { %>
+      document.addEventListener('DOMContentLoaded', function() {
+        const usernameInput = document.querySelector('input[name="username"]');
+        if (usernameInput) {
+          // Pre-fill username
+          usernameInput.value = '<%= registrationSuccess.username %>';
+          // Focus on password field for user convenience
+          const passwordInput = document.querySelector('input[name="password"]');
+          if (passwordInput) {
+            passwordInput.focus();
+          }
+        }
+      });
+    <% } %>
   </script>
 </body>
 </html>

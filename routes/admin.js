@@ -16,6 +16,7 @@ const Page = require('../models/Page');
 const { requireAdmin, requireAdminAPI } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
+const emailService = require('../services/emailService');
 const settingsService = require('../services/settingsService');
 const reportService = require('../services/reportService');
 const announcementService = require('../services/announcementService');
@@ -1878,10 +1879,17 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
       });
     }
 
-    // Update user status
+    // Update user status and email verification for approved users
+    const updateData = { status: newStatus };
+    
+    // When approving, also mark email as verified
+    if (action === 'approve') {
+      updateData.emailVerified = true;
+    }
+    
     const user = await User.findByIdAndUpdate(
       userId, 
-      { status: newStatus }, 
+      updateData, 
       { new: true }
     ).populate('role');
 
@@ -1894,16 +1902,44 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
 
     // Send appropriate notification
     try {
+      const fullName = `${user.fName} ${user.lName}`;
+      
       if (action === 'approve') {
+        // Send email notification about account approval
+        try {
+          await emailService.sendAccountApproved(user.email, fullName);
+          console.log(`✅ Account approval email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('❌ Error sending account approval email:', emailError);
+          // Don't fail the approval if email fails
+        }
+
+        // Send in-app notification
         if (user.role === 'unit') {
           await notificationService.notifyUnitApproved(userId, req.user._id);
         } else {
           await notificationService.notifyUserApproved(userId, req.user._id);
         }
       } else if (action === 'deny') {
+        // Send email notification about account denial
+        try {
+          await emailService.sendAccountDenied(user.email, fullName);
+          console.log(`✅ Account denied email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('❌ Error sending account denied email:', emailError);
+        }
+        
+        // Send in-app notification
         await notificationService.notifyUserDenied(userId, req.user._id);
+      } else if (action === 'reset') {
+        // Send email notification about reset to pending
+        try {
+          await emailService.sendAccountResetToPending(user.email, fullName);
+          console.log(`✅ Account reset to pending email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('❌ Error sending account reset email:', emailError);
+        }
       }
-      // Reset action doesn't send notification
     } catch (notificationError) {
       console.error('Error sending notification:', notificationError);
       // Don't fail the request if notification fails

@@ -42,7 +42,44 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: function() {
+      return this.authProvider === 'local';
+    }
+  },
+
+  // OAuth fields
+  clerkId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  microsoftId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'microsoft'],
+    default: 'local'
+  },
+
+  // Email verification fields
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: {
+    type: String
+  },
+  verificationTokenExpiry: {
+    type: Date
+  },
+  passwordResetToken: {
+    type: String
+  },
+  passwordResetExpiry: {
+    type: Date
   },
 
   // Contact information

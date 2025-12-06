@@ -4,13 +4,16 @@
 
 const express = require('express');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const router = express.Router();
 const User = require('../models/User');
 const BroadcastMessage = require('../models/BroadcastMessage');
 const notificationService = require('../services/notificationService');
+const emailService = require('../services/emailService');
 const { authLimiter } = require('../middleware/rateLimiter');
 const { getOrganizations, getOffices } = require('../utils/settingsHelpers');
 const { escapeRegex, sanitizeEmail, sanitizeName, sanitizePhone, sanitizeText, sanitizeString } = require('../utils/sanitize');
+const { isAllowedDomain } = require('../config/clerk');
 
 /**
  * GET /register
@@ -20,17 +23,31 @@ router.get('/register', async (req, res) => {
   try {
     const organizations = await require('../utils/settingsHelpers').getOrganizations();
     const offices = await require('../utils/settingsHelpers').getOffices();
+    
+    // Check if user came from Microsoft OAuth
+    const microsoftProfile = req.session.microsoftProfile || null;
+    const microsoftNewUser = req.session.microsoftNewUser || false;
+    
+    // Clear the new user flag after showing it once
+    if (microsoftNewUser) {
+      delete req.session.microsoftNewUser;
+    }
+    
     res.render('register', {
       error: null,
       organizations,
-      offices
+      offices,
+      microsoftProfile,
+      microsoftNewUser
     });
   } catch (error) {
     console.error('[Register] Error loading registration page:', error);
     res.render('register', {
       error: null,
       organizations: [],
-      offices: []
+      offices: [],
+      microsoftProfile: null,
+      microsoftNewUser: false
     });
   }
 });
@@ -62,7 +79,32 @@ router.get('/about-s-core', async (req, res) => {
  * Renders the login form
  */
 router.get('/login', (req, res) => {
-  res.render('index', { error: null });
+  // Get registration success data from session
+  const registrationSuccess = req.session.registrationSuccess;
+  const passwordResetSuccess = req.session.passwordResetSuccess;
+  
+  // Clear them from session after retrieving
+  if (registrationSuccess) {
+    delete req.session.registrationSuccess;
+  }
+  if (passwordResetSuccess) {
+    delete req.session.passwordResetSuccess;
+  }
+  
+  // Get error from query parameters (for redirects from Microsoft OAuth, etc.)
+  const errorFromQuery = req.query.error || null;
+  
+  // Create success message for password reset
+  let successMessage = null;
+  if (passwordResetSuccess) {
+    successMessage = 'Your password has been reset successfully. You can now sign in with your new password.';
+  }
+  
+  res.render('index', { 
+    error: errorFromQuery,
+    registrationSuccess: registrationSuccess || null,
+    passwordResetSuccess: successMessage
+  });
 });
 
 /**
@@ -135,6 +177,11 @@ router.post('/register', authLimiter, async (req, res) => {
       return sendError('Please provide a valid email address.');
     }
 
+    // Domain restriction validation
+    if (!isAllowedDomain(email)) {
+      return sendError('Only @dlsud.edu.ph email addresses are allowed to register.');
+    }
+
     // Normalize email and username for consistency
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedUsername = username.trim().toLowerCase();
@@ -158,6 +205,13 @@ router.post('/register', authLimiter, async (req, res) => {
     const escapedEmail = escapeRegex(normalizedEmail);
     const existingEmail = await User.findOne({ email: { $regex: `^${escapedEmail}$`, $options: 'i' } });
     if (existingEmail) {
+      // Check if trying to register with different auth provider
+      const microsoftProfile = req.session.microsoftProfile;
+      if (microsoftProfile && existingEmail.authProvider === 'local') {
+        return sendError('An account with this email already exists. Please use Microsoft sign-in.');
+      } else if (!microsoftProfile && existingEmail.authProvider === 'microsoft') {
+        return sendError('An account with this email already exists. Please use Microsoft sign-in.');
+      }
       return sendError('This email is already registered. Please use a different email or try logging in.');
     }
 
@@ -197,8 +251,23 @@ router.post('/register', authLimiter, async (req, res) => {
       return sendError('You must agree to the Terms and Conditions to register.');
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Check if user is coming from Microsoft OAuth
+    const microsoftProfile = req.session.microsoftProfile;
+    
+    // Hash password (or generate random one for Microsoft users)
+    let hashedPassword;
+    if (microsoftProfile) {
+      // Generate random password for Microsoft OAuth users
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      hashedPassword = await bcrypt.hash(randomPassword, 10);
+    } else {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const expiryHours = parseInt(process.env.EMAIL_VERIFICATION_EXPIRY || 24);
+    const verificationTokenExpiry = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
 
     // Prepare user data
     const userData = {
@@ -210,8 +279,18 @@ router.post('/register', authLimiter, async (req, res) => {
       password: hashedPassword,
       phoneNumber,
       agreedToTerms: terms === 'on',
-      userType
+      userType,
+      emailVerified: microsoftProfile ? true : false, // Microsoft OAuth users have verified email
+      verificationToken,
+      verificationTokenExpiry,
+      authProvider: microsoftProfile ? 'microsoft' : 'local'
     };
+
+    // Add Microsoft-specific fields if OAuth was used
+    if (microsoftProfile) {
+      userData.microsoftId = microsoftProfile.microsoftId;
+      userData.clerkId = microsoftProfile.clerkId;
+    }
 
     // Add student-specific fields
     if (userType === 'student') {
@@ -238,8 +317,27 @@ router.post('/register', authLimiter, async (req, res) => {
       const savedUser = await User.findOne({ username: userData.username });
       console.log('🔍 Verification - Found user in database:', savedUser ? 'Yes' : 'No');
       
-      // Notify admins about new user registration
+      // Send email verification
       if (savedUser) {
+        try {
+          console.log('📧 Sending email verification...');
+          const emailResult = await emailService.sendEmailVerification(
+            savedUser.email,
+            `${savedUser.fName} ${savedUser.lName}`,
+            savedUser.verificationToken
+          );
+          
+          if (emailResult.devMode) {
+            console.log('📧 [DEV MODE] Verification link:', emailResult.verificationLink);
+          }
+          
+          console.log('✅ Verification email sent successfully');
+        } catch (emailError) {
+          console.error('❌ Error sending verification email:', emailError);
+          // Don't fail registration if email fails
+        }
+        
+        // Notify admins about new user registration (immediately)
         console.log('📧 ===== TRIGGERING ADMIN NOTIFICATION =====');
         console.log('👤 New user registered:', {
           id: savedUser._id,
@@ -247,7 +345,8 @@ router.post('/register', authLimiter, async (req, res) => {
           name: `${savedUser.fName} ${savedUser.lName}`,
           email: savedUser.email,
           userType: savedUser.userType,
-          status: savedUser.status
+          status: savedUser.status,
+          emailVerified: savedUser.emailVerified
         });
         
         try {
@@ -261,7 +360,7 @@ router.post('/register', authLimiter, async (req, res) => {
         
         console.log('📧 ===== ADMIN NOTIFICATION COMPLETE =====');
       } else {
-        console.error('⚠️ User not found after save - cannot send notification');
+        console.error('⚠️ User not found after save - cannot send notifications');
       }
 
       // Add new user to all existing "all users" announcements
@@ -292,9 +391,33 @@ router.post('/register', authLimiter, async (req, res) => {
         // Don't fail registration if this fails
       }
       
-      // Redirect to login on successful registration
+      // Clear Microsoft profile from session after successful registration
+      if (req.session.microsoftProfile) {
+        delete req.session.microsoftProfile;
+      }
+      
+      // Store registration success info in session for login page
+      req.session.registrationSuccess = {
+        username: userData.username,
+        email: userData.email,
+        message: 'Registration successful! Please check your email to verify your account. Your account is pending admin approval.'
+      };
+      
+      // Redirect to login page
       console.log('🔄 Redirecting user to login page...');
-      res.redirect('/login');
+      
+      const acceptHeader = req.headers.accept || '';
+      const isAjax = req.xhr || acceptHeader.includes('json') || acceptHeader.includes('application/json');
+      
+      if (isAjax) {
+        return res.status(200).json({ 
+          success: true, 
+          redirect: '/login',
+          message: 'Registration successful! Redirecting to login...'
+        });
+      } else {
+        return res.redirect('/login');
+      }
     } catch (saveError) {
       console.error('❌ Error saving user:', saveError);
       throw saveError;
@@ -329,39 +452,72 @@ router.post('/register', authLimiter, async (req, res) => {
  */
 router.post('/login', authLimiter, async (req, res) => {
   // Sanitize username input to prevent NoSQL injection
-  const username = sanitizeString(req.body.username);
+  const usernameOrEmail = sanitizeString(req.body.username);
   const password = req.body.password; // Don't sanitize password
 
   try {
     // Validate inputs exist
-    if (!username || !password) {
-      return res.status(400).render('index', { error: 'Username and password are required.' });
+    if (!usernameOrEmail || !password) {
+      return res.status(400).render('index', { 
+        error: 'Username/Email and password are required.',
+        registrationSuccess: null
+      });
     }
 
-    console.log('Login attempt for username:', username);
+    console.log('Login attempt for username/email:', usernameOrEmail);
     
-    // Find user by username (exact match, no regex needed)
-    const user = await User.findOne({ username: username });
+    // Find user by username OR email (exact match)
+    const user = await User.findOne({ 
+      $or: [
+        { username: usernameOrEmail },
+        { email: usernameOrEmail.toLowerCase() }
+      ]
+    });
     
     if (!user) {
-      console.log('User not found:', username);
-      return res.status(401).render('index', { message: 'Invalid credentials.' });
+      console.log('User not found:', usernameOrEmail);
+      return res.status(401).render('index', { 
+        message: 'Invalid credentials.',
+        registrationSuccess: null
+      });
     }
 
     // Check if user account is deleted
     if (user.isDeleted) {
-      console.log('Login blocked - User account deleted:', username);
+      console.log('Login blocked - User account deleted:', usernameOrEmail);
       return res.status(403).render('index', { 
-        error: 'Your account has been deactivated. Please contact an administrator for assistance.' 
+        error: 'Your account has been deactivated. Please contact an administrator for assistance.',
+        registrationSuccess: null
       });
     }
 
+    // Check if this is a Microsoft OAuth user
+    if (user.authProvider === 'microsoft') {
+      // Redirect to Microsoft OAuth authentication flow
+      console.log('Microsoft OAuth user detected - redirecting to Microsoft sign-in');
+      return res.redirect('/clerk/sign-in');
+    }
+
+    // For local users, validate password
     const passwordMatch = await bcrypt.compare(password, user.password);
     console.log('Password match result:', passwordMatch);
 
-    // Validate username and password
+    // Validate password for local users
     if (!passwordMatch) {
-      return res.status(401).render('index', { message: 'Invalid credentials.' });
+      return res.status(401).render('index', { 
+        message: 'Invalid credentials.',
+        registrationSuccess: null
+      });
+    }
+
+    // !! EMAIL VERIFICATION CHECK !!
+    // Check if user has verified their email
+    if (!user.emailVerified) {
+      console.log('Login blocked - Email not verified:', usernameOrEmail);
+      return res.status(403).render('index', { 
+        error: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+        registrationSuccess: null
+      });
     }
 
     // !! ACCOUNT STATUS VERIFICATION !!
@@ -370,19 +526,22 @@ router.post('/login', authLimiter, async (req, res) => {
       if (user.status === 'pending') {
         console.log('Login blocked - User account pending approval:', username);
         return res.status(403).render('index', { 
-          error: 'Your account is pending approval. Please wait for an admin to verify your registration.' 
+          error: 'Your account has not been approved by an administrator yet. Please wait for an email notification confirming your account approval before logging in.',
+          registrationSuccess: null
         });
       }
       if (user.status === 'denied') {
         console.log('Login blocked - User account denied:', username);
         return res.status(403).render('index', { 
-          error: 'Your account registration was not approved. Please contact an administrator for more information.' 
+          error: 'Your account registration was not approved. Please contact an administrator for more information.',
+          registrationSuccess: null
         });
       }
       // Failsafe for any other status
       console.log('Login blocked - User account not active:', username, 'Status:', user.status);
       return res.status(403).render('index', { 
-        error: 'Your account is not active. Please contact an administrator for assistance.' 
+        error: 'Your account is not active. Please contact an administrator for assistance.',
+        registrationSuccess: null
       });
     }
 
@@ -420,6 +579,298 @@ router.get('/logout', (req, res) => {
     }
     res.redirect('/');
   });
+});
+
+/**
+ * GET /forgot-password
+ * Renders forgot password form
+ */
+router.get('/forgot-password', (req, res) => {
+  res.render('forgot-password', { 
+    error: null,
+    success: null,
+    microsoftUser: false,
+    identifier: null,
+    method: null,
+    resetToken: null,
+    showResetLink: false
+  });
+});
+
+/**
+ * POST /forgot-password
+ * Sends password reset email
+ */
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { identifier, method, confirmReset } = req.body;
+
+    // Find user by email or username based on method
+    let user;
+    if (method === 'email') {
+      const normalizedEmail = identifier.toLowerCase().trim();
+      user = await User.findOne({ email: normalizedEmail });
+    } else if (method === 'username') {
+      const normalizedUsername = identifier.trim();
+      user = await User.findOne({ username: normalizedUsername });
+    } else {
+      return res.render('forgot-password', {
+        error: 'Invalid request method',
+        success: null,
+        microsoftUser: false,
+        identifier: null,
+        method: null,
+        resetToken: null,
+        showResetLink: false
+      });
+    }
+
+    // Don't reveal if user exists or not for security
+    if (!user) {
+      return res.render('forgot-password', {
+        success: method === 'email' 
+          ? 'If an account exists with this email, you will receive a password reset link shortly.'
+          : 'If an account exists with this username, you will receive a password reset link shortly.',
+        error: null,
+        microsoftUser: false,
+        identifier: null,
+        method: null,
+        resetToken: null,
+        showResetLink: false
+      });
+    }
+
+    // Check if user is Microsoft OAuth user
+    if (user.authProvider === 'microsoft' && confirmReset !== 'true') {
+      return res.render('forgot-password', {
+        error: null,
+        success: null,
+        microsoftUser: true,
+        identifier: identifier,
+        method: method,
+        resetToken: null,
+        showResetLink: false
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send reset email
+    await emailService.sendPasswordReset(user.email, `${user.fName} ${user.lName}`, resetToken);
+
+    return res.render('forgot-password', {
+      success: 'Password reset link sent to your email. Please check your inbox.',
+      error: null,
+      microsoftUser: false,
+      identifier: null,
+      method: null,
+      resetToken: resetToken,
+      showResetLink: true
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.render('forgot-password', {
+      error: 'An error occurred. Please try again later.',
+      success: null,
+      microsoftUser: false,
+      identifier: null,
+      method: null,
+      resetToken: null,
+      showResetLink: false
+    });
+  }
+});
+
+/**
+ * GET /reset-password/:token
+ * Renders reset password form
+ */
+router.get('/reset-password/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.render('reset-password', {
+        error: 'Invalid or expired reset link.',
+        token: null
+      });
+    }
+
+    res.render('reset-password', {
+      error: null,
+      token: token
+    });
+
+  } catch (error) {
+    console.error('Reset password get error:', error);
+    res.render('reset-password', {
+      error: 'An error occurred.',
+      token: null
+    });
+  }
+});
+
+/**
+ * POST /reset-password
+ * Updates user password
+ */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password, confirmPassword } = req.body;
+
+    if (password !== confirmPassword) {
+      return res.render('reset-password', {
+        error: 'Passwords do not match.',
+        token: token
+      });
+    }
+
+    if (password.length < 8) {
+      return res.render('reset-password', {
+        error: 'Password must be at least 8 characters long.',
+        token: token
+      });
+    }
+
+    if (!/\d/.test(password) || !/[a-zA-Z]/.test(password)) {
+      return res.render('reset-password', {
+        error: 'Password must contain at least one letter and one number.',
+        token: token
+      });
+    }
+
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.render('reset-password', {
+        error: 'Invalid or expired reset link.',
+        token: null
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpiry = undefined;
+    await user.save();
+
+    // Redirect to login with success message
+    req.session.passwordResetSuccess = true;
+    res.redirect('/login');
+
+  } catch (error) {
+    console.error('Reset password post error:', error);
+    res.render('reset-password', {
+      error: 'An error occurred. Please try again.',
+      token: req.body.token
+    });
+  }
+});
+
+/**
+ * GET /auth/verify-email/:token
+ * Verifies user email address using token
+ */
+router.get('/verify-email/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    console.log('Email verification attempt with token:', token);
+    
+    // Find user with this verification token
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpiry: { $gt: Date.now() }
+    });
+    
+    if (!user) {
+      console.log('Invalid or expired verification token');
+      return res.render('email-verified', {
+        success: false,
+        message: 'Invalid or expired verification link. Please request a new verification email.',
+        showResendButton: true
+      });
+    }
+    
+    // Mark email as verified
+    user.emailVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpiry = undefined;
+    await user.save();
+    
+    console.log('✅ Email verified successfully for user:', user.email);
+    
+    res.render('email-verified', {
+      success: true,
+      message: 'Your email has been verified successfully! You can now wait for admin approval to access your account.',
+      userName: `${user.fName} ${user.lName}`,
+      showResendButton: false
+    });
+    
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.render('email-verified', {
+      success: false,
+      message: 'An error occurred during verification. Please try again.',
+      showResendButton: true
+    });
+  }
+});
+
+/**
+ * POST /auth/resend-verification
+ * Resends verification email to user
+ */
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+    
+    if (user.emailVerified) {
+      return res.status(400).json({ error: 'Email is already verified.' });
+    }
+    
+    // Generate new token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const expiryHours = parseInt(process.env.EMAIL_VERIFICATION_EXPIRY || 24);
+    const verificationTokenExpiry = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
+    
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpiry = verificationTokenExpiry;
+    await user.save();
+    
+    // Send new verification email
+    await emailService.sendEmailVerification(
+      user.email,
+      `${user.fName} ${user.lName}`,
+      user.verificationToken
+    );
+    
+    res.json({ success: true, message: 'Verification email sent successfully.' });
+    
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ error: 'Failed to resend verification email.' });
+  }
 });
 
 module.exports = router;

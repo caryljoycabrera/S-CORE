@@ -454,6 +454,300 @@ class EmailService {
   }
 
   /**
+   * Send email verification link
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @param {string} verificationToken - Verification token
+   * @returns {Promise} Send result
+   */
+  async sendEmailVerification(userEmail, userName, verificationToken) {
+    try {
+      const verificationLink = `${process.env.APP_URL}/auth/verify-email/${verificationToken}`;
+      const expiryHours = process.env.EMAIL_VERIFICATION_EXPIRY || 24;
+
+      const html = this.loadTemplate('email-verification', {
+        userName,
+        verificationLink,
+        expiryHours
+      });
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
+        to: userEmail,
+        subject: 'Verify Your Email Address - S-CORE',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] Verification email sent to ${userEmail}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send verification email to ${userEmail} (dev mode)`);
+        console.log(`[EMAIL] Verification link: ${verificationLink}`);
+        return { success: true, devMode: true, verificationLink };
+      }
+    } catch (error) {
+      console.error('[EMAIL] Error sending verification email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send password reset email
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @param {string} resetToken - Password reset token
+   * @returns {Promise} Send result
+   */
+  async sendPasswordReset(userEmail, userName, resetToken) {
+    try {
+      const resetLink = `${process.env.APP_URL}/reset-password/${resetToken}`;
+
+      const html = `
+        <html>
+          <head><style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #408b4e; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
+            .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
+            .button { display: inline-block; background: #408b4e; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 5px; margin-top: 15px; }
+          </style></head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h2>Password Reset Request</h2>
+              </div>
+              <div class="content">
+                <p>Hi ${userName},</p>
+                <p>We received a request to reset your password for your S-CORE account.</p>
+                <p>Click the button below to reset your password. This link will expire in 1 hour.</p>
+                <a href="${resetLink}" class="button">Reset Password</a>
+                <p style="margin-top: 20px; color: #666; font-size: 14px;">
+                  If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                </p>
+                <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
+                  <strong>Please do not reply to this email.</strong><br>
+                  This is an automated message from SCO Creative Optimization for Requests and Engagement System (S-CORE). 
+                  For assistance, please contact the Student Communications Office directly.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'Password Reset Request - S-CORE',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] Password reset email sent to ${userEmail}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send password reset email to ${userEmail} (dev mode)`);
+        console.log(`[EMAIL] Reset link: ${resetLink}`);
+        return { success: true, devMode: true, resetLink };
+      }
+    } catch (error) {
+      console.error('[EMAIL] Error sending password reset email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send account approved notification
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @returns {Promise} Send result
+   */
+  async sendAccountApproved(userEmail, userName) {
+    try {
+      const loginLink = 'https://dlsuds-core.me/login';
+
+      const html = `
+        <html>
+          <head><style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #28a745; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
+            .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
+            .button { display: inline-block; background: #007bff; color: white; padding: 10px 20px; 
+                      text-decoration: none; border-radius: 5px; margin-top: 10px; }
+          </style></head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h2>Account Approved!</h2>
+              </div>
+              <div class="content">
+                <p>Hi ${userName},</p>
+                <p><strong>Good news! Your S-CORE account has been approved by an administrator.</strong></p>
+                <p>Your email has been verified and your account is now active. You can now log in and access the system.</p>
+                <a href="${loginLink}" class="button">Log In Now</a>
+                <p style="margin-top: 20px; color: #666; font-size: 14px;">
+                  This email was sent to your registered Microsoft Outlook account. 
+                  Please keep this email for your records.
+                </p>
+                <p style="margin-top: 10px;">Welcome to the SCO Creative Optimization for Requests and Engagement System!</p>
+                <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
+                  <strong>Please do not reply to this email.</strong><br>
+                  This is an automated message from SCO Creative Optimization for Requests and Engagement System (S-CORE). 
+                  For assistance, please contact the Student Communications Office directly.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'Your S-CORE Account Has Been Approved',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] ✅ Account approved email sent successfully to ${userEmail}`);
+        console.log(`[EMAIL] Message ID: ${result.messageId}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send account approved email to ${userEmail} (dev mode)`);
+        return { success: true, devMode: true };
+      }
+    } catch (error) {
+      console.error('[EMAIL] ❌ Error sending account approved email:', error.message);
+      console.error('[EMAIL] Full error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send account denied notification
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @returns {Promise} Send result
+   */
+  async sendAccountDenied(userEmail, userName) {
+    try {
+      const html = `
+        <html>
+          <head><style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc3545; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
+            .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
+          </style></head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h2>Account Registration Not Approved</h2>
+              </div>
+              <div class="content">
+                <p>Hi ${userName},</p>
+                <p>We regret to inform you that your account registration for the SCO Creative Optimization for Requests and Engagement System (S-CORE) was not approved by an administrator.</p>
+                <p>If you believe this is an error or need further assistance, please contact the Student Communications Office directly.</p>
+                <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
+                  <strong>Please do not reply to this email.</strong><br>
+                  This is an automated message from SCO Creative Optimization for Requests and Engagement System (S-CORE). 
+                  For assistance, please contact the Student Communications Office directly.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'S-CORE Account Registration - Not Approved',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] Account denied email sent to ${userEmail}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send account denied email to ${userEmail} (dev mode)`);
+        return { success: true, devMode: true };
+      }
+    } catch (error) {
+      console.error('[EMAIL] Error sending account denied email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send account reset to pending notification
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @returns {Promise} Send result
+   */
+  async sendAccountResetToPending(userEmail, userName) {
+    try {
+      const html = `
+        <html>
+          <head><style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #ffc107; color: #333; padding: 20px; border-radius: 5px 5px 0 0; }
+            .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
+          </style></head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h2>Account Status Updated - Pending Review</h2>
+              </div>
+              <div class="content">
+                <p>Hi ${userName},</p>
+                <p>Your account status for the SCO Creative Optimization for Requests and Engagement System (S-CORE) has been reset to <strong>Pending</strong> by an administrator.</p>
+                <p>Your account is currently under review. You will receive another email notification once your account status is updated.</p>
+                <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
+                  <strong>Please do not reply to this email.</strong><br>
+                  This is an automated message from SCO Creative Optimization for Requests and Engagement System (S-CORE). 
+                  For assistance, please contact the Student Communications Office directly.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'S-CORE Account Status Updated',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] Account reset to pending email sent to ${userEmail}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send account reset to pending email to ${userEmail} (dev mode)`);
+        return { success: true, devMode: true };
+      }
+    } catch (error) {
+      console.error('[EMAIL] Error sending account reset to pending email:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Test email configuration
    * @param {string} testEmail - Email to send test to
    * @returns {Promise} Test result

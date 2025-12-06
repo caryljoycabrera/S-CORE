@@ -14,6 +14,7 @@ require('dotenv').config();
 // Import configuration modules
 const { connectDB } = require('./config/database');
 const { upload, ensureUploadsDirectory, UPLOADS_DIR } = require('./config/upload');
+const { clerkMiddleware } = require('./config/clerk');
 
 // Import middleware
 const { apiLimiter, authLimiter, messageLimiter, requestLimiter } = require('./middleware/rateLimiter');
@@ -71,8 +72,16 @@ app.use(sanitizeAll);
 app.use(session({
   secret: process.env.SESSION_SECRET || 's-core-secret',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
+
+// Clerk authentication middleware - adds auth object to all requests
+app.use(clerkMiddleware());
 
 // Make settings helpers available to all views
 const settingsHelpers = require('./utils/settingsHelpers');
@@ -120,10 +129,13 @@ const unitRoutes = require('./routes/unit');
 const apiRoutes = require('./routes/api');
 const notificationRoutes = require('./routes/notifications');
 const messagesRoutes = require('./routes/messages');
+const clerkRoutes = require('./routes/clerk');
 // const adminCalendarRoutes = require('./routes/adminCalendar');
 
 // Use route modules
 app.use('/', authRoutes);
+app.use('/', clerkRoutes);
+console.log('[SERVER] Clerk routes registered');
 app.use('/', userRoutes);
 app.use('/', adminRoutes);
 app.use('/', unitRoutes);
