@@ -572,37 +572,97 @@ class EmailService {
       const loginLink = 'https://dlsuds-core.me/login';
 
       const html = `
+        <!DOCTYPE html>
         <html>
-          <head><style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #28a745; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
-            .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
-            .button { display: inline-block; background: #007bff; color: white; padding: 10px 20px; 
-                      text-decoration: none; border-radius: 5px; margin-top: 10px; }
-          </style></head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h2>Account Approved!</h2>
-              </div>
-              <div class="content">
-                <p>Hi ${userName},</p>
-                <p><strong>Good news! Your S-CORE account has been approved by an administrator.</strong></p>
-                <p>Your email has been verified and your account is now active. You can now log in and access the system.</p>
-                <a href="${loginLink}" class="button">Log In Now</a>
-                <p style="margin-top: 20px; color: #666; font-size: 14px;">
-                  This email was sent to your registered Microsoft Outlook account. 
-                  Please keep this email for your records.
-                </p>
-                <p style="margin-top: 10px;">Welcome to the SCO Creative Optimization for Requests and Engagement System!</p>
-                <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
-                  <strong>Please do not reply to this email.</strong><br>
-                  This is an automated message from SCO Creative Optimization for Requests and Engagement System (S-CORE). 
-                  For assistance, please contact the Student Communications Office directly.
-                </p>
-              </div>
-            </div>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Branding Section with White Background -->
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <!-- Page Title Section with Dark Green Background -->
+                    <tr>
+                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
+                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Account Approved</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #d4edda; border-left: 4px solid #28a745; margin: 0 0 25px 0;">
+                          <tr>
+                            <td style="padding: 25px; text-align: center;">
+                              <strong style="display: block; margin: 0 0 10px 0; color: #155724; font-size: 22px; font-weight: 600;">Welcome to S-CORE</strong>
+                              <p style="margin: 0; color: #155724;">Your account has been approved by an administrator</p>
+                            </td>
+                          </tr>
+                        </table>
+                        <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
+                        <p style="font-size: 16px; margin: 20px 0; color: #1a2e1a;"><strong>Good news!</strong> Your S-CORE account has been approved and is now active.</p>
+                        <p style="color: #1a2e1a;">Your email has been verified and your account role is set to <span style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: 600; background-color: #4caf50; color: white; font-size: 13px;">USER/REQUESTOR</span></p>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #1a5d1a; display: block; margin-bottom: 10px; font-size: 15px;">What you can do</strong>
+                              <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li style="margin: 10px 0; color: #2d7a2d;">Submit service requests to the SCO</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Track your request statuses in real-time</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">View announcements and updates</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Manage your profile settings</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Receive notifications about your requests</li>
+                              </ul>
+                            </td>
+                          </tr>
+                        </table>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+                          <tr>
+                            <td align="center">
+                              <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                  <td align="center" style="background-color: #1a5d1a; border-radius: 6px;">
+                                    <a href="${loginLink}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">Log In Now</a>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fff9e6; border: 2px solid #ffd700; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 25px; text-align: center;">
+                              <strong style="display: block; font-size: 16px; color: #1a5d1a; margin-bottom: 8px;">Welcome to the SCO Creative Optimization for Requests and Engagement System</strong>
+                              <span style="color: #6c757d; font-size: 14px;">We're excited to have you on board</span>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 25px 0;"></div>
+                        <p style="color: #6c757d; font-size: 13px;">
+                          This email was sent to your registered Microsoft Outlook account. Please keep this email for your records.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        (SCO Creative Optimization for Requests and Engagement System)<br><br>
+                        <strong>Strategic Communications Office</strong><br>
+                        De La Salle University - Dasmarinas<br><br>
+                        For assistance, contact us at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none;">sco@dlsud.edu.ph</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </body>
         </html>
       `;
@@ -640,29 +700,76 @@ class EmailService {
   async sendAccountDenied(userEmail, userName) {
     try {
       const html = `
+        <!DOCTYPE html>
         <html>
-          <head><style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #dc3545; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
-            .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
-          </style></head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h2>Account Registration Not Approved</h2>
-              </div>
-              <div class="content">
-                <p>Hi ${userName},</p>
-                <p>We regret to inform you that your account registration for the SCO Creative Optimization for Requests and Engagement System (S-CORE) was not approved by an administrator.</p>
-                <p>If you believe this is an error or need further assistance, please contact the Student Communications Office directly.</p>
-                <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
-                  <strong>Please do not reply to this email.</strong><br>
-                  This is an automated message from SCO Creative Optimization for Requests and Engagement System (S-CORE). 
-                  For assistance, please contact the Student Communications Office directly.
-                </p>
-              </div>
-            </div>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Branding Section with White Background -->
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <!-- Page Title Section with Dark Green Background -->
+                    <tr>
+                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
+                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Account Registration Update</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8d7da; border-left: 4px solid #dc3545; margin: 0 0 25px 0;">
+                          <tr>
+                            <td style="padding: 25px; text-align: center;">
+                              <strong style="color: #721c24; font-size: 18px;">Account Registration Not Approved</strong>
+                            </td>
+                          </tr>
+                        </table>
+                        <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
+                        <p style="color: #1a2e1a;">We regret to inform you that your account registration for the SCO Creative Optimization for Requests and Engagement System (S-CORE) was not approved by an administrator.</p>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #1a5d1a; display: block; margin-bottom: 10px;">Need More Information?</strong>
+                              If you believe this is an error or need further assistance, please contact the Strategic Communications Office directly.
+                            </td>
+                          </tr>
+                        </table>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; margin: 30px 0;">
+                          <tr>
+                            <td style="padding: 20px; text-align: center;">
+                              <strong style="display: block; margin-bottom: 10px; color: #1a5d1a;">Contact Us</strong>
+                              <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none; font-weight: 600; font-size: 16px;">sco@dlsud.edu.ph</a>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 25px 0;"></div>
+                        <p style="color: #6c757d; font-size: 13px;">
+                          This email was sent to your registered Microsoft Outlook account.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        (SCO Creative Optimization for Requests and Engagement System)<br><br>
+                        <strong>Strategic Communications Office</strong><br>
+                        De La Salle University - Dasmarinas<br><br>
+                        For assistance, contact us at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none;">sco@dlsud.edu.ph</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </body>
         </html>
       `;
@@ -698,29 +805,77 @@ class EmailService {
   async sendAccountResetToPending(userEmail, userName) {
     try {
       const html = `
+        <!DOCTYPE html>
         <html>
-          <head><style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #ffc107; color: #333; padding: 20px; border-radius: 5px 5px 0 0; }
-            .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
-          </style></head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h2>Account Status Updated - Pending Review</h2>
-              </div>
-              <div class="content">
-                <p>Hi ${userName},</p>
-                <p>Your account status for the SCO Creative Optimization for Requests and Engagement System (S-CORE) has been reset to <strong>Pending</strong> by an administrator.</p>
-                <p>Your account is currently under review. You will receive another email notification once your account status is updated.</p>
-                <p style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
-                  <strong>Please do not reply to this email.</strong><br>
-                  This is an automated message from SCO Creative Optimization for Requests and Engagement System (S-CORE). 
-                  For assistance, please contact the Student Communications Office directly.
-                </p>
-              </div>
-            </div>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Branding Section with White Background -->
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <!-- Page Title Section with Dark Green Background -->
+                    <tr>
+                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
+                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Account Status Updated</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; margin: 0 0 25px 0;">
+                          <tr>
+                            <td style="padding: 25px; text-align: center;">
+                              <strong style="color: #856404; font-size: 18px;">Your account status has been reset to Pending Review</strong>
+                            </td>
+                          </tr>
+                        </table>
+                        <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
+                        <p style="color: #1a2e1a;">Your S-CORE account status has been reset to <strong>Pending</strong> and is awaiting administrator review.</p>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #1a5d1a; display: block; margin-bottom: 10px;">What This Means</strong>
+                              Your account access has been temporarily suspended until an administrator reviews and approves your account again. You will receive another email once your account status is updated.
+                            </td>
+                          </tr>
+                        </table>
+                        <p style="color: #1a2e1a;">If you have any questions or concerns about this change, please contact the Strategic Communications Office.</p>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; margin: 30px 0;">
+                          <tr>
+                            <td style="padding: 20px; text-align: center;">
+                              <strong style="display: block; margin-bottom: 10px; color: #1a5d1a;">Contact Us</strong>
+                              <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none; font-weight: 600; font-size: 16px;">sco@dlsud.edu.ph</a>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 25px 0;"></div>
+                        <p style="color: #6c757d; font-size: 13px;">
+                          This email was sent to your registered Microsoft Outlook account.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        (SCO Creative Optimization for Requests and Engagement System)<br><br>
+                        <strong>Strategic Communications Office</strong><br>
+                        De La Salle University - Dasmarinas<br><br>
+                        For assistance, contact us at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none;">sco@dlsud.edu.ph</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </body>
         </html>
       `;
@@ -743,6 +898,366 @@ class EmailService {
       }
     } catch (error) {
       console.error('[EMAIL] Error sending account reset to pending email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send role changed to Admin notification
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @returns {Promise} Send result
+   */
+  async sendRoleChangedToAdmin(userEmail, userName) {
+    try {
+      const loginLink = 'https://dlsuds-core.me/login';
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Branding Section with White Background -->
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <!-- Page Title Section with Dark Green Background -->
+                    <tr>
+                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
+                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Role Updated - Administrator Access</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
+                        <p style="font-size: 16px; margin: 20px 0; color: #1a2e1a;">Your S-CORE account role has been updated to <span style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: 600; background-color: #dc3545; color: white; font-size: 13px;">ADMINISTRATOR</span></p>
+                        
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #1a5d1a; display: block; margin-bottom: 10px; font-size: 15px;">Administrator Privileges</strong>
+                              <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li style="margin: 10px 0; color: #2d7a2d;">Managing user accounts and roles</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Accessing the admin dashboard</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Configuring system settings</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Viewing analytics and reports</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Managing all service requests</li>
+                              </ul>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fff8f0; border-left: 4px solid #ff9800; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px; color: #856404;">
+                              <strong>Important Notice:</strong> Please use these privileges responsibly. Administrator access gives you full control over the system.
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+                          <tr>
+                            <td align="center">
+                              <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                  <td align="center" style="background-color: #1a5d1a; border-radius: 6px;">
+                                    <a href="${loginLink}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">Log In to Admin Dashboard</a>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 25px 0;"></div>
+                        <p style="color: #6c757d; font-size: 13px;">
+                          This email was sent to your registered Microsoft Outlook account. If you did not expect this change, please contact another administrator immediately.
+                        </p>
+                      </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        (SCO Creative Optimization for Requests and Engagement System)<br><br>
+                        <strong>Strategic Communications Office</strong><br>
+                        De La Salle University - Dasmarinas<br><br>
+                        For assistance, contact us at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none;">sco@dlsud.edu.ph</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'Your Role Has Been Updated to Administrator - S-CORE',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] ✅ Role changed to admin email sent successfully to ${userEmail}`);
+        console.log(`[EMAIL] Message ID: ${result.messageId}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send role changed to admin email to ${userEmail} (dev mode)`);
+        return { success: true, devMode: true };
+      }
+    } catch (error) {
+      console.error('[EMAIL] ❌ Error sending role changed to admin email:', error.message);
+      console.error('[EMAIL] Full error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send role changed to Unit notification
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @param {string} unitTeam - Unit team name
+   * @returns {Promise} Send result
+   */
+  async sendRoleChangedToUnit(userEmail, userName, unitTeam) {
+    try {
+      const loginLink = 'https://dlsuds-core.me/login';
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Branding Section with White Background -->
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <!-- Page Title Section with Dark Green Background -->
+                    <tr>
+                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
+                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Role Updated - Unit Member Access</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
+                        <p style="font-size: 16px; margin: 20px 0; color: #1a2e1a;">Your S-CORE account role has been updated to <span style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: 600; background-color: #17a2b8; color: white; font-size: 13px;">UNIT MEMBER${unitTeam && unitTeam !== 'N/A' ? ` - ${unitTeam}` : ''}</span></p>
+                        ${unitTeam && unitTeam !== 'N/A' ? `
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #e3f2fd; border-left: 4px solid #2196f3; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #0d47a1;">Your Assigned Unit:</strong> ${unitTeam}
+                            </td>
+                          </tr>
+                        </table>` : ''}
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #1a5d1a; display: block; margin-bottom: 10px; font-size: 15px;">Unit Member Privileges</strong>
+                              <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li style="margin: 10px 0; color: #2d7a2d;">Managing service requests assigned to your unit</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Accessing the unit dashboard</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Viewing and updating task statuses</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Collaborating with team members</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Creating service reports</li>
+                              </ul>
+                            </td>
+                          </tr>
+                        </table>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+                          <tr>
+                            <td align="center">
+                              <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                  <td align="center" style="background-color: #1a5d1a; border-radius: 6px;">
+                                    <a href="${loginLink}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">Log In to Unit Dashboard</a>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 25px 0;"></div>
+                        <p style="color: #6c757d; font-size: 13px;">
+                          This email was sent to your registered Microsoft Outlook account. If you did not expect this change, please contact an administrator.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        (SCO Creative Optimization for Requests and Engagement System)<br><br>
+                        <strong>Strategic Communications Office</strong><br>
+                        De La Salle University - Dasmarinas<br><br>
+                        For assistance, contact us at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none;">sco@dlsud.edu.ph</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'Your Role Has Been Updated to Unit Member - S-CORE',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] ✅ Role changed to unit email sent successfully to ${userEmail}`);
+        console.log(`[EMAIL] Message ID: ${result.messageId}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send role changed to unit email to ${userEmail} (dev mode)`);
+        return { success: true, devMode: true };
+      }
+    } catch (error) {
+      console.error('[EMAIL] ❌ Error sending role changed to unit email:', error.message);
+      console.error('[EMAIL] Full error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send role changed to User notification
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @returns {Promise} Send result
+   */
+  async sendRoleChangedToUser(userEmail, userName) {
+    try {
+      const loginLink = 'https://dlsuds-core.me/login';
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Branding Section with White Background -->
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <!-- Page Title Section with Dark Green Background -->
+                    <tr>
+                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
+                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Role Updated - User Access</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
+                        <p style="font-size: 16px; margin: 20px 0; color: #1a2e1a;">Your S-CORE account role has been updated to <span style="display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: 600; background-color: #4caf50; color: white; font-size: 13px;">USER/REQUESTOR</span></p>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #1a5d1a; display: block; margin-bottom: 10px; font-size: 15px;">Your Capabilities</strong>
+                              <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li style="margin: 10px 0; color: #2d7a2d;">Submit service requests</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Track your request statuses</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">View announcements and updates</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Manage your profile</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">Receive notifications about your requests</li>
+                              </ul>
+                            </td>
+                          </tr>
+                        </table>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+                          <tr>
+                            <td align="center">
+                              <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                  <td align="center" style="background-color: #1a5d1a; border-radius: 6px;">
+                                    <a href="${loginLink}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">Log In to Your Account</a>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 25px 0;"></div>
+                        <p style="color: #6c757d; font-size: 13px;">
+                          This email was sent to your registered Microsoft Outlook account. If you did not expect this change, please contact an administrator.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        (SCO Creative Optimization for Requests and Engagement System)<br><br>
+                        <strong>Strategic Communications Office</strong><br>
+                        De La Salle University - Dasmarinas<br><br>
+                        For assistance, contact us at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none;">sco@dlsud.edu.ph</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'Your Role Has Been Updated to User/Requestor - S-CORE',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] ✅ Role changed to user email sent successfully to ${userEmail}`);
+        console.log(`[EMAIL] Message ID: ${result.messageId}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] Would send role changed to user email to ${userEmail} (dev mode)`);
+        return { success: true, devMode: true };
+      }
+    } catch (error) {
+      console.error('[EMAIL] ❌ Error sending role changed to user email:', error.message);
+      console.error('[EMAIL] Full error:', error);
       throw error;
     }
   }
@@ -785,3 +1300,7 @@ class EmailService {
 
 // Export singleton instance
 module.exports = new EmailService();
+
+
+
+

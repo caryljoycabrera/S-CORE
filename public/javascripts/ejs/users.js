@@ -192,7 +192,7 @@ const NotificationManager = {
       container = document.createElement('div');
       container.id = 'toastContainer';
       container.style.cssText = `
-        position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+        position: fixed; top: 1rem; right: 1rem; z-index: 150000;
         display: flex; flex-direction: column; gap: 0.5rem;
       `;
       document.body.appendChild(container);
@@ -557,6 +557,10 @@ class EnhancedMultiSelect {
 let affiliationFilter, studentOrgFilter, roleFilter;
 
 function initializeSearchableDropdowns() {
+  // Get data from global variables (provided by server)
+  const affiliationsArray = typeof officesData !== 'undefined' ? officesData : [];
+  const studentOrgsArray = typeof organizationsData !== 'undefined' ? organizationsData : [];
+  
   // Initialize role filter (simple dropdown without search)
   roleFilter = new EnhancedMultiSelect('roleFilter',
     ['admin', 'user'], 'Select Roles', false);
@@ -878,6 +882,40 @@ function selectCustomRole(value, text) {
   document.getElementById('editRole').dispatchEvent(changeEvent);
 }
 
+// Toggle custom dropdown visibility
+function toggleCustomDropdown() {
+  const dropdown = document.getElementById('customDropdownOptions');
+  const selectedDiv = document.querySelector('.dropdown-selected');
+  
+  if (!dropdown || !selectedDiv) return;
+  
+  const isVisible = dropdown.style.display === 'block';
+  
+  if (isVisible) {
+    dropdown.style.display = 'none';
+    selectedDiv.classList.remove('active');
+  } else {
+    dropdown.style.display = 'block';
+    selectedDiv.classList.add('active');
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+  const dropdown = document.querySelector('.custom-role-dropdown');
+  const dropdownOptions = document.getElementById('customDropdownOptions');
+  const selectedDiv = document.querySelector('.dropdown-selected');
+  
+  if (dropdown && !dropdown.contains(event.target) && dropdownOptions) {
+    dropdownOptions.style.display = 'none';
+    if (selectedDiv) selectedDiv.classList.remove('active');
+  }
+});
+
+// Make functions globally available
+window.toggleCustomDropdown = toggleCustomDropdown;
+window.selectCustomRole = selectCustomRole;
+
 // ========================================
 // USER UPDATE FORM HANDLER
 // ========================================
@@ -978,12 +1016,6 @@ const UserFormHandler = {
     submitBtn.innerHTML = originalText;
   }
 };
-
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  UserFormHandler.setup();
-  RoleManager.setupRoleFieldHighlighting();
-});
 
 // ========================================
 // HEADER DROPDOWN MANAGER
@@ -1292,6 +1324,12 @@ function handleModalAction(action, userId, buttonElement) {
     return;
   }
   
+  // Prevent duplicate modals - check if already open
+  if (confirmStatusModal.style.display === 'flex') {
+    console.log('⚠️ Confirmation modal already open, ignoring duplicate call');
+    return;
+  }
+  
   // Set modal content based on action
   let actionText = '';
   let actionColor = '';
@@ -1329,15 +1367,25 @@ function handleModalAction(action, userId, buttonElement) {
   }
   
   // Confirm button - execute action
-  newConfirmBtn.onclick = function() {
+  newConfirmBtn.onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('✅ Modal confirm clicked - executing status change');
     closeModal();
     executeModalStatusChange(action, userId, buttonElement);
   };
   
   // Cancel and close buttons
-  newCancelBtn.onclick = closeModal;
-  newCloseBtn.onclick = closeModal;
+  newCancelBtn.onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeModal();
+  };
+  newCloseBtn.onclick = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeModal();
+  };
   
   // Show modal
   ModalUtility.openModal(confirmStatusModal);
@@ -1472,6 +1520,29 @@ async function executeModalStatusChange(action, userId, buttonElement) {
       
       // Update modal action buttons to reflect new status
       updateModalActionButtons(action);
+      
+      // Show/Hide Administrative Controls based on approval status
+      const adminControlsSection = document.getElementById('adminControlsSection');
+      if (adminControlsSection) {
+        if (newStatus === 'approved') {
+          // Show Administrative Controls with smooth animation
+          adminControlsSection.style.display = 'block';
+          adminControlsSection.style.opacity = '0';
+          adminControlsSection.style.transform = 'translateY(-10px)';
+          
+          setTimeout(() => {
+            adminControlsSection.style.transition = 'all 0.4s ease';
+            adminControlsSection.style.opacity = '1';
+            adminControlsSection.style.transform = 'translateY(0)';
+          }, 50);
+          
+          console.log('✅ Administrative Controls revealed');
+        } else {
+          // Hide Administrative Controls if not approved
+          adminControlsSection.style.display = 'none';
+          console.log('ℹ️ Administrative Controls hidden');
+        }
+      }
       
       // Show brief visual feedback in console only (no toasts/pop-ups)
       logSuccess(`User status updated to ${newStatus.toUpperCase()}`);

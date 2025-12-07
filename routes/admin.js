@@ -1832,6 +1832,25 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
+    // Send email notification about role change
+    try {
+      const fullName = `${result.fName} ${result.lName}`;
+      
+      if (role === 'admin') {
+        await emailService.sendRoleChangedToAdmin(result.email, fullName);
+        console.log(`✅ Role changed to admin email sent to ${result.email}`);
+      } else if (role === 'unit') {
+        await emailService.sendRoleChangedToUnit(result.email, fullName, result.unitTeam);
+        console.log(`✅ Role changed to unit email sent to ${result.email}`);
+      } else if (role === 'user') {
+        await emailService.sendRoleChangedToUser(result.email, fullName);
+        console.log(`✅ Role changed to user email sent to ${result.email}`);
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending role change email:', emailError);
+      // Don't fail the role update if email fails
+    }
+
     res.json({
       success: true,
       message: 'User role updated successfully',
@@ -1882,9 +1901,17 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
     // Update user status and email verification for approved users
     const updateData = { status: newStatus };
     
-    // When approving, also mark email as verified
+    // When approving, mark email as verified AND reset role to 'user' (requestor) as default
     if (action === 'approve') {
       updateData.emailVerified = true;
+      updateData.role = 'user';
+      updateData.unitTeam = 'N/A';
+    }
+    
+    // When resetting to pending, reset role to 'user' (requestor)
+    if (action === 'reset') {
+      updateData.role = 'user';
+      updateData.unitTeam = 'N/A';
     }
     
     const user = await User.findByIdAndUpdate(
@@ -2124,22 +2151,74 @@ router.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
 
 /**
  * POST /admin/profile/change-password-popup
- * Updates admin password
+ * Updates admin password with validation
  */
 router.post('/admin/profile/change-password-popup', async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  if (!req.session.userId) return res.status(401).send('Unauthorized');
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
   try {
     const user = await User.findById(req.session.userId);
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).send('Incorrect old password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Verify current password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+
+    // Validate new password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'New passwords do not match' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/\d/.test(newPassword) || !/[a-zA-Z]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must contain at least one letter and one number' });
+    }
+
+    // Update password
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
-    res.status(200).send('Password updated');
+    
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
-    console.error('Popup password update error:', err);
-    res.status(500).send('Password change failed');
+    console.error('Password update error:', err);
+    res.status(500).json({ success: false, message: 'Password change failed' });
+  }
+});
+
+/**
+ * POST /admin/profile/request-password-reset
+ * Send password reset email from profile page
+ */
+router.post('/admin/profile/request-password-reset', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send reset email
+    const emailService = require('../services/emailService');
+    await emailService.sendPasswordReset(user.email, `${user.fName} ${user.lName}`, resetToken);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Password reset link sent to your email',
+      resetToken: resetToken
+    });
+  } catch (err) {
+    console.error('Password reset request error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send reset email' });
   }
 });
 

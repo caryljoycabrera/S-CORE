@@ -400,7 +400,7 @@ router.post('/register', authLimiter, async (req, res) => {
       req.session.registrationSuccess = {
         username: userData.username,
         email: userData.email,
-        message: 'Registration successful! Please check your email to verify your account. Your account is pending admin approval.'
+        message: 'Registration successful! Please wait for an email notification to know if your account has been approved by the admin. You will be able to enter the system once approved.'
       };
       
       // Redirect to login page
@@ -454,6 +454,7 @@ router.post('/login', authLimiter, async (req, res) => {
   // Sanitize username input to prevent NoSQL injection
   const usernameOrEmail = sanitizeString(req.body.username);
   const password = req.body.password; // Don't sanitize password
+  const rememberMe = req.body.remember === 'on'; // Check if remember me is checked
 
   try {
     // Validate inputs exist
@@ -548,6 +549,17 @@ router.post('/login', authLimiter, async (req, res) => {
     // Create session
     req.session.userId = user._id;
     req.session.role = user.role;
+
+    // Set session expiry based on remember me
+    if (rememberMe) {
+      // Remember me: session lasts 30 days
+      req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+      console.log('Remember me enabled - session will last 30 days');
+    } else {
+      // Don't remember: session lasts 24 hours (default)
+      req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 hours
+      console.log('Remember me disabled - session will last 24 hours');
+    }
 
     // Redirect based on user role
     if (user.role === 'admin') {

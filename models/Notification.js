@@ -40,6 +40,7 @@ const notificationSchema = new mongoose.Schema({
       'user_registered',     // New user registration (admin notification)
       'user_approved',       // User account approved
       'user_denied',         // User account denied
+      'unit_approved',       // User assigned to unit team
       'new_message',         // New chat message
       'system',              // System notification
       'announcement',        // Broadcast announcement from admin

@@ -1067,34 +1067,37 @@ router.post('/unit/profile/update', requireUnit, async (req, res) => {
 
 /**
  * POST /unit/profile/change-password
- * Change unit member password
+ * Change unit member password with validation
  */
 router.post('/unit/profile/change-password', requireUnit, async (req, res) => {
   try {
     const userId = req.session.userId;
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     // Verify current password
     const bcrypt = require('bcrypt');
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(400).send('Current password is incorrect');
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
     }
 
-    // Validate new password
+    // Validate new password matches
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'New passwords do not match' });
+    }
+
+    // Validate new password strength
     if (newPassword.length < 8) {
-      return res.status(400).send('Password must be at least 8 characters long');
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
     }
-    if (!newPassword.match(/[0-9]/)) {
-      return res.status(400).send('Password must contain at least one number');
-    }
-    if (!newPassword.match(/[^a-zA-Z0-9]/)) {
-      return res.status(400).send('Password must contain at least one special character');
+    
+    if (!/\d/.test(newPassword) || !/[a-zA-Z]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must contain at least one letter and one number' });
     }
 
     // Hash and update password
@@ -1102,10 +1105,41 @@ router.post('/unit/profile/change-password', requireUnit, async (req, res) => {
     user.password = hashedPassword;
     await user.save();
 
-    res.status(200).send('Password updated successfully');
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
     console.error('Error changing password:', err);
-    res.status(500).send('Error changing password: ' + err.message);
+    res.status(500).json({ success: false, message: 'Error changing password: ' + err.message });
+  }
+});
+
+/**
+ * POST /unit/profile/request-password-reset
+ * Send password reset email from profile page
+ */
+router.post('/unit/profile/request-password-reset', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send reset email
+    const emailService = require('../services/emailService');
+    await emailService.sendPasswordReset(user.email, `${user.fName} ${user.lName}`, resetToken);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Password reset link sent to your email',
+      resetToken: resetToken
+    });
+  } catch (err) {
+    console.error('Password reset request error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send reset email' });
   }
 });
 

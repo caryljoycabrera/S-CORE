@@ -744,22 +744,74 @@ router.post('/profile/update-popup', async (req, res) => {
 
 /**
  * POST /profile/change-password-popup
- * Updates user password
+ * Updates user password with validation
  */
 router.post('/profile/change-password-popup', async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  if (!req.session.userId) return res.status(401).send('Unauthorized');
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
   try {
     const user = await User.findById(req.session.userId);
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).send('Incorrect old password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Verify current password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+
+    // Validate new password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'New passwords do not match' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/\d/.test(newPassword) || !/[a-zA-Z]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must contain at least one letter and one number' });
+    }
+
+    // Update password
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
-    res.status(200).send('Password updated');
+    
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
-    console.error('Popup password update error:', err);
-    res.status(500).send('Password change failed');
+    console.error('Password update error:', err);
+    res.status(500).json({ success: false, message: 'Password change failed' });
+  }
+});
+
+/**
+ * POST /profile/request-password-reset
+ * Send password reset email from profile page
+ */
+router.post('/profile/request-password-reset', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send reset email
+    const emailService = require('../services/emailService');
+    await emailService.sendPasswordReset(user.email, `${user.fName} ${user.lName}`, resetToken);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Password reset link sent to your email',
+      resetToken: resetToken
+    });
+  } catch (err) {
+    console.error('Password reset request error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send reset email' });
   }
 });
 
