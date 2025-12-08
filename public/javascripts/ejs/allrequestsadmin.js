@@ -974,28 +974,37 @@ function initializeRichModalHandlers() {
 // Conversation functionality
 function initializeConversationModal() {
   const chatBtn = document.getElementById('openChatFromModal');
-  const conversationModal = document.getElementById('conversationModal');
-  const closeBtn = document.getElementById('closeConversationModal');
-  const sendBtn = document.getElementById('sendMessageBtn');
-  const input = document.getElementById('messageInput');
+  const conversationModal = document.getElementById('teamConversationModal');
+  const closeBtn = document.getElementById('closeTeamConversationModal');
+  const sendBtn = document.getElementById('sendTeamMessageBtn');
+  const input = document.getElementById('teamMessageInput');
 
   if (chatBtn) {
-    chatBtn.onclick = () => currentRequestId && openConversation(currentRequestId);
+    chatBtn.onclick = () => {
+      console.log('[AllRequestsAdmin] Chat button clicked, currentRequestId:', currentRequestId);
+      if (currentRequestId) {
+        window.openTeamConversationModal(currentRequestId);
+      } else {
+        console.error('[AllRequestsAdmin] No currentRequestId set!');
+      }
+    };
   }
 
   if (closeBtn) {
-    closeBtn.onclick = () => conversationModal.style.display = 'none';
+    closeBtn.onclick = () => {
+      if (conversationModal) conversationModal.style.display = 'none';
+    };
   }
 
   if (sendBtn) {
-    sendBtn.onclick = sendMessage;
+    sendBtn.onclick = window.sendTeamMessage;
   }
 
   if (input) {
     input.onkeypress = (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        if (window.sendTeamMessage) window.sendTeamMessage();
       }
     };
   }
@@ -2210,23 +2219,44 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentConversationRequestId = null;
 
 window.openTeamConversationModal = function(requestId) {
+    console.log('[AllRequestsAdmin] openTeamConversationModal called with requestId:', requestId);
     currentConversationRequestId = requestId;
+    console.log('[AllRequestsAdmin] Set currentConversationRequestId to:', currentConversationRequestId);
     const modal = document.getElementById('teamConversationModal');
+    console.log('[AllRequestsAdmin] Modal element found:', !!modal);
     if (modal && requestId) {
         loadTeamConversation(requestId);
         modal.style.display = 'flex';
+        console.log('[AllRequestsAdmin] Modal opened successfully');
+    } else {
+        console.error('[AllRequestsAdmin] Cannot open modal - modal:', !!modal, 'requestId:', requestId);
     }
 };
 
 function loadTeamConversation(requestId) {
+    console.log('[AllRequestsAdmin] ========== LOADING CONVERSATION ==========');
+    console.log('[AllRequestsAdmin] Request ID:', requestId);
     const container = document.getElementById('teamMessagesContainer');
-    if (!container) return;
+    if (!container) {
+        console.error('[AllRequestsAdmin] Container not found!');
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+                <p>Loading conversation...</p>
+            </div>
+        </div>
+    `;
 
     fetch(`/api/conversation/${requestId}`)
         .then(response => {
+            console.log('[AllRequestsAdmin] Conversation fetch status:', response.status);
             if (!response.ok) {
                 return response.text().then(text => {
-                    console.error('Server error response:', text);
+                    console.error('[AllRequestsAdmin] Server error response:', text);
                     let errorMsg = 'Failed to load conversation';
                     if (response.status === 401) errorMsg = 'Session expired. Please log in again.';
                     else if (response.status === 403) errorMsg = 'Access denied.';
@@ -2236,14 +2266,29 @@ function loadTeamConversation(requestId) {
             return response.json();
         })
         .then(data => {
-            if (data.conversation && data.conversation.length > 0) {
+            console.log('[AllRequestsAdmin] Conversation data received:', data);
+            console.log('[AllRequestsAdmin] Raw data structure:', JSON.stringify(Object.keys(data)));
+            
+            // Extract messages from response - check both data.conversation and data.messages
+            const messages = data.conversation || data.messages || [];
+            console.log('[AllRequestsAdmin] Extracted messages array:', messages);
+            console.log('[AllRequestsAdmin] Displaying', messages.length, 'messages');
+            
+            if (messages && messages.length > 0) {
                 container.innerHTML = '';
-                data.conversation.forEach(msg => {
+                messages.forEach(msg => {
                     const messageDiv = createMessageElement(msg);
                     container.appendChild(messageDiv);
                 });
                 container.scrollTop = container.scrollHeight;
+                
+                // Mark messages as read
+                console.log('[AllRequestsAdmin] Marking messages as read');
+                fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' })
+                    .then(() => console.log('[AllRequestsAdmin] Messages marked as read'))
+                    .catch(err => console.error('[AllRequestsAdmin] Error marking as read:', err));
             } else {
+                console.log('[AllRequestsAdmin] No messages found, showing empty state');
                 container.innerHTML = `
                     <div class="unit-messages-empty">
                         <div class="empty-icon">
@@ -2258,8 +2303,18 @@ function loadTeamConversation(requestId) {
             }
         })
         .catch(error => {
-            console.error('Error loading conversation:', error);
-            alert('Failed to load conversation');
+            console.error('[AllRequestsAdmin] Error loading conversation:', error);
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <p>Failed to load conversation</p>
+                    <small>${error.message}</small>
+                </div>
+            `;
         });
 }
 
@@ -2296,6 +2351,7 @@ function createMessageElement(msg) {
     
     let attachmentsHTML = '';
     if (msg.attachments && msg.attachments.length > 0) {
+        console.log('[AllRequests] Message has attachments:', msg.attachments.length);
         attachmentsHTML = msg.attachments.map(file => {
             const ext = file.filename.split('.').pop().toLowerCase();
             const isPdf = ext === 'pdf';
@@ -2350,7 +2406,7 @@ function createMessageElement(msg) {
         }).join('');
     }
     
-    // Create read receipts HTML
+    // Build read receipts HTML
     let readReceiptsHTML = '';
     if (msg.readBy && msg.readBy.length > 0) {
         const readByList = msg.readBy.map(reader => {
@@ -2360,15 +2416,17 @@ function createMessageElement(msg) {
                 hour: '2-digit',
                 minute: '2-digit'
             });
-            return `<div style="font-size: 0.7rem; color: #6b7280; margin-top: 0.15rem;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-right: 2px;">
-                    <polyline points="20 6 9 17 4 12"/>
-                    <polyline points="20 6 9 17" style="opacity: 0.5;"/>
-                </svg>
-                Read by ${escapeHtml(reader.userName)} at ${readTime}
-            </div>`;
+            return `
+                <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M1 12l5 5L23 3"></path>
+                        <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+                    </svg>
+                    <span>Read by ${escapeHtml(reader.userName)} at ${readTime}</span>
+                </div>
+            `;
         }).join('');
-        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.25rem;">${readByList}</div>`;
+        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
     }
     
     div.innerHTML = `
@@ -2654,14 +2712,32 @@ function createRevisionEntry(revision, index, total) {
 // Send team message
 window.sendTeamMessage = function() {
     console.log('[AllRequestsAdmin] Send team message triggered');
-    const input = document.getElementById('teamMessageInput');
-    if (!input || !currentConversationRequestId) {
-        console.error('[AllRequestsAdmin] Missing input or request ID:', {
-            input: !!input,
-            currentConversationRequestId
-        });
+    
+    // Check if conversation modal is open
+    const modal = document.getElementById('teamConversationModal');
+    if (!modal || modal.style.display !== 'flex') {
+        console.warn('[AllRequestsAdmin] Conversation modal is not open, ignoring send');
         return;
     }
+    
+    const input = document.getElementById('teamMessageInput');
+    
+    // Use currentConversationRequestId OR window.currentConversationId (from inline script)
+    const requestId = currentConversationRequestId || window.currentConversationId;
+    
+    if (!input || !requestId) {
+        console.error('[AllRequestsAdmin] Missing input or request ID:', {
+            input: !!input,
+            currentConversationRequestId,
+            'window.currentConversationId': window.currentConversationId,
+            modalDisplay: modal?.style.display
+        });
+        alert('Cannot send message. Please open a conversation first.');
+        return;
+    }
+    
+    // Sync the variables
+    currentConversationRequestId = requestId;
 
     const content = input.value.trim();
     console.log('[AllRequestsAdmin] Message content:', content || '(empty)');
@@ -2682,8 +2758,8 @@ window.sendTeamMessage = function() {
         formData.append('chatFiles', file);
     });
 
-    console.log('[AllRequestsAdmin] Sending to:', `/api/conversation/${currentConversationRequestId}/message`);
-    fetch(`/api/conversation/${currentConversationRequestId}/message`, {
+    console.log('[AllRequestsAdmin] Sending to:', `/api/conversation/${requestId}/message`);
+    fetch(`/api/conversation/${requestId}/message`, {
         method: 'POST',
         body: formData
     })
@@ -2706,7 +2782,7 @@ window.sendTeamMessage = function() {
             console.log('[AllRequestsAdmin] Message sent successfully');
             input.value = '';
             clearAllChatFiles();
-            loadTeamConversation(currentConversationRequestId);
+            loadTeamConversation(requestId);
         } else {
             console.error('[AllRequestsAdmin] Server error:', data);
             alert(data.message || 'Failed to send message');
@@ -2779,9 +2855,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const openChatBtn = document.getElementById('openTeamChatBtn');
     if (openChatBtn) {
         openChatBtn.addEventListener('click', function() {
-            const requestId = document.getElementById('detailsModalRequestId')?.value;
-            if (requestId) {
-                openTeamConversationModal(requestId);
+            // Use the global currentRequestId that's set when details modal opens
+            if (currentRequestId) {
+                console.log('[AllRequestsAdmin] Opening conversation for request:', currentRequestId);
+                openTeamConversationModal(currentRequestId);
+            } else {
+                console.error('[AllRequestsAdmin] No request ID available');
+                alert('No request selected. Please open a request first.');
             }
         });
     }

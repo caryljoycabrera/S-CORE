@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Apply default sorting (pending with nearest deadlines first)
     applySorting();
+    
+    // Check URL parameters for auto-opening modals (from notifications)
+    checkURLParameters();
 });
 
 // ==========================================
@@ -2586,7 +2589,7 @@ function createMessageElement(msg) {
     
     let attachmentsHTML = '';
     if (msg.attachments && msg.attachments.length > 0) {
-        attachmentsHTML = msg.attachments.map(file => {
+        const attachmentItems = msg.attachments.map(file => {
             const ext = file.filename.split('.').pop().toLowerCase();
             const isPdf = ext === 'pdf';
             const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
@@ -2638,6 +2641,12 @@ function createMessageElement(msg) {
                 </div>
             `;
         }).join('');
+        
+        attachmentsHTML = `
+            <div class="message-attachments-section">
+                ${attachmentItems}
+            </div>
+        `;
     }
     
     // Build read receipts display
@@ -4008,3 +4017,42 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// Make openRequestDetails globally accessible for notifications
+window.openRequestModal = function(requestId, requestType) {
+    console.log('🌐 Global openRequestModal called:', { requestId, requestType });
+    openRequestDetails(requestId, requestType);
+};
+
+// Check URL parameters and auto-open modals if needed
+function checkURLParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Check if we should open a modal
+    const hasModal = urlParams.has('modal');
+    const hasConversation = urlParams.has('conversation');
+    const requestId = urlParams.get('requestId');
+    const requestType = urlParams.get('type');
+    
+    console.log('🔍 Checking URL parameters:', { hasModal, hasConversation, requestId, requestType });
+    
+    if (requestId && requestType && (hasModal || hasConversation)) {
+        console.log('📋 Auto-opening modal from URL parameters');
+        
+        // Small delay to ensure DOM is fully ready
+        setTimeout(() => {
+            // Open the request modal
+            openRequestDetails(requestId, requestType);
+            
+            // If conversation parameter is present, also open conversation tab
+            if (hasConversation) {
+                setTimeout(() => {
+                    const conversationTab = document.querySelector('[data-tab="conversation"]');
+                    if (conversationTab) {
+                        console.log('💬 Switching to conversation tab');
+                        conversationTab.click();
+                    }
+                }, 500);
+            }
+        }, 300);
+    }
+}

@@ -711,17 +711,17 @@ class UnitNotificationSystem {
   openAnnouncementModalFromNotification(announcementId) {
     console.log('🎯 Unit openAnnouncementModalFromNotification called with ID:', announcementId);
     
-    // Call the openAnnouncementDetail function from the page if it exists
+    // Try multiple ways to open the announcement modal
     if (typeof openAnnouncementDetail === 'function') {
       console.log('✅ Calling unit openAnnouncementDetail function');
       openAnnouncementDetail(announcementId);
+    } else if (window.openAnnouncementDetail && typeof window.openAnnouncementDetail === 'function') {
+      console.log('✅ Using window.openAnnouncementDetail');
+      window.openAnnouncementDetail(announcementId);
     } else {
-      console.warn('⚠️ Unit openAnnouncementDetail function not found on page');
-      // Fallback: try to call it on window
-      if (window.openAnnouncementDetail && typeof window.openAnnouncementDetail === 'function') {
-        console.log('✅ Using window.openAnnouncementDetail');
-        window.openAnnouncementDetail(announcementId);
-      }
+      console.warn('⚠️ Unit openAnnouncementDetail function not found on page - navigating to dashboard');
+      // Fallback: navigate to dashboard (which has the announcement modal)
+      window.location.href = `/unit/dashboard?announcement=${announcementId}`;
     }
   }
 
@@ -744,6 +744,57 @@ class UnitNotificationSystem {
         this.closeDropdown();
         this.showOnboardingModal();
         return;
+      }
+
+      // Check if this is an announcement notification
+      if (type === 'announcement') {
+        console.log('📢 Unit announcement notification clicked');
+        this.closeDropdown();
+        
+        // If there's a relatedId, try to open the announcement modal
+        const relatedId = params.get('relatedId') || url.match(/announcement[\/=]([a-f0-9]{24})/i)?.[1];
+        if (relatedId && typeof window.openAnnouncementDetail === 'function') {
+          console.log('✅ Opening announcement modal with ID:', relatedId);
+          window.openAnnouncementDetail(relatedId);
+          return;
+        }
+        
+        // Fallback to navigation
+        window.location.href = url;
+        return;
+      }
+
+      // Check if this is a message/conversation notification
+      if (type === 'new_message' && params.has('conversation')) {
+        const requestId = params.get('requestId');
+        const requestType = params.get('type');
+        
+        console.log('💬 Unit message notification clicked:', { requestId, requestType });
+        
+        const currentPath = window.location.pathname;
+        const targetPath = urlObj.pathname;
+
+        // Check if we're already on the correct page
+        if (currentPath === targetPath) {
+          console.log('✅ Unit on correct page, opening conversation modal...');
+          this.closeDropdown();
+          
+          // Try to open the modal directly if the page has the function
+          if (typeof window.openRequestModal === 'function') {
+            window.openRequestModal(requestId, requestType);
+          } else if (typeof window.openConversationModal === 'function') {
+            window.openConversationModal(requestId, requestType);
+          } else {
+            // If functions don't exist, navigate with parameters
+            window.location.href = url;
+          }
+          return;
+        } else {
+          // Navigate to the correct page with conversation parameters
+          console.log('🔄 Unit navigating to correct page for conversation:', url);
+          window.location.href = url;
+          return;
+        }
       }
 
       // Handle unit-specific navigation

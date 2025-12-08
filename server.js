@@ -61,7 +61,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Body parsers
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json({ limit: process.env.MAX_FILE_SIZE || '50mb' }));
-app.use(bodyParser.json());
 
 // ======= Security Middleware ========
 // Apply sanitization middleware to all routes to prevent NoSQL injection

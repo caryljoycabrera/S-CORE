@@ -1247,53 +1247,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Global function to open conversation (updated to match /api/conversation response)
-  window.openConversation = async function(requestId) {
-    const teamMessagesContainer = document.getElementById('teamMessagesContainer');
-    const teamConversationModal = document.getElementById('teamConversationModal');
-    
-    if (!teamMessagesContainer || !teamConversationModal) {
-      console.error('[AllRequests] Conversation modal elements not found');
-      return;
-    }
-    
-    currentConversationId = requestId;
-    teamMessagesContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem;">Loading conversation...</p>';
-    teamConversationModal.style.display = 'flex';
-
-    try {
-      const response = await fetch(`/api/conversation/${requestId}`);
-      const data = await response.json();
-
-      if (response.ok && data) {
-        // API returns the conversation document directly (with .messages array)
-        loadConversation(data);
-        // mark messages as read for the admin view
-        await fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' });
-      } else {
-        throw new Error(data && data.error ? data.error : 'Failed to load conversation');
-      }
-    } catch (error) {
-      console.error('Error loading conversation:', error);
-      teamMessagesContainer.innerHTML = '<p style="color: red;">Error loading conversation</p>';
+  // Conversation functionality is handled by allrequestsadmin.js external file
+  // No inline conversation code needed here - it's all in the external JS file
+  
+  // Keep this stub for compatibility but it just delegates to the external function
+  window.openConversation = function(requestId) {
+    console.log('[AllRequestsAdmin EJS] Delegating to openTeamConversationModal');
+    if (window.openTeamConversationModal) {
+      window.openTeamConversationModal(requestId);
     }
   };
-
-  function loadConversation(conversation) {
-    const teamMessagesContainer = document.getElementById('teamMessagesContainer');
-    if (!teamMessagesContainer) return;
-    
-    teamMessagesContainer.innerHTML = '';
-    
-    if (!conversation || !conversation.messages || conversation.messages.length === 0) {
-      teamMessagesContainer.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 2rem;">No messages yet. Start the conversation!</p>';
-      return;
-    }
-    
-    conversation.messages.forEach(message => {
-      addMessageToUI(message);
-    });
-  }
 
   function addMessageToUI(message) {
     const teamMessagesContainer = document.getElementById('teamMessagesContainer');
