@@ -63,8 +63,10 @@ router.get('/', async (req, res) => {
     res.render('homepage', { content });
   } catch (error) {
     console.error('[HOMEPAGE] Error loading homepage:', error);
-    // Render with empty content on error
-    res.render('homepage', { content: {} });
+    // Only send response if headers haven't been sent yet
+    if (!res.headersSent) {
+      res.render('homepage', { content: {} });
+    }
   }
 });
 
@@ -206,7 +208,9 @@ router.get('/dashboard', requireLogin, async (req, res) => {
     });
   } catch (err) {
     console.error('User dashboard load error:', err);
-    res.status(500).render('error', { message: 'Failed to load dashboard.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load dashboard.' });
+    }
   }
 });
 
@@ -358,7 +362,9 @@ router.get('/service-requests', async (req, res) => {
 
   } catch (err) {
     console.error('Error loading service requests:', err);
-    res.status(500).render('error', { message: 'Error loading page' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Error loading page' });
+    }
   }
 });
 
@@ -461,7 +467,9 @@ router.get('/all-requests', async (req, res) => {
     res.render('User/allRequestsUser', { user, approvals, serviceRequests: services, allRequests });
   } catch (err) {
     console.error('Error loading all requests:', err);
-    res.status(500).render('error', { message: 'Error loading page' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Error loading page' });
+    }
   }
 });
 
@@ -664,7 +672,9 @@ router.get('/profile', async (req, res) => {
     res.render('User/profile', { user });
   } catch (err) {
     console.error('Error loading profile:', err);
-    res.status(500).render('error', { message: 'Failed to load profile page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load profile page.' });
+    }
   }
 });
 
@@ -679,7 +689,9 @@ router.get('/user-guide', async (req, res) => {
     res.render('User/guide', { user });
   } catch (err) {
     console.error('Error loading user guide:', err);
-    res.status(500).render('error', { message: 'Failed to load guide page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load guide page.' });
+    }
   }
 });
 
@@ -1588,7 +1600,9 @@ router.get('/settings', requireLogin, (req, res) => {
     });
   } catch (error) {
     console.error('Error loading settings page:', error);
-    res.status(500).render('error', { error: error.message });
+    if (!res.headersSent) {
+      res.status(500).render('error', { error: error.message });
+    }
   }
 });
 

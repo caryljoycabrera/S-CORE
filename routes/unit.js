@@ -589,9 +589,11 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     console.error('[/unit/dashboard] Error message:', err.message);
     console.error('[/unit/dashboard] Error name:', err.name);
     console.error('[/unit/dashboard] Stack trace:', err.stack);
-    res.status(500).render('error', {
-      message: 'Failed to load dashboard: ' + err.message
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Failed to load dashboard: ' + err.message
+      });
+    }
   }
 });
 
@@ -639,9 +641,11 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading unit tasks:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load tasks.'
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Failed to load tasks.'
+      });
+    }
   }
 });
 
@@ -660,9 +664,11 @@ router.get('/unit/profile', requireUnit, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading profile:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load profile.'
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Failed to load profile.'
+      });
+    }
   }
 });
 
@@ -681,9 +687,11 @@ router.get('/unit/guide', requireUnit, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading guide:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load guide.'
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Failed to load guide.'
+      });
+    }
   }
 });
 
@@ -731,9 +739,11 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading all tasks:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load tasks.'
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Failed to load tasks.'
+      });
+    }
   }
 });
 
@@ -770,9 +780,11 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading task approvals:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load approval requests.'
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Failed to load approval requests.'
+      });
+    }
   }
 });
 
@@ -826,9 +838,11 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading task services:', err);
-    res.status(500).render('error', {
-      message: 'Failed to load service requests.'
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Failed to load service requests.'
+      });
+    }
   }
 });
 
@@ -1727,9 +1741,11 @@ router.get('/unit/reports', requireUnit, async (req, res) => {
     });
   } catch (error) {
     console.error('Error rendering reports page:', error);
-    res.status(500).render('error', {
-      message: 'Error loading reports page'
-    });
+    if (!res.headersSent) {
+      res.status(500).render('error', {
+        message: 'Error loading reports page'
+      });
+    }
   }
 });
 

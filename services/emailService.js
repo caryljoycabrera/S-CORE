@@ -1263,6 +1263,118 @@ class EmailService {
   }
 
   /**
+   * Send user invitation email
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's name (if provided)
+   * @param {string} invitationLink - Registration link with token
+   * @param {Object} preFilledData - Pre-filled registration data
+   * @returns {Promise} Send result
+   */
+  async sendUserInvitation(userEmail, userName, invitationLink, preFilledData = {}) {
+    try {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif;">S-CORE</h1>
+                        <p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <!-- Title -->
+                    <tr>
+                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
+                        <h2 style="margin: 0; color: white; font-size: 26px;">You're Invited to Join S-CORE</h2>
+                      </td>
+                    </tr>
+                    <!-- Body -->
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #374151;">Hi ${userName},</p>
+                        <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #374151;">An administrator has invited you to create an account on <strong>S-CORE</strong>, the SCO Creative Optimization for Requests and Engagement System.</p>
+                        
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #d4edda; border-left: 4px solid #28a745; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #155724; font-size: 16px;">✓ Good News!</strong><br>
+                              <span style="color: #155724; font-size: 14px; line-height: 1.6;">Your account will be automatically approved once you complete registration.</span>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        ${preFilledData.firstName || preFilledData.lastName || preFilledData.userType ? `
+                          <p style="margin: 20px 0 10px 0; font-size: 16px; line-height: 1.6; color: #374151;"><strong>Pre-filled Information:</strong></p>
+                          <ul style="margin: 0 0 20px 0; padding-left: 25px; font-size: 14px; line-height: 1.8; color: #6b7280;">
+                            ${preFilledData.firstName ? `<li>First Name: ${preFilledData.firstName}</li>` : ''}
+                            ${preFilledData.lastName ? `<li>Last Name: ${preFilledData.lastName}</li>` : ''}
+                            ${preFilledData.userType ? `<li>User Type: ${preFilledData.userType === 'student' ? 'Student' : 'Staff/Faculty'}</li>` : ''}
+                          </ul>
+                        ` : ''}
+                        
+                        <p style="margin: 20px 0; font-size: 16px; line-height: 1.6; color: #374151;">Click the button below to complete your registration. <strong style="color: #dc2626;">This link will expire in 7 days.</strong></p>
+                        
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+                          <tr>
+                            <td align="center">
+                              <a href="${invitationLink}" style="display: inline-block; padding: 14px 32px; background-color: #1a5d1a; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">Complete Registration</a>
+                            </td>
+                          </tr>
+                        </table>
+                        
+                        <p style="color: #6c757d; font-size: 13px; line-height: 1.6; margin: 20px 0 0 0;">If you didn't expect this invitation, you can safely ignore this email.</p>
+                      </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        Strategic Communications Office<br>
+                        De La Salle University - Dasmariñas
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `;
+
+      const mailOptions = {
+        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        replyTo: 'sco@dlsud.edu.ph',
+        to: userEmail,
+        subject: 'You\'re Invited to Join S-CORE',
+        html
+      };
+
+      if (this.transporter) {
+        const result = await this.transporter.sendMail(mailOptions);
+        console.log(`[EMAIL] ✅ Invitation sent to ${userEmail}`);
+        return { success: true, messageId: result.messageId };
+      } else {
+        console.log(`[EMAIL] [DEV MODE] Invitation would be sent to ${userEmail}`);
+        console.log(`[EMAIL] Invitation link: ${invitationLink}`);
+        return { success: true, devMode: true, invitationLink };
+      }
+    } catch (error) {
+      console.error('[EMAIL] ❌ Error sending invitation:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Test email configuration
    * @param {string} testEmail - Email to send test to
    * @returns {Promise} Test result

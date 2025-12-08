@@ -98,8 +98,14 @@ const userSchema = new mongoose.Schema({
   // NEW FIELD: User status for admin verification
   status: {
     type: String,
-    enum: ['pending', 'approved', 'denied'],
+    enum: ['pending', 'approved', 'denied', 'invited'],
     default: 'pending'
+  },
+
+  // Invitation data for admin-created users (stores pre-filled registration data as JSON)
+  invitationData: {
+    type: String,
+    default: null
   },
 
   // User type enum: determines student vs non-student user
@@ -113,7 +119,8 @@ const userSchema = new mongoose.Schema({
   studentId: {
     type: String,
     required: function() {
-      return this.userType === 'student';
+      // Don't require for invited users (will be filled during registration)
+      return this.userType === 'student' && this.status !== 'invited';
     }
   },
   studentOrganization: [{
@@ -122,7 +129,8 @@ const userSchema = new mongoose.Schema({
   cys: {
     type: String,
     required: function() {
-      return this.userType === 'student';
+      // Don't require for invited users (will be filled during registration)
+      return this.userType === 'student' && this.status !== 'invited';
     }
   },
 

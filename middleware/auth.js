@@ -43,7 +43,7 @@ async function requireAuth(req, res, next) {
 
   } catch (err) {
     console.error('Authentication error:', err);
-    res.status(500).json({ success: false, message: 'Authentication error' });
+    return res.status(500).json({ success: false, message: 'Authentication error' });
   }
 }
 
@@ -90,7 +90,7 @@ async function requireAdmin(req, res, next) {
 
   } catch (err) {
     console.error('Admin authentication error:', err);
-    res.status(500).render('error', {
+    return res.status(500).render('error', {
       message: 'Server error during authentication'
     });
   }
@@ -165,7 +165,7 @@ async function requireUnit(req, res, next) {
   } catch (err) {
     console.error('[requireUnit] EXCEPTION during authentication:', err);
     console.error('[requireUnit] Stack trace:', err.stack);
-    res.status(500).render('error', {
+    return res.status(500).render('error', {
       message: 'Server error during authentication'
     });
   }
@@ -204,7 +204,7 @@ async function requireAdminAPI(req, res, next) {
 
   } catch (err) {
     console.error('Admin API authentication error:', err);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Server error during authentication'
     });

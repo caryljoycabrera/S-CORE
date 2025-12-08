@@ -1039,7 +1039,33 @@ body::before {
     <h1 class="welcome-text">Welcome!</h1>
     <p class="subtitle">Create your account to get started</p>
 
-    <form action="/register" method="POST" id="registerForm">
+    <!-- Invitation Notice (shows when registering via invitation) -->
+    <% if (typeof invitationData !== 'undefined' && invitationData && invitationData.autoApprove) { %>
+    <div style="background: #d4edda; color: #155724; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px solid #28a745; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);">
+      <div>
+        <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #155724;">
+          ✓ You're Invited to Join S-CORE!
+        </h3>
+        <p style="margin: 0 0 12px 0; font-size: 14px; line-height: 1.6; color: #155724;">
+          An administrator has invited you to create an account. 
+          <strong>Your account will be automatically approved</strong> once you complete this registration.
+        </p>
+        <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #c3e6cb;">
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #155724;">
+            ✓ Some information has been pre-filled for your convenience<br>
+            ✓ You can sign in immediately after registration<br>
+            ✓ No need to wait for admin approval
+          </p>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <form action="<%= typeof invitationData !== 'undefined' && invitationData ? '/register-invitation' : '/register' %>" method="POST" id="registerForm">
+      <!-- Hidden field for invitation token -->
+      <% if (typeof invitationData !== 'undefined' && invitationData && invitationData.invitationToken) { %>
+      <input type="hidden" name="invitationToken" value="<%= invitationData.invitationToken %>" />
+      <% } %>
       <!-- User Type Selection with Buttons -->
       <div class="user-type-selection" id="userTypeSelection" style="margin-bottom: 30px;">
         <!-- New Microsoft User Notice (only shows during user type selection) -->
@@ -1324,11 +1350,119 @@ body::before {
     lastName: '<%= microsoftProfile.lastName || "" %>',
     emailVerified: <%= microsoftProfile.emailVerified || false %>
   };
+<% } %>
+
+// Check for invitation data and pre-fill fields
+<% if (typeof invitationData !== 'undefined' && invitationData) { %>
+  window.invitationData = {
+    email: '<%= invitationData.email %>',
+    firstName: '<%= invitationData.firstName || "" %>',
+    lastName: '<%= invitationData.lastName || "" %>',
+    middleName: '<%= invitationData.middleName || "" %>',
+    phoneNumber: '<%= invitationData.phoneNumber || "" %>',
+    userType: '<%= invitationData.userType || "" %>',
+    studentId: '<%= invitationData.studentId || "" %>',
+    studentOrganization: <%- JSON.stringify(invitationData.studentOrganization || []) %>,
+    cys: '<%= invitationData.cys || "" %>',
+    affiliation: <%- JSON.stringify(invitationData.affiliation || []) %>,
+    autoApprove: <%= invitationData.autoApprove || false %>,
+    invitationToken: '<%= invitationData.invitationToken || "" %>'
+  };
   
   // Helper function to capitalize only first letter
   function capitalizeFirstLetter(str) {
     if (!str) return str;
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+  
+  // Function to pre-fill invitation data into visible fields
+  function preFillInvitationData() {
+    const invitation = window.invitationData;
+    if (!invitation) return;
+    
+    console.log('Pre-filling invitation data:', invitation);
+    
+    // Pre-fill email and make it readonly
+    if (invitation.email) {
+      const emailInputs = document.querySelectorAll('input[name="email"]');
+      emailInputs.forEach(input => {
+        input.value = invitation.email;
+        input.readOnly = true;
+        input.style.background = '#f0f0f0';
+        input.style.cursor = 'not-allowed';
+      });
+    }
+    
+    // Pre-fill name fields if available
+    if (invitation.firstName) {
+      const firstNameInputs = document.querySelectorAll('input[name="firstName"]');
+      firstNameInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.firstName;
+        }
+      });
+    }
+    
+    if (invitation.lastName) {
+      const lastNameInputs = document.querySelectorAll('input[name="lastName"]');
+      lastNameInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.lastName;
+        }
+      });
+    }
+    
+    if (invitation.middleName) {
+      const middleNameInputs = document.querySelectorAll('input[name="middleName"]');
+      middleNameInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.middleName;
+        }
+      });
+    }
+    
+    if (invitation.phoneNumber) {
+      const phoneInputs = document.querySelectorAll('input[name="phoneNumber"]');
+      phoneInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.phoneNumber;
+        }
+      });
+    }
+    
+    // Auto-select user type if provided
+    if (invitation.userType) {
+      selectUserType(invitation.userType);
+      
+      // Wait for form to be visible, then pre-fill user-type-specific fields
+      setTimeout(() => {
+        if (invitation.userType === 'student') {
+          if (invitation.studentId) {
+            const studentIdInput = document.getElementById('studentId');
+            if (studentIdInput) studentIdInput.value = invitation.studentId;
+          }
+          
+          if (invitation.cys) {
+            const cysInput = document.getElementById('cys');
+            if (cysInput) cysInput.value = invitation.cys;
+          }
+          
+          if (invitation.studentOrganization && invitation.studentOrganization.length > 0) {
+            const orgSelect = $('#studentOrganizations');
+            if (orgSelect.length) {
+              orgSelect.val(invitation.studentOrganization).trigger('change');
+            }
+          }
+        } else if (invitation.userType === 'nonstudent') {
+          if (invitation.affiliation && invitation.affiliation.length > 0) {
+            const affiliationSelect = $('#affiliation');
+            if (affiliationSelect.length) {
+              affiliationSelect.val(invitation.affiliation).trigger('change');
+            }
+          }
+        }
+      }, 500);
+    }
   }
   
   // Function to pre-fill Microsoft data into visible fields
@@ -1452,6 +1586,11 @@ function selectUserType(type) {
   // Pre-fill Microsoft profile data after fields are visible
   if (window.microsoftProfile) {
     preFillMicrosoftData();
+  }
+  
+  // Pre-fill invitation data after fields are visible
+  if (window.invitationData) {
+    preFillInvitationData();
   }
   
   // Scroll to form fields smoothly
@@ -2276,8 +2415,11 @@ document.querySelector('form').addEventListener('submit', function(e) {
     urlEncodedData.append(key, value);
   }
 
+  // Get the form action (respects invitation vs regular registration)
+  const formAction = this.getAttribute('action') || '/register';
+
   // Submit via fetch to handle server-side errors
-  fetch('/register', {
+  fetch(formAction, {
     method: 'POST',
     body: urlEncodedData,
     headers: {

@@ -15,6 +15,7 @@ require('dotenv').config();
 const { connectDB } = require('./config/database');
 const { upload, ensureUploadsDirectory, UPLOADS_DIR } = require('./config/upload');
 const { clerkMiddleware } = require('./config/clerk');
+const MongoStore = require('connect-mongo').default;
 
 // Import middleware
 const { apiLimiter, authLimiter, messageLimiter, requestLimiter } = require('./middleware/rateLimiter');
@@ -67,11 +68,18 @@ app.use(express.json({ limit: process.env.MAX_FILE_SIZE || '50mb' }));
 // This removes MongoDB operators ($) from request body, query, and params
 app.use(sanitizeAll);
 
-// Session handling with environment-based secret
+// Session handling with MongoDB persistence
 app.use(session({
   secret: process.env.SESSION_SECRET || 's-core-secret',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false, // Don't save empty sessions
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI || 'mongodb+srv://scoadmin:JoJiCa52425@cluster0.18ajqou.mongodb.net/',
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60, // Session TTL in seconds (24 hours)
+    autoRemove: 'native', // Let MongoDB handle expired session cleanup
+    touchAfter: 24 * 3600 // Lazy session update (in seconds)
+  }),
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,

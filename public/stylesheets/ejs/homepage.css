@@ -122,12 +122,23 @@ a,
   transform: scale(1.05);
 }
 
+.logo-area a {
+  text-decoration: none;
+  color: inherit;
+}
+
 .logo-text {
   font-family: 'Playfair Display', serif;
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--primary-green);
   user-select: none;
+  text-decoration: none;
+}
+
+.logo-area a:hover .logo-text {
+  color: var(--primary-green);
+  text-decoration: none;
 }
 
 .nav-links {

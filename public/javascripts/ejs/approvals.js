@@ -383,6 +383,129 @@ class EnhancedMultiSelect {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
   
+  // ==========================================
+  // CREATE REQUEST MODAL HANDLER
+  // ==========================================
+  const openModalBtn = document.getElementById('openModalBtn');
+  const requestModal = document.getElementById('requestModal');
+  
+  if (openModalBtn && requestModal) {
+    openModalBtn.onclick = () => {
+      requestModal.style.display = 'flex';
+      // Clear user search when opening modal
+      const userInput = document.getElementById('requestForUser');
+      const userIdInput = document.getElementById('requestForUserId');
+      if (userInput) userInput.value = '';
+      if (userIdInput) userIdInput.value = '';
+    };
+  }
+  
+  // ==========================================
+  // USER SEARCH FUNCTIONALITY
+  // ==========================================
+  const requestForUserInput = document.getElementById('requestForUser');
+  const requestForUserIdInput = document.getElementById('requestForUserId');
+  const userSuggestionsDropdown = document.getElementById('userSuggestionsDropdown');
+  
+  let userSearchTimeout;
+  let usersCache = [];
+  
+  if (requestForUserInput && userSuggestionsDropdown) {
+    // Debounced search function
+    requestForUserInput.addEventListener('input', function() {
+      clearTimeout(userSearchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length < 2) {
+        userSuggestionsDropdown.style.display = 'none';
+        requestForUserIdInput.value = '';
+        return;
+      }
+      
+      // Show loading state
+      userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-loading">Searching users...</div>';
+      userSuggestionsDropdown.style.display = 'block';
+      
+      userSearchTimeout = setTimeout(async () => {
+        try {
+          console.log('[USER SEARCH] Fetching users for query:', query);
+          const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+          console.log('[USER SEARCH] Response status:', response.status, response.statusText);
+          
+          if (!response.ok) {
+            console.error('[USER SEARCH] Request failed with status:', response.status);
+            const contentType = response.headers.get('content-type');
+            console.error('[USER SEARCH] Content-Type:', contentType);
+            
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = await response.json();
+              console.error('[USER SEARCH] Error response:', errorData);
+            } else {
+              const errorText = await response.text();
+              console.error('[USER SEARCH] Error response (text):', errorText.substring(0, 200));
+            }
+            
+            userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">Error: Unable to search users. Please check your permissions.</div>';
+            return;
+          }
+          
+          const users = await response.json();
+          console.log('[USER SEARCH] Found users:', users.length, users);
+          usersCache = users;
+          
+          if (users.length === 0) {
+            userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">No users found</div>';
+          } else {
+            // Populate dropdown with rich suggestions
+            userSuggestionsDropdown.innerHTML = users.map(user => {
+              const initials = `${user.fName.charAt(0)}${user.lName.charAt(0)}`.toUpperCase();
+              return `
+                <div class="user-suggestion-item" data-user-id="${user._id}" data-user-name="${user.fName} ${user.lName}" data-user-email="${user.email}">
+                  <div class="user-suggestion-avatar">${initials}</div>
+                  <div class="user-suggestion-info">
+                    <div class="user-suggestion-name">${user.fName} ${user.lName}</div>
+                    <div class="user-suggestion-email">${user.email}</div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+            
+            // Add click handlers to suggestion items
+            const suggestionItems = userSuggestionsDropdown.querySelectorAll('.user-suggestion-item');
+            suggestionItems.forEach(item => {
+              item.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                const userEmail = this.getAttribute('data-user-email');
+                
+                requestForUserInput.value = `${userName} (${userEmail})`;
+                requestForUserIdInput.value = userId;
+                userSuggestionsDropdown.style.display = 'none';
+                
+                console.log('[USER SEARCH] Selected user:', { userId, userName, userEmail });
+              });
+            });
+          }
+        } catch (error) {
+          console.error('[USER SEARCH] Error searching users:', error);
+          userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">Error loading users</div>';
+        }
+      }, 300);
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!requestForUserInput.contains(e.target) && !userSuggestionsDropdown.contains(e.target)) {
+        userSuggestionsDropdown.style.display = 'none';
+      }
+    });
+    
+    // Clear hidden ID if user manually changes input
+    requestForUserInput.addEventListener('keydown', function() {
+      requestForUserIdInput.value = '';
+    });
+  }
+  
   // Debug: Check all rows for allowAdditionalUpload data
   console.log('🚀 Page loaded - checking all data attributes...');
   const allRows = document.querySelectorAll('.request-row');

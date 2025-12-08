@@ -174,6 +174,57 @@ router.get('/api/system-data', (req, res) => {
 });
 
 /**
+ * GET /api/users/search
+ * Admin API endpoint to search for users by name or email
+ * Query params: q (search query string)
+ */
+router.get('/api/users/search', requireAdmin, async (req, res) => {
+  try {
+    console.log('[API /api/users/search] Request received with query:', req.query.q);
+    console.log('[API /api/users/search] User session:', req.session?.userId, 'Role:', req.user?.role);
+    
+    const query = sanitizeString(req.query.q, 100);
+    console.log('[API /api/users/search] Sanitized query:', query);
+    
+    if (!query || query.length < 2) {
+      console.log('[API /api/users/search] Query too short, returning empty array');
+      return res.json([]);
+    }
+
+    // Search for users by first name, last name, or email
+    const searchCriteria = {
+      $and: [
+        { isDeleted: { $ne: true } }, // Exclude deleted users
+        { status: 'approved' }, // Only approved users
+        {
+          $or: [
+            { fName: { $regex: query, $options: 'i' } },
+            { lName: { $regex: query, $options: 'i' } },
+            { email: { $regex: query, $options: 'i' } }
+          ]
+        }
+      ]
+    };
+    
+    console.log('[API /api/users/search] Search criteria:', JSON.stringify(searchCriteria, null, 2));
+    
+    const users = await User.find(searchCriteria)
+    .select('_id fName lName email userType')
+    .limit(10)
+    .lean();
+
+    console.log('[API /api/users/search] Found', users.length, 'users');
+    res.json(users);
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to search users' 
+    });
+  }
+});
+
+/**
  * GET /api/deadlines
  * Admin API endpoint for all request deadlines grouped by date
  */

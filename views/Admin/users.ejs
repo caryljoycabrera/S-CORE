@@ -177,8 +177,23 @@
 
     <section class="activity-section">
       <div class="section-header">
-        <h1>Registered Users</h1>
-        <p>View and manage user accounts</p>
+        <div class="section-header-content">
+          <div class="section-header-text">
+            <h1>Registered Users</h1>
+            <p>View and manage user accounts</p>
+          </div>
+          <div class="action-button-container">
+            <button class="view-all-btn" id="openCreateUserModalBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              + Create User
+            </button>
+          </div>
+        </div>
       </div>
       
    
@@ -391,6 +406,21 @@
           <% } %>
         </section>
 
+        <!-- Pagination Controls -->
+        <div class="pagination-controls" id="paginationControls" style="display: none;">
+          <button class="pagination-btn pagination-nav" id="prevPage" aria-label="Previous page">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="pagination-numbers" id="paginationNumbers"></div>
+          <button class="pagination-btn pagination-nav" id="nextPage" aria-label="Next page">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
         <div class="back-to-dashboard-container">
           <a href="/admin" class="back-to-dashboard-btn">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -523,6 +553,151 @@
           Permanently Delete
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create User Modal -->
+<div id="createUserModal" class="modal" style="display:none;">
+  <div class="modal-content unit-modal-wide">
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="8.5" cy="7" r="4"></circle>
+          <line x1="20" y1="8" x2="20" y2="14"></line>
+          <line x1="23" y1="11" x2="17" y2="11"></line>
+        </svg>
+        <h2 class="modal-title">Create User Invitation</h2>
+      </div>
+      <button class="close-modal-btn" id="closeCreateUserModal" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="createUserForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <p style="color: #6b7280; margin: -0.5rem 0 0.5rem 0;">
+          Send an invitation email to create a new user account. The user will receive a link to complete registration with auto-approval.
+        </p>
+        
+        <!-- Email (Required) -->
+        <div class="form-group">
+          <label for="userEmail" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151;">
+            Email Address <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="email" id="userEmail" name="email" required 
+                 placeholder="user@dlsud.edu.ph"
+                 pattern=".*@dlsud\.edu\.ph$"
+                 style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+          <small style="color: #6b7280; display: block; margin-top: 0.25rem;">Must be a valid @dlsud.edu.ph email address</small>
+        </div>
+        
+        <!-- Optional fields section -->
+        <div style="border-top: 2px solid #e5e7eb; padding-top: 1rem;">
+          <h3 style="font-size: 16px; font-weight: 600; color: #374151; margin-bottom: 1rem;">
+            Optional Pre-filled Information
+          </h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <!-- First Name -->
+            <div class="form-group">
+              <label for="userFirstName" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">First Name</label>
+              <input type="text" id="userFirstName" name="firstName" placeholder="Juan"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+            
+            <!-- Last Name -->
+            <div class="form-group">
+              <label for="userLastName" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Last Name</label>
+              <input type="text" id="userLastName" name="lastName" placeholder="Dela Cruz"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <!-- Middle Name -->
+            <div class="form-group">
+              <label for="userMiddleName" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Middle Name</label>
+              <input type="text" id="userMiddleName" name="middleName" placeholder="Santos"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+            
+            <!-- Phone Number -->
+            <div class="form-group">
+              <label for="userPhoneNumber" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Phone Number</label>
+              <input type="text" id="userPhoneNumber" name="phoneNumber" placeholder="09123456789"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+          </div>
+          
+          <!-- User Type -->
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="createUserType" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">User Type</label>
+            <select id="createUserType" name="userType" 
+                    style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+              <option value="">Select user type (optional)...</option>
+              <option value="student">Student</option>
+              <option value="nonstudent">Staff/Faculty</option>
+            </select>
+          </div>
+          
+          <!-- Student-specific fields -->
+          <div id="createStudentFields" style="display: none; margin-top: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label for="createStudentId" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Student ID</label>
+                <input type="text" id="createStudentId" name="studentId" maxlength="9" placeholder="123456789"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+              </div>
+              
+              <div class="form-group">
+                <label for="createCYS" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Course/Year/Section</label>
+                <input type="text" id="createCYS" name="cys" placeholder="BSN21"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; text-transform: uppercase;">
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 1rem;">
+              <label for="createStudentOrg" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Student Organizations</label>
+              <select id="createStudentOrg" name="studentOrganization" multiple class="select2-multiple"
+                      style="width: 100%;">
+                <% organizationsData.forEach(org => { %>
+                  <option value="<%= org %>"><%= org %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Non-student fields -->
+          <div id="createNonStudentFields" style="display: none; margin-top: 1rem;">
+            <div class="form-group">
+              <label for="createAffiliation" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Office/Department</label>
+              <select id="createAffiliation" name="affiliation" multiple class="select2-multiple"
+                      style="width: 100%;">
+                <% officesData.forEach(office => { %>
+                  <option value="<%= office %>"><%= office %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 2px solid #e5e7eb; margin-top: 0.5rem;">
+          <button type="button" id="cancelCreateUser" class="modal-btn modal-btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" class="modal-btn modal-btn-primary" id="submitCreateUser">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            Send Invitation
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -990,7 +1165,6 @@
 </div>
 
 
-
 <!-- Shared Data Arrays -->
 <script>
   const userRolesData = <%- JSON.stringify(userRoles || []) %>;
@@ -1029,3 +1203,14 @@
 
 <!-- External JavaScript File -->
 <script src="/javascripts/ejs/users.js"></script>
+
+<!-- Spin animation for loading indicators -->
+<style>
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<!-- Create User Modal functionality now handled in users.js -->
+</script>

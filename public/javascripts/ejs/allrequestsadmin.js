@@ -3656,3 +3656,462 @@ function displayFormattedText(text) {
     
     return formatted;
 }
+
+// ==========================================
+// ADD REQUEST MODAL FUNCTIONALITY
+// ==========================================
+
+// Quill editor instances
+let approvalQuillEditor = null;
+let serviceQuillEditor = null;
+
+// Modal open/close functions
+window.openAddApprovalModal = function() {
+  const modal = document.getElementById('addApprovalModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    initializeApprovalModal();
+  }
+};
+
+window.closeAddApprovalModal = function() {
+  const modal = document.getElementById('addApprovalModal');
+  if (modal) {
+    modal.style.display = 'none';
+    resetApprovalForm();
+  }
+};
+
+window.openAddServiceModal = function() {
+  const modal = document.getElementById('addServiceModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    initializeServiceModal();
+  }
+};
+
+window.closeAddServiceModal = function() {
+  const modal = document.getElementById('addServiceModal');
+  if (modal) {
+    modal.style.display = 'none';
+    resetServiceForm();
+  }
+};
+
+// Initialize approval modal
+function initializeApprovalModal() {
+  // Initialize Quill editor if not already initialized
+  if (!approvalQuillEditor && typeof Quill !== 'undefined') {
+    approvalQuillEditor = new Quill('#approvalDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Describe your request in detail...',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['link'],
+          ['clean']
+        ]
+      }
+    });
+  }
+
+  // Initialize file upload
+  initializeApprovalFileUpload();
+}
+
+// Initialize service modal
+function initializeServiceModal() {
+  // Initialize Quill editor if not already initialized
+  if (!serviceQuillEditor && typeof Quill !== 'undefined') {
+    serviceQuillEditor = new Quill('#serviceDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Describe your service request in detail...',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['link'],
+          ['clean']
+        ]
+      }
+    });
+  }
+
+  // Load request types
+  loadServiceRequestTypes();
+  
+  // Initialize file upload
+  initializeServiceFileUpload();
+}
+
+// Load service request types
+async function loadServiceRequestTypes() {
+  try {
+    const response = await fetch('/api/request-types?requestCategory=Service Request');
+    const data = await response.json();
+    
+    const select = document.getElementById('serviceSpecificRequestType');
+    if (select && data.requestTypes) {
+      select.innerHTML = '<option value="" disabled selected>Select from predefined types...</option>';
+      data.requestTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.typeName;
+        option.textContent = type.typeName;
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading request types:', error);
+  }
+}
+
+// File upload handlers for approval
+let approvalSelectedFiles = [];
+
+function initializeApprovalFileUpload() {
+  const fileInput = document.getElementById('approvalUpload');
+  const fileUploadGroup = document.getElementById('approvalFileUploadGroup');
+  const clearAllBtn = document.getElementById('approvalClearAllBtn');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', handleApprovalFileSelect);
+  }
+
+  if (fileUploadGroup) {
+    // Drag and drop
+    fileUploadGroup.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.add('dragover');
+    });
+
+    fileUploadGroup.addEventListener('dragleave', () => {
+      fileUploadGroup.classList.remove('dragover');
+    });
+
+    fileUploadGroup.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      handleApprovalFiles(files);
+    });
+
+    fileUploadGroup.addEventListener('click', () => {
+      fileInput.click();
+    });
+  }
+
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', clearAllApprovalFiles);
+  }
+}
+
+function handleApprovalFileSelect(event) {
+  const files = Array.from(event.target.files);
+  handleApprovalFiles(files);
+}
+
+function handleApprovalFiles(files) {
+  approvalSelectedFiles = [...approvalSelectedFiles, ...files];
+  updateApprovalFileDisplay();
+}
+
+function updateApprovalFileDisplay() {
+  const fileManagement = document.getElementById('approvalFileManagement');
+  const filesContainer = document.getElementById('approvalSelectedFiles');
+  const filesCount = document.getElementById('approvalFilesCount');
+  const filesSummary = document.getElementById('approvalFilesSummary');
+
+  if (approvalSelectedFiles.length > 0) {
+    fileManagement.style.display = 'block';
+    filesCount.textContent = ${approvalSelectedFiles.length} file selected;
+
+    let totalSize = 0;
+    filesContainer.innerHTML = '';
+
+    approvalSelectedFiles.forEach((file, index) => {
+      totalSize += file.size;
+      const fileItem = createFileCard(file, index, 'approval');
+      filesContainer.innerHTML += fileItem;
+    });
+
+    filesSummary.textContent = Total size:  MB;
+  } else {
+    fileManagement.style.display = 'none';
+  }
+}
+
+function clearAllApprovalFiles() {
+  approvalSelectedFiles = [];
+  document.getElementById('approvalUpload').value = '';
+  updateApprovalFileDisplay();
+}
+
+window.removeApprovalFile = function(index) {
+  approvalSelectedFiles.splice(index, 1);
+  updateApprovalFileDisplay();
+};
+
+// File upload handlers for service
+let serviceSelectedFiles = [];
+
+function initializeServiceFileUpload() {
+  const fileInput = document.getElementById('serviceUpload');
+  const fileUploadGroup = document.getElementById('serviceFileUploadGroup');
+  const clearAllBtn = document.getElementById('serviceClearAllBtn');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', handleServiceFileSelect);
+  }
+
+  if (fileUploadGroup) {
+    // Drag and drop
+    fileUploadGroup.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.add('dragover');
+    });
+
+    fileUploadGroup.addEventListener('dragleave', () => {
+      fileUploadGroup.classList.remove('dragover');
+    });
+
+    fileUploadGroup.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      handleServiceFiles(files);
+    });
+
+    fileUploadGroup.addEventListener('click', () => {
+      fileInput.click();
+    });
+  }
+
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', clearAllServiceFiles);
+  }
+}
+
+function handleServiceFileSelect(event) {
+  const files = Array.from(event.target.files);
+  handleServiceFiles(files);
+}
+
+function handleServiceFiles(files) {
+  serviceSelectedFiles = [...serviceSelectedFiles, ...files];
+  updateServiceFileDisplay();
+}
+
+function updateServiceFileDisplay() {
+  const fileManagement = document.getElementById('serviceFileManagement');
+  const filesContainer = document.getElementById('serviceSelectedFiles');
+  const filesCount = document.getElementById('serviceFilesCount');
+  const filesSummary = document.getElementById('serviceFilesSummary');
+
+  if (serviceSelectedFiles.length > 0) {
+    fileManagement.style.display = 'block';
+    filesCount.textContent = ${serviceSelectedFiles.length} file selected;
+
+    let totalSize = 0;
+    filesContainer.innerHTML = '';
+
+    serviceSelectedFiles.forEach((file, index) => {
+      totalSize += file.size;
+      const fileItem = createFileCard(file, index, 'service');
+      filesContainer.innerHTML += fileItem;
+    });
+
+    filesSummary.textContent = Total size:  MB;
+  } else {
+    fileManagement.style.display = 'none';
+  }
+}
+
+function clearAllServiceFiles() {
+  serviceSelectedFiles = [];
+  document.getElementById('serviceUpload').value = '';
+  updateServiceFileDisplay();
+}
+
+window.removeServiceFile = function(index) {
+  serviceSelectedFiles.splice(index, 1);
+  updateServiceFileDisplay();
+};
+
+// Create file card HTML
+function createFileCard(file, index, type) {
+  const fileExt = file.name.split('.').pop().toLowerCase();
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+  
+  return <div class="file-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; transition: all 0.3s ease;">
+      <div class="file-item-info" style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: #3b82f6;">
+          
+        </svg>
+        <div class="file-item-details" style="flex: 1;">
+          <p class="file-item-name" style="margin: 0 0 0.25rem 0; font-size: 0.875rem; font-weight: 600; color: #334155; word-break: break-all;"></p>
+          <p class="file-item-size" style="margin: 0; font-size: 0.75rem; color: #64748b;"> KB</p>
+        </div>
+      </div>
+      <button type="button" class="file-delete-btn" onclick="removeFile()" style="background: #ef4444; color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; font-weight: bold; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"></button>
+    </div>;
+}
+
+// Links management for approval
+window.addApprovalLink = function() {
+  const container = document.getElementById('approvalLinksContainer');
+  const linkGroup = document.createElement('div');
+  linkGroup.className = 'link-input-group';
+  linkGroup.innerHTML = <input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)"></button>;
+  container.appendChild(linkGroup);
+};
+
+window.removeApprovalLink = function(button) {
+  const linkGroup = button.closest('.link-input-group');
+  linkGroup.remove();
+};
+
+// Links management for service
+window.addServiceLink = function() {
+  const container = document.getElementById('serviceLinksContainer');
+  const linkGroup = document.createElement('div');
+  linkGroup.className = 'link-input-group';
+  linkGroup.innerHTML = <input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeServiceLink(this)"></button>;
+  container.appendChild(linkGroup);
+};
+
+window.removeServiceLink = function(button) {
+  const linkGroup = button.closest('.link-input-group');
+  linkGroup.remove();
+};
+
+// Form submission handlers
+document.addEventListener('DOMContentLoaded', function() {
+  const approvalForm = document.getElementById('addApprovalForm');
+  const serviceForm = document.getElementById('addServiceForm');
+
+  if (approvalForm) {
+    approvalForm.addEventListener('submit', handleApprovalSubmit);
+  }
+
+  if (serviceForm) {
+    serviceForm.addEventListener('submit', handleServiceSubmit);
+  }
+});
+
+async function handleApprovalSubmit(event) {
+  event.preventDefault();
+  
+  if (approvalQuillEditor) {
+    const description = document.getElementById('approvalDescription');
+    description.value = approvalQuillEditor.root.innerHTML;
+  }
+
+  const form = event.target;
+  const formData = new FormData(form);
+
+  approvalSelectedFiles.forEach(file => {
+    formData.append('upload', file);
+  });
+
+  try {
+    const response = await fetch('/submit-request-approval', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      window.showSuccessAlert('Request submitted successfully!');
+      closeAddApprovalModal();
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      window.showErrorAlert('Failed to submit request. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error submitting approval request:', error);
+    window.showErrorAlert('An error occurred. Please try again.');
+  }
+}
+
+async function handleServiceSubmit(event) {
+  event.preventDefault();
+  
+  if (serviceQuillEditor) {
+    const description = document.getElementById('serviceDescription');
+    description.value = serviceQuillEditor.root.innerHTML;
+  }
+
+  const predefinedType = document.getElementById('serviceSpecificRequestType').value;
+  const customType = document.getElementById('serviceCustomRequestType').value;
+  const finalTypeInput = document.getElementById('serviceFinalRequestType');
+  
+  if (customType.trim()) {
+    finalTypeInput.value = customType.trim();
+  } else if (predefinedType) {
+    finalTypeInput.value = predefinedType;
+  } else {
+    window.showErrorAlert('Please select or enter a request type.');
+    return;
+  }
+
+  const form = event.target;
+  const formData = new FormData(form);
+
+  serviceSelectedFiles.forEach(file => {
+    formData.append('upload', file);
+  });
+
+  try {
+    const response = await fetch('/submit-service-request', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      window.showSuccessAlert('Service request submitted successfully!');
+      closeAddServiceModal();
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      window.showErrorAlert('Failed to submit service request. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error submitting service request:', error);
+    window.showErrorAlert('An error occurred. Please try again.');
+  }
+}
+
+function resetApprovalForm() {
+  const form = document.getElementById('addApprovalForm');
+  if (form) form.reset();
+  
+  if (approvalQuillEditor) {
+    approvalQuillEditor.setText('');
+  }
+  
+  approvalSelectedFiles = [];
+  updateApprovalFileDisplay();
+  
+  const linksContainer = document.getElementById('approvalLinksContainer');
+  if (linksContainer) {
+    linksContainer.innerHTML = <div class="link-input-group"><input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)" style="display: none;"></button></div>;
+  }
+}
+
+function resetServiceForm() {
+  const form = document.getElementById('addServiceForm');
+  if (form) form.reset();
+  
+  if (serviceQuillEditor) {
+    serviceQuillEditor.setText('');
+  }
+  
+  serviceSelectedFiles = [];
+  updateServiceFileDisplay();
+  
+  const linksContainer = document.getElementById('serviceLinksContainer');
+  if (linksContainer) {
+    linksContainer.innerHTML = <div class="link-input-group"><input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeServiceLink(this)" style="display: none;"></button></div>;
+  }
+}

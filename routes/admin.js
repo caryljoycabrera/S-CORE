@@ -322,7 +322,9 @@ router.get('/admin', requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading admin dashboard:', err);
-    res.status(500).render('error', { message: 'Failed to load admin page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load admin page.' });
+    }
   }
 });
 
@@ -507,7 +509,9 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading analytics page:', err);
-    res.status(500).render('error', { message: 'Failed to load analytics page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load analytics page.' });
+    }
   }
 });
 
@@ -522,7 +526,9 @@ router.get('/admin/profile', async (req, res) => {
     res.render('Admin/profileadmin', { user });
   } catch (err) {
     console.error('Error loading admin profile:', err);
-    res.status(500).render('error', { message: 'Failed to load profile page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load profile page.' });
+    }
   }
 });
 
@@ -585,7 +591,9 @@ router.post('/admin/announcement/send', requireAdmin, async (req, res) => {
     res.redirect('/admin?announcement=sent');
   } catch (err) {
     console.error('Error sending announcement:', err);
-    res.status(500).render('error', { message: 'Failed to send announcement.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to send announcement.' });
+    }
   }
 });
 
@@ -634,7 +642,9 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching admin approvals:', err);
-    res.status(500).render('error', { message: 'Server error' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Server error' });
+    }
   }
 });
 
@@ -890,7 +900,9 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
     units: settingsHelpers.getUnits(),
     userRoles: settingsHelpers.getUserRoles(),
     organizations: settingsHelpers.getOrganizations(),
-    offices: settingsHelpers.getOffices()
+    offices: settingsHelpers.getOffices(),
+    organizationsData: settingsHelpers.getOrganizations(),
+    officesData: settingsHelpers.getOffices()
   });
 });
 
@@ -1046,7 +1058,9 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading all admin requests:', err);
-    res.status(500).render('error', { message: 'Failed to load all requests page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load all requests page.' });
+    }
   }
 });
 
@@ -1144,7 +1158,9 @@ router.get('/admin/archive', requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading archived requests:', err);
-    res.status(500).render('error', { message: 'Failed to load archived requests page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load archived requests page.' });
+    }
   }
 });
 
@@ -1768,7 +1784,8 @@ router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => 
  */
 router.post('/admin/user/update', requireAdmin, async (req, res) => {
   try {
-    const { userId, role, unitTeam } = req.body;
+    const { userId, role } = req.body;
+    let { unitTeam } = req.body;
 
     if (!userId || !role) {
       return res.status(400).json({
@@ -1983,6 +2000,279 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Internal server error while updating user status' 
+    });
+  }
+});
+
+/**
+ * POST /admin/user/update-info
+ * Updates user personal information (name, email, phone, etc.)
+ */
+router.post('/admin/user/update-info', requireAdmin, async (req, res) => {
+  try {
+    const { userId, fName, mName, lName, username, email, phoneNumber, cys, organization } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required.'
+      });
+    }
+
+    // Validate required fields
+    if (!fName || !lName || !username || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'First name, last name, username, and email are required.'
+      });
+    }
+
+    // Check if username is already taken by another user
+    const existingUsername = await User.findOne({ 
+      username: username, 
+      _id: { $ne: userId } 
+    });
+    
+    if (existingUsername) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username is already taken by another user.'
+      });
+    }
+
+    // Check if email is already taken by another user
+    const existingEmail = await User.findOne({ 
+      email: email, 
+      _id: { $ne: userId } 
+    });
+    
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already registered to another user.'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.'
+      });
+    }
+
+    // Prepare update data
+    const updateData = {
+      fName: fName.trim(),
+      mName: mName ? mName.trim() : '',
+      lName: lName.trim(),
+      username: username.trim(),
+      email: email.trim(),
+      phoneNumber: phoneNumber ? phoneNumber.trim() : ''
+    };
+
+    // Update student-specific fields
+    if (user.userType === 'student') {
+      updateData.cys = cys ? cys.trim() : '';
+      updateData.studentOrg = Array.isArray(organization) ? organization : [];
+    } else {
+      // Update non-student organization/affiliation
+      updateData.affiliation = Array.isArray(organization) ? organization : [];
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update user information.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User information updated successfully.',
+      user: {
+        id: updatedUser._id,
+        fName: updatedUser.fName,
+        mName: updatedUser.mName,
+        lName: updatedUser.lName,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phoneNumber: updatedUser.phoneNumber,
+        cys: updatedUser.cys,
+        organization: user.userType === 'student' ? updatedUser.studentOrg : updatedUser.affiliation
+      }
+    });
+
+  } catch (err) {
+    console.error('Error updating user info:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error: Failed to update user information.'
+    });
+  }
+});
+
+/**
+ * POST /admin/user/create-invitation
+ * Creates a user invitation with pre-filled data
+ */
+router.post('/admin/user/create-invitation', requireAdmin, async (req, res) => {
+  try {
+    const crypto = require('crypto');
+    const { 
+      email, 
+      firstName, 
+      lastName,
+      middleName,
+      phoneNumber,
+      userType,
+      studentId,
+      studentOrganization,
+      cys,
+      affiliation 
+    } = req.body;
+
+    // Validate email
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address is required'
+      });
+    }
+
+    const emailLower = email.toLowerCase().trim();
+
+    // Check if it's @dlsud.edu.ph domain
+    if (!emailLower.endsWith('@dlsud.edu.ph')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email must be a valid @dlsud.edu.ph address'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: emailLower });
+    
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'A user with this email already exists in the system'
+      });
+    }
+
+    // Generate invitation token
+    const invitationToken = crypto.randomBytes(32).toString('hex');
+    const invitationExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create pre-filled user data object
+    const preFilledData = {
+      email: emailLower,
+      firstName: firstName?.trim() || '',
+      lastName: lastName?.trim() || '',
+      middleName: middleName?.trim() || '',
+      phoneNumber: phoneNumber?.trim() || '',
+      userType: userType || '',
+      studentId: studentId?.trim() || '',
+      studentOrganization: studentOrganization || [],
+      cys: cys?.trim().toUpperCase() || '',
+      affiliation: affiliation || []
+    };
+
+    // Create incomplete user with invitation token
+    // Default to 'nonstudent' if userType not specified to avoid student field validation
+    const finalUserType = preFilledData.userType || 'nonstudent';
+    
+    const incompleteUser = new User({
+      email: emailLower,
+      fName: preFilledData.firstName || 'Pending',
+      lName: preFilledData.lastName || 'Registration',
+      mName: preFilledData.middleName || '',
+      username: `temp_${invitationToken.slice(0, 8)}`, // Temporary username
+      password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10), // Random password
+      phoneNumber: preFilledData.phoneNumber || '00000000000', // Placeholder
+      userType: finalUserType,
+      status: 'invited',
+      emailVerified: false,
+      verificationToken: invitationToken,
+      verificationTokenExpiry: invitationExpiry,
+      invitationData: JSON.stringify(preFilledData),
+      agreedToTerms: false,
+      // Add placeholder values for required student fields if userType is student
+      ...(finalUserType === 'student' && {
+        studentId: preFilledData.studentId || 'PENDING',
+        cys: preFilledData.cys || 'PENDING'
+      })
+    });
+
+    // Add optional student fields if provided
+    if (finalUserType === 'student' && preFilledData.studentOrganization.length > 0) {
+      incompleteUser.studentOrganization = preFilledData.studentOrganization;
+    }
+    
+    // Add non-student fields if provided
+    if (finalUserType === 'nonstudent' && preFilledData.affiliation.length > 0) {
+      incompleteUser.affiliation = preFilledData.affiliation;
+    }
+
+    await incompleteUser.save();
+
+    // Send invitation email
+    const invitationLink = `${process.env.APP_URL || 'http://localhost:8080'}/register-invitation/${invitationToken}`;
+    
+    let emailResult;
+    let emailError = null;
+    
+    try {
+      emailResult = await emailService.sendUserInvitation(
+        emailLower,
+        preFilledData.firstName || 'User',
+        invitationLink,
+        preFilledData
+      );
+    } catch (emailErr) {
+      // Email failed but user was created - log error and continue with fallback
+      console.error('[INVITATION] Email sending failed:', emailErr.message);
+      emailError = emailErr;
+      emailResult = { success: false, devMode: true, error: emailErr.message };
+    }
+
+    // Determine response message based on email service mode
+    let responseMessage = 'Invitation created successfully';
+    let showLink = false;
+    
+    if (emailError) {
+      // Email failed - provide link as fallback
+      responseMessage = `Invitation created but email failed to send to ${emailLower}. Error: ${emailError.message}`;
+      showLink = true;
+      console.log('⚠️  Invitation link (email failed):', invitationLink);
+    } else if (emailResult.devMode) {
+      responseMessage = 'Invitation created (DEV MODE - No email sent). Check server console for invitation link.';
+      showLink = true;
+      console.log('🔗 Invitation link (DEV MODE):', invitationLink);
+    } else if (emailResult.success) {
+      responseMessage = 'Invitation email sent successfully to ' + emailLower;
+    }
+
+    res.json({
+      success: true,
+      message: responseMessage,
+      invitationLink: showLink || process.env.NODE_ENV === 'development' ? invitationLink : undefined,
+      devMode: emailResult.devMode || false,
+      emailSent: emailResult.success && !emailError,
+      emailError: emailError ? emailError.message : null
+    });
+
+  } catch (error) {
+    console.error('[INVITATION] Error creating invitation:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create invitation: ' + error.message
     });
   }
 });
@@ -3497,7 +3787,9 @@ router.get('/admin/settings', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading settings page:', error);
-    res.status(500).render('error', { message: 'Failed to load settings' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load settings' });
+    }
   }
 });
 
@@ -3697,7 +3989,9 @@ router.get('/admin/reports', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading reports page:', error);
-    res.status(500).render('error', { message: 'Failed to load reports' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load reports' });
+    }
   }
 });
 
@@ -4471,7 +4765,9 @@ router.get('/admin/announcement', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading announcements page:', error);
-    res.status(500).render('error', { message: 'Failed to load announcements' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load announcements' });
+    }
   }
 });
 
@@ -4781,7 +5077,9 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading analytics page:', error);
-    res.status(500).render('error', { error: error.message });
+    if (!res.headersSent) {
+      res.status(500).render('error', { error: error.message });
+    }
   }
 });
 
@@ -6167,6 +6465,65 @@ router.get('/api/admin/urgent-overdue-tasks', requireAdmin, async (req, res) => 
   } catch (error) {
     console.error('Error loading urgent/overdue tasks:', error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/test-email
+ * Test email configuration - sends a test email to verify SMTP is working
+ */
+router.get('/admin/test-email', requireAdmin, async (req, res) => {
+  try {
+    const testEmail = req.user.email; // Send to current admin's email
+    
+    console.log('[TEST EMAIL] Attempting to send test email to:', testEmail);
+    
+    // Check if email service has transporter configured
+    if (!emailService.transporter) {
+      return res.json({
+        success: false,
+        devMode: true,
+        message: 'Email service is in DEV MODE - SMTP not configured. Check your .env file for SMTP settings.',
+        details: 'Required: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD'
+      });
+    }
+    
+    // Send test email
+    const mailOptions = {
+      from: `"S-CORE Test" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+      to: testEmail,
+      subject: 'S-CORE Email Service Test',
+      html: `
+        <h2>✅ Email Service is Working!</h2>
+        <p>This is a test email from S-CORE.</p>
+        <p>If you received this, your SMTP configuration is correct.</p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">
+          Sent at: ${new Date().toLocaleString()}<br>
+          To: ${testEmail}
+        </p>
+      `
+    };
+    
+    const result = await emailService.transporter.sendMail(mailOptions);
+    
+    console.log('[TEST EMAIL] ✅ Test email sent successfully:', result.messageId);
+    
+    res.json({
+      success: true,
+      message: `Test email sent successfully to ${testEmail}`,
+      messageId: result.messageId,
+      details: 'Check your inbox (and spam folder) for the test email.'
+    });
+    
+  } catch (error) {
+    console.error('[TEST EMAIL] ❌ Error sending test email:', error);
+    res.json({
+      success: false,
+      message: 'Failed to send test email',
+      error: error.message,
+      details: 'Check server console for detailed error. Common issues: invalid credentials, blocked by Gmail, incorrect SMTP settings.'
+    });
   }
 });
 

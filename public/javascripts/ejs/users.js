@@ -246,7 +246,7 @@ const NotificationManager = {
     overlay.style.cssText = `
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.6); display: flex; align-items: center;
-      justify-content: center; z-index: 99999; backdrop-filter: blur(4px);
+      justify-content: center; z-index: 100001; backdrop-filter: blur(4px);
     `;
 
     const modal = document.createElement('div');
@@ -626,7 +626,7 @@ const FilterManager = {
 
   applyFilters() {
     const allRows = DOMCache.getAllRows();
-    let visibleCount = 0;
+    const visibleRows = [];
 
     allRows.forEach(row => {
       const rowUserId = row.dataset.userId.toLowerCase();
@@ -653,11 +653,14 @@ const FilterManager = {
       const isVisible = userIdMatch && nameMatch && usernameMatch && emailMatch && cysMatch && 
                        roleMatch && affiliationMatch && studentOrgMatch;
 
-      row.style.display = isVisible ? 'grid' : 'none';
-      if (isVisible) visibleCount++;
+      if (isVisible) {
+        visibleRows.push(row);
+      }
     });
 
-    this.updateResultsCount(visibleCount, allRows.length);
+    // Update pagination with filtered rows
+    PaginationManager.currentPage = 1; // Reset to first page when filters change
+    PaginationManager.updatePagination(visibleRows);
   },
 
   updateResultsCount(visibleCount, totalCount) {
@@ -742,12 +745,165 @@ function initializeApplication() {
   RoleManager.setupRoleFieldHighlighting();
   HeaderDropdown.init();
   NavigationManager.init();
+  PaginationManager.init();
+
+  // Initialize pagination with all rows on page load
+  const allRows = DOMCache.getAllRows();
+  if (allRows.length > 0) {
+    PaginationManager.updatePagination(allRows);
+  }
 
   console.log('✅ All components initialized successfully');
 }
 
 // Run initialization when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeApplication);
+
+// ========================================
+// PAGINATION MANAGER
+// ========================================
+const PaginationManager = {
+  currentPage: 1,
+  itemsPerPage: 10,
+  totalItems: 0,
+  filteredRows: [],
+
+  init() {
+    this.setupEventListeners();
+  },
+
+  setupEventListeners() {
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+
+    if (prevBtn) prevBtn.addEventListener('click', () => this.goToPage(this.currentPage - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => this.goToPage(this.currentPage + 1));
+  },
+
+  updatePagination(rows) {
+    this.filteredRows = rows;
+    this.totalItems = rows.length;
+    const totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+
+    // Show/hide pagination controls
+    const paginationControls = document.getElementById('paginationControls');
+    if (paginationControls) {
+      paginationControls.style.display = this.totalItems > this.itemsPerPage ? 'flex' : 'none';
+    }
+
+    // Reset to page 1 if current page exceeds total pages
+    if (this.currentPage > totalPages && totalPages > 0) {
+      this.currentPage = totalPages;
+    } else if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
+
+    this.renderPage();
+    this.renderPageNumbers(totalPages);
+    this.updateButtons(totalPages);
+  },
+
+  renderPage() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+
+    // Hide all rows first
+    this.filteredRows.forEach(row => {
+      row.style.display = 'none';
+    });
+
+    // Show only rows for current page
+    this.filteredRows.slice(startIndex, endIndex).forEach(row => {
+      row.style.display = 'grid';
+    });
+
+    // Update results count
+    const displayedCount = Math.min(endIndex, this.totalItems) - startIndex;
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) {
+      resultsCount.textContent = `Showing ${displayedCount} of ${this.totalItems} users (Page ${this.currentPage} of ${Math.ceil(this.totalItems / this.itemsPerPage)})`;
+    }
+  },
+
+  renderPageNumbers(totalPages) {
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    if (!paginationNumbers) return;
+
+    paginationNumbers.innerHTML = '';
+
+    // Always show first page
+    if (totalPages > 0) {
+      this.addPageButton(paginationNumbers, 1, totalPages);
+    }
+
+    // Show ellipsis and middle pages
+    if (totalPages > 7) {
+      if (this.currentPage > 3) {
+        this.addEllipsis(paginationNumbers);
+      }
+
+      const start = Math.max(2, this.currentPage - 1);
+      const end = Math.min(totalPages - 1, this.currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        this.addPageButton(paginationNumbers, i, totalPages);
+      }
+
+      if (this.currentPage < totalPages - 2) {
+        this.addEllipsis(paginationNumbers);
+      }
+    } else {
+      // Show all pages if total is 7 or less
+      for (let i = 2; i < totalPages; i++) {
+        this.addPageButton(paginationNumbers, i, totalPages);
+      }
+    }
+
+    // Always show last page
+    if (totalPages > 1) {
+      this.addPageButton(paginationNumbers, totalPages, totalPages);
+    }
+  },
+
+  addPageButton(container, pageNum, totalPages) {
+    const btn = document.createElement('button');
+    btn.className = `pagination-btn ${pageNum === this.currentPage ? 'active' : ''}`;
+    btn.textContent = pageNum;
+    btn.addEventListener('click', () => this.goToPage(pageNum));
+    container.appendChild(btn);
+  },
+
+  addEllipsis(container) {
+    const ellipsis = document.createElement('span');
+    ellipsis.className = 'pagination-ellipsis';
+    ellipsis.textContent = '...';
+    container.appendChild(ellipsis);
+  },
+
+  updateButtons(totalPages) {
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+
+    if (prevBtn) prevBtn.disabled = this.currentPage === 1;
+    if (nextBtn) nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
+  },
+
+  goToPage(pageNum) {
+    const totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+    if (pageNum < 1 || pageNum > totalPages) return;
+
+    this.currentPage = pageNum;
+    this.renderPage();
+    this.renderPageNumbers(totalPages);
+    this.updateButtons(totalPages);
+
+    // Scroll to top of table
+    const tableSection = document.querySelector('.table-section-wrapper');
+    if (tableSection) {
+      tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+};
 
 // ========================================
 // STATUS TAB MANAGER
@@ -773,16 +929,19 @@ const StatusTabManager = {
 
   filterByStatus(filterStatus) {
     const gridRows = document.querySelectorAll('.grid-row');
-    let visibleCount = 0;
+    const visibleRows = [];
 
     gridRows.forEach(row => {
       const userStatus = row.dataset.status;
       const isVisible = filterStatus === 'all' || userStatus === filterStatus;
-      row.style.display = isVisible ? 'grid' : 'none';
-      if (isVisible) visibleCount++;
+      if (isVisible) {
+        visibleRows.push(row);
+      }
     });
 
-    this.updateResultsCount(visibleCount, gridRows.length);
+    // Update pagination with filtered rows
+    PaginationManager.currentPage = 1; // Reset to first page
+    PaginationManager.updatePagination(visibleRows);
   },
 
   updateResultsCount(visibleCount, totalCount) {
@@ -2146,4 +2305,583 @@ document.addEventListener('DOMContentLoaded', function() {
   if (selectAllCheckbox) {
     selectAllCheckbox.addEventListener('change', selectAllUsers);
   }
+});
+
+// ========================================
+// EDIT USER MODAL FUNCTIONS
+// ========================================
+
+// Global variable to store current user data
+let currentEditingUser = null;
+
+/**
+ * Opens the edit user modal and populates it with current user data
+ */
+function openEditUserModal() {
+  const editModal = document.getElementById('editUserModal');
+  if (!editModal) {
+    console.error('Edit user modal not found');
+    return;
+  }
+
+  // Get current user data from the user details modal
+  const userId = document.getElementById('viewUserId')?.textContent;
+  const fullName = document.getElementById('viewFullName')?.textContent || '';
+  const username = document.getElementById('viewUsername')?.textContent;
+  const email = document.getElementById('viewEmail')?.textContent;
+  const phone = document.getElementById('viewPhone')?.textContent || '';
+  const userType = document.getElementById('viewUserType')?.textContent?.toLowerCase() || '';
+  const cys = document.getElementById('viewCys')?.textContent || '';
+  
+  // Get organization data from the original grid row (not from modal display)
+  const currentRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
+  let organizationArray = [];
+  
+  if (currentRow) {
+    if (userType === 'student') {
+      // For students, get from studentorg data attribute
+      const studentOrg = currentRow.dataset.studentorg || '';
+      organizationArray = studentOrg.split('||').filter(Boolean);
+    } else {
+      // For non-students, get from affiliation data attribute
+      const affiliation = currentRow.dataset.affiliation || '';
+      organizationArray = affiliation.split('||').filter(Boolean);
+    }
+  }
+
+  // Parse full name
+  const nameParts = fullName.split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts[nameParts.length - 1] || '';
+  const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+
+  // Store current user data
+  currentEditingUser = {
+    userId,
+    fName: firstName,
+    mName: middleName,
+    lName: lastName,
+    username,
+    email,
+    phoneNumber: phone,
+    userType,
+    cys,
+    organizationArray
+  };
+  
+  console.log('📋 Opening edit modal with organizations:', organizationArray);
+
+  // Populate form fields
+  document.getElementById('editUserFormId').value = userId;
+  document.getElementById('editFirstName').value = firstName;
+  document.getElementById('editMiddleName').value = middleName;
+  document.getElementById('editLastName').value = lastName;
+  document.getElementById('editUsername').value = username;
+  document.getElementById('editEmail').value = email;
+  document.getElementById('editPhone').value = phone;
+
+  // Handle student-specific fields
+  const cysGroup = document.getElementById('editCysGroup');
+  if (userType === 'student') {
+    if (cysGroup) cysGroup.style.display = 'block';
+    document.getElementById('editCys').value = cys;
+  } else {
+    if (cysGroup) cysGroup.style.display = 'none';
+  }
+
+  // Handle organization field
+  const editOrgSelect = document.getElementById('editOrganization');
+  if (editOrgSelect && window.jQuery && jQuery.fn.select2) {
+    // Destroy existing Select2 instance if it exists
+    if (jQuery(editOrgSelect).hasClass('select2-hidden-accessible')) {
+      jQuery(editOrgSelect).select2('destroy');
+    }
+
+    // Determine which data source to use based on user type
+    let dataSource = [];
+    if (userType === 'student') {
+      // Use organizationsData for students (student organizations)
+      dataSource = organizationsData || [];
+    } else {
+      // Use officesData for non-students (offices/departments)
+      dataSource = officesData || [];
+    }
+
+    console.log('🔧 Initializing Select2 with data source:', dataSource);
+    console.log('📝 Current user organizations to select:', organizationArray);
+
+    // Initialize Select2 with appropriate data
+    jQuery(editOrgSelect).select2({
+      placeholder: userType === 'student' ? 'Select organization(s)' : 'Select office(s)/department(s)',
+      allowClear: true,
+      width: '100%',
+      data: dataSource,
+      tags: false
+    });
+
+    // Set selected values using the array from data attributes
+    if (organizationArray && organizationArray.length > 0) {
+      console.log('✅ Setting Select2 values:', organizationArray);
+      jQuery(editOrgSelect).val(organizationArray).trigger('change');
+    } else {
+      console.log('ℹ️ No organizations to pre-select');
+      jQuery(editOrgSelect).val(null).trigger('change');
+    }
+  }
+
+  // Update organization label based on user type
+  const editOrgLabel = document.getElementById('editOrgLabel');
+  if (editOrgLabel) {
+    if (userType === 'student') {
+      editOrgLabel.innerHTML = `
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Student Organization
+      `;
+    } else {
+      editOrgLabel.innerHTML = `
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
+        </svg>
+        Office/Department
+      `;
+    }
+  }
+
+  // Open the modal
+  ModalUtility.openModal(editModal);
+}
+
+/**
+ * Closes the edit user modal
+ */
+function closeEditUserModal() {
+  const editModal = document.getElementById('editUserModal');
+  if (editModal) {
+    ModalUtility.closeModal(editModal);
+    currentEditingUser = null;
+  }
+}
+
+/**
+ * Saves the changes made to user information
+ */
+async function saveUserChanges() {
+  const form = document.getElementById('editUserForm');
+  if (!form) {
+    console.error('Edit user form not found');
+    return;
+  }
+
+  // Validate required fields
+  const firstName = document.getElementById('editFirstName').value.trim();
+  const lastName = document.getElementById('editLastName').value.trim();
+  const username = document.getElementById('editUsername').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+
+  if (!firstName || !lastName || !username || !email) {
+    showToast('Validation Error', 'Please fill in all required fields.', 'error');
+    return;
+  }
+
+  // Get form data
+  const userId = document.getElementById('editUserFormId').value;
+  const middleName = document.getElementById('editMiddleName').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const cys = document.getElementById('editCys')?.value.trim() || '';
+  
+  // Get organization values
+  const editOrgSelect = document.getElementById('editOrganization');
+  let organizations = [];
+  if (editOrgSelect && window.jQuery && jQuery.fn.select2) {
+    organizations = jQuery(editOrgSelect).val() || [];
+  }
+
+  const updateData = {
+    userId,
+    fName: firstName,
+    mName: middleName,
+    lName: lastName,
+    username,
+    email,
+    phoneNumber: phone,
+    cys,
+    organization: organizations
+  };
+
+  // Show loading state
+  const saveBtn = document.querySelector('#editUserModal .modal-btn-primary');
+  const originalBtnText = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = `
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v6l4 2"/>
+    </svg>
+    Saving...
+  `;
+
+  try {
+    const response = await fetch('/admin/user/update-info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Update the user details modal
+      document.getElementById('viewFullName').textContent = `${firstName} ${middleName} ${lastName}`.trim().replace(/\s+/g, ' ');
+      document.getElementById('viewUsername').textContent = username;
+      document.getElementById('viewEmail').textContent = email;
+      document.getElementById('viewPhone').textContent = phone || 'Not provided';
+      
+      if (cys) {
+        document.getElementById('viewCys').textContent = cys;
+      }
+      
+      // Update organization display in view modal
+      const orgContainer = document.getElementById('viewOrganizationContainer');
+      if (organizations.length > 0) {
+        orgContainer.innerHTML = '<div class="org-tags-container">' +
+          organizations.map(org => `<span class="org-tag">${org}</span>`).join('') +
+          '</div>';
+      } else {
+        orgContainer.innerHTML = `<span class="no-organizations">${currentEditingUser.userType === 'student' ? 'No organizations' : 'No affiliation'}</span>`;
+      }
+
+      // Update the grid row
+      const gridRow = document.querySelector(`.grid-row[data-id="${userId}"]`);
+      if (gridRow) {
+        gridRow.dataset.fname = firstName;
+        gridRow.dataset.mname = middleName;
+        gridRow.dataset.lname = lastName;
+        gridRow.dataset.username = username;
+        gridRow.dataset.email = email;
+        gridRow.dataset.cys = cys;
+        
+        // Update organizations with || separator for proper data storage
+        const userType = currentEditingUser.userType;
+        if (userType === 'student') {
+          gridRow.dataset.studentorg = organizations.join('||');
+        } else {
+          gridRow.dataset.affiliation = organizations.join('||');
+        }
+
+        // Update visible text in grid
+        const nameCell = gridRow.querySelector('.cell-name');
+        if (nameCell) {
+          nameCell.textContent = `${firstName} ${middleName} ${lastName}`.trim().replace(/\s+/g, ' ');
+        }
+
+        const usernameCell = gridRow.querySelector('.cell-username');
+        if (usernameCell) {
+          usernameCell.textContent = username;
+        }
+
+        const emailCell = gridRow.querySelector('.cell-email');
+        if (emailCell) {
+          emailCell.textContent = email;
+        }
+      }
+
+      showToast('Success', 'User information updated successfully!', 'success');
+      closeEditUserModal();
+    } else {
+      throw new Error(result.message || 'Update failed');
+    }
+  } catch (error) {
+    console.error('Error updating user info:', error);
+    showToast('Error', `Failed to update user information: ${error.message}`, 'error');
+  } finally {
+    // Reset button
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalBtnText;
+  }
+}
+
+// Make functions globally available
+window.openEditUserModal = openEditUserModal;
+window.closeEditUserModal = closeEditUserModal;
+window.saveUserChanges = saveUserChanges;
+
+// ========================================
+// CREATE USER MODAL FUNCTIONALITY
+// ========================================
+const CreateUserModal = {
+  modal: null,
+  openBtn: null,
+  closeBtn: null,
+  cancelBtn: null,
+  form: null,
+  userTypeSelect: null,
+  studentFields: null,
+  nonStudentFields: null,
+
+  init() {
+    this.modal = document.getElementById('createUserModal');
+    this.openBtn = document.getElementById('openCreateUserModalBtn');
+    this.closeBtn = document.getElementById('closeCreateUserModal');
+    this.cancelBtn = document.getElementById('cancelCreateUser');
+    this.form = document.getElementById('createUserForm');
+    this.userTypeSelect = document.getElementById('createUserType');
+    this.studentFields = document.getElementById('createStudentFields');
+    this.nonStudentFields = document.getElementById('createNonStudentFields');
+
+    if (!this.modal || !this.openBtn || !this.form) {
+      console.error('❌ Required elements not found for Create User Modal');
+      return;
+    }
+
+    this.setupEventListeners();
+  },
+
+  initializeSelect2() {
+    // Initialize Select2 only when modal is opened and DOM is ready
+    if (typeof $ !== 'undefined') {
+      try {
+        // Check if Select2 is already initialized and destroy if so
+        const $studentOrg = $('#createStudentOrg');
+        const $affiliation = $('#createAffiliation');
+        
+        if ($studentOrg.hasClass('select2-hidden-accessible')) {
+          $studentOrg.select2('destroy');
+        }
+        if ($affiliation.hasClass('select2-hidden-accessible')) {
+          $affiliation.select2('destroy');
+        }
+        
+        // Initialize fresh Select2 instances
+        $studentOrg.select2({
+          placeholder: 'Select student organizations...',
+          dropdownParent: $('#createUserModal'),
+          width: '100%',
+          allowClear: true
+        });
+        
+        $affiliation.select2({
+          placeholder: 'Select offices/departments...',
+          dropdownParent: $('#createUserModal'),
+          width: '100%',
+          allowClear: true
+        });
+      } catch (error) {
+        console.error('Select2 initialization error:', error);
+      }
+    }
+  },
+
+  setupEventListeners() {
+    // Open modal
+    if (this.openBtn) {
+      this.openBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openModal();
+      });
+    }
+
+    // Close modal
+    if (this.closeBtn) {
+      this.closeBtn.addEventListener('click', () => this.closeModal());
+    }
+    
+    if (this.cancelBtn) {
+      this.cancelBtn.addEventListener('click', () => this.closeModal());
+    }
+
+    // Close on background click
+    if (this.modal) {
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) {
+          this.closeModal();
+        }
+      });
+    }
+
+    // Toggle user type specific fields
+    if (this.userTypeSelect) {
+      this.userTypeSelect.addEventListener('change', () => this.toggleUserTypeFields());
+    }
+
+    // Form submission
+    if (this.form) {
+      this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+  },
+
+  openModal() {
+    if (this.modal) {
+      this.modal.style.display = 'flex';
+      
+      // Initialize Select2 after modal is visible and DOM is ready
+      setTimeout(() => {
+        this.initializeSelect2();
+      }, 100);
+    }
+  },
+
+  closeModal() {
+    if (this.modal) {
+      this.modal.style.display = 'none';
+      this.form.reset();
+      
+      // Destroy Select2 instances on close (only if they exist)
+      if (typeof $ !== 'undefined') {
+        try {
+          const $studentOrg = $('#createStudentOrg');
+          const $affiliation = $('#createAffiliation');
+          
+          if ($studentOrg.hasClass('select2-hidden-accessible')) {
+            $studentOrg.select2('destroy');
+          }
+          if ($affiliation.hasClass('select2-hidden-accessible')) {
+            $affiliation.select2('destroy');
+          }
+        } catch (e) {
+          console.log('Select2 cleanup skipped:', e.message);
+        }
+      }
+      
+      this.studentFields.style.display = 'none';
+      this.nonStudentFields.style.display = 'none';
+    }
+  },
+
+  toggleUserTypeFields() {
+    const userType = this.userTypeSelect.value;
+    
+    if (userType === 'student') {
+      this.studentFields.style.display = 'block';
+      this.nonStudentFields.style.display = 'none';
+    } else if (userType === 'nonstudent') {
+      this.studentFields.style.display = 'none';
+      this.nonStudentFields.style.display = 'block';
+    } else {
+      this.studentFields.style.display = 'none';
+      this.nonStudentFields.style.display = 'none';
+    }
+  },
+
+  async handleSubmit(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitCreateUser');
+    const originalText = submitBtn.innerHTML;
+    
+    // Validate email
+    const email = document.getElementById('userEmail').value.trim();
+    if (!email || !email.endsWith('@dlsud.edu.ph')) {
+      NotificationManager.showNotificationPersistent('Email must be a valid @dlsud.edu.ph address', 'error');
+      return;
+    }
+    
+    // Disable submit button and show loading
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>Sending...';
+    
+    try {
+      // Prepare form data
+      const formData = {
+        email: email,
+        firstName: document.getElementById('userFirstName').value.trim(),
+        lastName: document.getElementById('userLastName').value.trim(),
+        middleName: document.getElementById('userMiddleName').value.trim(),
+        phoneNumber: document.getElementById('userPhoneNumber').value.trim(),
+        userType: this.userTypeSelect.value
+      };
+      
+      // Add student-specific fields
+      if (this.userTypeSelect.value === 'student') {
+        formData.studentId = document.getElementById('createStudentId').value.trim();
+        formData.cys = document.getElementById('createCYS').value.trim().toUpperCase();
+        formData.studentOrganization = $('#createStudentOrg').val() || [];
+      }
+      
+      // Add non-student fields
+      if (this.userTypeSelect.value === 'nonstudent') {
+        formData.affiliation = $('#createAffiliation').val() || [];
+      }
+      
+      // Send request
+      const response = await fetch('/admin/user/create-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Show different messages based on whether email was actually sent
+        if (result.emailError) {
+          // Email failed to send - show error with link
+          console.error('Email failed to send:', result.emailError);
+          console.log('Invitation link:', result.invitationLink);
+          
+          NotificationManager.showNotificationPersistent(
+            `<strong>⚠️ Invitation Created - Email Failed</strong><br><br>` +
+            `User invitation was created successfully, but the email could not be sent.<br><br>` +
+            `<strong>Error:</strong> ${result.emailError}<br><br>` +
+            `<strong>Possible reasons:</strong><br>` +
+            `• Gmail blocking emails to @dlsud.edu.ph domain<br>` +
+            `• Recipient's spam filters blocking the email<br>` +
+            `• Domain restrictions on external emails<br><br>` +
+            `<strong>Share this registration link with the user:</strong><br>` +
+            `<input type="text" value="${result.invitationLink}" readonly onclick="this.select()" style="width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; background: #f9fafb;"><br>` +
+            `<a href="${result.invitationLink}" target="_blank" style="color: #1a5d1a; font-weight: 600; text-decoration: underline;">📧 Open Registration Link</a><br><br>` +
+            `<small style="color: #6b7280;">Link also logged in console. Valid for 7 days.</small>`,
+            'error'
+          );
+        } else if (result.devMode) {
+          // Development mode - email not sent
+          console.log('Invitation link (DEV MODE):', result.invitationLink);
+          
+          NotificationManager.showNotificationPersistent(
+            `<strong>⚠️ Invitation Created (DEV MODE - Email Not Sent)</strong><br><br>` +
+            `The SMTP email service is not configured or not working.<br><br>` +
+            `<strong>Share this registration link with the user:</strong><br>` +
+            `<input type="text" value="${result.invitationLink}" readonly onclick="this.select()" style="width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; background: #f9fafb;"><br>` +
+            `<a href="${result.invitationLink}" target="_blank" style="color: #1a5d1a; font-weight: 600; text-decoration: underline;">📧 Open Registration Link</a><br><br>` +
+            `<small style="color: #6b7280;">Link also logged in browser & server console</small>`,
+            'info'
+          );
+        } else if (result.emailSent) {
+          // Production mode - email sent successfully
+          NotificationManager.showToast('Success', result.message || 'Invitation email sent successfully!', 'success');
+        }
+        
+        this.closeModal();
+        
+        // Reload page after delay (longer for error/dev mode messages)
+        setTimeout(() => {
+          window.location.reload();
+        }, (result.emailError || result.devMode) ? 8000 : 1500);
+      } else {
+        NotificationManager.showNotificationPersistent(result.message || 'Failed to send invitation', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating invitation:', error);
+      NotificationManager.showNotificationPersistent('An error occurred. Please try again.', 'error');
+    } finally {
+      // Re-enable submit button
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  }
+};
+
+// Initialize Create User Modal on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  CreateUserModal.init();
 });
