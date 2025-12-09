@@ -143,9 +143,30 @@ router.get('/dashboard', requireLogin, async (req, res) => {
     // Show announcements where scheduledTime is not set OR scheduledTime <= now
     // Also filter by expiresAt to only show non-expired announcements
     let announcements = [];
+    let page = parseInt(req.query.page) || 1;
+    let totalPages = 1;
+    let hasNextPage = false;
+    let hasPrevPage = false;
+    let isNewUser = false;
+    
     try {
       const now = new Date();
-      
+      const limit = 10;
+      const skip = (page - 1) * limit;
+
+      // Check if user is "new" (created within 3 months)
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(now.getMonth() - 3);
+      isNewUser = user.createdAt > threeMonthsAgo;
+
+      let dateFilter = {};
+      if (isNewUser) {
+        // For new users, only show announcements from the last 3 months
+        const threeMonthsAgoAnnouncements = new Date();
+        threeMonthsAgoAnnouncements.setMonth(now.getMonth() - 3);
+        dateFilter = { createdAt: { $gte: threeMonthsAgoAnnouncements } };
+      }
+
       announcements = await BroadcastMessage
         .find({
           $and: [
@@ -168,13 +189,46 @@ router.get('/dashboard', requireLogin, async (req, res) => {
                 { scheduledTime: null },
                 { scheduledTime: { $lte: now } }
               ]
-            }
+            },
+            dateFilter // Add date filter for new users
           ]
         })
         .populate('sentBy', 'fName lName role')
-        .sort({ priority: -1, createdAt: -1 })
-        .limit(10)
+        .sort({ createdAt: -1 }) // Sort by newest first
+        .skip(skip)
+        .limit(limit)
         .lean();
+
+      // Get total count for pagination
+      const totalAnnouncements = await BroadcastMessage.countDocuments({
+        $and: [
+          {
+            $or: [
+              { expiresAt: { $gte: now } },
+              { expiresAt: { $exists: false } },
+              { expiresAt: null }
+            ]
+          },
+          {
+            $or: [
+              { isVisibleToAll: true },
+              { 'recipients.userId': user._id }
+            ]
+          },
+          {
+            $or: [
+              { scheduledTime: { $exists: false } },
+              { scheduledTime: null },
+              { scheduledTime: { $lte: now } }
+            ]
+          },
+          dateFilter
+        ]
+      });
+
+      totalPages = Math.ceil(totalAnnouncements / limit);
+      hasNextPage = page < totalPages;
+      hasPrevPage = page > 1;
       
 
       
@@ -204,7 +258,12 @@ router.get('/dashboard', requireLogin, async (req, res) => {
       pendingRequests,
       inReviewRequests,
       recentActivity,
-      announcements
+      announcements,
+      currentPage: page,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      isNewUser
     });
   } catch (err) {
     console.error('User dashboard load error:', err);
@@ -1467,24 +1526,38 @@ router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) =>
       return res.status(400).json({ success: false, message: 'Only requests with status "For Checking" can be marked as complete' });
     }
 
-    // Update status to Completed
-    request.status = 'Completed';
+    // Update status to Approved (not Completed yet - unit needs to finalize)
+    request.status = 'Approved';
+    
+    // Add approval entry to revision history
+    if (!Array.isArray(request.revisionHistory)) {
+      request.revisionHistory = [];
+    }
+    const mongoose = require('mongoose');
+    request.revisionHistory.push({
+      respondedBy: new mongoose.Types.ObjectId(userId),
+      respondedAt: new Date(),
+      responseNotes: 'Deliverables approved by requestor',
+      status: 'approved',
+      revisionType: 'approved_by_requestor'
+    });
+    
     await request.save();
 
     // Broadcast active requests update to admins
     const socketService = require('../services/socketService');
     socketService.updateActiveRequestsCount();
 
-    // Notify unit team that request was marked complete
+    // Notify unit team that deliverables were approved
     try {
-      await notificationService.notifyServiceCompleted(request._id, userId, request.assignedUnits);
+      await notificationService.notifyServiceApproved(request._id, userId, request.assignedUnits);
     } catch (notifError) {
-      console.error('Error sending completion notification:', notifError);
+      console.error('Error sending approval notification:', notifError);
     }
 
     res.json({ 
       success: true, 
-      message: 'Service request marked as complete successfully!'
+      message: 'Deliverables approved successfully! Unit can now complete the task.'
     });
   } catch (error) {
     console.error('Error marking service as complete:', error);
@@ -1982,17 +2055,35 @@ router.delete('/settings/account', requireLogin, async (req, res) => {
     }
 
     // Delete profile picture if exists
+    // Delete profile picture if exists (use non-blocking async fs)
     if (user.profilePicture) {
       const filePath = path.join(UPLOADS_DIR, user.profilePicture);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      try {
+        await fs.promises.unlink(filePath).catch(err => {
+          if (err && err.code !== 'ENOENT') console.error('Error deleting profile picture:', err);
+        });
+      } catch (err) {
+        console.error('Error deleting profile picture:', err);
       }
     }
 
-    // Delete user and related data
-    await User.findByIdAndDelete(userId);
-    await ServiceRequest.deleteMany({ requesterId: userId });
-    await RequestApproval.deleteMany({ requesterId: userId });
+    // Delete user and related data. Run related deletes in parallel to avoid blocking.
+    try {
+      const deleteOps = [
+        User.findByIdAndDelete(userId),
+        ServiceRequest.deleteMany({ requesterId: userId }),
+        RequestApproval.deleteMany({ requesterId: userId })
+      ];
+
+      const results = await Promise.allSettled(deleteOps);
+      results.forEach((r, idx) => {
+        if (r.status === 'rejected') {
+          console.error('Error in delete operation', idx, r.reason);
+        }
+      });
+    } catch (err) {
+      console.error('Unexpected error deleting user and related data:', err);
+    }
 
     // Clear user session
     req.logout((err) => {

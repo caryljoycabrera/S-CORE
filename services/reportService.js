@@ -68,12 +68,12 @@ class ReportService {
 
         results = results.concat(
           await Promise.all(serviceRequests.map(async req => {
-            // Get final remarks - PRIORITY 1: Check dedicated finalRemark field, PRIORITY 2: Fallback to revisionHistory
+            // Get final remarks - PRIORITY 1: Check dedicated finalRemarks field, PRIORITY 2: Fallback to revisionHistory
             let finalRemarks = '';
             
-            // Check for dedicated finalRemark field first (future-proof for when schema is updated)
-            if (req.finalRemark && req.finalRemark.trim()) {
-              finalRemarks = req.finalRemark.trim();
+            // Check for dedicated finalRemarks field first
+            if (req.finalRemarks && req.finalRemarks.trim()) {
+              finalRemarks = req.finalRemarks.trim();
             }
             // Fallback to revisionHistory for backward compatibility
             else if ((req.status === 'Completed' || req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
@@ -118,15 +118,15 @@ class ReportService {
 
         results = results.concat(
           await Promise.all(requestApprovals.map(async req => {
-            // Get final remarks - PRIORITY 1: Check dedicated finalRemark field, PRIORITY 2: Fallback to revisionHistory
+            // Get final remarks - PRIORITY 1: Check dedicated finalRemarks field, PRIORITY 2: Fallback to revisionHistory
             let finalRemarks = '';
             
-            // Check for dedicated finalRemark field first (future-proof for when schema is updated)
-            if (req.finalRemark && req.finalRemark.trim()) {
-              finalRemarks = req.finalRemark.trim();
+            // Check for dedicated finalRemarks field first
+            if (req.finalRemarks && req.finalRemarks.trim()) {
+              finalRemarks = req.finalRemarks.trim();
             }
             // Fallback to revisionHistory for backward compatibility
-            else if ((req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
+            else if ((req.status === 'Completed' || req.status === 'Approved') && req.revisionHistory && req.revisionHistory.length > 0) {
               // Find the last revision notes from unit users only
               for (const rev of req.revisionHistory.slice().reverse()) {
                 if (rev.revisionNotes && rev.revisionNotes.trim() && rev.requestedBy) {

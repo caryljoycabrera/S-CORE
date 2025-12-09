@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Request Services - S-CORE</title>
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-modal-two-column.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -140,63 +142,106 @@
   }
 }
 
-/* Modal Styles - z-index handled by modal-centered.css */
+/* Modal Styles (allrequests) */
 .modal {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background-color: rgba(0,0,0,0.5);
   display: none;
   justify-content: center;
   align-items: center;
   padding: 20px;
+  z-index: 100000;
 }
 
-.modal-content {
-  background: white;
-  border-radius: 1rem;
-  max-width: 1500px !important;
-  width: 95%;
-  max-height: 90vh !important;
-  box-shadow: var(--card-shadow);
+#conversationModal {
+  z-index: 100002 !important;
+}
+
+.modal.show,
+.modal[style*="flex"],
+.modal[style*="display: block"],
+.modal[style*="display:block"] {
+  display: flex !important;
+}
+
+.modal .modal-content,
+.confirmation-modal .confirmation-modal-content,
+.edit-modal .edit-modal-content,
+.calendar-modal .calendar-modal-content,
+.deadline-details-modal .deadline-details-modal-content,
+.notification-modal .notification-modal-content {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+.unit-modal-wide {
+  max-width: 1600px !important;
+  width: 95% !important;
+  max-height: 95vh !important;
   overflow: hidden;
+}
+
+.modal-content,
+.confirmation-modal-content,
+.edit-modal-content,
+.calendar-modal-content,
+.deadline-details-modal-content,
+.notification-modal-content {
+  z-index: 100001 !important;
+  position: relative !important;
+  margin: auto !important;
+  background: white !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3) !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+  transform: translateY(0) !important;
   display: flex;
   flex-direction: column;
 }
 
-.modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-  background: #f97316 !important;
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: min(800px, calc(100vw - 120px)) !important;
+  width: 90% !important;
+  max-height: 95vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
-.modal-title-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-}
-
-.modal-title-icon {
-  width: 24px;
-  height: 24px;
-  color: white;
-  flex-shrink: 0;
-}
-
-.modal-title {
-  margin: 0;
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.modal-body {
+.modal-content {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: var(--card-shadow-hover);
+  animation: fadeIn 0.3s ease-in-out;
+  max-height: 90vh;
   overflow-y: auto;
-  padding: 0;
+}
+
+/* Ensure wide modal wins over tighter modal-content sizing */
+.unit-modal-wide {
+  max-width: 1600px !important;
+  width: 95% !important;
+  max-height: 95vh !important;
+}
+
+.modal[style*="display: flex"],
+.modal[style*="display:flex"],
+.modal[style*="display: block"],
+.modal[style*="display:block"],
+#teamConversationModal[style*="display: flex"],
+#teamConversationModal[style*="display:flex"] {
+  pointer-events: auto !important;
 }
 
 .modal-form {
@@ -701,7 +746,7 @@
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  max-height: 300px;
+  max-height: 400px;
   overflow: hidden;
   animation: dropdownSlideIn 0.2s ease-out;
 }
@@ -1592,43 +1637,46 @@
 }
 
 /* ========================================
-   REQUESTOR MODAL (SERVICE REQUEST PAGE)
-   Two-column layout for revision history
+   UNIT TWO-COLUMN MODAL LAYOUT (shared)
+   Matches allRequestsUser/admin modal layout
    ======================================== */
 
-.requestor-modal-body {
+.unit-modal-body {
   display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 0 !important;
-  padding: 0 !important;
+  grid-template-columns: 1fr 700px !important;
+  gap: 2rem !important;
+  padding: 2rem !important;
   max-height: calc(95vh - 120px) !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scroll-behavior: smooth !important;
 }
 
-.requestor-modal-body.two-column {
-  grid-template-columns: 1fr 850px !important;
-  gap: 2rem !important;
-  padding: 2rem !important;
-}
-
-.requestor-left-column,
-.requestor-right-column {
+.unit-left-column,
+.unit-right-column {
   overflow: visible !important;
-  min-height: fit-content;
+  min-height: 0 !important;
 }
 
-.requestor-left-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.requestor-right-column {
+.unit-left-column {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  min-height: fit-content;
+}
+
+.unit-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: fit-content;
+}
+
+@media (max-width: 1400px) {
+  .unit-modal-body {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
 }
 
 /* Revision Section Styles */
@@ -2410,7 +2458,7 @@
               <% allRequests.forEach(request => { %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
-                  data-type="<%= request.type %>"
+                  data-type="Service Request"
                   data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status %>"
@@ -2421,7 +2469,8 @@
                   data-deadline="<%= request.deadline ? new Date(request.deadline).toISOString().slice(0, 10) : '' %>"
                   data-description="<%= request.description %>" 
                   data-file="<%= request.file ? request.file : '' %>"
-                  data-files="<%= request.files ? request.files.join(',') : '' %>">
+                  data-files="<%= request.files ? request.files.join(',') : '' %>"
+                  data-revision-count="<%= request.revisionCount || 0 %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
                   <td><%= request.organization %></td>
@@ -3083,19 +3132,18 @@ function getLinkValues() {
 
   <div id="detailsModal" class="modal" style="display:none;">
     <div class="modal-content unit-modal-wide">
-      <div class="modal-header unit-modal-header" style="background: #0891b2 !important; padding: 20px">
+      <div class="modal-header unit-modal-header" id="detailsModalHeader" style="background: rgb(249, 115, 22) !important; padding: 20px;">
         <div class="modal-title-section">
           <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="detailsModalIcon">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            <path d="M3 12h2m14 0h2M9 7v2m6 0V7m-6 6v2m6 0v-2M9 3h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
           </svg>
           <h2 class="modal-title" id="detailsModalTitle" style="color: white !important;">Service Details</h2>
           <span class="type-badge" id="modalTypeBadge">SERVICE</span>
         </div>
         <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
@@ -3239,26 +3287,36 @@ function getLinkValues() {
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
             </div>
-          </div>
-
-          <!-- Action Buttons for Service Requests with "For Checking" status -->
+            <!-- Action Buttons for Service Requests with "For Checking" status -->
             <div id="serviceActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
-            <button type="button" id="showServiceRevisionFormBtn" onclick="toggleResubmissionForm()" 
+              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
                     style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
-              <span id="revisionFormToggleText">Respond to Revision</span>
+                <span id="revisionFormToggleText">Request Revision</span>
             </button>
+            <div id="revisionLimitWarning" style="display: none; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 1rem 1.25rem; color: #92400e; font-size: 0.875rem; align-items: flex-start; gap: 0.75rem; width: 100%;">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 2px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <div>
+                <strong style="display: block; margin-bottom: 0.25rem;">Revision Limit Reached</strong>
+                <span>You have used all 2 revision requests for this service request. If you need further changes, please submit a new service request and reference this one.</span>
+              </div>
+            </div>
             <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" 
                     style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              Mark as Complete
+              Approve
             </button>
           </div>
+          </div>
+
+          
 
           <!-- Service Revision Request Form -->
           <div id="serviceRevisionFormSection" class="requestor-resubmission-section" style="display: none;">
@@ -4019,8 +4077,8 @@ function getLinkValues() {
     window.onclick = function(event) {
       if (event.target === requestModal) requestModal.style.display = 'none';
       if (event.target === detailModal) {
-        const modalBody = document.querySelector('.requestor-modal-body');
-        const modalContent = document.querySelector('.requestor-modal-content');
+        const modalBody = document.querySelector('.unit-modal-body');
+        const modalContent = document.querySelector('.unit-modal-wide');
         const rightColumn = document.getElementById('requestorRightColumn');
         
         detailModal.style.display = 'none';
@@ -4036,6 +4094,14 @@ function getLinkValues() {
     if (openChatFromDetailsModal) {
       openChatFromDetailsModal.onclick = function() {
         detailModal.style.display = 'none';
+        openChat(currentConversationId);
+      };
+    }
+
+    // Chat functionality for right column button
+    const openChatFromDetailsModalRight = document.getElementById('openChatFromDetailsModalRight');
+    if (openChatFromDetailsModalRight) {
+      openChatFromDetailsModalRight.onclick = function() {
         openChat(currentConversationId);
       };
     }
@@ -4540,10 +4606,12 @@ document.querySelectorAll('.request-row').forEach(row => {
     const detailUnits = document.getElementById("detailUnits");
     const detailDatetime = document.getElementById("detailDatetime");
     const detailSpecificType = document.getElementById("detailSpecificType");
+    const detailType = document.getElementById("detailType");
     
     // Populate fields
     if (detailTitle) detailTitle.innerText = row.dataset.title || '';
     if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified';
+    if (detailType) detailType.innerText = row.dataset.type || '';
     
     // CRITICAL FIX: Display the exact organization from the request
     const requestOrganization = row.dataset.organization || 'N/A';
@@ -4566,7 +4634,7 @@ document.querySelectorAll('.request-row').forEach(row => {
           
           // Always show right column for two-column layout
           const requestorRightColumn = document.getElementById("requestorRightColumn");
-          const modalBody = document.querySelector('.requestor-modal-body');
+          const modalBody = document.querySelector('.unit-modal-body');
           if (requestorRightColumn) {
             requestorRightColumn.style.display = 'flex';
           }
@@ -4618,23 +4686,29 @@ document.querySelectorAll('.request-row').forEach(row => {
           createEnhancedFilePreview(allFiles, previewContainer);
         }
         
-        // Chat functionality
+        // Right column layout + chat state
         currentConversationId = row.dataset.id;
-        const chatButtonSection = document.getElementById("chatButtonSection");
-        if (chatButtonSection) {
-          const requestType = row.dataset.type;
-          if (requestType === "Service Request" || requestType === "Request Approval") {
-            chatButtonSection.style.display = 'block';
-            
-            // Load revision history for service requests
-            if (requestType === "Service Request") {
-              loadServiceRevisionHistory(currentConversationId);
-            }
-          } else {
-            chatButtonSection.style.display = 'none';
-          }
-        }
-        
+        const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
+        const chatButtonSectionRight = document.querySelector('.unit-right-column .chat-section[id="chatButtonSection"]');
+        const modalBody = document.querySelector('.unit-modal-body');
+        const rightColumn = document.getElementById('requestorRightColumn');
+        const serviceActionButtons = document.getElementById('serviceActionButtons');
+        const showServiceRevisionFormBtn = document.getElementById('showServiceRevisionFormBtn');
+        const markServiceCompleteBtn2 = document.getElementById('markServiceCompleteBtn2');
+        const resubmissionSection = document.getElementById('resubmissionFormSection');
+
+        if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
+        if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'block';
+        if (modalBody) modalBody.classList.add('two-column');
+        if (rightColumn) rightColumn.style.display = 'flex';
+
+        // Revision history + service actions
+        loadServiceRevisionHistory(currentConversationId);
+        if (serviceActionButtons) serviceActionButtons.style.display = 'flex';
+        if (showServiceRevisionFormBtn) showServiceRevisionFormBtn.style.display = 'inline-flex';
+        if (markServiceCompleteBtn2) markServiceCompleteBtn2.style.display = 'inline-flex';
+        if (resubmissionSection) resubmissionSection.style.display = 'none';
+
         if (detailModal) detailModal.style.display = 'flex';
       });
     });
@@ -5995,8 +6069,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('[Service] Request ID:', requestId);
         const historyContainer = document.getElementById('revisionHistoryContainer');
         const rightColumn = document.getElementById('requestorRightColumn');
-        const modalBody = document.querySelector('.requestor-modal-body');
-        const modalContent = document.querySelector('.requestor-modal-content');
+        const modalBody = document.querySelector('.unit-modal-body');
+        const modalContent = document.querySelector('.unit-modal-wide');
         const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
         
         console.log('[Service] Elements check:');
@@ -6061,23 +6135,60 @@ document.addEventListener('DOMContentLoaded', function() {
                         historyContainer.appendChild(entry);
                     });
                     
+                    // Count how many revision_requested entries exist (this is the actual revision count)
+                    const actualRevisionCount = revisionsToShow.filter(r => r.type === 'revision_requested').length;
+                    
                     // Check if request has status that allows revision
                     const row = document.querySelector(`tr[data-id="${requestId}"]`);
                     const status = row ? row.dataset.status : '';
                     
                     const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
-                    console.log('[Service] Normalized status:', normalizedStatus);
+                    console.log('[Service] Normalized status:', normalizedStatus, 'Actual revision count:', actualRevisionCount);
                     
                     // IMPORTANT: Keep form hidden by default - shown when user clicks "Request Revision" button
-                    if ((normalizedStatus === 'completed' || normalizedStatus === 'for-checking') && serviceRevisionSection) {
-                        console.log('[Service] Status allows revision');
+                    if (normalizedStatus === 'for-checking' && serviceRevisionSection) {
+                        console.log('[Service] Status is For Checking - checking revision limit');
                         serviceRevisionSection.style.display = 'none';
                         
-                        // Show the action buttons
+                        // Show the action buttons container
                         const actionButtons = document.getElementById('serviceActionButtons');
+                        const revisionButton = document.getElementById('showServiceRevisionFormBtn');
+                        const warningMessage = document.getElementById('revisionLimitWarning');
+                        
                         if (actionButtons) {
                             actionButtons.style.display = 'flex';
-                            console.log('[Service] ✅ Action buttons displayed');
+                            console.log('[Service] ✅ Action buttons container displayed');
+                        }
+                        
+                        // Check if revision limit has been reached (max 2 revisions)
+                        if (actualRevisionCount >= 2) {
+                            // Hide the revision button completely
+                            if (revisionButton) {
+                                revisionButton.style.display = 'none';
+                            }
+                            
+                            // Show warning message
+                            if (warningMessage) {
+                                warningMessage.style.display = 'flex';
+                            }
+                            
+                            console.log('[Service] ⚠️ Revision limit reached:', actualRevisionCount, '/ 2');
+                        } else {
+                            // Show revision button
+                            if (revisionButton) {
+                                revisionButton.style.display = 'inline-flex';
+                                revisionButton.disabled = false;
+                                revisionButton.style.opacity = '1';
+                                revisionButton.style.cursor = 'pointer';
+                                revisionButton.title = `Request Revision (${actualRevisionCount}/2 used)`;
+                            }
+                            
+                            // Hide warning message
+                            if (warningMessage) {
+                                warningMessage.style.display = 'none';
+                            }
+                            
+                            console.log('[Service] ✅ Revision button shown:', actualRevisionCount, '/ 2 used');
                         }
                         
                         // Initialize Quill editor if not already initialized
@@ -6095,8 +6206,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             });
                         }
-                    } else if (serviceRevisionSection) {
-                        serviceRevisionSection.style.display = 'none';
+                    } else {
+                        // Hide action buttons for Approved, Completed, or other statuses
+                        const actionButtons = document.getElementById('serviceActionButtons');
+                        if (actionButtons) {
+                            actionButtons.style.display = 'none';
+                            console.log('[Service] Action buttons hidden for status:', normalizedStatus);
+                        }
+                        if (serviceRevisionSection) {
+                            serviceRevisionSection.style.display = 'none';
+                        }
                     }
                 } else {
                     // No revisions to show, but still show the section with empty message
@@ -6188,6 +6307,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (revision.type === 'deliverable_submitted') {
             typeLabel = 'Deliverables Uploaded';
             badgeClass = 'badge-resubmitted';
+        } else if (revision.type === 'approved_by_requestor') {
+            typeLabel = '✓ Approved';
+            badgeClass = 'badge-approved';
         } else if (revision.type === 'completed') {
             typeLabel = '✓ Completed';
             badgeClass = 'badge-approved';
@@ -6238,6 +6360,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         <polyline points="8 12 11 15 16 9"/>
                     </svg>
                     <span style="color: #10b981; font-weight: 600;">Service Request Completed!</span>
+                </div>
+            `;
+        } else if (revision.type === 'approved_by_requestor') {
+            statusIndicator = `
+                <div class="status-indicator approved">
+                    <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="8 12 11 15 16 9"/>
+                    </svg>
+                    <span style="color: #10b981; font-weight: 600;">Approved - Awaiting Unit Completion</span>
                 </div>
             `;
         } else if (isLast) {
@@ -6347,10 +6479,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return formatted;
     }
 
+    // Helper function to truncate long filenames intelligently
+    function truncateFilename(filename, maxLength = 50) {
+        if (!filename || filename.length <= maxLength) return filename;
+        
+        const ext = filename.split('.').pop();
+        const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
+        const availableLength = maxLength - ext.length - 4; // 4 for "...."
+        
+        if (availableLength < 10) {
+            // Very short limit, just show start and extension
+            return nameWithoutExt.substring(0, 10) + '...' + ext;
+        }
+        
+        // Show start and end of filename with ellipsis in middle
+        const startLength = Math.ceil(availableLength * 0.6);
+        const endLength = Math.floor(availableLength * 0.4);
+        
+        return nameWithoutExt.substring(0, startLength) + '...' + nameWithoutExt.substring(nameWithoutExt.length - endLength) + '.' + ext;
+    }
+
     function createRevisionFileCard(file) {
         console.log('📁 [ServiceRequest] Creating file card for:', file);
         const filename = typeof file === 'string' ? file : (file.filename || file.name || file);
         const displayName = typeof file === 'object' ? (file.originalname || file.filename || file.name) : file;
+        const truncatedName = truncateFilename(displayName, 45);
         const ext = filename.split('.').pop().toLowerCase();
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
         const isPDF = ext === 'pdf';
@@ -6396,7 +6549,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </svg>
                 </div>
                 <div class="revision-file-info">
-                    <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
+                    <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(truncatedName)}</div>
                     <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
                 </div>
                 <div class="revision-file-actions">
@@ -6508,36 +6661,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Toggle resubmission form visibility
-    function toggleResubmissionForm() {
-        const resubmissionSection = document.getElementById('resubmissionFormSection');
-        const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
-        const toggleText = document.getElementById('revisionFormToggleText');
-        
-        if (resubmissionSection) {
-            const isVisible = resubmissionSection.style.display === 'block';
-            
-            if (isVisible) {
-                // Hide the form
-                resubmissionSection.style.display = 'none';
-                if (toggleText) toggleText.textContent = 'Respond to Revision';
-                if (toggleBtn) {
-                    toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-                }
-            } else {
-                // Show the form
-                resubmissionSection.style.display = 'block';
-                if (toggleText) toggleText.textContent = 'Hide Response Form';
-                if (toggleBtn) {
-                    toggleBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-                }
-                
-                // Scroll to the form
-                setTimeout(() => {
-                    resubmissionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 100);
+    // Toggle service revision form visibility
+    function toggleServiceRevisionForm() {
+      const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+      const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
+      const toggleText = document.getElementById('revisionFormToggleText');
+
+      if (!serviceRevisionSection) {
+        console.error('[Service] Service revision section not found');
+        return;
+      }
+
+      const isVisible = serviceRevisionSection.style.display === 'block';
+
+      if (isVisible) {
+        serviceRevisionSection.style.display = 'none';
+        if (toggleText) toggleText.textContent = 'Request Revision';
+        if (toggleBtn) toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+      } else {
+        serviceRevisionSection.style.display = 'block';
+        if (toggleText) toggleText.textContent = 'Hide Revision Form';
+        if (toggleBtn) toggleBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+
+        if (!serviceRevisionQuill) {
+          serviceRevisionQuill = new Quill('#serviceRevisionEditor', {
+            theme: 'snow',
+            placeholder: 'Describe what needs to be revised or improved... ',
+            modules: {
+              toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+              ]
             }
+          });
         }
+
+        setTimeout(() => {
+          serviceRevisionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
     }
 
     // Handle marking service as complete (accept deliverables)
@@ -6548,7 +6712,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Confirm action
-        if (!confirm('Are you sure you want to mark this service request as complete? This means you accept the deliverables and the request will be closed.')) {
+        if (!confirm('Are you sure you want to approve these deliverables? The unit will then finalize the task.')) {
             return;
         }
         
@@ -6563,7 +6727,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (result.success) {
-                showAlert('success', result.message || 'Service request marked as complete!');
+                showAlert('success', result.message || 'Deliverables approved successfully!');
+                
+                // Hide action buttons after approval
+                const actionButtons = document.getElementById('serviceActionButtons');
+                if (actionButtons) actionButtons.style.display = 'none';
                 
                 // Close modal and refresh page
                 setTimeout(() => {
@@ -6571,7 +6739,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     location.reload();
                 }, 1500);
             } else {
-                showAlert('error', result.message || 'Failed to mark as complete. Please try again.');
+                showAlert('error', result.message || 'Failed to approve deliverables. Please try again.');
             }
         } catch (error) {
             console.error('[Service] Error marking as complete:', error);

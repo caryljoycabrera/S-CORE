@@ -150,21 +150,18 @@ function initializeEventListeners() {
         uploadDeliverablesBtn.addEventListener('click', uploadDeliverables);
     }
 
-    // Message sending - check for both standard and team-specific IDs
-    const sendMessageBtn = document.getElementById('sendMessageBtn') || document.getElementById('sendTeamMessageBtn');
-    if (sendMessageBtn) {
-        sendMessageBtn.addEventListener('click', sendMessage);
+    // Complete task modal
+    const openCompleteTaskModalBtn = document.getElementById('openCompleteTaskModalBtn');
+    if (openCompleteTaskModalBtn) {
+        openCompleteTaskModalBtn.addEventListener('click', openCompleteTaskModal);
     }
 
-    const messageInput = document.getElementById('messageInput') || document.getElementById('teamMessageInput');
-    if (messageInput) {
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+    const submitCompleteTaskBtn = document.getElementById('submitCompleteTaskBtn');
+    if (submitCompleteTaskBtn) {
+        submitCompleteTaskBtn.addEventListener('click', submitCompleteTask);
     }
+
+    // Message sending event listeners are handled in DOMContentLoaded section below
 }
 
 function initializeTableFilters() {
@@ -685,13 +682,45 @@ function openRequestDetails(requestId, requestType) {
     // Load service revision history for service requests
     if (requestType === 'service') {
         const serviceActionsPanel = document.getElementById('serviceActionsPanel');
-        if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+        const completeTaskPanel = document.getElementById('completeTaskPanel');
+        
+        console.log('Service request status:', status); // Debug log
+        
+        // Load revision history first to determine the actual state
+        // The revision history will handle showing/hiding panels based on approval status
         loadServiceRevisionHistory(requestId);
+        
+        // Initially hide both panels - loadServiceRevisionHistory will show the appropriate one
+        if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+        if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+        
+        // Only apply status-based logic if status is explicitly "Completed"
+        const normalizedStatus = status.toLowerCase().trim();
+        if (normalizedStatus === 'completed') {
+            console.log('Status is Completed - hiding both panels permanently');
+            // Task is fully completed, keep both panels hidden
+        }
+        
+        // Hide admin form section (Unit Actions) for service requests
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) adminFormSection.style.display = 'none';
         
         // Hide approve button for service requests
         const adminApproveBtn = document.getElementById('adminApproveBtn');
         if (adminApproveBtn) adminApproveBtn.style.display = 'none';
     } else if (requestType === 'approval') {
+        // Hide service actions panel for approval requests
+        const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+        if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+        
+        // Hide complete task panel for approval requests
+        const completeTaskPanel = document.getElementById('completeTaskPanel');
+        if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+        
+        // Show admin form section (Unit Actions) for approval requests
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) adminFormSection.style.display = 'block';
+        
         // Show approve button for approval requests
         const adminApproveBtn = document.getElementById('adminApproveBtn');
         if (adminApproveBtn) adminApproveBtn.style.display = 'inline-block';
@@ -704,8 +733,19 @@ function openRequestDetails(requestId, requestType) {
     };
     populateAdminForm(rowData);
 
-    // Hide admin actions if request is already approved
-    if (status.toLowerCase() === 'approved') {
+    // Handle approved status - for approval requests, "Approved" is the final state
+    if (status.toLowerCase() === 'approved' && requestType === 'approval') {
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) {
+            // Hide the approve/revision buttons since request is already approved
+            const adminActionButtons = document.querySelector('.admin-action-buttons');
+            if (adminActionButtons) {
+                adminActionButtons.style.display = 'none';
+            }
+            adminFormSection.style.display = 'none';
+        }
+    } else if (status.toLowerCase() === 'completed') {
+        // Hide all action panels when already completed (for service requests)
         const adminFormSection = document.querySelector('.admin-form-section');
         if (adminFormSection) {
             adminFormSection.style.display = 'none';
@@ -773,13 +813,34 @@ async function loadRevisionHistory(requestId) {
             // Clear container
             historyContainer.innerHTML = '';
             
-            // Filter out initial submission and render only unit feedback/revisions
+            // Filter out initial submission and duplicates
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
             
+            // Remove duplicates based on content and author (not timestamp, as they can vary by milliseconds)
+            const uniqueRevisions = [];
+            const seenKeys = new Set();
+            
+            for (const revision of revisionsToShow) {
+                // Create a unique key based on type, author, and content
+                const author = revision.requestedBy?._id || revision.respondedBy?._id || '';
+                const content = (revision.revisionNotes || revision.responseNotes || '').substring(0, 100); // First 100 chars
+                const filesCount = (revision.revisionFiles || revision.responseFiles || revision.files || []).length;
+                const key = `${revision.type}-${author}-${content}-${filesCount}`;
+                
+                if (!seenKeys.has(key)) {
+                    seenKeys.add(key);
+                    uniqueRevisions.push(revision);
+                } else {
+                    console.log('[Revision History] Skipping duplicate revision with key:', key);
+                }
+            }
+            
+            console.log('[Revision History] Unique revisions count:', uniqueRevisions.length, 'out of', revisionsToShow.length);
+            
             // Render each revision entry with enumeration
-            revisionsToShow.forEach((revision, index) => {
+            uniqueRevisions.forEach((revision, index) => {
                 console.log('[Revision History] Rendering revision', index, ':', revision.type);
-                const entry = createRevisionEntry(revision, index, revisionsToShow.length);
+                const entry = createRevisionEntry(revision, index, uniqueRevisions.length);
                 historyContainer.appendChild(entry);
             });
             
@@ -838,12 +899,14 @@ async function loadServiceRevisionHistory(requestId) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+    const completeTaskPanel = document.getElementById('completeTaskPanel');
     
     console.log('[Service Revision History] ===== STARTING LOAD =====');
     console.log('[Service Revision History] Request ID:', requestId);
     console.log('[Service Revision History] History section element:', !!historySection);
     console.log('[Service Revision History] History container element:', !!historyContainer);
     console.log('[Service Revision History] Service actions panel element:', !!serviceActionsPanel);
+    console.log('[Service Revision History] Complete task panel element:', !!completeTaskPanel);
     
     if (!historyContainer) {
         console.warn('[Service Revision History] ❌ Container not found!');
@@ -885,6 +948,46 @@ async function loadServiceRevisionHistory(requestId) {
                 console.log('[Service Revision History] Full object:', rev);
                 console.log('[Service Revision History] =====================================');
             });
+            
+            // Check if requestor has approved deliverables
+            const hasApprovedDeliverables = result.revisions.some(rev => rev.type === 'approved_by_requestor');
+            console.log('[Service Revision History] Has approved deliverables:', hasApprovedDeliverables);
+            
+            // Get current status from the modal status badge
+            const modalStatus = document.getElementById('modalStatus');
+            const currentStatus = modalStatus ? modalStatus.textContent.toLowerCase().trim() : '';
+            console.log('[Service Revision History] Current modal status:', currentStatus);
+            
+            // Also check the table row status for more accurate detection
+            const tableRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
+            const rowStatus = tableRow ? tableRow.getAttribute('data-status')?.toLowerCase().trim() : '';
+            console.log('[Service Revision History] Table row status:', rowStatus);
+            
+            // Determine the actual status (prefer modal status, fallback to row status)
+            const actualStatus = currentStatus || rowStatus;
+            console.log('[Service Revision History] Actual status:', actualStatus);
+            
+            // If approved and NOT already completed, show complete task panel
+            if (hasApprovedDeliverables && actualStatus !== 'completed') {
+                console.log('[Service Revision History] ✅ Deliverables approved - hiding upload panel, showing complete task panel');
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) {
+                    completeTaskPanel.style.display = 'block';
+                    // Scroll the panel into view
+                    setTimeout(() => {
+                        completeTaskPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 300);
+                }
+            } else if (actualStatus === 'completed') {
+                console.log('[Service Revision History] ✅ Task already completed - hiding both panels');
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            } else {
+                // No approval yet - show upload panel
+                console.log('[Service Revision History] No approval yet - showing upload panel');
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            }
             
             // Filter out initial submission
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
@@ -939,11 +1042,17 @@ async function loadServiceRevisionHistory(requestId) {
                     rev.status === 'pending'
                 );
                 
+                const hasApproval = revisionsToShow.some(rev => rev.type === 'approved_by_requestor');
+                
                 console.log('[Service Revision History] Has deliverable:', hasDeliverable);
                 console.log('[Service Revision History] Has revision request:', hasRevisionRequest);
+                console.log('[Service Revision History] Has approval (override check):', hasApproval);
                 
-                // Show upload panel if no deliverables submitted OR if revisions are requested
-                if (serviceActionsPanel) {
+                // Don't override panel visibility if:
+                // 1. Deliverables are approved (complete task panel should be showing)
+                // 2. Task is completed (both panels should be hidden)
+                if (serviceActionsPanel && !hasApproval && actualStatus !== 'completed') {
+                    // Show upload panel if no deliverables submitted OR if revisions are requested
                     if (!hasDeliverable || hasRevisionRequest) {
                         serviceActionsPanel.style.display = 'block';
                         console.log('[Service Revision History] ✅ Showed service actions panel');
@@ -951,6 +1060,8 @@ async function loadServiceRevisionHistory(requestId) {
                         serviceActionsPanel.style.display = 'none';
                         console.log('[Service Revision History] ✅ Hid service actions panel');
                     }
+                } else {
+                    console.log('[Service Revision History] ⏭️ Skipped panel override (approved or completed)');
                 }
                 
                 // Show action buttons for non-completed requests
@@ -1044,6 +1155,9 @@ function createServiceRevisionEntry(revision, index, total) {
     if (revision.type === 'deliverable_submitted') {
         typeLabel = 'Deliverables Uploaded';
         badgeClass = 'badge-resubmitted';
+    } else if (revision.type === 'approved_by_requestor') {
+        typeLabel = '✓ Approved by Requestor';
+        badgeClass = 'badge-approved';
     } else if (revision.type === 'completed') {
         typeLabel = '✓ Completed';
         badgeClass = 'badge-approved';
@@ -1084,6 +1198,16 @@ function createServiceRevisionEntry(revision, index, total) {
                     <polyline points="8 12 11 15 16 9"/>
                 </svg>
                 <span style="color: #10b981; font-weight: 600;">Service Request Completed</span>
+            </div>
+        `;
+    } else if (revision.type === 'approved_by_requestor') {
+        statusIndicator = `
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <span style="color: #10b981; font-weight: 600;">Approved by Requestor - Ready to Complete</span>
             </div>
         `;
     } else if (isLast) {
@@ -1389,11 +1513,58 @@ function createRevisionEntry(revision, index, total) {
                 </div>
             ` : ''}
             
+            ${((revision.revisionLinks && revision.revisionLinks.length > 0) || (revision.responseLinks && revision.responseLinks.length > 0)) ? `
+                <div class="message-attachments-section" style="margin-top: 1rem;">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span class="attachments-count">${(revision.revisionLinks || revision.responseLinks).length} link${(revision.revisionLinks || revision.responseLinks).length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                        ${(revision.revisionLinks || revision.responseLinks).map(link => `
+                            <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" 
+                               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; color: #0ea5e9; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0ea5e9';"
+                               onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(link)}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
             ${statusIndicator}
         </div>
     `;
     
     return entry;
+}
+
+// Helper function to truncate long filenames intelligently
+function truncateFilename(filename, maxLength = 50) {
+    if (!filename || filename.length <= maxLength) return filename;
+    
+    const ext = filename.split('.').pop();
+    const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
+    const availableLength = maxLength - ext.length - 4; // 4 for "...."
+    
+    if (availableLength < 10) {
+        // Very short limit, just show start and extension
+        return nameWithoutExt.substring(0, 10) + '...' + ext;
+    }
+    
+    // Show start and end of filename with ellipsis in middle
+    const startLength = Math.ceil(availableLength * 0.6);
+    const endLength = Math.floor(availableLength * 0.4);
+    
+    return nameWithoutExt.substring(0, startLength) + '...' + nameWithoutExt.substring(nameWithoutExt.length - endLength) + '.' + ext;
 }
 
 // Function: createRevisionFileCard
@@ -1404,6 +1575,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
     // If file is just a string (simple filename), use it directly
     if (typeof file === 'string') {
         const ext = file.split('.').pop().toLowerCase();
+        const truncatedName = truncateFilename(file, 45);
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
         const isPDF = ext === 'pdf';
         
@@ -1423,7 +1595,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
                     </svg>
                 </div>
                 <div class="revision-file-info">
-                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(file)}</div>
+                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(truncatedName)}</div>
                     <div class="revision-file-size">${ext.toUpperCase()}</div>
                 </div>
                 <div class="revision-file-actions">
@@ -1467,6 +1639,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
     else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
     
     const displayName = file.originalname || file.name || filename;
+    const truncatedName = truncateFilename(displayName, 45);
     
     return `
         <div class="revision-file-card">
@@ -1478,7 +1651,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
                 </svg>
             </div>
             <div class="revision-file-info">
-                <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
+                <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(truncatedName)}</div>
                 <div class="revision-file-size">${ext.toUpperCase()}</div>
             </div>
             <div class="revision-file-actions">
@@ -1627,11 +1800,11 @@ function approveRequest() {
         return;
     }
 
-    // Show inline confirmation panel
-    showInlineApprovalConfirmation();
+    // Directly open the final remarks modal for approval
+    openCompleteApprovalModal();
 }
 
-function showInlineApprovalConfirmation() {
+function showApprovalConfirmation() {
     // Create modal backdrop
     const modal = document.createElement('div');
     modal.id = 'approvalConfirmModal';
@@ -1670,14 +1843,9 @@ function showInlineApprovalConfirmation() {
                     </svg>
                 </div>
                 <div style="flex: 1;">
-                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin: 0 0 0.5rem 0;">Confirm Approval</h3>
-                    <p style="font-size: 0.9375rem; color: #6b7280; margin: 0; line-height: 1.6;">Are you sure you want to approve this request? The requestor and all administrators will be notified.</p>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin: 0 0 0.5rem 0;">Approve Request</h3>
+                    <p style="font-size: 0.9375rem; color: #6b7280; margin: 0; line-height: 1.6;">Are you sure you want to approve this request? You'll be able to add final remarks when you mark it as complete.</p>
                 </div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <label for="approvalRemarks" style="font-size: 0.9375rem; font-weight: 600; color: #374151;">Final Report / Remarks <span style="color: #dc2626;">*</span></label>
-                <textarea id="approvalRemarks" placeholder="Provide your final report or remarks for this approval..." rows="4" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9375rem; line-height: 1.5; resize: vertical; font-family: inherit;" required></textarea>
-                <small style="color: #6b7280; font-size: 0.8125rem;">These remarks will be saved to the request and visible in the revision history for transparency.</small>
             </div>
             <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.5rem;">
                 <button onclick="closeApprovalConfirmModal()" style="background: #f3f4f6; color: #374151; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9375rem; transition: all 0.2s;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
@@ -1687,7 +1855,7 @@ function showInlineApprovalConfirmation() {
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12"/>
                     </svg>
-                    <span>Confirm Approval</span>
+                    <span>Yes, Approve</span>
                 </button>
             </div>
         </div>
@@ -1726,29 +1894,37 @@ function closeApprovalConfirmModal() {
 
 window.closeApprovalConfirmModal = closeApprovalConfirmModal;
 
+// Note: confirmApproveRequest is deprecated - approvals now go directly through completeApproval()
+// This function is kept for backward compatibility but redirects to the new flow
 async function confirmApproveRequest() {
-    console.log('[DEBUG] Confirming approval');
+    console.log('[DEBUG] confirmApproveRequest called - redirecting to openCompleteApprovalModal');
     
-    // Get remarks from textarea
-    const remarksTextarea = document.getElementById('approvalRemarks');
-    const remarks = remarksTextarea ? remarksTextarea.value.trim() : '';
-    
-    // Validate that remarks are provided
-    if (!remarks) {
-        showErrorMessage('Please provide final remarks or report before approving');
-        return;
-    }
-    
-    // Close modal
+    // Close any confirmation modal
     closeApprovalConfirmModal();
     
+    // Open the final remarks modal directly
+    openCompleteApprovalModal();
+}
+
+// Function: completeApproval - Approve request with final remarks (single step - final status is Approved)
+async function completeApproval() {
     if (!currentRequestId) {
         showErrorMessage('No request selected');
         return;
     }
+
+    // Get final remarks from modal
+    const remarksTextarea = document.getElementById('approvalFinalRemarksInput');
+    const remarks = remarksTextarea ? remarksTextarea.value.trim() : '';
     
+    // Validate that remarks are provided
+    if (!remarks) {
+        showErrorMessage('Please provide final remarks before approving this request. Final remarks are required for reports.');
+        return;
+    }
+
     try {
-        const response = await fetch(`/unit/task/approve/${currentRequestId}`, {
+        const response = await fetch(`/unit/task/complete-approval/${currentRequestId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1761,48 +1937,32 @@ async function confirmApproveRequest() {
         const result = await response.json();
 
         if (response.ok && result.success) {
-            showSuccessMessage('Request approved successfully');
+            showSuccessMessage('Request approved successfully! Final remarks have been saved.');
+            
+            // Close the approval modal
+            closeCompleteApprovalModal();
             
             // Update modal UI immediately
             const modalStatus = document.getElementById('modalStatus');
-            const approvedOnField = document.getElementById('approvedOnField');
-            const modalApprovedOn = document.getElementById('modalApprovedOn');
-            
             if (modalStatus) {
                 modalStatus.textContent = 'APPROVED';
                 modalStatus.className = 'status-badge approved';
             }
             
-            // Show approval date
-            if (approvedOnField && modalApprovedOn) {
-                approvedOnField.style.display = 'block';
-                const now = new Date();
-                modalApprovedOn.textContent = now.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-            
-            // Hide the approval actions panel
-            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
-            if (approvalActionsPanel) {
-                approvalActionsPanel.style.display = 'none';
-            }
-            
-            // Hide the entire admin form section (unit actions)
+            // Hide all action buttons and sections since Approved is the final state
             const adminFormSection = document.querySelector('.admin-form-section');
             if (adminFormSection) {
                 adminFormSection.style.display = 'none';
             }
+            const adminActionButtons = document.querySelector('.admin-action-buttons');
+            if (adminActionButtons) {
+                adminActionButtons.style.display = 'none';
+            }
             
-            // Reload revision history to show the approval entry
+            // Reload revision history to show the approval entry with final remarks
             await loadRevisionHistory(currentRequestId);
             
-            // Update table row status in background without reload
+            // Update table row status in background
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
             if (tableRow) {
                 const statusCell = tableRow.querySelector('.status-badge');
@@ -1819,6 +1979,38 @@ async function confirmApproveRequest() {
         showErrorMessage('An error occurred while approving the request');
     }
 }
+
+window.completeApproval = completeApproval;
+
+// Function: openCompleteApprovalModal - Open modal for completing approval
+function openCompleteApprovalModal() {
+    const modal = document.getElementById('completeApprovalModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Clear previous input
+        const textarea = document.getElementById('approvalFinalRemarksInput');
+        if (textarea) {
+            textarea.value = '';
+        }
+    }
+}
+
+window.openCompleteApprovalModal = openCompleteApprovalModal;
+
+// Function: closeCompleteApprovalModal - Close completion modal
+function closeCompleteApprovalModal() {
+    const modal = document.getElementById('completeApprovalModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Clear input
+        const textarea = document.getElementById('approvalFinalRemarksInput');
+        if (textarea) {
+            textarea.value = '';
+        }
+    }
+}
+
+window.closeCompleteApprovalModal = closeCompleteApprovalModal;
 
 // Function: revokeApproval
 function revokeApproval() {
@@ -2206,7 +2398,7 @@ async function uploadDeliverables() {
             }
 
             // Reload service revision history if this is a service request
-            if (currentRequestType === 'Service') {
+            if (currentRequestType === 'service') {
                 loadServiceRevisionHistory(currentRequestId);
             }
         } else {
@@ -2260,7 +2452,7 @@ async function completeServiceRequest() {
             }
 
             // Reload service revision history to show completion entry
-            if (currentRequestType === 'Service') {
+            if (currentRequestType === 'service') {
                 loadServiceRevisionHistory(currentRequestId);
             }
         } else {
@@ -2839,19 +3031,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Open team chat button
     const openChatBtn = document.getElementById('openTeamChatBtn');
     if (openChatBtn) {
+        openChatBtn.removeEventListener('click', openTeamConversationModal); // Remove any existing
         openChatBtn.addEventListener('click', openTeamConversationModal);
     }
 
-    // Send team message button
+    // Send team message button - ensure only one listener
     const sendTeamBtn = document.getElementById('sendTeamMessageBtn');
     if (sendTeamBtn) {
-        sendTeamBtn.addEventListener('click', sendTeamMessage);
+        // Clone and replace to remove all existing listeners
+        const newSendBtn = sendTeamBtn.cloneNode(true);
+        sendTeamBtn.parentNode.replaceChild(newSendBtn, sendTeamBtn);
+        newSendBtn.addEventListener('click', sendTeamMessage);
     }
 
-    // Enter key to send
+    // Enter key to send - ensure only one listener
     const teamInput = document.getElementById('teamMessageInput');
     if (teamInput) {
-        teamInput.addEventListener('keypress', function(e) {
+        // Clone and replace to remove all existing listeners
+        const newInput = teamInput.cloneNode(true);
+        teamInput.parentNode.replaceChild(newInput, teamInput);
+        newInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendTeamMessage();
@@ -3763,6 +3962,14 @@ function initializeAdminActionButtons() {
         });
     }
 
+    // Submit Complete Approval Button (from modal) - handles final approval with remarks
+    const submitCompleteApprovalBtn = document.getElementById('submitCompleteApprovalBtn');
+    if (submitCompleteApprovalBtn) {
+        submitCompleteApprovalBtn.addEventListener('click', function() {
+            completeApproval();
+        });
+    }
+
     // Revision File Attachment Button
     const revisionAttachBtn = document.getElementById('revisionAttachBtn');
     const revisionFileInput = document.getElementById('revisionFileInput');
@@ -3838,12 +4045,30 @@ async function submitAdminRevision() {
             showSuccessMessage('Revision request submitted successfully');
 
             // Clear and hide revision form
+            document.getElementById('revisionComments').value = '';
+            clearRevisionFiles();
             hideAdminRevisionForm();
 
-            // Reload the page to show updated status
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            // Reload revision history to show the new revision immediately
+            await loadRevisionHistory(currentRequestId);
+
+            // Update modal status
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'FOR REVISION';
+                modalStatus.className = 'status-badge for-revision';
+            }
+
+            // Update table row status in background without reload
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status-badge');
+                if (statusCell) {
+                    statusCell.textContent = 'FOR REVISION';
+                    statusCell.className = 'status-badge for-revision';
+                }
+                tableRow.setAttribute('data-status', 'For Revision');
+            }
         } else {
             showErrorMessage(result.message || 'Failed to submit revision request');
         }
@@ -3951,28 +4176,7 @@ function initializeRevisionFormatting() {
         }
     });
 
-    // Keyboard shortcuts for revision comments
-    document.addEventListener('keydown', function(e) {
-        const revisionComments = document.getElementById('revisionComments');
-        if (revisionComments && document.activeElement === revisionComments) {
-            if (e.ctrlKey && !e.shiftKey && !e.altKey) {
-                switch(e.key.toLowerCase()) {
-                    case 'b':
-                        e.preventDefault();
-                        applyTextFormatting(revisionComments, 'bold');
-                        break;
-                    case 'i':
-                        e.preventDefault();
-                        applyTextFormatting(revisionComments, 'italic');
-                        break;
-                    case 'u':
-                        e.preventDefault();
-                        applyTextFormatting(revisionComments, 'underline');
-                        break;
-                }
-            }
-        }
-    });
+    // Keyboard shortcuts are handled in AllTasks.ejs to avoid duplication
 }
 
 // Function: applyTextFormatting - Apply text formatting to textarea
@@ -4015,6 +4219,112 @@ function formatFileSize(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// ==========================================
+// COMPLETE TASK MODAL FUNCTIONS
+// ==========================================
+
+// Function: openCompleteTaskModal
+function openCompleteTaskModal() {
+    const modal = document.getElementById('completeTaskModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Clear previous input
+        const remarksInput = document.getElementById('finalRemarksInput');
+        if (remarksInput) remarksInput.value = '';
+    }
+}
+
+// Function: closeCompleteTaskModal
+window.closeCompleteTaskModal = function() {
+    const modal = document.getElementById('completeTaskModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Function: submitCompleteTask
+async function submitCompleteTask() {
+    const remarksInput = document.getElementById('finalRemarksInput');
+    const finalRemarks = remarksInput ? remarksInput.value.trim() : '';
+
+    if (!finalRemarks) {
+        showErrorMessage('Please provide final remarks');
+        return;
+    }
+
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    try {
+        const submitBtn = document.getElementById('submitCompleteTaskBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Completing...</span>';
+        }
+
+        const response = await fetch(`/unit/task/complete/${currentRequestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ finalRemarks })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Task completed successfully!');
+            closeCompleteTaskModal();
+
+            // Update modal status
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'COMPLETED';
+                modalStatus.className = 'status-badge completed';
+            }
+
+            // Update table row status
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status-badge');
+                if (statusCell) {
+                    statusCell.textContent = 'COMPLETED';
+                    statusCell.className = 'status-badge completed';
+                }
+                tableRow.setAttribute('data-status', 'Completed');
+            }
+
+            // Hide both panels since task is now completed
+            const completeTaskPanel = document.getElementById('completeTaskPanel');
+            const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+            if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+
+            if (currentRequestType === 'service') {
+                loadServiceRevisionHistory(currentRequestId);
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to complete task');
+        }
+    } catch (error) {
+        console.error('Error completing task:', error);
+        showErrorMessage('An error occurred while completing the task');
+    } finally {
+        const submitBtn = document.getElementById('submitCompleteTaskBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Complete Task
+            `;
+        }
+    }
 }
 
 // Make openRequestDetails globally accessible for notifications

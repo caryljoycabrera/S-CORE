@@ -1719,11 +1719,12 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Pass database values to JavaScript for filters -->
 <script>
   // These values are fetched from the database and passed to the client
+  // Use route-provided variables if available, otherwise fall back to server-local settings
   window.filterDataFromDatabase = {
-    requestStatuses: <%- JSON.stringify(requestStatuses || []) %>,
-    organizations: <%- JSON.stringify(organizations || []) %>,
-    offices: <%- JSON.stringify(offices || []) %>,
-    units: <%- JSON.stringify(units || []) %>
+    requestStatuses: <%- JSON.stringify(typeof requestStatuses !== 'undefined' ? requestStatuses : (systemSettings && systemSettings.requestStatuses ? systemSettings.requestStatuses : [])) %>,
+    organizations: <%- JSON.stringify(typeof organizations !== 'undefined' ? organizations : (systemSettings && systemSettings.organizations ? systemSettings.organizations : [])) %>,
+    offices: <%- JSON.stringify(typeof offices !== 'undefined' ? offices : (systemSettings && systemSettings.offices ? systemSettings.offices : [])) %>,
+    units: <%- JSON.stringify(typeof units !== 'undefined' ? units : (systemSettings && systemSettings.units ? systemSettings.units : [])) %>
   };
 </script>
 

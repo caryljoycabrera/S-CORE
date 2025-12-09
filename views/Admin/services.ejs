@@ -334,7 +334,7 @@
               <tr>
                 <th>Request ID</th>
                 <th>User</th>
-                <th>Title</th>
+                <th>Project Title</th>
                 <th>Office/Department/Organization</th>
                 <th>Status</th>
                 <th>Assigned Units</th>
@@ -364,7 +364,7 @@
                   data-request-id="<%= request._id.toString().slice(-6) %>"
                   data-type="Service Request"
                   data-title="<%= request.title %>"
-                  data-status="<%= request.status.toLowerCase() %>"
+                  data-status="<%= request.status %>"
                   data-organization="<%= request.displayOrganization || request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
                   data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"

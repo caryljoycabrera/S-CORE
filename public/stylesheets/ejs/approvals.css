@@ -3529,3 +3529,46 @@ hr {
     display: none;
   }
 }
+
+/* -----------------------------------------------------------------------------
+   Table layout fixes for Approvals (match All Requests behavior)
+   - Force fixed table layout to prevent horizontal expansion
+   - Make cells wrap long text instead of widening table
+   - Set reasonable widths per column (adjustable)
+   ----------------------------------------------------------------------------- */
+.requests-table,
+.trash-requests-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.requests-table th,
+.requests-table td,
+.trash-requests-table th,
+.trash-requests-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
+  word-break: break-word;
+  vertical-align: top;
+  padding: 0.75rem;
+}
+
+/* Column width suggestions */
+.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 8%; max-width: 90px; }
+.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 8%; max-width: 90px; }
+.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 12%; max-width: 160px; }
+.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 12%; max-width: 160px; }
+.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 12%; max-width: 160px; }
+.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 10%; max-width: 160px; }
+.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 8%; max-width: 90px; }
+.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 8%; max-width: 90px; }
+
+.table-section {
+  overflow-x: auto;
+}
+
+@media (max-width: 900px) {
+  .requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 30%; }
+  .requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 20%; }
+}

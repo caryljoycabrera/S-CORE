@@ -32,11 +32,16 @@ const notificationSchema = new mongoose.Schema({
       'service_rejected',    // Service request rejected
       'service_updated',     // Service request updated
       'service_completed',   // Service request completed
+      'service_in_progress', // Service request in progress
+      'deliverables_uploaded', // Unit uploaded deliverables for review
+      'deliverables_approved', // Requestor approved deliverables
+      'revision_requested',  // Requestor requested revision
       'approval_created',    // New approval request submitted
       'approval_approved',   // Approval request approved
       'approval_rejected',   // Approval request rejected
       'approval_updated',    // Approval request updated
       'approval_revision',   // Approval request needs revision
+      'approval_in_progress', // Approval request in progress
       'user_registered',     // New user registration (admin notification)
       'user_approved',       // User account approved
       'user_denied',         // User account denied

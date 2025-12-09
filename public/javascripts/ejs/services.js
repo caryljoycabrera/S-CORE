@@ -826,22 +826,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Sort data function
     function sortData(data, sortValue) {
-      // Statuses that should be sorted to the bottom (completed/closed requests)
-      const bottomStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      // Statuses that should be sorted to the bottom in this order: completed, approved, rejected, archived
+      const bottomStatuses = ['completed', 'approved', 'rejected', 'archived'];
       
       const [field, direction] = sortValue.split('-');
       const isAsc = direction === 'asc';
       
       data.sort((a, b) => {
-        // Check if either request has a "completed" status
+        // Check if either request has a final status
         const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
         const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
         
-        // Always push completed statuses to the bottom
+        // Always push final statuses to the bottom
         if (aIsBottom && !bIsBottom) return 1;
         if (!aIsBottom && bIsBottom) return -1;
         
-        // If both are in the same category (both bottom or both not), sort normally
+        // If both are final statuses, sort by status order then newest to oldest
+        if (aIsBottom && bIsBottom) {
+          const aIndex = bottomStatuses.indexOf(a.status?.toLowerCase());
+          const bIndex = bottomStatuses.indexOf(b.status?.toLowerCase());
+          if (aIndex !== bIndex) return aIndex - bIndex;
+          // Same status, sort by date newest first
+          const dateA = new Date(a.date || 0);
+          const dateB = new Date(b.date || 0);
+          return dateB - dateA;
+        }
+        
+        // Both are active statuses, sort normally by selected field
         let valA, valB;
         
         switch (field) {
@@ -2155,11 +2166,26 @@ document.addEventListener('DOMContentLoaded', function() {
         label: status
       }));
       
-      statusSelect.innerHTML = statusOptions.map(option => 
-        `<option value="${option.value}" ${option.value === rowData.status ? 'selected' : ''}>${option.label}</option>`
-      ).join('');
-      
-      currentStatusValue.textContent = rowData.status;
+      // Compare status values case-insensitively so values from dataset
+      // (which may differ in casing) still match option values from DB
+      const rowStatusLower = (rowData.status || '').toString().toLowerCase();
+      let selectedFound = false;
+      statusSelect.innerHTML = statusOptions.map(option => {
+        const optVal = option.value || '';
+        const isSelected = optVal.toString().toLowerCase() === rowStatusLower && rowStatusLower !== '';
+        if (isSelected) selectedFound = true;
+        return `<option value="${optVal}" ${isSelected ? 'selected' : ''}>${option.label}</option>`;
+      }).join('');
+
+      // Display a friendly current value: prefer the matched option label,
+      // otherwise show a capitalized fallback of the stored value
+      if (selectedFound) {
+        const matched = statusOptions.find(o => (o.value || '').toString().toLowerCase() === rowStatusLower);
+        currentStatusValue.textContent = matched ? matched.label : (rowData.status || 'N/A');
+      } else {
+        const fallback = rowData.status ? (rowData.status.toString().charAt(0).toUpperCase() + rowData.status.toString().slice(1)) : 'N/A';
+        currentStatusValue.textContent = fallback;
+      }
     }
     
     // Populate units

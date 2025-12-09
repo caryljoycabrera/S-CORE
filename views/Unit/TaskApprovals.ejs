@@ -634,6 +634,51 @@
     </div>
   </div>
 
+  <!-- Complete Approval Modal -->
+  <div id="completeApprovalModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header unit-modal-header" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <h2 style="color: white;">Complete Approval Request</h2>
+        </div>
+        <button class="close-modal-btn" onclick="closeCompleteApprovalModal()" aria-label="Close" style="color: white; background: rgba(255,255,255,0.2); border: none;">
+          <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 2rem;">
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+          <p style="color: #166534; margin: 0; font-size: 0.9rem;">
+            <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Please provide final remarks to approve this request. This will set the final status to <strong>Approved</strong>.
+          </p>
+        </div>
+        <label class="unit-form-label">
+          <strong>Final Remarks</strong> <span style="color: #dc2626;">*</span>
+          <small>Provide a summary of the approval decision and any additional notes (required for reports)</small>
+        </label>
+        <textarea id="approvalFinalRemarksInput" class="unit-textarea" placeholder="E.g., All requirements have been met and the request has been thoroughly reviewed and approved..." rows="6" style="margin-bottom: 1.5rem;"></textarea>
+        <div style="display: flex; gap: 1rem;">
+          <button onclick="closeCompleteApprovalModal()" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
+          <button id="submitCompleteApprovalBtn" onclick="completeApproval()" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Complete Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Team Conversation Modal (same as AllTasks) -->
   <div id="teamConversationModal" class="modal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important;">
     <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;">

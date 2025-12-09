@@ -51,7 +51,7 @@ const requestApprovalSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'Pending',
-    enum: ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived']
+    enum: ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Completed', 'Archived']
   },
 
   // Administrative assignment
@@ -80,6 +80,19 @@ const requestApprovalSchema = new mongoose.Schema({
   links: [{
     type: String
   }],
+
+  // Completion tracking
+  completedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  completedAt: {
+    type: Date
+  },
+  finalRemarks: {
+    type: String,
+    trim: true
+  },
 
   // Revision tracking (2 revision limit)
   revisionCount: {
@@ -137,7 +150,7 @@ const requestApprovalSchema = new mongoose.Schema({
     }],
     status: {
       type: String,
-      enum: ['pending', 'responded', 'resolved'],
+      enum: ['pending', 'responded', 'resolved', 'completed', 'approved'],  // Added 'approved' for complete-approval status
       default: 'pending'
     }
   }],

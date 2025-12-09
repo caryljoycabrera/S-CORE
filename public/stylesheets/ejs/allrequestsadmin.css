@@ -5031,3 +5031,50 @@ input:checked + .toggle-slider:before {
     display: none;
   }
 }
+
+/* -----------------------------------------------------------------------------
+   Table layout fixes for All Requests
+   - Force fixed table layout to prevent horizontal expansion
+   - Make cells wrap long text instead of widening table
+   - Set reasonable widths per column (adjustable)
+   ----------------------------------------------------------------------------- */
+.requests-table,
+.trash-requests-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.requests-table th,
+.requests-table td,
+.trash-requests-table th,
+.trash-requests-table td {
+  white-space: normal; /* allow wrapping */
+  overflow-wrap: anywhere; /* best-effort wrap for long tokens */
+  word-wrap: break-word;
+  word-break: break-word;
+  vertical-align: top;
+  padding: 0.75rem;
+}
+
+/* Column width suggestions - keep total near 100% */
+.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 8%; max-width: 90px; }
+.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 6%; max-width: 90px; }
+.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 12%; max-width: 160px; }
+.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 12%; max-width: 160px; }
+.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 14%; max-width: 160px; }
+.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 12%; max-width: 160px; }
+.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 10%; max-width: 160px; }
+.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 10%; max-width: 90px; }
+.requests-table th:nth-child(9), .requests-table td:nth-child(9) { width: 8%; max-width: 90px; }
+
+/* Keep the table-section scrollable on very small viewports but avoid horizontal
+   scrolling in normal desktop widths by relying on fixed layout + wrapping. */
+.table-section {
+  overflow-x: auto; /* allow scroll on very narrow screens */
+}
+
+@media (max-width: 900px) {
+  .requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 30%; }
+  .requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 20%; }
+}
+

@@ -1606,6 +1606,9 @@ It's already a flex container, but we need to add two key properties:
               <path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/>
             </svg>
             <h3>Announcements</h3>
+            <% if (typeof isNewUser !== 'undefined' && isNewUser) { %>
+              <span class="new-user-badge" style="background: #17a2b8; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">New User</span>
+            <% } %>
             <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
               <span class="announcements-badge"><%= announcements.filter(a => !a.isRead).length %> new</span>
             <% } %>
@@ -1646,6 +1649,26 @@ It's already a flex container, but we need to add two key properties:
                   <% } %>
                 </div>
               <% }); %>
+              
+              <!-- Pagination Controls -->
+              <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.5rem;">
+                  <% if (hasPrevPage) { %>
+                    <a href="?page=<%= currentPage - 1 %>" class="pagination-btn" style="padding: 0.5rem 1rem; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Previous</a>
+                  <% } else { %>
+                    <span></span>
+                  <% } %>
+                  
+                  <span style="font-size: 0.875rem; color: #6b7280;">Page <%= currentPage %> of <%= totalPages %></span>
+                  
+                  <% if (hasNextPage) { %>
+                    <a href="?page=<%= currentPage + 1 %>" class="pagination-btn" style="padding: 0.5rem 1rem; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Next</a>
+                  <% } else { %>
+                    <span></span>
+                  <% } %>
+                </div>
+              <% } %>
+              
             <% } else { %>
               <!-- No announcements message -->
               <div class="no-announcements">
@@ -1656,10 +1679,16 @@ It's already a flex container, but we need to add two key properties:
                 </svg>
                 <p>No announcements yet.</p>
                 <span>Check back later for updates!</span>
-                <div class="quick-tip">
-                  <strong>Quick Tip:</strong> Remember to submit all service requests at least 
-                  <strong>one week</strong> in advance!
-                </div>
+                <% if (typeof isNewUser !== 'undefined' && isNewUser) { %>
+                  <div class="quick-tip" style="margin-top: 1rem; padding: 0.75rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
+                    <strong>Welcome!</strong> As a new user, you're currently seeing announcements from the last 3 months. You'll see all announcements once you've been with us longer.
+                  </div>
+                <% } else { %>
+                  <div class="quick-tip">
+                    <strong>Quick Tip:</strong> Remember to submit all service requests at least 
+                    <strong>one week</strong> in advance!
+                  </div>
+                <% } %>
               </div>
             <% } %>
           </div>

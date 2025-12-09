@@ -153,6 +153,16 @@
   color: rgb(194, 122, 40);
 }
 
+  .requestor-modal-header {
+    background: linear-gradient(135deg, #2d7a4a 0%, #256d3f 100%) !important;
+    box-shadow: 0 4px 12px rgba(45, 122, 74, 0.25) !important;
+    padding: 1.5rem 2rem !important;
+    border-radius: 16px 16px 0 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
 .message {
   margin-bottom: 1.5rem;
   max-width: 80%;
@@ -686,6 +696,28 @@
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
 }
 
+.add-link-btn {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
+}
+
+.add-link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+}
+
 .status-indicator {
   display: inline-flex;
   align-items: center;
@@ -766,19 +798,24 @@
   border: none;
   background: #f1f5f9;
   border-radius: 4px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
   color: #64748b;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .revision-file-btn:hover {
   background: var(--primary-green);
   color: white;
   transform: scale(1.1);
+}
+
+.revision-file-btn:active {
+  transform: scale(0.95);
 }
 
 .chat-btn-enhanced {
@@ -1269,7 +1306,7 @@
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   z-index: 999;
-  max-height: 300px;
+  max-height: 400px;
   overflow: hidden;
   animation: dropdownSlideIn 0.2s ease-out;
 }
@@ -2025,34 +2062,80 @@
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              Respond to Revision Request
+              Resubmit Your Request
             </h3>
+            <p style="color: #64748b; font-size: 0.875rem; margin-top: 0.5rem;">
+              The unit has requested changes to your submission. Please address their feedback and resubmit your request with the necessary updates.
+            </p>
           </div>
           
           <form id="resubmissionForm">
             <!-- Response Text Area with Rich Text Editor -->
             <div class="form-group">
-              <label for="resubmissionNotes">Your Response</label>
-              <div id="resubmissionEditor" style="background: white; min-height: 150px;"></div>
+              <label for="resubmissionNotes">
+                <strong>Your Response</strong>
+                <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Required - Explain what you've updated)</span>
+              </label>
+              <div id="resubmissionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
               <input type="hidden" id="resubmissionNotes" name="resubmissionNotes">
+              <small style="color: #64748b; display: block; margin-top: 0.5rem;">
+                Describe the changes you made based on the unit's feedback
+              </small>
             </div>
 
             <!-- File Upload -->
             <div class="form-group">
-              <label for="resubmissionFiles">Attach Additional Files (optional)</label>
-              <input type="file" id="resubmissionFiles" name="resubmissionFiles" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
-              <div id="resubmissionFileList" class="file-list"></div>
+              <label for="resubmissionFiles">
+                <strong>Updated Files</strong>
+                <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional - Upload revised documents)</span>
+              </label>
+              <div class="file-upload-area" style="border: 2px dashed #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" 
+                   onclick="document.getElementById('resubmissionFiles').click()"
+                   ondragover="event.preventDefault(); this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';"
+                   ondragleave="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';"
+                   ondrop="handleResubmissionFileDrop(event)">
+                <svg width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 0.5rem;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <p style="color: #64748b; margin: 0 0 0.25rem 0; font-size: 0.875rem;">Drop files here or click to browse</p>
+                <small style="color: #94a3b8; font-size: 0.75rem;">PDF, DOC, DOCX, XLS, XLSX, images (Max 10MB each)</small>
+              </div>
+              <input type="file" id="resubmissionFiles" name="resubmissionFiles" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" style="display: none;">
+              <div id="resubmissionFileList" class="file-list" style="margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Links Section -->
+            <div class="form-group">
+              <label>
+                <strong>Additional Links</strong>
+                <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional - Add reference links)</span>
+              </label>
+              <div id="resubmissionLinksContainer" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+              <button type="button" onclick="addResubmissionLink()" class="add-link-btn" style="margin-top: 0.75rem; background: #f1f5f9; border: 1px dashed #94a3b8; padding: 0.625rem 1rem; border-radius: 6px; color: #475569; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;"
+                      onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#64748b';" 
+                      onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8';">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add Link
+              </button>
             </div>
 
             <!-- Action Buttons -->
-            <div class="resubmission-actions">
-              <button type="button" id="submitResubmissionBtn" class="btn-resubmit">
+            <div class="resubmission-actions" style="margin-top: 2rem;">
+              <button type="button" id="submitResubmissionBtn" class="btn-resubmit" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 2rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); width: 100%; justify-content: center;">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <polyline points="9 11 12 14 22 4"/>
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                 </svg>
-                Submit for Approval Again
+                Resubmit for Review
               </button>
+              <small style="color: #64748b; display: block; margin-top: 1rem; text-align: center;">
+                💡 <strong>Tip:</strong> Make sure to address all feedback points before resubmitting
+              </small>
             </div>
           </form>
         </div>
@@ -2578,6 +2661,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (orgFilterItem) {
       orgFilterItem.style.display = 'none';
     }
+  }
+  
+  // Add event listener for file input change
+  const resubmissionFilesInput = document.getElementById('resubmissionFiles');
+  if (resubmissionFilesInput) {
+    resubmissionFilesInput.addEventListener('change', function(e) {
+      handleResubmissionFileSelection(e.target.files);
+    });
   }
 });
 
@@ -4805,6 +4896,33 @@ function createRevisionEntry(revision, index, total) {
                 </div>
             ` : ''}
             
+            ${((revision.revisionLinks && revision.revisionLinks.length > 0) || (revision.responseLinks && revision.responseLinks.length > 0)) ? `
+                <div class="message-attachments-section" style="margin-top: 1rem;">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span class="attachments-count">${(revision.revisionLinks || revision.responseLinks).length} link${(revision.revisionLinks || revision.responseLinks).length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                        ${(revision.revisionLinks || revision.responseLinks).map(link => `
+                            <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" 
+                               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; color: #0ea5e9; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0ea5e9';"
+                               onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(link)}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
             ${statusIndicator}
         </div>
     `;
@@ -4887,14 +5005,7 @@ function createRevisionFileCard(file) {
                     </svg>
                 </button>
                 `}
-                <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                </a>
-            </div>
+                <a href=\"/uploads/${filename}\" download=\"${escapeHtml(displayName)}\" class=\"revision-file-btn\" title=\"Download\" style=\"border: none; background: #10b981; color: white; cursor: pointer; padding: 6px 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; margin-left: 4px;\">\n                    <svg width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" viewBox=\"0 0 24 24\">\n                        <path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/>\n                        <polyline points=\"7 10 12 15 17 10\"/>\n                        <line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/>\n                    </svg>\n                </a>\n            </div>
         </div>
     `;
 }
@@ -4920,10 +5031,39 @@ async function handleResubmission() {
     formData.append('resubmissionNotes', responseText);
     
     // Add files if any
-    if (filesInput && filesInput.files.length > 0) {
-        for (let i = 0; i < filesInput.files.length; i++) {
-            formData.append('additionalFiles', filesInput.files[i]);
+    if (resubmissionSelectedFiles.length > 0) {
+        resubmissionSelectedFiles.forEach(file => {
+            formData.append('additionalFiles', file);
+        });
+    }
+    
+    // Add links if any (with validation)
+    const linkInputs = document.querySelectorAll('#resubmissionLinksContainer input[type="url"]');
+    const links = [];
+    let hasInvalidLink = false;
+    
+    linkInputs.forEach(input => {
+        const value = input.value.trim();
+        if (value !== '') {
+            if (!validateLinkInput(input)) {
+                hasInvalidLink = true;
+            } else {
+                links.push(value);
+            }
         }
+    });
+    
+    if (hasInvalidLink) {
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'Please fix invalid links before submitting.');
+        } else {
+            alert('Please fix invalid links before submitting.');
+        }
+        return;
+    }
+    
+    if (links.length > 0) {
+        formData.append('additionalLinks', JSON.stringify(links));
     }
     
     try {
@@ -4947,7 +5087,12 @@ async function handleResubmission() {
             
             // Clear form
             resubmissionQuill.setContents([]);
+            resubmissionSelectedFiles = [];
             if (filesInput) filesInput.value = '';
+            const fileList = document.getElementById('resubmissionFileList');
+            if (fileList) fileList.innerHTML = '';
+            const linksContainer = document.getElementById('resubmissionLinksContainer');
+            if (linksContainer) linksContainer.innerHTML = '';
             
             // Reload revision history immediately
             await loadRevisionHistory(currentConversationId);
@@ -5004,6 +5149,188 @@ async function handleClarificationRequest() {
         console.error('Error opening clarification:', error);
         showAlert('error', 'An error occurred. Please try again.');
     }
+}
+
+// ===== FILE UPLOAD MANAGEMENT =====
+let resubmissionSelectedFiles = [];
+
+function handleResubmissionFileDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const uploadArea = event.currentTarget;
+    uploadArea.style.borderColor = '#e2e8f0';
+    uploadArea.style.background = '#f8fafc';
+    
+    const files = event.dataTransfer.files;
+    handleResubmissionFileSelection(files);
+}
+
+function handleResubmissionFileSelection(files) {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Check file size
+        if (file.size > maxSize) {
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('error', `File "${file.name}" is too large. Maximum size is 10MB.`);
+            } else {
+                alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+            }
+            continue;
+        }
+        
+        // Check file type
+        if (!allowedTypes.includes(file.type)) {
+            if (typeof window.showAlert === 'function') {
+                window.showAlert('error', `File "${file.name}" has an unsupported format.`);
+            } else {
+                alert(`File "${file.name}" has an unsupported format.`);
+            }
+            continue;
+        }
+        
+        // Check if file already added
+        if (!resubmissionSelectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+            resubmissionSelectedFiles.push(file);
+        }
+    }
+    
+    updateResubmissionFileList();
+}
+
+function updateResubmissionFileList() {
+    const fileList = document.getElementById('resubmissionFileList');
+    if (!fileList) return;
+    
+    fileList.innerHTML = '';
+    
+    if (resubmissionSelectedFiles.length === 0) {
+        return;
+    }
+    
+    resubmissionSelectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: white; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 0.5rem;';
+        
+        const ext = file.name.split('.').pop().toLowerCase();
+        let iconColor = '#64748b';
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) iconColor = '#059669';
+        else if (ext === 'pdf') iconColor = '#dc2626';
+        else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+        else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+        
+        fileItem.innerHTML = `
+            <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: ${iconColor}20; border-radius: 6px; flex-shrink: 0;">
+                <svg width="16" height="16" fill="none" stroke="${iconColor}" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <line x1="8" y1="8" x2="16" y2="8"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 0.875rem; font-weight: 500; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${file.name}">${file.name}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">${(file.size / 1024).toFixed(1)} KB</div>
+            </div>
+            <button type="button" onclick="removeResubmissionFile(${index})" style="padding: 0.5rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; cursor: pointer; transition: all 0.2s; flex-shrink: 0;"
+                    onmouseover="this.style.background='#fecaca'" 
+                    onmouseout="this.style.background='#fee2e2'">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        `;
+        
+        fileList.appendChild(fileItem);
+    });
+}
+
+function removeResubmissionFile(index) {
+    resubmissionSelectedFiles.splice(index, 1);
+    updateResubmissionFileList();
+    
+    // Update the file input
+    const fileInput = document.getElementById('resubmissionFiles');
+    if (fileInput && resubmissionSelectedFiles.length === 0) {
+        fileInput.value = '';
+    }
+}
+
+// ===== LINK MANAGEMENT FUNCTIONS =====
+let resubmissionLinkCounter = 0;
+
+function addResubmissionLink() {
+    const container = document.getElementById('resubmissionLinksContainer');
+    if (!container) return;
+    
+    const linkId = `resubmissionLink_${resubmissionLinkCounter++}`;
+    const linkItem = document.createElement('div');
+    linkItem.className = 'link-item';
+    linkItem.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+    linkItem.innerHTML = `
+        <input type="url" 
+               id="${linkId}" 
+               placeholder="https://example.com" 
+               class="resubmission-link-input"
+               style="flex: 1; padding: 0.625rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem;"
+               pattern="https?://.*" 
+               title="Please enter a valid URL starting with http:// or https://">
+        <button type="button" 
+                onclick="removeResubmissionLink(this)" 
+                style="padding: 0.625rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.background='#fecaca'" 
+                onmouseout="this.style.background='#fee2e2'">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    container.appendChild(linkItem);
+    
+    // Add validation listener to the newly added input
+    const input = linkItem.querySelector('input');
+    if (input) {
+        input.addEventListener('blur', function() {
+            validateLinkInput(this);
+        });
+    }
+}
+
+function validateLinkInput(input) {
+    const value = input.value.trim();
+    if (value === '') {
+        // Empty is allowed (optional field)
+        input.style.borderColor = '#e2e8f0';
+        input.style.background = 'white';
+        return true;
+    }
+    
+    // Check if URL starts with http:// or https://
+    const urlPattern = /^https?:\/\/.+/i;
+    if (!urlPattern.test(value)) {
+        input.style.borderColor = '#ef4444';
+        input.style.background = '#fef2f2';
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'Please enter a valid URL starting with http:// or https://');
+        } else {
+            alert('Please enter a valid URL starting with http:// or https://');
+        }
+        return false;
+    }
+    
+    // Valid URL
+    input.style.borderColor = '#10b981';
+    input.style.background = '#f0fdf4';
+    return true;
+}
+
+function removeResubmissionLink(button) {
+    const linkItem = button.closest('.link-item');
+    if (linkItem) linkItem.remove();
 }
 
 // ========== SERVICE REQUEST REVISION HISTORY FUNCTIONS ==========

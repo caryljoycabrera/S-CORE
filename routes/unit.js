@@ -300,7 +300,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
           ]
         })
         .populate('sentBy', 'fName lName role')
-        .sort({ priority: -1, createdAt: -1 })
+        .sort({ createdAt: -1 }) // Sort by newest first
         .limit(10)
         .lean();
       
@@ -1527,8 +1527,8 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
     const user = await User.findById(req.session.userId);
     const taskId = req.params.id;
 
-    // Find the service request
-    const task = await ServiceRequest.findById(taskId);
+    // Find the service request and populate userId for notification
+    const task = await ServiceRequest.findById(taskId).populate('userId');
     
     if (!task) {
       return res.status(404).json({ success: false, message: 'Task not found' });
@@ -1571,6 +1571,22 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
     
     await task.save();
 
+    console.log('📢 Sending deliverable upload notification:', {
+      taskId: task._id,
+      userId: user._id,
+      requestorId: task.userId?._id || task.userId,
+      requestorIdType: typeof (task.userId?._id || task.userId)
+    });
+
+    // Notify requestor that deliverables are ready for review
+    try {
+      await notificationService.notifyRequestorDeliverableUploaded(task._id, user._id, task);
+      console.log('✅ Requestor notification sent successfully');
+    } catch (notifError) {
+      console.error('❌ Error sending requestor notification:', notifError);
+      console.error('Error stack:', notifError.stack);
+    }
+
     // Notify admins that unit uploaded deliverables
     try {
       await notificationService.notifyAdminUnitDeliverable(task._id, user._id, task, filenames.length);
@@ -1590,13 +1606,86 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
 });
 
 /**
+ * POST /unit/task/complete-approval/:id
+ * Approve a request with final remarks (one-step approval process)
+ * Final status is 'Approved' - there is no 'Completed' status for approval requests
+ */
+router.post('/unit/task/complete-approval/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+    const { remarks } = req.body;
+
+    // Find the approval request
+    const task = await RequestApproval.findById(taskId).populate('userId');
+    
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Validate final remarks are provided
+    if (!remarks || remarks.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Please provide final remarks for approval' });
+    }
+
+    // Update task status to Approved with final remarks (no intermediate approval step)
+    task.status = 'Approved';
+    task.completedBy = user._id;
+    task.completedAt = new Date();
+    task.finalRemarks = remarks.trim();
+    
+    // Add completion to revision history
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
+    }
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: `Request approved by ${user.fName} ${user.lName} (${user.unitTeam} Unit)\n\nFinal Report/Remarks:\n${remarks.trim()}`,
+      status: 'approved'
+    });
+    
+    await task.save();
+
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
+
+    // Send notification to the requestor
+    try {
+      await notificationService.notifyApprovalCompleted(task._id, task.userId._id, user._id);
+    } catch (notifError) {
+      console.error('Error sending completion notification:', notifError);
+    }
+
+    // Notify admins that unit completed the request
+    try {
+      await notificationService.notifyAdminUnitCompleted(task._id, user._id, task);
+    } catch (notifError) {
+      console.error('Error sending admin notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Request approved successfully with final remarks' });
+  } catch (error) {
+    console.error('Error approving request:', error);
+    res.status(500).json({ success: false, message: 'Error approving request: ' + error.message });
+  }
+});
+
+/**
  * POST /unit/task/complete/:id
- * Mark a service request as completed
+ * Mark a service request as completed with final remarks (after requestor approval)
  */
 router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     const taskId = req.params.id;
+    const { finalRemarks } = req.body;
 
     // Find the service request
     const task = await ServiceRequest.findById(taskId).populate('userId');
@@ -1610,13 +1699,21 @@ router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
-    // Check if at least one deliverable exists
-    if (!task.deliverables || task.deliverables.length === 0) {
-      return res.status(400).json({ success: false, message: 'Please upload at least one deliverable before marking as completed' });
+    // Check if status is Approved (requestor must approve first)
+    if (task.status !== 'Approved') {
+      return res.status(400).json({ success: false, message: 'Task must be approved by requestor before completion' });
+    }
+
+    // Validate final remarks
+    if (!finalRemarks || finalRemarks.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Please provide final remarks' });
     }
 
     // Update task status to Completed
     task.status = 'Completed';
+    task.completedBy = user._id;
+    task.completedAt = new Date();
+    task.finalRemarks = finalRemarks;
     
     // Note: revisionCount is managed when user requests revisions
     // When marking as completed, we don't reset it - it tracks total revisions across all cycles
@@ -1628,7 +1725,7 @@ router.post('/unit/task/complete/:id', requireUnit, async (req, res) => {
     task.revisionHistory.push({
       requestedBy: user._id,
       requestedAt: new Date(),
-      revisionNotes: `Service request completed by ${user.fName} ${user.lName} (${user.unitTeam} Unit)${task.revisionCount > 0 ? ` - Approved after ${task.revisionCount} revision${task.revisionCount > 1 ? 's' : ''}` : ''}`,
+      revisionNotes: finalRemarks,
       status: 'completed',
       revisionType: 'completed',
       revisionNumber: task.revisionCount // Track which revision cycle this completion belongs to

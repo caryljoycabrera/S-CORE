@@ -1,49 +1,32 @@
 // ===== Email Service =====
 // This module handles email delivery for notifications, announcements, and system messages
-// Integrates with SMTP server for sending emails with HTML templates
+// Integrates with Resend API for reliable email delivery
 
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const path = require('path');
 const fs = require('fs');
 
 class EmailService {
   constructor() {
-    this.transporter = null;
+    this.resend = null;
     this.emailQueue = [];
     this.isProcessing = false;
     this.initialize();
   }
 
   /**
-   * Initialize the email transporter with SMTP configuration
+   * Initialize the Resend client with API key
    */
   initialize() {
     try {
-      const smtpConfig = {
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || 587),
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD
-        }
-      };
+      const apiKey = process.env.RESEND_API_KEY;
 
-      // Only initialize if SMTP credentials are provided
-      if (smtpConfig.auth.user && smtpConfig.auth.pass) {
-        this.transporter = nodemailer.createTransport(smtpConfig);
-        console.log('[EMAIL] Email service initialized with SMTP configuration');
-        
-        // Verify connection
-        this.transporter.verify((error, success) => {
-          if (error) {
-            console.error('[EMAIL] SMTP verification failed:', error);
-          } else {
-            console.log('[EMAIL] SMTP server is ready to send emails');
-          }
-        });
+      // Only initialize if API key is provided
+      if (apiKey && apiKey !== 'your_resend_api_key_here') {
+        this.resend = new Resend(apiKey);
+        console.log('[EMAIL] Email service initialized with Resend API');
       } else {
-        console.warn('[EMAIL] SMTP credentials not configured - email service in development mode');
+        console.warn('[EMAIL] Resend API key not configured - email service in development mode');
       }
     } catch (error) {
       console.error('[EMAIL] Error initializing email service:', error);
@@ -90,7 +73,7 @@ class EmailService {
     const commonStyles = `
       body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
       .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { background: #007bff; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
+      .header { background: #cce5ff; color: #004085; padding: 20px; border-radius: 5px 5px 0 0; border: 2px solid #004085; }
       .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
       .button { display: inline-block; background: #007bff; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; margin-top: 10px; }
@@ -270,8 +253,8 @@ class EmailService {
         throw new Error(`Invalid email address: ${to}`);
       }
 
-      // If no SMTP transporter, log and return success (development mode)
-      if (!this.transporter) {
+      // If no Resend client, log and return success (development mode)
+      if (!this.resend) {
         console.log(`[EMAIL] Development mode - would send email to: ${to}`);
         console.log(`[EMAIL] Subject: ${subject}`);
         console.log(`[EMAIL] Template: ${template}`);
@@ -281,16 +264,16 @@ class EmailService {
       // Load template
       const html = this.loadTemplate(template, data);
 
-      // Send email
-      const result = await this.transporter.sendMail({
-        from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
+      // Send email using Resend
+      const result = await this.resend.emails.send({
+        from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
         to: to,
         subject: subject,
         html: html
       });
 
       console.log(`[EMAIL] Email sent successfully to ${to}`);
-      return { success: true, messageId: result.messageId };
+      return { success: true, id: result.id };
     } catch (error) {
       console.error('[EMAIL] Error sending email:', error);
       throw error;
@@ -471,17 +454,15 @@ class EmailService {
         expiryHours
       });
 
-      const mailOptions = {
-        from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
-        to: userEmail,
-        subject: 'Verify Your Email Address - S-CORE',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
+          to: userEmail,
+          subject: 'Verify Your Email Address - S-CORE',
+          html
+        });
         console.log(`[EMAIL] Verification email sent to ${userEmail}`);
-        return { success: true, messageId: result.messageId };
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send verification email to ${userEmail} (dev mode)`);
         console.log(`[EMAIL] Verification link: ${verificationLink}`);
@@ -509,7 +490,7 @@ class EmailService {
           <head><style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #408b4e; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
+            .header { background: #d4edda; color: #155724; padding: 20px; border-radius: 5px 5px 0 0; border: 2px solid #155724; }
             .content { padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
             .button { display: inline-block; background: #408b4e; color: white; padding: 12px 24px; 
                       text-decoration: none; border-radius: 5px; margin-top: 15px; }
@@ -546,10 +527,15 @@ class EmailService {
         html
       };
 
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
+          to: userEmail,
+          subject: 'Reset Your Password - S-CORE',
+          html: mailOptions.html
+        });
         console.log(`[EMAIL] Password reset email sent to ${userEmail}`);
-        return { success: true, messageId: result.messageId };
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send password reset email to ${userEmail} (dev mode)`);
         console.log(`[EMAIL] Reset link: ${resetLink}`);
@@ -591,8 +577,8 @@ class EmailService {
                     </tr>
                     <!-- Page Title Section with Dark Green Background -->
                     <tr>
-                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
-                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Account Approved</h2>
+                      <td style="background-color: #d4edda; padding: 30px; text-align: center; border: 2px solid #155724;">
+                        <h2 style="margin: 0; color: #155724; font-size: 26px; font-weight: 600;">Account Approved</h2>
                       </td>
                     </tr>
                     <tr>
@@ -667,19 +653,17 @@ class EmailService {
         </html>
       `;
 
-      const mailOptions = {
-        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        replyTo: 'sco@dlsud.edu.ph',
-        to: userEmail,
-        subject: 'Your S-CORE Account Has Been Approved',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'Your S-CORE Account Has Been Approved',
+          html
+        });
         console.log(`[EMAIL] ✅ Account approved email sent successfully to ${userEmail}`);
-        console.log(`[EMAIL] Message ID: ${result.messageId}`);
-        return { success: true, messageId: result.messageId };
+        console.log(`[EMAIL] Message ID: ${result.id}`);
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send account approved email to ${userEmail} (dev mode)`);
         return { success: true, devMode: true };
@@ -717,10 +701,10 @@ class EmailService {
                         <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
                       </td>
                     </tr>
-                    <!-- Page Title Section with Dark Green Background -->
+                    <!-- Page Title Section with Light Red Background -->
                     <tr>
-                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
-                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Account Registration Update</h2>
+                      <td style="background-color: #f8d7da; padding: 30px; text-align: center; border: 2px solid #721c24;">
+                        <h2 style="margin: 0; color: #721c24; font-size: 26px; font-weight: 600;">Account Registration Update</h2>
                       </td>
                     </tr>
                     <tr>
@@ -774,18 +758,16 @@ class EmailService {
         </html>
       `;
 
-      const mailOptions = {
-        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        replyTo: 'sco@dlsud.edu.ph',
-        to: userEmail,
-        subject: 'S-CORE Account Registration - Not Approved',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'S-CORE Account Registration - Not Approved',
+          html
+        });
         console.log(`[EMAIL] Account denied email sent to ${userEmail}`);
-        return { success: true, messageId: result.messageId };
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send account denied email to ${userEmail} (dev mode)`);
         return { success: true, devMode: true };
@@ -822,10 +804,10 @@ class EmailService {
                         <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
                       </td>
                     </tr>
-                    <!-- Page Title Section with Dark Green Background -->
+                    <!-- Page Title Section with Light Yellow Background -->
                     <tr>
-                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
-                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Account Status Updated</h2>
+                      <td style="background-color: #fff3cd; padding: 30px; text-align: center; border: 2px solid #856404;">
+                        <h2 style="margin: 0; color: #856404; font-size: 26px; font-weight: 600;">Account Status Updated</h2>
                       </td>
                     </tr>
                     <tr>
@@ -880,18 +862,16 @@ class EmailService {
         </html>
       `;
 
-      const mailOptions = {
-        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        replyTo: 'sco@dlsud.edu.ph',
-        to: userEmail,
-        subject: 'S-CORE Account Status Updated',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'S-CORE Account Status Updated',
+          html
+        });
         console.log(`[EMAIL] Account reset to pending email sent to ${userEmail}`);
-        return { success: true, messageId: result.messageId };
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send account reset to pending email to ${userEmail} (dev mode)`);
         return { success: true, devMode: true };
@@ -930,10 +910,10 @@ class EmailService {
                         <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
                       </td>
                     </tr>
-                    <!-- Page Title Section with Dark Green Background -->
+                    <!-- Page Title Section with Light Red Background -->
                     <tr>
-                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
-                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Role Updated - Administrator Access</h2>
+                      <td style="background-color: #f8d7da; padding: 30px; text-align: center; border: 2px solid #721c24;">
+                        <h2 style="margin: 0; color: #721c24; font-size: 26px; font-weight: 600;">Role Updated - Administrator Access</h2>
                       </td>
                     </tr>
                     <tr>
@@ -1003,19 +983,17 @@ class EmailService {
         </html>
       `;
 
-      const mailOptions = {
-        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        replyTo: 'sco@dlsud.edu.ph',
-        to: userEmail,
-        subject: 'Your Role Has Been Updated to Administrator - S-CORE',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'Your Role Has Been Updated to Administrator - S-CORE',
+          html
+        });
         console.log(`[EMAIL] ✅ Role changed to admin email sent successfully to ${userEmail}`);
-        console.log(`[EMAIL] Message ID: ${result.messageId}`);
-        return { success: true, messageId: result.messageId };
+        console.log(`[EMAIL] Message ID: ${result.id}`);
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send role changed to admin email to ${userEmail} (dev mode)`);
         return { success: true, devMode: true };
@@ -1056,10 +1034,10 @@ class EmailService {
                         <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
                       </td>
                     </tr>
-                    <!-- Page Title Section with Dark Green Background -->
+                    <!-- Page Title Section with Light Blue Background -->
                     <tr>
-                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
-                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Role Updated - Unit Member Access</h2>
+                      <td style="background-color: #e3f2fd; padding: 30px; text-align: center; border: 2px solid #0d47a1;">
+                        <h2 style="margin: 0; color: #0d47a1; font-size: 26px; font-weight: 600;">Role Updated - Unit Member Access</h2>
                       </td>
                     </tr>
                     <tr>
@@ -1125,19 +1103,17 @@ class EmailService {
         </html>
       `;
 
-      const mailOptions = {
-        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        replyTo: 'sco@dlsud.edu.ph',
-        to: userEmail,
-        subject: 'Your Role Has Been Updated to Unit Member - S-CORE',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'Your Role Has Been Updated to Unit Member - S-CORE',
+          html
+        });
         console.log(`[EMAIL] ✅ Role changed to unit email sent successfully to ${userEmail}`);
-        console.log(`[EMAIL] Message ID: ${result.messageId}`);
-        return { success: true, messageId: result.messageId };
+        console.log(`[EMAIL] Message ID: ${result.id}`);
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send role changed to unit email to ${userEmail} (dev mode)`);
         return { success: true, devMode: true };
@@ -1177,10 +1153,10 @@ class EmailService {
                         <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif; letter-spacing: 0;">S-CORE</h1><p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-weight: 400; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
                       </td>
                     </tr>
-                    <!-- Page Title Section with Dark Green Background -->
+                    <!-- Page Title Section with Light Green Background -->
                     <tr>
-                      <td style="background-color: #1a5d1a; padding: 30px; text-align: center;">
-                        <h2 style="margin: 0; color: white; font-size: 26px; font-weight: 600;">Role Updated - User Access</h2>
+                      <td style="background-color: #d4edda; padding: 30px; text-align: center; border: 2px solid #155724;">
+                        <h2 style="margin: 0; color: #155724; font-size: 26px; font-weight: 600;">Role Updated - User Access</h2>
                       </td>
                     </tr>
                     <tr>
@@ -1238,19 +1214,17 @@ class EmailService {
         </html>
       `;
 
-      const mailOptions = {
-        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        replyTo: 'sco@dlsud.edu.ph',
-        to: userEmail,
-        subject: 'Your Role Has Been Updated to User/Requestor - S-CORE',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'Your Role Has Been Updated to User/Requestor - S-CORE',
+          html
+        });
         console.log(`[EMAIL] ✅ Role changed to user email sent successfully to ${userEmail}`);
-        console.log(`[EMAIL] Message ID: ${result.messageId}`);
-        return { success: true, messageId: result.messageId };
+        console.log(`[EMAIL] Message ID: ${result.id}`);
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] Would send role changed to user email to ${userEmail} (dev mode)`);
         return { success: true, devMode: true };
@@ -1351,18 +1325,16 @@ class EmailService {
         </html>
       `;
 
-      const mailOptions = {
-        from: `"S-CORE - No Reply" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        replyTo: 'sco@dlsud.edu.ph',
-        to: userEmail,
-        subject: 'You\'re Invited to Join S-CORE',
-        html
-      };
-
-      if (this.transporter) {
-        const result = await this.transporter.sendMail(mailOptions);
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'You\'re Invited to Join S-CORE',
+          html
+        });
         console.log(`[EMAIL] ✅ Invitation sent to ${userEmail}`);
-        return { success: true, messageId: result.messageId };
+        return { success: true, id: result.id };
       } else {
         console.log(`[EMAIL] [DEV MODE] Invitation would be sent to ${userEmail}`);
         console.log(`[EMAIL] Invitation link: ${invitationLink}`);
@@ -1381,12 +1353,12 @@ class EmailService {
    */
   async testEmailConfiguration(testEmail) {
     try {
-      if (!this.transporter) {
+      if (!this.resend) {
         return { success: false, message: 'Email service not configured' };
       }
 
-      const result = await this.transporter.sendMail({
-        from: process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER,
+      const result = await this.resend.emails.send({
+        from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
         to: testEmail,
         subject: 'S-CORE Email Service Test',
         html: `
@@ -1402,7 +1374,7 @@ class EmailService {
       });
 
       console.log('[EMAIL] Test email sent successfully');
-      return { success: true, messageId: result.messageId };
+      return { success: true, id: result.id };
     } catch (error) {
       console.error('[EMAIL] Test email failed:', error);
       return { success: false, message: error.message };

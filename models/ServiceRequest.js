@@ -86,6 +86,19 @@ const serviceRequestSchema = new mongoose.Schema({
     type: String
   }],
 
+  // Completion tracking
+  completedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  completedAt: {
+    type: Date
+  },
+  finalRemarks: {
+    type: String,
+    trim: true
+  },
+
   // Revision tracking (2 revision limit)
   revisionCount: {
     type: Number,

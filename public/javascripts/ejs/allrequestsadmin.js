@@ -415,6 +415,7 @@ class EnhancedSingleSelect {
 // Global modal variables and functions (must be accessible globally)
 let detailModal;
 let updateConfirmationModal;
+let cancelConfirmationModal;
 let currentRequestId = null;
 let currentRequestType = null;
 let originalValues = {};
@@ -446,6 +447,7 @@ function openModalFromRow(row) {
 }
 
 function openModal(rowData) {
+  console.log('Opening modal for request:', rowData.requestId);
   // Mark notification as read when opening request
   if (typeof window.markNotificationReadForRequest === 'function') {
     window.markNotificationReadForRequest(rowData.id, rowData.type);
@@ -459,6 +461,7 @@ function openModal(rowData) {
   const modalBody = detailModal.querySelector('.details-modal-body');
   modalBody.scrollTop = 0;
 
+  console.log('Setting modal display to flex');
   detailModal.style.display = 'flex';
 }
 
@@ -531,10 +534,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize global modal variables
   detailModal = document.getElementById("detailsModal");
   updateConfirmationModal = document.getElementById("updateConfirmationModal");
+  cancelConfirmationModal = document.getElementById("cancelConfirmationModal");
 
   console.log('🔍 DOM Elements Check:', {
     detailModal: !!detailModal,
     updateConfirmationModal: !!updateConfirmationModal,
+    cancelConfirmationModal: !!cancelConfirmationModal,
     requestRows: document.querySelectorAll('.request-row').length
   });
 
@@ -628,7 +633,10 @@ function initializeFilters() {
   }
 
   if (sortByFilter) {
-    sortByFilter.addEventListener('change', applyFilters);
+    sortByFilter.addEventListener('change', () => {
+      console.log('Sort filter changed to:', sortByFilter.value);
+      applyFilters();
+    });
   }
 
   if (clearFiltersBtn) {
@@ -738,20 +746,25 @@ function initializeFilters() {
   }
 
   function applyFilters() {
+    console.log('Applying filters...');
     const filters = getFilterValues();
     const sortValue = sortByFilter?.value || 'deadline-asc';
+    console.log('Sort value:', sortValue);
     
     // Reset to first page when filters change
     currentPage = 1;
 
     // First, filter the data
     filteredData = allRequestsData.filter(request => testFilters(request, filters));
+    console.log(`Filtered to ${filteredData.length} requests`);
     
     // Then sort the filtered data
     sortData(filteredData, sortValue);
+    console.log('Data sorted');
     
     // Display the current page
     displayPage();
+    console.log('Page displayed');
   }
   
   function displayPage() {
@@ -786,42 +799,82 @@ function initializeFilters() {
 
   function sortData(data, sortValue) {
     // Statuses that should be sorted to the bottom (completed/closed requests)
-    const bottomStatuses = ['approved', 'completed', 'rejected', 'archived'];
-    
+    const bottomStatusPriority = {
+      completed: 1,
+      approved: 2,
+      rejected: 3,
+      archived: 4
+    };
+
+    const getBottomPriority = (status) => {
+      if (!status) return null;
+      const key = status.toLowerCase();
+      return Object.prototype.hasOwnProperty.call(bottomStatusPriority, key)
+        ? bottomStatusPriority[key]
+        : null;
+    };
+
+    const getSortDateValue = (item, field) => {
+      if (field === 'deadline') {
+        return item.element?.dataset?.deadline || '';
+      }
+      // For date-based sorts and default, use the request date
+      return item.date || '';
+    };
+
     const [field, direction] = sortValue.split('-');
     const isAsc = direction === 'asc';
-    
+
     data.sort((a, b) => {
-      // Check if either request has a "completed" status
-      const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
-      const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
-      
-      // Always push completed statuses to the bottom
+      const aPriority = getBottomPriority(a.status);
+      const bPriority = getBottomPriority(b.status);
+
+      const aIsBottom = aPriority !== null;
+      const bIsBottom = bPriority !== null;
+
+      // Non-bottom requests should always come before bottom ones
       if (aIsBottom && !bIsBottom) return 1;
       if (!aIsBottom && bIsBottom) return -1;
-      
-      // If both are in the same category (both bottom or both not), sort normally
-      let valA, valB;
-      
+
+      // If both are bottom-status requests, enforce fixed ordering
+      if (aIsBottom && bIsBottom) {
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+
+        // Same bottom status: sort newest to oldest by date/deadline
+        const valA = getSortDateValue(a, field);
+        const valB = getSortDateValue(b, field);
+
+        if (!valA && valB) return 1;
+        if (valA && !valB) return -1;
+        if (!valA && !valB) return 0;
+
+        if (valA < valB) return 1;
+        if (valA > valB) return -1;
+        return 0;
+      }
+
+      // For non-bottom requests, keep existing sort behavior
+      let valA = '';
+      let valB = '';
+
       switch (field) {
-        case 'deadline':
-          // Get deadline from element's dataset
+        case 'deadline': {
           valA = a.element?.dataset?.deadline || '';
           valB = b.element?.dataset?.deadline || '';
-          // Put items without deadline at the end (but before bottom statuses)
+          // Put items without deadline at the end (within the non-bottom group)
           if (!valA && valB) return isAsc ? 1 : -1;
           if (valA && !valB) return isAsc ? -1 : 1;
           if (!valA && !valB) return 0;
           break;
+        }
         case 'date':
-          valA = a.date || '';
-          valB = b.date || '';
-          break;
         default:
           valA = a.date || '';
           valB = b.date || '';
       }
-      
+
       if (valA < valB) return isAsc ? -1 : 1;
       if (valA > valB) return isAsc ? 1 : -1;
       return 0;
@@ -939,23 +992,33 @@ function initializeModalHandlers() {
 
   window.onclick = function(event) {
     if (event.target === detailModal) closeModal();
-    if (event.target === updateConfirmationModal) updateConfirmationModal?.classList?.remove('show');
+    if (event.target === updateConfirmationModal) {
+      updateConfirmationModal.classList.remove('show');
+      updateConfirmationModal.style.display = 'none';
+    }
+    if (event.target === cancelConfirmationModal) {
+      cancelConfirmationModal.classList.remove('show');
+      cancelConfirmationModal.style.display = 'none';
+    }
   };
 }
 
 function initializeRichModalHandlers() {
+  console.log('🟢 initializeRichModalHandlers called');
   const updateBtn = document.getElementById('adminUpdateBtn');
   const cancelBtn = document.getElementById('adminCancelBtn');
+  console.log('🟢 updateBtn:', !!updateBtn, 'cancelBtn:', !!cancelBtn);
 
   if (updateBtn) {
     updateBtn.onclick = showUpdateConfirmation;
+    console.log('🟢 updateBtn.onclick set');
   }
 
   if (cancelBtn) {
     cancelBtn.onclick = () => {
       resetFormToOriginalValues();
-      updateConfirmationModal?.classList?.remove('show');
     };
+    console.log('🟢 cancelBtn.onclick set');
   }
 
   // Confirmation modal handlers
@@ -967,7 +1030,41 @@ function initializeRichModalHandlers() {
   }
 
   if (cancelConfirmBtn) {
-    cancelConfirmBtn.onclick = () => updateConfirmationModal?.classList?.remove('show');
+    cancelConfirmBtn.onclick = () => {
+      if (updateConfirmationModal) {
+        updateConfirmationModal.classList.remove('show');
+        updateConfirmationModal.style.display = 'none';
+      }
+    };
+  }
+
+  // Cancel confirmation modal handlers
+  const confirmCancelChangesBtn = document.getElementById('confirmCancelChangesBtn');
+  const cancelCancelBtn = document.getElementById('cancelCancelBtn');
+
+  if (confirmCancelChangesBtn) {
+    confirmCancelChangesBtn.onclick = () => {
+      resetFormToOriginalValues();
+      const cancelModal = document.getElementById('cancelConfirmationModal');
+      if (cancelModal) {
+        cancelModal.classList.remove('show');
+        cancelModal.style.display = 'none';
+      }
+      if (updateConfirmationModal) {
+        updateConfirmationModal.classList.remove('show');
+        updateConfirmationModal.style.display = 'none';
+      }
+    };
+  }
+
+  if (cancelCancelBtn) {
+    cancelCancelBtn.onclick = () => {
+      const cancelModal = document.getElementById('cancelConfirmationModal');
+      if (cancelModal) {
+        cancelModal.classList.remove('show');
+        cancelModal.style.display = 'none';
+      }
+    };
   }
 }
 
@@ -1035,6 +1132,9 @@ function openModal(rowData) {
   }
 
   detailModal.style.display = 'flex';
+
+  // Initialize modal handlers after modal is displayed
+  initializeRichModalHandlers();
 }
 
 function populateModalData(rowData) {
@@ -1068,12 +1168,13 @@ function populateModalData(rowData) {
   setDetailText('detailDatetime', rowData.datetime);
   setElementHTML('detailDescription', rowData.description || 'No description provided');
 
-  // Handle deadline visibility
+  // Handle deadline visibility based on whether a deadline exists
   const deadlineElements = ['deadlineInfo', 'adminDeadlineField'];
+  const hasDeadline = rowData.formattedDeadline && rowData.formattedDeadline !== 'N/A';
   deadlineElements.forEach(id => {
     const element = document.getElementById(id);
     if (element) {
-      element.style.display = rowData.type === 'Service Request' ? 'block' : 'none';
+      element.style.display = hasDeadline ? 'block' : 'none';
     }
   });
 
@@ -1173,18 +1274,21 @@ function populateAdminForm(rowData) {
     }
   }
 
-  // Deadline (for service requests)
-  if (rowData.type === 'Service Request') {
-    const deadlineInput = document.getElementById('adminDeadlineInput');
-    if (deadlineInput && rowData.formattedDeadline) {
-      try {
-        deadlineInput.value = formatDateForInput(rowData.formattedDeadline);
-        originalValues.deadline = deadlineInput.value;
-      } catch (e) {
-        console.error('Error setting deadline:', e);
-      }
+  // Deadline (if available)
+  const deadlineInput = document.getElementById('adminDeadlineInput');
+  if (deadlineInput && rowData.formattedDeadline && rowData.formattedDeadline !== 'N/A') {
+    try {
+      deadlineInput.value = formatDateForInput(rowData.formattedDeadline);
+      originalValues.deadline = deadlineInput.value;
+    } catch (e) {
+      console.error('Error setting deadline:', e);
     }
-    document.getElementById('currentDeadlineValue').textContent = rowData.formattedDeadlineDisplay || rowData.formattedDeadline;
+  }
+
+  const currentDeadlineValueEl = document.getElementById('currentDeadlineValue');
+  if (currentDeadlineValueEl) {
+    currentDeadlineValueEl.textContent =
+      rowData.formattedDeadlineDisplay || rowData.formattedDeadline || 'N/A';
   }
 }
 
@@ -1540,8 +1644,12 @@ function initializeRowClickHandlers() {
   console.log('🖱️ Initializing row click handlers...');
 
   const rows = document.querySelectorAll('.request-row');
-  rows.forEach(row => {
-    row.addEventListener('click', () => openModalFromRow(row));
+  console.log(`Found ${rows.length} request rows`);
+  rows.forEach((row, index) => {
+    row.addEventListener('click', () => {
+      console.log(`Row ${index} clicked, opening modal for request:`, row.dataset.requestId);
+      openModalFromRow(row);
+    });
     row.style.cursor = 'pointer';
   });
 
@@ -1562,6 +1670,113 @@ document.addEventListener("click", function(event) {
     menu.style.display = "none";
   }
 });
+
+// Show notification function - displays styled modal notifications
+function showNotification(message, type = 'success') {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1005000 !important;
+    animation: fadeIn 0.3s ease-out;
+  `;
+  
+  // Create modal content
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+    z-index: 1005001 !important;
+  `;
+  
+  // Determine colors based on type
+  let headerColor, icon;
+  switch(type) {
+    case 'success':
+      headerColor = 'var(--primary-green)';
+      icon = '✅';
+      break;
+    case 'error':
+      headerColor = '#ef4444';
+      icon = '❌';
+      break;
+    case 'info':
+    default:
+      headerColor = '#3b82f6';
+      icon = 'ℹ️';
+      break;
+  }
+  
+  modal.innerHTML = `
+    <div style="background: ${headerColor}; color: white; padding: 1.5rem; text-align: center; border-radius: 12px 12px 0 0;">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">${icon}</div>
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">
+        ${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Information'}
+      </h3>
+    </div>
+    <div style="padding: 2rem; text-align: center;">
+      <p style="margin: 0 0 1.5rem 0; font-size: 1rem; color: #374151; line-height: 1.5;">${message}</p>
+      <button id="notificationOkBtn" style="
+        background: ${headerColor};
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      ">OK</button>
+    </div>
+  `;
+  
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  // Add event listeners
+  const okBtn = modal.querySelector('#notificationOkBtn');
+  
+  function closeNotificationModal() {
+    overlay.style.animation = 'fadeOut 0.3s ease-out';
+    modal.style.animation = 'slideDown 0.3s ease-out';
+    setTimeout(() => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      document.body.style.overflow = '';
+    }, 300);
+  }
+  
+  okBtn.addEventListener('click', closeNotificationModal);
+  
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeNotificationModal();
+    }
+  });
+  
+  // Auto close after 5 seconds for success/info messages
+  if (type === 'success' || type === 'info') {
+    setTimeout(closeNotificationModal, 5000);
+  }
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
 
 // Missing modal handlers - these need to be implemented based on the EJS template
 function showUpdateConfirmation() {
@@ -1618,9 +1833,24 @@ function showUpdateConfirmation() {
 
     if (updateConfirmationModal) {
       updateConfirmationModal.classList.add('show');
+      updateConfirmationModal.style.display = 'flex';
     }
   } else {
     console.log('No changes detected');
+    showNotification('No changes detected', 'info');
+  }
+}
+
+function showCancelConfirmation() {
+  console.log('🔴 showCancelConfirmation called');
+  const modal = document.getElementById('cancelConfirmationModal');
+  console.log('🔴 cancelConfirmationModal element:', modal);
+  if (modal) {
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    console.log('🔴 Modal should now be visible');
+  } else {
+    console.error('🔴 cancelConfirmationModal not found in DOM!');
   }
 }
 
@@ -1640,6 +1870,8 @@ function resetFormToOriginalValues() {
   if (deadlineInput && originalValues.deadline) {
     deadlineInput.value = originalValues.deadline;
   }
+  
+  showNotification('Changes cancelled - form reset to original values', 'info');
 }
 
 async function performUpdate() {
@@ -1693,6 +1925,7 @@ async function performUpdate() {
       // Close modals
       if (updateConfirmationModal) {
         updateConfirmationModal.classList.remove('show');
+        updateConfirmationModal.style.display = 'none';
       }
       if (detailModal) {
         detailModal.style.display = 'none';
@@ -1700,20 +1933,21 @@ async function performUpdate() {
 
       console.log('Update completed successfully');
 
-      // Optional: Show success message
-      alert('Request updated successfully!');
+      // Show success notification modal
+      showNotification('Request updated successfully!', 'success');
 
     } else {
       console.error('Update failed:', result.message);
-      alert('Failed to update request: ' + result.message);
+      showNotification('Failed to update request: ' + result.message, 'error');
     }
   } catch (error) {
     console.error('Error performing update:', error);
-    alert('Error updating request: ' + error.message);
+    showNotification('Error updating request: ' + error.message, 'error');
 
     // Revert modals on error
     if (updateConfirmationModal) {
       updateConfirmationModal.classList.remove('show');
+      updateConfirmationModal.style.display = 'none';
     }
   }
 }
@@ -3826,7 +4060,7 @@ function updateApprovalFileDisplay() {
 
   if (approvalSelectedFiles.length > 0) {
     fileManagement.style.display = 'block';
-    filesCount.textContent = ${approvalSelectedFiles.length} file selected;
+    filesCount.textContent = `${approvalSelectedFiles.length} file${approvalSelectedFiles.length > 1 ? 's' : ''} selected`;
 
     let totalSize = 0;
     filesContainer.innerHTML = '';
@@ -3837,7 +4071,8 @@ function updateApprovalFileDisplay() {
       filesContainer.innerHTML += fileItem;
     });
 
-    filesSummary.textContent = Total size:  MB;
+    const totalSizeMb = totalSize / (1024 * 1024);
+    filesSummary.textContent = `Total size: ${totalSizeMb.toFixed(2)} MB`;
   } else {
     fileManagement.style.display = 'none';
   }
@@ -3912,7 +4147,7 @@ function updateServiceFileDisplay() {
 
   if (serviceSelectedFiles.length > 0) {
     fileManagement.style.display = 'block';
-    filesCount.textContent = ${serviceSelectedFiles.length} file selected;
+    filesCount.textContent = `${serviceSelectedFiles.length} file${serviceSelectedFiles.length > 1 ? 's' : ''} selected`;
 
     let totalSize = 0;
     filesContainer.innerHTML = '';
@@ -3923,7 +4158,8 @@ function updateServiceFileDisplay() {
       filesContainer.innerHTML += fileItem;
     });
 
-    filesSummary.textContent = Total size:  MB;
+    const totalSizeMb = totalSize / (1024 * 1024);
+    filesSummary.textContent = `Total size: ${totalSizeMb.toFixed(2)} MB`;
   } else {
     fileManagement.style.display = 'none';
   }
@@ -3944,19 +4180,23 @@ window.removeServiceFile = function(index) {
 function createFileCard(file, index, type) {
   const fileExt = file.name.split('.').pop().toLowerCase();
   const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
-  
-  return <div class="file-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; transition: all 0.3s ease;">
+  const sizeKb = (file.size / 1024).toFixed(1);
+  const removeFn = type === 'approval' ? 'removeApprovalFile' : 'removeServiceFile';
+
+  return `
+    <div class="file-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; transition: all 0.3s ease;">
       <div class="file-item-info" style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
         <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: #3b82f6;">
-          
+          <path d="M4 4h16v16H4z" />
         </svg>
         <div class="file-item-details" style="flex: 1;">
-          <p class="file-item-name" style="margin: 0 0 0.25rem 0; font-size: 0.875rem; font-weight: 600; color: #334155; word-break: break-all;"></p>
-          <p class="file-item-size" style="margin: 0; font-size: 0.75rem; color: #64748b;"> KB</p>
+          <p class="file-item-name" style="margin: 0 0 0.25rem 0; font-size: 0.875rem; font-weight: 600; color: #334155; word-break: break-all;">${file.name}</p>
+          <p class="file-item-size" style="margin: 0; font-size: 0.75rem; color: #64748b;">${sizeKb} KB</p>
         </div>
       </div>
-      <button type="button" class="file-delete-btn" onclick="removeFile()" style="background: #ef4444; color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; font-weight: bold; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"></button>
-    </div>;
+      <button type="button" class="file-delete-btn" onclick="${removeFn}(${index})" style="background: #ef4444; color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; font-weight: bold; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">×</button>
+    </div>
+  `;
 }
 
 // Links management for approval
@@ -3964,7 +4204,10 @@ window.addApprovalLink = function() {
   const container = document.getElementById('approvalLinksContainer');
   const linkGroup = document.createElement('div');
   linkGroup.className = 'link-input-group';
-  linkGroup.innerHTML = <input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)"></button>;
+  linkGroup.innerHTML = `
+    <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+    <button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)">×</button>
+  `;
   container.appendChild(linkGroup);
 };
 
@@ -3978,7 +4221,10 @@ window.addServiceLink = function() {
   const container = document.getElementById('serviceLinksContainer');
   const linkGroup = document.createElement('div');
   linkGroup.className = 'link-input-group';
-  linkGroup.innerHTML = <input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeServiceLink(this)"></button>;
+  linkGroup.innerHTML = `
+    <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+    <button type="button" class="remove-link-btn" onclick="removeServiceLink(this)">×</button>
+  `;
   container.appendChild(linkGroup);
 };
 
@@ -4095,7 +4341,12 @@ function resetApprovalForm() {
   
   const linksContainer = document.getElementById('approvalLinksContainer');
   if (linksContainer) {
-    linksContainer.innerHTML = <div class="link-input-group"><input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)" style="display: none;"></button></div>;
+    linksContainer.innerHTML = `
+      <div class="link-input-group">
+        <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+        <button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)" style="display: none;">×</button>
+      </div>
+    `;
   }
 }
 
@@ -4112,6 +4363,11 @@ function resetServiceForm() {
   
   const linksContainer = document.getElementById('serviceLinksContainer');
   if (linksContainer) {
-    linksContainer.innerHTML = <div class="link-input-group"><input type="text" name="links[]" class="link-input" placeholder="https://example.com" /><button type="button" class="remove-link-btn" onclick="removeServiceLink(this)" style="display: none;"></button></div>;
+    linksContainer.innerHTML = `
+      <div class="link-input-group">
+        <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+        <button type="button" class="remove-link-btn" onclick="removeServiceLink(this)" style="display: none;">×</button>
+      </div>
+    `;
   }
 }

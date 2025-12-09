@@ -347,6 +347,7 @@ class EnhancedMultiSelect {
     this.isOpen = false;
     this.filteredOptions = [...options];
     this.hasSearch = hasSearch;
+    this.labels = new Map();
 
     this.init();
   }
@@ -368,13 +369,24 @@ class EnhancedMultiSelect {
 
   populateOptions() {
     // Add "All" option
-    const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
+    const allLabel = `All ${this.placeholder.replace('Select ', '')}`;
+    const allOption = this.createOption('all', allLabel);
     this.optionsContainer.appendChild(allOption);
+    this.labels.set('all', allLabel);
 
-    // Add other options
+    // Add other options. Support option as string or { value, label }
     this.options.forEach(option => {
-      const optionElement = this.createOption(option, option);
-      this.optionsContainer.appendChild(optionElement);
+      if (option && typeof option === 'object') {
+        const val = option.value;
+        const text = option.label || option.text || String(val);
+        const optionElement = this.createOption(val, text);
+        this.optionsContainer.appendChild(optionElement);
+        this.labels.set(val, text);
+      } else {
+        const optionElement = this.createOption(option, option);
+        this.optionsContainer.appendChild(optionElement);
+        this.labels.set(option, option);
+      }
     });
   }
 
@@ -491,7 +503,8 @@ class EnhancedMultiSelect {
     if (selectedArray.includes('all') || selectedArray.length === 0) {
       this.selectedText.textContent = `All ${this.placeholder.replace('Select ', '')}`;
     } else if (selectedArray.length === 1) {
-      this.selectedText.textContent = selectedArray[0];
+      const val = selectedArray[0];
+      this.selectedText.textContent = this.labels.get(val) || val;
     } else {
       this.selectedText.textContent = `${selectedArray.length} selected`;
     }
@@ -527,6 +540,34 @@ class EnhancedMultiSelect {
     this.isOpen = true;
     this.display.classList.add('active');
     this.dropdown.classList.add('show');
+    // Make dropdown a floating fixed element to avoid stacking-context issues
+    try {
+      const rect = this.display.getBoundingClientRect();
+      // move dropdown to body to avoid any ancestor stacking/overflow/transform issues
+      this._originalParent = this.dropdown.parentNode;
+      this._originalNextSibling = this.dropdown.nextSibling;
+      document.body.appendChild(this.dropdown);
+
+      // apply fixed positioning so the dropdown is above sticky headers
+      this.dropdown.style.position = 'fixed';
+      this.dropdown.style.top = (rect.bottom + 4) + 'px';
+      this.dropdown.style.left = rect.left + 'px';
+      this.dropdown.style.width = rect.width + 'px';
+      this.dropdown.style.zIndex = '2147483647';
+      this._isFloating = true;
+
+      // Add reposition handler to handle scroll/resize while open
+      this._repositionHandler = () => {
+        const r = this.display.getBoundingClientRect();
+        this.dropdown.style.top = (r.bottom + 4) + 'px';
+        this.dropdown.style.left = r.left + 'px';
+        this.dropdown.style.width = r.width + 'px';
+      };
+      window.addEventListener('scroll', this._repositionHandler, true);
+      window.addEventListener('resize', this._repositionHandler);
+    } catch (err) {
+      this._isFloating = false;
+    }
     if (this.hasSearch && this.searchInput) {
       this.searchInput.focus();
     }
@@ -536,6 +577,31 @@ class EnhancedMultiSelect {
     this.isOpen = false;
     this.display.classList.remove('active');
     this.dropdown.classList.remove('show');
+
+    // If we floated the dropdown to the body via fixed positioning, clear inline styles
+    if (this._isFloating) {
+      this.dropdown.style.position = '';
+      this.dropdown.style.top = '';
+      this.dropdown.style.left = '';
+      this.dropdown.style.width = '';
+      this.dropdown.style.zIndex = '';
+      // restore to original parent
+      if (this._originalParent) {
+        if (this._originalNextSibling) {
+          this._originalParent.insertBefore(this.dropdown, this._originalNextSibling);
+        } else {
+          this._originalParent.appendChild(this.dropdown);
+        }
+      }
+      this._originalParent = null;
+      this._originalNextSibling = null;
+      this._isFloating = false;
+      if (this._repositionHandler) {
+        window.removeEventListener('scroll', this._repositionHandler, true);
+        window.removeEventListener('resize', this._repositionHandler);
+        this._repositionHandler = null;
+      }
+    }
 
     DropdownManager.clearActive(this);
 
@@ -563,7 +629,11 @@ function initializeSearchableDropdowns() {
   
   // Initialize role filter (simple dropdown without search)
   roleFilter = new EnhancedMultiSelect('roleFilter',
-    ['admin', 'user'], 'Select Roles', false);
+    [
+      { value: 'admin', label: 'Admin' },
+      { value: 'unit', label: 'Unit' },
+      { value: 'user', label: 'User' }
+    ], 'Select Roles', false);
     
   affiliationFilter = new EnhancedMultiSelect('affiliationFilter',
     affiliationsArray, 'Select Offices/Departments', true);
@@ -807,21 +877,34 @@ const PaginationManager = {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
 
-    // Hide all rows first
-    this.filteredRows.forEach(row => {
-      row.style.display = 'none';
-    });
+    // Ensure all rows are hidden first (so previously-visible rows
+    // that are not part of the current filtered set get hidden).
+    const allRows = document.querySelectorAll('.grid-row');
+    allRows.forEach(r => { r.style.display = 'none'; });
 
-    // Show only rows for current page
+    // Show only rows for current page from the filtered set
     this.filteredRows.slice(startIndex, endIndex).forEach(row => {
       row.style.display = 'grid';
     });
 
-    // Update results count
-    const displayedCount = Math.min(endIndex, this.totalItems) - startIndex;
+    // Update results count and show/hide no-results client message
     const resultsCount = document.getElementById('resultsCount');
-    if (resultsCount) {
-      resultsCount.textContent = `Showing ${displayedCount} of ${this.totalItems} users (Page ${this.currentPage} of ${Math.ceil(this.totalItems / this.itemsPerPage)})`;
+    const noResultsEl = document.getElementById('noResultsClient');
+    const totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+
+    if (this.totalItems === 0) {
+      if (noResultsEl) noResultsEl.style.display = 'block';
+      if (resultsCount) resultsCount.textContent = `Showing 0 of 0 users`;
+    } else {
+      if (noResultsEl) noResultsEl.style.display = 'none';
+      const displayedCount = Math.min(endIndex, this.totalItems) - startIndex;
+      if (resultsCount) {
+        if (totalPages > 0) {
+          resultsCount.textContent = `Showing ${displayedCount} of ${this.totalItems} users (Page ${this.currentPage} of ${totalPages})`;
+        } else {
+          resultsCount.textContent = `Showing ${displayedCount} of ${this.totalItems} users`;
+        }
+      }
     }
   },
 
@@ -1148,7 +1231,7 @@ const UserFormHandler = {
       if (roleBadge) {
         roleBadge.classList.remove('role-admin', 'role-unit', 'role-user');
         roleBadge.classList.add(`role-${newRole}`);
-        let badgeText = newRole.toUpperCase();
+        let badgeText = newRole.charAt(0).toUpperCase() + newRole.slice(1).toLowerCase();
         if (newRole === 'unit' && newUnitTeam && newUnitTeam !== 'N/A') {
           badgeText += ` - ${newUnitTeam}`;
         }

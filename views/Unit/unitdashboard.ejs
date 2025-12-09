@@ -249,16 +249,14 @@
             <h3>My Urgent Tasks</h3>
           </div>
           
-          <% if (urgentTasks && urgentTasks.length > 0) { %>
-            <%
-              const excludedStatuses = ['completed', 'approved', 'archived', 'deleted'];
-              const approvalTasks = urgentTasks.filter(t => !t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
-              const serviceTasks = urgentTasks.filter(t => t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
-              const hasApprovals = approvalTasks.length > 0;
-              const hasServices = serviceTasks.length > 0;
-            %>
-            
-            <!-- Tab Navigation -->
+            <% if (urgentTasks && urgentTasks.length > 0) { %>
+              <%
+                const excludedStatuses = ['completed', 'approved', 'rejected', 'archived', 'deleted'];
+                const approvalTasks = urgentTasks.filter(t => !t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
+                const serviceTasks = urgentTasks.filter(t => t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
+                const hasApprovals = approvalTasks.length > 0;
+                const hasServices = serviceTasks.length > 0;
+              %>            <!-- Tab Navigation -->
             <div class="urgent-tasks-tabs">
               <button class="urgent-tab-btn active" data-tab="approvals" onclick="switchUrgentTab('approvals')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

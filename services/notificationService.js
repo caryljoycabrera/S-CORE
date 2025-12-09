@@ -102,23 +102,31 @@ class NotificationService {
   }
 
   // Notify user when their service request is approved
-  async notifyServiceApproved(serviceId, userId, adminId, assignedUnits = null) {
+  async notifyServiceApproved(serviceId, requestorId, assignedUnits) {
     try {
-      const message = assignedUnits 
-        ? `Your service request has been approved and assigned to: ${assignedUnits}`
-        : 'Your service request has been approved';
+      // Notify unit team that requestor approved their deliverables
+      const unitMembers = await User.find({ 
+        unitTeam: assignedUnits,
+        role: 'unit'
+      });
 
-      await this.createNotification({
-        recipient: userId,
-        sender: adminId,
-        title: 'Service Request Approved',
-        message: message,
-        type: 'service_approved',
+      const notificationData = {
+        sender: requestorId,
+        title: 'Deliverables Approved',
+        message: `Requestor approved your deliverables. Please complete the task with final remarks.`,
+        type: 'deliverables_approved',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
         priority: 'high',
-        actionUrl: `/service-requests?modal=true&requestId=${serviceId}&type=service`
-      });
+        actionUrl: `/unit/task-services?modal=true&requestId=${serviceId}&type=service`
+      };
+
+      for (const member of unitMembers) {
+        await this.createNotification({
+          ...notificationData,
+          recipient: member._id
+        });
+      }
     } catch (error) {
       console.error('Error notifying service approval:', error);
     }
@@ -1053,6 +1061,7 @@ class NotificationService {
   }
 
   // Notify admins when unit uploads deliverable
+  // Notify admins when unit uploads deliverables
   async notifyAdminUnitDeliverable(serviceId, unitMemberId, serviceData, filesCount) {
     try {
       const admins = await User.find({ role: 'admin', status: 'approved' });
@@ -1080,6 +1089,64 @@ class NotificationService {
       console.log(`✅ Unit deliverable notification sent to ${admins.length} admins`);
     } catch (error) {
       console.error('Error notifying admins of unit deliverable:', error);
+    }
+  }
+
+  // Notify requestor when unit uploads deliverables
+  async notifyRequestorDeliverableUploaded(serviceId, unitMemberId, serviceData) {
+    try {
+      console.log('🚀 [DELIVERABLE NOTIFICATION] Starting notification process');
+      console.log('🚀 notifyRequestorDeliverableUploaded called with:', {
+        serviceId,
+        unitMemberId,
+        serviceDataUserId: serviceData.userId,
+        serviceDataUserIdType: typeof serviceData.userId,
+        hasUserId: !!serviceData.userId
+      });
+      
+      if (!serviceData.userId) {
+        console.error('❌ [DELIVERABLE NOTIFICATION] No userId found in serviceData!');
+        return;
+      }
+      
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+      console.log('👤 [DELIVERABLE NOTIFICATION] Unit member found:', unitName);
+      
+      // Extract userId - handle both populated and unpopulated cases
+      const requestorId = serviceData.userId?._id || serviceData.userId;
+      
+      console.log('📧 [DELIVERABLE NOTIFICATION] Preparing to send notification to requestor:', {
+        requestorId,
+        requestorIdString: requestorId?.toString(),
+        requestorIdType: typeof requestorId,
+        unitName,
+        serviceId: serviceId?.toString()
+      });
+      
+      if (!requestorId) {
+        console.error('❌ [DELIVERABLE NOTIFICATION] RequestorId is null or undefined!');
+        return;
+      }
+
+      console.log('📝 [DELIVERABLE NOTIFICATION] Calling createNotification...');
+      const notification = await this.createNotification({
+        recipient: requestorId,
+        sender: unitMemberId,
+        title: 'Deliverables Ready for Review',
+        message: `${unitName} team uploaded deliverables for your service request. Please review and approve or request revisions.`,
+        type: 'deliverables_uploaded',
+        relatedId: serviceId,
+        relatedModel: 'ServiceRequest',
+        priority: 'high',
+        actionUrl: `/service-requests?modal=true&requestId=${serviceId}&type=service`
+      });
+      
+      console.log(`✅ [DELIVERABLE NOTIFICATION] Notification created successfully:`, notification?._id);
+    } catch (error) {
+      console.error('❌ [DELIVERABLE NOTIFICATION] Error notifying requestor of deliverable upload:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
     }
   }
 
@@ -1161,23 +1228,43 @@ class NotificationService {
   // Notify unit when user requests revision on completed task
   async notifyUnitRevisionRequested(requestId, requestorId, assignedUnits, revisionCount) {
     try {
+      console.log('🔄 [REVISION NOTIFICATION] Starting notification process');
+      console.log('🔄 notifyUnitRevisionRequested called with:', {
+        requestId,
+        requestorId,
+        assignedUnits,
+        revisionCount
+      });
+      
       const unitsArray = typeof assignedUnits === 'string' 
         ? assignedUnits.split(',').map(u => u.trim()).filter(u => u && u !== 'Not yet assigned')
         : Array.isArray(assignedUnits)
           ? assignedUnits.filter(u => u && u !== 'Not yet assigned')
           : [assignedUnits].filter(u => u && u !== 'Not yet assigned');
 
-      if (unitsArray.length === 0) return;
+      console.log('🔄 [REVISION NOTIFICATION] Units array:', unitsArray);
+
+      if (unitsArray.length === 0) {
+        console.warn('⚠️ [REVISION NOTIFICATION] No valid units found');
+        return;
+      }
 
       const unitMembers = await User.find({
         role: 'unit',
         unitTeam: { $in: unitsArray }
       });
 
-      if (unitMembers.length === 0) return;
+      console.log('🔄 [REVISION NOTIFICATION] Found unit members:', unitMembers.length);
+
+      if (unitMembers.length === 0) {
+        console.warn('⚠️ [REVISION NOTIFICATION] No unit members found for teams:', unitsArray);
+        return;
+      }
 
       const requestor = await User.findById(requestorId);
       const revisionsRemaining = 2 - revisionCount;
+
+      console.log('🔄 [REVISION NOTIFICATION] Requestor:', requestor ? `${requestor.fName} ${requestor.lName}` : 'Unknown');
 
       const notificationData = {
         title: 'Revision Requested',
@@ -1190,14 +1277,19 @@ class NotificationService {
         actionUrl: `/unit/all-tasks?modal=true&requestId=${requestId}&type=service`
       };
 
-      const notifications = unitMembers.map(member => 
-        this.createNotification({ ...notificationData, recipient: member._id })
-      );
+      console.log('🔄 [REVISION NOTIFICATION] Sending to', unitMembers.length, 'unit members');
+
+      const notifications = unitMembers.map(member => {
+        console.log('🔄 [REVISION NOTIFICATION] Creating notification for:', member.fName, member.lName);
+        return this.createNotification({ ...notificationData, recipient: member._id });
+      });
       
       await Promise.all(notifications);
-      console.log(`✅ User revision request notification sent to ${unitMembers.length} unit members`);
+      console.log(`✅ [REVISION NOTIFICATION] Revision request notification sent to ${unitMembers.length} unit members`);
     } catch (error) {
-      console.error('Error notifying unit of revision request:', error);
+      console.error('❌ [REVISION NOTIFICATION] Error notifying unit of revision request:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
     }
   }
 

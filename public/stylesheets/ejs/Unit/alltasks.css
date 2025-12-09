@@ -1068,7 +1068,7 @@
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   z-index: 999;
-  max-height: 300px;
+  max-height: 340px;
   overflow: hidden;
   animation: dropdownSlideIn 0.2s ease-out;
 }

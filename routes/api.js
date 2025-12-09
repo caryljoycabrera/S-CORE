@@ -831,32 +831,6 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
             status: revision.status,
             type: revision.revisionNotes && revision.revisionNotes.includes('approved') ? 'approved' : 'revision'
           });
-        } else if (isUserRevisionRequest) {
-          // This is a user requesting revision
-          let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
-          
-          console.log('🔍 [API] User revision request:', {
-            responseNotes: revision.responseNotes,
-            notes: revision.notes,
-            description: revision.description,
-            hasResponseNotes: !!revision.responseNotes,
-            responseNotesType: typeof revision.responseNotes,
-            respondedByUser
-          });
-          
-          revisions.push({
-            respondedBy: respondedByUser ? {
-              _id: respondedByUser._id,
-              fName: respondedByUser.fName,
-              lName: respondedByUser.lName
-            } : revision.respondedBy,
-            respondedAt: revision.respondedAt,
-            responseNotes: revision.responseNotes || revision.notes || revision.description || '',
-            responseFiles: revision.responseFiles || revision.files || [],
-            type: 'revision_requested',
-            status: revision.status,
-            revisionNumber: revision.revisionNumber || 0
-          });
         } else if (isUserResubmission) {
           // This is a user resubmitting after revision
           let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
@@ -1007,6 +981,18 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
     // Add all revisions from revisionHistory array
     if (serviceRequest.revisionHistory && serviceRequest.revisionHistory.length > 0) {
       for (const revision of serviceRequest.revisionHistory) {
+        // Skip conversation messages (type='message')
+        if (revision.revisionType === 'message' || revision.type === 'message') {
+          console.log('[API] Skipping message type revision');
+          continue;
+        }
+        
+        // Skip completed type (final remarks) - these should not appear in revision history
+        if (revision.revisionType === 'completed' || revision.type === 'completed') {
+          console.log('[API] Skipping completed type revision (final remarks)');
+          continue;
+        }
+        
         // Unit actions have requestedBy field (deliverable uploads, completions)
         // User actions have respondedBy field (revision requests)
         const isUnitAction = revision.requestedBy !== undefined && revision.requestedBy !== null;
@@ -1061,58 +1047,7 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
       }
     }
 
-    // Add conversation messages to revision history
-    const conversation = await Conversation.findOne({ serviceRequestId: requestId });
-    if (conversation && conversation.messages && conversation.messages.length > 0) {
-      for (const message of conversation.messages) {
-        // Skip messages that are actually revision requests or responses (they start with specific patterns)
-        // These are already included as revision history entries above
-        if (message.content && (
-          message.content.startsWith('🔄 **Revision Request #') ||
-          message.content.startsWith('✅ **Revision Response**')
-        )) {
-          continue;
-        }
-
-        // Populate sender information
-        let senderUser = null;
-        try {
-          senderUser = await User.findById(message.senderId).select('fName lName unitTeam');
-        } catch (err) {
-          console.log('Error populating message sender:', err);
-        }
-        
-        // Add message as a revision entry
-        if (message.senderRole === 'unit') {
-          revisions.push({
-            requestedBy: senderUser ? {
-              _id: senderUser._id,
-              fName: senderUser.fName,
-              lName: senderUser.lName,
-              unitTeam: senderUser.unitTeam
-            } : null,
-            requestedAt: message.timestamp,
-            revisionNotes: message.content || '',
-            type: 'message',
-            status: 'message'
-          });
-        } else if (message.senderRole === 'user') {
-          revisions.push({
-            respondedBy: senderUser ? {
-              _id: senderUser._id,
-              fName: senderUser.fName,
-              lName: senderUser.lName
-            } : null,
-            respondedAt: message.timestamp,
-            responseNotes: message.content || '',
-            type: 'message',
-            status: 'message'
-          });
-        }
-      }
-    }
-
-    // Sort by timestamp
+    // Sort revisions by timestamp (newest first)
     revisions.sort((a, b) => new Date(a.requestedAt || a.respondedAt || a.timestamp) - new Date(b.requestedAt || b.respondedAt || b.timestamp));
 
     res.json({

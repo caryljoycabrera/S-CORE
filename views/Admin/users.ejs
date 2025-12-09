@@ -371,7 +371,7 @@
                   <div class="grid-col-email"><%= u.email %></div>
                   <div class="grid-col-role">
                     <span class="role-badge <%= u.role === 'admin' ? 'role-admin' : (u.role === 'unit' ? 'role-unit' : 'role-user') %>">
-                      <%= u.role.toUpperCase() %><% if (u.role === 'unit' && u.unitTeam && u.unitTeam !== 'N/A') { %> - <%= u.unitTeam %><% } %>
+                      <%= (u.role ? (u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()) : '') %><% if (u.role === 'unit' && u.unitTeam && u.unitTeam !== 'N/A') { %> - <%= u.unitTeam %><% } %>
                     </span>
                   </div>
                   <div class="grid-col-date">
@@ -396,6 +396,15 @@
                 </div>
               </div>
               <% }) %>
+            </div>
+            <!-- Client-side no-results message (shown when filters match nothing) -->
+            <div id="noResultsClient" class="no-results-client" style="display: none; padding: 2rem; text-align: center; color: #6b7280;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5" style="margin-bottom: 0.5rem;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <div style="font-weight:600; margin-top: 0.25rem;">No users match your filters</div>
+              <div style="font-size: 0.9rem; margin-top: 0.25rem;">Try clearing filters or adjusting your search.</div>
             </div>
           </div>
 
