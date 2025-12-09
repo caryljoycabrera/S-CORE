@@ -1182,11 +1182,20 @@ const UserFormHandler = {
     const userId = document.getElementById('editUserId').value;
     const newUnitTeam = document.getElementById('editUnitTeam').value;
 
+    // Validate unit selection for unit role
+    if (newRole === 'unit' && !newUnitTeam) {
+      showToast('Validation Error', 'Please select a unit for this user.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      submitBtn.innerHTML = originalText;
+      return;
+    }
+
     // Show loading state
     submitBtn.disabled = true;
     submitBtn.classList.add('loading');
 
-    const requestData = { userId, role: newRole, unitTeam: newUnitTeam };
+    const requestData = { userId, role: newRole, unitTeam: newRole === 'unit' ? newUnitTeam : null };
 
     try {
       const response = await fetch(form.action, {
@@ -2584,6 +2593,17 @@ async function saveUserChanges() {
     organizations = jQuery(editOrgSelect).val() || [];
   }
 
+  // Validate unit selection for unit role
+  const role = document.getElementById('editRole').value;
+  let unitTeam = '';
+  if (role === 'unit') {
+    unitTeam = document.getElementById('editUnitTeam').value;
+    if (!unitTeam) {
+      showToast('Validation Error', 'Please select a unit for this user.', 'error');
+      return;
+    }
+  }
+
   const updateData = {
     userId,
     fName: firstName,
@@ -2593,7 +2613,8 @@ async function saveUserChanges() {
     email,
     phoneNumber: phone,
     cys,
-    organization: organizations
+    organization: organizations,
+    unitTeam: role === 'unit' ? unitTeam : null
   };
 
   // Show loading state
@@ -2679,6 +2700,7 @@ async function saveUserChanges() {
 
       showToast('Success', 'User information updated successfully!', 'success');
       closeEditUserModal();
+      window.location.reload();
     } else {
       throw new Error(result.message || 'Update failed');
     }

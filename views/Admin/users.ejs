@@ -962,7 +962,7 @@
             Assign to Unit Team
           </label>
           <select name="unitTeam" id="editUnitTeam" class="filter-select" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
-            <option value="N/A">N/A (No Unit)</option>
+            <option value="">Select a Unit</option>
             <% if (typeof units !== 'undefined' && units.length > 0) { %>
               <% units.forEach(unit => { %>
                 <option value="<%= unit %>"><%= unit %></option>

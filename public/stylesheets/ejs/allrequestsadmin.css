@@ -3176,11 +3176,89 @@ input:checked + .toggle-slider:before {
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
 }
 
 .revision-file-card:hover {
   border-color: #10b981;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+/* File card component styles */
+.revision-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  min-width: 70px;
+  min-height: 70px;
+  flex-shrink: 0;
+  border-right: 1px solid #f3f4f6;
+}
+
+.revision-file-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.revision-file-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0.25rem;
+}
+
+.revision-file-size {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.125rem;
+}
+
+.revision-file-date {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+}
+
+.revision-file-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-left: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+.file-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+  padding: 0;
+  min-width: 32px;
+}
+
+.file-action-icon:hover {
+  background: #e5e7eb;
+  color: #1e293b;
 }
 
 .file-card-header {

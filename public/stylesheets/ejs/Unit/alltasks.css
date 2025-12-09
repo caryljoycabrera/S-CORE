@@ -264,6 +264,17 @@
     text-align: center;
   }
 
+  /* Column width suggestions - keep total near 100% */
+  /* Use higher-specificity selectors so these rules override the admin stylesheet loaded after this file. */
+  .student-side .table-section .requests-table th:nth-child(1), .student-side .table-section .requests-table td:nth-child(1) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(2), .student-side .table-section .requests-table td:nth-child(2) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(3), .student-side .table-section .requests-table td:nth-child(3) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(4), .student-side .table-section .requests-table td:nth-child(4) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(5), .student-side .table-section .requests-table td:nth-child(5) { width: 11%; max-width: 160px; }
+  .student-side .table-section .requests-table th:nth-child(6), .student-side .table-section .requests-table td:nth-child(6) { width: 10%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(7), .student-side .table-section .requests-table td:nth-child(7) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(8), .student-side .table-section .requests-table td:nth-child(8) { width: 8%; max-width: 90px; }
+
   /* Responsive button styling */
   @media (max-width: 992px) {
     .view-btn {

@@ -1417,25 +1417,36 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     const { revisionNotes } = req.body;
     const userId = req.session.userId;
 
+    console.log('[REVISION] Request ID:', id);
+    console.log('[REVISION] User ID:', userId);
+    console.log('[REVISION] Revision Notes length:', revisionNotes ? revisionNotes.length : 0);
+    console.log('[REVISION] Revision Notes (first 100 chars):', revisionNotes ? revisionNotes.substring(0, 100) : 'EMPTY');
+
     // Find the service request
     const request = await ServiceRequest.findById(id);
     
     if (!request) {
+      console.log('[REVISION] Request not found:', id);
       return res.status(404).json({ success: false, message: 'Service request not found' });
     }
 
+    console.log('[REVISION] Found request - Status:', request.status, '| RevisionCount:', request.revisionCount, '| UserId:', request.userId);
+
     // Verify user owns this request
     if (request.userId.toString() !== userId) {
+      console.log('[REVISION] Unauthorized - Request owner:', request.userId, '| Session user:', userId);
       return res.status(403).json({ success: false, message: 'Unauthorized to request revision for this request' });
     }
 
     // Verify request is in Completed or For Checking status
     if (request.status !== 'Completed' && request.status !== 'For Checking') {
-      return res.status(400).json({ success: false, message: 'Only completed or for-checking requests can be sent for revision' });
+      console.log('[REVISION] Invalid status - Current status:', request.status);
+      return res.status(400).json({ success: false, message: `Only completed or for-checking requests can be sent for revision. Current status: "${request.status}"` });
     }
 
     // Check revision limit (2 revisions maximum)
     if (request.revisionCount >= 2) {
+      console.log('[REVISION] Revision limit reached -', request.revisionCount);
       return res.status(400).json({ 
         success: false, 
         message: 'This task has reached its 2-revision limit. For further changes, please submit a new Service Request and reference this one.' 
@@ -1444,6 +1455,7 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
 
     // Validate revision notes
     if (!revisionNotes || revisionNotes.trim() === '') {
+      console.log('[REVISION] Empty revision notes');
       return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
     }
 
@@ -1487,6 +1499,8 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     } catch (notifError) {
       console.error('Error sending revision request notification:', notifError);
     }
+
+    console.log('[REVISION] SUCCESS - Request saved with revision count:', request.revisionCount);
 
     res.json({ 
       success: true, 

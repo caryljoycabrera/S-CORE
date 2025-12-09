@@ -966,7 +966,7 @@
 
         <!-- Message Input -->
         <div class="unit-message-input-wrapper">
-          <textarea id="messageInput" placeholder="Type your message..." rows="3" class="unit-message-input"></textarea>
+          <div id="messageInput" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Type your message..." class="unit-message-input"></div>
           <button id="sendMessageBtn" class="unit-send-btn">
             <span>Send</span>
             <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1262,10 +1262,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load request types from database
   fetch('/api/request-types?requestCategory=Request Approval')
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        console.warn('Failed to fetch request types:', res.status);
+        return null;
+      }
+      return res.json();
+    })
     .then(data => {
+      if (!data || !data.types) {
+        console.warn('No request types returned from API');
+        return;
+      }
       const select = document.getElementById('specificRequestType');
-      if (select && data.types) {
+      if (select) {
         data.types.forEach(type => {
           const option = document.createElement('option');
           option.value = type;
@@ -1274,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     })
-    .catch(err => console.error('Error loading request types:', err));
+    .catch(err => console.warn('Error loading request types:', err));
 });
 
 // ===== LINKS MANAGEMENT =====
@@ -1429,6 +1439,103 @@ document.getElementById('cancelModalBtn')?.addEventListener('click', () => {
   selectedFiles = [];
   updateFileDisplay();
 });
+</script>
+
+<!-- Conversation formatting + send handler (enables WYSIWYG formatting) -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendMessageBtn');
+    const toolbar = document.querySelector('.unit-format-toolbar');
+
+    // Apply formatting using execCommand when toolbar buttons clicked
+    if (toolbar && messageInput && messageInput.isContentEditable !== false) {
+      toolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.format-btn');
+        if (!btn) return;
+        const format = btn.dataset.chatFormat;
+        if (!format) return;
+        messageInput.focus();
+        switch(format) {
+          case 'bold': document.execCommand('bold'); break;
+          case 'italic': document.execCommand('italic'); break;
+          case 'underline': document.execCommand('underline'); break;
+        }
+      });
+
+      // Keyboard shortcuts
+      messageInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+          e.preventDefault(); document.execCommand('bold'); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+          e.preventDefault(); document.execCommand('italic'); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+          e.preventDefault(); document.execCommand('underline'); return;
+        }
+        // Enter = send (without shift)
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
+    }
+
+    // Send handler - sends innerHTML when contenteditable
+    if (sendBtn && messageInput) {
+      sendBtn.addEventListener('click', () => {
+        const modal = document.getElementById('conversationModal');
+        const requestId = modal?.dataset?.requestId || window.currentConversationId || window.currentRequestId;
+        if (!requestId) {
+          alert('No request selected. Please open a request first.');
+          return;
+        }
+
+        const content = messageInput.isContentEditable ? messageInput.innerHTML.trim() : (messageInput.value || '').trim();
+        if (!content) {
+          alert('Please enter a message');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('content', content);
+
+        fetch(`/api/conversation/${requestId}/message`, { method: 'POST', body: formData })
+          .then(resp => {
+            if (!resp.ok) throw new Error('Failed to send message');
+            return resp.json();
+          })
+          .then(data => {
+            if (data.success) {
+              // clear input
+              if (messageInput.isContentEditable) messageInput.innerHTML = '';
+              else messageInput.value = '';
+              // try to reload conversation if a loader exists
+              if (typeof window.loadConversation === 'function') {
+                window.loadConversation(requestId);
+              } else if (typeof window.loadTeamConversation === 'function') {
+                window.loadTeamConversation(requestId);
+              } else {
+                // fallback: close and reopen modal to refresh
+                const modalEl = document.getElementById('conversationModal');
+                if (modalEl) {
+                  // naive reload of messages container
+                  const messagesContainer = document.getElementById('messagesContainer');
+                  if (messagesContainer) messagesContainer.insertAdjacentHTML('beforeend', '<div style="font-size:0.9rem;color:#6b7280;margin-top:8px;">Message sent — refresh to see updates</div>');
+                }
+              }
+            } else {
+              alert(data.message || 'Failed to send message');
+            }
+          })
+          .catch(err => {
+            console.error('Error sending conversation message', err);
+            alert('Failed to send message');
+          });
+      });
+    }
+  });
 </script>
 
 </body>

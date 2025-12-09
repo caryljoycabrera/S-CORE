@@ -867,7 +867,7 @@
 
           <!-- Message Input -->
           <div class="unit-message-input-wrapper">
-            <textarea id="teamMessageInput" placeholder="Type your message..." rows="3" class="unit-message-input"></textarea>
+            <div id="teamMessageInput" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Type your message..." class="unit-message-input"></div>
             <button id="sendTeamMessageBtn" class="unit-send-btn">
               <span>Send</span>
               <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1410,63 +1410,8 @@ document.addEventListener('DOMContentLoaded', function() {
     teamMessagesContainer.appendChild(messageDiv);
   }
 
-  // Send message functionality
-  if (sendMessageBtn && messageInput) {
-    sendMessageBtn.onclick = async function() {
-      const content = messageInput.value.trim();
-      if (!content && !currentAttachment && !uploadedFile) return;
-      if (!currentConversationId) return;
-
-      try {
-        let response;
-        
-        if (currentAttachment || uploadedFile) {
-          // Send with file attachment using FormData
-          const formData = new FormData();
-          formData.append('content', content || ''); // Always include content field
-          formData.append('file', currentAttachment?.file || uploadedFile);
-          
-          response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-            method: 'POST',
-            body: formData
-          });
-        } else {
-          // Send text only using JSON
-          response = await fetch(`/api/conversation/${currentConversationId}/message`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ content })
-          });
-        }
-
-        const result = await response.json();
-        if (result.success) {
-          addMessageToUI(result.message);
-          messageInput.value = '';
-          
-          // Clear attachment
-          clearAttachment();
-        } else {
-          throw new Error(result.error || 'Failed to send message');
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Failed to send message: ' + error.message);
-      }
-    };
-  }
-
-  // Enter key to send message
-  if (messageInput) {
-    messageInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessageBtn.click();
-      }
-    });
-  }
+  // Message sending is handled centrally by the shared public script
+  // `public/javascripts/ejs/allrequestsadmin.js` to avoid duplicate handlers.
   
   // Image modal function for message previews
   window.openImageModal = function(imageSrc) {

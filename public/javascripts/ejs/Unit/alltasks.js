@@ -4,6 +4,263 @@ let currentRequestType = null;
 let selectedFiles = [];
 let revisionFiles = [];
 
+// Global dropdown manager to ensure only one dropdown is open at a time
+const DropdownManager = {
+  activeDropdown: null,
+  
+  registerOpen(dropdown) {
+    // Close the currently active dropdown if it exists and is different
+    if (this.activeDropdown && this.activeDropdown !== dropdown) {
+      this.activeDropdown.close();
+    }
+    this.activeDropdown = dropdown;
+  },
+  
+  clearActive(dropdown) {
+    if (this.activeDropdown === dropdown) {
+      this.activeDropdown = null;
+    }
+  }
+};
+
+// Enhanced Multi-Select Class
+class EnhancedMultiSelect {
+  constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
+    this.container = document.getElementById(containerId);
+    if (!this.container) {
+      console.error(`EnhancedMultiSelect: Container with id '${containerId}' not found`);
+      return;
+    }
+    this.options = options || [];
+    this.placeholder = placeholder;
+    this.selectedValues = new Set(['all']);
+    this.isOpen = false;
+    this.filteredOptions = [...this.options];
+    this.hasSearch = hasSearch;
+
+    this.init();
+  }
+
+  init() {
+    if (!this.container) return;
+    this.setupElements();
+    this.populateOptions();
+    this.attachEventListeners();
+    this.updateDisplay();
+  }
+
+  setupElements() {
+    this.display = this.container.querySelector('.select-display');
+    this.dropdown = this.container.querySelector('.select-dropdown');
+    this.searchInput = this.dropdown?.querySelector('.search-input');
+    this.optionsContainer = this.dropdown?.querySelector('.options-container');
+    this.selectedText = this.display?.querySelector('.selected-text');
+  }
+
+  populateOptions() {
+    if (!this.optionsContainer) {
+      console.error('EnhancedMultiSelect: Options container not found');
+      return;
+    }
+    
+    // Clear existing options first
+    this.optionsContainer.innerHTML = '';
+    
+    // Add "All" option
+    const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
+    this.optionsContainer.appendChild(allOption);
+
+    // Add other options from data
+    this.options.forEach(option => {
+      const optionElement = this.createOption(option, option);
+      this.optionsContainer.appendChild(optionElement);
+    });
+  }
+
+  createOption(value, text) {
+    const label = document.createElement('label');
+    label.className = 'dropdown-option';
+    label.innerHTML = `
+      <input type="checkbox" value="${value}" ${this.selectedValues.has(value) ? 'checked' : ''}>
+      <span class="checkbox-custom"></span>
+      ${text}
+    `;
+    return label;
+  }
+
+  attachEventListeners() {
+    if (!this.display || !this.optionsContainer || !this.dropdown) {
+      console.error('EnhancedMultiSelect: Required elements not found for event listeners');
+      return;
+    }
+
+    this.display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.addEventListener('input', (e) => {
+        this.filterOptions(e.target.value);
+      });
+    }
+
+    this.optionsContainer.addEventListener('change', (e) => {
+      if (e.target.type === 'checkbox') {
+        this.handleOptionChange(e.target);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!this.container.contains(e.target)) {
+        this.close();
+      }
+    });
+
+    this.dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  filterOptions(searchTerm) {
+    if (!this.hasSearch) return;
+
+    const options = this.optionsContainer.querySelectorAll('.dropdown-option');
+    let visibleCount = 0;
+
+    options.forEach(option => {
+      const text = option.textContent.toLowerCase();
+      const matches = text.includes(searchTerm.toLowerCase());
+      option.style.display = matches ? 'flex' : 'none';
+      if (matches) visibleCount++;
+    });
+
+    this.toggleNoResults(visibleCount === 0 && searchTerm.length > 0);
+  }
+
+  toggleNoResults(show) {
+    if (!this.hasSearch) return;
+
+    let noResultsEl = this.optionsContainer.querySelector('.no-results');
+
+    if (show && !noResultsEl) {
+      noResultsEl = document.createElement('div');
+      noResultsEl.className = 'no-results';
+      noResultsEl.textContent = 'No results found';
+      this.optionsContainer.appendChild(noResultsEl);
+    } else if (!show && noResultsEl) {
+      noResultsEl.remove();
+    }
+  }
+
+  handleOptionChange(checkbox) {
+    const value = checkbox.value;
+
+    if (value === 'all') {
+      if (checkbox.checked) {
+        this.selectedValues.clear();
+        this.selectedValues.add('all');
+        this.updateCheckboxes();
+      } else if (this.selectedValues.size === 1 && this.selectedValues.has('all')) {
+        checkbox.checked = true;
+        return;
+      }
+    } else {
+      if (checkbox.checked) {
+        this.selectedValues.delete('all');
+        this.selectedValues.add(value);
+      } else {
+        this.selectedValues.delete(value);
+        if (this.selectedValues.size === 0) {
+          this.selectedValues.add('all');
+        }
+      }
+      this.updateCheckboxes();
+    }
+
+    this.updateDisplay();
+    this.triggerChange();
+  }
+
+  updateCheckboxes() {
+    const checkboxes = this.optionsContainer.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+      cb.checked = this.selectedValues.has(cb.value);
+    });
+  }
+
+  updateDisplay() {
+    if (!this.selectedText) return;
+    
+    const selectedArray = Array.from(this.selectedValues);
+
+    if (selectedArray.includes('all') || selectedArray.length === 0) {
+      this.selectedText.textContent = `All ${this.placeholder.replace('Select ', '')}`;
+    } else if (selectedArray.length === 1) {
+      this.selectedText.textContent = selectedArray[0];
+    } else {
+      this.selectedText.textContent = `${selectedArray.length} selected`;
+    }
+  }
+
+  getSelectedValues() {
+    return Array.from(this.selectedValues);
+  }
+
+  reset() {
+    this.selectedValues.clear();
+    this.selectedValues.add('all');
+    this.updateCheckboxes();
+    this.updateDisplay();
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+    this.triggerChange();
+  }
+
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
+  open() {
+    // Register this dropdown with the manager (will close others)
+    DropdownManager.registerOpen(this);
+    
+    this.isOpen = true;
+    this.display.classList.add('active');
+    this.dropdown.classList.add('show');
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.focus();
+    }
+  }
+
+  close() {
+    this.isOpen = false;
+    this.display.classList.remove('active');
+    this.dropdown.classList.remove('show');
+    
+    // Clear this dropdown from the manager
+    DropdownManager.clearActive(this);
+    
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+  }
+
+  triggerChange() {
+    const event = new CustomEvent('selectionChange', {
+      detail: { values: this.getSelectedValues() }
+    });
+    this.container.dispatchEvent(event);
+  }
+}
+
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all event listeners
@@ -48,9 +305,9 @@ function initializeEventListeners() {
     }
 
     // Sort select dropdown
-    const sortSelect = document.getElementById('sortSelect');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', applySorting);
+    const sortByFilter = document.getElementById('sortByFilter');
+    if (sortByFilter) {
+        sortByFilter.addEventListener('change', applySorting);
     }
 
     // Table row click events - use event delegation
@@ -168,39 +425,72 @@ function initializeTableFilters() {
     // Initialize custom dropdown filters
     initializeCustomDropdowns();
     
+    // Add event listeners for EnhancedMultiSelect filters
+    const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+    if (studentOrgFilterContainer) {
+        studentOrgFilterContainer.addEventListener('selectionChange', applyTableFilters);
+    }
+    
+    const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+    if (officeDeptFilterContainer) {
+        officeDeptFilterContainer.addEventListener('selectionChange', applyTableFilters);
+    }
+    
     // Add event listeners for text inputs
-    const titleFilter = document.getElementById('titleFilter');
-    const requestorFilter = document.getElementById('requestorFilter');
+    const requestIdFilter = document.getElementById('requestIdFilter');
+    const studentFilter = document.getElementById('studentFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     
-    if (titleFilter) titleFilter.addEventListener('input', applyTableFilters);
-    if (requestorFilter) requestorFilter.addEventListener('input', applyTableFilters);
-    if (dateFromFilter) dateFromFilter.addEventListener('change', applyTableFilters);
-    if (dateToFilter) dateToFilter.addEventListener('change', applyTableFilters);
+    if (requestIdFilter) requestIdFilter.addEventListener('input', applyTableFilters);
+    if (studentFilter) studentFilter.addEventListener('input', applyTableFilters);
+    
+    // Date filter event listeners with validation
+    if (dateFromFilter) {
+        dateFromFilter.addEventListener('change', handleDateFromChange);
+        dateFromFilter.addEventListener('change', applyTableFilters);
+    }
+    if (dateToFilter) {
+        dateToFilter.addEventListener('change', handleDateToChange);
+        dateToFilter.addEventListener('change', applyTableFilters);
+    }
 }
 
 function initializeCustomDropdowns() {
-    // Define available options
-    const statusOptions = [
-        'Pending', 'Queued', 'In Progress', 'Approved',
-        'For Revision', 'Completed', 'Rejected', 'Archived'
-    ];
-
-    const typeOptions = ['approval', 'service'];
-
-    // Initialize Type filter dropdown (if exists)
-    const typeFilterDropdown = document.getElementById('typeFilter');
-    if (typeFilterDropdown) {
-        populateDropdownOptions('typeDropdown', typeOptions);
-        initializeCustomDropdown(typeFilterDropdown, 'typeDropdown', applyTableFilters);
-    }
-
+    // Get data from the global database object
+    const dbData = window.filterDataFromDatabase || {};
+    
     // Initialize Status filter dropdown
     const statusFilterDropdown = document.getElementById('statusFilter');
     if (statusFilterDropdown) {
-        populateDropdownOptions('statusDropdown', statusOptions);
+        populateDropdownOptions('statusDropdown', dbData.requestStatuses || []);
         initializeCustomDropdown(statusFilterDropdown, 'statusDropdown', applyTableFilters);
+    }
+
+    // Initialize Student Organization filter
+    const studentOrgFilter = document.getElementById('studentOrgFilter');
+    if (studentOrgFilter) {
+        const studentOrgSelect = new EnhancedMultiSelect('studentOrgFilter',
+            dbData.organizations || [],
+            'Select Student Organizations', true);
+        
+        const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+        if (studentOrgFilterContainer) {
+            studentOrgFilterContainer.__instance = studentOrgSelect;
+        }
+    }
+
+    // Initialize Office/Department filter
+    const officeDeptFilter = document.getElementById('officeDeptFilter');
+    if (officeDeptFilter) {
+        const officeDeptSelect = new EnhancedMultiSelect('officeDeptFilter',
+            dbData.offices || [],
+            'Select Offices/Departments', true);
+        
+        const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+        if (officeDeptFilterContainer) {
+            officeDeptFilterContainer.__instance = officeDeptSelect;
+        }
     }
 }
 
@@ -217,7 +507,7 @@ function populateDropdownOptions(dropdownId, options) {
     allLabel.innerHTML = `
         <input type="checkbox" value="all" checked>
         <span class="checkmark"></span>
-        <span class="option-text">All ${dropdownId === 'typeDropdown' ? 'Types' : 'Statuses'}</span>
+        <span class="option-text">All Statuses</span>
     `;
     optionsContainer.appendChild(allLabel);
 
@@ -310,45 +600,46 @@ function handleCheckboxChange(customSelectElement, dropdown, checkboxes, onChang
 }
 
 function getDefaultText(dropdownId) {
-    if (dropdownId === 'typeDropdown') return 'All Types';
     if (dropdownId === 'statusDropdown') return 'All Status';
     return 'All';
 }
 
 function applyTableFilters() {
     // Get filter values
-    const titleFilter = document.getElementById('titleFilter')?.value.toLowerCase() || '';
-    const requestorFilter = document.getElementById('requestorFilter')?.value.toLowerCase() || '';
+    const requestIdFilter = document.getElementById('requestIdFilter')?.value.toLowerCase() || '';
+    const studentFilter = document.getElementById('studentFilter')?.value.toLowerCase() || '';
     const dateFromFilter = document.getElementById('dateFromFilter')?.value || '';
     const dateToFilter = document.getElementById('dateToFilter')?.value || '';
-    
-    // Get selected types from custom dropdown
-    const selectedTypes = getSelectedDropdownValues('typeDropdown');
     
     // Get selected statuses from custom dropdown
     const selectedStatuses = getSelectedDropdownValues('statusDropdown');
     
+    // Get selected organizations from EnhancedMultiSelect
+    const selectedOrganizations = getEnhancedMultiSelectValues('studentOrgFilter');
+    
+    // Get selected offices/departments from EnhancedMultiSelect
+    const selectedOffices = getEnhancedMultiSelectValues('officeDeptFilter');
+    
     const tableRows = document.querySelectorAll('.requests-table tbody tr.request-row');
     
     tableRows.forEach(row => {
-        const title = row.getAttribute('data-title')?.toLowerCase() || '';
-        const type = row.getAttribute('data-request-type')?.toLowerCase() || '';
+        const requestId = row.getAttribute('data-request-id')?.toLowerCase() || '';
         const status = row.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
-        const requestor = row.getAttribute('data-requestor')?.toLowerCase() || '';
+        const student = row.getAttribute('data-requestor')?.toLowerCase() || '';
+        const studentOrg = row.getAttribute('data-student')?.toLowerCase() || '';
+        const officeDept = row.getAttribute('data-office')?.toLowerCase() || '';
         const dateSubmitted = row.getAttribute('data-date-submitted') || '';
 
         let showRow = true;
 
-        // Apply title filter
-        if (titleFilter && !title.includes(titleFilter)) {
+        // Apply request ID filter
+        if (requestIdFilter && !requestId.includes(requestIdFilter)) {
             showRow = false;
         }
         
-        // Apply type filter (only if type dropdown exists - not in TaskApprovals/TaskServices)
-        if (selectedTypes.length > 0 && !selectedTypes.includes('all')) {
-            if (!selectedTypes.includes(type)) {
-                showRow = false;
-            }
+        // Apply student filter
+        if (studentFilter && !student.includes(studentFilter)) {
+            showRow = false;
         }
         
         // Apply status filter
@@ -358,9 +649,18 @@ function applyTableFilters() {
             }
         }
         
-        // Apply requestor filter
-        if (requestorFilter && !requestor.includes(requestorFilter)) {
-            showRow = false;
+        // Apply organization filter
+        if (selectedOrganizations.length > 0 && !selectedOrganizations.includes('all')) {
+            if (!selectedOrganizations.some(org => studentOrg.includes(org.toLowerCase()))) {
+                showRow = false;
+            }
+        }
+        
+        // Apply office/department filter
+        if (selectedOffices.length > 0 && !selectedOffices.includes('all')) {
+            if (!selectedOffices.some(off => officeDept.includes(off.toLowerCase()))) {
+                showRow = false;
+            }
         }
         
         // Apply date range filters
@@ -373,6 +673,111 @@ function applyTableFilters() {
 
         row.style.display = showRow ? '' : 'none';
     });
+    
+    // Update results count
+    const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+    updateResultsCount(visibleRows.length, tableRows.length);
+}
+
+function updateResultsCount(visibleCount, totalCount) {
+    const resultsCountElement = document.getElementById('resultsCount');
+    if (resultsCountElement) {
+        if (visibleCount === totalCount) {
+            resultsCountElement.textContent = `Showing all ${totalCount} requests`;
+        } else {
+            resultsCountElement.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+        }
+    }
+}
+
+// ==========================================
+// DATE FILTER VALIDATION FUNCTIONS
+// ==========================================
+
+function handleDateFromChange() {
+    const dateFromFilter = document.getElementById('dateFromFilter');
+    const dateToFilter = document.getElementById('dateToFilter');
+    
+    if (!dateFromFilter || !dateToFilter) return;
+    
+    const dateFromValue = dateFromFilter.value;
+    const dateToValue = dateToFilter.value;
+    
+    // Set the minimum date for dateTo to be the selected dateFrom
+    if (dateFromValue) {
+        dateToFilter.min = dateFromValue;
+        
+        // If dateTo is set and is before dateFrom, clear it
+        if (dateToValue && dateToValue < dateFromValue) {
+            dateToFilter.value = '';
+        }
+    } else {
+        // If dateFrom is cleared, remove the min constraint
+        dateToFilter.removeAttribute('min');
+    }
+}
+
+function handleDateToChange() {
+    const dateFromFilter = document.getElementById('dateFromFilter');
+    const dateToFilter = document.getElementById('dateToFilter');
+    
+    if (!dateFromFilter || !dateToFilter) return;
+    
+    const dateFromValue = dateFromFilter.value;
+    const dateToValue = dateToFilter.value;
+    
+    // If dateTo is set and dateFrom is also set, ensure dateTo is not before dateFrom
+    if (dateToValue && dateFromValue && dateToValue < dateFromValue) {
+        // Show a brief error message and clear the invalid date
+        showDateValidationError('Date To cannot be before Date From');
+        dateToFilter.value = '';
+        return;
+    }
+}
+
+function showDateValidationError(message) {
+    // Create a temporary error message
+    const errorDiv = document.createElement('div');
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #dc2626;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Add slide-in animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(errorDiv);
+    
+    // Remove the error message after 3 seconds
+    setTimeout(() => {
+        errorDiv.style.animation = 'slideIn 0.3s ease-in reverse';
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+            if (style.parentNode) {
+                style.parentNode.removeChild(style);
+            }
+        }, 300);
+    }, 3000);
 }
 
 function getSelectedDropdownValues(dropdownId) {
@@ -383,32 +788,55 @@ function getSelectedDropdownValues(dropdownId) {
     return Array.from(checkboxes).map(cb => cb.value);
 }
 
+function getEnhancedMultiSelectValues(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || !container.__instance) return [];
+    
+    return container.__instance.getSelectedValues();
+}
+
 function clearAllFilters() {
     // Clear text inputs
-    const titleFilter = document.getElementById('titleFilter');
-    const requestorFilter = document.getElementById('requestorFilter');
+    const requestIdFilter = document.getElementById('requestIdFilter');
+    const studentFilter = document.getElementById('studentFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     
-    if (titleFilter) titleFilter.value = '';
-    if (requestorFilter) requestorFilter.value = '';
+    if (requestIdFilter) requestIdFilter.value = '';
+    if (studentFilter) studentFilter.value = '';
     if (dateFromFilter) dateFromFilter.value = '';
-    if (dateToFilter) dateToFilter.value = '';
-    
-    // Reset type dropdown (if exists)
-    resetCustomDropdown('typeFilter', 'typeDropdown', 'All Types');
+    if (dateToFilter) {
+        dateToFilter.value = '';
+        dateToFilter.removeAttribute('min'); // Remove date validation constraint
+    }
     
     // Reset status dropdown
     resetCustomDropdown('statusFilter', 'statusDropdown', 'All Status');
     
+    // Reset student organization filter
+    const studentOrgContainer = document.getElementById('studentOrgFilter');
+    if (studentOrgContainer && studentOrgContainer.__instance) {
+        studentOrgContainer.__instance.reset();
+    }
+    
+    // Reset office/department filter
+    const officeDeptContainer = document.getElementById('officeDeptFilter');
+    if (officeDeptContainer && officeDeptContainer.__instance) {
+        officeDeptContainer.__instance.reset();
+    }
+    
     // Reset sort select
-    const sortSelect = document.getElementById('sortSelect');
-    if (sortSelect) {
-        sortSelect.value = 'priority';
+    const sortByFilter = document.getElementById('sortByFilter');
+    if (sortByFilter) {
+        sortByFilter.value = 'deadline-asc';
     }
     
     applyTableFilters();
     applySorting();
+    
+    // Update results count after clearing filters
+    const tableRows = document.querySelectorAll('.requests-table tbody tr.request-row');
+    updateResultsCount(tableRows.length, tableRows.length);
 }
 
 function resetCustomDropdown(filterId, dropdownId, defaultText) {
@@ -433,64 +861,45 @@ function resetCustomDropdown(filterId, dropdownId, defaultText) {
 }
 
 function applySorting() {
-    const sortSelect = document.getElementById('sortSelect');
-    if (!sortSelect) return;
+    const sortByFilter = document.getElementById('sortByFilter');
+    if (!sortByFilter) return;
 
-    const sortValue = sortSelect.value;
+    const sortValue = sortByFilter.value;
     const tableBody = document.getElementById('requestsTableBody');
     if (!tableBody) return;
 
     // Get all visible rows
-    const rows = Array.from(tableBody.querySelectorAll('tr.request-row'));
+    const allRows = Array.from(tableBody.querySelectorAll('tr.request-row'));
     
-    // Sort rows based on selected option
-    rows.sort((a, b) => {
+    // Define completed/archived statuses and their priority order
+    const completedStatuses = ['completed', 'approved', 'rejected', 'archived'];
+    const statusPriority = {
+        'completed': 1,
+        'approved': 2,
+        'rejected': 3,
+        'archived': 4
+    };
+    
+    // Separate active and completed/archived rows
+    const activeRows = [];
+    const completedRows = [];
+    
+    allRows.forEach(row => {
+        const status = row.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
+        if (completedStatuses.includes(status)) {
+            completedRows.push(row);
+        } else {
+            activeRows.push(row);
+        }
+    });
+    
+    // Sort active rows based on selected option
+    activeRows.sort((a, b) => {
         let aValue, bValue;
         
         switch(sortValue) {
-            case 'priority':
-                // Smart priority: Overdue tasks first, then by status priority, then by nearest deadline
-                const aDeadline = a.getAttribute('data-deadline');
-                const bDeadline = b.getAttribute('data-deadline');
-                const now = new Date();
-                
-                const aOverdue = aDeadline && new Date(aDeadline) < now;
-                const bOverdue = bDeadline && new Date(bDeadline) < now;
-                
-                // Overdue tasks come first
-                if (aOverdue && !bOverdue) return -1;
-                if (!aOverdue && bOverdue) return 1;
-                
-                // Then by status priority (Queued > In Progress > Pending > For Revision)
-                const statusPriority = {
-                    'queued': 1,
-                    'in-progress': 2,
-                    'pending': 3,
-                    'for-revision': 4,
-                    'approved': 5,
-                    'completed': 6,
-                    'rejected': 7
-                };
-                
-                const aStatus = (a.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const bStatus = (b.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const aPriority = statusPriority[aStatus] || 999;
-                const bPriority = statusPriority[bStatus] || 999;
-                
-                if (aPriority !== bPriority) return aPriority - bPriority;
-                
-                // Within same status, sort by nearest deadline
-                if (aDeadline && bDeadline) {
-                    return new Date(aDeadline) - new Date(bDeadline);
-                }
-                if (aDeadline && !bDeadline) return -1;
-                if (!aDeadline && bDeadline) return 1;
-                
-                // Finally by date submitted (newest first)
-                return new Date(b.getAttribute('data-date-submitted') || 0) - new Date(a.getAttribute('data-date-submitted') || 0);
-                
             case 'deadline-asc':
-                // Nearest deadline first
+                // Soonest deadline first
                 aValue = a.getAttribute('data-deadline');
                 bValue = b.getAttribute('data-deadline');
                 
@@ -501,7 +910,7 @@ function applySorting() {
                 return new Date(aValue) - new Date(bValue);
                 
             case 'deadline-desc':
-                // Farthest deadline first
+                // Latest deadline first
                 aValue = a.getAttribute('data-deadline');
                 bValue = b.getAttribute('data-deadline');
                 
@@ -511,53 +920,47 @@ function applySorting() {
                 
                 return new Date(bValue) - new Date(aValue);
                 
-            case 'status-priority':
-                // Active statuses first (Queued, In Progress, Pending, For Revision)
-                const statusOrder = {
-                    'queued': 1,
-                    'in-progress': 2,
-                    'pending': 3,
-                    'for-revision': 4,
-                    'approved': 5,
-                    'completed': 6,
-                    'rejected': 7,
-                    'cancelled': 8
-                };
-                
-                const aStatusNorm = (a.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const bStatusNorm = (b.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const aOrder = statusOrder[aStatusNorm] || 999;
-                const bOrder = statusOrder[bStatusNorm] || 999;
-                
-                if (aOrder !== bOrder) return aOrder - bOrder;
-                
-                // Within same status, sort by date submitted (newest first)
-                return new Date(b.getAttribute('data-date-submitted') || 0) - new Date(a.getAttribute('data-date-submitted') || 0);
-                
             case 'date-desc':
-                // Newest first
+                // Newest submitted first
                 aValue = new Date(a.getAttribute('data-date-submitted') || 0);
                 bValue = new Date(b.getAttribute('data-date-submitted') || 0);
                 return bValue - aValue;
                 
             case 'date-asc':
-                // Oldest first
+                // Oldest submitted first
                 aValue = new Date(a.getAttribute('data-date-submitted') || 0);
                 bValue = new Date(b.getAttribute('data-date-submitted') || 0);
                 return aValue - bValue;
-                
-            case 'title-asc':
-                aValue = (a.getAttribute('data-title') || '').toLowerCase();
-                bValue = (b.getAttribute('data-title') || '').toLowerCase();
-                return aValue.localeCompare(bValue);
                 
             default:
                 return 0;
         }
     });
     
+    // Sort completed/archived rows by status priority then by date (newest first)
+    completedRows.sort((a, b) => {
+        const aStatus = a.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
+        const bStatus = b.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
+        
+        const aPriority = statusPriority[aStatus] || 999;
+        const bPriority = statusPriority[bStatus] || 999;
+        
+        // First sort by status priority
+        if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+        }
+        
+        // Then sort by date (newest first)
+        const aDate = new Date(a.getAttribute('data-date-submitted') || 0);
+        const bDate = new Date(b.getAttribute('data-date-submitted') || 0);
+        return bDate - aDate;
+    });
+    
+    // Combine active rows first, then completed/archived rows
+    const sortedRows = [...activeRows, ...completedRows];
+    
     // Re-append rows in sorted order
-    rows.forEach(row => tableBody.appendChild(row));
+    sortedRows.forEach(row => tableBody.appendChild(row));
 }
 
 // Function: openRequestDetails

@@ -2416,6 +2416,13 @@ option:hover {
             </tbody>
           </table>
 
+          <!-- Pagination Controls -->
+          <div id="paginationControls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+            <button id="prevPageBtn" onclick="previousPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Previous page">← Previous</button>
+            <div id="pageInfo" style="font-weight: 500; color: #64748b;">Page 1</div>
+            <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
+          </div>
+
           <% if (!allRequests || allRequests.length === 0) { %>
           <div class="no-requests-message">
             <p>No requests found.</p>
@@ -2836,7 +2843,7 @@ option:hover {
             
             <!-- Action Buttons for Service Requests (Always Visible) -->
             <div id="serviceActionButtons" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
+              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleRevisionForm()" 
                       style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2-2v-7"/>
@@ -3790,10 +3797,21 @@ async function submitFormData() {
     closeDetailsModal.onclick = () => {
       const modalBody = document.querySelector('.unit-modal-body');
       const modalContent = document.querySelector('.unit-modal-wide');
+      const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+      const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
+      const toggleText = document.getElementById('revisionFormToggleText');
       
       detailModal.style.display = 'none';
       if (modalBody) modalBody.classList.remove('two-column');
       if (modalContent) modalContent.classList.remove('has-revisions');
+      
+      // Reset revision form state
+      if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
+      if (toggleBtn) {
+        toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        toggleBtn.textContent = 'Request Revision';
+      }
+      if (toggleText) toggleText.textContent = 'Request Revision';
     };
   }
   
@@ -3806,10 +3824,21 @@ async function submitFormData() {
     if (event.target === detailModal && detailModal) {
       const modalBody = document.querySelector('.unit-modal-body');
       const modalContent = document.querySelector('.unit-modal-wide');
+      const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+      const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
+      const toggleText = document.getElementById('revisionFormToggleText');
       
       detailModal.style.display = 'none';
       if (modalBody) modalBody.classList.remove('two-column');
       if (modalContent) modalContent.classList.remove('has-revisions');
+      
+      // Reset revision form state
+      if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
+      if (toggleBtn) {
+        toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        toggleBtn.textContent = 'Request Revision';
+      }
+      if (toggleText) toggleText.textContent = 'Request Revision';
     }
     
     if (event.target === conversationModal && conversationModal) conversationModal.style.display = 'none';
@@ -4510,16 +4539,16 @@ document.querySelectorAll('.request-row').forEach(row => {
       if (modalBody) modalBody.classList.add('two-column');
       if (rightColumn) rightColumn.style.display = 'flex';
 
-      // Show service action buttons for both SERVICE and APPROVAL requests (treat them the same)
-      if (serviceActionButtons) serviceActionButtons.style.display = 'flex';
-      if (showServiceRevisionFormBtn) showServiceRevisionFormBtn.style.display = 'inline-flex';
-      if (markServiceCompleteBtn2) markServiceCompleteBtn2.style.display = 'inline-flex';
+      // Hide service action buttons for approval requests (only show for service requests)
+      if (serviceActionButtons) serviceActionButtons.style.display = 'none';
+      if (showServiceRevisionFormBtn) showServiceRevisionFormBtn.style.display = 'none';
+      if (markServiceCompleteBtn2) markServiceCompleteBtn2.style.display = 'none';
       loadServiceRevisionHistory(currentConversationId);
       loadRevisionHistory(currentConversationId);
 
       // Use serviceRevisionFormSection instead of resubmissionSection for both types
       if (resubmissionSection) resubmissionSection.style.display = 'none';
-      if (serviceRevisionFormSection) serviceRevisionFormSection.style.display = isServiceRequest ? 'block' : 'none';
+      if (serviceRevisionFormSection) serviceRevisionFormSection.style.display = 'none';
 
       if (detailModal) {
         detailModal.style.display = 'flex';
@@ -6030,9 +6059,80 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// Initialize pagination when DOM loads
+document.addEventListener('DOMContentLoaded', function() {
+  const allRows = Array.from(document.querySelectorAll('.request-row'));
+  filteredRows = allRows;
+  updateTableDisplay();
+});
+
 // ========== REVISION HISTORY FUNCTIONS ==========
 let resubmissionQuill = null;
 let serviceRevisionQuill = null;
+
+// Pagination variables
+let currentPage = 1;
+const itemsPerPage = 10;
+let filteredRows = [];
+
+// Pagination and filter functions
+function updateTableDisplay() {
+  const allRows = Array.from(document.querySelectorAll('.request-row'));
+  
+  // Hide all rows first
+  allRows.forEach(row => row.style.display = 'none');
+
+  // Calculate pagination
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const rowsToShow = filteredRows.slice(startIndex, endIndex);
+
+  // Show paginated rows
+  rowsToShow.forEach(row => row.style.display = '');
+
+  // Update pagination controls
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  const pageInfo = document.getElementById('pageInfo');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  
+  if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+  if (prevBtn) {
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
+  }
+  if (nextBtn) {
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    nextBtn.style.opacity = currentPage === totalPages || totalPages === 0 ? '0.5' : '1';
+  }
+
+  // Hide pagination if only one page
+  const paginationControls = document.getElementById('paginationControls');
+  if (paginationControls) {
+    if (totalPages <= 1) {
+      paginationControls.style.display = 'none';
+    } else {
+      paginationControls.style.display = 'flex';
+    }
+  }
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    updateTableDisplay();
+    document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function previousPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    updateTableDisplay();
+    document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+  }
+}
 
 async function loadRevisionHistory(requestId) {
     console.log('[Requestapproval] loadRevisionHistory called for:', requestId);
@@ -6174,7 +6274,7 @@ async function loadRevisionHistory(requestId) {
                 resubmissionSection.style.display = 'none';
             }
         } else {
-            if (historySection) historySection.style.display = 'none';
+            if (historySection) historySection.style.display = 'block';
             // Keep right column visible for chat button, even with no revisions
             if (rightColumn) rightColumn.style.display = 'flex';
             if (modalBody) modalBody.classList.add('two-column');
@@ -6193,6 +6293,13 @@ async function loadRevisionHistory(requestId) {
                     <small>Revision history will appear here when updates are made to your request.</small>
                 </div>
             `;
+            
+            // Show service action buttons only if this is a service request
+            const actionButtons = document.getElementById('serviceActionButtons');
+            const isServiceRequest = currentRequestType === 'Service Request';
+            if (actionButtons && isServiceRequest) {
+                actionButtons.style.display = 'flex';
+            }
         }
     } catch (error) {
         console.error('Error loading revision history:', error);
@@ -6634,11 +6741,11 @@ async function loadServiceRevisionHistory(requestId) {
                     console.log('[Service] Status allows revision - keeping form hidden until user clicks button');
                     serviceRevisionSection.style.display = 'none';
                     
-                    // Show the action buttons (Request Revision and Mark as Complete)
+                    // Hide the action buttons for approval requests
                     const actionButtons = document.getElementById('serviceActionButtons');
                     if (actionButtons) {
-                        actionButtons.style.display = 'flex';
-                        console.log('[Service] ✅ Action buttons displayed');
+                        actionButtons.style.display = 'none';
+                        console.log('[Service] ✅ Action buttons hidden for approval requests');
                     }
                 } else if (serviceRevisionSection) {
                     serviceRevisionSection.style.display = 'none';
@@ -6663,14 +6770,14 @@ async function loadServiceRevisionHistory(requestId) {
             const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
             
             if ((normalizedStatus === 'completed' || normalizedStatus === 'for-checking') && serviceRevisionSection) {
-                console.log('[Service] Status allows revision - showing action buttons');
+                console.log('[Service] Status allows revision - hiding action buttons for approval requests');
                 serviceRevisionSection.style.display = 'none';
                 
-                // Show the action buttons (Request Revision and Mark as Complete)
+                // Hide the action buttons for approval requests
                 const actionButtons = document.getElementById('serviceActionButtons');
                 if (actionButtons) {
-                    actionButtons.style.display = 'flex';
-                    console.log('[Service] ✅ Action buttons displayed');
+                    actionButtons.style.display = 'none';
+                    console.log('[Service] ✅ Action buttons hidden for approval requests');
                 }
             } else if (serviceRevisionSection) {
                 serviceRevisionSection.style.display = 'none';
@@ -6908,6 +7015,16 @@ async function handleServiceRevision() {
   }
 }
 
+// Wrapper function to determine which toggle function to call
+function toggleRevisionForm() {
+    // Check if this is a service request or approval request
+    const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+    
+    if (serviceRevisionSection) {
+        // Service request - use service toggle
+        toggleServiceRevisionForm();
+    }
+}
 
 function toggleServiceRevisionForm() {
   const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');

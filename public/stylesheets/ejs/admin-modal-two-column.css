@@ -26,7 +26,7 @@
 .unit-left-column,
 .unit-right-column {
   overflow: visible !important;
-  min-height: 0 !important;
+  min-height: auto !important;
 }
 
 .unit-left-column {
@@ -237,8 +237,9 @@ input:checked + .toggle-slider:before {
 
 .revision-history-timeline {
   padding: 1rem;
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
+  overflow-x: hidden;
 }
 
 /* Empty state for revision history */

@@ -741,6 +741,11 @@ document.getElementById('passwordForm').onsubmit = async function (e) {
     return;
   }
 
+  if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+    showError('Password must contain at least one special character');
+    return;
+  }
+
   try {
     const res = await fetch('/admin/profile/change-password-popup', {
       method: 'POST',

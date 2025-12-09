@@ -167,8 +167,10 @@
                       'In Progress': 2,
                       'Pending': 3,
                       'For Revision': 4,
-                      'Approved': 5,
-                      'Completed': 6,
+                      // Finalized statuses should always appear last in this specific order
+                      // Completed (most recent first), then Approved, Rejected, then Cancelled/Archived
+                      'Completed': 5,
+                      'Approved': 6,
                       'Rejected': 7,
                       'Cancelled': 8
                     };

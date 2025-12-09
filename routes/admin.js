@@ -2468,6 +2468,10 @@ router.post('/admin/profile/change-password-popup', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password must contain at least one letter and one number' });
     }
 
+    if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must contain at least one special character' });
+    }
+
     // Update password
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();

@@ -431,6 +431,26 @@ class EnhancedMultiSelect {
   }
 }
 
+// Global helper functions
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function displayFormattedText(text) {
+  if (!text) return '';
+  if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>') || text.includes('<b>') || text.includes('<i>')) {
+    return text;
+  }
+  let formatted = escapeHtml(text);
+  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+  formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+  formatted = formatted.replace(/\n/g, '<br>');
+  return formatted;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
   
@@ -1373,13 +1393,8 @@ document.addEventListener('DOMContentLoaded', function() {
       clearFilesBtn.addEventListener('click', clearAllChatFiles);
     }
     
-    const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
-    chatFormatBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        const format = this.getAttribute('data-chat-format');
-        applyChatFormat(format);
-      });
-    });
+    // Toolbar formatting is now handled by inline script in services.ejs for contenteditable
+    // Legacy textarea support kept in applyChatFormat function
   }
 
   function handleChatFileSelect(event) {
@@ -1497,12 +1512,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function applyChatFormat(format) {
     console.log('[Services] Apply format:', format);
-    const textarea = document.getElementById('messageInput');
-    if (!textarea) {
+    const input = document.getElementById('messageInput');
+    if (!input) {
       console.error('[Services] Message input not found');
       return;
     }
 
+    // Check if input is contenteditable (WYSIWYG mode)
+    if (input.isContentEditable) {
+      // Use execCommand for contenteditable
+      console.log('[Services] Using execCommand for format:', format);
+      switch(format) {
+        case 'bold':
+          document.execCommand('bold', false, null);
+          break;
+        case 'italic':
+          document.execCommand('italic', false, null);
+          break;
+        case 'underline':
+          document.execCommand('underline', false, null);
+          break;
+      }
+      input.focus();
+      return;
+    }
+
+    // Fallback for textarea (legacy)
+    const textarea = input;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
@@ -1567,8 +1603,17 @@ document.addEventListener('DOMContentLoaded', function() {
       plainText = window.messageQuill.getText().trim();
     } else {
       const messageInput = document.getElementById('messageInput');
-      content = messageInput ? messageInput.value.trim() : '';
-      plainText = content;
+      if (messageInput) {
+        // Check if input is contenteditable (WYSIWYG mode)
+        if (messageInput.isContentEditable) {
+          content = messageInput.innerHTML.trim();
+          plainText = messageInput.textContent.trim();
+        } else {
+          // Fallback for textarea
+          content = messageInput.value.trim();
+          plainText = content;
+        }
+      }
     }
     
     console.log('[Services] Message content:', content || '(empty)');
@@ -1632,12 +1677,20 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('[Services] Message sent successfully');
       
-      // Clear message input (Quill or textarea)
+      // Clear message input (Quill or contenteditable/textarea)
       if (window.messageQuill) {
         window.messageQuill.setText('');
       } else {
         const messageInput = document.getElementById('messageInput');
-        if (messageInput) messageInput.value = '';
+        if (messageInput) {
+          // Check if input is contenteditable (WYSIWYG mode)
+          if (messageInput.isContentEditable) {
+            messageInput.innerHTML = '';
+          } else {
+            // Fallback for textarea
+            messageInput.value = '';
+          }
+        }
       }
       
       clearAllChatFiles();
@@ -1789,6 +1842,18 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           reopenModalAfterUpdate(currentRequestId);
         }, 1000);
+
+        // Also refresh the page shortly after to ensure all server-side
+        // changes (deliverables, revision history, etc.) are reflected
+        // across the UI. This is a simple and reliable fallback when
+        // partial client-side re-rendering isn't available.
+        setTimeout(() => {
+          try {
+            window.location.reload();
+          } catch (e) {
+            console.error('Auto-reload failed:', e);
+          }
+        }, 1800);
       }
       
     } catch (error) {
@@ -2866,7 +2931,7 @@ window.openImagePreview = function(imageUrl, fileName) {
     };
     
     try {
-      const response = await fetch(`/api/revision-history/${requestId}`);
+      const response = await fetch(`/api/service-revision-history/${requestId}`);
       console.log('[Admin Services - Revision History] Response status:', response.status);
       
       const contentType = response.headers.get('content-type');
@@ -2904,7 +2969,7 @@ window.openImagePreview = function(imageUrl, fileName) {
         if (revisionsToShow.length > 0) {
           revisionsToShow.forEach((revision, index) => {
             console.log('[Admin Services - Revision History] Rendering revision', index, ':', revision.type);
-            const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+            const entry = createServiceAdminRevisionEntry(revision, index, revisionsToShow.length);
             historyContainer.appendChild(entry);
           });
           
@@ -2932,76 +2997,81 @@ window.openImagePreview = function(imageUrl, fileName) {
     }
   }
   
-  function createServiceRevisionEntry(revision, index, total) {
-    console.log('🔍 [Admin Services] Creating revision entry:', {
-      index,
-      total,
-      hasRequestedBy: !!revision.requestedBy,
-      hasRespondedBy: !!revision.respondedBy,
-      type: revision.type
-    });
-    
+  function createServiceAdminRevisionEntry(revision, index, total) {
     const entry = document.createElement('div');
-    entry.className = `revision-entry ${index === total - 1 ? 'latest' : ''}`;
+    const isUnitAction = revision.requestedBy || revision.type === 'revision' || revision.type === 'revoked' || revision.type === 'approved';
+    const isRequestorAction = revision.respondedBy || revision.type === 'initial' || revision.type === 'resubmitted';
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
-    const isLatest = index === total - 1;
-    const entryNumber = total - index;
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt || revision.timestamp);
+    const fullTimestamp = timestamp.toLocaleString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true});
+    const shortTimestamp = timestamp.toLocaleString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'});
     
-    // Format date
-    const formatDate = (dateStr) => {
-      if (!dateStr) return 'N/A';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    };
+    const now = new Date(), diffMs = now - timestamp, diffMins = Math.floor(diffMs / 60000), diffHours = Math.floor(diffMs / 3600000), diffDays = Math.floor(diffMs / 86400000);
+    let relativeTime = diffMins < 1 ? 'Just now' : diffMins < 60 ? `${diffMins} minute${diffMins > 1 ? 's' : ''} ago` : diffHours < 24 ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago` : diffDays < 7 ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago` : shortTimestamp;
     
-    // Get type label and icon
-    const getTypeInfo = (type) => {
-      switch (type) {
-        case 'revision_request':
-          return { label: 'Revision Requested', icon: '🔄', color: '#f59e0b' };
-        case 'user_resubmit':
-          return { label: 'Resubmitted', icon: '📤', color: '#10b981' };
-        case 'admin_update':
-          return { label: 'Admin Update', icon: '✏️', color: '#6366f1' };
-        default:
-          return { label: type || 'Update', icon: '📋', color: '#6b7280' };
-      }
-    };
+    let typeLabel, badgeClass;
+    if (revision.type === 'initial') {typeLabel = 'Initial Submission'; badgeClass = 'badge-initial';} 
+    else if (revision.type === 'approved') {typeLabel = '✓ Approved'; badgeClass = 'badge-approved';} 
+    else if (isUnitAction) {typeLabel = 'Revision Requested'; badgeClass = 'badge-revision';} 
+    else if (isRequestorAction) {typeLabel = 'Resubmitted For Review'; badgeClass = 'badge-resubmitted';} 
+    else {typeLabel = 'Update'; badgeClass = 'badge-revision';}
     
-    const typeInfo = getTypeInfo(revision.type);
+    let statusIndicator = '';
+    if (revision.type === 'approved') statusIndicator = `<div class="status-indicator approved"><svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg><span style="color: #10b981; font-weight: 600;">Request Approved - Process Complete</span></div>`;
+    else if (index === total - 1) statusIndicator = isUnitAction ? `<div class="status-indicator waiting"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Waiting for Requestor Response</div>` : `<div class="status-indicator under-review"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Under Unit Review</div>`;
     
-    entry.innerHTML = `
-      <div class="revision-header">
-        <span class="revision-number" style="background: ${typeInfo.color};">${typeInfo.icon} #${entryNumber}</span>
-        <span class="revision-type">${typeInfo.label}</span>
-        ${isLatest ? '<span class="revision-latest-badge">Latest</span>' : ''}
-      </div>
-      <div class="revision-meta">
-        <span class="revision-date">${formatDate(revision.timestamp || revision.createdAt)}</span>
-        ${revision.requestedBy ? `<span class="revision-by">By: ${revision.requestedBy.name || revision.requestedBy}</span>` : ''}
-      </div>
-      ${revision.reason || revision.message ? `
-        <div class="revision-reason">
-          <strong>Reason:</strong> ${revision.reason || revision.message}
-        </div>
-      ` : ''}
-      ${revision.changes && revision.changes.length > 0 ? `
-        <div class="revision-changes">
-          <strong>Changes:</strong>
-          <ul>
-            ${revision.changes.map(change => `<li>${change.field}: ${change.oldValue} → ${change.newValue}</li>`).join('')}
-          </ul>
-        </div>
-      ` : ''}
-    `;
+    let authorName = 'Unknown', authorUnit = '';
+    if (revision.by) authorName = revision.by;
+    else if (revision.requestedBy) {if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`; if (revision.requestedBy.unitTeam) authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;} else {authorName = 'Unit Team';}}
+    else if (revision.respondedBy) {if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`; else authorName = 'Requestor';}
+    else if (isUnitAction) authorName = 'Unit Team';
+    else authorName = 'Requestor';
     
+    const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) ? `REV #${revision.revisionNumber}` : `#${index + 1}`;
+    
+    const files = revision.deliverableFiles || revision.responseFiles || revision.revisionFiles || revision.files || [];
+    entry.innerHTML = `<div class="revision-number-badge">${badgeNumber}</div><div class="revision-message-bubble"><div class="revision-bubble-header"><div><span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span><span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span></div><div class="revision-timestamp"><span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span><span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span></div></div><div class="message-content-section"><div class="content-label">${revision.type === 'approved' ? 'APPROVAL DETAILS:' : revision.type === 'initial' ? 'REQUEST DESCRIPTION:' : isUnitAction ? 'UNIT FEEDBACK:' : 'USER RESPONSE:'}</div><div class="content-text">${displayFormattedText(revision.type === 'approved' ? 'The request has been reviewed and approved by the unit team. All requirements have been met.' : revision.type === 'initial' ? revision.description || 'No description provided' : isUnitAction ? revision.revisionNotes || revision.description || 'No feedback provided' : revision.responseNotes || revision.description || 'No response provided')}</div></div>${files.length > 0 ? `<div class="message-attachments-section"><div class="attachments-header"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span></div><div class="attachments-grid">${files.map(f => createServiceRevisionFileCard(f, revision.requestedAt || revision.respondedAt || revision.timestamp)).join('')}</div></div>` : ''}${statusIndicator}</div>`;
     return entry;
+  }
+  
+  function createServiceRevisionFileCard(file, revisionTimestamp) {
+    const filename = file.filename || file.path || file.name || file;
+    if (typeof file === 'string') {
+        const ext = file.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+        const isPDF = ext === 'pdf';
+        const fileUrl = `/uploads/${file}`;
+        let iconColor = '#64748b';
+        if (isImage) iconColor = '#059669';
+        else if (isPDF) iconColor = '#dc2626';
+        else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+        else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+        const timestamp = revisionTimestamp ? new Date(revisionTimestamp).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'Unknown date';
+        return `
+            <div class="revision-file-card">
+                <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                </div>
+                <div class="revision-file-info">
+                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(file)}</div>
+                    <div class="revision-file-size">${ext.toUpperCase()}</div>
+                    <div class="revision-file-date">${timestamp}</div>
+                </div>
+                <div class="revision-file-actions">
+                    ${isPDF ? `<button class="file-action-icon" onclick="window.open('${fileUrl}', '_blank')" title="View PDF"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>` : ''}
+                    <button class="file-action-icon" onclick="window.open('${fileUrl}', '_blank')" title="Download"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                </div>
+            </div>
+        `;
+    }
+    return '';
   }
 
   // Initialize everything
@@ -3318,7 +3388,7 @@ console.log('✅ Services Admin script loaded successfully');
           <strong>${window.escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
           <span class="message-time">${time}</span>
         </div>
-        <div class="message-content">${window.formatText(msg.content || '')}</div>
+        <div class="message-content">${displayFormattedText(msg.content || '')}</div>
         ${attachmentsHTML}
         ${readReceiptsHTML}
       </div>

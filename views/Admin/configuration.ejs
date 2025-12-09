@@ -2105,450 +2105,84 @@
                                       <div style="font-weight: 600; color: #1f2937; margin-bottom: 0.25rem;">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b" style="display: inline-block; margin-right: 0.25rem; vertical-align: text-bottom;">
                                           <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                        </svg>
+                                        Administrator - Full Access
                                       </div>
                                       <div style="font-size: 0.875rem; color: #6b7280;">Complete administrative access to all system features</div>
                                     </div>
                                   </label>
                                 </div>
                               </div>
-                              <% }); %>
                             </div>
                           </div>
-                          </div>
-                          </div>
-                          </div>
-                          </div>
-                          </div>
-                          </div>
-                          </div>
-
-                          <!-- Announcement Priority Levels Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">🎯</span>
-                              Announcement Priority Levels
-                            </h2>
-                            <p class="section-description">
-                              Manage the priority levels for announcements (e.g., low, medium, high, urgent).
-                            </p>
-                            <div class="form-group">
-                              <label for="announcementPriorities">Priority Levels (one per line)</label>
-                              <textarea
-                                id="announcementPriorities"
-                                name="announcementPriorities"
-                                class="tall"
-                                placeholder="low&#10;medium&#10;high&#10;urgent"
-                                rows="5"
-                              ><%= (settings && settings.announcementPriorities && settings.announcementPriorities.length > 0) ? settings.announcementPriorities.join('\n') : '' %></textarea>
-                              <p class="form-hint">Enter each priority level on a new line</p>
-                            </div>
-                          </div>
-
-                          <!-- Announcement Types Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">📢</span>
-                              Announcement Types
-                            </h2>
-                            <p class="section-description">
-                              Manage the types/categories of announcements (e.g., Event, News, Reminder, Update).
-                            </p>
-                            <div class="form-group">
-                              <label for="announcementTypes">Announcement Types (one per line)</label>
-                              <textarea
-                                id="announcementTypes"
-                                name="announcementTypes"
-                                class="tall"
-                                placeholder="Event&#10;News&#10;Reminder&#10;Update&#10;Maintenance"
-                                rows="6"
-                              ><%= (settings && settings.announcementTypes && settings.announcementTypes.length > 0) ? settings.announcementTypes.join('\n') : '' %></textarea>
-                              <p class="form-hint">Enter each announcement type on a new line</p>
-                            </div>
-                          </div>
-
-                          <!-- General Settings Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">⚙️</span>
-                              General Settings
-                            </h2>
-                            <p class="section-description">
-                              Configure basic system settings and branding.
-                            </p>
-                            <div class="form-group">
-                              <label for="siteTitle">Site Title</label>
-                              <input
-                                type="text"
-                                id="siteTitle"
-                                name="siteTitle"
-                                value="<%= settings.siteTitle || 'S-CORE - Student Communications Office Request & Engagement System' %>"
-                                maxlength="200"
-                              >
-                            </div>
-                            <div class="form-group">
-                              <label for="siteDescription">Site Description</label>
-                              <textarea
-                                id="siteDescription"
-                                name="siteDescription"
-                                maxlength="500"
-                                rows="3"
-                              ><%= settings.siteDescription || 'A comprehensive request management portal for DLSU-D Student Communications Office' %></textarea>
-                            </div>
-                            <div class="form-group">
-                              <label for="timezone">Timezone</label>
-                              <select id="timezone" name="timezone">
-                                <option value="Asia/Manila" <%= settings.timezone === 'Asia/Manila' ? 'selected' : '' %>>Asia/Manila</option>
-                                <option value="UTC" <%= settings.timezone === 'UTC' ? 'selected' : '' %>>UTC</option>
-                                <option value="America/New_York" <%= settings.timezone === 'America/New_York' ? 'selected' : '' %>>America/New York</option>
-                                <option value="Europe/London" <%= settings.timezone === 'Europe/London' ? 'selected' : '' %>>Europe/London</option>
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label for="dateFormat">Date Format</label>
-                              <select id="dateFormat" name="dateFormat">
-                                <option value="MM/DD/YYYY" <%= settings.dateFormat === 'MM/DD/YYYY' ? 'selected' : '' %>>MM/DD/YYYY</option>
-                                <option value="DD/MM/YYYY" <%= settings.dateFormat === 'DD/MM/YYYY' ? 'selected' : '' %>>DD/MM/YYYY</option>
-                                <option value="YYYY-MM-DD" <%= settings.dateFormat === 'YYYY-MM-DD' ? 'selected' : '' %>>YYYY-MM-DD</option>
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label for="logo">Logo URL (optional)</label>
-                              <input
-                                type="text"
-                                id="logo"
-                                name="logo"
-                                value="<%= settings.logo || '' %>"
-                                placeholder="https://example.com/logo.png"
-                              >
-                            </div>
-                            <div class="form-group">
-                              <label for="favicon">Favicon URL (optional)</label>
-                              <input
-                                type="text"
-                                id="favicon"
-                                name="favicon"
-                                value="<%= settings.favicon || '' %>"
-                                placeholder="https://example.com/favicon.ico"
-                              >
-                            </div>
-                          </div>
-
-                          <!-- Request Management Settings Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">📋</span>
-                              Request Management Settings
-                            </h2>
-                            <p class="section-description">
-                              Configure how requests are handled and processed. These settings control revision limits, default deadlines, and workflow automation.
-                            </p>
-                            <div class="form-group">
-                              <label for="maxRevisions">Maximum Major Revisions</label>
-                              <input
-                                type="number"
-                                id="maxRevisions"
-                                name="maxRevisions"
-                                value="<%= settings.maxRevisions || 3 %>"
-                                min="1"
-                                max="10"
-                              >
-                              <p class="form-hint">Maximum number of major revisions allowed per request</p>
-                            </div>
-                            <div class="form-group">
-                              <label for="maxMinorRevisions">Maximum Minor Revisions</label>
-                              <input
-                                type="number"
-                                id="maxMinorRevisions"
-                                name="maxMinorRevisions"
-                                value="<%= settings.maxMinorRevisions || 2 %>"
-                                min="1"
-                                max="10"
-                              >
-                              <p class="form-hint">Maximum number of minor revisions allowed per request</p>
-                            </div>
-                            <div class="form-group">
-                              <label for="defaultDeadlineDays">Default Deadline (Days)</label>
-                              <input
-                                type="number"
-                                id="defaultDeadlineDays"
-                                name="defaultDeadlineDays"
-                                value="<%= settings.defaultDeadlineDays || 7 %>"
-                                min="1"
-                                max="365"
-                              >
-                              <p class="form-hint">Default number of days for request deadlines</p>
-                            </div>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="autoApproveAfterRevisions"
-                                  name="autoApproveAfterRevisions"
-                                  <%= settings.autoApproveAfterRevisions ? 'checked' : '' %>
-                                >
-                                Auto-approve requests after all revisions
-                              </label>
-                            </div>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="requireUnitReview"
-                                  name="requireUnitReview"
-                                  <%= settings.requireUnitReview !== false ? 'checked' : '' %>
-                                >
-                                Require unit review for all requests
-                              </label>
-                            </div>
-                          </div>
-
-                          <!-- File Storage Settings Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">📁</span>
-                              File Storage Settings
-                            </h2>
-                            <p class="section-description">
-                              Configure file upload and storage settings. These control the maximum file size and allowed file types for all file uploads in the system.
-                            </p>
-                            <div class="form-group">
-                              <label for="maxFileSize">Maximum File Size (MB)</label>
-                              <input
-                                type="number"
-                                id="maxFileSize"
-                                name="maxFileSize"
-                                value="<%= settings.maxFileSize || 50 %>"
-                                min="1"
-                                max="500"
-                              >
-                            </div>
-                            <div class="form-group">
-                              <label for="allowedFileTypes">Allowed File Types (one per line)</label>
-                              <textarea
-                                id="allowedFileTypes"
-                                name="allowedFileTypes"
-                                rows="5"
-                                placeholder="pdf&#10;jpg&#10;png&#10;docx"
-                              ><%= (settings.allowedFileTypes && settings.allowedFileTypes.length > 0) ? settings.allowedFileTypes.join('\n') : 'pdf\njpg\njpeg\npng\ngif\ndoc\ndocx\nxlsx\nxls\ntxt\npptx' %></textarea>
-                              <p class="form-hint">Enter each file extension without the dot</p>
-                            </div>
-                            <div class="form-group">
-                              <label for="storageType">Storage Type</label>
-                              <select id="storageType" name="storageType">
-                                <option value="local" <%= settings.storageType === 'local' || !settings.storageType ? 'selected' : '' %>>Local Storage</option>
-                                <option value="aws" <%= settings.storageType === 'aws' ? 'selected' : '' %>>AWS S3</option>
-                                <option value="gcs" <%= settings.storageType === 'gcs' ? 'selected' : '' %>>Google Cloud Storage</option>
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="retainAllRevisionFiles"
-                                  name="retainAllRevisionFiles"
-                                  <%= settings.retainAllRevisionFiles !== false ? 'checked' : '' %>
-                                >
-                                Retain all revision files
-                              </label>
-                            </div>
-                            <div class="form-group">
-                              <label for="autoDeleteOldFilesAfterDays">Auto-delete old files after (days)</label>
-                              <input
-                                type="number"
-                                id="autoDeleteOldFilesAfterDays"
-                                name="autoDeleteOldFilesAfterDays"
-                                value="<%= settings.autoDeleteOldFilesAfterDays || '' %>"
-                                min="30"
-                                max="3650"
-                                placeholder="Leave empty to never auto-delete"
-                              >
-                              <p class="form-hint">Leave empty to never auto-delete old files</p>
-                            </div>
-                          </div>
-
-                          <!-- Notification Settings Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">🔔</span>
-                              Notification Settings
-                            </h2>
-                            <p class="section-description">
-                              Configure email notifications and notification frequency.
-                            </p>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="enableEmailNotifications"
-                                  name="enableEmailNotifications"
-                                  <%= settings.enableEmailNotifications !== false ? 'checked' : '' %>
-                                >
-                                Enable email notifications
-                              </label>
-                            </div>
-                            <div class="form-group">
-                              <label for="notificationFrequency">Notification Frequency</label>
-                              <select id="notificationFrequency" name="notificationFrequency">
-                                <option value="immediate" <%= settings.notificationFrequency === 'immediate' || !settings.notificationFrequency ? 'selected' : '' %>>Immediate</option>
-                                <option value="daily" <%= settings.notificationFrequency === 'daily' ? 'selected' : '' %>>Daily Digest</option>
-                                <option value="weekly" <%= settings.notificationFrequency === 'weekly' ? 'selected' : '' %>>Weekly Digest</option>
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label for="emailFrom">Email From Address</label>
-                              <input
-                                type="email"
-                                id="emailFrom"
-                                name="emailFrom"
-                                value="<%= settings.emailFrom || 'noreply@dlsud.edu.ph' %>"
-                              >
-                            </div>
-                            <div class="form-group">
-                              <label for="smtpHost">SMTP Host</label>
-                              <input
-                                type="text"
-                                id="smtpHost"
-                                name="smtpHost"
-                                value="<%= settings.smtpHost || 'smtp.gmail.com' %>"
-                                placeholder="smtp.gmail.com"
-                              >
-                            </div>
-                            <div class="form-group">
-                              <label for="smtpPort">SMTP Port</label>
-                              <input
-                                type="number"
-                                id="smtpPort"
-                                name="smtpPort"
-                                value="<%= settings.smtpPort || 587 %>"
-                                min="1"
-                                max="65535"
-                              >
-                            </div>
-                          </div>
-
-                          <!-- Maintenance & Backup Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">🔧</span>
-                              Maintenance & Backup
-                            </h2>
-                            <p class="section-description">
-                              Configure system maintenance and backup settings.
-                            </p>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="maintenanceMode"
-                                  name="maintenanceMode"
-                                  <%= settings.maintenanceMode ? 'checked' : '' %>
-                                >
-                                Maintenance Mode
-                              </label>
-                            </div>
-                            <div class="form-group">
-                              <label for="maintenanceMessage">Maintenance Message</label>
-                              <textarea
-                                id="maintenanceMessage"
-                                name="maintenanceMessage"
-                                rows="3"
-                              ><%= settings.maintenanceMessage || 'System is under maintenance. Please try again later.' %></textarea>
-                            </div>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="backupEnabled"
-                                  name="backupEnabled"
-                                  <%= settings.backupEnabled !== false ? 'checked' : '' %>
-                                >
-                                Enable Automatic Backups
-                              </label>
-                            </div>
-                            <div class="form-group">
-                              <label for="backupFrequency">Backup Frequency</label>
-                              <select id="backupFrequency" name="backupFrequency">
-                                <option value="daily" <%= settings.backupFrequency === 'daily' ? 'selected' : '' %>>Daily</option>
-                                <option value="weekly" <%= settings.backupFrequency === 'weekly' || !settings.backupFrequency ? 'selected' : '' %>>Weekly</option>
-                                <option value="monthly" <%= settings.backupFrequency === 'monthly' ? 'selected' : '' %>>Monthly</option>
-                              </select>
-                            </div>
-                            <div class="form-group">
-                              <label for="backupRetentionDays">Backup Retention (Days)</label>
-                              <input
-                                type="number"
-                                id="backupRetentionDays"
-                                name="backupRetentionDays"
-                                value="<%= settings.backupRetentionDays || 90 %>"
-                                min="7"
-                                max="3650"
-                              >
-                            </div>
-                          </div>
-
-                          <!-- Audit & Logging Section -->
-                          <div class="config-section">
-                            <h2 class="section-title">
-                              <span class="section-icon">📊</span>
-                              Audit & Logging
-                            </h2>
-                            <p class="section-description">
-                              Configure system logging and audit trail settings.
-                            </p>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="enableDetailedLogs"
-                                  name="enableDetailedLogs"
-                                  <%= settings.enableDetailedLogs !== false ? 'checked' : '' %>
-                                >
-                                Enable Detailed Logs
-                              </label>
-                            </div>
-                            <div class="form-group">
-                              <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400;">
-                                <input
-                                  type="checkbox"
-                                  id="trackUserActions"
-                                  name="trackUserActions"
-                                  <%= settings.trackUserActions !== false ? 'checked' : '' %>
-                                >
-                                Track User Actions
-                              </label>
-                            </div>
-                            <div class="form-group">
-                              <label for="logRetentionDays">Log Retention (Days)</label>
-                              <input
-                                type="number"
-                                id="logRetentionDays"
-                                name="logRetentionDays"
-                                value="<%= settings.logRetentionDays || 90 %>"
-                                min="7"
-                                max="3650"
-                              >
-                            </div>
-                          </div>
-
+                          <% }); %>
                         </div>
+                      </div>
+                    </div>
 
-                        <!-- Footer Actions -->
-                        <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
-                          <button type="button" id="systemSaveBtnFooter" class="btn-save" onclick="document.getElementById('systemSaveBtn').click()">
-                            💾 Save Changes
-                          </button>
-                          <button type="button" id="systemResetBtnFooter" class="btn-reset" onclick="document.getElementById('systemResetBtn').click()">
-                            🔄 Reset Form
-                          </button>
-                        </div>
-                      </form>
-                    </div> <!-- End system-tab -->
+                    <!-- Announcement Priority Levels Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">🎯</span>
+                        Announcement Priority Levels
+                      </h2>
+                      <p class="section-description">
+                        Manage the priority levels for announcements (e.g., low, medium, high, urgent).
+                      </p>
+                      <div class="form-group">
+                        <label for="announcementPriorities">Priority Levels (one per line)</label>
+                        <textarea
+                          id="announcementPriorities"
+                          name="announcementPriorities"
+                          class="tall"
+                          placeholder="low&#10;medium&#10;high&#10;urgent"
+                          rows="5"
+                        ><%= (settings && settings.announcementPriorities && settings.announcementPriorities.length > 0) ? settings.announcementPriorities.join('\n') : '' %></textarea>
+                        <p class="form-hint">Enter each priority level on a new line</p>
+                      </div>
+                    </div>
+
+                    <!-- Announcement Types Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">📢</span>
+                        Announcement Types
+                      </h2>
+                      <p class="section-description">
+                        Manage the types/categories of announcements (e.g., Event, News, Reminder, Update).
+                      </p>
+                      <div class="form-group">
+                        <label for="announcementTypes">Announcement Types (one per line)</label>
+                        <textarea
+                          id="announcementTypes"
+                          name="announcementTypes"
+                          class="tall"
+                          placeholder="Event&#10;News&#10;Reminder&#10;Update&#10;Maintenance"
+                          rows="6"
+                        ><%= (settings && settings.announcementTypes && settings.announcementTypes.length > 0) ? settings.announcementTypes.join('\n') : '' %></textarea>
+                        <p class="form-hint">Enter each announcement type on a new line</p>
+                      </div>
+                    </div>
+
                   </div>
-                </div>
-                <!-- Add global tab switching function at end of body -->
-                <script>
-                  // Tab switching function
-                  function switchTab(tabName) {
+
+                  <!-- Footer Actions -->
+                  <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+                    <button type="button" id="systemSaveBtnFooter" class="btn-save" onclick="document.getElementById('systemSaveBtn').click()">
+                      💾 Save Changes
+                    </button>
+                    <button type="button" id="systemResetBtnFooter" class="btn-reset" onclick="document.getElementById('systemResetBtn').click()">
+                      🔄 Reset Form
+                    </button>
+                  </div>
+                </form>
+              </div> <!-- End system-tab -->
+            </div>
+          </div>
+          <!-- Add global tab switching function at end of body -->
+          <script>
+            // Tab switching function
+            function switchTab(tabName) {
                     // Hide all tabs
                     const tabs = document.querySelectorAll('.tab-content');
                     tabs.forEach(tab => tab.classList.remove('active'));

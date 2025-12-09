@@ -2514,6 +2514,7 @@ hr {
   padding: 1rem 0.5rem;
   max-height: none;
   overflow-y: visible;
+  overflow-x: hidden;
 }
 
 /* Revision summary header */

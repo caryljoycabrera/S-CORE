@@ -82,19 +82,22 @@
           
           <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
 
-          <!-- Filter Options -->
+          <!-- Filter Options (aligned with AllTasks filters for full functionality) -->
           <div class="filter-section">
             <div class="filter-container">
               <div class="filter-group">
                 <label class="filter-label">Filter by:</label>
 
-                <!-- Filter Controls -->
+                <!-- First Row: Request ID, User, Status -->
                 <div class="filter-controls">
                   <div class="filter-item">
-                    <label for="titleFilter" class="filter-sublabel">Title</label>
-                    <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
+                    <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
+                    <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
                   </div>
-                  
+                  <div class="filter-item">
+                    <label for="studentFilter" class="filter-sublabel">User</label>
+                    <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
+                  </div>
                   <div class="filter-item">
                     <label class="filter-sublabel">Status</label>
                     <div class="enhanced-multi-select-wrapper">
@@ -104,41 +107,71 @@
                           <span class="dropdown-arrow">▼</span>
                         </div>
                         <div class="select-dropdown" id="statusDropdown">
-                          <div class="options-container">
-                            <!-- JavaScript will populate this -->
-                          </div>
+                          <div class="options-container"></div>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
 
+                <!-- Second Row: Student Organization and Office/Department -->
+                <div class="filter-controls dropdown-row">
                   <div class="filter-item">
-                    <label for="requestorFilter" class="filter-sublabel">Requestor</label>
-                    <input type="text" id="requestorFilter" class="filter-input" placeholder="Search requestor...">
+                    <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
+                    <div class="enhanced-multi-select-wrapper">
+                      <div class="enhanced-multi-select" id="studentOrgFilter">
+                        <div class="select-display" data-placeholder="Select Student Organizations">
+                          <span class="selected-text">All Student Organizations</span>
+                          <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="select-dropdown" id="studentOrgDropdown">
+                          <div class="search-container">
+                            <input type="text" class="search-input" placeholder="Search organizations...">
+                          </div>
+                          <div class="options-container"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                  <div class="filter-item">
+                    <label for="officeDeptFilter" class="filter-sublabel">Office/Department</label>
+                    <div class="enhanced-multi-select-wrapper">
+                      <div class="enhanced-multi-select" id="officeDeptFilter">
+                        <div class="select-display" data-placeholder="Select Offices/Departments">
+                          <span class="selected-text">All Offices/Departments</span>
+                          <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="select-dropdown" id="officeDeptDropdown">
+                          <div class="search-container">
+                            <input type="text" class="search-input" placeholder="Search offices/departments...">
+                          </div>
+                          <div class="options-container"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
+                <!-- Third Row: Sort By, Date From and Date To -->
+                <div class="filter-controls">
+                  <div class="filter-item">
+                    <label for="sortByFilter" class="filter-sublabel">Sort By</label>
+                    <select id="sortByFilter" class="filter-input">
+                      <option value="deadline-asc">Deadline (Soonest First)</option>
+                      <option value="deadline-desc">Deadline (Latest First)</option>
+                      <option value="date-desc">Date Submitted (Newest)</option>
+                      <option value="date-asc">Date Submitted (Oldest)</option>
+                    </select>
+                  </div>
                   <div class="filter-item">
                     <label for="dateFromFilter" class="filter-sublabel">Date From</label>
                     <input type="date" id="dateFromFilter" class="filter-input">
                   </div>
-
                   <div class="filter-item">
                     <label for="dateToFilter" class="filter-sublabel">Date To</label>
                     <input type="date" id="dateToFilter" class="filter-input">
                   </div>
-
-                  <div class="filter-item">
-                    <label for="sortSelect" class="filter-sublabel">Sort By</label>
-                    <select id="sortSelect" class="filter-select">
-                      <option value="priority">Priority (Urgent First)</option>
-                      <option value="deadline-asc">Deadline (Nearest First)</option>
-                      <option value="deadline-desc">Deadline (Farthest First)</option>
-                      <option value="status-priority">Status (Active First)</option>
-                      <option value="date-desc">Date Submitted (Newest)</option>
-                      <option value="date-asc">Date Submitted (Oldest)</option>
-                      <option value="title-asc">Title (A-Z)</option>
-                    </select>
-                  </div>
+                  <div class="filter-item" style="visibility: hidden;"></div>
                 </div>
               </div>
 
@@ -184,8 +217,10 @@
                       'In Progress': 2,
                       'Pending': 3,
                       'For Revision': 4,
-                      'Approved': 5,
-                      'Completed': 6,
+                      // Finalized statuses should always appear last in this specific order
+                      // Completed (most recent first), then Approved, Rejected, then Cancelled/Archived
+                      'Completed': 5,
+                      'Approved': 6,
                       'Rejected': 7,
                       'Cancelled': 8
                     };
@@ -794,7 +829,15 @@
     </div>
   </div>
 
-  <!-- JavaScript: reuse the same client script as AllTasks to preserve functionality -->
+  <!-- Provide filter data to the client script, then load the shared alltasks logic -->
+  <script>
+    window.filterDataFromDatabase = {
+      requestStatuses: <%- JSON.stringify(typeof requestStatuses !== 'undefined' ? requestStatuses : []) %>,
+      organizations: <%- JSON.stringify(typeof organizations !== 'undefined' ? organizations : []) %>,
+      offices: <%- JSON.stringify(typeof offices !== 'undefined' ? offices : []) %>,
+      units: <%- JSON.stringify(typeof units !== 'undefined' ? units : []) %>
+    };
+  </script>
   <script src="/javascripts/ejs/Unit/alltasks.js"></script>
   <script>
     // Small helper: ensure filtering only shows approvals since this page has only approvals

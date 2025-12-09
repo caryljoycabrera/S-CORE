@@ -1094,17 +1094,10 @@ function initializeConversationModal() {
   }
 
   if (sendBtn) {
-    sendBtn.onclick = window.sendTeamMessage;
+    // send button listener is attached later in the file to avoid duplicate handlers
   }
 
-  if (input) {
-    input.onkeypress = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (window.sendTeamMessage) window.sendTeamMessage();
-      }
-    };
-  }
+  // message input key handling is attached later to avoid duplicate handlers
 
   if (conversationModal) {
     conversationModal.onclick = (e) => {
@@ -1936,6 +1929,16 @@ async function performUpdate() {
       // Show success notification modal
       showNotification('Request updated successfully!', 'success');
 
+      // Refresh the page shortly after to ensure server-side changes
+      // (deliverables, revision history, etc.) are reflected in the UI.
+      setTimeout(() => {
+        try {
+          window.location.reload();
+        } catch (e) {
+          console.error('Auto-reload failed:', e);
+        }
+      }, 1400);
+
     } else {
       console.error('Update failed:', result.message);
       showNotification('Failed to update request: ' + result.message, 'error');
@@ -2377,9 +2380,41 @@ function clearAllChatFiles() {
 }
 
 function applyChatFormat(format) {
-    const textarea = document.getElementById('teamMessageInput');
-    if (!textarea) return;
+  const input = document.getElementById('teamMessageInput');
+  if (!input) return;
 
+  // If the input is a contenteditable element, use execCommand for WYSIWYG
+  if (input.isContentEditable) {
+    input.focus();
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    let selectionInside = false;
+    for (let i = 0; i < selection.rangeCount; i++) {
+      const node = selection.getRangeAt(i).commonAncestorContainer;
+      if (input.contains(node)) { selectionInside = true; break; }
+    }
+
+    if (!selectionInside) {
+      const range = document.createRange();
+      range.selectNodeContents(input);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    switch (format) {
+      case 'bold': document.execCommand('bold'); break;
+      case 'italic': document.execCommand('italic'); break;
+      case 'underline': document.execCommand('underline'); break;
+    }
+    input.focus();
+    return;
+  }
+
+  // Fallback for legacy textarea inputs: insert markdown-like markers
+  const textarea = input; // treat same variable name
+  if (textarea && typeof textarea.selectionStart !== 'undefined') {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
@@ -2390,23 +2425,25 @@ function applyChatFormat(format) {
     let newCursorPos = end;
 
     switch(format) {
-        case 'bold':
-            formattedText = `**${selectedText}**`;
-            newCursorPos = start + formattedText.length;
-            break;
-        case 'italic':
-            formattedText = `*${selectedText}*`;
-            newCursorPos = start + formattedText.length;
-            break;
-        case 'underline':
-            formattedText = `__${selectedText}__`;
-            newCursorPos = start + formattedText.length;
-            break;
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        newCursorPos = start + formattedText.length;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        newCursorPos = start + formattedText.length;
+        break;
+      case 'underline':
+        formattedText = `<u>${selectedText}</u>`;
+        newCursorPos = start + formattedText.length;
+        break;
     }
 
     textarea.value = beforeText + formattedText + afterText;
     textarea.focus();
     textarea.setSelectionRange(newCursorPos, newCursorPos);
+    return;
+  }
 }
 
 // PDF Viewer Functions
@@ -2669,7 +2706,7 @@ function createMessageElement(msg) {
                 <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
                 <span class="message-time">${time}</span>
             </div>
-            <div class="message-content">${formatText(msg.content || '')}</div>
+            <div class="message-content">${displayFormattedText(msg.content || '')}</div>
             ${attachmentsHTML}
             ${readReceiptsHTML}
         </div>
@@ -2973,7 +3010,14 @@ window.sendTeamMessage = function() {
     // Sync the variables
     currentConversationRequestId = requestId;
 
-    const content = input.value.trim();
+    // Support both contenteditable (WYSIWYG) and legacy textarea inputs
+    let content = '';
+    if (input.isContentEditable) {
+      // Use innerHTML so formatting (bold/italic/underline) is preserved as HTML
+      content = input.innerHTML.trim();
+    } else {
+      content = (input.value || '').trim();
+    }
     console.log('[AllRequestsAdmin] Message content:', content || '(empty)');
     console.log('[AllRequestsAdmin] Files to send:', chatFiles.length);
     
@@ -3013,11 +3057,16 @@ window.sendTeamMessage = function() {
     .then(data => {
         console.log('[AllRequestsAdmin] Response data:', data);
         if (data.success) {
-            console.log('[AllRequestsAdmin] Message sent successfully');
-            input.value = '';
-            clearAllChatFiles();
-            loadTeamConversation(requestId);
+        console.log('[AllRequestsAdmin] Message sent successfully');
+        // Clear the input appropriately depending on type
+        if (input.isContentEditable) {
+          input.innerHTML = '';
         } else {
+          input.value = '';
+        }
+        clearAllChatFiles();
+        loadTeamConversation(requestId);
+      } else {
             console.error('[AllRequestsAdmin] Server error:', data);
             alert(data.message || 'Failed to send message');
         }

@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/admin-edit-modal.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/admin-trash-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/services-revision-styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <!-- Quill Editor -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -913,7 +914,7 @@
 
         <!-- Message Input -->
         <div class="unit-message-input-wrapper">
-          <div id="messageEditor" style="background: white; min-height: 80px; border: 1px solid #e2e8f0; border-radius: 8px; flex: 1;"></div>
+          <div id="messageInput" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Type your message..." style="background: white; min-height: 80px; border: 1px solid #e2e8f0; border-radius: 8px; flex: 1;"></div>
           <button id="sendMessageBtn" class="unit-send-btn">
             <span>Send</span>
             <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -931,6 +932,98 @@
   // Define current user role for conversation
   window.currentUserRole = 'admin';
   window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
+</script>
+
+<!-- Conversation formatting + send handler (WYSIWYG) -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendMessageBtn');
+    const toolbar = document.querySelector('.unit-format-toolbar');
+
+    // Toolbar formatting
+    if (toolbar && messageInput && messageInput.isContentEditable !== false) {
+      toolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.format-btn');
+        if (!btn) return;
+        const format = btn.dataset.chatFormat;
+        if (!format) return;
+        messageInput.focus();
+        switch(format) {
+          case 'bold': document.execCommand('bold'); break;
+          case 'italic': document.execCommand('italic'); break;
+          case 'underline': document.execCommand('underline'); break;
+        }
+      });
+
+      // Keyboard shortcuts and Enter to send
+      messageInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+          e.preventDefault(); document.execCommand('bold'); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+          e.preventDefault(); document.execCommand('italic'); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+          e.preventDefault(); document.execCommand('underline'); return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn && sendBtn.click();
+        }
+      });
+    }
+
+    // Send handler
+    if (sendBtn && messageInput) {
+      sendBtn.addEventListener('click', async () => {
+        const modal = document.getElementById('conversationModal');
+        const requestId = modal?.dataset?.requestId || window.currentConversationId || window.currentRequestId;
+        if (!requestId) {
+          alert('No request selected. Please open a request first.');
+          return;
+        }
+
+        const content = messageInput.isContentEditable ? (messageInput.innerHTML || '').trim() : (messageInput.value || '').trim();
+        const plain = messageInput.isContentEditable ? (messageInput.textContent || '').trim() : (messageInput.value || '').trim();
+
+        if ((!content || content === '<br>' || plain === '') && (window.chatFiles ? window.chatFiles.length === 0 : true)) {
+          alert('Please enter a message or attach files');
+          return;
+        }
+
+        try {
+          let response;
+          if (window.chatFiles && window.chatFiles.length > 0) {
+            const formData = new FormData();
+            formData.append('content', content || '');
+            window.chatFiles.forEach(f => formData.append('chatFiles', f));
+            response = await fetch(`/api/conversation/${requestId}/message`, { method: 'POST', body: formData });
+          } else {
+            response = await fetch(`/api/conversation/${requestId}/message`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ content }) });
+          }
+
+          if (!response.ok) {
+            const err = await response.text();
+            throw new Error(err || 'Failed to send message');
+          }
+
+          const data = await response.json();
+          if (data.success) {
+            if (messageInput.isContentEditable) messageInput.innerHTML = '';
+            else messageInput.value = '';
+            if (typeof clearAllChatFiles === 'function') clearAllChatFiles();
+            if (typeof openConversation === 'function') await openConversation(requestId);
+          } else {
+            alert(data.message || 'Failed to send message');
+          }
+        } catch (err) {
+          console.error('Error sending message', err);
+          alert('Failed to send message');
+        }
+      });
+    }
+  });
 </script>
 
 <!-- Update Confirmation Modal -->
@@ -1542,10 +1635,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load request types from database
   fetch('/api/request-types?requestCategory=Service Request')
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        console.warn('Failed to fetch request types:', res.status);
+        return null;
+      }
+      return res.json();
+    })
     .then(data => {
+      if (!data || !data.types) {
+        console.warn('No request types returned from API');
+        return;
+      }
       const select = document.getElementById('specificRequestType');
-      if (select && data.types) {
+      if (select) {
         data.types.forEach(type => {
           const option = document.createElement('option');
           option.value = type;
@@ -1554,7 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     })
-    .catch(err => console.error('Error loading request types:', err));
+    .catch(err => console.warn('Error loading request types:', err));
 
   // Handle request type selection
   const specificType = document.getElementById('specificRequestType');

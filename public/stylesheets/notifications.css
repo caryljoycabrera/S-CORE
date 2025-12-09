@@ -381,6 +381,13 @@
   overflow: hidden;
 }
 
+/* Notification Item Content (used within notification items) */
+.notification-item-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .notification-item-title {
   font-weight: 600;
   color: #111827;

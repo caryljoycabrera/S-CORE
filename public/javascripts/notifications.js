@@ -526,7 +526,7 @@ class NotificationSystem {
         <div class="notification-icon ${notification.type}">
           ${icon}
         </div>
-        <div class="notification-content">
+        <div class="notification-item-content">
           <h4 class="notification-item-title">${this.escapeHtml(notification.title)}</h4>
           <p class="notification-item-message">${this.processNotificationMessage(notification.message, notification.type)}</p>
           <div class="notification-meta">

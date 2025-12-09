@@ -12,7 +12,7 @@ const Notification = require('../models/Notification');
 const { requireUnit } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
 const uploadConfig = require('../config/upload');
-const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
 const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
 
 /**
@@ -735,7 +735,9 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
       approvalRequests,
       serviceRequests,
       units: getUnits(),
-      requestStatuses: getRequestStatuses()
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
     });
   } catch (err) {
     console.error('Error loading all tasks:', err);
@@ -776,7 +778,9 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
       unitTeam: user.unitTeam,
       approvalRequests,
       units: getUnits(),
-      requestStatuses: getRequestStatuses()
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
     });
   } catch (err) {
     console.error('Error loading task approvals:', err);
@@ -834,7 +838,9 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
       unitTeam: user.unitTeam,
       serviceRequests: allServiceRequests,
       units: getUnits(),
-      requestStatuses: getRequestStatuses()
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
     });
   } catch (err) {
     console.error('Error loading task services:', err);

@@ -1857,6 +1857,13 @@
 </tbody>
           </table>
 
+          <!-- Pagination Controls -->
+          <div id="paginationControls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+            <button id="prevPageBtn" onclick="previousPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Previous page">← Previous</button>
+            <div id="pageInfo" style="font-weight: 500; color: #64748b;">Page 1</div>
+            <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
+          </div>
+
           <% if (!allRequests || allRequests.length === 0) { %>
           <div class="no-requests-message">
             <p>No requests found.</p>
@@ -2035,7 +2042,7 @@
           
           <!-- Action Buttons for Service Requests with "For Checking" status -->
           <div id="serviceActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
-            <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
+            <button type="button" id="showServiceRevisionFormBtn" onclick="toggleRevisionForm()" 
                     style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -2643,6 +2650,11 @@ let currentRequestType = null; // Track if viewing approval or service request
 let resubmissionQuill = null; // Quill editor for approval resubmissions
 let serviceRevisionQuill = null; // Quill editor for service revisions
 
+// Pagination variables
+let currentPage = 1;
+const itemsPerPage = 10;
+let filteredRows = [];
+
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize organization filter based on user's organizations
@@ -2670,6 +2682,10 @@ document.addEventListener('DOMContentLoaded', function() {
       handleResubmissionFileSelection(e.target.files);
     });
   }
+
+  // Initialize pagination
+  filteredRows = allRows;
+  updateTableDisplay();
 });
 
 // Modal close handler
@@ -2678,12 +2694,25 @@ function closeDetailsModal() {
   const rightColumn = document.getElementById('requestorRightColumn');
   const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
   const chatButtonSectionRight = document.querySelector('.unit-right-column .chat-section[id="chatButtonSection"]');
+  const resubmissionSection = document.getElementById('resubmissionFormSection');
+  const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+  const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
+  const toggleText = document.getElementById('revisionFormToggleText');
   
   detailModal.style.display = 'none';
   if (modalBody) modalBody.classList.remove('two-column');
   if (rightColumn) rightColumn.style.display = 'none';
   if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
   if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'none';
+  
+  // Reset revision form state
+  if (resubmissionSection) resubmissionSection.style.display = 'none';
+  if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
+  if (toggleBtn) {
+    toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+    toggleBtn.textContent = 'Request Revision';
+  }
+  if (toggleText) toggleText.textContent = 'Request Revision';
 }
 
 openChatFromDetailsModal.onclick = function() {
@@ -2712,12 +2741,25 @@ window.onclick = function(event) {
     const rightColumn = document.getElementById('requestorRightColumn');
     const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
     const chatButtonSectionRight = document.querySelector('.requestor-right-column .chat-section[id="chatButtonSection"]');
+    const resubmissionSection = document.getElementById('resubmissionFormSection');
+    const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+    const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
+    const toggleText = document.getElementById('revisionFormToggleText');
     
     detailModal.style.display = 'none';
     if (modalBody) modalBody.classList.remove('two-column');
     if (rightColumn) rightColumn.style.display = 'none';
     if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
     if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'none';
+    
+    // Reset revision form state
+    if (resubmissionSection) resubmissionSection.style.display = 'none';
+    if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
+    if (toggleBtn) {
+      toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+      toggleBtn.textContent = 'Request Revision';
+    }
+    if (toggleText) toggleText.textContent = 'Request Revision';
   }
 }
 
@@ -2729,16 +2771,13 @@ function filterRequests() {
   const dateFromValue = document.getElementById('dateFromFilter').value ? new Date(document.getElementById('dateFromFilter').value) : null;
   const dateToValue = document.getElementById('dateToFilter').value ? new Date(document.getElementById('dateToFilter').value) : null;
   
-  let visibleCount = 0;
-
-  allRows.forEach(row => {
+  filteredRows = allRows.filter(row => {
     const rowType = row.dataset.type.toLowerCase();
-    const rowStatus = row.dataset.status.toLowerCase().replace(/\s+/g, '-'); // Normalize status with hyphens
+    const rowStatus = row.dataset.status.toLowerCase().replace(/\s+/g, '-');
     const rowTitle = row.dataset.title.toLowerCase();
     const rowOrganization = row.dataset.organization.toLowerCase();
     const rowDate = new Date(row.dataset.date);
 
-    // Type filter logic
     let typeMatch = true;
     if (selectedTypes.length > 0 && !selectedTypes.includes('all')) {
       typeMatch = selectedTypes.some(type => rowType.includes(type.toLowerCase()));
@@ -2747,7 +2786,6 @@ function filterRequests() {
     const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatus);
     const titleMatch = titleValue === '' || rowTitle.includes(titleValue);
     
-    // Organization filter logic
     let organizationMatch = true;
     if (organizationFilter && organizationValue.length > 0 && !organizationValue.includes('all')) {
       organizationMatch = organizationValue.some(org => 
@@ -2759,21 +2797,68 @@ function filterRequests() {
     if (dateFromValue && rowDate < dateFromValue) dateMatch = false;
     if (dateToValue && rowDate > dateToValue) dateMatch = false;
 
-    const isVisible = typeMatch && statusMatch && titleMatch && organizationMatch && dateMatch;
-    row.style.display = isVisible ? '' : 'none';
-    
-    if (isVisible) visibleCount++;
+    return typeMatch && statusMatch && titleMatch && organizationMatch && dateMatch;
   });
 
-  const totalCount = allRows.length;
-  const resultsCount = document.getElementById('resultsCount');
-  if (visibleCount === totalCount) {
-    resultsCount.textContent = `Showing all ${totalCount} requests`;
-  } else {
-    resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+  currentPage = 1;
+  updateTableDisplay();
+  toggleNoResultsMessage(filteredRows.length === 0);
+}
+
+function updateTableDisplay() {
+  // Hide all rows first
+  allRows.forEach(row => row.style.display = 'none');
+
+  // Calculate pagination
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const rowsToShow = filteredRows.slice(startIndex, endIndex);
+
+  // Show paginated rows
+  rowsToShow.forEach(row => row.style.display = '');
+
+  // Update pagination controls
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  const pageInfo = document.getElementById('pageInfo');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  
+  if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+  if (prevBtn) {
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
+  }
+  if (nextBtn) {
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    nextBtn.style.opacity = currentPage === totalPages || totalPages === 0 ? '0.5' : '1';
   }
 
-  toggleNoResultsMessage(visibleCount === 0);
+  // Hide pagination if only one page
+  const paginationControls = document.getElementById('paginationControls');
+  if (paginationControls) {
+    if (totalPages <= 1) {
+      paginationControls.style.display = 'none';
+    } else {
+      paginationControls.style.display = 'flex';
+    }
+  }
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    updateTableDisplay();
+    document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function previousPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    updateTableDisplay();
+    document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+  }
 }
 
 function toggleNoResultsMessage(show) {
@@ -4617,8 +4702,8 @@ async function loadRevisionHistory(requestId) {
             console.log('🔍 [AllRequests] Checking resubmission form visibility:', { requestId, status, hasSection: !!resubmissionSection });
             
             if ((status.toLowerCase() === 'for revision' || status.toLowerCase() === 'revision requested') && resubmissionSection) {
-                console.log('✅ [AllRequests] Showing resubmission form');
-                resubmissionSection.style.display = 'block';
+                console.log('✅ [AllRequests] Hiding resubmission form by default - will show on button click');
+                resubmissionSection.style.display = 'none';
                 
                 // Set button text to hide - but since buttons are hidden for approval requests, this might not be needed
                 // const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
@@ -4671,7 +4756,7 @@ async function loadRevisionHistory(requestId) {
                 resubmissionSection.style.display = 'none';
             }
         } else {
-            if (historySection) historySection.style.display = 'none';
+            if (historySection) historySection.style.display = 'block';
             // Keep right column visible for chat button, even with no revisions
             if (rightColumn) rightColumn.style.display = 'flex';
             if (modalBody) modalBody.classList.add('two-column');
@@ -4690,6 +4775,13 @@ async function loadRevisionHistory(requestId) {
                     <small>Revision history will appear here when updates are made to your request.</small>
                 </div>
             `;
+            
+            // Show service action buttons only if this is a service request
+            const actionButtons = document.getElementById('serviceActionButtons');
+            const isServiceRequest = currentRequestType === 'Service Request';
+            if (actionButtons && isServiceRequest) {
+                actionButtons.style.display = 'flex';
+            }
         }
     } catch (error) {
         console.error('Error loading revision history:', error);
@@ -5767,6 +5859,31 @@ async function handleServiceRevision() {
         } else {
             alert('An error occurred while submitting your revision request.');
         }
+    }
+}
+
+// Wrapper function to determine which toggle function to call
+function toggleRevisionForm() {
+    // Check if this is a service request or approval request
+    const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+    const resubmissionSection = document.getElementById('resubmissionFormSection');
+    
+    if (serviceRevisionSection && resubmissionSection) {
+        // Determine which form exists and is relevant
+        const isServiceRequest = !!serviceRevisionSection;
+        const isApprovalRequest = !!resubmissionSection;
+        
+        if (isServiceRequest && serviceRevisionSection.parentElement) {
+            // Service request - use service toggle
+            toggleServiceRevisionForm();
+        } else if (isApprovalRequest) {
+            // Approval request - use resubmission toggle
+            toggleResubmissionForm();
+        }
+    } else if (serviceRevisionSection && serviceRevisionSection.parentElement) {
+        toggleServiceRevisionForm();
+    } else if (resubmissionSection) {
+        toggleResubmissionForm();
     }
 }
 

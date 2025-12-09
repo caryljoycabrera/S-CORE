@@ -102,7 +102,7 @@
     /* Back to Dashboard Container */
     .back-to-dashboard-container {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
       gap: 1rem;
       padding: 1.5rem 3rem;
@@ -1084,7 +1084,8 @@
 
         if (data.success) {
           showAlert('Announcement restored successfully', 'success');
-          await loadDeletedAnnouncements();
+          // Reload the page to reflect the restored announcement in the main table
+          window.location.reload();
         } else {
           showAlert(data.message || 'Failed to restore announcement', 'error');
         }

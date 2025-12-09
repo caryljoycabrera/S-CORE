@@ -1,0 +1,459 @@
+const fs = require('fs');
+const path = require('path');
+
+const cssFile = path.join(__dirname, 'public/stylesheets/ejs/services.css');
+const revisionStyles = `
+/* Revision History Styles */
+.revision-conversation-item {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.revision-conversation-item.unit-action {
+  padding-left: 4rem;
+}
+
+.revision-conversation-item.requestor-action {
+  padding-right: 4rem;
+  align-items: flex-end;
+}
+
+/* Revision number badge */
+.revision-number-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.revision-conversation-item.unit-action .revision-number-badge {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  left: 0;
+}
+
+.revision-conversation-item.requestor-action .revision-number-badge {
+  background: linear-gradient(135deg, #16a34a, #059669);
+  right: 0;
+  left: auto;
+}
+
+/* Message bubble */
+.revision-message-bubble {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  max-width: 100%;
+}
+
+.revision-conversation-item.unit-action .revision-message-bubble {
+  border-left: 3px solid #3b82f6;
+}
+
+.revision-conversation-item.requestor-action .revision-message-bubble {
+  border-left: 3px solid #16a34a;
+}
+
+/* Message header */
+.revision-bubble-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+
+.revision-author {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9375rem;
+}
+
+.revision-timestamp {
+  font-size: 0.8125rem;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  text-align: right;
+}
+
+.revision-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.revision-badge.badge-initial {
+  background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+  color: #4f46e5;
+}
+
+.revision-badge.badge-revoked {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+}
+
+.revision-badge.badge-resubmitted {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #059669;
+}
+
+.revision-badge.badge-revision {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+.revision-badge.badge-approved {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #047857;
+  border: 1px solid #10b981;
+}
+
+.content-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.content-text {
+  color: #374151;
+  line-height: 1.6;
+  font-size: 0.9375rem;
+}
+
+.content-text strong {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.content-text em {
+  font-style: italic;
+  color: #334155;
+}
+
+.content-text u {
+  text-decoration: underline;
+  text-decoration-color: #3b82f6;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+/* Message attachments */
+.message-attachments-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.attachments-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.attachments-count {
+  color: #3b82f6;
+}
+
+.attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Status indicators */
+.status-indicator {
+  margin-top: 1rem;
+  padding: 0.875rem 1.125rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-indicator.waiting {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  color: #92400e;
+}
+
+.status-indicator.under-review {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  color: #1e3a8a;
+}
+
+.status-indicator.approved {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+  color: #065f46;
+  animation: none;
+}
+
+.status-indicator svg {
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.01);
+  }
+}
+
+.notes-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.notes-label svg {
+  color: #6b7280;
+}
+
+.notes-content {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #4b5563;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.revision-files {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.files-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.files-label svg {
+  color: #6b7280;
+}
+
+.files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.revision-file-card {
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.revision-file-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+.file-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.file-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.125rem;
+}
+
+.file-type {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.file-date {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+}
+
+.file-preview-img {
+  padding: 0.5rem;
+  background: #f9fafb;
+}
+
+.file-preview-img img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.file-preview-img img:hover {
+  transform: scale(1.05);
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.file-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1.5px solid transparent;
+}
+
+.view-btn {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.view-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.download-btn {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+
+.download-btn:hover {
+  background: #a7f3d0;
+  border-color: #34d399;
+}
+
+/* Responsive revision history */
+@media (max-width: 768px) {
+  .files-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .revision-header {
+    padding: 1rem;
+  }
+  
+  .revision-notes,
+  .revision-files {
+    padding: 1rem;
+  }
+}
+
+/* Responsive layout for admin modal - collapse to single column on smaller screens */
+@media (max-width: 1200px) {
+  .admin-modal-body.has-revisions {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  
+  .admin-modal-body.has-revisions .admin-right-column {
+    border-left: none !important;
+    border-top: 2px solid #e5e7eb;
+    padding-left: 0 !important;
+    padding-top: 1rem;
+  }
+  
+  .admin-modal-body.has-revisions .admin-left-column {
+    padding-right: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-modal-body {
+    padding: 1rem !important;
+  }
+  
+  .admin-modal-body.has-revisions {
+    padding: 1rem !important;
+    gap: 1rem !important;
+  }
+}
+`;
+
+try {
+  const content = fs.readFileSync(cssFile, 'utf8');
+  fs.writeFileSync(cssFile, content + '\n' + revisionStyles);
+  console.log('✓ Revision history styles appended to services.css');
+} catch (error) {
+  console.error('Error appending styles:', error.message);
+  process.exit(1);
+}

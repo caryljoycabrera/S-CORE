@@ -37,8 +37,13 @@ window.escapeHtml = function(text) {
 // Helper function to format text with markdown-style syntax
 window.formatText = function(text) {
   if (!text) return '';
-  
-  // Escape HTML first
+  // If the text already appears to be HTML (contains tags like <p>, <strong>, <em>, <u>, <a>),
+  // assume it's preformatted HTML and return as-is to preserve WYSIWYG formatting.
+  if (typeof text === 'string' && /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text)) {
+    return text;
+  }
+
+  // Escape HTML first for plaintext
   let formatted = window.escapeHtml(text);
   
   // Bold: **text** -> <strong>text</strong>
@@ -1176,56 +1181,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function applyChatFormat(format) {
     console.log('[Approvals] Apply format:', format);
-    const textarea = document.getElementById('messageInput');
-    if (!textarea) {
+    const input = document.getElementById('messageInput');
+    if (!input) {
       console.error('[Approvals] Message input not found');
       return;
     }
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
+    // If contenteditable (WYSIWYG), use execCommand to apply formatting
+    if (input.isContentEditable) {
+      input.focus();
+      // Ensure there's a selection inside the editable element
+      const selection = window.getSelection();
+      if (!selection) return;
 
-    console.log('[Approvals] Selection:', { start, end, selectedText });
+      let selectionInside = false;
+      for (let i = 0; i < selection.rangeCount; i++) {
+        const node = selection.getRangeAt(i).commonAncestorContainer;
+        if (input.contains(node)) { selectionInside = true; break; }
+      }
 
-    let prefix = '';
-    let suffix = '';
-    let cursorOffset = 0;
+      if (!selectionInside) {
+        const range = document.createRange();
+        range.selectNodeContents(input);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
 
-    switch(format) {
-      case 'bold':
-        prefix = '**';
-        suffix = '**';
-        cursorOffset = 2;
-        break;
-      case 'italic':
-        prefix = '*';
-        suffix = '*';
-        cursorOffset = 1;
-        break;
-      case 'underline':
-        prefix = '__';
-        suffix = '__';
-        cursorOffset = 2;
-        break;
+      switch(format) {
+        case 'bold': document.execCommand('bold'); break;
+        case 'italic': document.execCommand('italic'); break;
+        case 'underline': document.execCommand('underline'); break;
+      }
+      input.focus();
+      return;
     }
 
-    const newText = beforeText + prefix + selectedText + suffix + afterText;
-    textarea.value = newText;
-    
-    // Set cursor position
-    if (selectedText) {
-      // If text was selected, place cursor after the formatted text
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
-    } else {
-      // If no text selected, place cursor between the markers
-      textarea.setSelectionRange(start + cursorOffset, start + cursorOffset);
+    // Fallback for legacy textarea inputs: insert markdown-like markers
+    const textarea = input; // treat same variable name
+    if (textarea && typeof textarea.selectionStart !== 'undefined') {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+      const beforeText = textarea.value.substring(0, start);
+      const afterText = textarea.value.substring(end);
+
+      console.log('[Approvals] Selection:', { start, end, selectedText });
+
+      let prefix = '';
+      let suffix = '';
+      let cursorOffset = 0;
+
+      switch(format) {
+        case 'bold':
+          prefix = '**';
+          suffix = '**';
+          cursorOffset = 2;
+          break;
+        case 'italic':
+          prefix = '*';
+          suffix = '*';
+          cursorOffset = 1;
+          break;
+        case 'underline':
+          prefix = '__';
+          suffix = '__';
+          cursorOffset = 2;
+          break;
+      }
+
+      const newText = beforeText + prefix + selectedText + suffix + afterText;
+      textarea.value = newText;
+      
+      // Set cursor position
+      if (selectedText) {
+        // If text was selected, place cursor after the formatted text
+        textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+      } else {
+        // If no text selected, place cursor between the markers
+        textarea.setSelectionRange(start + cursorOffset, start + cursorOffset);
+      }
+      
+      textarea.focus();
+      console.log('[Approvals] Format applied, new text length:', newText.length);
+      return;
     }
-    
-    textarea.focus();
-    console.log('[Approvals] Format applied, new text length:', newText.length);
+
+    console.warn('[Approvals] Input does not support selection-based formatting');
   }
 
   // Add conversation modal functionality
@@ -1396,39 +1438,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
-      // Add keyboard shortcuts for formatting
+      // Add keyboard shortcuts for formatting (use execCommand for contenteditable)
       messageInput.addEventListener('keydown', function(e) {
-        console.log('[Approvals] Keydown event:', {
-          key: e.key,
-          ctrlKey: e.ctrlKey,
-          metaKey: e.metaKey,
-          shiftKey: e.shiftKey
-        });
-        
-        // Ctrl+B or Cmd+B for bold
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        // Ctrl/Cmd + B/I/U shortcuts
+        if ((e.ctrlKey || e.metaKey) && ['b','i','u'].includes(e.key.toLowerCase())) {
           e.preventDefault();
-          console.log('[Approvals] Keyboard shortcut: Bold (Ctrl+B)');
-          applyChatFormat('bold');
-          return false;
-        }
-        // Ctrl+I or Cmd+I for italic
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
-          e.preventDefault();
-          console.log('[Approvals] Keyboard shortcut: Italic (Ctrl+I)');
-          applyChatFormat('italic');
-          return false;
-        }
-        // Ctrl+U or Cmd+U for underline
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
-          e.preventDefault();
-          console.log('[Approvals] Keyboard shortcut: Underline (Ctrl+U)');
-          applyChatFormat('underline');
+          const k = e.key.toLowerCase();
+          if (messageInput.isContentEditable) {
+            if (k === 'b') document.execCommand('bold');
+            if (k === 'i') document.execCommand('italic');
+            if (k === 'u') document.execCommand('underline');
+          } else {
+            // fallback to existing function which handles textarea
+            if (k === 'b') applyChatFormat('bold');
+            if (k === 'i') applyChatFormat('italic');
+            if (k === 'u') applyChatFormat('underline');
+          }
           return false;
         }
       });
     } else {
       console.error('[Approvals] Message input element not found!');
+    }
+
+    // Delegate toolbar button clicks to apply formatting appropriately
+    const toolbarEl = document.querySelector('.unit-format-toolbar');
+    if (toolbarEl) {
+      toolbarEl.addEventListener('click', function(e) {
+        const btn = e.target.closest('.format-btn');
+        if (!btn) return;
+        const format = btn.dataset.chatFormat;
+        if (!format) return;
+        if (messageInput && messageInput.isContentEditable) {
+          messageInput.focus();
+          switch(format) {
+            case 'bold': document.execCommand('bold'); break;
+            case 'italic': document.execCommand('italic'); break;
+            case 'underline': document.execCommand('underline'); break;
+          }
+        } else {
+          // If textarea fallback exists, use insertFormatting/applyChatFormat
+          if (format === 'bold') applyChatFormat('bold');
+          if (format === 'italic') applyChatFormat('italic');
+          if (format === 'underline') applyChatFormat('underline');
+        }
+      });
     }
     
     // Close modal when clicking outside
@@ -1527,9 +1581,23 @@ document.addEventListener('DOMContentLoaded', function() {
   // Send message function
   async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
-    const content = messageInput.value.trim();
+    if (!messageInput) {
+      showNotification('Message input not found', 'error');
+      return;
+    }
+
+    // Support contenteditable (WYSIWYG) and textarea inputs
+    let content = '';
+    let plainText = '';
+    if (messageInput.isContentEditable) {
+      plainText = (messageInput.textContent || '').trim();
+      content = (messageInput.innerHTML || '').trim();
+    } else {
+      plainText = (messageInput.value || '').trim();
+      content = plainText;
+    }
     
-    if (!content && chatFiles.length === 0) {
+    if ((!content || content === '<br>' || plainText === '') && chatFiles.length === 0) {
       showNotification('Please enter a message or select a file', 'error');
       return;
     }
@@ -1586,7 +1654,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await response.json();
       console.log('[Approvals] Message sent successfully');
       console.log('[Approvals] Current request ID:', currentRequestId);
-      messageInput.value = '';
+      // Clear the input depending on type
+      if (messageInput.isContentEditable) {
+        messageInput.innerHTML = '';
+      } else {
+        messageInput.value = '';
+      }
       clearAllChatFiles();
       // Reload conversation to show new message
       console.log('[Approvals] Reloading conversation...');
@@ -1734,6 +1807,16 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           reopenModalAfterUpdate(currentRequestId);
         }, 1000);
+
+        // Refresh page shortly after so server-side changes (deliverables,
+        // revision history, etc.) are reflected across the UI.
+        setTimeout(() => {
+          try {
+            window.location.reload();
+          } catch (e) {
+            console.error('Auto-reload failed:', e);
+          }
+        }, 1500);
       } else {
         showNotification('Update failed: ' + result.message, 'error');
         updateConfirmationModal.classList.remove('show');

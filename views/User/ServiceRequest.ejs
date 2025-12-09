@@ -2380,7 +2380,7 @@
                       </div>
                       <div class="select-dropdown" id="organizationDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search my organizations...">
+                          <input type="text" class="search-input select2-search__field" id="organizationSearch" placeholder="Search my organizations..." autocomplete="off" aria-label="Search organizations">
                         </div>
                         <div class="options-container">
                           <!-- Options populated by JavaScript -->
@@ -2398,7 +2398,7 @@
                       </div>
                       <div class="select-dropdown" id="organizationDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search my departments...">
+                          <input type="text" class="search-input select2-search__field" id="departmentSearch" placeholder="Search my departments..." autocomplete="off" aria-label="Search departments">
                         </div>
                         <div class="options-container">
                           <!-- Options populated by JavaScript -->
@@ -2505,6 +2505,13 @@
               <% }); %>
             </tbody>
           </table>
+
+          <!-- Pagination Controls -->
+          <div id="paginationControls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+            <button id="prevPageBtn" onclick="previousPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Previous page">← Previous</button>
+            <div id="pageInfo" style="font-weight: 500; color: #64748b;">Page 1</div>
+            <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
+          </div>
 
           <% if (!allRequests || allRequests.length === 0) { %>
           <div class="no-requests-message">
@@ -3956,6 +3963,11 @@ function getLinkValues() {
     const sendMessageBtn = document.getElementById("sendMessageBtn");
     const openChatFromDetailsModal = document.getElementById("openChatFromDetailsModal");
     const deadlineWarningModal = document.getElementById('deadlineWarningModal');
+
+    // Pagination variables
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let filteredRows = [];
     const closeDeadlineWarningModal = document.getElementById('closeDeadlineWarningModal');
     const serviceRequestForm = document.querySelector('#requestModal form');
 
@@ -4062,8 +4074,28 @@ function getLinkValues() {
       }
     });
 
+    // Initialize pagination
+    filteredRows = allRows;
+    updateTableDisplay();
+
     // Modal close handlers
-    if (openModalBtn) openModalBtn.onclick = () => requestModal.style.display = 'flex';
+    if (openModalBtn) {
+      openModalBtn.onclick = () => {
+        requestModal.style.display = 'flex';
+        
+        // Auto-populate organization field when modal opens
+        const organizationInput = document.getElementById('organization');
+        if (organizationInput && userOrganizations.length > 0) {
+          if (organizationInput.tagName === 'INPUT') {
+            // If it's an input field, set the value
+            organizationInput.value = userOrganizations[0];
+          } else if (organizationInput.tagName === 'SELECT') {
+            // If it's a select dropdown, set the selected option
+            organizationInput.value = userOrganizations[0];
+          }
+        }
+      };
+    }
     if (closeModalBtn) closeModalBtn.onclick = () => requestModal.style.display = 'none';
     if (cancelModalBtn) cancelModalBtn.onclick = () => requestModal.style.display = 'none';
     if (closeConversationModal) closeConversationModal.onclick = () => conversationModal.style.display = 'none';
@@ -4449,24 +4481,13 @@ function getLinkValues() {
 
     // Filter functionality
     function filterRequests() {
-      console.log('[ServiceRequest] filterRequests called');
       const selectedStatuses = getSelectedStatuses();
       const titleValue = document.getElementById('titleFilter') ? document.getElementById('titleFilter').value.toLowerCase() : '';
       const organizationValue = organizationFilter ? organizationFilter.getSelectedValues() : ['all'];
       const dateFromValue = document.getElementById('dateFromFilter') ? document.getElementById('dateFromFilter').value : '';
       const dateToValue = document.getElementById('dateToFilter') ? document.getElementById('dateToFilter').value : '';
 
-      console.log('[ServiceRequest] Filter values:', {
-        selectedStatuses,
-        titleValue,
-        organizationValue,
-        dateFromValue,
-        dateToValue
-      });
-
-      let visibleCount = 0;
-
-      allRows.forEach(row => {
+      filteredRows = allRows.filter(row => {
         const rowStatus = row.dataset.status || '';
         const rowStatusNormalized = normalizeStatus(rowStatus);
         const rowTitle = row.dataset.title ? row.dataset.title.toLowerCase() : '';
@@ -4474,19 +4495,8 @@ function getLinkValues() {
         const rowDate = row.dataset.date || '';
 
         const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatusNormalized);
-        
-        if (row.dataset.id && rowStatus.toLowerCase().includes('checking')) {
-          console.log('[ServiceRequest] Row with "checking" status:', {
-            id: row.dataset.id.slice(-6),
-            originalStatus: rowStatus,
-            normalizedStatus: rowStatusNormalized,
-            selectedStatuses: selectedStatuses,
-            statusMatch: statusMatch
-          });
-        }
         const titleMatch = (titleValue === '' || rowTitle.includes(titleValue));
         
-        // Organization filter logic
         let organizationMatch = true;
         if (organizationFilter && organizationValue.length > 0 && !organizationValue.includes('all')) {
           organizationMatch = organizationValue.some(org => 
@@ -4506,29 +4516,68 @@ function getLinkValues() {
           dateMatch = dateMatch && (rowDateObj <= toDate);
         }
 
-        const isVisible = statusMatch && titleMatch && organizationMatch && dateMatch;
-        row.style.display = isVisible ? '' : 'none';
-        
-        if (isVisible) visibleCount++;
+        return statusMatch && titleMatch && organizationMatch && dateMatch;
       });
 
-      const totalCount = allRows.length;
-      console.log('[ServiceRequest] Filter results:', {
-        visibleCount,
-        totalCount,
-        percentVisible: Math.round((visibleCount / totalCount) * 100) + '%'
-      });
+      currentPage = 1;
+      updateTableDisplay();
+      toggleNoResultsMessage(filteredRows.length === 0);
+    }
+
+    function updateTableDisplay() {
+      // Hide all rows first
+      allRows.forEach(row => row.style.display = 'none');
+
+      // Calculate pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const rowsToShow = filteredRows.slice(startIndex, endIndex);
+
+      // Show paginated rows
+      rowsToShow.forEach(row => row.style.display = '');
+
+      // Update pagination controls
+      const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+      const pageInfo = document.getElementById('pageInfo');
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
       
-      const resultsCount = document.getElementById('resultsCount');
-      if (resultsCount) {
-        if (visibleCount === totalCount) {
-          resultsCount.textContent = `Showing all ${totalCount} requests`;
-        } else {
-          resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
-        }
+      if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+      if (prevBtn) {
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
+      }
+      if (nextBtn) {
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+        nextBtn.style.opacity = currentPage === totalPages || totalPages === 0 ? '0.5' : '1';
       }
 
-      toggleNoResultsMessage(visibleCount === 0);
+      // Hide pagination if only one page
+      const paginationControls = document.getElementById('paginationControls');
+      if (paginationControls) {
+        if (totalPages <= 1) {
+          paginationControls.style.display = 'none';
+        } else {
+          paginationControls.style.display = 'flex';
+        }
+      }
+    }
+
+    function nextPage() {
+      const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        updateTableDisplay();
+        document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        updateTableDisplay();
+        document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+      }
     }
     
     function toggleNoResultsMessage(show) {
@@ -6594,9 +6643,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const revisionText = serviceRevisionQuill.root.innerHTML;
+        const revisionTextPlain = serviceRevisionQuill.getText().trim();
         
         // Validate revision text
-        if (!revisionText || revisionText.trim() === '<p><br></p>' || revisionText.trim() === '') {
+        if (!revisionText || revisionText.trim() === '<p><br></p>' || revisionTextPlain === '') {
             if (typeof window.showAlert === 'function') {
                 window.showAlert('error', 'Please describe what needs to be revised before submitting.');
             } else {
@@ -6617,15 +6667,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        console.log('[Service] Submitting revision for request:', currentConversationId);
+        console.log('[Service] Revision text (HTML):', revisionText);
+        console.log('[Service] Revision text (plain):', revisionTextPlain);
+        console.log('[Service] Files count:', filesInput && filesInput.files.length || 0);
+        
         try {
             const response = await fetch(`/user/service/request-revision/${currentConversationId}`, {
                 method: 'POST',
                 body: formData
             });
             
+            console.log('[Service] Response status:', response.status);
             const result = await response.json();
+            console.log('[Service] Response:', result);
             
-            if (result.success) {
+            if (response.ok && result.success) {
                 if (typeof window.showAlert === 'function') {
                     window.showAlert('success', result.message || 'Revision request submitted successfully!');
                 } else {
@@ -6703,6 +6760,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
       }
     }
+
+    // Expose service revision functions to global scope
+    window.handleServiceRevision = handleServiceRevision;
+    window.toggleServiceRevisionForm = toggleServiceRevisionForm;
 
     // Handle marking service as complete (accept deliverables)
     async function handleMarkServiceComplete() {
