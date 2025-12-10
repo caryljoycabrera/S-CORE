@@ -1662,16 +1662,16 @@ router.post('/unit/task/complete-approval/:id', requireUnit, async (req, res) =>
     const socketService = require('../services/socketService');
     socketService.updateActiveRequestsCount();
 
-    // Send notification to the requestor
+    // Send notification to the requestor that their approval request has been approved
     try {
-      await notificationService.notifyApprovalCompleted(task._id, task.userId._id, user._id);
+      await notificationService.notifyApprovalApproved(task._id, task.userId._id, user._id);
     } catch (notifError) {
-      console.error('Error sending completion notification:', notifError);
+      console.error('Error sending approval notification:', notifError);
     }
 
-    // Notify admins that unit completed the request
+    // Notify admins that unit approved the request
     try {
-      await notificationService.notifyAdminUnitCompleted(task._id, user._id, task);
+      await notificationService.notifyAdminUnitApproved(task._id, user._id, task);
     } catch (notifError) {
       console.error('Error sending admin notification:', notifError);
     }

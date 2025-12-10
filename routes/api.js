@@ -801,22 +801,28 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
     if (approvalRequest.revisionHistory && approvalRequest.revisionHistory.length > 0) {
       for (const revision of approvalRequest.revisionHistory) {
         // Check action types based on fields and revision type
-        const isUnitAction = revision.requestedBy && !revision.respondedBy;
-        const isUserResubmission = revision.respondedBy && !revision.requestedBy;
-        const isCombined = revision.requestedBy && revision.respondedBy;
+        // IMPORTANT: Check if BOTH fields exist AND have meaningful values to determine if combined
+        const hasRequestedBy = revision.requestedBy && revision.requestedBy.toString() !== '';
+        const hasRespondedBy = revision.respondedBy && revision.respondedBy.toString() !== '';
+        
+        const isUnitAction = hasRequestedBy && !hasRespondedBy;
+        const isUserResubmission = hasRespondedBy && !hasRequestedBy;
+        const isCombined = hasRequestedBy && hasRespondedBy;
+        
+        // Log to debug doubling issue
+        console.log('🔍 [API] Processing revision:', {
+          hasRequestedBy,
+          hasRespondedBy,
+          isUnitAction,
+          isUserResubmission,
+          isCombined,
+          revisionNotes: revision.revisionNotes?.substring(0, 50),
+          status: revision.status
+        });
         
         if (isUnitAction) {
           // This is a unit requesting revision
           let requestedByUser = await User.findById(revision.requestedBy).select('fName lName unitTeam');
-          
-          console.log('🔍 [API] Unit action revision:', {
-            revisionNotes: revision.revisionNotes,
-            notes: revision.notes,
-            description: revision.description,
-            hasRevisionNotes: !!revision.revisionNotes,
-            revisionNotesType: typeof revision.revisionNotes,
-            requestedByUser
-          });
           
           revisions.push({
             requestedBy: requestedByUser ? {
@@ -835,15 +841,6 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
           // This is a user resubmitting after revision
           let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
           
-          console.log('🔍 [API] User resubmission:', {
-            responseNotes: revision.responseNotes,
-            notes: revision.notes,
-            description: revision.description,
-            hasResponseNotes: !!revision.responseNotes,
-            responseNotesType: typeof revision.responseNotes,
-            respondedByUser
-          });
-          
           revisions.push({
             respondedBy: respondedByUser ? {
               _id: respondedByUser._id,
@@ -858,43 +855,55 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
           });
         } else if (isCombined) {
           // Handle combined entries (unit feedback + user response in same object)
+          // This should be rare - only when both requestedBy AND respondedBy exist with values
+          console.log('⚠️ [API] COMBINED ENTRY DETECTED - This should be rare:', {
+            hasRequestedBy,
+            hasRespondedBy,
+            revisionNotes: revision.revisionNotes?.substring(0, 50),
+            responseNotes: revision.responseNotes?.substring(0, 50)
+          });
+          
           let requestedByUser = await User.findById(revision.requestedBy).select('fName lName unitTeam');
           
-          console.log('🔍 [API] Combined revision:', {
-            revisionNotes: revision.revisionNotes,
-            responseNotes: revision.responseNotes,
-            requestedByUser
-          });
+          // Push unit action first (only if there are revision notes)
+          if (revision.revisionNotes || revision.notes || revision.description) {
+            revisions.push({
+              requestedBy: requestedByUser ? {
+                _id: requestedByUser._id,
+                fName: requestedByUser.fName,
+                lName: requestedByUser.lName,
+                unitTeam: requestedByUser.unitTeam
+              } : revision.requestedBy,
+              requestedAt: revision.requestedAt,
+              revisionNotes: revision.revisionNotes || revision.notes || revision.description || '',
+              revisionFiles: revision.revisionFiles || [],
+              status: revision.status,
+              type: 'revision'
+            });
+          }
           
-          // Push unit action first
-          revisions.push({
-            requestedBy: requestedByUser ? {
-              _id: requestedByUser._id,
-              fName: requestedByUser.fName,
-              lName: requestedByUser.lName,
-              unitTeam: requestedByUser.unitTeam
-            } : revision.requestedBy,
-            requestedAt: revision.requestedAt,
-            revisionNotes: revision.revisionNotes || revision.notes || revision.description || '',
-            revisionFiles: revision.revisionFiles || revision.files || [],
-            status: revision.status,
-            type: 'revision'
-          });
+          // Then push user response (only if there are actual response notes - different from revision notes)
+          const hasResponseNotes = revision.responseNotes && revision.responseNotes.trim() !== '' && 
+                                   revision.responseNotes !== revision.revisionNotes;
+          const hasResponseFiles = revision.responseFiles && revision.responseFiles.length > 0;
           
-          // Then push user response
-          let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
-          revisions.push({
-            respondedBy: respondedByUser ? {
-              _id: respondedByUser._id,
-              fName: respondedByUser.fName,
-              lName: respondedByUser.lName
-            } : revision.respondedBy,
-            respondedAt: revision.respondedAt,
-            responseNotes: revision.responseNotes || revision.notes || revision.description || '',
-            responseFiles: revision.responseFiles || revision.files || [],
-            type: 'resubmitted',
-            status: revision.status
-          });
+          if (hasResponseNotes || hasResponseFiles) {
+            let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
+            revisions.push({
+              respondedBy: respondedByUser ? {
+                _id: respondedByUser._id,
+                fName: respondedByUser.fName,
+                lName: respondedByUser.lName
+              } : revision.respondedBy,
+              respondedAt: revision.respondedAt,
+              responseNotes: revision.responseNotes || '',
+              responseFiles: revision.responseFiles || [],
+              type: 'resubmitted',
+              status: revision.status
+            });
+          }
+        } else {
+          console.log('⚠️ [API] Revision entry has neither requestedBy nor respondedBy - skipping');
         }
       }
     }

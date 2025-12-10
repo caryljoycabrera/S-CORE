@@ -4357,13 +4357,8 @@ function initializeAdminActionButtons() {
         });
     }
 
-    // Submit Revision Button
-    const submitRevisionBtn = document.getElementById('submitRevisionBtn');
-    if (submitRevisionBtn) {
-        submitRevisionBtn.addEventListener('click', function() {
-            submitAdminRevision();
-        });
-    }
+    // NOTE: submitRevisionBtn listener is already set in initializeEventListeners()
+    // Do not add another listener here to avoid duplicate submissions
 
     // Submit Complete Approval Button (from modal) - handles final approval with remarks
     const submitCompleteApprovalBtn = document.getElementById('submitCompleteApprovalBtn');
