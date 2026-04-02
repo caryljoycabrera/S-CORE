@@ -20,6 +20,7 @@ const emailService = require('../services/emailService');
 const settingsService = require('../services/settingsService');
 const reportService = require('../services/reportService');
 const announcementService = require('../services/announcementService');
+const { runArchivingTasks } = require('../services/archivingService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -37,8 +38,8 @@ console.log('[routes/admin] admin routes module loaded');
 router.get('/admin', requireAdmin, async (req, res) => {
   try {
     const users = await User.find().lean();
-    const approvals = await RequestApproval.find({ isDeleted: { $ne: true } }).populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } }).populate('userId').lean();
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
 
     // Filter by status - only pending AND unassigned for pending assignment KPI
     const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending' && (!a.assignedUnits || a.assignedUnits === 'Not yet assigned'))
@@ -603,7 +604,7 @@ router.post('/admin/announcement/send', requireAdmin, async (req, res) => {
  */
 router.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
-    let approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
+    let approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -655,7 +656,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
 router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    let approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
+    let approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .lean();
 
@@ -730,7 +731,7 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
  */
 router.get('/admin/services', requireAdmin, async (req, res) => {
   try {
-    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } })
+    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -808,7 +809,7 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
 router.get('/admin/services/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } })
+    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -913,7 +914,7 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
 router.get('/admin/all-requests', requireAdmin, async (req, res) => {
   try {
     // Fetch with proper population and error handling (exclude deleted items)
-    const approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate({
         path: 'userId',
         select: 'fName lName userType affiliation studentOrganization',
@@ -921,7 +922,7 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       })
       .lean();
 
-    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } })
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate({
         path: 'userId',
         select: 'fName lName userType affiliation studentOrganization',
@@ -1066,101 +1067,87 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
 
 /**
  * GET /admin/archive
- * View archived (deleted) requests
+ * Redirects to the Archive Manager tab inside the Configuration page.
+ * Kept for backward compatibility with any existing links.
  */
-router.get('/admin/archive', requireAdmin, async (req, res) => {
+router.get('/admin/archive', requireAdmin, (req, res) => {
+  res.redirect('/admin/configuration?tab=archivemanager');
+});
+
+
+
+/**
+ * POST /admin/requests/:id/restore
+ * Restore an archived request back to 'Pending' status.
+ * Admins can always restore. Regular users can only restore if allowUserReactivation is enabled.
+ */
+router.post('/admin/requests/:id/restore', requireAdmin, async (req, res) => {
   try {
-    // Fetch only deleted/archived requests
-    const approvals = await RequestApproval.find({ isDeleted: true })
-      .populate({
-        path: 'userId',
-        select: 'fName lName userType affiliation studentOrganization',
-        options: { strictPopulate: false }
-      })
-      .populate({
-        path: 'deletedBy',
-        select: 'fName lName'
-      })
-      .lean();
+    const { id } = req.params;
+    const { type } = req.body; // 'Request Approval' | 'Service Request'
 
-    const serviceRequests = await ServiceRequest.find({ isDeleted: true })
-      .populate({
-        path: 'userId',
-        select: 'fName lName userType affiliation studentOrganization',
-        options: { strictPopulate: false }
-      })
-      .populate({
-        path: 'deletedBy',
-        select: 'fName lName'
-      })
-      .lean();
+    let restored = false;
 
-    // Process archived requests
-    const archivedRequests = [
-      ...approvals.map(r => {
-        let userName = 'System User';
-        let displayOrganization = r.organization || 'N/A';
-        let deletedByName = 'Unknown';
-
-        if (r.userId && r.userId.fName) {
-          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
-          displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
-        }
-
-        if (r.deletedBy && r.deletedBy.fName) {
-          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
-        }
-
-        return {
-          ...r,
-          type: "Request Approval",
-          displayOrganization,
-          userName,
-          deletedByName,
-          datetime: r.datetime || r.createdAt
-        };
-      }),
-      ...serviceRequests.map(r => {
-        let userName = 'System User';
-        let displayOrganization = r.organization || 'N/A';
-        let deletedByName = 'Unknown';
-
-        if (r.userId && r.userId.fName) {
-          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
-          displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
-        }
-
-        if (r.deletedBy && r.deletedBy.fName) {
-          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
-        }
-
-        return {
-          ...r,
-          type: "Service Request",
-          displayOrganization,
-          userName,
-          deletedByName,
-          datetime: r.datetime || r.createdAt
-        };
-      })
-    ];
-
-    // Sort by deleted date (most recent first)
-    archivedRequests.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
-
-    res.render('Admin/archive', {
-      archivedRequests,
-      user: req.user
-    });
-  } catch (err) {
-    console.error('Error loading archived requests:', err);
-    if (!res.headersSent) {
-      res.status(500).render('error', { message: 'Failed to load archived requests page.' });
+    if (type === 'Request Approval') {
+      const result = await RequestApproval.findByIdAndUpdate(id, {
+        $set: {
+          status: 'Pending',
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null
+        },
+        $unset: { archivedAt: '', archivedBy: '' }
+      }, { new: true });
+      restored = !!result;
+    } else if (type === 'Service Request') {
+      const result = await ServiceRequest.findByIdAndUpdate(id, {
+        $set: {
+          status: 'Pending',
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null
+        },
+        $unset: { archivedAt: '', archivedBy: '' }
+      }, { new: true });
+      restored = !!result;
     }
+
+    if (!restored) {
+      return res.status(404).json({ success: false, message: 'Request not found.' });
+    }
+
+    console.log(`[ADMIN] Restored request ${id} (type: ${type}) to Pending by user ${req.session.userId}`);
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, message: 'Request has been restored to Pending status.' });
+    }
+    return res.redirect('/admin/archive?success=Request restored successfully');
+  } catch (err) {
+    console.error('Error restoring request:', err);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, message: 'Failed to restore request.' });
+    }
+    return res.redirect('/admin/archive?error=Failed to restore request');
+  }
+});
+
+/**
+ * POST /admin/run-archiving-now
+ * Manually trigger the archiving job immediately — for testing/admin use.
+ * Admin-only. Safe to run at any time; only archives requests that meet the day-limit rules.
+ */
+router.post('/admin/run-archiving-now', requireAdmin, async (req, res) => {
+  try {
+    console.log(`[ADMIN] Manual archiving triggered by user ${req.session.userId}`);
+    const result = await runArchivingTasks();
+    return res.json({
+      success: true,
+      message: `Archiving complete. ${result.totalArchived} request(s) archived this run.`,
+      totalArchived: result.totalArchived
+    });
+  } catch (error) {
+    console.error('[ADMIN] Manual archiving failed:', error);
+    return res.status(500).json({ success: false, message: 'Archiving job failed. Check server logs.' });
   }
 });
 
@@ -3385,16 +3372,24 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
 
     const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
     
-    // Soft delete by setting isDeleted flag
+    // Read current status first so restore can return to it
+    const existing = await Model.findById(requestId).select('status').lean();
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Soft delete by setting isDeleted flag, preserving previous status
     const request = await Model.findByIdAndUpdate(
       requestId,
       { 
         isDeleted: true,
         deletedAt: new Date(),
-        deletedBy: req.user._id
+        deletedBy: req.user._id,
+        previousStatus: existing.status   // ← save so restore knows where to send it back
       },
       { new: true }
     );
+
 
     if (!request) {
       return res.status(404).json({ success: false, message: 'Request not found' });
@@ -3424,7 +3419,7 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
 
 /**
  * POST /admin/request/restore
- * Restore archived request
+ * Restore archived/deleted request back to its previous status
  */
 router.post('/admin/request/restore', requireAdmin, async (req, res) => {
   try {
@@ -3435,26 +3430,42 @@ router.post('/admin/request/restore', requireAdmin, async (req, res) => {
     }
 
     const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
-    
-    // Restore by unsetting isDeleted flag
-    const request = await Model.findByIdAndUpdate(
-      requestId,
-      { 
-        isDeleted: false,
-        $unset: { deletedAt: 1, deletedBy: 1 }
-      },
-      { new: true }
-    );
+
+    // Read the current document to get previousStatus before modifying
+    const existing = await Model.findById(requestId).lean();
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Determine the status to restore to:
+    //   - If previousStatus was saved (by archive or delete), use it
+    //   - Otherwise fall back to 'Pending'
+    const restoreStatus = existing.previousStatus || 'Pending';
+
+    // Build the update: clear archive/delete flags and restore the original status
+    const updateDoc = {
+      status: restoreStatus,
+      isDeleted: false,
+      $unset: {
+        deletedAt: 1,
+        deletedBy: 1,
+        previousStatus: 1,
+        archivedAt: 1,
+        archivedBy: 1
+      }
+    };
+
+    const request = await Model.findByIdAndUpdate(requestId, updateDoc, { new: true });
 
     if (!request) {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
 
-    // Create notification for the user who submitted the request
+    // Notify the user with the actual restored status
     try {
       await notificationService.createNotification({
         userId: request.userId,
-        message: `Your ${requestType.toLowerCase()} "${request.title}" has been restored from archive`,
+        message: `Your ${requestType.toLowerCase()} "${request.title}" has been restored from archive (status: ${restoreStatus})`,
         link: '/user/my-requests',
         type: 'system'
       });
@@ -3464,13 +3475,15 @@ router.post('/admin/request/restore', requireAdmin, async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Request restored successfully'
+      message: `Request restored to "${restoreStatus}" status successfully`,
+      restoredStatus: restoreStatus
     });
   } catch (error) {
     console.error('Error restoring request:', error);
     res.status(500).json({ success: false, message: 'Failed to restore request' });
   }
 });
+
 
 /**
  * DELETE /admin/request/permanent-delete
@@ -5467,12 +5480,50 @@ router.get('/admin/configuration', requireAdmin, async (req, res) => {
       requestTypes = [];
     }
     
+    // Fetch archived requests for the Archive Manager tab (safe — falls back to [] on error)
+    let archivedRequests = [];
+    try {
+      const [deletedApprovals, deletedServices, autoArchivedApprovals, autoArchivedServices] = await Promise.all([
+        RequestApproval.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
+        ServiceRequest.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
+        RequestApproval.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+        ServiceRequest.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean()
+      ]);
+      const buildEntry = (r, type, source) => {
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        let deletedByName = source === 'auto' ? 'System (Auto-Archive)' : 'Unknown';
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        }
+        if (source === 'deleted' && r.deletedBy && r.deletedBy.fName) {
+          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+        }
+        return { ...r, type, displayOrganization, userName, deletedByName, archiveSource: source,
+          datetime: r.datetime || r.createdAt,
+          deletedAt: source === 'auto' ? (r.archivedAt || r.updatedAt) : r.deletedAt };
+      };
+      archivedRequests = [
+        ...deletedApprovals.map(r => buildEntry(r, 'Request Approval', 'deleted')),
+        ...deletedServices.map(r => buildEntry(r, 'Service Request', 'deleted')),
+        ...autoArchivedApprovals.map(r => buildEntry(r, 'Request Approval', 'auto')),
+        ...autoArchivedServices.map(r => buildEntry(r, 'Service Request', 'auto')),
+      ].sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
+    } catch (archiveError) {
+      console.error('[ADMIN] Could not load archive data for config page:', archiveError.message);
+    }
+
     res.render('Admin/configuration', {
       name: user.firstName,
       user: user,
       pageContent: pageContent.content || {},
       settings: settings,
       requestTypes: requestTypes,
+      archivedRequests,
+      allowUserReactivation: settings ? settings.allowUserReactivation : false,
       success: req.query.success,
       error: req.query.error
     });
@@ -5693,9 +5744,33 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
 });
 
 /**
- * POST /admin/system-configuration
- * Save system configuration settings
+ * POST /admin/archive-settings
+ * Save ONLY archiving-related settings (safe subset — no page content fields required).
+ * Called by the Archive Manager tab's "Save Settings" button.
  */
+router.post('/admin/archive-settings', requireAdmin, async (req, res) => {
+  try {
+    const settingsService = require('../services/settingsService');
+
+    const completedDays = parseInt(req.body.archiveCompletedAfterDays, 10);
+    const revisionDays  = parseInt(req.body.archiveRevisionAfterDays,  10);
+    const allowReactivation = req.body.allowUserReactivation === 'true' || req.body.allowUserReactivation === 'on';
+
+    const updates = {};
+    if (!isNaN(completedDays)) updates.archiveCompletedAfterDays = completedDays;
+    if (!isNaN(revisionDays))  updates.archiveRevisionAfterDays  = revisionDays;
+    updates.allowUserReactivation = allowReactivation;
+
+    await settingsService.updateSettings(updates);
+
+    console.log(`[ADMIN] Archive settings saved: completed=${completedDays}d, revision=${revisionDays}d, reactivation=${allowReactivation}`);
+    return res.json({ success: true, message: 'Archive settings saved.' });
+  } catch (error) {
+    console.error('[ADMIN] Error saving archive settings:', error);
+    return res.status(500).json({ success: false, message: 'Failed to save archive settings.' });
+  }
+});
+
 router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -5845,6 +5920,11 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
       enableDetailedLogs: req.body.enableDetailedLogs === 'on',
       trackUserActions: req.body.trackUserActions === 'on',
       logRetentionDays: parseInt(req.body.logRetentionDays) || 90,
+
+      // Automated archiving settings
+      archiveCompletedAfterDays: parseInt(req.body.archiveCompletedAfterDays) || 30,
+      archiveRevisionAfterDays: parseInt(req.body.archiveRevisionAfterDays) || 14,
+      allowUserReactivation: req.body.allowUserReactivation === 'on',
       
       // Metadata
       updatedBy: user._id,
@@ -5876,8 +5956,8 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
  */
 router.get('/admin/analytics-data/top-requestors', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find({ isDeleted: { $ne: true } }).populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } }).populate('userId').lean();
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
     const allRequests = [...approvals, ...serviceRequests];
 
     // Group by organization

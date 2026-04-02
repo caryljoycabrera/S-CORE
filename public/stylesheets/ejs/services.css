@@ -2640,3 +2640,59 @@ hr {
  } 
  
  
+
+  /* Status/type badges stay on one line */
+  .requests-table .status-badge,
+  .requests-table .type-badge,
+  .trash-requests-table .status-badge,
+  .trash-requests-table .type-badge {
+    white-space: nowrap !important;
+    display: inline-block;
+  }
+}
+
+/* =============================================================================
+   MOBILE RESPONSIVE — Horizontal scroll, full text visible, no overlap
+   ============================================================================= */
+@media (max-width: 900px) {
+
+  .table-section {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .requests-table,
+  .trash-requests-table {
+    table-layout: auto !important;
+    min-width: 960px !important;
+    width: max-content !important;
+  }
+
+  .requests-table th,
+  .requests-table td,
+  .trash-requests-table th,
+  .trash-requests-table td {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: none !important;
+    width: auto !important;
+    padding: 0.6rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    vertical-align: middle !important;
+  }
+
+  .requests-table th:nth-child(n),
+  .requests-table td:nth-child(n),
+  .trash-requests-table th:nth-child(n),
+  .trash-requests-table td:nth-child(n) {
+    width: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-section { border-radius: 8px; }
+  .requests-table, .trash-requests-table { min-width: 800px !important; }
+}

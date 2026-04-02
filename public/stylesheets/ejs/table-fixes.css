@@ -1,41 +1,102 @@
-/* Table layout fixes shared across admin tables
-   - Forces fixed table layout
-   - Enables wrapping of long content
-   - Provides sensible column width suggestions
-*/
+/* =============================================================================
+   TABLE-FIXES.CSS — Shared table styles across all admin/unit/user pages
+   Applied to: .requests-table, .trash-requests-table
+   ============================================================================= */
+
+/* ── Base table layout ── */
 .requests-table,
 .trash-requests-table {
   table-layout: fixed;
   width: 100%;
+  border-collapse: collapse;
 }
 
+/* ── All cells: ellipsis truncation for long text ── */
 .requests-table th,
 .requests-table td,
 .trash-requests-table th,
 .trash-requests-table td {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-wrap: break-word;
-  word-break: break-word;
-  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;          /* required for text-overflow to work in table-layout:fixed */
+  vertical-align: middle;
   padding: 0.75rem;
 }
 
-/* Column width suggestions */
-.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 8%; max-width: 90px; }
-.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 8%; max-width: 90px; }
-.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 10%; max-width: 160px; }
-.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 8%; max-width: 90px; }
-.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 8%; max-width: 90px; }
+/* ── Column width suggestions (9-col layout) ── */
+.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 7%;  }
+.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 7%;  }
+.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 13%; }
+.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 16%; }
+.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 16%; }
+.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 10%; }
+.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 11%; }
+.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 10%; }
+.requests-table th:nth-child(9), .requests-table td:nth-child(9) { width: 10%; }
 
+/* ── Trash/modal tables (fewer cols) ── */
+.trash-requests-table th:nth-child(1), .trash-requests-table td:nth-child(1) { width: 10%; }
+.trash-requests-table th:nth-child(2), .trash-requests-table td:nth-child(2) { width: 22%; }
+.trash-requests-table th:nth-child(3), .trash-requests-table td:nth-child(3) { width: 20%; }
+.trash-requests-table th:nth-child(4), .trash-requests-table td:nth-child(4) { width: 15%; }
+.trash-requests-table th:nth-child(5), .trash-requests-table td:nth-child(5) { width: 15%; }
+.trash-requests-table th:nth-child(6), .trash-requests-table td:nth-child(6) { width: 10%; }
+.trash-requests-table th:nth-child(7), .trash-requests-table td:nth-child(7) { width: 8%;  }
+
+/* ── Table section wrapper — always allows horizontal scroll ── */
 .table-section {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-@media (max-width: 900px) {
-  .requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 30%; }
-  .requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 20%; }
+/* ── Status/type badges must not be truncated ── */
+.requests-table .status-badge,
+.requests-table .type-badge,
+.trash-requests-table .status-badge,
+.trash-requests-table .type-badge {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* =============================================================================
+   MOBILE RESPONSIVE — ≤ 768px
+   Enforces horizontal scroll with min-width so nothing squashes or wraps
+   ============================================================================= */
+@media (max-width: 768px) {
+
+  /* Give the table a fixed minimum so all columns stay readable */
+  .requests-table       { min-width: 780px; }
+  .trash-requests-table { min-width: 900px; }
+
+  /* Tighter padding + slightly smaller text on mobile */
+  .requests-table th,
+  .requests-table td,
+  .trash-requests-table th,
+  .trash-requests-table td {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  /* Ensure the wrapper scrolls and is visually delimited */
+  .table-section {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+  }
+}
+
+@media (max-width: 480px) {
+  .requests-table       { min-width: 700px; }
+  .trash-requests-table { min-width: 900px; }
+
+  .requests-table th,
+  .requests-table td,
+  .trash-requests-table th,
+  .trash-requests-table td {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.75rem;
+  }
 }

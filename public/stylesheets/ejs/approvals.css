@@ -3532,10 +3532,8 @@ hr {
 }
 
 /* -----------------------------------------------------------------------------
-   Table layout fixes for Approvals (match All Requests behavior)
-   - Force fixed table layout to prevent horizontal expansion
-   - Make cells wrap long text instead of widening table
-   - Set reasonable widths per column (adjustable)
+   Table layout fixes — ellipsis truncation (overrides table-fixes.css defaults
+   for approvals-specific column widths)
    ----------------------------------------------------------------------------- */
 .requests-table,
 .trash-requests-table {
@@ -3547,29 +3545,98 @@ hr {
 .requests-table td,
 .trash-requests-table th,
 .trash-requests-table td {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-wrap: break-word;
-  word-break: break-word;
-  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+  vertical-align: middle;
   padding: 0.75rem;
 }
 
-/* Column width suggestions */
-.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 8%; max-width: 90px; }
-.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 8%; max-width: 90px; }
-.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 10%; max-width: 160px; }
-.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 8%; max-width: 90px; }
-.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 8%; max-width: 90px; }
+/* Column widths for 8-col approvals table */
+.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 7%;  }
+.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 8%;  }
+.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 13%; }
+.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 16%; }
+.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 16%; }
+.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 11%; }
+.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 10%; }
+.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 10%; }
+
+/* Status/type badges must not truncate */
+.requests-table .status-badge,
+.requests-table .type-badge {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  display: inline-block;
+}
 
 .table-section {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+@media (max-width: 768px) {
+  .requests-table { min-width: 780px; }
+  .requests-table th,
+  .requests-table td { padding: 0.55rem 0.6rem; font-size: 0.8rem; }
+  .table-section { border-radius: 10px; border: 1px solid #e5e7eb; }
+}
+
+
+  /* Status/type badges stay on one line */
+  .requests-table .status-badge,
+  .requests-table .type-badge,
+  .trash-requests-table .status-badge,
+  .trash-requests-table .type-badge {
+    white-space: nowrap !important;
+    display: inline-block;
+  }
+}
+
+/* =============================================================================
+   MOBILE RESPONSIVE — Horizontal scroll, full text visible, no overlap
+   ============================================================================= */
 @media (max-width: 900px) {
-  .requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 30%; }
-  .requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 20%; }
+
+  .table-section {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .requests-table,
+  .trash-requests-table {
+    table-layout: auto !important;
+    min-width: 960px !important;
+    width: max-content !important;
+  }
+
+  .requests-table th,
+  .requests-table td,
+  .trash-requests-table th,
+  .trash-requests-table td {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: none !important;
+    width: auto !important;
+    padding: 0.6rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    vertical-align: middle !important;
+  }
+
+  .requests-table th:nth-child(n),
+  .requests-table td:nth-child(n),
+  .trash-requests-table th:nth-child(n),
+  .trash-requests-table td:nth-child(n) {
+    width: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-section { border-radius: 8px; }
+  .requests-table, .trash-requests-table { min-width: 800px !important; }
 }

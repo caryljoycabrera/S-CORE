@@ -25,6 +25,7 @@ const { sanitizeAll } = require('./middleware/sanitize');
 const socketService = require('./services/socketService');
 const settingsService = require('./services/settingsService');
 const announcementService = require('./services/announcementService');
+const { initScheduler } = require('./services/jobSchedulerService');
 const cron = require('node-cron');
 
 // Create Express application and HTTP server
@@ -41,6 +42,10 @@ connectDB();
     // Load system settings before starting server
     await settingsService.loadSettings();
     console.log('[SERVER] System settings loaded successfully');
+
+    // Initialize all scheduled background jobs (archiving, etc.)
+    initScheduler();
+    console.log('[SERVER] Job scheduler initialized successfully');
   } catch (err) {
     console.error('[SERVER] Failed to load system settings:', err);
     console.error('[SERVER] Server will continue with default settings');

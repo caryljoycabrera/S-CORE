@@ -195,7 +195,8 @@
    ========================================== */
 .trash-requests-table {
   width: 100%;
-  min-width: 900px;
+  min-width: max-content;
+  table-layout: auto !important;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -220,7 +221,11 @@
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  white-space: nowrap;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  width: auto !important;
 }
 
 .trash-requests-table tbody tr {
@@ -240,6 +245,11 @@
   padding: 14px 16px;
   color: #4b5563;
   vertical-align: middle;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  width: auto !important;
 }
 
 /* ==========================================
@@ -680,14 +690,6 @@
 
   .trash-requests-table .delete-btn-permanent {
     margin-left: 4px;
-  }
-
-  /* Hide some columns on mobile */
-  .trash-requests-table th:nth-child(3),
-  .trash-requests-table td:nth-child(3),
-  .trash-requests-table th:nth-child(5),
-  .trash-requests-table td:nth-child(5) {
-    display: none;
   }
 }
 

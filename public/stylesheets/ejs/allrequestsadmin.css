@@ -4378,11 +4378,11 @@ input:checked + .toggle-slider:before {
     padding: 1.5rem;
   }
 
-  /* Info Grid - Two columns */
+  /* Info Grid - single column keeps label+value readable */
   .general-info-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
 
   /* Admin Controls */
@@ -4971,7 +4971,7 @@ input:checked + .toggle-slider:before {
 .trash-table-container {
   background: white;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -5111,10 +5111,7 @@ input:checked + .toggle-slider:before {
 }
 
 /* -----------------------------------------------------------------------------
-   Table layout fixes for All Requests
-   - Force fixed table layout to prevent horizontal expansion
-   - Make cells wrap long text instead of widening table
-   - Set reasonable widths per column (adjustable)
+   Table layout fixes for All Requests — ellipsis truncation on desktop
    ----------------------------------------------------------------------------- */
 .requests-table,
 .trash-requests-table {
@@ -5126,33 +5123,171 @@ input:checked + .toggle-slider:before {
 .requests-table td,
 .trash-requests-table th,
 .trash-requests-table td {
-  white-space: normal; /* allow wrapping */
-  overflow-wrap: anywhere; /* best-effort wrap for long tokens */
-  word-wrap: break-word;
-  word-break: break-word;
-  vertical-align: top;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+  vertical-align: middle;
   padding: 0.75rem;
 }
 
-/* Column width suggestions - keep total near 100% */
-.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 8%; max-width: 90px; }
-.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 6%; max-width: 90px; }
-.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 14%; max-width: 160px; }
-.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 12%; max-width: 160px; }
-.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 10%; max-width: 160px; }
-.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 10%; max-width: 90px; }
-.requests-table th:nth-child(9), .requests-table td:nth-child(9) { width: 8%; max-width: 90px; }
+/* Column widths — 9 cols */
+.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 7%;  }
+.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 6%;  }
+.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 12%; }
+.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 16%; }
+.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 16%; }
+.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 11%; }
+.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 12%; }
+.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 10%; }
+.requests-table th:nth-child(9), .requests-table td:nth-child(9) { width: 10%; }
 
-/* Keep the table-section scrollable on very small viewports but avoid horizontal
-   scrolling in normal desktop widths by relying on fixed layout + wrapping. */
+/* Status/type badges: never clip */
+.requests-table .status-badge,
+.requests-table .type-badge {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  display: inline-block;
+}
+
 .table-section {
-  overflow-x: auto; /* allow scroll on very narrow screens */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* =============================================================================
+   MOBILE RESPONSIVE — Horizontal scroll, full text visible, no overlap
+   ============================================================================= */
 @media (max-width: 900px) {
-  .requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 30%; }
-  .requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 20%; }
+
+  .table-section {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin: 0 1rem 1rem 1rem;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .requests-table,
+  .trash-requests-table {
+    table-layout: auto !important;
+    min-width: 960px !important;
+    width: max-content !important;
+  }
+
+  .requests-table th,
+  .requests-table td,
+  .trash-requests-table th,
+  .trash-requests-table td {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: none !important;
+    width: auto !important;
+    padding: 0.6rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    vertical-align: middle !important;
+  }
+
+  .requests-table th:nth-child(n),
+  .requests-table td:nth-child(n),
+  .trash-requests-table th:nth-child(n),
+  .trash-requests-table td:nth-child(n) {
+    width: auto !important;
+  }
+
+  .page-header-container { padding: 1rem 1rem 0 1rem; flex-direction: column; align-items: flex-start; }
+  .action-button-container { width: 100%; flex-direction: row; flex-wrap: wrap; margin-left: 0; gap: 0.5rem; }
+  .action-button-container .view-all-btn { flex: 1; text-align: center; }
+  .tabs { padding: 0 1rem 0.75rem 1rem !important; gap: 0.4rem !important; flex-wrap: wrap !important; }
+  .filter-section { margin: 0 1rem 1rem 1rem; padding: 1rem; }
+  .filter-container { padding-bottom: 0 !important; }
+  .filter-controls { flex-direction: column !important; gap: 0.625rem !important; }
+  .filter-item { width: 100% !important; }
+  .filter-actions { position: static !important; margin-top: 0.75rem; justify-content: space-between; width: 100%; }
+  .clear-filters-btn { flex: 1; justify-content: center; }
+  .results-count { flex: 1; text-align: center; }
+  .back-to-dashboard-container { margin: 1rem 1rem; flex-direction: column; align-items: stretch; gap: 0.75rem; }
+  .back-to-dashboard-btn { margin-right: 0; justify-content: center; }
+  .pagination-controls { justify-content: center; }
+  .trash-btn { justify-content: center; }
+  hr { margin: 0 1rem 1rem 1rem; }
 }
 
+@media (max-width: 480px) {
+  .filter-section { margin: 0 0.5rem 1rem 0.5rem; }
+  .table-section  { margin: 0 0.5rem 1rem 0.5rem !important; }
+  .back-to-dashboard-container { margin: 1rem 0.5rem; }
+  .requests-table, .trash-requests-table { min-width: 800px !important; }
+}
+
+/* =============================================================================
+   MODAL RESPONSIVE — info items single column on small screens
+   Matches approvals.ejs / services.ejs behavior exactly
+   ============================================================================= */
+
+/* Tablet: collapse the two-column modal body to single column */
+@media (max-width: 1200px) {
+  .unit-modal-wide {
+    max-width: 98% !important;
+    width: 98% !important;
+  }
+  .unit-modal-body {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  .unit-modal-body.has-revisions {
+    grid-template-columns: 1fr !important;
+  }
+  .unit-right-column {
+    border-left: none !important;
+    border-top: 2px solid #e5e7eb;
+    padding-left: 0 !important;
+    padding-top: 1rem !important;
+  }
+}
+
+/* Phone: single column modal, compact info items */
+@media (max-width: 768px) {
+  .unit-modal-wide {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+  .unit-modal-body {
+    grid-template-columns: 1fr !important;
+    padding: 1rem !important;
+    gap: 1rem !important;
+    max-height: calc(100vh - 80px) !important;
+  }
+  /* Info row stacks vertically, each item is full width */
+  .general-info-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .info-item {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex-wrap: nowrap;
+  }
+  /* Label shrinks on very small phones so value gets enough space */
+  .info-label {
+    min-width: 130px !important;
+    font-size: 0.8rem !important;
+  }
+  .info-value {
+    font-size: 0.875rem !important;
+    word-break: break-word;
+  }
+  /* Admin controls collapse to 1col */
+  .admin-form-grid,
+  .admin-controls-grid,
+  .edit-form-row {
+    grid-template-columns: 1fr !important;
+  }
+}

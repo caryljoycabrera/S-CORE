@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const emptyRow = document.createElement('tr');
       emptyRow.className = 'empty-state filter-empty';
       emptyRow.innerHTML = `
-        <td colspan="7">
+        <td colspan="8">
           <div class="empty-archive-message">
             <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No matching requests</p>
             <p style="color: #6b7280;">Try adjusting your filters</p>
@@ -94,14 +94,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!currentRequestId || !currentRequestType) return;
 
     try {
-      const response = await fetch('/admin/request/restore', {
+      const response = await fetch(`/admin/requests/${currentRequestId}/restore`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
-          requestId: currentRequestId,
-          requestType: currentRequestType
+          type: currentRequestType
         })
       });
 
@@ -182,6 +182,45 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error('Error permanently deleting request:', error);
       showNotification('An error occurred while deleting the request', 'error');
+    }
+  };
+
+  // Trigger archiving job manually (for testing / admin convenience)
+  window.triggerArchivingNow = async function() {
+    const btn = document.getElementById('runArchivingNowBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ Running...';
+    }
+
+    try {
+      const response = await fetch('/admin/run-archiving-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        showNotification(data.message, 'success');
+        // Reload after short delay so newly archived items appear
+        if (data.totalArchived > 0) {
+          setTimeout(() => location.reload(), 1500);
+        }
+      } else {
+        showNotification(data.message || 'Archiving failed', 'error');
+      }
+    } catch (error) {
+      console.error('Error triggering archiving:', error);
+      showNotification('Could not reach the server. Check your connection.', 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+          </svg>
+          Run Archiving Now`;
+      }
     }
   };
 

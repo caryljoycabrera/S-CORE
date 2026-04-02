@@ -14,6 +14,7 @@
        * ========================================== -->
 
   <!-- Base Stylesheet and Google Fonts -->
+  <link rel="stylesheet" href="/stylesheets/ejs/table-fixes.css" />
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
@@ -401,8 +402,8 @@
                   final: request.allowAdditionalFileUpload ? 'true' : 'false'
                 }) %>"
                 data-student="<%= displayUserName %>">
-                <td><%= request._id.toString().slice(-6) %></td>
-                <td>
+                <td data-label="ID"><%= request._id.toString().slice(-6) %></td>
+                <td data-label="Type">
                   <% if (request.type === 'Request Approval') { %>
                     <span class="type-badge" style="padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; background: #dbeafe; color: #1e40af;">
                       Approval
@@ -413,17 +414,17 @@
                     </span>
                   <% } %>
                 </td>
-                <td><%= displayUserName %></td>
-                <td><%= request.title %></td>
-                <td><%= request.displayOrganization || request.organization %></td>
-                <td>
+                <td data-label="User"><%= displayUserName %></td>
+                <td data-label="Title"><%= request.title %></td>
+                <td data-label="Organization"><%= request.displayOrganization || request.organization %></td>
+                <td data-label="Status">
                   <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                     <%= request.status %>
                   </span>
                 </td>
-                <td><%= request.assignedUnits || 'Not yet assigned' %></td>
-                <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
-                <td><%= formattedDeadline %></td>
+                <td data-label="Assigned Units"><%= request.assignedUnits || 'Not yet assigned' %></td>
+                <td data-label="Submitted"><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
+                <td data-label="Deadline"><%= formattedDeadline %></td>
               </tr>
               <% }); %>
             </tbody>

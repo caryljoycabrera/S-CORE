@@ -56,6 +56,20 @@ const systemSettingsSchema = new mongoose.Schema({
     default: true
   },
 
+  // Automated Archiving Settings
+  archiveCompletedAfterDays: {
+    type: Number,
+    default: 30 // Archive Completed/Approved requests after 30 days
+  },
+  archiveRevisionAfterDays: {
+    type: Number,
+    default: 14 // Archive For Revision requests with no activity after 14 days
+  },
+  allowUserReactivation: {
+    type: Boolean,
+    default: false // If true, regular users can restore their own archived requests
+  },
+
   // Units & Organizations Settings
   units: [{
     type: String

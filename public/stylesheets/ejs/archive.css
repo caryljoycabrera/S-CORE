@@ -9,10 +9,13 @@
   background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
   border: 1px solid #0891b2;
   border-radius: 8px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   color: #0e7490;
   font-size: 14px;
   font-weight: 500;
@@ -20,12 +23,12 @@
 
 .filters-container {
   background: white;
-  padding: 20px;
+  padding: 16px 20px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   display: flex;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: flex-end;
 }
@@ -34,7 +37,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 200px;
+  min-width: 180px;
   flex: 1;
 }
 
@@ -46,7 +49,7 @@
 
 .filter-input,
 .filter-select {
-  padding: 10px 12px;
+  padding: 9px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
@@ -62,7 +65,7 @@
 }
 
 .filter-reset-btn {
-  padding: 10px 20px;
+  padding: 9px 18px;
   background: #6b7280;
   color: white;
   border: none;
@@ -78,17 +81,30 @@
   background: #4b5563;
 }
 
+/* ── Table Container ─────────────────────────────────────── */
 .table-container {
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow-x: auto; /* horizontal scroll on small screens */
 }
 
 .requests-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* fixed column widths — prevents cells from stretching */
+  min-width: 900px;    /* ensures table is at least readable before horizontal scroll kicks in */
 }
+
+/* ── Column widths ── */
+.requests-table colgroup col:nth-child(1) { width: 130px; }  /* Request Type */
+.requests-table colgroup col:nth-child(2) { width: 18%; }    /* Title */
+.requests-table colgroup col:nth-child(3) { width: 17%; }    /* Organization */
+.requests-table colgroup col:nth-child(4) { width: 12%; }    /* Requester */
+.requests-table colgroup col:nth-child(5) { width: 15%; }    /* Archived By */
+.requests-table colgroup col:nth-child(6) { width: 100px; } /* Archived On */
+.requests-table colgroup col:nth-child(7) { width: 80px; }  /* Source */
+.requests-table colgroup col:nth-child(8) { width: 160px; } /* Actions */
 
 .requests-table thead {
   background: #f9fafb;
@@ -96,13 +112,16 @@
 }
 
 .requests-table th {
-  padding: 16px;
+  padding: 12px 14px;
   text-align: left;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #374151;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .requests-table tbody tr {
@@ -114,19 +133,45 @@
   background: #f9fafb;
 }
 
+/* All cells: truncate long text with ellipsis */
 .requests-table td {
-  padding: 16px;
-  font-size: 14px;
+  padding: 12px 14px;
+  font-size: 13px;
   color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  max-width: 0; /* required for text-overflow to work with table-layout:fixed */
 }
 
+/* Title cell: allow 2 lines then clip */
+.requests-table td.col-title {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+/* Actions cell: don't clip, stack buttons neatly */
+.requests-table td.col-actions {
+  white-space: nowrap;
+  overflow: visible;
+  padding: 8px 10px;
+}
+
+/* ── Type Badges ─────────────────────────────────────────── */
 .type-badge {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .type-approval {
@@ -139,23 +184,30 @@
   color: #065f46;
 }
 
+/* ── Action Buttons ──────────────────────────────────────── */
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 5px;
+  padding: 6px 10px;
   border: none;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  margin-right: 8px;
+  white-space: nowrap;
+}
+
+/* Keep buttons side by side with a tiny gap */
+.col-actions .action-btn + .action-btn {
+  margin-left: 4px;
 }
 
 .action-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .restore-btn {
@@ -166,7 +218,7 @@
 .restore-btn:hover {
   background: #059669;
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 3px 6px rgba(16, 185, 129, 0.3);
 }
 
 .delete-btn-permanent {
@@ -177,9 +229,10 @@
 .delete-btn-permanent:hover {
   background: #dc2626;
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 3px 6px rgba(239, 68, 68, 0.3);
 }
 
+/* ── Empty State ─────────────────────────────────────────── */
 .empty-archive-message {
   text-align: center;
   padding: 60px 20px;
@@ -188,9 +241,11 @@
 
 .empty-state td {
   border: none !important;
+  overflow: visible;
+  white-space: normal;
 }
 
-/* Confirmation Modals */
+/* ── Confirmation Modals ─────────────────────────────────── */
 .confirmation-modal {
   display: none;
   position: fixed;
@@ -329,32 +384,23 @@
   box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .filters-container {
-    flex-direction: column;
-  }
-
-  .filter-group {
-    min-width: 100%;
-  }
-
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 900px) {
   .requests-table {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .requests-table th,
   .requests-table td {
-    padding: 12px 8px;
+    padding: 10px 8px;
   }
 
   .action-btn {
-    padding: 6px 10px;
-    font-size: 12px;
-    margin-right: 4px;
-    margin-bottom: 4px;
+    padding: 5px 8px;
+    font-size: 11px;
   }
 
+  /* On very small screens, hide button text, show only icon */
   .action-btn span {
     display: none;
   }
