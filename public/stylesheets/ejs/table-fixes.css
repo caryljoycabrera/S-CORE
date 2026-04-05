@@ -6,71 +6,58 @@
 /* ── Base table layout ── */
 .requests-table,
 .trash-requests-table {
-  table-layout: fixed;
-  width: 100%;
+  table-layout: auto !important; /* Allow columns to naturally size based on content */
+  width: 100% !important;
   border-collapse: collapse;
 }
 
-/* ── All cells: ellipsis truncation for long text ── */
-.requests-table th,
-.requests-table td,
-.trash-requests-table th,
-.trash-requests-table td {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 0;          /* required for text-overflow to work in table-layout:fixed */
-  vertical-align: middle;
-  padding: 0.75rem;
-}
-
-/* ── Column width suggestions (9-col layout) ── */
-.requests-table th:nth-child(1), .requests-table td:nth-child(1) { width: 7%;  }
-.requests-table th:nth-child(2), .requests-table td:nth-child(2) { width: 7%;  }
-.requests-table th:nth-child(3), .requests-table td:nth-child(3) { width: 13%; }
-.requests-table th:nth-child(4), .requests-table td:nth-child(4) { width: 16%; }
-.requests-table th:nth-child(5), .requests-table td:nth-child(5) { width: 16%; }
-.requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 10%; }
-.requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 11%; }
-.requests-table th:nth-child(8), .requests-table td:nth-child(8) { width: 10%; }
-.requests-table th:nth-child(9), .requests-table td:nth-child(9) { width: 10%; }
-
-/* ── Trash/modal tables (fewer cols) ── */
-.trash-requests-table th:nth-child(1), .trash-requests-table td:nth-child(1) { width: 10%; }
-.trash-requests-table th:nth-child(2), .trash-requests-table td:nth-child(2) { width: 22%; }
-.trash-requests-table th:nth-child(3), .trash-requests-table td:nth-child(3) { width: 20%; }
-.trash-requests-table th:nth-child(4), .trash-requests-table td:nth-child(4) { width: 15%; }
-.trash-requests-table th:nth-child(5), .trash-requests-table td:nth-child(5) { width: 15%; }
-.trash-requests-table th:nth-child(6), .trash-requests-table td:nth-child(6) { width: 10%; }
-.trash-requests-table th:nth-child(7), .trash-requests-table td:nth-child(7) { width: 8%;  }
-
-/* ── Table section wrapper — always allows horizontal scroll ── */
-.table-section {
+/* Ensure the container triggers horizontal scroll instead of squishing the table */
+.table-section,
+.trash-table-container {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* ── Status/type badges must not be truncated ── */
-.requests-table .status-badge,
-.requests-table .type-badge,
-.trash-requests-table .status-badge,
-.trash-requests-table .type-badge {
+/* ── Default Cell Behavior ── */
+.requests-table th,
+.requests-table td,
+.trash-requests-table th,
+.trash-requests-table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+  /* Default is nowrap to show ID, User, Status, and Dates fully */
   white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
+}
+
+/* ── Content Wrapper for Line Clamping (2 Lines Max) ── */
+.table-cell-wrapper {
+  white-space: normal !important; /* Allow wrapping */
+  word-break: break-word;
+  min-width: 140px;
+  max-width: 280px;
+  
+  /* Standard Line Clamping */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Ensure Status/Type badges are never cut ── */
+.status-badge,
+.type-badge {
+  display: inline-block;
+  white-space: nowrap !important;
 }
 
 /* =============================================================================
-   MOBILE RESPONSIVE — ≤ 768px
-   Enforces horizontal scroll with min-width so nothing squashes or wraps
+   MOBILE RESPONSIVE — <= 768px
    ============================================================================= */
 @media (max-width: 768px) {
-
-  /* Give the table a fixed minimum so all columns stay readable */
-  .requests-table       { min-width: 780px; }
-  .trash-requests-table { min-width: 900px; }
-
-  /* Tighter padding + slightly smaller text on mobile */
   .requests-table th,
   .requests-table td,
   .trash-requests-table th,
@@ -78,20 +65,9 @@
     padding: 0.55rem 0.6rem;
     font-size: 0.8rem;
   }
-
-  /* Ensure the wrapper scrolls and is visually delimited */
-  .table-section {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-  }
 }
 
 @media (max-width: 480px) {
-  .requests-table       { min-width: 700px; }
-  .trash-requests-table { min-width: 900px; }
-
   .requests-table th,
   .requests-table td,
   .trash-requests-table th,
@@ -100,3 +76,4 @@
     font-size: 0.75rem;
   }
 }
+

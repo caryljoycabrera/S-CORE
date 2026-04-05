@@ -884,15 +884,22 @@ function updateFilteredStatusChart(data) {
     // Show actual data
     filteredStatusChart.data.labels = data.labels;
     filteredStatusChart.data.datasets[0].data = data.data;
-    filteredStatusChart.data.datasets[0].backgroundColor = [
-      '#f59e0b', // Pending
-      '#3b82f6', // In Progress
-      '#ef4444', // Revision
-      '#10b981', // Completed
-      '#8b5cf6', // Approved
-      '#06b6d4', // Rejected
-      '#14b8a6'  // Cancelled
-    ];
+    
+    // Status color mapping
+    const statusColorMap = {
+      'Pending': '#fbbf24',
+      'In Progress': '#3b82f6',
+      'For Revision': '#f59e0b',
+      'Completed': '#10b981',
+      'Approved': '#10b981',
+      'Rejected': '#ef4444',
+      'Cancelled': '#9ca3af',
+      'Queued': '#0ea5e9',
+      'For Checking': '#a855f7',
+      'Draft': '#9ca3af'
+    };
+    
+    filteredStatusChart.data.datasets[0].backgroundColor = data.labels.map(label => statusColorMap[label] || '#9ca3af');
     filteredStatusChart.options.plugins.legend.display = true;
   }
   filteredStatusChart.update();

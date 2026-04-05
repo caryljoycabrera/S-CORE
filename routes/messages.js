@@ -51,7 +51,7 @@ router.get('/messages', requireLogin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching conversations:', error);
-    res.status(500).render('error', { error: error.message });
+    res.status(500).render('error', { message: error.message });
   }
 });
 

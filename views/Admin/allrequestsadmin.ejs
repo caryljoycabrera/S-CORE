@@ -345,7 +345,7 @@
 
         <!-- Table -->
         <section class="table-section" style="overflow-x: auto;">
-          <table class="requests-table" style="width: 100%; border-collapse: collapse; background: white;">
+          <table class="requests-table" style="border-collapse: collapse; background: white; min-width: 960px;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
               <tr>
                 <th>Request ID</th>
@@ -415,8 +415,8 @@
                   <% } %>
                 </td>
                 <td data-label="User"><%= displayUserName %></td>
-                <td data-label="Title"><%= request.title %></td>
-                <td data-label="Organization"><%= request.displayOrganization || request.organization %></td>
+                <td data-label="Title"><div class="table-cell-wrapper"><%= request.title %></div></td>
+                <td data-label="Organization"><div class="table-cell-wrapper"><%= request.displayOrganization || request.organization %></div></td>
                 <td data-label="Status">
                   <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                     <%= request.status %>

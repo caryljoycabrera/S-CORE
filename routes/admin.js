@@ -339,8 +339,8 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     const now = new Date();
     const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
     
-    const approvals = await RequestApproval.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true } }).populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true } }).populate('userId').lean();
+    const approvals = await RequestApproval.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
 
     const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending');
     const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending');
@@ -1077,57 +1077,87 @@ router.get('/admin/archive', requireAdmin, (req, res) => {
 
 
 /**
- * POST /admin/requests/:id/restore
- * Restore an archived request back to 'Pending' status.
- * Admins can always restore. Regular users can only restore if allowUserReactivation is enabled.
+ * POST /a POST /admin/request/restore
+ * Restore archived/deleted request back to its previous status
  */
-router.post('/admin/requests/:id/restore', requireAdmin, async (req, res) => {
+router.post('/admin/request/restore', requireAdmin, async (req, res) => {
   try {
-    const { id } = req.params;
-    const { type } = req.body; // 'Request Approval' | 'Service Request'
+    const { requestId, requestType, newStatus } = req.body;
 
-    let restored = false;
-
-    if (type === 'Request Approval') {
-      const result = await RequestApproval.findByIdAndUpdate(id, {
-        $set: {
-          status: 'Pending',
-          isDeleted: false,
-          deletedAt: null,
-          deletedBy: null
-        },
-        $unset: { archivedAt: '', archivedBy: '' }
-      }, { new: true });
-      restored = !!result;
-    } else if (type === 'Service Request') {
-      const result = await ServiceRequest.findByIdAndUpdate(id, {
-        $set: {
-          status: 'Pending',
-          isDeleted: false,
-          deletedAt: null,
-          deletedBy: null
-        },
-        $unset: { archivedAt: '', archivedBy: '' }
-      }, { new: true });
-      restored = !!result;
+    if (!requestId || !requestType) {
+      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
     }
 
-    if (!restored) {
-      return res.status(404).json({ success: false, message: 'Request not found.' });
+    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
+
+    // Read the current document to get previousStatus before modifying
+    const existing = await Model.findById(requestId).lean();
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
     }
 
-    console.log(`[ADMIN] Restored request ${id} (type: ${type}) to Pending by user ${req.session.userId}`);
+    // Determine the status to restore to:
+    //   - If newStatus is provided (from the UI modal choice), use it
+    //   - If previousStatus was saved (by archive or delete), use it
+    //   - Otherwise fall back to 'Pending'
+    const restoreStatus = newStatus || existing.previousStatus || 'Pending';
 
-    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
-      return res.json({ success: true, message: 'Request has been restored to Pending status.' });
+    // Build the update: clear archive/delete flags and restore the original status
+    const updateDoc = {
+      status: restoreStatus,
+      isDeleted: false,
+      $unset: {
+        deletedAt: 1,
+        deletedBy: 1,
+        previousStatus: 1,
+        archivedAt: 1,
+        archivedBy: 1
+      }
+    };
+
+    const request = await Model.findByIdAndUpdate(requestId, updateDoc, { new: true });
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
     }
-    return res.redirect('/admin/archive?success=Request restored successfully');
-  } catch (err) {
-    console.error('Error restoring request:', err);
-    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
-      return res.status(500).json({ success: false, message: 'Failed to restore request.' });
+
+    // Notify the user with the actual restored status
+    try {
+      await notificationService.notifySystem(
+        request.userId, 
+        'Request Restored', 
+        `Your ${requestType.toLowerCase()} "${request.title}" has been restored (status: ${restoreStatus}).`, 
+        'medium', 
+        '/messages'
+      );
+      
+      // Notify Units if assigned
+      if (request.assignedUnits) {
+        const User = require('../models/User');
+        const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
+        const unitIds = unitMembers.map(u => u._id);
+        if (unitIds.length > 0) {
+          await notificationService.notifySystem(
+            unitIds,
+            'Request Restored',
+            `The ${requestType.toLowerCase()} "${request.title}" assigned to your unit has been restored (status: ${restoreStatus}).`,
+            'medium',
+            '/messages'
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending notification:', notifError);
     }
-    return res.redirect('/admin/archive?error=Failed to restore request');
+
+    res.json({ 
+      success: true, 
+      message: `Request restored to "${restoreStatus}" status successfully`,
+      restoredStatus: restoreStatus
+    });
+  } catch (error) {
+    console.error('Error restoring request:', error);
+    res.status(500).json({ success: false, message: 'Failed to restore request' });
   }
 });
 
@@ -1148,6 +1178,59 @@ router.post('/admin/run-archiving-now', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('[ADMIN] Manual archiving failed:', error);
     return res.status(500).json({ success: false, message: 'Archiving job failed. Check server logs.' });
+  }
+});
+
+/**
+ * GET /api/admin/archived-records
+ * Fetch all archived and manually deleted requests with display fields computed.
+ * Consolidated from the configuration page's initial load logic.
+ */
+router.get('/api/admin/archived-records', requireAdmin, async (req, res) => {
+  try {
+    const [deletedApprovals, deletedServices, autoArchivedApprovals, autoArchivedServices] = await Promise.all([
+      RequestApproval.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
+      ServiceRequest.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
+      RequestApproval.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+      ServiceRequest.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean()
+    ]);
+
+    const buildEntry = (r, type, source) => {
+      let userName = 'System User';
+      let displayOrganization = r.organization || 'N/A';
+      let deletedByName = source === 'auto' ? 'System (Auto-Archive)' : 'Unknown';
+      if (r.userId && r.userId.fName) {
+        userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+        displayOrganization = r.userId.userType === 'nonstudent'
+          ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+          : r.organization || 'N/A';
+      }
+      if (source === 'deleted' && r.deletedBy && r.deletedBy.fName) {
+        deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+      }
+      return { 
+        ...r, 
+        type, 
+        displayOrganization, 
+        userName, 
+        deletedByName, 
+        archiveSource: source,
+        datetime: r.datetime || r.createdAt,
+        deletedAt: source === 'auto' ? (r.archivedAt || r.updatedAt) : r.deletedAt 
+      };
+    };
+
+    const archivedRequests = [
+      ...deletedApprovals.map(r => buildEntry(r, 'Request Approval', 'deleted')),
+      ...deletedServices.map(r => buildEntry(r, 'Service Request', 'deleted')),
+      ...autoArchivedApprovals.map(r => buildEntry(r, 'Request Approval', 'auto')),
+      ...autoArchivedServices.map(r => buildEntry(r, 'Service Request', 'auto')),
+    ].sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
+
+    res.json({ success: true, data: archivedRequests });
+  } catch (error) {
+    console.error('[API] Error fetching archived records:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch archived records' });
   }
 });
 
@@ -1523,6 +1606,15 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             await notificationService.notifyApprovalRejected(requestId, approval.userId._id, req.user._id);
           } else if (statusLower === 'for revision') {
             await notificationService.notifyApprovalRevision(requestId, approval.userId._id, req.user._id);
+          } else if (statusLower === 'archived' || statusLower === 'deleted') {
+            const titleStr = approval.title || 'Untitled Request';
+            const requestorId = approval.userId._id || approval.userId;
+            const adminId = req.user._id;
+            // Only notify requestor if they are NOT the admin performing the action
+            if (String(requestorId) !== String(adminId)) {
+              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+              await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/request-approvals?openModalId=${requestId}`);
+            }
           }
         }
       } else if (requestType === 'Service Request') {
@@ -1536,6 +1628,24 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             await notificationService.notifyServiceRejected(requestId, service.userId._id, req.user._id);
           } else if (statusLower === 'completed') {
             await notificationService.notifyServiceCompleted(requestId, service.userId._id, req.user._id);
+          } else if (statusLower === 'archived' || statusLower === 'deleted') {
+            const titleStr = service.title || 'Untitled Request';
+            const requestorId = service.userId._id || service.userId;
+            const adminId = req.user._id;
+            // Only notify requestor if they are NOT the admin performing the action
+            if (String(requestorId) !== String(adminId)) {
+              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+              await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/service-requests?openModalId=${requestId}`);
+            }
+            // Notify Units - send to service-requests page where archived requests are visible
+            const User = require('../models/User');
+            if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+              const unitMembers = await User.find({ unitTeam: assignedUnits, role: 'unit' }, '_id');
+              const unitIds = unitMembers.map(u => u._id);
+              if (unitIds.length > 0) {
+                await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was archived.`, 'medium', `/admin/services?openModalId=${requestId}`);
+              }
+            }
           }
         }
       }
@@ -1603,6 +1713,15 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
           await notificationService.notifyApprovalRejected(requestId, result.userId._id, req.user._id);
         } else if (statusLower === 'for revision') {
           await notificationService.notifyApprovalRevision(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'archived' || statusLower === 'deleted') {
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminId = req.user._id;
+          // Only notify requestor if they are NOT the admin performing the action
+          if (String(requestorId) !== String(adminId)) {
+            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+            await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/request-approvals?openModalId=${result._id}`);
+          }
         }
       }
     } catch (notifError) {
@@ -1727,6 +1846,23 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
           await notificationService.notifyServiceRejected(requestId, result.userId._id, req.user._id);
         } else if (statusLower === 'completed') {
           await notificationService.notifyServiceCompleted(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'archived' || statusLower === 'deleted') {
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminId = req.user._id;
+          // Only notify requestor if they are NOT the admin performing the action
+          if (String(requestorId) !== String(adminId)) {
+            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+            await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/service-requests?openModalId=${result._id}`);
+          }
+          const User = require('../models/User');
+          if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+            const unitMembers = await User.find({ unitTeam: assignedUnits, role: 'unit' }, '_id');
+            const unitIds = unitMembers.map(u => u._id);
+            if (unitIds.length > 0) {
+              await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was archived.`, 'medium', `/admin/services?openModalId=${result._id}`);
+            }
+          }
         }
       }
     } catch (notifError) {
@@ -2682,6 +2818,8 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
     // Status filter
     if (status && status !== 'all') {
       query.status = new RegExp(status, 'i');
+    } else {
+      query.status = { $nin: ['Archived', 'ARCHIVED', 'archived'] };
     }
     
     // Fetch data based on request type
@@ -2833,7 +2971,8 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
     // Status breakdown for filtered data
     const statusBreakdown = {};
     allFilteredRequests.forEach(req => {
-      const status = req.status || 'Unknown';
+      let rawStatus = req.status || 'Unknown';
+      let status = rawStatus.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
       statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
     });
     
@@ -3395,14 +3534,36 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
 
-    // Create notification for the user who submitted the request
+    // Notify requestor and assigned units (but NOT the admin who performed the action)
     try {
-      await notificationService.createNotification({
-        userId: request.userId,
-        message: `Your ${requestType.toLowerCase()} "${request.title}" has been archived by an administrator`,
-        link: '/user/my-requests',
-        type: 'system'
-      });
+      const titleStr = request.title || 'Untitled Request';
+      const requestorId = request.userId._id || request.userId;
+      const adminId = req.user._id;
+      
+      // Determine the correct notification URL based on request type - use archived modal format
+      const notificationUrl = requestType === 'Request Approval' 
+        ? `/request-approvals?modal=archived&requestId=${request._id}&type=approval`
+        : `/service-requests?modal=archived&requestId=${request._id}&type=service`;
+
+      // 1. User Notification - ONLY if the requestor is NOT the admin performing the action
+      const userMessage = `Your request "${titleStr}" was manually deleted by an administrator. You can request restoration by providing a reason.`;
+      if (request.userId && String(requestorId) !== String(adminId)) {
+        await notificationService.notifySystem(requestorId, 'Request Deleted', userMessage, 'high', notificationUrl);
+      }
+
+      // 2. Unit Notification - send to appropriate page where archived requests are visible
+      if (request.assignedUnits) {
+        const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
+        const unitIds = unitMembers.map(u => u._id);
+        if (unitIds.length > 0) {
+          const unitMessage = `The request "${titleStr}" assigned to your unit was manually deleted by an administrator.`;
+          // For units, send to admin equivalents (admin/services or admin/approvals)
+          const unitNotificationUrl = requestType === 'Request Approval'
+            ? `/admin/approvals?openModalId=${request._id}`
+            : `/admin/services?openModalId=${request._id}`;
+          await notificationService.notifySystem(unitIds, 'Request Deleted', unitMessage, 'medium', unitNotificationUrl);
+        }
+      }
     } catch (notifError) {
       console.error('Error sending notification:', notifError);
     }
@@ -3418,69 +3579,7 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
 });
 
 /**
- * POST /admin/request/restore
- * Restore archived/deleted request back to its previous status
- */
-router.post('/admin/request/restore', requireAdmin, async (req, res) => {
-  try {
-    const { requestId, requestType } = req.body;
-
-    if (!requestId || !requestType) {
-      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
-    }
-
-    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
-
-    // Read the current document to get previousStatus before modifying
-    const existing = await Model.findById(requestId).lean();
-    if (!existing) {
-      return res.status(404).json({ success: false, message: 'Request not found' });
-    }
-
-    // Determine the status to restore to:
-    //   - If previousStatus was saved (by archive or delete), use it
-    //   - Otherwise fall back to 'Pending'
-    const restoreStatus = existing.previousStatus || 'Pending';
-
-    // Build the update: clear archive/delete flags and restore the original status
-    const updateDoc = {
-      status: restoreStatus,
-      isDeleted: false,
-      $unset: {
-        deletedAt: 1,
-        deletedBy: 1,
-        previousStatus: 1,
-        archivedAt: 1,
-        archivedBy: 1
-      }
-    };
-
-    const request = await Model.findByIdAndUpdate(requestId, updateDoc, { new: true });
-
-    if (!request) {
-      return res.status(404).json({ success: false, message: 'Request not found' });
-    }
-
-    // Notify the user with the actual restored status
-    try {
-      await notificationService.createNotification({
-        userId: request.userId,
-        message: `Your ${requestType.toLowerCase()} "${request.title}" has been restored from archive (status: ${restoreStatus})`,
-        link: '/user/my-requests',
-        type: 'system'
-      });
-    } catch (notifError) {
-      console.error('Error sending notification:', notifError);
-    }
-
-    res.json({ 
-      success: true, 
-      message: `Request restored to "${restoreStatus}" status successfully`,
-      restoredStatus: restoreStatus
-    });
-  } catch (error) {
-    console.error('Error restoring request:', error);
-    res.status(500).json({ success: false, message: 'Failed to restore request' });
+ *
   }
 });
 
@@ -3859,7 +3958,11 @@ router.put('/admin/settings/request-management', requireAdmin, async (req, res) 
       maxMinorRevisions,
       defaultDeadlineDays,
       autoApproveAfterRevisions,
-      requireUnitReview
+      requireUnitReview,
+      archiveCompletedAfterDays,
+      archiveApprovedAfterDays,
+      archiveRevisionAfterDays,
+      allowUserReactivation
     } = req.body;
 
     const updates = {
@@ -3867,7 +3970,11 @@ router.put('/admin/settings/request-management', requireAdmin, async (req, res) 
       maxMinorRevisions: parseInt(maxMinorRevisions),
       defaultDeadlineDays: parseInt(defaultDeadlineDays),
       autoApproveAfterRevisions: autoApproveAfterRevisions === 'true' || autoApproveAfterRevisions === true,
-      requireUnitReview: requireUnitReview === 'true' || requireUnitReview === true
+      requireUnitReview: requireUnitReview === 'true' || requireUnitReview === true,
+      archiveCompletedAfterDays: parseInt(archiveCompletedAfterDays),
+      archiveApprovedAfterDays: parseInt(archiveApprovedAfterDays),
+      archiveRevisionAfterDays: parseInt(archiveRevisionAfterDays),
+      allowUserReactivation: allowUserReactivation === 'true' || allowUserReactivation === true
     };
 
     const settings = await settingsService.updateSettings(updates, req.session.userId);
@@ -5095,7 +5202,7 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error loading analytics page:', error);
     if (!res.headersSent) {
-      res.status(500).render('error', { error: error.message });
+      res.status(500).render('error', { message: error.message });
     }
   }
 });
@@ -5516,6 +5623,10 @@ router.get('/admin/configuration', requireAdmin, async (req, res) => {
       console.error('[ADMIN] Could not load archive data for config page:', archiveError.message);
     }
 
+    // Get system-defined statuses, excluding 'Archived' for restoration
+    const allStatuses = (settings && settings.requestStatuses) || ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected'];
+    const restoreStatuses = allStatuses.filter(s => s.toLowerCase() !== 'archived');
+
     res.render('Admin/configuration', {
       name: user.firstName,
       user: user,
@@ -5523,6 +5634,7 @@ router.get('/admin/configuration', requireAdmin, async (req, res) => {
       settings: settings,
       requestTypes: requestTypes,
       archivedRequests,
+      restoreStatuses,
       allowUserReactivation: settings ? settings.allowUserReactivation : false,
       success: req.query.success,
       error: req.query.error
@@ -5753,17 +5865,19 @@ router.post('/admin/archive-settings', requireAdmin, async (req, res) => {
     const settingsService = require('../services/settingsService');
 
     const completedDays = parseInt(req.body.archiveCompletedAfterDays, 10);
+    const approvedDays  = parseInt(req.body.archiveApprovedAfterDays,  10);
     const revisionDays  = parseInt(req.body.archiveRevisionAfterDays,  10);
     const allowReactivation = req.body.allowUserReactivation === 'true' || req.body.allowUserReactivation === 'on';
 
     const updates = {};
     if (!isNaN(completedDays)) updates.archiveCompletedAfterDays = completedDays;
+    if (!isNaN(approvedDays))  updates.archiveApprovedAfterDays  = approvedDays;
     if (!isNaN(revisionDays))  updates.archiveRevisionAfterDays  = revisionDays;
     updates.allowUserReactivation = allowReactivation;
 
     await settingsService.updateSettings(updates);
 
-    console.log(`[ADMIN] Archive settings saved: completed=${completedDays}d, revision=${revisionDays}d, reactivation=${allowReactivation}`);
+    console.log(`[ADMIN] Archive settings saved: completed=${completedDays}d, approved=${approvedDays}d, revision=${revisionDays}d, reactivation=${allowReactivation}`);
     return res.json({ success: true, message: 'Archive settings saved.' });
   } catch (error) {
     console.error('[ADMIN] Error saving archive settings:', error);
@@ -6045,6 +6159,8 @@ router.get('/admin/analytics-data/request-volume', requireAdmin, async (req, res
     // Status filter
     if (status && status !== 'all') {
       query.status = new RegExp(status, 'i');
+    } else {
+      query.status = { $nin: ['Archived', 'ARCHIVED', 'archived'] };
     }
     
     // Fetch data based on request type
@@ -6249,8 +6365,8 @@ router.get('/admin/analytics-data/turnaround-by-unit', requireAdmin, async (req,
  */
 router.get('/admin/analytics-data/total-workload', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find().lean();
-    const serviceRequests = await ServiceRequest.find().lean();
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
 
     const unitMap = {};
     const { getUnits } = require('../utils/settingsHelpers');
@@ -6295,8 +6411,8 @@ router.get('/admin/analytics-data/total-workload', requireAdmin, async (req, res
  */
 router.get('/admin/analytics-data/response-time-by-unit', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find().lean();
-    const serviceRequests = await ServiceRequest.find().lean();
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
 
     const unitMap = {};
     const { getUnits } = require('../utils/settingsHelpers');

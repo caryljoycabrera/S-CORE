@@ -525,6 +525,8 @@
               <label for="requireUnitReview">Require unit team review before approval</label>
             </div>
 
+
+
             <div class="settings-button-group">
               <button type="submit" class="settings-btn settings-btn-primary">Save Changes</button>
               <button type="button" class="settings-btn settings-btn-secondary" onclick="resetRequestSettings()">Reset</button>
@@ -815,6 +817,10 @@
           document.getElementById('defaultDeadlineDays').value = settings.defaultDeadlineDays || 7;
           document.getElementById('autoApproveAfterRevisions').checked = settings.autoApproveAfterRevisions || false;
           document.getElementById('requireUnitReview').checked = settings.requireUnitReview !== false;
+          document.getElementById('archiveCompletedAfterDays').value = settings.archiveCompletedAfterDays || 30;
+          document.getElementById('archiveApprovedAfterDays').value = settings.archiveApprovedAfterDays || 30;
+          document.getElementById('archiveRevisionAfterDays').value = settings.archiveRevisionAfterDays || 14;
+          document.getElementById('allowUserReactivation').checked = settings.allowUserReactivation || false;
 
           // Populate Notification Settings
           document.getElementById('enableEmailNotifications').checked = settings.enableEmailNotifications !== false;
@@ -886,7 +892,11 @@
         maxMinorRevisions: document.getElementById('maxMinorRevisions').value,
         defaultDeadlineDays: document.getElementById('defaultDeadlineDays').value,
         autoApproveAfterRevisions: document.getElementById('autoApproveAfterRevisions').checked,
-        requireUnitReview: document.getElementById('requireUnitReview').checked
+        requireUnitReview: document.getElementById('requireUnitReview').checked,
+        archiveCompletedAfterDays: document.getElementById('archiveCompletedAfterDays').value,
+        archiveApprovedAfterDays: document.getElementById('archiveApprovedAfterDays').value,
+        archiveRevisionAfterDays: document.getElementById('archiveRevisionAfterDays').value,
+        allowUserReactivation: document.getElementById('allowUserReactivation').checked
       };
 
       try {

@@ -526,18 +526,19 @@ class NotificationService {
    */
 
   // Send system notification
-  async notifySystem(recipientIds, title, message, priority = 'medium') {
+async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl = null) {
     try {
       if (!Array.isArray(recipientIds)) {
         recipientIds = [recipientIds];
       }
 
-      const notifications = recipientIds.map(recipientId => 
+      const notifications = recipientIds.map(recipientId =>
         this.createNotification({
           recipient: recipientId,
           title: title,
           message: message,
           type: 'system',
+          actionUrl: actionUrl,
           priority: priority
         })
       );

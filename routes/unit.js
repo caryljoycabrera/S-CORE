@@ -50,71 +50,82 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     console.log('[/unit/dashboard] Querying RequestApproval tasks...');
     const totalApprovalTasks = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
-      status: { $nin: ['completed', 'cancelled', 'Archived'] }
-    });
+      status: { $nin: ['completed', 'cancelled', 'Archived', 'Deleted'] }
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Total approval tasks:', totalApprovalTasks);
 
     const pendingApprovalTasks = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^pending$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Pending approval tasks:', pendingApprovalTasks);
     
     const queuedApprovalTasks = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^queued$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Queued approval tasks:', queuedApprovalTasks);
     
     const inProgressApprovalTasks = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^in progress$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] In Progress approval tasks:', inProgressApprovalTasks);
 
     const revisionApprovalTasks = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^(revision|for revision)$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Revision approval tasks:', revisionApprovalTasks);
 
     // Service requests assigned to their unit (for processing - current assignments)
     console.log('[/unit/dashboard] Querying ServiceRequest tasks...');
     const totalServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
-      status: { $nin: ['completed', 'cancelled', 'Archived'] }
-    });
+      status: { $nin: ['completed', 'cancelled', 'Archived', 'Deleted'] }
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Total service tasks:', totalServiceTasks);
 
     const pendingServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^pending$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Pending service tasks:', pendingServiceTasks);
     
     const queuedServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^queued$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Queued service tasks:', queuedServiceTasks);
     
     const inProgressServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^in progress$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] In Progress service tasks:', inProgressServiceTasks);
 
     const revisionServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^(revision|for revision)$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Revision service tasks:', revisionServiceTasks);
 
     // Get viewable tasks count (tasks they were ever auto-assigned to, even if admin removed assignment)
     const viewableServiceTasks = await ServiceRequest.countDocuments({
       originalAssignedUnits: user.unitTeam,
-      status: { $nin: ['completed', 'cancelled', 'Archived'] }
-    });
+      status: { $nin: ['completed', 'cancelled', 'Archived', 'Deleted'] }
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     console.log('[/unit/dashboard] Viewable service tasks (ever assigned):', viewableServiceTasks);
 
     // Calculate combined statistics
@@ -128,12 +139,14 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const approvedApprovalTasks = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^approved$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
 
     const approvedServiceTasks = await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^approved$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
 
     const approvedTasks = approvedApprovalTasks + approvedServiceTasks;
 
@@ -142,7 +155,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const recentApprovalActivity = await RequestApproval
       .find({
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -153,7 +166,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const recentServiceActivity = await ServiceRequest
       .find({
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -180,15 +193,15 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
     const upcomingApprovalDeadlines = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       deadline: { $lte: sevenDaysFromNow, $gte: new Date() },
-      status: { $nin: ['completed', 'cancelled', 'Archived'] },
-      isDeleted: { $ne: true }
+      status: { $nin: ['completed', 'cancelled', 'Archived', 'Deleted'] },
+      isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
     });
 
     const upcomingServiceDeadlines = await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       deadline: { $lte: sevenDaysFromNow, $gte: new Date() },
-      status: { $nin: ['completed', 'cancelled', 'Archived'] },
-      isDeleted: { $ne: true }
+      status: { $nin: ['completed', 'cancelled', 'Archived', 'Deleted'] },
+      isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
     });
 
     const upcomingDeadlines = upcomingApprovalDeadlines + upcomingServiceDeadlines;
@@ -199,7 +212,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
         assignedUnits: user.unitTeam,
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
         deadline: { $exists: true },
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ deadline: 1 })
@@ -211,7 +224,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
         assignedUnits: user.unitTeam,
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
         deadline: { $exists: true },
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ deadline: 1 })
@@ -231,7 +244,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       .find({
         assignedUnits: user.unitTeam,
         status: 'completed',
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -242,7 +255,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       .find({
         assignedUnits: user.unitTeam,
         status: 'completed',
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -359,13 +372,15 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       .countDocuments({
         assignedUnits: user.unitTeam,
         status: /^approved$/i
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     
     const completedServices = await ServiceRequest
       .countDocuments({
         assignedUnits: user.unitTeam,
         status: /^completed$/i
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
 
     // Create breakdown by status
     const statusBreakdown = {
@@ -537,22 +552,28 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       const dayApprovals = await RequestApproval.countDocuments({
         assignedUnits: user.unitTeam,
         createdAt: { $gte: date, $lt: nextDate }
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] },
+        status: { $nin: ['Archived', 'Deleted'] }});
       
       const dayServices = await ServiceRequest.countDocuments({
         assignedUnits: user.unitTeam,
         createdAt: { $gte: date, $lt: nextDate }
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] },
+        status: { $nin: ['Archived', 'Deleted'] }});
       
       const dayCompleted = await RequestApproval.countDocuments({
         assignedUnits: user.unitTeam,
         status: 'Approved',
         updatedAt: { $gte: date, $lt: nextDate }
-      }) + await ServiceRequest.countDocuments({
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }}) + await ServiceRequest.countDocuments({
         assignedUnits: user.unitTeam,
         status: 'Completed',
         updatedAt: { $gte: date, $lt: nextDate }
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
       
       taskTimeline.push({
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -615,7 +636,7 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
     const approvalRequests = await RequestApproval
       .find({ 
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName email')
       .sort({ createdAt: -1 })
@@ -625,7 +646,7 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
     const serviceRequests = await ServiceRequest
       .find({ 
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName email')
       .sort({ createdAt: -1 })
@@ -713,7 +734,7 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
     const approvalRequests = await RequestApproval
       .find({ 
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
@@ -723,7 +744,7 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
     const serviceRequests = await ServiceRequest
       .find({ 
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
@@ -767,7 +788,7 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
     const approvalRequests = await RequestApproval
       .find({ 
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
@@ -810,7 +831,7 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
     const currentServiceRequests = await ServiceRequest
       .find({ 
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
@@ -820,7 +841,7 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
     const viewableServiceRequests = await ServiceRequest
       .find({ 
         originalAssignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName email studentOrganization office department affiliation')
       .sort({ createdAt: -1 })
@@ -1834,7 +1855,9 @@ router.get('/unit/reports', requireUnit, async (req, res) => {
     const unreadCount = await Notification.countDocuments({
       recipient: req.user._id,
       read: false
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] },
+        status: { $nin: ['Archived', 'Deleted'] }});
     res.render('Unit/unitReports', {
       user: user,
       unreadCount: unreadCount,
@@ -1870,7 +1893,7 @@ router.get('/unit/dashboard/urgent-tasks', requireUnit, async (req, res) => {
         assignedUnits: user.unitTeam,
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
         deadline: { $exists: true },
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ deadline: 1 })
@@ -1882,7 +1905,7 @@ router.get('/unit/dashboard/urgent-tasks', requireUnit, async (req, res) => {
         assignedUnits: user.unitTeam,
         status: { $nin: ['completed', 'cancelled', 'Archived'] },
         deadline: { $exists: true },
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ deadline: 1 })
@@ -1938,13 +1961,15 @@ router.get('/unit/dashboard/task-breakdown', requireUnit, async (req, res) => {
       .countDocuments({
         assignedUnits: user.unitTeam,
         status: /^approved$/i
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
     
     const completedServices = await ServiceRequest
       .countDocuments({
         assignedUnits: user.unitTeam,
         status: /^completed$/i
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
 
     // Create breakdown by status
     const statusBreakdown = {
@@ -2131,19 +2156,23 @@ router.get('/unit/dashboard/workload-snapshot', requireUnit, async (req, res) =>
     const pendingRequests = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^pending$/i }
-    }) + await ServiceRequest.countDocuments({
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }}) + await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^pending$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
 
     // Get in-review requests count
     const inReviewRequests = await RequestApproval.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^(in review|for revision)$/i }
-    }) + await ServiceRequest.countDocuments({
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }}) + await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^(in review|for revision)$/i }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
 
     // Get approved requests count (this week)
     const oneWeekAgo = new Date();
@@ -2153,11 +2182,13 @@ router.get('/unit/dashboard/workload-snapshot', requireUnit, async (req, res) =>
       assignedUnits: user.unitTeam,
       status: { $regex: /^approved$/i },
       updatedAt: { $gte: oneWeekAgo }
-    }) + await ServiceRequest.countDocuments({
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }}) + await ServiceRequest.countDocuments({
       assignedUnits: user.unitTeam,
       status: { $regex: /^completed$/i },
       updatedAt: { $gte: oneWeekAgo }
-    });
+    ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
 
     res.json({
       pendingRequests,
@@ -2186,7 +2217,7 @@ router.get('/unit/dashboard/recent-activity', requireUnit, async (req, res) => {
     const recentApprovalActivity = await RequestApproval
       .find({
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -2196,7 +2227,7 @@ router.get('/unit/dashboard/recent-activity', requireUnit, async (req, res) => {
     const recentServiceActivity = await ServiceRequest
       .find({
         assignedUnits: user.unitTeam,
-        isDeleted: { $ne: true }
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }
       })
       .populate('userId', 'fName lName')
       .sort({ updatedAt: -1 })
@@ -2241,10 +2272,12 @@ router.get('/unit/dashboard/requester-compliance', requireUnit, async (req, res)
     // Calculate requester compliance (organizations with submission/response stats)
     const allTasks = [
       ...(await RequestApproval.find({
-        assignedUnits: user.unitTeam
+        assignedUnits: user.unitTeam,
+        status: { $nin: ['Archived', 'Deleted'] }
       }).populate('userId', 'studentOrg office').lean()),
       ...(await ServiceRequest.find({
-        assignedUnits: user.unitTeam
+        assignedUnits: user.unitTeam,
+        status: { $nin: ['Archived', 'Deleted'] }
       }).populate('userId', 'studentOrg office').lean())
     ];
 
@@ -2327,22 +2360,28 @@ router.get('/unit/dashboard/task-timeline', requireUnit, async (req, res) => {
       const dayApprovals = await RequestApproval.countDocuments({
         assignedUnits: user.unitTeam,
         createdAt: { $gte: date, $lt: nextDate }
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] },
+        status: { $nin: ['Archived', 'Deleted'] }});
       
       const dayServices = await ServiceRequest.countDocuments({
         assignedUnits: user.unitTeam,
         createdAt: { $gte: date, $lt: nextDate }
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] },
+        status: { $nin: ['Archived', 'Deleted'] }});
       
       const dayCompleted = await RequestApproval.countDocuments({
         assignedUnits: user.unitTeam,
         status: 'Approved',
         updatedAt: { $gte: date, $lt: nextDate }
-      }) + await ServiceRequest.countDocuments({
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }}) + await ServiceRequest.countDocuments({
         assignedUnits: user.unitTeam,
         status: 'Completed',
         updatedAt: { $gte: date, $lt: nextDate }
-      });
+      ,
+        isDeleted: { $ne: true }, status: { $nin: ['Archived', 'Deleted'] }});
       
       taskTimeline.push({
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),

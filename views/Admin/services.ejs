@@ -386,8 +386,8 @@
                   data-student="<%= displayUserName %>">
                 <td><%= request._id.toString().slice(-6) %></td>
                 <td><%= displayUserName %></td>
-                <td><%= request.title %></td>
-                <td><%= request.displayOrganization || request.organization %></td>
+                <td><div class="table-cell-wrapper"><%= request.title %></div></td>
+                <td><div class="table-cell-wrapper"><%= request.displayOrganization || request.organization %></div></td>
                 <td>
                   <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                     <%= request.status %>

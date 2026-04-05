@@ -1125,6 +1125,173 @@
     window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
   </script>
 
+  <!-- Archived Request Modal - Allow user to request restoration -->
+  <div id="archivedRequestModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header unit-modal-header" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          <h2 style="color: white;">Archived Request</h2>
+        </div>
+        <button class="close-modal-btn" onclick="closeArchivedRequestModal()" aria-label="Close" style="color: white; background: rgba(255,255,255,0.2); border: none;">
+          <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 2rem;">
+        <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+          <p style="color: #92400e; margin: 0; font-size: 0.9rem;">
+            <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            This request was archived by an administrator. You can request its restoration below.
+          </p>
+        </div>
+        
+        <div style="background: #f3f4f6; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+          <h3 style="margin-top: 0; color: #1f2937; font-size: 1rem;">Request Details</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 0.25rem;">Title</label>
+              <p id="archivedRequestTitle" style="margin: 0; color: #1f2937; font-weight: 500;">Loading...</p>
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 0.25rem;">Status</label>
+              <p id="archivedRequestStatus" style="margin: 0; color: #1f2937; font-weight: 500;">Loading...</p>
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <label style="display: block; font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 0.25rem;">Archived Date</label>
+            <p id="archivedRequestDate" style="margin: 0; color: #1f2937; font-weight: 500;">Loading...</p>
+          </div>
+        </div>
+
+        <label class="unit-form-label">
+          <strong>Reason for Restoration</strong> <span style="color: #dc2626;">*</span>
+          <small>Explain why this request should be restored and what changes have been made</small>
+        </label>
+        <textarea id="restorationReasonInput" class="unit-textarea" placeholder="E.g., We have completed the required changes and would like to resubmit this request for approval..." rows="5" style="margin-bottom: 1.5rem;"></textarea>
+        
+        <div style="display: flex; gap: 1rem;">
+          <button onclick="closeArchivedRequestModal()" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
+          <button id="submitRestorationBtn" onclick="submitRestorationRequest()" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none;">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Request Restoration
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables for archived request modal
+    let currentArchivedRequestId = null;
+    let currentArchivedRequestType = null;
+
+    function closeArchivedRequestModal() {
+      const modal = document.getElementById('archivedRequestModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+
+    function openArchivedRequestModal(requestId, requestType) {
+      console.log('Opening archived request modal:', { requestId, requestType });
+      
+      currentArchivedRequestId = requestId;
+      currentArchivedRequestType = requestType;
+      
+      // Fetch the request details
+      fetch(`/api/request/${requestId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.archived) {
+            // Display the archived request information
+            document.getElementById('archivedRequestTitle').textContent = data.title || 'Untitled';
+            document.getElementById('archivedRequestStatus').textContent = data.previousStatus || 'Unknown';
+            document.getElementById('archivedRequestDate').textContent = data.deletedAt 
+              ? new Date(data.deletedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+              : 'Unknown';
+            
+            // Clear previous input
+            document.getElementById('restorationReasonInput').value = '';
+            
+            // Show the modal
+            const modal = document.getElementById('archivedRequestModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+          } else {
+            alert('This request is not archived. Please try again.');
+            closeArchivedRequestModal();
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching request:', error);
+          alert('Failed to load request details. Please try again.');
+          closeArchivedRequestModal();
+        });
+    }
+
+    function submitRestorationRequest() {
+      const reason = document.getElementById('restorationReasonInput').value.trim();
+      
+      if (!reason) {
+        alert('Please provide a reason for restoration.');
+        return;
+      }
+      
+      if (!currentArchivedRequestId || !currentArchivedRequestType) {
+        alert('Request information is missing. Please try again.');
+        return;
+      }
+
+      // Submit restoration request
+      fetch('/api/request-restoration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestId: currentArchivedRequestId,
+          requestType: currentArchivedRequestType,
+          reason: reason
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Your restoration request has been submitted successfully. An administrator will review it soon.');
+          closeArchivedRequestModal();
+        } else {
+          alert(`Error: ${data.message}`);
+        }
+      })
+      .catch(error => {
+        console.error('Error submitting restoration request:', error);
+        alert('Failed to submit restoration request. Please try again.');
+      });
+    }
+
+    // Close modal on overlay click
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('archivedRequestModal');
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            closeArchivedRequestModal();
+          }
+        });
+      }
+    });
+  </script>
+
   <!-- PDF Viewer Modal -->
   <div id="pdfViewerModal" class="modal" style="display: none;">
     <div class="modal-content pdf-viewer-modal">

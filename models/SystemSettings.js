@@ -59,7 +59,11 @@ const systemSettingsSchema = new mongoose.Schema({
   // Automated Archiving Settings
   archiveCompletedAfterDays: {
     type: Number,
-    default: 30 // Archive Completed/Approved requests after 30 days
+    default: 30 // Archive Completed requests after 30 days
+  },
+  archiveApprovedAfterDays: {
+    type: Number,
+    default: 30 // Archive Approved requests after 30 days
   },
   archiveRevisionAfterDays: {
     type: Number,

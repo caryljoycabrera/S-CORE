@@ -172,7 +172,31 @@ const requestApprovalSchema = new mongoose.Schema({
   deletedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }
+  },
+  previousStatus: {
+    type: String
+  },
+
+  // Restoration requests when archived/deleted
+  restorationRequests: [{
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    reason: {
+      type: String,
+      trim: true
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    }
+  }]
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields
 });

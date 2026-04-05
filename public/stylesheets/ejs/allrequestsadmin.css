@@ -309,7 +309,7 @@ hr {
   overflow: visible !important;
   position: relative;
   display: block !important;
-  padding-bottom: 3.5rem !important;
+  padding-bottom: 0 !important;
 }
 
 .filter-group {
@@ -331,14 +331,15 @@ hr {
 
 /* Filter actions positioning fix */
 .filter-actions {
-  position: absolute !important;
-  bottom: 0 !important;
-  right: 0 !important;
+  position: relative !important;
   display: flex !important;
+  justify-content: flex-end !important;
   align-items: center !important;
   gap: 0.625rem !important; /* 10px - compact spacing */
-  border-top: none !important;
-  padding-top: 0 !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding-top: 1.25rem !important;
+  margin-top: 1.25rem !important;
+  width: 100% !important;
 }
 
 /* Clear button styling - ensure proper spacing */
@@ -5206,9 +5207,15 @@ input:checked + .toggle-slider:before {
   .filter-container { padding-bottom: 0 !important; }
   .filter-controls { flex-direction: column !important; gap: 0.625rem !important; }
   .filter-item { width: 100% !important; }
-  .filter-actions { position: static !important; margin-top: 0.75rem; justify-content: space-between; width: 100%; }
-  .clear-filters-btn { flex: 1; justify-content: center; }
-  .results-count { flex: 1; text-align: center; }
+  .filter-actions { 
+    position: static !important; 
+    margin-top: 1rem; 
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    width: 100% !important; 
+  }
+  .clear-filters-btn { width: 100% !important; justify-content: center; }
+  .results-count { width: 100% !important; text-align: center; display: block !important; box-sizing: border-box !important; }
   .back-to-dashboard-container { margin: 1rem 1rem; flex-direction: column; align-items: stretch; gap: 0.75rem; }
   .back-to-dashboard-btn { margin-right: 0; justify-content: center; }
   .pagination-controls { justify-content: center; }

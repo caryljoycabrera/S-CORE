@@ -178,8 +178,8 @@
             ${escapeHtml(request.type)}
           </span>
         </td>
-        <td>${escapeHtml(request.title)}</td>
-        <td>${escapeHtml(request.displayOrganization || request.organization)}</td>
+        <td><div class="table-cell-wrapper">${escapeHtml(request.title)}</div></td>
+        <td><div class="table-cell-wrapper">${escapeHtml(request.displayOrganization || request.organization)}</div></td>
         <td>${escapeHtml(request.userName || 'Unknown')}</td>
         <td>${escapeHtml(request.deletedByName || 'N/A')}</td>
         <td>${formatDate(request.deletedAt)}</td>

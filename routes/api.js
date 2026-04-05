@@ -536,6 +536,22 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
     // Check access permissions
     const targetRequest = serviceRequest || approvalRequest;
 
+    // Check if request is deleted/archived
+    if (targetRequest.isDeleted) {
+      console.log(`Request ${requestId} is archived/deleted. Returning archive notification.`);
+      
+      // Return special response for archived request so frontend can display restoration option
+      return res.status(410).json({
+        archived: true,
+        requestId: requestId,
+        title: targetRequest.title || 'Untitled Request',
+        status: targetRequest.status,
+        previousStatus: targetRequest.previousStatus,
+        deletedAt: targetRequest.deletedAt,
+        message: 'This request has been archived by an administrator. You can request restoration by providing a reason in the details below.'
+      });
+    }
+
     // Handle missing user data
     if (!targetRequest.userId) {
       console.warn(`Request ${requestId} has no associated user`);
@@ -636,8 +652,13 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, up
       return res.status(404).json({ error: 'Request not found' });
     }
 
-    // Check access permissions
+    // Check if request is deleted/archived
     const targetRequest = serviceRequest || approvalRequest;
+    if (targetRequest.isDeleted) {
+      return res.status(410).json({ error: 'Cannot send message to an archived request' });
+    }
+
+    // Check access permissions
     if (user.role !== 'admin' && user.role !== 'unit' && targetRequest.userId.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -1497,6 +1518,102 @@ router.get('/api/announcements', requireLogin, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch announcements' 
+    });
+  }
+});
+
+/**
+ * POST /api/request-restoration
+ * Submit a request to restore a deleted/archived request with reason
+ */
+router.post('/api/request-restoration', requireLogin, async (req, res) => {
+  try {
+    const { requestId, requestType, reason } = req.body;
+    const userId = req.session.userId;
+
+    if (!requestId || !requestType || !reason || !reason.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Request ID, request type, and reason are required' 
+      });
+    }
+
+    // Fetch the deleted request
+    const Model = requestType === 'approval' ? RequestApproval : ServiceRequest;
+    const request = await Model.findById(requestId).select('title userId isDeleted previousStatus');
+
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Request not found' 
+      });
+    }
+
+    if (!request.isDeleted) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This request is not archived' 
+      });
+    }
+
+    // Verify the user is the request author
+    if (request.userId.toString() !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You can only request restoration for your own requests' 
+      });
+    }
+
+    // Store restoration request (in request document for now)
+    const restorationRecord = {
+      requestedAt: new Date(),
+      requestedBy: userId,
+      reason: reason.trim(),
+      status: 'pending',
+      requestType: requestType
+    };
+
+    // Add restoration request to the request document
+    if (!request.restorationRequests) {
+      request.restorationRequests = [];
+    }
+    request.restorationRequests.push(restorationRecord);
+    await request.save();
+
+    // Notify admins about the restoration request
+    const admins = await User.find({ role: 'admin' }, '_id');
+    const adminIds = admins.map(a => a._id);
+    
+    if (adminIds.length > 0) {
+      const notificationService = require('../services/notificationService');
+      const requestTitle = request.title || 'Untitled Request';
+      const userInfo = await User.findById(userId).select('fName lName');
+      const userName = userInfo ? `${userInfo.fName} ${userInfo.lName}` : 'Unknown User';
+      
+      const message = `${userName} has requested restoration of the ${requestType} "${requestTitle}" with reason: "${reason.trim()}"`;
+      const actionUrl = requestType === 'approval' 
+        ? `/admin/approvals?view=archived&requestId=${requestId}`
+        : `/admin/services?view=archived&requestId=${requestId}`;
+      
+      await notificationService.notifySystem(
+        adminIds,
+        'Request Restoration Requested',
+        message,
+        'high',
+        actionUrl
+      );
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Restoration request submitted successfully. Admins have been notified.' 
+    });
+  } catch (error) {
+    console.error('Error submitting restoration request:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to submit restoration request',
+      details: error.message 
     });
   }
 });

@@ -4738,28 +4738,35 @@ function checkURLParameters() {
     // Check if we should open a modal
     const hasModal = urlParams.has('modal');
     const hasConversation = urlParams.has('conversation');
+    const modalType = urlParams.get('modal');
     const requestId = urlParams.get('requestId');
     const requestType = urlParams.get('type');
     
-    console.log('🔍 Checking URL parameters:', { hasModal, hasConversation, requestId, requestType });
+    console.log('🔍 Checking URL parameters:', { hasModal, modalType, hasConversation, requestId, requestType });
     
-    if (requestId && requestType && (hasModal || hasConversation)) {
+    if (requestId && requestType) {
         console.log('📋 Auto-opening modal from URL parameters');
         
         // Small delay to ensure DOM is fully ready
         setTimeout(() => {
-            // Open the request modal
-            openRequestDetails(requestId, requestType);
-            
-            // If conversation parameter is present, also open conversation tab
-            if (hasConversation) {
-                setTimeout(() => {
-                    const conversationTab = document.querySelector('[data-tab="conversation"]');
-                    if (conversationTab) {
-                        console.log('💬 Switching to conversation tab');
-                        conversationTab.click();
-                    }
-                }, 500);
+            // Check for archived modal specifically
+            if (modalType === 'archived' && typeof window.openArchivedRequestModal === 'function') {
+                console.log('📦 Opening archived request modal');
+                window.openArchivedRequestModal(requestId, requestType);
+            } else if (hasModal || hasConversation) {
+                // Open the request modal
+                openRequestDetails(requestId, requestType);
+                
+                // If conversation parameter is present, also open conversation tab
+                if (hasConversation) {
+                    setTimeout(() => {
+                        const conversationTab = document.querySelector('[data-tab="conversation"]');
+                        if (conversationTab) {
+                            console.log('💬 Switching to conversation tab');
+                            conversationTab.click();
+                        }
+                    }, 500);
+                }
             }
         }, 300);
     }

@@ -4021,6 +4021,64 @@ function getLinkValues() {
     </div>
   </div>
 
+  <!-- Archived Request Restoration Modal -->
+  <div id="archivedRequestModal" class="modal" style="display:none;">
+    <div class="modal-content unit-conversation-modal">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"/>
+            <polyline points="7 10 12 15 17 10"/>
+          </svg>
+          <h2>Request Archived</h2>
+          <span class="unit-conversation-subtitle">Request Restoration</span>
+        </div>
+        <button class="close-modal-btn" id="closeArchivedModal" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="unit-conversation-body" style="padding: 2rem;">
+        <div id="archivedRequestContent">
+          <!-- Request details will be populated here -->
+          <div style="text-align: center; color: #64748b;">
+            <div style="font-size: 1.5rem; margin-bottom: 1rem;">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Restoration Request Form -->
+        <div id="restorationFormSection" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+          <h3 style="margin-bottom: 1rem; color: #1e293b; font-size: 1.125rem;">Request Restoration</h3>
+          <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.9375rem;">If you believe this request should be restored, please provide a reason below. Administrators will review your request.</p>
+          
+          <form id="archivedRestorationForm" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div>
+              <label for="restorationReason" style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 500;">Reason for Restoration:</label>
+              <textarea 
+                id="restorationReason" 
+                name="reason" 
+                rows="5" 
+                placeholder="Explain why this request should be restored..."
+                style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.9375rem;"
+                required></textarea>
+              <small style="display: block; margin-top: 0.25rem; color: #94a3b8;">Minimum 10 characters</small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+              <button type="button" class="close-modal-btn" onclick="document.getElementById('archivedRequestModal').style.display='none'" style="background: #f1f5f9; color: #1e293b; padding: 0.625rem 1.25rem; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
+              <button type="submit" style="background: #059669; color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Submit Restoration Request</button>
+            </div>
+
+            <div id="submissionStatus" style="display: none; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9375rem;"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Define current user role for conversation
     window.currentUserRole = 'user';
@@ -4680,6 +4738,29 @@ function getLinkValues() {
       try {
         const response = await fetch(`/api/conversation/${serviceRequestId}`);
         const conversation = await response.json();
+        
+        // Handle archived/deleted requests (410 Gone status)
+        if (response.status === 410 || conversation.archived) {
+          if (messagesContainer) {
+            messagesContainer.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+                <div style="text-align: center;">
+                  <div style="font-size: 2rem; margin-bottom: 1rem;">🗂️</div>
+                  <p><strong>This request has been archived</strong></p>
+                  <small style="display: block; margin-top: 0.5rem;">An administrator has archived this request. You can request restoration by providing a reason below.</small>
+                </div>
+              </div>
+            `;
+          }
+          // Disable message form and show restoration option
+          const messageForm = document.getElementById('conversationForm');
+          if (messageForm) messageForm.style.display = 'none';
+          const restorationSection = document.getElementById('requestRestorationForm') || document.getElementById('resubmissionFormSection');
+          if (restorationSection && restorationSection.style) {
+            restorationSection.style.display = 'block';
+          }
+          return;
+        }
         
         if (messagesContainer) messagesContainer.innerHTML = '';
         
@@ -6493,9 +6574,85 @@ window.openConversationModal = function(requestId, requestType) {
   }
 };
 
+/**
+ * Open archived request restoration modal
+ */
+window.openArchivedRequestModal = function(requestId, requestType) {
+  console.log('Opening archived request restoration modal for:', requestId, requestType);
+  
+  const modal = document.getElementById('archivedRequestModal');
+  const contentDiv = document.getElementById('archivedRequestContent');
+  const form = document.getElementById('archivedRestorationForm');
+  
+  if (!modal || !contentDiv) {
+    console.error('Archived request modal elements not found');
+    return;
+  }
+
+  // Fetch archived request details
+  fetch(`/api/conversation/${requestId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.archived) {
+        // Display archived request information
+        contentDiv.innerHTML = `
+          <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <p style="color: #92400e; margin: 0; font-weight: 500;">
+              <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; display: inline; vertical-align: middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              This request has been archived by an administrator.
+            </p>
+          </div>
+
+          <div style="background: #f1f5f9; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Title</label>
+              <p style="margin: 0; color: #1e293b; font-weight: 500;">${data.title || 'Untitled Request'}</p>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Status</label>
+              <p style="margin: 0; color: #1e293b;"><span class="status-badge archived">${data.status || 'Archived'}</span></p>
+            </div>
+            <div>
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Archived On</label>
+              <p style="margin: 0; color: #1e293b;">${new Date(data.deletedAt).toLocaleString()}</p>
+            </div>
+          </div>
+        `;
+        modal.style.display = 'flex';
+        
+        // Reset form
+        if (form) {
+          form.reset();
+          document.getElementById('submissionStatus').style.display = 'none';
+        }
+      } else {
+        contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
+        modal.style.display = 'flex';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching archived request:', error);
+      contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
+      modal.style.display = 'flex';
+    });
+};
+
 // Auto-open modal if URL contains modal parameters
 document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
+  
+  // Handle archived request restoration modal
+  if (urlParams.get('modal') === 'archived' && urlParams.has('requestId') && urlParams.get('type') === 'service') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening archived request modal for:', requestId);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      window.openArchivedRequestModal(requestId, 'service');
+    }, 500);
+  }
   
   // Handle regular modal opening
   if (urlParams.has('modal') && urlParams.has('requestId') && urlParams.get('type') === 'service') {
@@ -6517,6 +6674,69 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
       window.openConversationModal(requestId, 'service');
     }, 500);
+  }
+  
+  // Handle restoration form submission
+  const restorationForm = document.getElementById('archivedRestorationForm');
+  if (restorationForm) {
+    restorationForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const requestId = new URLSearchParams(window.location.search).get('requestId');
+      const reason = document.getElementById('restorationReason').value.trim();
+      const statusDiv = document.getElementById('submissionStatus');
+      
+      if (!reason || reason.length < 10) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#7f1d1d';
+        statusDiv.style.borderLeft = '4px solid #ef4444';
+        statusDiv.innerHTML = '❌ Please provide at least 10 characters explaining the reason.';
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/request-restoration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requestId: requestId,
+            requestType: 'service',
+            reason: reason
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#dcfce7';
+          statusDiv.style.color = '#166534';
+          statusDiv.style.borderLeft = '4px solid #22c55e';
+          statusDiv.innerHTML = '✅ ' + result.message;
+          
+          // Reset form after 2 seconds
+          setTimeout(() => {
+            restorationForm.reset();
+            statusDiv.style.display = 'none';
+            document.getElementById('archivedRequestModal').style.display = 'none';
+          }, 2000);
+        } else {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#fee2e2';
+          statusDiv.style.color = '#7f1d1d';
+          statusDiv.style.borderLeft = '4px solid #ef4444';
+          statusDiv.innerHTML = '❌ ' + (result.message || 'Failed to submit restoration request');
+        }
+      } catch (error) {
+        console.error('Error submitting restoration request:', error);
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#7f1d1d';
+        statusDiv.style.borderLeft = '4px solid #ef4444';
+        statusDiv.innerHTML = '❌ Error submitting request. Please try again.';
+      }
+    });
   }
 });
   </script>

@@ -86,33 +86,39 @@ router.get('/dashboard', requireLogin, async (req, res) => {
       return res.redirect('/unit/dashboard');
     }
 
-    // Get approval request statistics
-    const totalApprovals = await RequestApproval.countDocuments({ userId: user._id });
+    // Get approval request statistics (exclude archived/deleted)
+    const totalApprovals = await RequestApproval.countDocuments({ userId: user._id, isDeleted: { $ne: true } });
     const approvedApprovals = await RequestApproval.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^approved$/i }
     });
     const pendingApprovals = await RequestApproval.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^pending$/i }
     });
     const revisionApprovals = await RequestApproval.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^revision$/i }
     });
 
-    // Get service request statistics
-    const totalServices = await ServiceRequest.countDocuments({ userId: user._id });
+    // Get service request statistics (exclude archived/deleted)
+    const totalServices = await ServiceRequest.countDocuments({ userId: user._id, isDeleted: { $ne: true } });
     const approvedServices = await ServiceRequest.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^approved$/i }
     });
     const pendingServices = await ServiceRequest.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^pending$/i }
     });
     const revisionServices = await ServiceRequest.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^revision$/i }
     });
 
@@ -122,15 +128,15 @@ router.get('/dashboard', requireLogin, async (req, res) => {
     const pendingRequests = pendingApprovals + pendingServices;
     const inReviewRequests = revisionApprovals + revisionServices;
 
-    // Get recent activity from both request types
+    // Get recent activity from both request types (exclude archived/deleted)
     const approvalActivity = await RequestApproval
-      .find({ userId: user._id })
+      .find({ userId: user._id, isDeleted: { $ne: true } })
       .sort({ updatedAt: -1 })
       .limit(3)
       .lean();
 
     const serviceActivity = await ServiceRequest
-      .find({ userId: user._id })
+      .find({ userId: user._id, isDeleted: { $ne: true } })
       .sort({ updatedAt: -1 })
       .limit(3)
       .lean();
@@ -540,13 +546,15 @@ router.get('/api/user-deadlines', requireLogin, async (req, res) => {
   try {
     console.log('User fetching all requests from database...');
 
-    // Fetch ALL current user's approval requests and service requests
+    // Fetch ALL current user's approval requests and service requests (exclude archived/deleted)
     const approvals = await RequestApproval.find({
-      userId: req.session.userId
+      userId: req.session.userId,
+      isDeleted: { $ne: true }
     }).select('deadline title status createdAt').lean();
 
     const services = await ServiceRequest.find({
-      userId: req.session.userId
+      userId: req.session.userId,
+      isDeleted: { $ne: true }
     }).select('deadline title status createdAt').lean();
 
     console.log(`Found ${approvals.length} approval requests and ${services.length} service requests for user`);
@@ -621,9 +629,10 @@ router.get('/api/user-deadlines/:date/details', requireLogin, async (req, res) =
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
 
-    // Fetch approval requests for current user
+    // Fetch approval requests for current user (exclude archived/deleted)
     const approvals = await RequestApproval.find({
       userId: req.session.userId,
+      isDeleted: { $ne: true },
       $or: [
         {
           deadline: {
@@ -651,9 +660,10 @@ router.get('/api/user-deadlines/:date/details', requireLogin, async (req, res) =
     .select('_id title description organization deadline createdAt userId status')
     .lean();
 
-    // Fetch service requests for current user
+    // Fetch service requests for current user (exclude archived/deleted)
     const services = await ServiceRequest.find({
       userId: req.session.userId,
+      isDeleted: { $ne: true },
       $or: [
         {
           deadline: {
@@ -1688,7 +1698,7 @@ router.get('/settings', requireLogin, (req, res) => {
   } catch (error) {
     console.error('Error loading settings page:', error);
     if (!res.headersSent) {
-      res.status(500).render('error', { error: error.message });
+      res.status(500).render('error', { message: error.message });
     }
   }
 });

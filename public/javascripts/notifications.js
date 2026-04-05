@@ -844,6 +844,30 @@ class NotificationSystem {
         return;
       }
       
+      // Check if this is an archived request restoration modal
+      if (params.get('modal') === 'archived' && params.has('requestId')) {
+        const requestId = params.get('requestId');
+        const requestType = params.get('type');
+        
+        console.log('📦 Archived/Deleted request restoration modal detected:', { requestId, requestType });
+        
+        // Check if we're on the correct page for this request type
+        const currentPath = window.location.pathname;
+        const targetPath = urlObj.pathname;
+        
+        if (currentPath === targetPath) {
+          // We're on the right page, try to open modal
+          console.log('✅ On correct page, opening archived restoration modal...');
+          this.closeDropdown();
+          this.openArchivedRequestModal(requestId, requestType);
+        } else {
+          // Navigate to the correct page with modal parameters
+          console.log('🔄 Navigating to correct page for archived request:', url);
+          window.location.href = url;
+        }
+        return;
+      }
+      
       // Check if this is a modal-opening URL
       if (params.has('modal') && params.has('requestId')) {
         const requestId = params.get('requestId');
@@ -893,6 +917,20 @@ class NotificationSystem {
       console.error('❌ Error handling notification navigation:', error);
       // Fallback to regular navigation
       window.location.href = url;
+    }
+  }
+
+  /**
+   * Open archived request restoration modal
+   */
+  async openArchivedRequestModal(requestId, requestType) {
+    if (typeof window.openArchivedRequestModal === 'function') {
+      // Use existing function if available on the page
+      window.openArchivedRequestModal(requestId, requestType);
+    } else {
+      console.warn('Archived request modal function not available on this page');
+      // Show alert to user
+      alert('Archived Request\n\nThis request has been archived by an administrator. Please submit a restoration request if you would like it to be restored.');
     }
   }
 
@@ -1329,14 +1367,8 @@ class NotificationSystem {
    * Show a toast notification for new notifications
    */
   showNotificationToast(notification) {
-    // Check if browser supports notifications and user has granted permission
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.message,
-        icon: '/favicon.ico', // Adjust path as needed
-        tag: notification.id
-      });
-    }
+    // Disabled computer system notification as per requested
+    return;
   }
 
   /**
