@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configuration - S-CORE</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
@@ -12,7 +13,6 @@
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
-  <script src="/javascripts/configuration.js"></script>
   <style>
     /* Archive Manager badge classes */
     .am-badge-approval { background: #dbeafe; color: #1e40af; }
@@ -1062,6 +1062,7 @@
 
         <!-- Configuration Form -->
         <form id="configurationForm" action="/admin/configuration" method="POST">
+          <input type="hidden" name="tabName" value="homepage">
           <div class="config-sections" id="configForm">
                   <!-- Modal for Preview -->
                   <div id="configModal" class="preview-modal">
@@ -1882,6 +1883,7 @@
 
         <!-- About S-CORE Configuration Form -->
         <form id="aboutScoreConfigForm" action="/admin/configuration" method="POST">
+          <input type="hidden" name="tabName" value="aboutscore">
           <div class="config-sections">
 
             <!-- S-CORE Header Section -->

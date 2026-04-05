@@ -18,17 +18,17 @@
     {
       "name": "Creativity",
       "description": "To bring out the best of the community through projects of high aesthetic quality",
-      "_id": "693897ad4c26a240178d11c1"
+      "_id": "69d282d82d0e50c9a248c68a"
     },
     {
       "name": "Efficiency",
       "description": "To operate resourcefully and accurately in upholding the image of the university",
-      "_id": "693897ad4c26a240178d11c2"
+      "_id": "69d282d82d0e50c9a248c68b"
     },
     {
       "name": "Dedication",
       "description": "To commit ourselves in fulfilling the communication needs of the institutionn",
-      "_id": "693897ad4c26a240178d11c3"
+      "_id": "69d282d82d0e50c9a248c68c"
     }
   ],
   "aboutSectionTitle": "About Our Office",
@@ -42,25 +42,25 @@
       "icon": "📱",
       "title": "Digital Excellence",
       "description": "Leveraging cutting-edge digital platforms for maximum reach and engagement",
-      "_id": "693897ad4c26a240178d11c4"
+      "_id": "69d282d82d0e50c9a248c68d"
     },
     {
       "icon": "🎨",
       "title": "Creative Design",
       "description": "Producing visually stunning materials that reflect our institution's prestige",
-      "_id": "693897ad4c26a240178d11c5"
+      "_id": "69d282d82d0e50c9a248c68e"
     },
     {
       "icon": "📊",
       "title": "Strategic Planning",
       "description": "Data-driven communication strategies for measurable impact",
-      "_id": "693897ad4c26a240178d11c6"
+      "_id": "69d282d82d0e50c9a248c68f"
     },
     {
       "icon": "🤝",
       "title": "Community Focus",
       "description": "Building stronger connections within our academic communityy",
-      "_id": "693897ad4c26a240178d11c7"
+      "_id": "69d282d82d0e50c9a248c690"
     }
   ],
   "gallerySectionTitle": "Gallery",
@@ -74,28 +74,28 @@
       "title": "Email Us",
       "description": "Get in touch with our team for inquiries, collaboration opportunities, or communication support.",
       "contactInfo": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11c8"
+      "_id": "69d282d82d0e50c9a248c691"
     },
     {
       "icon": "📞",
       "title": "Call Us",
       "description": "Speak directly with us for immediate assistance and consultation.",
       "contactInfo": "(046) 481-1900 local 3031",
-      "_id": "693897ad4c26a240178d11c9"
+      "_id": "69d282d82d0e50c9a248c692"
     },
     {
       "icon": "📍",
       "title": "Visit Us",
       "description": "Meet us in person at our office for detailed discussions and strategic planning sessions.",
       "contactInfo": "2nd Floor, Ayuntamiento De Gonzalez Building\r\nDLSU-Dasmariñas, Cavite",
-      "_id": "693897ad4c26a240178d11ca"
+      "_id": "69d282d82d0e50c9a248c693"
     },
     {
       "icon": "🕒",
       "title": "Office Hours",
       "description": "We're available during regular business hours to serve you better.",
       "contactInfo": "Monday - Friday: 8:00 AM - 5:00 PM",
-      "_id": "693897ad4c26a240178d11cb"
+      "_id": "69d282d82d0e50c9a248c694"
     }
   ],
   "socialSectionTitle": "Follow Us on Social Media",
@@ -104,19 +104,19 @@
       "icon": "f",
       "url": "https://facebook.com/DLSU.Dasmarinas",
       "title": "Facebook",
-      "_id": "693897ad4c26a240178d11cc"
+      "_id": "69d282d82d0e50c9a248c695"
     },
     {
       "icon": "f",
       "url": "https://facebook.com/dlsudsco",
       "title": "Facebook",
-      "_id": "693897ad4c26a240178d11cd"
+      "_id": "69d282d82d0e50c9a248c696"
     },
     {
       "icon": "▶",
       "url": "https://youtube.com/@DLSUDasmaOfficial",
       "title": "YouTube",
-      "_id": "693897ad4c26a240178d11ce"
+      "_id": "69d282d82d0e50c9a248c697"
     }
   ],
   "heroPrimaryButtonText": "Connect With Us",
@@ -129,32 +129,32 @@
     {
       "title": "Content Creation & Strategy",
       "description": "We develop compelling content strategies and create high-quality materials including brochures, newsletters, digital content, and multimedia presentations that effectively communicate the university's message to target audiences.",
-      "_id": "693897ad4c26a240178d11cf"
+      "_id": "69d282d82d0e50c9a248c698"
     },
     {
       "title": "Media Relations & Outreach",
       "description": "Building and maintaining strong relationships with media outlets, managing press releases, coordinating interviews, and ensuring positive coverage of university events and achievements.",
-      "_id": "693897ad4c26a240178d11d0"
+      "_id": "69d282d82d0e50c9a248c699"
     },
     {
       "title": "Digital Marketing & Social Media",
       "description": "Comprehensive digital marketing strategies including social media management, website content, online campaigns, and digital advertising to enhance the university's online presence.",
-      "_id": "693897ad4c26a240178d11d1"
+      "_id": "69d282d82d0e50c9a248c69a"
     },
     {
       "title": "Brand Management & Design",
       "description": "Ensuring consistent brand representation across all communication materials, developing visual identity guidelines, and creating professional designs that uphold the university's image.",
-      "_id": "693897ad4c26a240178d11d2"
+      "_id": "69d282d82d0e50c9a248c69b"
     },
     {
       "title": "Event Communication",
       "description": "Complete communication support for university events including promotional materials, media coverage coordination, live event documentation, and post-event reporting.",
-      "_id": "693897ad4c26a240178d11d3"
+      "_id": "69d282d82d0e50c9a248c69c"
     },
     {
       "title": "Crisis Communication",
       "description": "Strategic communication planning for sensitive situations, reputation management, and coordinated response strategies to maintain the university's positive image during challenging times.",
-      "_id": "693897ad4c26a240178d11d4"
+      "_id": "69d282d82d0e50c9a248c69d"
     }
   ],
   "teamSectionTitle": "Meet Our Team",
@@ -164,49 +164,49 @@
       "name": "Wynne Angelyne O. Chui, MDMG",
       "role": "SCO Director",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11d5"
+      "_id": "69d282d82d0e50c9a248c69e"
     },
     {
       "name": "Ma. Carmila R. Ferrer",
       "role": "Institutional Secretary",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11d6"
+      "_id": "69d282d82d0e50c9a248c69f"
     },
     {
       "name": "Amvher A. Pamaran",
       "role": "Social Media Manager",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11d7"
+      "_id": "69d282d82d0e50c9a248c6a0"
     },
     {
       "name": "Jacquelyn M. Torres",
       "role": "Public Relations Officer",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11d8"
+      "_id": "69d282d82d0e50c9a248c6a1"
     },
     {
       "name": "Christopher John B. Catapang",
       "role": "Graphics/Design and Layout Artist",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11d9"
+      "_id": "69d282d82d0e50c9a248c6a2"
     },
     {
       "name": "Zildjian Malachi M. Periodico",
       "role": "Graphics/Design and Layout Artist",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11da"
+      "_id": "69d282d82d0e50c9a248c6a3"
     },
     {
       "name": "Joseph Neil P. Romerosa",
       "role": "Multimedia Artist",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11db"
+      "_id": "69d282d82d0e50c9a248c6a4"
     },
     {
       "name": "Evie Rose C. San Jose",
       "role": "Multimedia Artist",
       "email": "sco@dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11dc"
+      "_id": "69d282d82d0e50c9a248c6a5"
     }
   ],
   "footerTagline": "Committed to Excellence in Communication | Building Stronger Communities",
@@ -215,17 +215,17 @@
     {
       "text": "DLSU-D Main Site",
       "url": "https://dlsud.edu.ph",
-      "_id": "693897ad4c26a240178d11dd"
+      "_id": "69d282d82d0e50c9a248c6a6"
     },
     {
       "text": "Privacy Policy",
       "url": "#",
-      "_id": "693897ad4c26a240178d11de"
+      "_id": "69d282d82d0e50c9a248c6a7"
     },
     {
       "text": "SCO Gallery",
       "url": "https://www.dlsud.edu.ph/sco/gallery/",
-      "_id": "693897ad4c26a240178d11df"
+      "_id": "69d282d82d0e50c9a248c6a8"
     }
   ]
 }

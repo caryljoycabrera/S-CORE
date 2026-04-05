@@ -28,6 +28,34 @@ const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
 
+// Helper to get admin/staff name for notifications
+async function getAdminNameString(req) {
+  try {
+    if (!req.user || !req.user._id) return 'Admin';
+    let adminName = 'Administrator';
+    const adminFirstName = req.user.fName ? String(req.user.fName).trim() : '';
+    const adminLastName = req.user.lName ? String(req.user.lName).trim() : '';
+    
+    if (adminFirstName && adminLastName) {
+      adminName = `${adminFirstName} ${adminLastName}`;
+    } else {
+      const freshAdmin = await User.findById(req.user._id);
+      if (freshAdmin) {
+        const freshFirst = freshAdmin.fName ? String(freshAdmin.fName).trim() : '';
+        const freshLast = freshAdmin.lName ? String(freshAdmin.lName).trim() : '';
+        if (freshFirst && freshLast) {
+          adminName = `${freshFirst} ${freshLast}`;
+        }
+      }
+    }
+    const roleStr = (req.user.role === 'staff' || req.user.userType === 'staff') ? 'Staff' : 'Admin';
+    return `${roleStr} ${adminName}`;
+  } catch (err) {
+    console.error('Error in getAdminNameString:', err);
+    return 'Admin';
+  }
+}
+
 // Debug: indicate admin routes module loaded
 console.log('[routes/admin] admin routes module loaded');
 
@@ -1123,28 +1151,68 @@ router.post('/admin/request/restore', requireAdmin, async (req, res) => {
 
     // Notify the user with the actual restored status
     try {
+      const adminId = req.user._id;
+      const User = require('../models/User');
+      
+      // Determine the correct page URL based on request type
+      const userPageUrl = requestType === 'Request Approval' 
+        ? `/request-approvals?openModalId=${requestId}` 
+        : `/service-requests?openModalId=${requestId}`;
+      
+      // Get admin name - handle both Mongoose Document and plain objects
+      let adminName = 'Administrator';
+      const adminFirstName = req.user.fName ? String(req.user.fName).trim() : '';
+      const adminLastName = req.user.lName ? String(req.user.lName).trim() : '';
+      
+      if (adminFirstName && adminLastName) {
+        adminName = `${adminFirstName} ${adminLastName}`;
+      } else if (!adminFirstName || !adminLastName) {
+        // If req.user doesn't have the names, fetch fresh from DB
+        try {
+          const freshAdmin = await User.findById(adminId);
+          if (freshAdmin) {
+            const freshFirst = freshAdmin.fName ? String(freshAdmin.fName).trim() : '';
+            const freshLast = freshAdmin.lName ? String(freshAdmin.lName).trim() : '';
+            if (freshFirst && freshLast) {
+              adminName = `${freshFirst} ${freshLast}`;
+            }
+          }
+        } catch (dbErr) {
+          console.error('Error fetching admin from DB:', dbErr);
+        }
+      }
+      
+      console.log('[Restore Notification] Admin name being used:', adminName);
+      
       await notificationService.notifySystem(
         request.userId, 
         'Request Restored', 
-        `Your ${requestType.toLowerCase()} "${request.title}" has been restored (status: ${restoreStatus}).`, 
+        `Admin ${adminName} has restored your ${requestType.toLowerCase()} "${request.title}" and is now active (status: ${restoreStatus}).`, 
         'medium', 
-        '/messages'
+        userPageUrl
       );
       
       // Notify Units if assigned
       if (request.assignedUnits) {
-        const User = require('../models/User');
         const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
         const unitIds = unitMembers.map(u => u._id);
         if (unitIds.length > 0) {
           await notificationService.notifySystem(
             unitIds,
             'Request Restored',
-            `The ${requestType.toLowerCase()} "${request.title}" assigned to your unit has been restored (status: ${restoreStatus}).`,
+            `Admin ${adminName} has restored the ${requestType.toLowerCase()} "${request.title}" assigned to your unit (status: ${restoreStatus}).`,
             'medium',
             '/messages'
           );
         }
+      }
+      
+      // Notify OTHER admin users (exclude performing admin)
+      const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+      const otherAdminIds = otherAdmins.map(a => a._id);
+      if (otherAdminIds.length > 0) {
+        const adminMessage = `Admin ${adminName} has restored the ${requestType.toLowerCase()} "${request.title}" to status: ${restoreStatus}.`;
+        await notificationService.notifySystem(otherAdminIds, 'Request Restored', adminMessage, 'medium', `/admin/configuration?tab=archivemanager&openModalId=${requestId}`);
       }
     } catch (notifError) {
       console.error('Error sending notification:', notifError);
@@ -1610,10 +1678,41 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             const titleStr = approval.title || 'Untitled Request';
             const requestorId = approval.userId._id || approval.userId;
             const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
             // Only notify requestor if they are NOT the admin performing the action
             if (String(requestorId) !== String(adminId)) {
-              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
               await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/request-approvals?openModalId=${requestId}`);
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const User = require('../models/User');
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const adminMessage = `${adminNameFull} has manually ${statusLower} the request "${titleStr}".`;
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              await notificationService.notifySystem(otherAdminIds, `Request ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
+            }
+          } else {
+            // General fallback: notify the user of any intermediate status updates (e.g. "pending", "in progress")
+            const titleStr = approval.title || 'Untitled Request';
+            const requestorId = approval.userId._id || approval.userId;
+            const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
+            
+            if (String(requestorId) !== String(adminId)) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+              await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/request-approvals?openModalId=${requestId}`);
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const User = require('../models/User');
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const adminMessage = `${adminNameFull} has changed the approval "${titleStr}" to status: ${capitalizedStatus}.`;
+              await notificationService.notifySystem(otherAdminIds, `Approval ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
             }
           }
         }
@@ -1632,9 +1731,10 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             const titleStr = service.title || 'Untitled Request';
             const requestorId = service.userId._id || service.userId;
             const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
             // Only notify requestor if they are NOT the admin performing the action
             if (String(requestorId) !== String(adminId)) {
-              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
               await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/service-requests?openModalId=${requestId}`);
             }
             // Notify Units - send to service-requests page where archived requests are visible
@@ -1643,8 +1743,37 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
               const unitMembers = await User.find({ unitTeam: assignedUnits, role: 'unit' }, '_id');
               const unitIds = unitMembers.map(u => u._id);
               if (unitIds.length > 0) {
-                await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was archived.`, 'medium', `/admin/services?openModalId=${requestId}`);
+                await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was ${statusLower} by ${adminNameFull}.`, 'medium', `/admin/services?openModalId=${requestId}`);
               }
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const adminMessage = `${adminNameFull} has manually ${statusLower} the request "${titleStr}".`;
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              await notificationService.notifySystem(otherAdminIds, `Request ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
+            }
+          } else {
+            // General fallback: notify the user of any intermediate service status updates (e.g. "pending", "in progress")
+            const titleStr = service.title || 'Untitled Request';
+            const requestorId = service.userId._id || service.userId;
+            const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
+            
+            if (String(requestorId) !== String(adminId)) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+              await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/service-requests?openModalId=${requestId}`);
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const User = require('../models/User');
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const adminMessage = `${adminNameFull} has changed the service request "${titleStr}" to status: ${capitalizedStatus}.`;
+              await notificationService.notifySystem(otherAdminIds, `Service ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
             }
           }
         }
@@ -1704,6 +1833,9 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
 
     // Send notification to user
     try {
+      const adminId = req.user._id;
+      const User = require('../models/User');
+      
       if (result && result.userId) {
         const statusLower = status?.toLowerCase();
         
@@ -1716,12 +1848,34 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
         } else if (statusLower === 'archived' || statusLower === 'deleted') {
           const titleStr = result.title || 'Untitled Request';
           const requestorId = result.userId._id || result.userId;
-          const adminId = req.user._id;
+          const adminNameFull = await getAdminNameString(req);
           // Only notify requestor if they are NOT the admin performing the action
           if (String(requestorId) !== String(adminId)) {
-            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
             await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/request-approvals?openModalId=${result._id}`);
           }
+        } else {
+          // General fallback: notify the user of any intermediate approval status updates (e.g. "pending", "in progress")
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminNameFull = await getAdminNameString(req);
+          
+          if (String(requestorId) !== String(adminId)) {
+            const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+            const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+            await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/request-approvals?openModalId=${result._id}`);
+          }
+        }
+        
+        // Notify OTHER admin users (exclude performing admin)
+        const adminNameFull = await getAdminNameString(req);
+        const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+        const otherAdminIds = otherAdmins.map(a => a._id);
+        if (otherAdminIds.length > 0) {
+          const titleStr = result.title || 'Untitled Request';
+          const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+          const adminMessage = `${adminNameFull} has changed the approval "${titleStr}" to status: ${capitalizedStatus}.`;
+          await notificationService.notifySystem(otherAdminIds, `Approval ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${result._id}`);
         }
       }
     } catch (notifError) {
@@ -1837,6 +1991,9 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
 
     // Send notification to user
     try {
+      const adminId = req.user._id;
+      const User = require('../models/User');
+      
       if (result && result.userId) {
         const statusLower = status?.toLowerCase();
         
@@ -1849,20 +2006,41 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
         } else if (statusLower === 'archived' || statusLower === 'deleted') {
           const titleStr = result.title || 'Untitled Request';
           const requestorId = result.userId._id || result.userId;
-          const adminId = req.user._id;
+          const adminNameFull = await getAdminNameString(req);
           // Only notify requestor if they are NOT the admin performing the action
           if (String(requestorId) !== String(adminId)) {
-            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by an administrator. You can request restoration by providing a reason in the request details.`;
+            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
             await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/service-requests?openModalId=${result._id}`);
           }
-          const User = require('../models/User');
           if (assignedUnits && assignedUnits !== 'Not yet assigned') {
             const unitMembers = await User.find({ unitTeam: assignedUnits, role: 'unit' }, '_id');
             const unitIds = unitMembers.map(u => u._id);
             if (unitIds.length > 0) {
-              await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was archived.`, 'medium', `/admin/services?openModalId=${result._id}`);
+              await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was ${statusLower} by ${adminNameFull}.`, 'medium', `/admin/services?openModalId=${result._id}`);
             }
           }
+        } else {
+          // General fallback: notify the user of any intermediate service status updates (e.g. "pending", "in progress")
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminNameFull = await getAdminNameString(req);
+          
+          if (String(requestorId) !== String(adminId)) {
+            const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+            const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+            await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/service-requests?openModalId=${result._id}`);
+          }
+        }
+        
+        // Notify OTHER admin users (exclude performing admin)
+        const adminNameFull = await getAdminNameString(req);
+        const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+        const otherAdminIds = otherAdmins.map(a => a._id);
+        if (otherAdminIds.length > 0) {
+          const titleStr = result.title || 'Untitled Request';
+          const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+          const adminMessage = `${adminNameFull} has changed the service request "${titleStr}" to status: ${capitalizedStatus}.`;
+          await notificationService.notifySystem(otherAdminIds, `Service ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${result._id}`);
         }
       }
     } catch (notifError) {
@@ -1893,7 +2071,42 @@ router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => 
       return res.status(400).json({ success: false, message: 'Deadline must be in the future' });
     }
 
-    await ServiceRequest.findByIdAndUpdate(requestId, { deadline: deadlineDate });
+    const result = await ServiceRequest.findByIdAndUpdate(
+      requestId, 
+      { deadline: deadlineDate },
+      { new: true }
+    ).populate('userId');
+
+    // Send notification to user about deadline change
+    try {
+      if (result && result.userId) {
+        const adminId = req.user._id;
+        const requestorId = result.userId._id || result.userId;
+        const titleStr = result.title || 'Untitled Request';
+        const adminNameFull = await getAdminNameString(req);
+        
+        // Only notify requestor if they are NOT the admin performing the action
+        if (String(requestorId) !== String(adminId)) {
+          const formattedDeadline = deadlineDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric'
+          });
+          const message = `The deadline for your request "${titleStr}" has been updated to ${formattedDeadline} by ${adminNameFull}.`;
+          await notificationService.createNotification(
+            requestorId,
+            'Request Deadline Updated',
+            message,
+            'info',
+            `/service-requests?openModalId=${result._id}`
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending deadline update notification:', notifError);
+      // Don't fail the deadline update if notification fails
+    }
+
     res.json({ success: true, message: 'Deadline updated successfully' });
   } catch (err) {
     console.error('Error updating deadline:', err);
@@ -1989,6 +2202,28 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
     } catch (emailError) {
       console.error('❌ Error sending role change email:', emailError);
       // Don't fail the role update if email fails
+    }
+
+    // Send in-app notification about role change
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const roleLabels = {
+        'admin': 'Administrator',
+        'unit': `Unit Team - ${result.unitTeam}`,
+        'user': 'Regular User'
+      };
+      const roleLabel = roleLabels[role] || role;
+      const message = `Your account role was changed to ${roleLabel} by ${adminNameFull}.`;
+      await notificationService.createNotification(
+        result._id,
+        'Role Updated',
+        message,
+        'info',
+        '/profile'
+      );
+    } catch (notifError) {
+      console.error('Error sending role change notification:', notifError);
+      // Don't fail the role update if notification fails
     }
 
     res.json({
@@ -2106,6 +2341,16 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
         } catch (emailError) {
           console.error('❌ Error sending account reset email:', emailError);
         }
+        
+        // Send in-app notification
+        const adminNameFull = await getAdminNameString(req);
+        await notificationService.notifySystem(
+          userId, 
+          'Account Reset', 
+          `Your account status was reset to pending by ${adminNameFull}. Please await further review.`, 
+          'high', 
+          '/profile'
+        );
       }
     } catch (notificationError) {
       console.error('Error sending notification:', notificationError);
@@ -2214,6 +2459,22 @@ router.post('/admin/user/update-info', requireAdmin, async (req, res) => {
         success: false,
         message: 'Failed to update user information.'
       });
+    }
+
+    // Send in-app notification about info update
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const message = `Your account information was updated by ${adminNameFull}.`;
+      await notificationService.createNotification(
+        updatedUser._id,
+        'Profile Updated',
+        message,
+        'info',
+        '/profile'
+      );
+    } catch (notifError) {
+      console.error('Error sending profile update notification:', notifError);
+      // Don't fail the update if notification fails
     }
 
     res.json({
@@ -3480,10 +3741,40 @@ router.put('/admin/request/edit', requireAdmin, async (req, res) => {
       requestId,
       { $set: updates },
       { new: true, runValidators: true }
-    );
+    ).populate('userId');
 
     if (!request) {
       return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Send notification to user about request edit
+    try {
+      if (request && request.userId) {
+        const adminId = req.user._id;
+        const requestorId = request.userId._id || request.userId;
+        const titleStr = request.title || 'Untitled Request';
+        const adminNameFull = await getAdminNameString(req);
+        
+        // Only notify requestor if they are NOT the admin performing the action
+        if (String(requestorId) !== String(adminId)) {
+          const requestTypeLabel = requestType === 'Request Approval' ? 'Request Approval' : 'Service Request';
+          const message = `Your ${requestTypeLabel} "${titleStr}" was edited by ${adminNameFull}.`;
+          const actionUrl = requestType === 'Request Approval' 
+            ? `/request-approvals?openModalId=${request._id}`
+            : `/service-requests?openModalId=${request._id}`;
+          
+          await notificationService.createNotification(
+            requestorId,
+            `${requestTypeLabel} Updated`,
+            message,
+            'info',
+            actionUrl
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending request edit notification:', notifError);
+      // Don't fail the request update if notification fails
     }
 
     res.json({ 
@@ -5840,17 +6131,42 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       console.error('[ADMIN] Failed to save JSON backup:', jsonError);
     }
     
+    // Notify OTHER admin users (exclude performing admin)
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const adminId = req.user ? req.user._id : req.session.userId;
+      const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+      const otherAdminIds = otherAdmins.map(a => a._id);
+      
+      const submittedTab = req.body.tabName || 'homepage';
+      const layoutName = submittedTab === 'aboutscore' ? 'About S-Core' : 'Homepage';
+
+      if (otherAdminIds.length > 0) {
+        await notificationService.notifySystem(
+          otherAdminIds, 
+          `${layoutName} Content Updated`, 
+          `The ${layoutName} layout was updated by ${adminNameFull}.`, 
+          'low', 
+          `/admin/configuration?tab=${submittedTab}`
+        );
+      }
+    } catch (notifError) {
+      console.error('[ADMIN] Failed to notify admins of homepage update:', notifError);
+    }
+
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
       return res.json({ success: true, message: 'Homepage content updated successfully' });
     } else {
-      return res.redirect('/admin/configuration?success=Homepage content updated successfully');
+      const targetTab = req.body.tabName === 'aboutscore' ? 'aboutscore' : 'homepage';
+      return res.redirect(`/admin/configuration?tab=${targetTab}&success=Homepage content updated successfully`);
     }
   } catch (error) {
     console.error('[ADMIN] Error saving configuration:', error);
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
       return res.status(500).json({ success: false, message: 'Failed to save homepage content' });
     } else {
-      return res.redirect('/admin/configuration?error=Failed to save homepage content');
+      const targetTab = req.body.tabName === 'aboutscore' ? 'aboutscore' : 'homepage';
+      return res.redirect(`/admin/configuration?tab=${targetTab}&error=Failed to save homepage content`);
     }
   }
 });
@@ -6048,6 +6364,26 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
     console.log('[ADMIN] Saving userRoles to database:', JSON.stringify(updateData.userRoles, null, 2));
     
     await settingsService.updateSettings(updateData);
+    
+    // Notify OTHER admin users (exclude performing admin)
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const adminId = user._id; // Loaded from req.session.userId at start of function
+      const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+      const otherAdminIds = otherAdmins.map(a => a._id);
+      
+      if (otherAdminIds.length > 0) {
+        await notificationService.notifySystem(
+          otherAdminIds, 
+          'System Configuration Updated', 
+          `The system configuration (units, roles, statuses) was updated by ${adminNameFull}.`, 
+          'low', 
+          '/admin/configuration?tab=system'
+        );
+      }
+    } catch (notifError) {
+      console.error('[ADMIN] Failed to notify admins of system configuration update:', notifError);
+    }
     
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
       return res.json({ success: true, message: 'System configuration updated successfully' });

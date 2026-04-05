@@ -8,6 +8,24 @@ const socketService = require('./socketService');
 
 class NotificationService {
   /**
+   * Helper to format an admin/staff name based on their user ID
+   */
+  async _getAdminNameString(adminId) {
+    if (!adminId) return 'Admin';
+    try {
+      const User = require('../models/User');
+      const admin = await User.findById(adminId, 'fName lName role userType');
+      if (admin && admin.fName && admin.lName) {
+        const roleStr = (admin.role === 'staff' || admin.userType === 'staff') ? 'Staff' : 'Admin';
+        return `${roleStr} ${admin.fName.trim()} ${admin.lName.trim()}`;
+      }
+    } catch (e) {
+      console.error('Error fetching admin name for notification:', e);
+    }
+    return 'Admin';
+  }
+
+  /**
    * Create a new notification
    * @param {Object} data - Notification data
    * @returns {Object} Created notification
@@ -102,8 +120,9 @@ class NotificationService {
   }
 
   // Notify user when their service request is approved
-  async notifyServiceApproved(serviceId, requestorId, assignedUnits) {
+  async notifyServiceApproved(serviceId, requestorId, adminId, assignedUnits) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       // Notify unit team that requestor approved their deliverables
       const unitMembers = await User.find({ 
         unitTeam: assignedUnits,
@@ -111,9 +130,9 @@ class NotificationService {
       });
 
       const notificationData = {
-        sender: requestorId,
+        sender: adminId,
         title: 'Deliverables Approved',
-        message: `Requestor approved your deliverables. Please complete the task with final remarks.`,
+        message: `${adminNameFull} approved the deliverables. Please complete the task with final remarks.`,
         type: 'deliverables_approved',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
@@ -135,9 +154,10 @@ class NotificationService {
   // Notify user when their service request is rejected
   async notifyServiceRejected(serviceId, userId, adminId, reason = null) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       const message = reason 
-        ? `Your service request was rejected. Reason: ${reason}`
-        : 'Your service request was rejected';
+        ? `Your service request was rejected by ${adminNameFull}. Reason: ${reason}`
+        : `Your service request was rejected by ${adminNameFull}.`;
 
       await this.createNotification({
         recipient: userId,
@@ -158,11 +178,12 @@ class NotificationService {
   // Notify user when their service request is completed
   async notifyServiceCompleted(serviceId, userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Service Request Completed',
-        message: 'Your service request has been completed successfully',
+        message: `Your service request has been completed successfully by ${adminNameFull}.`,
         type: 'service_completed',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
@@ -248,11 +269,12 @@ class NotificationService {
   // Notify user when their approval request is approved
   async notifyApprovalApproved(approvalId, userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Approval Request Approved',
-        message: 'Your approval request has been approved',
+        message: `Your approval request has been approved by ${adminNameFull}.`,
         type: 'approval_approved',
         relatedId: approvalId,
         relatedModel: 'RequestApproval',
@@ -267,9 +289,10 @@ class NotificationService {
   // Notify user when their approval request is rejected
   async notifyApprovalRejected(approvalId, userId, adminId, reason = null) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       const message = reason 
-        ? `Your approval request was rejected. Reason: ${reason}`
-        : 'Your approval request was rejected';
+        ? `Your approval request was rejected by ${adminNameFull}. Reason: ${reason}`
+        : `Your approval request was rejected by ${adminNameFull}.`;
 
       await this.createNotification({
         recipient: userId,
@@ -290,9 +313,10 @@ class NotificationService {
   // Notify user when their approval request needs revision
   async notifyApprovalRevision(approvalId, userId, adminId, message = null) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       const notificationMessage = message 
-        ? `Your approval request needs revision: ${message}`
-        : 'Your approval request needs revision. Please check and resubmit.';
+        ? `Your approval request needs revision (marked by ${adminNameFull}): ${message}`
+        : `Your approval request needs revision based on feedback from ${adminNameFull}. Please check and resubmit.`;
 
       await this.createNotification({
         recipient: userId,
@@ -403,12 +427,13 @@ class NotificationService {
   // Notify user when their account is approved
   async notifyUserApproved(userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       // Send the welcome notification
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Welcome to S-CORE!',
-        message: 'Your account has been approved! Click here to learn how to navigate the system and get started.',
+        message: `Your account has been approved by ${adminNameFull}! Click here to learn how to navigate the system and get started.`,
         type: 'user_approved',
         relatedId: userId,
         relatedModel: 'User',
@@ -426,12 +451,13 @@ class NotificationService {
   // Notify unit member when their account is approved
   async notifyUnitApproved(userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       // Send the unit welcome notification - use special URL to trigger modal
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Welcome to S-CORE Unit Team!',
-        message: 'Your unit account has been approved! Click here to learn how to process tasks and manage your workflow.',
+        message: `Your unit account has been approved by ${adminNameFull}! Click here to learn how to process tasks and manage your workflow.`,
         type: 'unit_approved',
         relatedId: userId,
         relatedModel: 'User',
@@ -449,11 +475,12 @@ class NotificationService {
   // Notify user when their account is denied
   async notifyUserDenied(userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Account Access Denied',
-        message: 'Your account registration was not approved. Please contact the administrator for more information.',
+        message: `Your account registration was not approved by ${adminNameFull}. Please contact the administrator for more information.`,
         type: 'user_denied',
         relatedId: userId,
         relatedModel: 'User',
