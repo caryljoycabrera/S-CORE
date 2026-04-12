@@ -149,7 +149,7 @@ class UnitNotificationSystem {
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span class="notification-badge" id="notification-badge">0</span>
+          <span class="notification-badge empty" id="notification-badge">0</span>
         </button>
 
         <div class="notification-dropdown" id="notification-dropdown">
@@ -797,19 +797,13 @@ class UnitNotificationSystem {
         }
       }
 
-      // Handle unit-specific navigation
-      if (urlObj.pathname.includes('/unit/')) {
-        console.log('🏢 Unit navigation to unit page:', url);
-        window.location.href = url;
-        return;
-      }
-
-      // Check if this is a modal-opening URL
+      // Check if this is a modal-opening URL FIRST (before generic unit nav)
       if (params.has('modal') && params.has('requestId')) {
         const requestId = params.get('requestId');
         const requestType = params.get('type');
+        const modalType = params.get('modal');
 
-        console.log('📋 Unit modal detected:', { requestId, requestType });
+        console.log('📋 Unit modal detected:', { requestId, requestType, modalType });
 
         // Check if we're on the correct page for this request type
         const currentPath = window.location.pathname;
@@ -818,17 +812,33 @@ class UnitNotificationSystem {
         if (currentPath === targetPath) {
           // We're on the right page, try to open modal
           console.log('✅ Unit on correct page, opening modal...');
-          this.openRequestModal(requestId, requestType);
+          this.closeDropdown();
+          // Handle archived modals differently
+          if (modalType === 'archived' && typeof window.openArchivedRequestModal === 'function') {
+            console.log('📦 Opening archived request modal:', { requestId, requestType });
+            window.openArchivedRequestModal(requestId, requestType);
+          } else {
+            // For regular modals, just navigate - alltasks.js will handle modal opening on page load
+            window.location.href = url;
+          }
         } else {
           // Navigate to the correct page with modal parameters
           console.log('🔄 Unit navigating to correct page:', url);
           window.location.href = url;
         }
-      } else {
-        // Regular navigation
-        console.log('🔗 Unit regular navigation to:', url);
-        window.location.href = url;
+        return; // Exit after handling modal URL
       }
+
+      // Handle unit-specific navigation (for non-modal URLs)
+      if (urlObj.pathname.includes('/unit/')) {
+        console.log('🏢 Unit navigation to unit page:', url);
+        window.location.href = url;
+        return;
+      }
+
+      // Regular navigation
+      console.log('🔗 Unit regular navigation to:', url);
+      window.location.href = url;
     } catch (error) {
       console.error('❌ Unit error handling notification navigation:', error);
       // Fallback to regular navigation

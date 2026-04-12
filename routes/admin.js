@@ -1197,12 +1197,15 @@ router.post('/admin/request/restore', requireAdmin, async (req, res) => {
         const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
         const unitIds = unitMembers.map(u => u._id);
         if (unitIds.length > 0) {
+          const unitNotificationUrl = requestType === 'Request Approval'
+            ? `/unit/task-approvals?modal=request&requestId=${requestId}&type=approval`
+            : `/unit/task-services?modal=request&requestId=${requestId}&type=service`;
           await notificationService.notifySystem(
             unitIds,
             'Request Restored',
             `Admin ${adminName} has restored the ${requestType.toLowerCase()} "${request.title}" assigned to your unit (status: ${restoreStatus}).`,
             'medium',
-            '/messages'
+            unitNotificationUrl
           );
         }
       }
@@ -1256,11 +1259,11 @@ router.post('/admin/run-archiving-now', requireAdmin, async (req, res) => {
  */
 router.get('/api/admin/archived-records', requireAdmin, async (req, res) => {
   try {
-    const [deletedApprovals, deletedServices, autoArchivedApprovals, autoArchivedServices] = await Promise.all([
-      RequestApproval.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
-      ServiceRequest.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
-      RequestApproval.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
-      ServiceRequest.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean()
+    const [manualApprovals, manualServices, autoArchivedApprovals, autoArchivedServices] = await Promise.all([
+      RequestApproval.find({ status: 'Archived', archiveReason: { $exists: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+      ServiceRequest.find({ status: 'Archived', archiveReason: { $exists: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+      RequestApproval.find({ status: 'Archived', archivedBy: 'system' }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+      ServiceRequest.find({ status: 'Archived', archivedBy: 'system' }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean()
     ]);
 
     const buildEntry = (r, type, source) => {
@@ -1272,9 +1275,6 @@ router.get('/api/admin/archived-records', requireAdmin, async (req, res) => {
         displayOrganization = r.userId.userType === 'nonstudent'
           ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
           : r.organization || 'N/A';
-      }
-      if (source === 'deleted' && r.deletedBy && r.deletedBy.fName) {
-        deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
       }
       return { 
         ...r, 
@@ -1289,8 +1289,8 @@ router.get('/api/admin/archived-records', requireAdmin, async (req, res) => {
     };
 
     const archivedRequests = [
-      ...deletedApprovals.map(r => buildEntry(r, 'Request Approval', 'deleted')),
-      ...deletedServices.map(r => buildEntry(r, 'Service Request', 'deleted')),
+      ...manualApprovals.map(r => buildEntry(r, 'Request Approval', 'deleted')),
+      ...manualServices.map(r => buildEntry(r, 'Service Request', 'deleted')),
       ...autoArchivedApprovals.map(r => buildEntry(r, 'Request Approval', 'auto')),
       ...autoArchivedServices.map(r => buildEntry(r, 'Service Request', 'auto')),
     ].sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
@@ -1737,13 +1737,13 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
               const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
               await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/service-requests?openModalId=${requestId}`);
             }
-            // Notify Units - send to service-requests page where archived requests are visible
+            // Notify Units - send to unit-specific task pages with archived modal parameters
             const User = require('../models/User');
             if (assignedUnits && assignedUnits !== 'Not yet assigned') {
               const unitMembers = await User.find({ unitTeam: assignedUnits, role: 'unit' }, '_id');
               const unitIds = unitMembers.map(u => u._id);
               if (unitIds.length > 0) {
-                await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was ${statusLower} by ${adminNameFull}.`, 'medium', `/admin/services?openModalId=${requestId}`);
+                await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was ${statusLower} by ${adminNameFull}.`, 'medium', `/unit/task-services?modal=archived&requestId=${requestId}&type=service`);
               }
             }
             // Notify OTHER admin users (exclude performing admin)
@@ -3794,7 +3794,7 @@ router.put('/admin/request/edit', requireAdmin, async (req, res) => {
  */
 router.post('/admin/request/delete', requireAdmin, async (req, res) => {
   try {
-    const { requestId, requestType } = req.body;
+    const { requestId, requestType, archiveReason } = req.body;
 
     if (!requestId || !requestType) {
       return res.status(400).json({ success: false, message: 'Request ID and type are required' });
@@ -3808,14 +3808,25 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
 
-    // Soft delete by setting isDeleted flag, preserving previous status
+    // Set status to Archived instead of moving to trash
+    const updateFields = { 
+      status: 'Archived',
+      archiveReason: archiveReason || 'No reason provided',
+      previousStatus: existing.status,   // ← save so restore knows where to send it back
+      archivedBy: 'admin',
+      archivedAt: new Date()
+    };
+
+    // Clear restorationRequests when re-archiving to remove old restoration history
+    const unsetFields = {
+      restorationRequests: 1
+    };
+
     const request = await Model.findByIdAndUpdate(
       requestId,
-      { 
-        isDeleted: true,
-        deletedAt: new Date(),
-        deletedBy: req.user._id,
-        previousStatus: existing.status   // ← save so restore knows where to send it back
+      {
+        $set: updateFields,
+        $unset: unsetFields
       },
       { new: true }
     );
@@ -3842,16 +3853,16 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
         await notificationService.notifySystem(requestorId, 'Request Deleted', userMessage, 'high', notificationUrl);
       }
 
-      // 2. Unit Notification - send to appropriate page where archived requests are visible
+      // 2. Unit Notification - send to unit task pages with archived modal parameters
       if (request.assignedUnits) {
         const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
         const unitIds = unitMembers.map(u => u._id);
         if (unitIds.length > 0) {
           const unitMessage = `The request "${titleStr}" assigned to your unit was manually deleted by an administrator.`;
-          // For units, send to admin equivalents (admin/services or admin/approvals)
+          // For units, send to unit-specific task pages with archived modal parameters
           const unitNotificationUrl = requestType === 'Request Approval'
-            ? `/admin/approvals?openModalId=${request._id}`
-            : `/admin/services?openModalId=${request._id}`;
+            ? `/unit/task-approvals?modal=archived&requestId=${request._id}&type=approval`
+            : `/unit/task-services?modal=archived&requestId=${request._id}&type=service`;
           await notificationService.notifySystem(unitIds, 'Request Deleted', unitMessage, 'medium', unitNotificationUrl);
         }
       }
@@ -7063,4 +7074,6 @@ router.get('/admin/test-email', requireAdmin, async (req, res) => {
   }
 });
 
+
 module.exports = router;
+

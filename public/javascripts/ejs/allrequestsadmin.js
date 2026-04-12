@@ -1782,6 +1782,17 @@ function showUpdateConfirmation() {
   const currentUnits = unitsSelect ? unitsSelect.value : '';
   const currentDeadline = deadlineInput ? deadlineInput.value : '';
 
+  // Intercept Archived status
+  if (currentStatus === 'Archived' && originalValues.status !== 'Archived') {
+    if (typeof window.openDeleteConfirm === 'function') {
+      window.openDeleteConfirm({
+        requestId: currentRequestId,
+        requestType: currentRequestType
+      });
+      return;
+    }
+  }
+
   // Compare with original values
   const changes = [];
 

@@ -10,7 +10,7 @@ const User = require('../models/User');
 const BroadcastMessage = require('../models/BroadcastMessage');
 const notificationService = require('../services/notificationService');
 const emailService = require('../services/emailService');
-const { authLimiter } = require('../middleware/rateLimiter');
+const { authLimiter, apiLimiter } = require('../middleware/rateLimiter');
 const { getOrganizations, getOffices } = require('../utils/settingsHelpers');
 const { escapeRegex, sanitizeEmail, sanitizeName, sanitizePhone, sanitizeText, sanitizeString } = require('../utils/sanitize');
 const { isAllowedDomain } = require('../config/clerk');
@@ -189,7 +189,7 @@ router.get('/login', (req, res) => {
  * Validates input, creates user account, and redirects to login
  * Rate limited to prevent abuse
  */
-router.post('/register', authLimiter, async (req, res) => {
+router.post('/register', apiLimiter, async (req, res) => {
   try {
     console.log('Registration attempt:', req.body);
     
@@ -530,7 +530,7 @@ router.post('/register', authLimiter, async (req, res) => {
  * POST /register-invitation
  * Processes registration from invitation with auto-approval
  */
-router.post('/register-invitation', authLimiter, async (req, res) => {
+router.post('/register-invitation', apiLimiter, async (req, res) => {
   try {
     const { invitationToken, ...registrationData } = req.body;
     

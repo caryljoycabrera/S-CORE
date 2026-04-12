@@ -109,7 +109,7 @@ class NotificationSystem {
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span class="notification-badge" id="notification-badge">0</span>
+          <span class="notification-badge empty" id="notification-badge">0</span>
         </button>
         
         <div class="notification-dropdown" id="notification-dropdown">
@@ -925,12 +925,82 @@ class NotificationSystem {
    */
   async openArchivedRequestModal(requestId, requestType) {
     if (typeof window.openArchivedRequestModal === 'function') {
-      // Use existing function if available on the page
       window.openArchivedRequestModal(requestId, requestType);
-    } else {
-      console.warn('Archived request modal function not available on this page');
-      // Show alert to user
-      alert('Archived Request\n\nThis request has been archived by an administrator. Please submit a restoration request if you would like it to be restored.');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/request/${requestId}`);
+      let requestData;
+      if (res.status === 410) {
+        requestData = await res.json();
+      } else {
+        requestData = await res.json();
+        if (!requestData.archived) {
+          alert('This request is not archived.');
+          return;
+        }
+      }
+
+      // Remove existing if any
+      const existing = document.getElementById('dynamicArchivedModal');
+      if (existing) existing.remove();
+
+      const modalHTML = `
+        <div id="dynamicArchivedModal" style="display:flex; justify-content:center; align-items:center; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+          <div style="background:#fff; border-radius:8px; width:450px; max-width:90%; padding:24px; box-shadow:0 4px 6px rgba(0,0,0,0.1); font-family:sans-serif;">
+            <h2 style="margin-top:0; color:#dc2626; font-size: 1.25rem;">Archived Request Details</h2>
+            <p style="margin-bottom: 12px;"><strong>Title:</strong> ${requestData.title || 'Untitled Session'}</p>
+            <div style="background:#f3f4f6; padding:12px; border-radius:6px; margin:16px 0;">
+              <strong style="display:block; margin-bottom:4px; color:#374151; font-size:14px;">Archiving Reason from Admin:</strong>
+              <p style="margin:0; color:#4b5563; font-size:14px;">${requestData.archiveReason || 'No reason provided.'}</p>
+            </div>
+            <div style="margin-top:20px;">
+              <label for="restoreReasonInput" style="display:block; margin-bottom:6px; font-weight:bold; color:#374151; font-size:14px;">Reason for Restoration Request (Required)</label>
+              <textarea id="restoreReasonInput" rows="3" style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:8px; box-sizing:border-box; font-family:inherit; font-size:14px;" required placeholder="Explain why you are requesting restoration of this item..."></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+              <button id="closeArchivedBtn" style="padding:8px 16px; background:#e5e7eb; color:#374151; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Cancel</button>
+              <button id="requestRestoreBtn" style="padding:8px 16px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Request Restoration</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      const modal = document.getElementById('dynamicArchivedModal');
+
+      document.getElementById('closeArchivedBtn').onclick = () => {
+        modal.remove();
+      };
+
+      document.getElementById('requestRestoreBtn').onclick = async () => {
+        const reason = document.getElementById('restoreReasonInput').value.trim();
+        if (!reason) {
+          alert('Please provide a reason for requesting restoration.');
+          return;
+        }
+        
+        try {
+          const fetchRes = await fetch('/api/request-restoration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId, requestType, reason })
+          });
+          const result = await fetchRes.json();
+          if (result.success || fetchRes.ok) {
+            alert('Restoration request sent successfully.');
+            modal.remove();
+          } else {
+            alert(result.message || 'Failed to send restoration request.');
+          }
+        } catch (e) {
+          alert('An error occurred while sending your request.');
+        }
+      };
+    } catch (err) {
+      console.error('Error fetching archived request details:', err);
+      alert('Error fetching request details. Please try again.');
     }
   }
 

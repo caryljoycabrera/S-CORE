@@ -40,6 +40,14 @@ body:has(.modal[style*="display:block"]) #adminSidebar {
   /* Remove opacity - modal backdrop will darken it naturally */
 }
 
+/* Disable background scroll when admin modal is active */
+body:has(.modal[style*="display: flex"]),
+body:has(.modal[style*="display:flex"]),
+body:has(.modal[style*="display: block"]),
+body:has(.modal[style*="display:block"]) {
+  overflow: hidden !important;
+}
+
 /* ==========================================
    PROFILE SECTION AT TOP
    ========================================== */
@@ -217,13 +225,14 @@ body:has(.modal[style*="display:block"]) #adminSidebar {
   flex-direction: column;
   padding: 1rem 0;
   flex: 1;
+  opacity: 1 !important;
 }
 
 .sidebar-item {
   display: flex;
   align-items: center;
   padding: 1rem 1.25rem;
-  color: rgba(255, 255, 255, 1); /* Full opacity for all icons */
+  color: white !important; /* Force permanent full white */
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -235,13 +244,13 @@ body:has(.modal[style*="display:block"]) #adminSidebar {
 
 .sidebar-item:hover {
   background: rgba(255, 255, 255, 0.15);
-  color: white;
+  color: white; /* Full white on hover */
   transform: translateX(4px);
 }
 
 .sidebar-item.active {
   background: rgba(255, 255, 255, 0.25);
-  color: #ffffff; /* Ensure active icon is bright white */
+  color: white !important; /* Ensure active icon is bright white */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border-left: 4px solid white;
   padding-left: calc(1.25rem - 4px);
@@ -270,6 +279,7 @@ body:has(.modal[style*="display:block"]) #adminSidebar {
   /* This will inherit the 'color' from .sidebar-item or .sidebar-item.active */
   stroke: currentColor;
   fill: none; /* Explicitly remove any fill */
+  opacity: 1 !important;
 }
 
 .sidebar-item:hover .sidebar-icon {

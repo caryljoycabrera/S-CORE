@@ -454,6 +454,15 @@
       return;
     }
 
+    const archiveReasonInput = document.getElementById('archiveReason');
+    const archiveReason = archiveReasonInput ? archiveReasonInput.value.trim() : '';
+
+    if (archiveReasonInput && archiveReasonInput.hasAttribute('required') && !archiveReason) {
+      showNotification('Please provide a reason for archiving/deleting this request', 'warning', { container: document.querySelector('.confirmation-modal-content') || document.body });
+      archiveReasonInput.focus();
+      return;
+    }
+
     // Store the request ID before clearing it
     const deletedRequestId = currentEditRequestId;
 
@@ -466,14 +475,15 @@
         credentials: 'include',
         body: JSON.stringify({
           requestId: currentEditRequestId,
-          requestType: currentEditRequestType
+          requestType: currentEditRequestType,
+          archiveReason: archiveReason || 'No reason provided'
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        showNotification('Request moved to trash successfully!', 'success');
+        showNotification('Request has been archived successfully!', 'success');
         closeDeleteConfirm();
 
         // Close details modal if open
@@ -486,11 +496,11 @@
         // Update the results count if it exists
         updateResultsCount();
       } else {
-        showNotification(data.message || 'Failed to delete request', 'error');
+        showNotification(data.message || 'Failed to archive request', 'error');
       }
     } catch (error) {
-      console.error('[AdminEditModal] Error deleting request:', error);
-      showNotification('An error occurred while deleting the request', 'error');
+      console.error('[AdminEditModal] Error archiving request:', error);
+      showNotification('An error occurred while archiving the request', 'error');
     }
   }
 

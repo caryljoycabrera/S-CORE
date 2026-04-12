@@ -7,6 +7,7 @@ const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
+const RequestType = require('../models/RequestType');
 const Conversation = require('../models/Conversation');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
 const { upload } = require('../config/upload');
@@ -515,6 +516,95 @@ router.get('/api/admin/calendar-requests/:date/details', requireAdmin, async (re
 });
 
 /**
+ * GET /api/request/:requestId
+ * Fetch minimal request details (used by Unit archived request modal)
+ */
+router.get('/api/request/:requestId', apiLimiter, requireLogin, async (req, res) => {
+  try {
+    const requestId = sanitizeMongoId(req.params.requestId);
+    if (!requestId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid Request ID is required'
+      });
+    }
+
+    const user = await User.findById(req.session.userId).select('role unitTeam').lean();
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const projection = 'title status previousStatus deletedAt archivedAt archiveReason isDeleted assignedUnits originalAssignedUnits userId updatedAt';
+
+    const serviceRequest = await ServiceRequest.findById(requestId).select(projection).lean();
+    const approvalRequest = serviceRequest
+      ? null
+      : await RequestApproval.findById(requestId).select(projection).lean();
+
+    const requestDoc = serviceRequest || approvalRequest;
+    const requestType = serviceRequest ? 'service' : (approvalRequest ? 'approval' : null);
+
+    if (!requestDoc || !requestType) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    // Access control
+    const sessionUserId = String(req.session.userId);
+    const requestorId = requestDoc.userId ? String(requestDoc.userId) : null;
+
+    if (user.role === 'admin') {
+      // Admin can access any request
+    } else if (user.role === 'unit') {
+      const userUnit = (user.unitTeam || '').toString().trim().toLowerCase();
+      const assignedUnit = (requestDoc.assignedUnits || '').toString().trim().toLowerCase();
+      const originalUnit = (requestDoc.originalAssignedUnits || '').toString().trim().toLowerCase();
+
+      if (!userUnit || (assignedUnit !== userUnit && originalUnit !== userUnit)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+    } else {
+      // Regular user can only access their own request
+      if (!requestorId || requestorId !== sessionUserId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+    }
+
+    const statusStr = (requestDoc.status || '').toString();
+    const isArchived = Boolean(requestDoc.isDeleted) || statusStr.toLowerCase() === 'archived';
+
+    return res.json({
+      success: true,
+      requestId,
+      requestType,
+      archived: isArchived,
+      title: requestDoc.title || 'Untitled Request',
+      status: requestDoc.status,
+      previousStatus: requestDoc.previousStatus,
+      // Unit UI expects `deletedAt`; fall back to `archivedAt`/`updatedAt` when not present
+      deletedAt: requestDoc.deletedAt || requestDoc.archivedAt || requestDoc.updatedAt || null
+    });
+  } catch (error) {
+    console.error('Error fetching request details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch request details'
+    });
+  }
+});
+
+/**
  * GET /api/conversation/:requestId
  * API endpoint to get conversation for a specific request
  */
@@ -548,6 +638,7 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
         status: targetRequest.status,
         previousStatus: targetRequest.previousStatus,
         deletedAt: targetRequest.deletedAt,
+        archiveReason: targetRequest.archiveReason,
         message: 'This request has been archived by an administrator. You can request restoration by providing a reason in the details below.'
       });
     }
@@ -1528,19 +1619,31 @@ router.get('/api/announcements', requireLogin, async (req, res) => {
  */
 router.post('/api/request-restoration', requireLogin, async (req, res) => {
   try {
-    const { requestId, requestType, reason } = req.body;
     const userId = req.session.userId;
 
-    if (!requestId || !requestType || !reason || !reason.trim()) {
+    const requestId = sanitizeMongoId(req.body.requestId);
+    const requestType = sanitizeString(req.body.requestType).toLowerCase();
+    const reason = sanitizeText(req.body.reason, 500);
+
+    if (!requestId || !['approval', 'service'].includes(requestType) || !reason) {
       return res.status(400).json({ 
         success: false, 
         message: 'Request ID, request type, and reason are required' 
       });
     }
 
-    // Fetch the deleted request
+    const user = await User.findById(userId).select('role unitTeam fName lName').lean();
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Fetch the archived request
     const Model = requestType === 'approval' ? RequestApproval : ServiceRequest;
-    const request = await Model.findById(requestId).select('title userId isDeleted previousStatus');
+    const request = await Model.findById(requestId)
+      .select('title userId isDeleted status previousStatus assignedUnits originalAssignedUnits restorationRequests');
 
     if (!request) {
       return res.status(404).json({ 
@@ -1549,28 +1652,46 @@ router.post('/api/request-restoration', requireLogin, async (req, res) => {
       });
     }
 
-    if (!request.isDeleted) {
+    const statusStr = (request.status || '').toString().trim().toLowerCase();
+    const isArchived = Boolean(request.isDeleted) || statusStr === 'archived';
+
+    if (!isArchived) {
       return res.status(400).json({ 
         success: false, 
         message: 'This request is not archived' 
       });
     }
 
-    // Verify the user is the request author
-    if (request.userId.toString() !== userId) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'You can only request restoration for your own requests' 
-      });
+    // Access control: allow request author, assigned unit members, or admin
+    if (user.role === 'admin') {
+      // Admin allowed (though typically restore directly)
+    } else if (user.role === 'unit') {
+      const userUnit = (user.unitTeam || '').toString().trim().toLowerCase();
+      const assignedUnit = (request.assignedUnits || '').toString().trim().toLowerCase();
+      const originalUnit = (request.originalAssignedUnits || '').toString().trim().toLowerCase();
+
+      if (!userUnit || (assignedUnit !== userUnit && originalUnit !== userUnit)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+    } else {
+      // Regular user can only request restoration for own request
+      if (!request.userId || request.userId.toString() !== String(userId)) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'You can only request restoration for your own requests' 
+        });
+      }
     }
 
     // Store restoration request (in request document for now)
     const restorationRecord = {
       requestedAt: new Date(),
       requestedBy: userId,
-      reason: reason.trim(),
-      status: 'pending',
-      requestType: requestType
+      reason: reason,
+      status: 'pending'
     };
 
     // Add restoration request to the request document
@@ -1585,15 +1706,11 @@ router.post('/api/request-restoration', requireLogin, async (req, res) => {
     const adminIds = admins.map(a => a._id);
     
     if (adminIds.length > 0) {
-      const notificationService = require('../services/notificationService');
       const requestTitle = request.title || 'Untitled Request';
-      const userInfo = await User.findById(userId).select('fName lName');
-      const userName = userInfo ? `${userInfo.fName} ${userInfo.lName}` : 'Unknown User';
+      const userName = `${user.fName || ''} ${user.lName || ''}`.trim() || 'Unknown User';
       
-      const message = `${userName} has requested restoration of the ${requestType} "${requestTitle}" with reason: "${reason.trim()}"`;
-      const actionUrl = requestType === 'approval' 
-        ? `/admin/approvals?view=archived&requestId=${requestId}`
-        : `/admin/services?view=archived&requestId=${requestId}`;
+      const message = `${userName} has requested restoration of the ${requestType} "${requestTitle}" with reason: "${reason}"`;
+      const actionUrl = `/admin/restoration-requests?reviewModalId=${requestId}`;
       
       await notificationService.notifySystem(
         adminIds,
@@ -1615,6 +1732,47 @@ router.post('/api/request-restoration', requireLogin, async (req, res) => {
       message: 'Failed to submit restoration request',
       details: error.message 
     });
+  }
+});
+
+/**
+ * GET /api/request-types
+ * Returns request types optionally filtered by category
+ */
+router.get('/api/request-types', requireLogin, async (req, res) => {
+  try {
+    const { requestCategory } = req.query;
+    let query = { status: 'approved' };
+    
+    if (requestCategory) {
+      if (requestCategory.toLowerCase() === 'service request') {
+        query.category = 'service';
+      } else if (requestCategory.toLowerCase() === 'request approval') {
+        query.category = 'approval';
+      } else {
+        query.category = requestCategory.toLowerCase();
+      }
+    }
+    
+    const types = await RequestType.find(query).select('name assignedUnit category').sort('name').lean();
+    res.json({ success: true, types, requestTypes: types });
+  } catch (error) {
+    console.error('Error fetching request types:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+/**
+ * GET /api/request-types/approved
+ * Returns all approved request types
+ */
+router.get('/api/request-types/approved', requireLogin, async (req, res) => {
+  try {
+    const types = await RequestType.find({ status: 'approved' }).select('name category assignedUnit').sort('name').lean();
+    res.json({ success: true, requestTypes: types, types });
+  } catch (error) {
+    console.error('Error fetching approved request types:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 

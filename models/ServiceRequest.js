@@ -182,7 +182,21 @@ const serviceRequestSchema = new mongoose.Schema({
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending'
     }
-  }]
+  }],
+
+  // Archive reason (why it was archived) and archive source (manual vs auto-archive)
+  archiveReason: {
+    type: String,
+    trim: true
+  },
+  archivedBy: {
+    type: String,
+    enum: ['system', 'admin'],
+    default: 'admin'
+  },
+  archivedAt: {
+    type: Date
+  }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields
 });

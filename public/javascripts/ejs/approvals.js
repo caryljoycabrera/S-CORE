@@ -1686,8 +1686,17 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Show update confirmation modal
   function showUpdateConfirmation() {
-    const changes = getFormChanges();
-    
+      const statusSelect = document.getElementById('adminStatusSelect');
+      if (statusSelect && statusSelect.value === 'Archived' && originalValues.status !== 'Archived') {
+        if (typeof window.openDeleteConfirm === 'function') {
+          window.openDeleteConfirm({
+            requestId: currentRequestId,
+            requestType: currentRequestType
+          });
+          return;
+        }
+      }
+
     if (changes.length === 0) {
       showNotification('No changes detected', 'info');
       return;
