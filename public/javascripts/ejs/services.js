@@ -1709,8 +1709,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitsSelect = document.getElementById('adminUnitsSelect');
     const deadlineInput = document.getElementById('adminDeadlineInput');
     
-    if (statusSelect) statusSelect.value = originalValues.status || '';
-    if (unitsSelect) unitsSelect.value = originalValues.units || '';
+    if (statusSelect) {
+      statusSelect.value = originalValues.status || '';
+      const currentStatusValue = document.getElementById('currentStatusValue');
+      if (currentStatusValue) currentStatusValue.textContent = originalValues.status || '';
+    }
+    
+    if (unitsSelect) {
+      unitsSelect.value = originalValues.units === 'Not yet assigned' ? '' : (originalValues.units || '');
+      const currentUnitsValue = document.getElementById('currentUnitsValue');
+      if (currentUnitsValue) currentUnitsValue.textContent = originalValues.units || 'Not yet assigned';
+    }
+    
     if (deadlineInput) deadlineInput.value = originalValues.deadline || '';
     
     showNotification('Changes cancelled - form reset to original values', 'info');

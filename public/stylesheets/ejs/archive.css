@@ -271,11 +271,11 @@
 
 @keyframes modalSlideIn {
   from {
-    transform: scale(0.95) translateY(-20px);
+    transform: translateY(-20px);
     opacity: 0;
   }
   to {
-    transform: scale(1) translateY(0);
+    transform: translateY(0);
     opacity: 1;
   }
 }

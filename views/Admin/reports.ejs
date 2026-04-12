@@ -353,13 +353,90 @@
               <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
             </div>
           </div>
-          <div class="dropdown-menu" id="dropdownMenu">
-            <a href="/admin/profile">My Profile</a>
-            <a href="/logout">Logout</a>
+          <div id="dropdownMenu" style="display: none !important; position: fixed !important; top: auto !important; right: 8px !important; left: auto !important; background: white !important; border: 1px solid #ddd !important; min-width: 180px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important; border-radius: 6px !important; z-index: 99999 !important; padding: 0 !important; margin: 0 !important; visibility: visible !important; pointer-events: auto !important; bottom: auto !important;">
+            <a href="/admin/profile" style="display: block; padding: 12px 16px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">My Profile</a>
+            <a href="/logout" style="display: block; padding: 12px 16px; color: #333; text-decoration: none;">Logout</a>
           </div>
         </div>
       </div>
     </div>
+
+    <script>
+      console.log('Report dropdown script loaded');
+      // Header Dropdown Manager
+      const headerDropdown = {
+        menu: null,
+        toggleBtn: null,
+        isOpen: false,
+        
+        init() {
+          console.log('headerDropdown.init() called');
+          this.menu = document.getElementById("dropdownMenu");
+          this.toggleBtn = document.querySelector('.dropdown-toggle');
+          console.log('Dropdown menu element:', this.menu);
+          console.log('Toggle element:', this.toggleBtn);
+        },
+        
+        toggle() {
+          console.log('headerDropdown.toggle() called, current isOpen:', this.isOpen);
+          if (this.isOpen) {
+            this.close();
+          } else {
+            this.open();
+          }
+        },
+        
+        open() {
+          console.log('headerDropdown.open() called');
+          if (this.menu && this.toggleBtn) {
+            // Position relative to toggle element
+            const rect = this.toggleBtn.getBoundingClientRect();
+            this.menu.style.setProperty('top', (rect.bottom + 8) + 'px', 'important');
+            this.menu.style.setProperty('display', 'block', 'important');
+            this.isOpen = true;
+            const computed = window.getComputedStyle(this.menu);
+            console.log('Menu positioned at top:', this.menu.style.top, 'display:', computed.display, 'z-index:', computed.zIndex);
+            console.log('Menu rect:', this.menu.getBoundingClientRect());
+          } else {
+            console.error('Cannot open: menu or toggle missing', { menu: this.menu, toggleBtn: this.toggleBtn });
+          }
+        },
+        
+        close() {
+          console.log('headerDropdown.close() called');
+          if (this.menu) {
+            this.menu.style.setProperty('display', 'none', 'important');
+            this.isOpen = false;
+            console.log('Menu closed');
+          }
+        }
+      };
+
+      // Dropdown toggle function for onclick
+      function toggleDropdown() {
+        console.log('toggleDropdown() global function triggered');
+        if (!headerDropdown.menu) {
+          headerDropdown.init();
+        }
+        headerDropdown.toggle();
+      }
+
+      // Close dropdown when clicking outside
+      window.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-toggle') && !e.target.closest('#dropdownMenu')) {
+          if (headerDropdown.isOpen) {
+            console.log('Outside click detected, closing dropdown');
+            headerDropdown.close();
+          }
+        }
+      });
+
+      // Initialize on load
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOMContentLoaded: initializing dropdown');
+        headerDropdown.init();
+      });
+    </script>
 
     <!-- REPORTS PAGE CONTENT -->
     <div class="main-content-area" style="padding: 2rem;">

@@ -1861,13 +1861,16 @@ function showCancelConfirmation() {
 function resetFormToOriginalValues() {
   const statusSelect = document.getElementById('adminStatusSelect');
   if (statusSelect) {
-    const options = getStatusOptions(currentRequestType);
-    statusSelect.innerHTML = options.map(opt => `<option value="${opt}" ${opt === originalValues.status ? 'selected' : ''}>${opt}</option>`).join('');
+    statusSelect.value = originalValues.status || '';
+    const currentStatusValue = document.getElementById('currentStatusValue');
+    if (currentStatusValue) currentStatusValue.textContent = originalValues.status || '';
   }
 
   const unitsSelect = document.getElementById('adminUnitsSelect');
   if (unitsSelect) {
-    unitsSelect.value = originalValues.units === 'Not yet assigned' ? '' : originalValues.units;
+    unitsSelect.value = originalValues.units === 'Not yet assigned' ? '' : (originalValues.units || '');
+    const currentUnitsValue = document.getElementById('currentUnitsValue');
+    if (currentUnitsValue) currentUnitsValue.textContent = originalValues.units || 'Not yet assigned';
   }
 
   const deadlineInput = document.getElementById('adminDeadlineInput');

@@ -598,7 +598,7 @@ body:has(.modal[style*="display: block"]) .unit-sidebar {
 }
 
 .unit-menu-toggle:active {
-  transform: scale(0.95);
+  
 }
 
 .unit-menu-toggle svg {

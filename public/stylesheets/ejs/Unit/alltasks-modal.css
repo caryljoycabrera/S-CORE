@@ -59,7 +59,7 @@
 }
 
 .close-modal-btn:active {
-  transform: scale(0.95);
+  
 }
 
 .unit-modal-header .modal-title-section {
@@ -1420,7 +1420,7 @@
 .close-modal-btn:active,
 .close-modal:active,
 .unit-conversation-modal .close-modal:active {
-  transform: scale(0.95);
+  
 }
 
 /* ==========================================
@@ -1819,7 +1819,7 @@
 
 @keyframes checkmark-bounce {
   0%, 100% {
-    transform: scale(1);
+    
   }
   50% {
     transform: scale(1.1);
@@ -2280,7 +2280,7 @@
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
-    transform: scale(1);
+    
   }
   50% {
     opacity: 0.9;
