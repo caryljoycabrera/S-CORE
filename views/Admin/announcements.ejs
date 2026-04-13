@@ -323,14 +323,6 @@
       <section class="activity-section">
         <!-- Page Header -->
         <div class="page-header-container">
-          <div class="user-info-section">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>"
-                 alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
-            <div>
-              <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
-              <p style="color: #6b7280;">Administrator</p>
-            </div>
-          </div>
           <div class="action-button-container">
             <button onclick="openCreateModal()" class="view-all-btn" style="display: inline-flex; align-items: center; gap: 0.5rem;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -382,19 +374,13 @@
                   <% if (announcement.scheduledTime) { %>
                     <% 
                       const schedDate = new Date(announcement.scheduledTime);
-                      // Convert UTC back to UTC+8 for display
+                      // Convert UTC back to UTC+8 for display by adjusting the date object directly
+                      schedDate.setUTCHours(schedDate.getUTCHours() + 8);
+                      
                       const year = schedDate.getUTCFullYear();
                       const month = String(schedDate.getUTCMonth() + 1).padStart(2, '0');
-                      let day = schedDate.getUTCDate();
-                      let hours = schedDate.getUTCHours() + 8; // Add 8 hours for UTC+8
-                      
-                      // Handle day rollover
-                      if (hours >= 24) {
-                        hours -= 24;
-                        day += 1;
-                      }
-                      
-                      const dayStr = String(day).padStart(2, '0');
+                      const dayStr = String(schedDate.getUTCDate()).padStart(2, '0');
+                      const hours = schedDate.getUTCHours();
                       const hoursStr = String(hours).padStart(2, '0');
                       const minutes = String(schedDate.getUTCMinutes()).padStart(2, '0');
                       const seconds = String(schedDate.getUTCSeconds()).padStart(2, '0');
@@ -529,8 +515,11 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="scheduledTime">Schedule Send Time (Optional)</label>
-          <input type="datetime-local" id="scheduledTime" class="form-input">
+          <label class="form-label" for="scheduledDate">Schedule Send Date & Time (Optional)</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="date" id="scheduledDate" class="form-input" style="flex: 1;">
+            <input type="time" id="scheduledTime" class="form-input" style="flex: 1;">
+          </div>
           <small>Leave empty to send immediately</small>
         </div>
       </div>
@@ -822,6 +811,7 @@
       document.getElementById('announcementPriority').value = 'medium';
       document.getElementById('announcementType').value = '';
       document.getElementById('recipientAll').checked = true;
+      document.getElementById('scheduledDate').value = '';
       document.getElementById('scheduledTime').value = '';
       toggleRecipientOptions();
       document.getElementById('announcementModal').style.display = 'flex';
@@ -846,26 +836,17 @@
             // Convert UTC back to UTC+8 for display
             // We stored it as UTC, so we need to ADD 8 hours to display in UTC+8
             const date = new Date(data.announcement.scheduledTime);
+            date.setUTCHours(date.getUTCHours() + 8);
             const year = date.getUTCFullYear();
             const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(date.getUTCDate()).padStart(2, '0');
-            let hours = date.getUTCHours() + 8; // Add 8 hours for UTC+8
-            let adjustedDay = day;
-            
-            // Handle day rollover
-            if (hours >= 24) {
-              hours -= 24;
-              // Increment day
-              let nextDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
-              nextDate.setUTCDate(nextDate.getUTCDate() + 1);
-              adjustedDay = String(nextDate.getUTCDate()).padStart(2, '0');
-            }
-            
+            const dayStr = String(date.getUTCDate()).padStart(2, '0');
+            const hoursStr = String(date.getUTCHours()).padStart(2, '0');
             const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-            const hoursStr = String(hours).padStart(2, '0');
-            const localDateTime = `${year}-${month}-${adjustedDay}T${hoursStr}:${minutes}`;
-            document.getElementById('scheduledTime').value = localDateTime;
+            
+            document.getElementById('scheduledDate').value = `${year}-${month}-${dayStr}`;
+            document.getElementById('scheduledTime').value = `${hoursStr}:${minutes}`;
           } else {
+            document.getElementById('scheduledDate').value = '';
             document.getElementById('scheduledTime').value = '';
           }
         }
@@ -929,32 +910,27 @@
       const priority = document.getElementById('announcementPriority').value.toLowerCase();
       const type = document.getElementById('announcementType').value;
       const recipientType = document.querySelector('input[name="recipientType"]:checked').value;
-      const scheduledTimeInput = document.getElementById('scheduledTime').value;
+      const scheduledDateInput = document.getElementById('scheduledDate').value;
+      let scheduledTimeInput = document.getElementById('scheduledTime').value;
 
       if (!title || content === '<p><br></p>') {
         showAlert('Please fill in title and message', 'error');
         return;
       }
 
-      // Convert datetime-local to ISO string format
+      // Convert separate inputs to ISO string format
       let scheduledTime = null;
-      if (scheduledTimeInput) {
-        // datetime-local format is "YYYY-MM-DDTHH:mm" - this is the user's local time
-        // We always want to treat this as UTC+8 (Philippine Time)
-        const [date, time] = scheduledTimeInput.split('T');
-        const [year, month, day] = date.split('-');
-        const [hours, minutes] = time.split(':');
+      if (scheduledDateInput) {
+        if (!scheduledTimeInput) {
+          scheduledTimeInput = '00:00'; // default time to 12:00 AM
+        }
+        
+        const [year, month, day] = scheduledDateInput.split('-');
+        const [hours, minutes] = scheduledTimeInput.split(':');
         
         // Create a UTC date assuming the input is in UTC+8
         // To convert UTC+8 to UTC: subtract 8 hours
-        // So if user enters 10:00, we want 10:00 UTC+8 = 02:00 UTC
         const utcDate = new Date(Date.UTC(year, month - 1, day, hours - 8, minutes, 0));
-        
-        console.log('[Frontend] Scheduled Time Details:');
-        console.log('  - User input (local/UTC+8):', scheduledTimeInput);
-        console.log('  - Treating as UTC+8 timezone');
-        console.log('  - UTC Date (converted):', utcDate.toISOString());
-        console.log('  - Note: User enters 10:00 UTC+8 → stored as 02:00 UTC');
         
         scheduledTime = utcDate.toISOString();
       }

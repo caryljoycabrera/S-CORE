@@ -33,9 +33,26 @@ document.getElementById('resetFilters').addEventListener('click', resetAnalytics
 let filterTimeout;
 function debouncedApplyFilters() {
   clearTimeout(filterTimeout);
+  updateResetButtonState();
   filterTimeout = setTimeout(() => {
     applyAnalyticsFilters();
   }, 500); // Wait 500ms after user stops changing filters
+}
+
+function updateResetButtonState() {
+  const dateRange = document.getElementById('dateRangeFilter').value;
+  const isUnitDefault = document.getElementById('unitFilter').value === 'all';
+  const isTypeDefault = document.getElementById('requestTypeFilter').value === 'all';
+  const isStatusDefault = document.getElementById('statusFilter').value === 'all';
+  
+  const isDefault = dateRange === 'monthly' && isUnitDefault && isTypeDefault && isStatusDefault;
+  const resetBtn = document.getElementById('resetFilters');
+  
+  if (isDefault) {
+    resetBtn.classList.remove('active');
+  } else {
+    resetBtn.classList.add('active');
+  }
 }
 
 function applyAnalyticsFilters() {
@@ -96,13 +113,57 @@ function applyAnalyticsFilters() {
   });
 }
 
+function updateDashboardWithFilters(data) {
+  if (!data || Object.keys(data).length === 0) return;
+
+  if (document.getElementById('kpi-total-requests') && data.kpis) {
+    document.getElementById('kpi-total-requests').textContent = data.kpis.totalRequests || 0;
+    
+    const avgTurnaround = document.getElementById('kpi-avg-turnaround');
+    if (avgTurnaround) avgTurnaround.innerHTML = `<span class="kpi-number">${data.kpis.avgTurnaround || 0}</span><span class="kpi-unit">days</span>`;
+    
+    const pendingAssignment = document.getElementById('kpi-pending-assignment');
+    if (pendingAssignment) pendingAssignment.textContent = data.kpis.pendingAssignment || 0;
+    
+    const inRevision = document.getElementById('kpi-in-revision');
+    if (inRevision) inRevision.textContent = data.kpis.inRevision || 0;
+    
+    const completionRateElem = document.getElementById('kpi-completion-rate');
+    if (completionRateElem) {
+      const completionRate = data.kpis.totalRequests > 0 
+        ? Math.round(((data.kpis.completed || 0) / data.kpis.totalRequests) * 100) 
+        : 0;
+      completionRateElem.innerHTML = `<span class="kpi-number">${completionRate}</span><span class="kpi-unit">%</span>`;
+    }
+    
+    const responseTimeElem = document.getElementById('kpi-response-time');
+    if (responseTimeElem) responseTimeElem.innerHTML = `<span class="kpi-number">${data.kpis.avgResponseTime || 0}</span><span class="kpi-unit">${data.kpis.responseTimeUnit || 'hrs'}</span>`;
+    
+    const overdueTasks = document.getElementById('kpi-overdue-tasks');
+    if (overdueTasks) overdueTasks.textContent = data.kpis.overdue || 0;
+    
+    const activeRequests = document.getElementById('kpi-active-requests');
+    if (activeRequests) activeRequests.textContent = data.kpis.activeRequests || 0;
+  }
+
+  if (data.charts) {
+    if (data.charts.topRequestors) updateTopRequestorsChart(data.charts.topRequestors);
+    if (data.charts.unitWorkload) updateActiveWorkloadChart(data.charts.unitWorkload);
+    if (data.charts.turnaroundByUnit) updateTurnaroundByUnitChart(data.charts.turnaroundByUnit);
+    if (data.charts.totalWorkload) updateTotalWorkloadChart(data.charts.totalWorkload);
+    if (data.charts.responseTimeByUnit) updateResponseTimeByUnitChart(data.charts.responseTimeByUnit);
+  }
+
+  showFilteredResults(data);
+}
+
 function resetAnalyticsFilters() {
   // Clear any pending filter timeout
   clearTimeout(filterTimeout);
   
   // Reset all filter values
   document.getElementById('dateRangeFilter').value = 'monthly';
-  document.getElementById('unitFilter').selectedIndex = 0;
+  document.getElementById('unitFilter').value = 'all';
   document.getElementById('requestTypeFilter').value = 'all';
   document.getElementById('statusFilter').value = 'all';
   document.getElementById('customDateRange').style.display = 'none';
@@ -110,6 +171,7 @@ function resetAnalyticsFilters() {
   document.getElementById('customStartDate').value = '';
   document.getElementById('customEndDate').value = '';
   
+  updateResetButtonState();
   // Apply filters immediately with reset values
   applyAnalyticsFilters();
 }
@@ -120,7 +182,7 @@ function applyMonthlyFilterOnLoad() {
   document.getElementById('dateRangeFilter').value = 'monthly';
   
   // Ensure other filters are at default values
-  document.getElementById('unitFilter').selectedIndex = 0;
+  document.getElementById('unitFilter').value = 'all';
   document.getElementById('requestTypeFilter').value = 'all';
   document.getElementById('statusFilter').value = 'all';
   
@@ -128,44 +190,10 @@ function applyMonthlyFilterOnLoad() {
   document.getElementById('customDateRange').style.display = 'none';
   document.getElementById('customDateRangeEnd').style.display = 'none';
   
-  // Apply the monthly filter
+  updateResetButtonState();
+  
+  // Apply filters via API rather than trying to access undefined local data
   applyAnalyticsFilters();
-}
-
-function updateDashboardWithFilters(data, filters = {}) {
-  // Update KPIs
-  document.getElementById('kpi-total-requests').textContent = data.kpis.totalRequests;
-  
-  const avgTurnaround = document.getElementById('kpi-avg-turnaround');
-  avgTurnaround.innerHTML = `<span class="kpi-number">${data.kpis.avgTurnaround}</span><span class="kpi-unit">days</span>`;
-  
-  document.getElementById('kpi-pending-assignment').textContent = data.kpis.pendingAssignment;
-  document.getElementById('kpi-in-revision').textContent = data.kpis.inRevision;
-  
-  // Calculate and update completion rate
-  const completionRate = data.kpis.totalRequests > 0 
-    ? Math.round((data.kpis.completed / data.kpis.totalRequests) * 100) 
-    : 0;
-  document.getElementById('kpi-completion-rate').innerHTML = `<span class="kpi-number">${completionRate}</span><span class="kpi-unit">%</span>`;
-  
-  // Update response time
-  document.getElementById('kpi-response-time').innerHTML = `<span class="kpi-number">${data.kpis.avgResponseTime}</span><span class="kpi-unit">${data.kpis.responseTimeUnit}</span>`;
-  
-  // Update overdue tasks
-  document.getElementById('kpi-overdue-tasks').textContent = data.kpis.overdue;
-  
-  // Update active requests
-  document.getElementById('kpi-active-requests').textContent = data.kpis.activeRequests;
-  
-  // Update Charts
-  updateTopRequestorsChart(data.charts.topRequestors);
-  updateActiveWorkloadChart(data.charts.unitWorkload);
-  updateTurnaroundByUnitChart(data.charts.turnaroundByUnit);
-  updateTotalWorkloadChart(data.charts.totalWorkload);
-  updateResponseTimeByUnitChart(data.charts.responseTimeByUnit);
-  
-  // Show and update filtered results section
-  showFilteredResults(data);
 }
 
 function hideLoadingState() {
@@ -931,6 +959,10 @@ function updateFilteredTypeChart(data) {
    FILTERED RESULTS SECTION
    ============================================ */
 
+let currentFilteredPage = 1;
+const itemsPerPage = 10;
+let filteredRequestsData = [];
+
 function showFilteredResults(data) {
   const section = document.getElementById('filteredResultsSection');
   const countElement = document.getElementById('filtered-count');
@@ -946,7 +978,9 @@ function showFilteredResults(data) {
     updateFilteredTypeChart(data.filtered.typeBreakdown);
     
     // Populate filtered table
-    populateFilteredRequestsTable(data.filtered.requests);
+    filteredRequestsData = data.filtered.requests;
+    currentFilteredPage = 1;
+    renderFilteredTablePage();
   } else {
     countElement.textContent = '0';
     
@@ -955,9 +989,61 @@ function showFilteredResults(data) {
     updateFilteredTypeChart(null);
     
     // Show empty table message
-    populateFilteredRequestsTable([]);
+    filteredRequestsData = [];
+    renderFilteredTablePage();
   }
 }
+
+function renderFilteredTablePage() {
+  const tbody = document.getElementById('filteredRequestsTbody');
+  const pagination = document.getElementById('filteredPagination');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  const indicator = document.getElementById('pageIndicator');
+  const rangeIndicator = document.getElementById('pageEntryRange');
+  
+  if (!filteredRequestsData || filteredRequestsData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No requests match the current filters. Try adjusting your filter criteria.</td></tr>';
+    if(pagination) pagination.style.display = 'none';
+    return;
+  }
+  
+  const totalPages = Math.ceil(filteredRequestsData.length / itemsPerPage);
+  if (currentFilteredPage < 1) currentFilteredPage = 1;
+  if (currentFilteredPage > totalPages) currentFilteredPage = totalPages;
+  
+  const startIndex = (currentFilteredPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageData = filteredRequestsData.slice(startIndex, endIndex);
+  
+  populateFilteredRequestsTable(pageData);
+  
+  if (pagination) {
+    pagination.style.display = 'flex';
+    
+    if (rangeIndicator) {
+      const actualEndIndex = Math.min(endIndex, filteredRequestsData.length);
+      const actualStartIndex = filteredRequestsData.length === 0 ? 0 : startIndex + 1;
+      rangeIndicator.textContent = `Showing ${actualStartIndex}-${actualEndIndex} of ${filteredRequestsData.length}`;
+    }
+
+    if (totalPages > 1) {
+      indicator.parentElement.style.display = 'flex';
+      indicator.textContent = `Page ${currentFilteredPage} of ${totalPages}`;
+      prevBtn.disabled = currentFilteredPage === 1;
+      nextBtn.disabled = currentFilteredPage === totalPages;
+      prevBtn.style.opacity = currentFilteredPage === 1 ? '0.5' : '1';
+      nextBtn.style.opacity = currentFilteredPage === totalPages ? '0.5' : '1';
+    } else {
+      indicator.parentElement.style.display = 'none';
+    }
+  }
+}
+
+window.changeFilteredPage = function(newPage) {
+  currentFilteredPage = newPage;
+  renderFilteredTablePage();
+};
 
 function populateFilteredRequestsTable(requests) {
   const tbody = document.getElementById('filteredRequestsTbody');
@@ -985,7 +1071,7 @@ function populateFilteredRequestsTable(requests) {
         </td>
         <td>${request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'N/A'}</td>
         <td>
-          <a href="/admin/${request.requestType === 'service' ? 'services' : 'approvals'}?id=${request._id}" class="btn-view">View</a>
+          <a href="/admin/${request.requestType === 'service' ? 'services' : 'approvals'}?openModalId=${request._id}" class="btn-view">View</a>
         </td>
       </tr>
     `;

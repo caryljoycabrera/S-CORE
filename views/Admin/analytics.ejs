@@ -150,6 +150,33 @@
 .status-badge.approved { background: #d1fae5; color: #065f46; }
 .status-badge.rejected { background: #fee2e2; color: #dc2626; }
 .status-badge.unknown { background: #f3f4f6; color: #374151; }
+
+/* Custom dropdown arrow for select elements */
+.filter-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 16px !important;
+  background-color: white !important;
+  padding-right: 2.5rem !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.btn-reset-filters.active {
+  background: var(--primary-green) !important;
+  color: white !important;
+}
+
+.btn-reset-filters.active:hover {
+  background: var(--accent-green) !important;
+}
+
+.btn-reset-filters.active svg {
+  color: white !important;
+}
 </style>
 </head>
 <body>
@@ -507,6 +534,15 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+          <!-- Pagination Controls -->
+          <div class="pagination-controls" id="filteredPagination" style="display: none; justify-content: space-between; align-items: center; margin-top: 1rem; padding-bottom: 1rem; padding-left: 1.5rem; padding-right: 1.5rem;">
+            <div id="pageEntryRange" style="font-size: 0.85rem; color: #6b7280; font-weight: 500;">Showing 0-0 of 0</div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button id="prevPageBtn" class="btn-page" style="padding: 0.25rem 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer;" onclick="changeFilteredPage(currentFilteredPage - 1)">Prev</button>
+              <span id="pageIndicator" style="display: flex; align-items: center; font-size: 0.85rem; font-weight: 500; color: #4b5563;">Page 1 of 1</span>
+              <button id="nextPageBtn" class="btn-page" style="padding: 0.25rem 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer;" onclick="changeFilteredPage(currentFilteredPage + 1)">Next</button>
+            </div>
           </div>
         </div>
       </div>

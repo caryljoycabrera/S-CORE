@@ -14,6 +14,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
   <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
     /* Archive Manager badge classes */
     .am-badge-approval { background: #dbeafe; color: #1e40af; }
     .am-badge-service  { background: #d1fae5; color: #065f46; }
@@ -25,7 +28,7 @@
     /* Dropdown Menu Styles */
     .dropdown-menu { display: none; position: absolute; right: 0; top: 100%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 0.5rem; min-width: 160px; z-index: 1000; }
     .dropdown-menu.show { display: block; }
-    .dropdown-menu a { display: block; padding: 0.75rem 1rem; color: #1a2e1a; text-decoration: none; }
+    .dropdown-menu a { display: block; padding: 0.75rem 1rem; color: #1a2e1a; text-decoration: none; font-family: 'Inter', sans-serif; }
     .dropdown-menu a:hover { background: #f0f8f0; }
     .dropdown-wrapper { position: relative; }
 
@@ -48,7 +51,7 @@
     .select-display {
       display: flex; align-items: center; justify-content: space-between;
       width: 100%; padding: 8px 12px; border: 1px solid #d1d5db;
-      border-radius: 6px; font-size: 13px; color: #374151;
+      border-radius: 6px; font-size: 13px; font-family: 'Inter', sans-serif; color: #374151;
       background: white; cursor: pointer; transition: all 0.2s;
       min-height: 36px; box-sizing: border-box;
     }
@@ -92,7 +95,7 @@
     }
     .archive-filter-item {
       height: 38px; border: 1px solid #d1d5db; border-radius: 8px;
-      font-size: 13px; font-family: inherit; color: #374151; background: white;
+      font-size: 13px; font-family: 'Inter', sans-serif; color: #374151; background: white;
       padding: 0 12px; box-sizing: border-box; transition: all 0.2s ease;
       display: inline-flex; align-items: center;
     }
@@ -170,6 +173,7 @@
     
     .archive-btn {
       padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
       cursor: pointer; transition: all 0.2s; border: none;
     }
     .archive-btn-secondary { background: #f3f4f6; color: #4b5563; }
@@ -213,6 +217,7 @@
       border-radius: 0.5rem;
       font-weight: 600;
       font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
       cursor: pointer;
       transition: all 0.2s ease;
       border: none;
@@ -588,6 +593,7 @@
       border-radius: 0.375rem;
       font-weight: 600;
       font-size: 0.875rem;
+      font-family: 'Inter', sans-serif;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
@@ -676,6 +682,7 @@
       display: flex;
       border-bottom: 2px solid #e5e7eb;
       margin-bottom: 2rem;
+      font-family: 'Inter', sans-serif;
     }
 
     .config-tab {
@@ -3835,7 +3842,6 @@
       <div class="preview-content">
         <div class="preview-header">
           <h2>Confirm Save</h2>
-          <button type="button" class="btn-close-preview" onclick="closeSystemSaveConfirm()">Cancel</button>
         </div>
         <div class="preview-body">
           <p>Are you sure you want to save these changes to the system configuration? This will update the system settings immediately.</p>

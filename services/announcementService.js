@@ -103,8 +103,10 @@ class AnnouncementService {
       // Get recipient details for email sending and role checking
       const recipients = await User.find({ _id: { $in: recipientIds } }).select('_id email fName lName settings role');
 
-      // Send in-app notifications
-      const notificationPromises = recipientIds.map(recipientId => {
+      // Send in-app notifications (skip sender)
+      const notificationPromises = recipientIds
+        .filter(id => id.toString() !== announcement.sentBy.toString())
+        .map(recipientId => {
         const recipient = recipients.find(r => r._id.toString() === recipientId.toString());
         const isAdmin = recipient && recipient.role === 'admin';
         const actionUrl = isAdmin ? '/admin/announcement' : '/dashboard';
@@ -129,7 +131,7 @@ class AnnouncementService {
       // Send emails if enabled
       if (process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true') {
         const emailPromises = recipients
-          .filter(user => user.email && user.settings?.emailNotifications)
+          .filter(user => user.email && user.settings?.emailNotifications && user._id.toString() !== announcement.sentBy.toString())
           .map(user =>
             emailService.sendAnnouncementEmail(user.email, announcement)
               .catch(err => {

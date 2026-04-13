@@ -640,8 +640,13 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
 
         // For announcements, check if the scheduled time has passed
         try {
-          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime').lean();
+          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime sentBy').lean();
           if (announcement) {
+            // Skip announcement if this user created it
+            if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
+              continue;
+            }
+
             // Include announcement if it has no scheduled time or if the scheduled time has passed
             if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
               filteredNotifications.push(notification);
@@ -660,10 +665,7 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
       // Apply pagination to filtered notifications
       const paginatedNotifications = filteredNotifications.slice(skip, skip + limit);
 
-      const unreadCount = await Notification.countDocuments({ 
-        recipient: userId, 
-        isRead: false 
-      });
+      const unreadCount = await this.getUnreadCount(userId);
 
       return { 
         notifications: paginatedNotifications, 
@@ -1370,9 +1372,17 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
         }
 
         try {
-          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime').lean();
-          if (!announcement || !announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
+          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime sentBy').lean();
+          if (!announcement) {
             validCount++;
+          } else {
+            // Skip if this user created the announcement
+            if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
+              continue;
+            }
+            if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
+              validCount++;
+            }
           }
         } catch (err) {
           console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);

@@ -518,11 +518,7 @@ body:has(.modal[style*="display:block"]) {
   padding: 1.5rem;
 }
 
-/* Ensure proper spacing for section headers */
-.admin-main-content .section-header {
-  margin-bottom: 1.5rem;
-  padding: 1.5rem 1.5rem 0 1.5rem;
-}
+/* Let specific page CSS handle section headers instead of forcing padding that breaks tab alignment */
 
 /* Tabs navigation padding */
 .admin-main-content .tabs {
@@ -733,10 +729,6 @@ body:has(.modal[style*="display:block"]) {
   
   .admin-main-content .activity-section {
     padding: 0;
-  }
-  
-  .admin-main-content .section-header {
-    padding: 1rem;
   }
   
   .admin-main-content .table-section,

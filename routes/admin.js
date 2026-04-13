@@ -6226,7 +6226,8 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
     const requestTypeMappings = [];
     
     if (req.body.unitName && Array.isArray(req.body.unitName)) {
-      req.body.unitName.forEach((unitName, index) => {
+      for (let index = 0; index < req.body.unitName.length; index++) {
+        const unitName = req.body.unitName[index];
         if (unitName && unitName.trim()) {
           units.push(unitName.trim());
           
@@ -6238,14 +6239,32 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
             .filter(rt => rt);
           
           // Create mappings for each request type to this unit
-          requestTypesForUnit.forEach(requestType => {
+          for (const requestType of requestTypesForUnit) {
             requestTypeMappings.push({
               requestType: requestType,
               recommendedUnit: unitName.trim()
             });
-          });
+
+            // Sync to RequestType collection
+            await RequestType.findOneAndUpdate(
+              { name: requestType },
+              { 
+                $set: {
+                  assignedUnit: unitName.trim(),
+                  status: 'approved',
+                  reviewedBy: user._id,
+                  reviewedAt: new Date()
+                },
+                $setOnInsert: {
+                  name: requestType,
+                  submittedBy: user._id
+                }
+              },
+              { upsert: true, new: true }
+            );
+          }
         }
-      });
+      }
     }
 
     // Process offices/departments
