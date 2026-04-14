@@ -70,7 +70,8 @@ class AnnouncementService {
         isVisibleToAll: recipientType === 'all',
         recipients: recipientIds.map(id => ({ userId: id })),
         sentBy: sentBy || createdBy,
-        scheduledTime: scheduledTime ? new Date(scheduledTime) : null
+        scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
+        status: scheduledTime ? 'scheduled' : 'active'
       });
 
       await announcement.save();
@@ -146,8 +147,8 @@ class AnnouncementService {
         }
       }
 
-      // Update announcement status if it was scheduled
-      if (announcement.status === 'scheduled') {
+      // Update announcement status if it was scheduled or lacking active status
+      if (announcement.scheduledTime && announcement.status !== 'active') {
         announcement.status = 'active';
         announcement.sentAt = new Date();
         await announcement.save();
@@ -300,7 +301,8 @@ class AnnouncementService {
       const scheduledAnnouncements = await BroadcastMessage.find({
         scheduledTime: { $exists: true },
         scheduledTime: { $ne: null },
-        scheduledTime: { $lte: now }
+        scheduledTime: { $lte: now },
+        status: { $ne: 'active' }
       });
 
       for (const announcement of scheduledAnnouncements) {

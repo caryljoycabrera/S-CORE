@@ -35,6 +35,13 @@ const broadcastMessageSchema = new mongoose.Schema({
     default: 'News'
   },
 
+  // Announcement status
+  status: {
+    type: String,
+    enum: ['active', 'scheduled', 'archived'],
+    default: 'active'
+  },
+
   // Recipients and their read status
   recipients: [{
     // Reference to each recipient user

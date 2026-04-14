@@ -151,6 +151,21 @@
       color:white;
     }
 
+    /* View Content Styling */
+    #viewContent { font-size: 1rem; color: #1f2937; word-wrap: break-word; }
+    #viewContent img { max-width: 100%; height: auto; border-radius: 8px; margin: 1rem 0; display: block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+    #viewContent ul, #viewContent ol { margin: 1rem 0; padding-left: 2rem; }
+    #viewContent li { margin: 0.5rem 0; }
+    #viewContent blockquote { margin: 1rem 0; padding-left: 1rem; border-left: 4px solid #10b981; color: #6b7280; font-style: italic; }
+    #viewContent a { color: #10b981; text-decoration: none; }
+    #viewContent a:hover { text-decoration: underline; }
+    #viewContent h1 { font-size: 1.875rem; font-weight: 700; margin: 1rem 0 0.5rem 0; }
+    #viewContent h2 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem 0; }
+    #viewContent h3 { font-size: 1.25rem; font-weight: 700; margin: 1rem 0 0.5rem 0; }
+    #viewContent p { margin: 0.5rem 0; }
+    #viewContent strong { font-weight: 600; }
+    #viewContent em { font-style: italic; }
+
     /* Responsive */
     @media (max-width: 768px) {
       .page-header-container, .filter-section, .table-section { padding-left: 1.5rem; padding-right: 1.5rem; margin-left: 1.5rem; margin-right: 1.5rem; }
@@ -520,7 +535,10 @@
             <input type="date" id="scheduledDate" class="form-input" style="flex: 1;">
             <input type="time" id="scheduledTime" class="form-input" style="flex: 1;">
           </div>
-          <small>Leave empty to send immediately</small>
+          <div style="display: flex; justify-content: space-between;">
+            <small>Leave empty to send immediately</small>
+            <small id="timeWarning" style="color: #ef4444; display: none;">Outside working hours</small>
+          </div>
         </div>
       </div>
       <div class="modal-actions">
@@ -763,6 +781,31 @@
         sidebar.addEventListener('mouseleave', function() { this.classList.remove('expanded'); });
       }
 
+      // Time verification handler
+      const dInput = document.getElementById('scheduledDate');
+      const tInput = document.getElementById('scheduledTime');
+      const timeWarn = document.getElementById('timeWarning');
+
+      if (dInput && tInput) {
+        const checkTime = (val) => {
+          if (val) {
+            const hrs = parseInt(val.split(':')[0], 10);
+            timeWarn.style.display = (hrs >= 17 || hrs < 8) ? 'block' : 'none';
+          } else {
+            timeWarn.style.display = 'none';
+          }
+        };
+
+        dInput.addEventListener('change', () => {
+          if (dInput.value && !tInput.value) {
+            tInput.value = '08:00';
+            checkTime(tInput.value);
+          }
+        });
+
+        tInput.addEventListener('input', () => checkTime(tInput.value));
+      }
+
       // Load users for specific user selection
       loadUsers();
     });
@@ -792,7 +835,8 @@
     }
 
     function toggleRecipientOptions() {
-      const type = document.querySelector('input[name="recipientType"]:checked').value;
+      const recipientRadio = document.querySelector('input[name="recipientType"]:checked');
+      const type = recipientRadio ? recipientRadio.value : 'all';
       document.getElementById('orgSelectBlock').style.display = type === 'organization' ? 'block' : 'none';
       document.getElementById('officeSelectBlock').style.display = type === 'office' ? 'block' : 'none';
       document.getElementById('userSelectBlock').style.display = type === 'specific' ? 'block' : 'none';
@@ -813,6 +857,10 @@
       document.getElementById('recipientAll').checked = true;
       document.getElementById('scheduledDate').value = '';
       document.getElementById('scheduledTime').value = '';
+      
+      const timeWarn = document.getElementById('timeWarning');
+      if (timeWarn) timeWarn.style.display = 'none';
+
       toggleRecipientOptions();
       document.getElementById('announcementModal').style.display = 'flex';
     }
@@ -848,6 +896,13 @@
           } else {
             document.getElementById('scheduledDate').value = '';
             document.getElementById('scheduledTime').value = '';
+          }
+          
+          const timeVal = document.getElementById('scheduledTime').value;
+          const timeWarn = document.getElementById('timeWarning');
+          if (timeWarn) {
+            const hrs = timeVal ? parseInt(timeVal.split(':')[0], 10) : 0;
+            timeWarn.style.display = (timeVal && (hrs >= 17 || hrs < 8)) ? 'block' : 'none';
           }
         }
       } catch (error) {
@@ -905,11 +960,17 @@
     }
 
     async function submitAnnouncement() {
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn && submitBtn.disabled) {
+        return; // Prevent double-submit
+      }
+
       const title = document.getElementById('announcementTitle').value.trim();
       const content = announcementQuill.root.innerHTML;
       const priority = document.getElementById('announcementPriority').value.toLowerCase();
       const type = document.getElementById('announcementType').value;
-      const recipientType = document.querySelector('input[name="recipientType"]:checked').value;
+      const recipientRadio = document.querySelector('input[name="recipientType"]:checked');
+      const recipientType = recipientRadio ? recipientRadio.value : 'all';
       const scheduledDateInput = document.getElementById('scheduledDate').value;
       let scheduledTimeInput = document.getElementById('scheduledTime').value;
 
@@ -918,11 +979,18 @@
         return;
       }
 
+      // Disable submit button to prevent double-submit
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+      }
+
       // Convert separate inputs to ISO string format
       let scheduledTime = null;
       if (scheduledDateInput) {
         if (!scheduledTimeInput) {
-          scheduledTimeInput = '00:00'; // default time to 12:00 AM
+          scheduledTimeInput = '08:00'; // default time to 08:00 AM
         }
         
         const [year, month, day] = scheduledDateInput.split('-');
@@ -949,18 +1017,33 @@
         data.organization = document.getElementById('organizationSelect').value;
         if (!data.organization) {
           showAlert('Please select an organization', 'error');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+          }
           return;
         }
       } else if (recipientType === 'office') {
         data.office = document.getElementById('officeSelect').value;
         if (!data.office) {
           showAlert('Please select an office/department', 'error');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+          }
           return;
         }
       } else if (recipientType === 'specific') {
         data.recipients = Array.from(document.getElementById('userSelect').selectedOptions).map(opt => opt.value);
         if (data.recipients.length === 0) {
           showAlert('Please select at least one user', 'error');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+          }
           return;
         }
       }
@@ -985,10 +1068,20 @@
           setTimeout(() => location.reload(), 1500);
         } else {
           showAlert(result.message || 'Failed to save announcement', 'error');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+          }
         }
       } catch (error) {
         console.error('Error saving announcement:', error);
         showAlert('Failed to save announcement', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.style.cursor = 'pointer';
+        }
       }
     }
 
