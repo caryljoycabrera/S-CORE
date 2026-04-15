@@ -3211,7 +3211,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     } else {
-        console.error('[AllRequestsAdmin] Message input element not found!');
+        console.log('[AllRequestsAdmin] Message input element not found (may load later via conversation modal)');
     }
 });
 

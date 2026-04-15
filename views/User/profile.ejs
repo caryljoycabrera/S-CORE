@@ -1398,7 +1398,7 @@ body > .select2-container--default {
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -1500,7 +1500,7 @@ body > .select2-container--default {
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -1516,7 +1516,7 @@ body > .select2-container--default {
       <!-- LEFT SIDEBAR - Profile Card -->
       <div class="section-header">
         <div class="profile-info">
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="Profile Picture" class="profile-pic-large" />
           <h2><%= user.fName %> <%= user.lName %></h2>
           <p><%= user.userType === 'student' ? 'Student' : 'Staff' %></p>
@@ -2053,7 +2053,7 @@ body > .select2-container--default {
           
           <!-- Current Picture Section at the top -->
           <div class="current-picture-header">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                  alt="Current Profile Picture" id="currentProfileImg" />
             <h4>Current Picture</h4>
             <p>This is your current profile picture that others will see.</p>

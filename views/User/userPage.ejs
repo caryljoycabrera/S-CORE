@@ -1399,7 +1399,7 @@ It's already a flex container, but we need to add two key properties:
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <!-- Profile Avatar (shows when expanded) -->
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -1502,7 +1502,7 @@ It's already a flex container, but we need to add two key properties:
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">

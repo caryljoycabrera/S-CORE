@@ -1301,7 +1301,7 @@ body.profile-page .student-side > .div {
       <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
         <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
         <div class="user">
-          <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+          <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
         </div>
       </div>
       <div class="dropdown-menu" id="dropdownMenu">
@@ -1316,7 +1316,7 @@ body.profile-page .student-side > .div {
       <section class="activity-section">
         <div class="section-header">
           <div class="profile-info">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                  alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
               <h2><%= user.fName %> <%= user.lName %></h2>
@@ -1723,7 +1723,7 @@ body.profile-page .student-side > .div {
           
           <!-- Current Picture Section at the top -->
           <div class="current-picture-header">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                  alt="Current Profile Picture" id="currentProfileImg" />
             <h4>Current Picture</h4>
             <p>This is your current profile picture that others will see.</p>

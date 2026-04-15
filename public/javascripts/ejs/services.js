@@ -1288,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     } else {
-      console.error('[Services] Message input element not found!');
+      console.log('[Services] Message input element not found (may load later via conversation modal)');
     }
     
     // Close modal when clicking outside

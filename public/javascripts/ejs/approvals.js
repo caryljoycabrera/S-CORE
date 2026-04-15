@@ -1707,6 +1707,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
 
+    const changes = getFormChanges();
     if (changes.length === 0) {
       showNotification('No changes detected', 'info');
       return;

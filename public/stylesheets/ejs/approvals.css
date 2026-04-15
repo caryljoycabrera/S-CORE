@@ -768,6 +768,12 @@ hr {
   border: 1px solid #10b981;
 }
 
+.status-badge.for-checking {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #6366f1;
+}
+
 .status-badge.for-revision {
   background-color: #fed7aa;
   color: #78350f;
@@ -973,6 +979,12 @@ hr {
   background: #dcfce7;
   color: #16a34a;
   border-color: #10b981;
+}
+
+.status-badge-large.for-checking {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-color: #6366f1;
 }
 
 .status-badge-large.rejected {

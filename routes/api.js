@@ -696,7 +696,7 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
     // Format response with message data including sender names and read receipts
     const formattedMessages = conversation.messages.map(msg => ({
       _id: msg._id,
-      senderName: msg.senderId ? `${msg.senderId.fName} ${msg.senderId.lName}` : 'Unknown',
+      senderName: msg.senderId ? `${msg.senderId.fName || ''} ${msg.senderId.lName || ''}`.trim() || 'Unknown' : 'Unknown',
       senderRole: msg.senderRole,
       content: msg.content,
       attachments: msg.attachments || [],
@@ -859,7 +859,7 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, up
       message: {
         _id: conversation.messages[conversation.messages.length - 1]._id,
         senderName: conversation.messages[conversation.messages.length - 1].senderId ? 
-          `${conversation.messages[conversation.messages.length - 1].senderId.fName} ${conversation.messages[conversation.messages.length - 1].senderId.lName}` : 'Unknown',
+          `${conversation.messages[conversation.messages.length - 1].senderId.fName || ''} ${conversation.messages[conversation.messages.length - 1].senderId.lName || ''}`.trim() || 'Unknown' : 'Unknown',
         senderRole: conversation.messages[conversation.messages.length - 1].senderRole,
         content: conversation.messages[conversation.messages.length - 1].content,
         attachments: conversation.messages[conversation.messages.length - 1].attachments || [],

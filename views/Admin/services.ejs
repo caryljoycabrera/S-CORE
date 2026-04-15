@@ -38,7 +38,7 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <!-- Profile Avatar (shows when expanded) -->
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -171,7 +171,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -1339,6 +1339,24 @@
           <textarea id="editDescription" required class="edit-textarea" rows="5" placeholder="Enter detailed description"></textarea>
         </div>
         
+        <div class="edit-form-group">
+          <label for="editSpecificRequestType">Specific Request Type</label>
+          <div style="display: flex; gap: 1rem; align-items: flex-start;">
+            <div style="flex: 1;">
+              <select id="editSpecificRequestType" class="edit-input" style="margin-bottom: 0.5rem; width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <option value="">Select type</option>
+              </select>
+              <small style="color: #6b7280; font-size: 0.875rem;">Choose from approved request types</small>
+            </div>
+            <div style="flex: 0 0 auto; padding-top: 0.5rem;"><span style="color: #6b7280; font-size: 0.875rem;">or</span></div>
+            <div style="flex: 1;">
+              <input type="text" id="editCustomRequestType" class="edit-input" style="margin-bottom: 0.5rem;" placeholder="Enter custom type..." maxlength="100">
+              <small style="color: #6b7280; font-size: 0.875rem;">Custom types need approval</small>
+            </div>
+          </div>
+          <input type="hidden" id="editFinalRequestType" name="editFinalRequestType">
+        </div>
+
         <div class="edit-form-row">
           <div class="edit-form-group">
             <label for="editDeadline">Deadline</label>

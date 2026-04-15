@@ -1920,7 +1920,7 @@ router.post('/api/admin/approval/mark-viewed', requireAdmin, async (req, res) =>
       success: true,
       message: 'Request marked as viewed',
       viewedAt: now,
-      viewedBy: req.user.fName + ' ' + req.user.lName
+      viewedBy: `${req.user.fName || ''} ${req.user.lName || ''}`.trim() || 'Unknown'
     });
   } catch (err) {
     console.error('Error marking approval as viewed:', err);
@@ -1959,7 +1959,7 @@ router.post('/api/admin/service/mark-viewed', requireAdmin, async (req, res) => 
       success: true,
       message: 'Request marked as viewed',
       viewedAt: now,
-      viewedBy: req.user.fName + ' ' + req.user.lName
+      viewedBy: `${req.user.fName || ''} ${req.user.lName || ''}`.trim() || 'Unknown'
     });
   } catch (err) {
     console.error('Error marking service as viewed:', err);

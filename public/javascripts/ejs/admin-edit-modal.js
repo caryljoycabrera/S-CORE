@@ -212,6 +212,9 @@
     currentEditRequestId = requestId;
     currentEditRequestType = requestType;
 
+    // Load request types
+    loadRequestTypes();
+
     // Populate read-only fields
     populateReadOnlyFields(requestData);
     
@@ -246,6 +249,36 @@
       if (specificTypeContainer) specificTypeContainer.style.display = 'block';
     } else {
       if (specificTypeContainer) specificTypeContainer.style.display = 'none';
+    }
+  }
+
+  /**
+   * Load approved request types for the dropdown
+   */
+  async function loadRequestTypes() {
+    try {
+      const response = await fetch('/api/request-types/approved');
+      const data = await response.json();
+      
+      if (data.success && data.requestTypes && data.requestTypes.length > 0) {
+        const select = document.getElementById('editSpecificRequestType');
+        if (select) {
+          // Clear existing options except the first one
+          while (select.options.length > 1) {
+            select.remove(1);
+          }
+          
+          // Add each type as an option
+          data.requestTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.name;
+            option.textContent = type.name;
+            select.appendChild(option);
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[AdminEditModal] Error loading request types:', error);
     }
   }
 
@@ -293,6 +326,36 @@
     } else {
       if (linksContainer) linksContainer.style.display = 'none';
     }
+
+    // Specific Request Type
+    populateSpecificRequestType(data);
+  }
+
+  /**
+   * Populate specific request type fields
+   */
+  function populateSpecificRequestType(data = {}) {
+    const specificTypeValue = data.specificType || getElementText('#detailSpecificType', '');
+    const editSpecificSelect = document.getElementById('editSpecificRequestType');
+    const editCustomInput = document.getElementById('editCustomRequestType');
+
+    if (editSpecificSelect && editCustomInput) {
+      // Clear custom input
+      editCustomInput.value = '';
+
+      if (specificTypeValue && specificTypeValue !== 'N/A' && specificTypeValue.trim() !== '') {
+        // Check if it's in the dropdown options
+        const option = Array.from(editSpecificSelect.options).find(o => o.value === specificTypeValue);
+        
+        if (option) {
+          // It's a predefined type
+          editSpecificSelect.value = specificTypeValue;
+        } else {
+          // It's a custom type
+          editCustomInput.value = specificTypeValue;
+        }
+      }
+    }
   }
 
   /**
@@ -326,11 +389,23 @@
 
     const deadline = parseDeadlineInput(document.getElementById('editDeadline')?.value);
 
+    // Get specific request type
+    const editSpecificSelect = document.getElementById('editSpecificRequestType');
+    const editCustomInput = document.getElementById('editCustomRequestType');
+    let specificRequestType = '';
+
+    if (editSpecificSelect && editSpecificSelect.value) {
+      specificRequestType = editSpecificSelect.value;
+    } else if (editCustomInput && editCustomInput.value.trim()) {
+      specificRequestType = editCustomInput.value.trim();
+    }
+
     const updates = {
       title: document.getElementById('editTitle')?.value.trim() || '',
       description: document.getElementById('editDescription')?.value.trim() || '',
       deadline: deadline,
-      links: linksArray
+      links: linksArray,
+      specificRequestType: specificRequestType || undefined
     };
 
     // Validate required fields

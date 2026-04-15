@@ -1868,7 +1868,7 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <!-- Profile Avatar (shows when expanded) -->
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -1971,7 +1971,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -1990,7 +1990,7 @@
         <!-- Page Header with User Info and Action Buttons -->
         <div class="page-header-container">
           <div class="user-info-section">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                  alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
               <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>

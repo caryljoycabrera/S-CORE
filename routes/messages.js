@@ -196,7 +196,7 @@ router.post('/messages/:conversationId/send', requireLogin, messageLimiter, asyn
     // Create message
     const message = {
       senderId: userId,
-      senderName: `${req.user.fName} ${req.user.lName}`,
+      senderName: `${req.user.fName || ''} ${req.user.lName || ''}`.trim() || 'Unknown',
       senderRole: req.user.role,
       content: content.trim(),
       messageType: 'text',
@@ -216,10 +216,11 @@ router.post('/messages/:conversationId/send', requireLogin, messageLimiter, asyn
     // Send in-app notification to other participants
     for (const participant of otherParticipants) {
       try {
+        const senderName = `${req.user.fName || ''} ${req.user.lName || ''}`.trim() || 'Unknown';
         await notificationService.createNotification({
           recipient: participant.userId,
           title: 'New Message',
-          message: `${req.user.fName} ${req.user.lName}: ${content.substring(0, 50)}...`,
+          message: `${senderName}: ${content.substring(0, 50)}...`,
           type: 'message',
           priority: 'medium',
           actionUrl: `/messages/${conversationId}`
@@ -233,7 +234,7 @@ router.post('/messages/:conversationId/send', requireLogin, messageLimiter, asyn
     socketService.emitToConversation(conversationId, 'newMessage', {
       conversationId: conversationId,
       message: message,
-      senderName: req.user.fName + ' ' + req.user.lName
+      senderName: `${req.user.fName || ''} ${req.user.lName || ''}`.trim() || 'Unknown'
     });
 
     res.json({
