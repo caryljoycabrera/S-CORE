@@ -42,7 +42,44 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: function() {
+      return this.authProvider === 'local';
+    }
+  },
+
+  // OAuth fields
+  clerkId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  microsoftId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'microsoft'],
+    default: 'local'
+  },
+
+  // Email verification fields
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: {
+    type: String
+  },
+  verificationTokenExpiry: {
+    type: Date
+  },
+  passwordResetToken: {
+    type: String
+  },
+  passwordResetExpiry: {
+    type: Date
   },
 
   // Contact information
@@ -61,8 +98,14 @@ const userSchema = new mongoose.Schema({
   // NEW FIELD: User status for admin verification
   status: {
     type: String,
-    enum: ['pending', 'approved', 'denied'],
+    enum: ['pending', 'approved', 'denied', 'invited'],
     default: 'pending'
+  },
+
+  // Invitation data for admin-created users (stores pre-filled registration data as JSON)
+  invitationData: {
+    type: String,
+    default: null
   },
 
   // User type enum: determines student vs non-student user
@@ -76,7 +119,8 @@ const userSchema = new mongoose.Schema({
   studentId: {
     type: String,
     required: function() {
-      return this.userType === 'student';
+      // Don't require for invited users (will be filled during registration)
+      return this.userType === 'student' && this.status !== 'invited';
     }
   },
   studentOrganization: [{
@@ -85,7 +129,8 @@ const userSchema = new mongoose.Schema({
   cys: {
     type: String,
     required: function() {
-      return this.userType === 'student';
+      // Don't require for invited users (will be filled during registration)
+      return this.userType === 'student' && this.status !== 'invited';
     }
   },
 

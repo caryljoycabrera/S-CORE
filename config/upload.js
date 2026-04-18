@@ -4,6 +4,7 @@
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const settingsService = require('../services/settingsService');
 
 // Define project root and uploads directory
 const PROJECT_ROOT = path.resolve(__dirname, '..');
@@ -69,42 +70,59 @@ const storage = multer.diskStorage({
 
 /**
  * File filter configuration
- * Only allows specific file types for security
+ * Dynamically checks allowed file types from database settings
  */
 const fileFilter = (req, file, cb) => {
-  // Define allowed MIME types
-  const allowedTypes = [
-    'image/jpeg',        // JPEG images
-    'image/png',         // PNG images
-    'image/gif',         // GIF images
-    'image/webp',        // WebP images
-    'application/pdf',   // PDF documents
-    'application/msword', // DOC files
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX files
-    'application/vnd.ms-excel', // XLS files
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX files
-    'text/plain'         // Plain text files
-  ];
+  // Get allowed file types from settings
+  const allowedFileTypes = settingsService.getSetting('allowedFileTypes', [
+    'pdf', 'jpg', 'jpeg', 'png', 'gif', 'doc', 'docx', 'xlsx', 'xls', 'txt', 'pptx'
+  ]);
 
-  if (allowedTypes.includes(file.mimetype)) {
+  // Map extensions to MIME types
+  const mimeTypeMap = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'pdf': 'application/pdf',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'txt': 'text/plain',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  };
+
+  // Build allowed MIME types from settings
+  const allowedMimeTypes = allowedFileTypes.map(ext => mimeTypeMap[ext.toLowerCase()]).filter(Boolean);
+
+  if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true); // Accept file
   } else {
-    cb(new Error('Invalid file type. Only images, PDFs, and documents are allowed.'), false); // Reject file
+    cb(new Error(`Invalid file type. Only ${allowedFileTypes.join(', ')} files are allowed.`), false); // Reject file
   }
 };
 
 /**
  * Multer upload configuration
- * Configured storage, file filter, and limits
+ * Configured storage, file filter, and limits (dynamically from settings)
  */
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB per file
-    files: 20 // Allow up to 20 files per upload
-  },
-  fileFilter: fileFilter
-});
+const getUploadConfig = () => {
+  const maxFileSize = settingsService.getSetting('maxFileSize', 10); // Default 10MB
+  
+  return multer({
+    storage: storage,
+    limits: {
+      fileSize: maxFileSize * 1024 * 1024, // Convert MB to bytes
+      files: 20 // Allow up to 20 files per upload
+    },
+    fileFilter: fileFilter
+  });
+};
+
+// Export a getter that creates upload middleware with current settings
+const upload = getUploadConfig();
 
 module.exports = {
   upload,

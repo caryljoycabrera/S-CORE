@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Request Types Management - S-CORE Admin</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css">
   <link rel="stylesheet" href="/stylesheets/modal-centered.css">
@@ -557,7 +558,7 @@
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>"
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>"
                alt="<%= user.fName %> <%= user.lName %>"
                class="sidebar-profile-avatar" />
         </div>
@@ -618,8 +619,7 @@
       </a>
       <a href="/admin/announcement" class="sidebar-item" title="Announcements">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 9.5v5a1 1 0 0 1-1 1h-2.5L14 20v-6H9a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1h5l4.5-4V8.5H21a1 1 0 0 1 1 1z"></path>
-          <path d="M3 11v2a7 7 0 0 0 7 7v-2a5 5 0 0 1-5-5v-2H3z"></path>
+          <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
         </svg>
         <span class="sidebar-label">Announcements</span>
       </a>
@@ -674,7 +674,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -690,7 +690,7 @@
         <!-- Page Header with User Info and Action Button -->
         <div class="page-header-container">
           <div class="user-info-section">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>"
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>"
                  alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
               <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
@@ -820,10 +820,9 @@
           <label class="form-label" for="approveAssignedUnit">Assign to Unit:</label>
           <select id="approveAssignedUnit" class="form-input" required>
             <option value="">Select unit...</option>
-            <option value="Graphics">Graphics</option>
-            <option value="Multimedia">Multimedia</option>
-            <option value="Public Relations">Public Relations</option>
-            <option value="Social Media">Social Media</option>
+            <% units.forEach(unit => { %>
+            <option value="<%= unit %>"><%= unit %></option>
+            <% }); %>
           </select>
           <div class="form-error-message" id="approveUnitError">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -909,10 +908,9 @@
           <label class="form-label" for="editAssignedUnit">Assigned Unit:</label>
           <select id="editAssignedUnit" class="form-input" required>
             <option value="">Select unit...</option>
-            <option value="Graphics">Graphics</option>
-            <option value="Multimedia">Multimedia</option>
-            <option value="Public Relations">Public Relations</option>
-            <option value="Social Media">Social Media</option>
+            <% units.forEach(unit => { %>
+            <option value="<%= unit %>"><%= unit %></option>
+            <% }); %>
           </select>
           <div class="form-error-message" id="editAssignedUnitError">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

@@ -465,6 +465,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (adminUpdateBtn) {
       adminUpdateBtn.onclick = () => {
+        const statusSelect = document.getElementById('adminStatusSelect');
+        if (statusSelect && statusSelect.value === 'Archived' && originalValues && originalValues.status !== 'Archived') {
+          if (typeof window.openDeleteConfirm === 'function') {
+            window.openDeleteConfirm({
+              requestId: currentRequestId,
+              requestType: currentRequestType
+            });
+            return;
+          }
+        }
         showUpdateConfirmation();
       };
     }

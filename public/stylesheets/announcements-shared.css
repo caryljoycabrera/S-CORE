@@ -60,7 +60,7 @@
 }
 
 @keyframes pulse-icon {
-  0%, 100% { transform: scale(1); }
+  0%, 100% {  }
   50% { transform: scale(1.1); }
 }
 
@@ -121,6 +121,24 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   cursor: pointer;
+}
+
+/* Unread announcement styling */
+.announcement-item.unread {
+  background: linear-gradient(135deg, #fefce8 0%, #ffffff 100%);
+  border-left-color: #f59e0b;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.15);
+}
+
+/* Read announcement styling */
+.announcement-item.read {
+  background: #fafafa;
+  border-left-color: #d1d5db;
+  opacity: 0.85;
+}
+
+.announcement-item.read:hover {
+  opacity: 1;
 }
 
 .announcement-item:last-child {

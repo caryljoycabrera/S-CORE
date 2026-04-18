@@ -4,6 +4,263 @@ let currentRequestType = null;
 let selectedFiles = [];
 let revisionFiles = [];
 
+// Global dropdown manager to ensure only one dropdown is open at a time
+const DropdownManager = {
+  activeDropdown: null,
+  
+  registerOpen(dropdown) {
+    // Close the currently active dropdown if it exists and is different
+    if (this.activeDropdown && this.activeDropdown !== dropdown) {
+      this.activeDropdown.close();
+    }
+    this.activeDropdown = dropdown;
+  },
+  
+  clearActive(dropdown) {
+    if (this.activeDropdown === dropdown) {
+      this.activeDropdown = null;
+    }
+  }
+};
+
+// Enhanced Multi-Select Class
+class EnhancedMultiSelect {
+  constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
+    this.container = document.getElementById(containerId);
+    if (!this.container) {
+      console.error(`EnhancedMultiSelect: Container with id '${containerId}' not found`);
+      return;
+    }
+    this.options = options || [];
+    this.placeholder = placeholder;
+    this.selectedValues = new Set(['all']);
+    this.isOpen = false;
+    this.filteredOptions = [...this.options];
+    this.hasSearch = hasSearch;
+
+    this.init();
+  }
+
+  init() {
+    if (!this.container) return;
+    this.setupElements();
+    this.populateOptions();
+    this.attachEventListeners();
+    this.updateDisplay();
+  }
+
+  setupElements() {
+    this.display = this.container.querySelector('.select-display');
+    this.dropdown = this.container.querySelector('.select-dropdown');
+    this.searchInput = this.dropdown?.querySelector('.search-input');
+    this.optionsContainer = this.dropdown?.querySelector('.options-container');
+    this.selectedText = this.display?.querySelector('.selected-text');
+  }
+
+  populateOptions() {
+    if (!this.optionsContainer) {
+      console.error('EnhancedMultiSelect: Options container not found');
+      return;
+    }
+    
+    // Clear existing options first
+    this.optionsContainer.innerHTML = '';
+    
+    // Add "All" option
+    const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
+    this.optionsContainer.appendChild(allOption);
+
+    // Add other options from data
+    this.options.forEach(option => {
+      const optionElement = this.createOption(option, option);
+      this.optionsContainer.appendChild(optionElement);
+    });
+  }
+
+  createOption(value, text) {
+    const label = document.createElement('label');
+    label.className = 'dropdown-option';
+    label.innerHTML = `
+      <input type="checkbox" value="${value}" ${this.selectedValues.has(value) ? 'checked' : ''}>
+      <span class="checkbox-custom"></span>
+      ${text}
+    `;
+    return label;
+  }
+
+  attachEventListeners() {
+    if (!this.display || !this.optionsContainer || !this.dropdown) {
+      console.error('EnhancedMultiSelect: Required elements not found for event listeners');
+      return;
+    }
+
+    this.display.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.addEventListener('input', (e) => {
+        this.filterOptions(e.target.value);
+      });
+    }
+
+    this.optionsContainer.addEventListener('change', (e) => {
+      if (e.target.type === 'checkbox') {
+        this.handleOptionChange(e.target);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!this.container.contains(e.target)) {
+        this.close();
+      }
+    });
+
+    this.dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  filterOptions(searchTerm) {
+    if (!this.hasSearch) return;
+
+    const options = this.optionsContainer.querySelectorAll('.dropdown-option');
+    let visibleCount = 0;
+
+    options.forEach(option => {
+      const text = option.textContent.toLowerCase();
+      const matches = text.includes(searchTerm.toLowerCase());
+      option.style.display = matches ? 'flex' : 'none';
+      if (matches) visibleCount++;
+    });
+
+    this.toggleNoResults(visibleCount === 0 && searchTerm.length > 0);
+  }
+
+  toggleNoResults(show) {
+    if (!this.hasSearch) return;
+
+    let noResultsEl = this.optionsContainer.querySelector('.no-results');
+
+    if (show && !noResultsEl) {
+      noResultsEl = document.createElement('div');
+      noResultsEl.className = 'no-results';
+      noResultsEl.textContent = 'No results found';
+      this.optionsContainer.appendChild(noResultsEl);
+    } else if (!show && noResultsEl) {
+      noResultsEl.remove();
+    }
+  }
+
+  handleOptionChange(checkbox) {
+    const value = checkbox.value;
+
+    if (value === 'all') {
+      if (checkbox.checked) {
+        this.selectedValues.clear();
+        this.selectedValues.add('all');
+        this.updateCheckboxes();
+      } else if (this.selectedValues.size === 1 && this.selectedValues.has('all')) {
+        checkbox.checked = true;
+        return;
+      }
+    } else {
+      if (checkbox.checked) {
+        this.selectedValues.delete('all');
+        this.selectedValues.add(value);
+      } else {
+        this.selectedValues.delete(value);
+        if (this.selectedValues.size === 0) {
+          this.selectedValues.add('all');
+        }
+      }
+      this.updateCheckboxes();
+    }
+
+    this.updateDisplay();
+    this.triggerChange();
+  }
+
+  updateCheckboxes() {
+    const checkboxes = this.optionsContainer.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+      cb.checked = this.selectedValues.has(cb.value);
+    });
+  }
+
+  updateDisplay() {
+    if (!this.selectedText) return;
+    
+    const selectedArray = Array.from(this.selectedValues);
+
+    if (selectedArray.includes('all') || selectedArray.length === 0) {
+      this.selectedText.textContent = `All ${this.placeholder.replace('Select ', '')}`;
+    } else if (selectedArray.length === 1) {
+      this.selectedText.textContent = selectedArray[0];
+    } else {
+      this.selectedText.textContent = `${selectedArray.length} selected`;
+    }
+  }
+
+  getSelectedValues() {
+    return Array.from(this.selectedValues);
+  }
+
+  reset() {
+    this.selectedValues.clear();
+    this.selectedValues.add('all');
+    this.updateCheckboxes();
+    this.updateDisplay();
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+    this.triggerChange();
+  }
+
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
+  open() {
+    // Register this dropdown with the manager (will close others)
+    DropdownManager.registerOpen(this);
+    
+    this.isOpen = true;
+    this.display.classList.add('active');
+    this.dropdown.classList.add('show');
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.focus();
+    }
+  }
+
+  close() {
+    this.isOpen = false;
+    this.display.classList.remove('active');
+    this.dropdown.classList.remove('show');
+    
+    // Clear this dropdown from the manager
+    DropdownManager.clearActive(this);
+    
+    if (this.hasSearch && this.searchInput) {
+      this.searchInput.value = '';
+      this.filterOptions('');
+    }
+  }
+
+  triggerChange() {
+    const event = new CustomEvent('selectionChange', {
+      detail: { values: this.getSelectedValues() }
+    });
+    this.container.dispatchEvent(event);
+  }
+}
+
 // DOM Content Loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all event listeners
@@ -13,6 +270,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Apply default sorting (pending with nearest deadlines first)
     applySorting();
+    
+    // Check URL parameters for auto-opening modals (from notifications)
+    checkURLParameters();
 });
 
 // ==========================================
@@ -45,9 +305,9 @@ function initializeEventListeners() {
     }
 
     // Sort select dropdown
-    const sortSelect = document.getElementById('sortSelect');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', applySorting);
+    const sortByFilter = document.getElementById('sortByFilter');
+    if (sortByFilter) {
+        sortByFilter.addEventListener('change', applySorting);
     }
 
     // Table row click events - use event delegation
@@ -147,51 +407,121 @@ function initializeEventListeners() {
         uploadDeliverablesBtn.addEventListener('click', uploadDeliverables);
     }
 
-    // Message sending - check for both standard and team-specific IDs
-    const sendMessageBtn = document.getElementById('sendMessageBtn') || document.getElementById('sendTeamMessageBtn');
-    if (sendMessageBtn) {
-        sendMessageBtn.addEventListener('click', sendMessage);
+    // Complete task modal
+    const openCompleteTaskModalBtn = document.getElementById('openCompleteTaskModalBtn');
+    if (openCompleteTaskModalBtn) {
+        openCompleteTaskModalBtn.addEventListener('click', openCompleteTaskModal);
     }
 
-    const messageInput = document.getElementById('messageInput') || document.getElementById('teamMessageInput');
-    if (messageInput) {
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+    const submitCompleteTaskBtn = document.getElementById('submitCompleteTaskBtn');
+    if (submitCompleteTaskBtn) {
+        submitCompleteTaskBtn.addEventListener('click', submitCompleteTask);
     }
+
+    // Message sending event listeners are handled in DOMContentLoaded section below
 }
 
 function initializeTableFilters() {
     // Initialize custom dropdown filters
     initializeCustomDropdowns();
     
+    // Add event listeners for EnhancedMultiSelect filters
+    const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+    if (studentOrgFilterContainer) {
+        studentOrgFilterContainer.addEventListener('selectionChange', applyTableFilters);
+    }
+    
+    const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+    if (officeDeptFilterContainer) {
+        officeDeptFilterContainer.addEventListener('selectionChange', applyTableFilters);
+    }
+    
     // Add event listeners for text inputs
-    const titleFilter = document.getElementById('titleFilter');
-    const requestorFilter = document.getElementById('requestorFilter');
+    const requestIdFilter = document.getElementById('requestIdFilter');
+    const studentFilter = document.getElementById('studentFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     
-    if (titleFilter) titleFilter.addEventListener('input', applyTableFilters);
-    if (requestorFilter) requestorFilter.addEventListener('input', applyTableFilters);
-    if (dateFromFilter) dateFromFilter.addEventListener('change', applyTableFilters);
-    if (dateToFilter) dateToFilter.addEventListener('change', applyTableFilters);
+    if (requestIdFilter) requestIdFilter.addEventListener('input', applyTableFilters);
+    if (studentFilter) studentFilter.addEventListener('input', applyTableFilters);
+    
+    // Date filter event listeners with validation
+    if (dateFromFilter) {
+        dateFromFilter.addEventListener('change', handleDateFromChange);
+        dateFromFilter.addEventListener('change', applyTableFilters);
+    }
+    if (dateToFilter) {
+        dateToFilter.addEventListener('change', handleDateToChange);
+        dateToFilter.addEventListener('change', applyTableFilters);
+    }
 }
 
 function initializeCustomDropdowns() {
-    // Initialize Type filter dropdown (if exists)
-    const typeFilterDropdown = document.getElementById('typeFilter');
-    if (typeFilterDropdown) {
-        initializeCustomDropdown(typeFilterDropdown, 'typeDropdown', applyTableFilters);
-    }
+    // Get data from the global database object
+    const dbData = window.filterDataFromDatabase || {};
     
     // Initialize Status filter dropdown
     const statusFilterDropdown = document.getElementById('statusFilter');
     if (statusFilterDropdown) {
+        populateDropdownOptions('statusDropdown', dbData.requestStatuses || []);
         initializeCustomDropdown(statusFilterDropdown, 'statusDropdown', applyTableFilters);
     }
+
+    // Initialize Student Organization filter
+    const studentOrgFilter = document.getElementById('studentOrgFilter');
+    if (studentOrgFilter) {
+        const studentOrgSelect = new EnhancedMultiSelect('studentOrgFilter',
+            dbData.organizations || [],
+            'Select Student Organizations', true);
+        
+        const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+        if (studentOrgFilterContainer) {
+            studentOrgFilterContainer.__instance = studentOrgSelect;
+        }
+    }
+
+    // Initialize Office/Department filter
+    const officeDeptFilter = document.getElementById('officeDeptFilter');
+    if (officeDeptFilter) {
+        const officeDeptSelect = new EnhancedMultiSelect('officeDeptFilter',
+            dbData.offices || [],
+            'Select Offices/Departments', true);
+        
+        const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+        if (officeDeptFilterContainer) {
+            officeDeptFilterContainer.__instance = officeDeptSelect;
+        }
+    }
+}
+
+function populateDropdownOptions(dropdownId, options) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+
+    const optionsContainer = dropdown.querySelector('.options-container');
+    if (!optionsContainer) return;
+
+    // Create "All" option
+    const allLabel = document.createElement('label');
+    allLabel.className = 'option-item';
+    allLabel.innerHTML = `
+        <input type="checkbox" value="all" checked>
+        <span class="checkmark"></span>
+        <span class="option-text">All Statuses</span>
+    `;
+    optionsContainer.appendChild(allLabel);
+
+    // Create individual options
+    options.forEach(option => {
+        const label = document.createElement('label');
+        label.className = 'option-item';
+        label.innerHTML = `
+            <input type="checkbox" value="${option.toLowerCase()}" name="${dropdownId}">
+            <span class="checkmark"></span>
+            <span class="option-text">${option}</span>
+        `;
+        optionsContainer.appendChild(label);
+    });
 }
 
 function initializeCustomDropdown(customSelectElement, dropdownId, onChangeCallback) {
@@ -270,45 +600,46 @@ function handleCheckboxChange(customSelectElement, dropdown, checkboxes, onChang
 }
 
 function getDefaultText(dropdownId) {
-    if (dropdownId === 'typeDropdown') return 'All Types';
     if (dropdownId === 'statusDropdown') return 'All Status';
     return 'All';
 }
 
 function applyTableFilters() {
     // Get filter values
-    const titleFilter = document.getElementById('titleFilter')?.value.toLowerCase() || '';
-    const requestorFilter = document.getElementById('requestorFilter')?.value.toLowerCase() || '';
+    const requestIdFilter = document.getElementById('requestIdFilter')?.value.toLowerCase() || '';
+    const studentFilter = document.getElementById('studentFilter')?.value.toLowerCase() || '';
     const dateFromFilter = document.getElementById('dateFromFilter')?.value || '';
     const dateToFilter = document.getElementById('dateToFilter')?.value || '';
-    
-    // Get selected types from custom dropdown
-    const selectedTypes = getSelectedDropdownValues('typeDropdown');
     
     // Get selected statuses from custom dropdown
     const selectedStatuses = getSelectedDropdownValues('statusDropdown');
     
+    // Get selected organizations from EnhancedMultiSelect
+    const selectedOrganizations = getEnhancedMultiSelectValues('studentOrgFilter');
+    
+    // Get selected offices/departments from EnhancedMultiSelect
+    const selectedOffices = getEnhancedMultiSelectValues('officeDeptFilter');
+    
     const tableRows = document.querySelectorAll('.requests-table tbody tr.request-row');
     
     tableRows.forEach(row => {
-        const title = row.getAttribute('data-title')?.toLowerCase() || '';
-        const type = row.getAttribute('data-request-type')?.toLowerCase() || '';
+        const requestId = row.getAttribute('data-request-id')?.toLowerCase() || '';
         const status = row.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
-        const requestor = row.getAttribute('data-requestor')?.toLowerCase() || '';
+        const student = row.getAttribute('data-requestor')?.toLowerCase() || '';
+        const studentOrg = row.getAttribute('data-student')?.toLowerCase() || '';
+        const officeDept = row.getAttribute('data-office')?.toLowerCase() || '';
         const dateSubmitted = row.getAttribute('data-date-submitted') || '';
 
         let showRow = true;
 
-        // Apply title filter
-        if (titleFilter && !title.includes(titleFilter)) {
+        // Apply request ID filter
+        if (requestIdFilter && !requestId.includes(requestIdFilter)) {
             showRow = false;
         }
         
-        // Apply type filter (only if type dropdown exists - not in TaskApprovals/TaskServices)
-        if (selectedTypes.length > 0 && !selectedTypes.includes('all')) {
-            if (!selectedTypes.includes(type)) {
-                showRow = false;
-            }
+        // Apply student filter
+        if (studentFilter && !student.includes(studentFilter)) {
+            showRow = false;
         }
         
         // Apply status filter
@@ -318,9 +649,18 @@ function applyTableFilters() {
             }
         }
         
-        // Apply requestor filter
-        if (requestorFilter && !requestor.includes(requestorFilter)) {
-            showRow = false;
+        // Apply organization filter
+        if (selectedOrganizations.length > 0 && !selectedOrganizations.includes('all')) {
+            if (!selectedOrganizations.some(org => studentOrg.includes(org.toLowerCase()))) {
+                showRow = false;
+            }
+        }
+        
+        // Apply office/department filter
+        if (selectedOffices.length > 0 && !selectedOffices.includes('all')) {
+            if (!selectedOffices.some(off => officeDept.includes(off.toLowerCase()))) {
+                showRow = false;
+            }
         }
         
         // Apply date range filters
@@ -333,6 +673,111 @@ function applyTableFilters() {
 
         row.style.display = showRow ? '' : 'none';
     });
+    
+    // Update results count
+    const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+    updateResultsCount(visibleRows.length, tableRows.length);
+}
+
+function updateResultsCount(visibleCount, totalCount) {
+    const resultsCountElement = document.getElementById('resultsCount');
+    if (resultsCountElement) {
+        if (visibleCount === totalCount) {
+            resultsCountElement.textContent = `Showing all ${totalCount} requests`;
+        } else {
+            resultsCountElement.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
+        }
+    }
+}
+
+// ==========================================
+// DATE FILTER VALIDATION FUNCTIONS
+// ==========================================
+
+function handleDateFromChange() {
+    const dateFromFilter = document.getElementById('dateFromFilter');
+    const dateToFilter = document.getElementById('dateToFilter');
+    
+    if (!dateFromFilter || !dateToFilter) return;
+    
+    const dateFromValue = dateFromFilter.value;
+    const dateToValue = dateToFilter.value;
+    
+    // Set the minimum date for dateTo to be the selected dateFrom
+    if (dateFromValue) {
+        dateToFilter.min = dateFromValue;
+        
+        // If dateTo is set and is before dateFrom, clear it
+        if (dateToValue && dateToValue < dateFromValue) {
+            dateToFilter.value = '';
+        }
+    } else {
+        // If dateFrom is cleared, remove the min constraint
+        dateToFilter.removeAttribute('min');
+    }
+}
+
+function handleDateToChange() {
+    const dateFromFilter = document.getElementById('dateFromFilter');
+    const dateToFilter = document.getElementById('dateToFilter');
+    
+    if (!dateFromFilter || !dateToFilter) return;
+    
+    const dateFromValue = dateFromFilter.value;
+    const dateToValue = dateToFilter.value;
+    
+    // If dateTo is set and dateFrom is also set, ensure dateTo is not before dateFrom
+    if (dateToValue && dateFromValue && dateToValue < dateFromValue) {
+        // Show a brief error message and clear the invalid date
+        showDateValidationError('Date To cannot be before Date From');
+        dateToFilter.value = '';
+        return;
+    }
+}
+
+function showDateValidationError(message) {
+    // Create a temporary error message
+    const errorDiv = document.createElement('div');
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #dc2626;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Add slide-in animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(errorDiv);
+    
+    // Remove the error message after 3 seconds
+    setTimeout(() => {
+        errorDiv.style.animation = 'slideIn 0.3s ease-in reverse';
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+            if (style.parentNode) {
+                style.parentNode.removeChild(style);
+            }
+        }, 300);
+    }, 3000);
 }
 
 function getSelectedDropdownValues(dropdownId) {
@@ -343,32 +788,55 @@ function getSelectedDropdownValues(dropdownId) {
     return Array.from(checkboxes).map(cb => cb.value);
 }
 
+function getEnhancedMultiSelectValues(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || !container.__instance) return [];
+    
+    return container.__instance.getSelectedValues();
+}
+
 function clearAllFilters() {
     // Clear text inputs
-    const titleFilter = document.getElementById('titleFilter');
-    const requestorFilter = document.getElementById('requestorFilter');
+    const requestIdFilter = document.getElementById('requestIdFilter');
+    const studentFilter = document.getElementById('studentFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     
-    if (titleFilter) titleFilter.value = '';
-    if (requestorFilter) requestorFilter.value = '';
+    if (requestIdFilter) requestIdFilter.value = '';
+    if (studentFilter) studentFilter.value = '';
     if (dateFromFilter) dateFromFilter.value = '';
-    if (dateToFilter) dateToFilter.value = '';
-    
-    // Reset type dropdown (if exists)
-    resetCustomDropdown('typeFilter', 'typeDropdown', 'All Types');
+    if (dateToFilter) {
+        dateToFilter.value = '';
+        dateToFilter.removeAttribute('min'); // Remove date validation constraint
+    }
     
     // Reset status dropdown
     resetCustomDropdown('statusFilter', 'statusDropdown', 'All Status');
     
+    // Reset student organization filter
+    const studentOrgContainer = document.getElementById('studentOrgFilter');
+    if (studentOrgContainer && studentOrgContainer.__instance) {
+        studentOrgContainer.__instance.reset();
+    }
+    
+    // Reset office/department filter
+    const officeDeptContainer = document.getElementById('officeDeptFilter');
+    if (officeDeptContainer && officeDeptContainer.__instance) {
+        officeDeptContainer.__instance.reset();
+    }
+    
     // Reset sort select
-    const sortSelect = document.getElementById('sortSelect');
-    if (sortSelect) {
-        sortSelect.value = 'priority';
+    const sortByFilter = document.getElementById('sortByFilter');
+    if (sortByFilter) {
+        sortByFilter.value = 'deadline-asc';
     }
     
     applyTableFilters();
     applySorting();
+    
+    // Update results count after clearing filters
+    const tableRows = document.querySelectorAll('.requests-table tbody tr.request-row');
+    updateResultsCount(tableRows.length, tableRows.length);
 }
 
 function resetCustomDropdown(filterId, dropdownId, defaultText) {
@@ -393,64 +861,45 @@ function resetCustomDropdown(filterId, dropdownId, defaultText) {
 }
 
 function applySorting() {
-    const sortSelect = document.getElementById('sortSelect');
-    if (!sortSelect) return;
+    const sortByFilter = document.getElementById('sortByFilter');
+    if (!sortByFilter) return;
 
-    const sortValue = sortSelect.value;
+    const sortValue = sortByFilter.value;
     const tableBody = document.getElementById('requestsTableBody');
     if (!tableBody) return;
 
     // Get all visible rows
-    const rows = Array.from(tableBody.querySelectorAll('tr.request-row'));
+    const allRows = Array.from(tableBody.querySelectorAll('tr.request-row'));
     
-    // Sort rows based on selected option
-    rows.sort((a, b) => {
+    // Define completed/archived statuses and their priority order
+    const completedStatuses = ['completed', 'approved', 'rejected', 'archived'];
+    const statusPriority = {
+        'completed': 1,
+        'approved': 2,
+        'rejected': 3,
+        'archived': 4
+    };
+    
+    // Separate active and completed/archived rows
+    const activeRows = [];
+    const completedRows = [];
+    
+    allRows.forEach(row => {
+        const status = row.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
+        if (completedStatuses.includes(status)) {
+            completedRows.push(row);
+        } else {
+            activeRows.push(row);
+        }
+    });
+    
+    // Sort active rows based on selected option
+    activeRows.sort((a, b) => {
         let aValue, bValue;
         
         switch(sortValue) {
-            case 'priority':
-                // Smart priority: Overdue tasks first, then by status priority, then by nearest deadline
-                const aDeadline = a.getAttribute('data-deadline');
-                const bDeadline = b.getAttribute('data-deadline');
-                const now = new Date();
-                
-                const aOverdue = aDeadline && new Date(aDeadline) < now;
-                const bOverdue = bDeadline && new Date(bDeadline) < now;
-                
-                // Overdue tasks come first
-                if (aOverdue && !bOverdue) return -1;
-                if (!aOverdue && bOverdue) return 1;
-                
-                // Then by status priority (Queued > In Progress > Pending > For Revision)
-                const statusPriority = {
-                    'queued': 1,
-                    'in-progress': 2,
-                    'pending': 3,
-                    'for-revision': 4,
-                    'approved': 5,
-                    'completed': 6,
-                    'rejected': 7
-                };
-                
-                const aStatus = (a.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const bStatus = (b.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const aPriority = statusPriority[aStatus] || 999;
-                const bPriority = statusPriority[bStatus] || 999;
-                
-                if (aPriority !== bPriority) return aPriority - bPriority;
-                
-                // Within same status, sort by nearest deadline
-                if (aDeadline && bDeadline) {
-                    return new Date(aDeadline) - new Date(bDeadline);
-                }
-                if (aDeadline && !bDeadline) return -1;
-                if (!aDeadline && bDeadline) return 1;
-                
-                // Finally by date submitted (newest first)
-                return new Date(b.getAttribute('data-date-submitted') || 0) - new Date(a.getAttribute('data-date-submitted') || 0);
-                
             case 'deadline-asc':
-                // Nearest deadline first
+                // Soonest deadline first
                 aValue = a.getAttribute('data-deadline');
                 bValue = b.getAttribute('data-deadline');
                 
@@ -461,7 +910,7 @@ function applySorting() {
                 return new Date(aValue) - new Date(bValue);
                 
             case 'deadline-desc':
-                // Farthest deadline first
+                // Latest deadline first
                 aValue = a.getAttribute('data-deadline');
                 bValue = b.getAttribute('data-deadline');
                 
@@ -471,53 +920,47 @@ function applySorting() {
                 
                 return new Date(bValue) - new Date(aValue);
                 
-            case 'status-priority':
-                // Active statuses first (Queued, In Progress, Pending, For Revision)
-                const statusOrder = {
-                    'queued': 1,
-                    'in-progress': 2,
-                    'pending': 3,
-                    'for-revision': 4,
-                    'approved': 5,
-                    'completed': 6,
-                    'rejected': 7,
-                    'cancelled': 8
-                };
-                
-                const aStatusNorm = (a.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const bStatusNorm = (b.getAttribute('data-status') || '').toLowerCase().replace(/\s+/g, '-');
-                const aOrder = statusOrder[aStatusNorm] || 999;
-                const bOrder = statusOrder[bStatusNorm] || 999;
-                
-                if (aOrder !== bOrder) return aOrder - bOrder;
-                
-                // Within same status, sort by date submitted (newest first)
-                return new Date(b.getAttribute('data-date-submitted') || 0) - new Date(a.getAttribute('data-date-submitted') || 0);
-                
             case 'date-desc':
-                // Newest first
+                // Newest submitted first
                 aValue = new Date(a.getAttribute('data-date-submitted') || 0);
                 bValue = new Date(b.getAttribute('data-date-submitted') || 0);
                 return bValue - aValue;
                 
             case 'date-asc':
-                // Oldest first
+                // Oldest submitted first
                 aValue = new Date(a.getAttribute('data-date-submitted') || 0);
                 bValue = new Date(b.getAttribute('data-date-submitted') || 0);
                 return aValue - bValue;
-                
-            case 'title-asc':
-                aValue = (a.getAttribute('data-title') || '').toLowerCase();
-                bValue = (b.getAttribute('data-title') || '').toLowerCase();
-                return aValue.localeCompare(bValue);
                 
             default:
                 return 0;
         }
     });
     
+    // Sort completed/archived rows by status priority then by date (newest first)
+    completedRows.sort((a, b) => {
+        const aStatus = a.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
+        const bStatus = b.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
+        
+        const aPriority = statusPriority[aStatus] || 999;
+        const bPriority = statusPriority[bStatus] || 999;
+        
+        // First sort by status priority
+        if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+        }
+        
+        // Then sort by date (newest first)
+        const aDate = new Date(a.getAttribute('data-date-submitted') || 0);
+        const bDate = new Date(b.getAttribute('data-date-submitted') || 0);
+        return bDate - aDate;
+    });
+    
+    // Combine active rows first, then completed/archived rows
+    const sortedRows = [...activeRows, ...completedRows];
+    
     // Re-append rows in sorted order
-    rows.forEach(row => tableBody.appendChild(row));
+    sortedRows.forEach(row => tableBody.appendChild(row));
 }
 
 // Function: openRequestDetails
@@ -557,7 +1000,7 @@ function openRequestDetails(requestId, requestType) {
     const modalStatus = document.getElementById('modalStatus');
     if (modalStatus) {
         const statusLower = status.toLowerCase().replace(/\s+/g, '-');
-        modalStatus.textContent = status.toUpperCase();
+        modalStatus.textContent = status;
         modalStatus.className = 'status-badge ' + statusLower;
     }
     
@@ -580,7 +1023,7 @@ function openRequestDetails(requestId, requestType) {
         if (deadline) {
             document.getElementById('modalDeadline').textContent = new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         } else {
-            document.getElementById('modalDeadline').textContent = 'Not specified';
+            document.getElementById('modalDeadline').textContent = '—';
         }
     } else if (requestType === 'service') {
         if (deadlineField) deadlineField.style.display = 'none';
@@ -588,7 +1031,7 @@ function openRequestDetails(requestId, requestType) {
         if (serviceType || specificRequestType) {
             document.getElementById('modalServiceType').textContent = serviceType || specificRequestType;
         } else {
-            document.getElementById('modalServiceType').textContent = 'Not specified';
+            document.getElementById('modalServiceType').textContent = '—';
         }
     }
 
@@ -642,8 +1085,48 @@ function openRequestDetails(requestId, requestType) {
     // Load service revision history for service requests
     if (requestType === 'service') {
         const serviceActionsPanel = document.getElementById('serviceActionsPanel');
-        if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+        const completeTaskPanel = document.getElementById('completeTaskPanel');
+        
+        console.log('Service request status:', status); // Debug log
+        
+        // Load revision history first to determine the actual state
+        // The revision history will handle showing/hiding panels based on approval status
         loadServiceRevisionHistory(requestId);
+        
+        // Initially hide both panels - loadServiceRevisionHistory will show the appropriate one
+        if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+        if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+        
+        // Only apply status-based logic if status is explicitly "Completed"
+        const normalizedStatus = status.toLowerCase().trim();
+        if (normalizedStatus === 'completed') {
+            console.log('Status is Completed - hiding both panels permanently');
+            // Task is fully completed, keep both panels hidden
+        }
+        
+        // Hide admin form section (Unit Actions) for service requests
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) adminFormSection.style.display = 'none';
+        
+        // Hide approve button for service requests
+        const adminApproveBtn = document.getElementById('adminApproveBtn');
+        if (adminApproveBtn) adminApproveBtn.style.display = 'none';
+    } else if (requestType === 'approval') {
+        // Hide service actions panel for approval requests
+        const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+        if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+        
+        // Hide complete task panel for approval requests
+        const completeTaskPanel = document.getElementById('completeTaskPanel');
+        if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+        
+        // Show admin form section (Unit Actions) for approval requests
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) adminFormSection.style.display = 'block';
+        
+        // Show approve button for approval requests
+        const adminApproveBtn = document.getElementById('adminApproveBtn');
+        if (adminApproveBtn) adminApproveBtn.style.display = 'inline-block';
     }
 
     // Populate admin form with current status and units
@@ -652,6 +1135,25 @@ function openRequestDetails(requestId, requestType) {
         units: ''  // Will be populated from the server or set as 'Not yet assigned'
     };
     populateAdminForm(rowData);
+
+    // Handle approved status - for approval requests, "Approved" is the final state
+    if (status.toLowerCase() === 'approved' && requestType === 'approval') {
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) {
+            // Hide the approve/revision buttons since request is already approved
+            const adminActionButtons = document.querySelector('.admin-action-buttons');
+            if (adminActionButtons) {
+                adminActionButtons.style.display = 'none';
+            }
+            adminFormSection.style.display = 'none';
+        }
+    } else if (status.toLowerCase() === 'completed') {
+        // Hide all action panels when already completed (for service requests)
+        const adminFormSection = document.querySelector('.admin-form-section');
+        if (adminFormSection) {
+            adminFormSection.style.display = 'none';
+        }
+    }
 
     // Handle Queued status - show Start Task button
     handleQueuedStatus(status, requestId, requestType);
@@ -714,13 +1216,34 @@ async function loadRevisionHistory(requestId) {
             // Clear container
             historyContainer.innerHTML = '';
             
-            // Filter out initial submission and render only unit feedback/revisions
+            // Filter out initial submission and duplicates
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
             
+            // Remove duplicates based on content and author (not timestamp, as they can vary by milliseconds)
+            const uniqueRevisions = [];
+            const seenKeys = new Set();
+            
+            for (const revision of revisionsToShow) {
+                // Create a unique key based on type, author, and content
+                const author = revision.requestedBy?._id || revision.respondedBy?._id || '';
+                const content = (revision.revisionNotes || revision.responseNotes || '').substring(0, 100); // First 100 chars
+                const filesCount = (revision.revisionFiles || revision.responseFiles || revision.files || []).length;
+                const key = `${revision.type}-${author}-${content}-${filesCount}`;
+                
+                if (!seenKeys.has(key)) {
+                    seenKeys.add(key);
+                    uniqueRevisions.push(revision);
+                } else {
+                    console.log('[Revision History] Skipping duplicate revision with key:', key);
+                }
+            }
+            
+            console.log('[Revision History] Unique revisions count:', uniqueRevisions.length, 'out of', revisionsToShow.length);
+            
             // Render each revision entry with enumeration
-            revisionsToShow.forEach((revision, index) => {
+            uniqueRevisions.forEach((revision, index) => {
                 console.log('[Revision History] Rendering revision', index, ':', revision.type);
-                const entry = createRevisionEntry(revision, index, revisionsToShow.length);
+                const entry = createRevisionEntry(revision, index, uniqueRevisions.length);
                 historyContainer.appendChild(entry);
             });
             
@@ -779,12 +1302,14 @@ async function loadServiceRevisionHistory(requestId) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+    const completeTaskPanel = document.getElementById('completeTaskPanel');
     
     console.log('[Service Revision History] ===== STARTING LOAD =====');
     console.log('[Service Revision History] Request ID:', requestId);
     console.log('[Service Revision History] History section element:', !!historySection);
     console.log('[Service Revision History] History container element:', !!historyContainer);
     console.log('[Service Revision History] Service actions panel element:', !!serviceActionsPanel);
+    console.log('[Service Revision History] Complete task panel element:', !!completeTaskPanel);
     
     if (!historyContainer) {
         console.warn('[Service Revision History] ❌ Container not found!');
@@ -827,6 +1352,46 @@ async function loadServiceRevisionHistory(requestId) {
                 console.log('[Service Revision History] =====================================');
             });
             
+            // Check if requestor has approved deliverables
+            const hasApprovedDeliverables = result.revisions.some(rev => rev.type === 'approved_by_requestor');
+            console.log('[Service Revision History] Has approved deliverables:', hasApprovedDeliverables);
+            
+            // Get current status from the modal status badge
+            const modalStatus = document.getElementById('modalStatus');
+            const currentStatus = modalStatus ? modalStatus.textContent.toLowerCase().trim() : '';
+            console.log('[Service Revision History] Current modal status:', currentStatus);
+            
+            // Also check the table row status for more accurate detection
+            const tableRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
+            const rowStatus = tableRow ? tableRow.getAttribute('data-status')?.toLowerCase().trim() : '';
+            console.log('[Service Revision History] Table row status:', rowStatus);
+            
+            // Determine the actual status (prefer modal status, fallback to row status)
+            const actualStatus = currentStatus || rowStatus;
+            console.log('[Service Revision History] Actual status:', actualStatus);
+            
+            // If approved and NOT already completed, show complete task panel
+            if (hasApprovedDeliverables && actualStatus !== 'completed') {
+                console.log('[Service Revision History] ✅ Deliverables approved - hiding upload panel, showing complete task panel');
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) {
+                    completeTaskPanel.style.display = 'block';
+                    // Scroll the panel into view
+                    setTimeout(() => {
+                        completeTaskPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 300);
+                }
+            } else if (actualStatus === 'completed') {
+                console.log('[Service Revision History] ✅ Task already completed - hiding both panels');
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            } else {
+                // No approval yet - show upload panel
+                console.log('[Service Revision History] No approval yet - showing upload panel');
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            }
+            
             // Filter out initial submission
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
             
@@ -868,19 +1433,38 @@ async function loadServiceRevisionHistory(requestId) {
                     console.log('[Service Revision History] ✅ Set right column display to flex');
                 }
                 
-                // Check if deliverables have been submitted
+                // Check if deliverables have been submitted and if revisions are requested
                 const hasDeliverable = revisionsToShow.some(rev => 
                     rev.type === 'deliverable_submitted' || 
                     rev.type === 'completed' ||
                     (rev.deliverableFiles && rev.deliverableFiles.length > 0)
                 );
                 
-                console.log('[Service Revision History] Has deliverable:', hasDeliverable);
+                const hasRevisionRequest = revisionsToShow.some(rev => 
+                    rev.type === 'revision_requested' ||
+                    rev.status === 'pending'
+                );
                 
-                // Hide upload panel if deliverables submitted, show revision history instead
-                if (hasDeliverable && serviceActionsPanel) {
-                    serviceActionsPanel.style.display = 'none';
-                    console.log('[Service Revision History] ✅ Hid service actions panel');
+                const hasApproval = revisionsToShow.some(rev => rev.type === 'approved_by_requestor');
+                
+                console.log('[Service Revision History] Has deliverable:', hasDeliverable);
+                console.log('[Service Revision History] Has revision request:', hasRevisionRequest);
+                console.log('[Service Revision History] Has approval (override check):', hasApproval);
+                
+                // Don't override panel visibility if:
+                // 1. Deliverables are approved (complete task panel should be showing)
+                // 2. Task is completed (both panels should be hidden)
+                if (serviceActionsPanel && !hasApproval && actualStatus !== 'completed') {
+                    // Show upload panel if no deliverables submitted OR if revisions are requested
+                    if (!hasDeliverable || hasRevisionRequest) {
+                        serviceActionsPanel.style.display = 'block';
+                        console.log('[Service Revision History] ✅ Showed service actions panel');
+                    } else {
+                        serviceActionsPanel.style.display = 'none';
+                        console.log('[Service Revision History] ✅ Hid service actions panel');
+                    }
+                } else {
+                    console.log('[Service Revision History] ⏭️ Skipped panel override (approved or completed)');
                 }
                 
                 // Show action buttons for non-completed requests
@@ -935,9 +1519,10 @@ function createServiceRevisionEntry(revision, index, total) {
     
     // Determine if this is a unit action or requestor action
     const isUnitAction = revision.requestedBy || 
-                         revision.type === 'deliverable_submitted' || 
-                         revision.type === 'completed';
-    const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+                         (revision.type === 'deliverable_submitted' || 
+                          revision.type === 'completed');
+    const isRequestorAction = revision.respondedBy || 
+                              (revision.type === 'revision_requested' && !revision.requestedBy);
     
     entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
@@ -973,6 +1558,9 @@ function createServiceRevisionEntry(revision, index, total) {
     if (revision.type === 'deliverable_submitted') {
         typeLabel = 'Deliverables Uploaded';
         badgeClass = 'badge-resubmitted';
+    } else if (revision.type === 'approved_by_requestor') {
+        typeLabel = '✓ Approved by Requestor';
+        badgeClass = 'badge-approved';
     } else if (revision.type === 'completed') {
         typeLabel = '✓ Completed';
         badgeClass = 'badge-approved';
@@ -1015,15 +1603,29 @@ function createServiceRevisionEntry(revision, index, total) {
                 <span style="color: #10b981; font-weight: 600;">Service Request Completed</span>
             </div>
         `;
+    } else if (revision.type === 'approved_by_requestor') {
+        statusIndicator = `
+            <div class="status-indicator approved">
+                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="8 12 11 15 16 9"/>
+                </svg>
+                <span style="color: #10b981; font-weight: 600;">Approved by Requestor - Ready to Complete</span>
+            </div>
+        `;
     } else if (isLast) {
         if (isUnitAction) {
+            let statusText = 'Awaiting Requestor Review';
+            if (revision.type === 'deliverable_submitted') {
+                statusText = 'Deliverables Uploaded - Awaiting Requestor Review';
+            }
             statusIndicator = `
                 <div class="status-indicator waiting">
                     <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 16 14"/>
+                        <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    Awaiting Requestor Review
+                    ${statusText}
                 </div>
             `;
         } else {
@@ -1112,9 +1714,9 @@ function createRevisionEntry(revision, index, total) {
     
     // Determine if this is a unit action or requestor action
     // Unit action: has requestedBy (unit requests revision)
-    // Requestor action: has respondedBy (user resubmits)  OR type is 'initial'
-    const isUnitAction = revision.requestedBy || revision.type === 'revision' || revision.type === 'revoked' || revision.type === 'approved';
+    // Requestor action: has respondedBy (user resubmits)  OR type is 'initial' or 'resubmitted'
     const isRequestorAction = revision.respondedBy || revision.type === 'initial' || revision.type === 'resubmitted';
+    const isUnitAction = !isRequestorAction;
     
     entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
@@ -1162,6 +1764,9 @@ function createRevisionEntry(revision, index, total) {
     } else if (revision.type === 'approved') {
         typeLabel = '✓ Approved';
         badgeClass = 'badge-approved';
+    } else if (revision.type === 'revision_requested') {
+        typeLabel = 'Revision Requested';
+        badgeClass = 'badge-revision';
     } else if (isUnitAction) {
         // Unit requested revision
         typeLabel = 'Revision Requested';
@@ -1276,7 +1881,7 @@ function createRevisionEntry(revision, index, total) {
             
             <div class="message-content-section">
                 <div class="content-label">${(() => {
-                    if (revision.type === 'approved') return 'APPROVAL DETAILS:';
+                    if (revision.type === 'approved') return 'APPROVAL REMARKS:';
                     if (revision.type === 'initial') return 'REQUEST DESCRIPTION:';
                     if (isUnitAction) return 'UNIT FEEDBACK:';
                     return 'USER RESPONSE:';
@@ -1284,7 +1889,7 @@ function createRevisionEntry(revision, index, total) {
                 <div class="content-text">${(() => {
                     let content;
                     if (revision.type === 'approved') {
-                        content = 'The request has been reviewed and approved by the unit team. All requirements have been met.';
+                        content = revision.revisionNotes || 'The request has been reviewed and approved by the unit team. All requirements have been met.';
                     } else if (revision.type === 'initial') {
                         content = revision.description || 'No description provided';
                     } else if (isUnitAction) {
@@ -1311,11 +1916,58 @@ function createRevisionEntry(revision, index, total) {
                 </div>
             ` : ''}
             
+            ${((revision.revisionLinks && revision.revisionLinks.length > 0) || (revision.responseLinks && revision.responseLinks.length > 0)) ? `
+                <div class="message-attachments-section" style="margin-top: 1rem;">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span class="attachments-count">${(revision.revisionLinks || revision.responseLinks).length} link${(revision.revisionLinks || revision.responseLinks).length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                        ${(revision.revisionLinks || revision.responseLinks).map(link => `
+                            <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" 
+                               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; color: #0ea5e9; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0ea5e9';"
+                               onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(link)}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
             ${statusIndicator}
         </div>
     `;
     
     return entry;
+}
+
+// Helper function to truncate long filenames intelligently
+function truncateFilename(filename, maxLength = 50) {
+    if (!filename || filename.length <= maxLength) return filename;
+    
+    const ext = filename.split('.').pop();
+    const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
+    const availableLength = maxLength - ext.length - 4; // 4 for "...."
+    
+    if (availableLength < 10) {
+        // Very short limit, just show start and extension
+        return nameWithoutExt.substring(0, 10) + '...' + ext;
+    }
+    
+    // Show start and end of filename with ellipsis in middle
+    const startLength = Math.ceil(availableLength * 0.6);
+    const endLength = Math.floor(availableLength * 0.4);
+    
+    return nameWithoutExt.substring(0, startLength) + '...' + nameWithoutExt.substring(nameWithoutExt.length - endLength) + '.' + ext;
 }
 
 // Function: createRevisionFileCard
@@ -1326,6 +1978,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
     // If file is just a string (simple filename), use it directly
     if (typeof file === 'string') {
         const ext = file.split('.').pop().toLowerCase();
+        const truncatedName = truncateFilename(file, 45);
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
         const isPDF = ext === 'pdf';
         
@@ -1345,7 +1998,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
                     </svg>
                 </div>
                 <div class="revision-file-info">
-                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(file)}</div>
+                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(truncatedName)}</div>
                     <div class="revision-file-size">${ext.toUpperCase()}</div>
                 </div>
                 <div class="revision-file-actions">
@@ -1389,6 +2042,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
     else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
     
     const displayName = file.originalname || file.name || filename;
+    const truncatedName = truncateFilename(displayName, 45);
     
     return `
         <div class="revision-file-card">
@@ -1400,7 +2054,7 @@ function createRevisionFileCard(file, revisionTimestamp) {
                 </svg>
             </div>
             <div class="revision-file-info">
-                <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
+                <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(truncatedName)}</div>
                 <div class="revision-file-size">${ext.toUpperCase()}</div>
             </div>
             <div class="revision-file-actions">
@@ -1543,11 +2197,17 @@ function approveRequest() {
         return;
     }
 
-    // Show inline confirmation panel
-    showInlineApprovalConfirmation();
+    // Only allow approval for approval requests
+    if (currentRequestType !== 'approval') {
+        showErrorMessage('Approval is only available for approval requests');
+        return;
+    }
+
+    // Directly open the final remarks modal for approval
+    openCompleteApprovalModal();
 }
 
-function showInlineApprovalConfirmation() {
+function showApprovalConfirmation() {
     // Create modal backdrop
     const modal = document.createElement('div');
     modal.id = 'approvalConfirmModal';
@@ -1586,8 +2246,8 @@ function showInlineApprovalConfirmation() {
                     </svg>
                 </div>
                 <div style="flex: 1;">
-                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin: 0 0 0.5rem 0;">Confirm Approval</h3>
-                    <p style="font-size: 0.9375rem; color: #6b7280; margin: 0; line-height: 1.6;">Are you sure you want to approve this request? The requestor and all administrators will be notified.</p>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #1f2937; margin: 0 0 0.5rem 0;">Approve Request</h3>
+                    <p style="font-size: 0.9375rem; color: #6b7280; margin: 0; line-height: 1.6;">Are you sure you want to approve this request? You'll be able to add final remarks when you mark it as complete.</p>
                 </div>
             </div>
             <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.5rem;">
@@ -1598,7 +2258,7 @@ function showInlineApprovalConfirmation() {
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12"/>
                     </svg>
-                    <span>Confirm Approval</span>
+                    <span>Yes, Approve</span>
                 </button>
             </div>
         </div>
@@ -1637,70 +2297,81 @@ function closeApprovalConfirmModal() {
 
 window.closeApprovalConfirmModal = closeApprovalConfirmModal;
 
+// Note: confirmApproveRequest is deprecated - approvals now go directly through completeApproval()
+// This function is kept for backward compatibility but redirects to the new flow
 async function confirmApproveRequest() {
-    console.log('[DEBUG] Confirming approval');
+    console.log('[DEBUG] confirmApproveRequest called - redirecting to openCompleteApprovalModal');
     
-    // Close modal
+    // Close any confirmation modal
     closeApprovalConfirmModal();
     
+    // Open the final remarks modal directly
+    openCompleteApprovalModal();
+}
+
+// Function: completeApproval - Approve request with final remarks (single step - final status is Approved)
+async function completeApproval() {
     if (!currentRequestId) {
         showErrorMessage('No request selected');
         return;
     }
+
+    // Get final remarks from modal
+    const remarksTextarea = document.getElementById('approvalFinalRemarksInput');
+    const remarks = remarksTextarea ? remarksTextarea.value.trim() : '';
     
+    // Validate that remarks are provided
+    if (!remarks) {
+        showErrorMessage('Please provide final remarks before approving this request. Final remarks are required for reports.');
+        return;
+    }
+
     try {
-        const response = await fetch(`/unit/task/approve/${currentRequestId}`, {
+        const response = await fetch(`/unit/task/complete-approval/${currentRequestId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                remarks: remarks
+            })
         });
 
         const result = await response.json();
 
         if (response.ok && result.success) {
-            showSuccessMessage('Request approved successfully');
+            showSuccessMessage('Request approved successfully! Final remarks have been saved.');
+            
+            // Close the approval modal
+            closeCompleteApprovalModal();
             
             // Update modal UI immediately
             const modalStatus = document.getElementById('modalStatus');
-            const approvedOnField = document.getElementById('approvedOnField');
-            const modalApprovedOn = document.getElementById('modalApprovedOn');
-            
             if (modalStatus) {
                 modalStatus.textContent = 'APPROVED';
                 modalStatus.className = 'status-badge approved';
             }
             
-            // Show approval date
-            if (approvedOnField && modalApprovedOn) {
-                approvedOnField.style.display = 'block';
-                const now = new Date();
-                modalApprovedOn.textContent = now.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+            // Hide all action buttons and sections since Approved is the final state
+            const adminFormSection = document.querySelector('.admin-form-section');
+            if (adminFormSection) {
+                adminFormSection.style.display = 'none';
+            }
+            const adminActionButtons = document.querySelector('.admin-action-buttons');
+            if (adminActionButtons) {
+                adminActionButtons.style.display = 'none';
             }
             
-            // Hide the approval actions panel
-            const approvalActionsPanel = document.getElementById('approvalActionsPanel');
-            if (approvalActionsPanel) {
-                approvalActionsPanel.style.display = 'none';
-            }
-            
-            // Reload revision history to show the approval entry
+            // Reload revision history to show the approval entry with final remarks
             await loadRevisionHistory(currentRequestId);
             
-            // Update table row status in background without reload
+            // Update table row status in background
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
             if (tableRow) {
-                const statusCell = tableRow.querySelector('.status');
+                const statusCell = tableRow.querySelector('.status-badge');
                 if (statusCell) {
-                    statusCell.textContent = 'APPROVED';
-                    statusCell.className = 'status approved';
+                    statusCell.textContent = 'Approved';
+                    statusCell.className = 'status-badge approved';
                 }
             }
         } else {
@@ -1711,6 +2382,38 @@ async function confirmApproveRequest() {
         showErrorMessage('An error occurred while approving the request');
     }
 }
+
+window.completeApproval = completeApproval;
+
+// Function: openCompleteApprovalModal - Open modal for completing approval
+function openCompleteApprovalModal() {
+    const modal = document.getElementById('completeApprovalModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Clear previous input
+        const textarea = document.getElementById('approvalFinalRemarksInput');
+        if (textarea) {
+            textarea.value = '';
+        }
+    }
+}
+
+window.openCompleteApprovalModal = openCompleteApprovalModal;
+
+// Function: closeCompleteApprovalModal - Close completion modal
+function closeCompleteApprovalModal() {
+    const modal = document.getElementById('completeApprovalModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Clear input
+        const textarea = document.getElementById('approvalFinalRemarksInput');
+        if (textarea) {
+            textarea.value = '';
+        }
+    }
+}
+
+window.closeCompleteApprovalModal = closeCompleteApprovalModal;
 
 // Function: revokeApproval
 function revokeApproval() {
@@ -2098,7 +2801,7 @@ async function uploadDeliverables() {
             }
 
             // Reload service revision history if this is a service request
-            if (currentRequestType === 'Service') {
+            if (currentRequestType === 'service') {
                 loadServiceRevisionHistory(currentRequestId);
             }
         } else {
@@ -2152,7 +2855,7 @@ async function completeServiceRequest() {
             }
 
             // Reload service revision history to show completion entry
-            if (currentRequestType === 'Service') {
+            if (currentRequestType === 'service') {
                 loadServiceRevisionHistory(currentRequestId);
             }
         } else {
@@ -2481,7 +3184,7 @@ function createMessageElement(msg) {
     
     let attachmentsHTML = '';
     if (msg.attachments && msg.attachments.length > 0) {
-        attachmentsHTML = msg.attachments.map(file => {
+        const attachmentItems = msg.attachments.map(file => {
             const ext = file.filename.split('.').pop().toLowerCase();
             const isPdf = ext === 'pdf';
             const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
@@ -2533,6 +3236,12 @@ function createMessageElement(msg) {
                 </div>
             `;
         }).join('');
+        
+        attachmentsHTML = `
+            <div class="message-attachments-section">
+                ${attachmentItems}
+            </div>
+        `;
     }
     
     // Build read receipts display
@@ -2725,19 +3434,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Open team chat button
     const openChatBtn = document.getElementById('openTeamChatBtn');
     if (openChatBtn) {
+        openChatBtn.removeEventListener('click', openTeamConversationModal); // Remove any existing
         openChatBtn.addEventListener('click', openTeamConversationModal);
     }
 
-    // Send team message button
+    // Send team message button - ensure only one listener
     const sendTeamBtn = document.getElementById('sendTeamMessageBtn');
     if (sendTeamBtn) {
-        sendTeamBtn.addEventListener('click', sendTeamMessage);
+        // Clone and replace to remove all existing listeners
+        const newSendBtn = sendTeamBtn.cloneNode(true);
+        sendTeamBtn.parentNode.replaceChild(newSendBtn, sendTeamBtn);
+        newSendBtn.addEventListener('click', sendTeamMessage);
     }
 
-    // Enter key to send
+    // Enter key to send - ensure only one listener
     const teamInput = document.getElementById('teamMessageInput');
     if (teamInput) {
-        teamInput.addEventListener('keypress', function(e) {
+        // Clone and replace to remove all existing listeners
+        const newInput = teamInput.cloneNode(true);
+        teamInput.parentNode.replaceChild(newInput, teamInput);
+        newInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendTeamMessage();
@@ -3609,6 +4325,449 @@ function handleQueuedStatus(status, requestId, requestType) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeChatFileFeatures();
     
+    // Initialize admin action buttons
+    initializeAdminActionButtons();
+    
     // Keyboard shortcuts are now handled in AllTasks.ejs to avoid duplication
 });
 
+// Function: initializeAdminActionButtons - Initialize admin action button event handlers
+function initializeAdminActionButtons() {
+    // Approve Request Button
+    const adminApproveBtn = document.getElementById('adminApproveBtn');
+    if (adminApproveBtn) {
+        adminApproveBtn.addEventListener('click', function() {
+            approveRequest();
+        });
+    }
+
+    // Ask for Revisions Button
+    const adminRevisionBtn = document.getElementById('adminRevisionBtn');
+    if (adminRevisionBtn) {
+        adminRevisionBtn.addEventListener('click', function() {
+            showAdminRevisionForm();
+        });
+    }
+
+    // Cancel Revision Button
+    const cancelRevisionBtn = document.getElementById('cancelRevisionBtn');
+    if (cancelRevisionBtn) {
+        cancelRevisionBtn.addEventListener('click', function() {
+            hideAdminRevisionForm();
+        });
+    }
+
+    // NOTE: submitRevisionBtn listener is already set in initializeEventListeners()
+    // Do not add another listener here to avoid duplicate submissions
+
+    // Submit Complete Approval Button (from modal) - handles final approval with remarks
+    const submitCompleteApprovalBtn = document.getElementById('submitCompleteApprovalBtn');
+    if (submitCompleteApprovalBtn) {
+        submitCompleteApprovalBtn.addEventListener('click', function() {
+            completeApproval();
+        });
+    }
+
+    // Revision File Attachment Button
+    const revisionAttachBtn = document.getElementById('revisionAttachBtn');
+    const revisionFileInput = document.getElementById('revisionFileInput');
+    if (revisionAttachBtn && revisionFileInput) {
+        revisionAttachBtn.addEventListener('click', function() {
+            revisionFileInput.click();
+        });
+
+        revisionFileInput.addEventListener('change', function(e) {
+            handleRevisionFileSelection(e.target.files);
+        });
+    }
+
+    // Revision Text Formatting Buttons
+    initializeRevisionFormatting();
+}
+
+// Function: showAdminRevisionForm - Show the admin revision form
+function showAdminRevisionForm() {
+    const revisionForm = document.getElementById('revisionForm');
+    if (revisionForm) {
+        revisionForm.style.display = 'block';
+        // Scroll to the form
+        revisionForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Function: hideAdminRevisionForm - Hide the admin revision form
+function hideAdminRevisionForm() {
+    const revisionForm = document.getElementById('revisionForm');
+    if (revisionForm) {
+        revisionForm.style.display = 'none';
+        // Clear the form
+        const revisionComments = document.getElementById('revisionComments');
+        if (revisionComments) {
+            revisionComments.value = '';
+        }
+        clearRevisionFiles();
+    }
+}
+
+// Function: submitAdminRevision - Submit admin revision request
+async function submitAdminRevision() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    const revisionComments = document.getElementById('revisionComments')?.value.trim();
+    if (!revisionComments) {
+        showErrorMessage('Please enter revision feedback');
+        return;
+    }
+
+    try {
+        // Create FormData to handle both text and files
+        const formData = new FormData();
+        formData.append('revisionNotes', revisionComments);
+
+        // Add files if any
+        revisionFiles.forEach((file, index) => {
+            formData.append('revisionFiles', file);
+        });
+
+        const response = await fetch(`/unit/task/revise/${currentRequestId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Revision request submitted successfully');
+
+            // Clear and hide revision form
+            document.getElementById('revisionComments').value = '';
+            clearRevisionFiles();
+            hideAdminRevisionForm();
+
+            // Reload revision history to show the new revision immediately
+            await loadRevisionHistory(currentRequestId);
+
+            // Update modal status
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'FOR REVISION';
+                modalStatus.className = 'status-badge for-revision';
+            }
+
+            // Update table row status in background without reload
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status-badge');
+                if (statusCell) {
+                    statusCell.textContent = 'FOR REVISION';
+                    statusCell.className = 'status-badge for-revision';
+                }
+                tableRow.setAttribute('data-status', 'For Revision');
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to submit revision request');
+        }
+    } catch (error) {
+        console.error('Error submitting revision:', error);
+        showErrorMessage('An error occurred while submitting the revision request');
+    }
+}
+
+// Function: handleRevisionFileSelection - Handle file selection for revisions
+function handleRevisionFileSelection(files) {
+    Array.from(files).forEach(file => {
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            showErrorMessage(`File "${file.name}" is too large. Maximum size is 10MB.`);
+            return;
+        }
+
+        // Check if file already exists
+        const exists = revisionFiles.some(existingFile => existingFile.name === file.name && existingFile.size === file.size);
+        if (exists) {
+            showErrorMessage(`File "${file.name}" is already attached.`);
+            return;
+        }
+
+        revisionFiles.push(file);
+    });
+
+    updateRevisionFilesPreview();
+}
+
+// Function: clearRevisionFiles - Clear all revision files
+function clearRevisionFiles() {
+    revisionFiles = [];
+    const revisionFileInput = document.getElementById('revisionFileInput');
+    if (revisionFileInput) {
+        revisionFileInput.value = '';
+    }
+    updateRevisionFilesPreview();
+}
+
+// Function: updateRevisionFilesPreview - Update the revision files preview
+function updateRevisionFilesPreview() {
+    const revisionFilesPreview = document.getElementById('revisionFilesPreview');
+    const revisionFilesContainer = document.getElementById('revisionFilesContainer');
+    const filesCount = document.querySelector('.files-count');
+
+    if (!revisionFilesPreview || !revisionFilesContainer) return;
+
+    if (revisionFiles.length > 0) {
+        revisionFilesPreview.style.display = 'block';
+        if (filesCount) {
+            filesCount.textContent = `${revisionFiles.length} file${revisionFiles.length > 1 ? 's' : ''} attached`;
+        }
+
+        revisionFilesContainer.innerHTML = revisionFiles.map((file, index) => `
+            <div class="file-item" data-index="${index}">
+                <div class="file-info">
+                    <div class="file-icon">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/>
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                </div>
+                <button type="button" class="remove-file-btn" onclick="removeRevisionFile(${index})">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        `).join('');
+    } else {
+        revisionFilesPreview.style.display = 'none';
+    }
+}
+
+// Function: removeRevisionFile - Remove a specific revision file
+function removeRevisionFile(index) {
+    if (index >= 0 && index < revisionFiles.length) {
+        revisionFiles.splice(index, 1);
+        updateRevisionFilesPreview();
+    }
+}
+
+// Function: initializeRevisionFormatting - Initialize text formatting for revision comments
+function initializeRevisionFormatting() {
+    // Use event delegation for revision formatting buttons
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('[data-revision-format]');
+        if (target) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const revisionComments = document.getElementById('revisionComments');
+            if (!revisionComments) return;
+
+            const format = target.getAttribute('data-revision-format');
+            applyTextFormatting(revisionComments, format);
+        }
+    });
+
+    // Keyboard shortcuts are handled in AllTasks.ejs to avoid duplication
+}
+
+// Function: applyTextFormatting - Apply text formatting to textarea
+function applyTextFormatting(textarea, format) {
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+
+    let formattedText = '';
+    if (format === 'bold') {
+        formattedText = `**${selectedText}**`;
+    } else if (format === 'italic') {
+        formattedText = `*${selectedText}*`;
+    } else if (format === 'underline') {
+        formattedText = `<u>${selectedText}</u>`;
+    }
+
+    // Insert formatted text
+    textarea.value = beforeText + formattedText + afterText;
+
+    // Position cursor - if no text selected, place between tags; if text selected, place after
+    let newPosition;
+    if (selectedText.length === 0) {
+        newPosition = start + (format === 'bold' ? 2 : 1);
+    } else {
+        newPosition = start + formattedText.length;
+    }
+    textarea.setSelectionRange(newPosition, newPosition);
+    textarea.focus();
+}
+
+// Function: formatFileSize - Format file size for display
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// ==========================================
+// COMPLETE TASK MODAL FUNCTIONS
+// ==========================================
+
+// Function: openCompleteTaskModal
+function openCompleteTaskModal() {
+    const modal = document.getElementById('completeTaskModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Clear previous input
+        const remarksInput = document.getElementById('finalRemarksInput');
+        if (remarksInput) remarksInput.value = '';
+    }
+}
+
+// Function: closeCompleteTaskModal
+window.closeCompleteTaskModal = function() {
+    const modal = document.getElementById('completeTaskModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+};
+
+// Function: submitCompleteTask
+async function submitCompleteTask() {
+    const remarksInput = document.getElementById('finalRemarksInput');
+    const finalRemarks = remarksInput ? remarksInput.value.trim() : '';
+
+    if (!finalRemarks) {
+        showErrorMessage('Please provide final remarks');
+        return;
+    }
+
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    try {
+        const submitBtn = document.getElementById('submitCompleteTaskBtn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Completing...</span>';
+        }
+
+        const response = await fetch(`/unit/task/complete/${currentRequestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ finalRemarks })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('Task completed successfully!');
+            closeCompleteTaskModal();
+
+            // Update modal status
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'COMPLETED';
+                modalStatus.className = 'status-badge completed';
+            }
+
+            // Update table row status
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status-badge');
+                if (statusCell) {
+                    statusCell.textContent = 'COMPLETED';
+                    statusCell.className = 'status-badge completed';
+                }
+                tableRow.setAttribute('data-status', 'Completed');
+            }
+
+            // Hide both panels since task is now completed
+            const completeTaskPanel = document.getElementById('completeTaskPanel');
+            const serviceActionsPanel = document.getElementById('serviceActionsPanel');
+            if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+
+            if (currentRequestType === 'service') {
+                loadServiceRevisionHistory(currentRequestId);
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to complete task');
+        }
+    } catch (error) {
+        console.error('Error completing task:', error);
+        showErrorMessage('An error occurred while completing the task');
+    } finally {
+        const submitBtn = document.getElementById('submitCompleteTaskBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Complete Task
+            `;
+        }
+    }
+}
+
+// Make openRequestDetails globally accessible for notifications
+window.openRequestModal = function(requestId, requestType) {
+    console.log('🌐 Global openRequestModal called:', { requestId, requestType });
+    openRequestDetails(requestId, requestType);
+};
+
+// Check URL parameters and auto-open modals if needed
+function checkURLParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Check if we should open a modal
+    const hasModal = urlParams.has('modal');
+    const hasConversation = urlParams.has('conversation');
+    const modalType = urlParams.get('modal');
+    const requestId = urlParams.get('requestId');
+    const requestType = urlParams.get('type');
+    
+    console.log('🔍 Checking URL parameters:', { hasModal, modalType, hasConversation, requestId, requestType });
+    
+    if (requestId && requestType) {
+        console.log('📋 Auto-opening modal from URL parameters');
+        
+        // Small delay to ensure DOM is fully ready
+        setTimeout(() => {
+            // Check for archived modal specifically
+            if (modalType === 'archived' && typeof window.openArchivedRequestModal === 'function') {
+                console.log('📦 Opening archived request modal');
+                window.openArchivedRequestModal(requestId, requestType);
+            } else if (hasModal || hasConversation) {
+                // Open the request modal
+                openRequestDetails(requestId, requestType);
+                
+                // If conversation parameter is present, also open conversation tab
+                if (hasConversation) {
+                    setTimeout(() => {
+                        const conversationTab = document.querySelector('[data-tab="conversation"]');
+                        if (conversationTab) {
+                            console.log('💬 Switching to conversation tab');
+                            conversationTab.click();
+                        }
+                    }, 500);
+                }
+            }
+        }, 300);
+    }
+}

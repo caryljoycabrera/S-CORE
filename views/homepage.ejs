@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DLSU-D Strategic Communications Office | Home</title>
+  <title>DLSU-D Strategic Communications Office</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!--
@@ -28,16 +29,16 @@
   <nav class="navbar" id="navbar">
     <div class="nav-container">
       <div class="logo-area">
-        <img src="Picture/logo.jpg" alt="DLSU-D Logo">
-        <span class="logo-text">Strategic Communications Office</span>
+        <a href="#home"><img src="Picture/logo.jpg" alt="DLSU-D Logo"></a>
+        <a href="#home"><span class="logo-text">Strategic Communications Office</span></a>
       </div>
       <div class="nav-links">
-        <a href="#home" class="nav-link">Home</a>
-        <a href="#about" class="nav-link">About</a>
-        <a href="#services" class="nav-link">Services</a>
-        <a href="#team" class="nav-link">Team</a>
-        <a href="#contact" class="nav-link">Contact</a>
-        <a href="/login" class="nav-link cta-nav">Access S-CORE</a>
+          <a href="#home" class="nav-link">Home</a>
+          <a href="#about" class="nav-link">About</a>
+          <a href="#services" class="nav-link">Services</a>
+          <a href="#team" class="nav-link">Team</a>
+          <a href="#contact" class="nav-link">Contact</a>
+          <a href="/about-s-core" class="nav-link cta-nav">Access S-CORE</a>
       </div>
       <div class="mobile-menu-toggle" id="mobileMenuToggle">
         <span></span>
@@ -54,7 +55,7 @@
       <a href="#services" class="nav-link">Services</a>
       <a href="#team" class="nav-link">Team</a>
       <a href="#contact" class="nav-link">Contact</a>
-      <a href="/login" class="nav-link cta-nav">Access S-CORE</a>
+      <a href="/about-s-core" class="nav-link cta-nav">Access S-CORE</a>
     </div>
   </div>
 
@@ -75,12 +76,14 @@
       <div class="hero-visual fade-in">
         <div class="hero-card">
           <h3 class="pledge-title"><%= content.pledgeSectionTitle %></h3>
+          <% if (content.pledgeItems && Array.isArray(content.pledgeItems)) { %>
           <% content.pledgeItems.forEach(item => { %>
           <div class="pledge-item">
             <h4><%= item.name %></h4>
             <p><%= item.description %></p>
           </div>
           <% }); %>
+          <% } %>
         </div>
       </div>
     </div>
@@ -94,12 +97,14 @@
       </div>
       <div class="about-grid">
         <div class="about-content fade-in">
-          <h3>Our Mission</h3>
+          <h3><%= content.aboutMissionTitle %></h3>
           <p><%= content.aboutMission %></p>
+          <h3><%= content.aboutVisionTitle %></h3>
           <p><%= content.aboutVision %></p>
         </div>
         <div class="about-visual fade-in">
           <div class="feature-grid">
+            <% if (content.aboutFeatures && Array.isArray(content.aboutFeatures)) { %>
             <% content.aboutFeatures.forEach(feature => { %>
             <div class="feature-card">
               <div class="feature-icon"><%= feature.icon %></div>
@@ -107,6 +112,7 @@
               <p><%= feature.description %></p>
             </div>
             <% }); %>
+            <% } %>
           </div>
         </div>
       </div>
@@ -120,6 +126,7 @@
         <p class="section-subtitle"><%= content.servicesSectionSubtitle %></p>
       </div>
       <div class="services-grid">
+        <% if (content.services && Array.isArray(content.services)) { %>
         <% content.services.forEach((service, index) => { %>
         <div class="service-card fade-in">
           <span class="service-number"><%= String(index + 1).padStart(2, '0') %></span>
@@ -127,6 +134,7 @@
           <p><%= service.description %></p>
         </div>
         <% }); %>
+        <% } %>
       </div>
     </div>
   </section>
@@ -138,6 +146,7 @@
         <p class="section-subtitle"><%= content.teamSectionSubtitle %></p>
       </div>
       <div class="team-grid">
+        <% if (content.teamMembers && Array.isArray(content.teamMembers)) { %>
         <% content.teamMembers.forEach(member => { %>
         <div class="team-card fade-in">
           <div class="team-info">
@@ -149,6 +158,7 @@
           </div>
         </div>
         <% }); %>
+        <% } %>
       </div>
     </div>
   </section>
@@ -160,20 +170,20 @@
         <p class="intro-text"><%= content.contactIntroText %></p>
         
         <div class="contact-cards">
+        <% if (content.contactCards && Array.isArray(content.contactCards)) { %>
         <% content.contactCards.forEach(card => { %>
           <div class="contact-card fade-in">
             <div class="contact-card-icon"><%= card.icon %></div>
             <h3><%= card.title %></h3>
             <p><%= card.description %></p>
-            <p style="white-space: pre-line;"><strong style="color: #FFD700;"><%= card.contactInfo %></strong></p>
+            <p style="white-space: pre-line;"><strong style="color: #FFD700;"><%- card.contactInfo.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" style="color: #FFD700;">$1</a>') %></strong></p>
           </div>
-          <% }); %>
-        </div>
-
-        <div class="social-section fade-in">
+        <% }); %>
+        <% } %>
+        </div>        <div class="social-section fade-in">
           <h3><%= content.socialSectionTitle %></h3>
           <div class="social-links">
-            <% if (content.socialMedia && content.socialMedia.length > 0) { %>
+            <% if (content.socialMedia && Array.isArray(content.socialMedia)) { %>
               <% content.socialMedia.forEach(function(social) { %>
                 <a href="<%= social.url %>" target="_blank" class="social-link" title="<%= social.title %>"><%= social.icon %></a>
               <% }); %>
@@ -195,12 +205,21 @@
         <%= content.footerTagline %>
       </div>
       <div class="footer-links">
+        <% if (content.footerLinks && Array.isArray(content.footerLinks)) { %>
         <% content.footerLinks.forEach(function(link) { %>
           <a href="<%= link.url %>"><%= link.text %></a>
         <% }); %>
+        <% } %>
       </div>
       <div class="footer-copyright">
         <p>&copy; <%= new Date().getFullYear() %> <%= content.footerText %>. All rights reserved.</p>
+      </div>
+      <div class="footer-developers" style="margin-top: 1rem; font-size: 0.85rem; color: rgba(255,255,255,0.7);">
+        <p>Developed by 
+          <a href="mailto:slsarellado@gmail.com" target="_blank" style="color: #FFD700; text-decoration: none;">John Emmanuelle Arellado</a>, 
+          <a href="mailto:caryldg.cabrera@gmail.com" target="_blank" style="color: #FFD700; text-decoration: none;">Caryl Joy Cabrera</a>, and 
+          <a href="mailto:jianhilario@gmail.com" target="_blank" style="color: #FFD700; text-decoration: none;">Jian Marie Hilario</a>
+        </p>
       </div>
     </div>
   </footer>

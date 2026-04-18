@@ -3,23 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Manage Services</title>
+  <title>Manage Services - S-CORE</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
+  <link rel="stylesheet" href="/stylesheets/ejs/table-fixes.css" />
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/services.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-modal-two-column.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/Admin/approvals-conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-edit-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-trash-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/services-revision-styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <!-- Quill Editor -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <link rel="stylesheet" href="/stylesheets/quill-custom.css">
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <script src="/javascripts/alert-handler.js"></script>
-
 </head>
 <body>
   <!-- SIDEBAR NAVIGATION -->
@@ -28,17 +32,19 @@
     <div class="sidebar-profile">
       <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
         <div class="sidebar-profile-icon-container">
+          <!-- SVG Icon (shows when collapsed) -->
           <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <!-- Profile Avatar (shows when expanded) -->
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
         <div class="sidebar-profile-info">
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
-          <p class="sidebar-profile-role"><%= user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : user.userType.charAt(0).toUpperCase() + user.userType.slice(1) %></p>
         </div>
         <span class="sidebar-profile-arrow">→</span>
       </a>
@@ -101,10 +107,17 @@
       </a>
       <a href="/admin/announcement" class="sidebar-item" title="Announcements">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 9.5v5a1 1 0 0 1-1 1h-2.5L14 20v-6H9a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1h5l4.5-4V8.5H21a1 1 0 0 1 1 1z"></path>
-          <path d="M3 11v2a7 7 0 0 0 7 7v-2a5 5 0 0 1-5-5v-2H3z"></path>
+          <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
         </svg>
         <span class="sidebar-label">Announcements</span>
+      </a>
+
+      
+        <a href="/admin/configuration" class="sidebar-item" title="Configuration">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span class="sidebar-label">Configuration</span>
       </a>
 
       <a href="/admin/reports" class="sidebar-item" title="Generate Reports">
@@ -128,36 +141,37 @@
     </div>
   </div>
 
-  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="admin-main-content">
-      <div class="overlap">
-        <!-- Left Group: Hamburger, Logo, Title -->
-        <div class="header-left-group">
-          <!-- Hamburger Menu Button for Mobile -->
-          <button class="admin-menu-toggle" id="adminMenuToggle" title="Open Menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
+    <!-- HEADER -->
+    <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
+      <div class="header-left-group">
+        <!-- Hamburger Menu Button for Mobile -->
+        <button class="admin-menu-toggle" id="adminMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
 
-          <div class="group">
-            <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
-          </div>
-          <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
         </div>
-        
-        <span class="text-wrapper-2">Manage Services</span>
+        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+        </div>
+      
+      <span class="text-wrapper-2">Manage Services</span>
 
-        <div class="header-right-section">
-           <%- include('../partials/notifications') %>
-           
-         <div class="dropdown-wrapper">
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+        
+        <div class="dropdown-wrapper">
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="Admin Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -165,13 +179,20 @@
             <a href="/logout">Logout</a>
           </div>
         </div>
-        </div>
       </div>
+    </div>
 
       <section class="activity-section">
         <div class="section-header">
-          <h1>Service Requests</h1>
-          <p>Manage service requests and assignments</p>
+          <div class="section-header-content">
+            <div class="section-header-text">
+              <h1>Service Requests</h1>
+              <p>Manage service requests and assignments</p>
+            </div>
+            <div class="action-button-container">
+              <button class="view-all-btn" id="openModalBtn">+ Request Service</button>
+            </div>
+          </div>
         </div>
         
         <nav class="nav-tabs tabs">
@@ -184,122 +205,138 @@
         <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
 
         <!-- Filter Options -->
-<div class="filter-section">
-  <div class="filter-container">
-    <div class="filter-group">
-      <label class="filter-label">Filter by:</label>
-      
-      <!-- First Row: Request ID, Status, User -->
-      <div class="filter-controls">
-        <div class="filter-item">
-          <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
-          <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
-        </div>
-        <div class="filter-item">
-          <label class="filter-sublabel">Status</label>
-          <div class="enhanced-multi-select-wrapper">
-            <div class="enhanced-multi-select" id="statusFilter">
-              <div class="select-display" data-placeholder="Select Status">
-                <span class="selected-text">All Status</span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              <div class="select-dropdown" id="statusDropdown">
-                <div class="options-container">
-                  <!-- JavaScript will populate this -->
+        <div class="filter-section">
+          <div class="filter-container">
+            <div class="filter-group">
+              <label class="filter-label">Filter by:</label>
+
+              <!-- First Row: Request ID, User, Status, Assigned Unit -->
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
+                  <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
                 </div>
+                <div class="filter-item">
+                  <label for="studentFilter" class="filter-sublabel">User</label>
+                  <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
+                </div>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Status</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="statusFilter">
+                      <div class="select-display" data-placeholder="Select Status">
+                        <span class="selected-text">All Status</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="statusDropdown">
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-item">
+                  <label class="filter-sublabel">Assigned Unit</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="assignedUnitFilter">
+                      <div class="select-display" data-placeholder="Select Assigned Unit">
+                        <span class="selected-text">All Units</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="assignedUnitDropdown">
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Second Row: Student Organization and Office/Department -->
+              <div class="filter-controls dropdown-row">
+                <div class="filter-item">
+                  <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="studentOrgFilter">
+                      <div class="select-display" data-placeholder="Select Student Organizations">
+                        <span class="selected-text">All Student Organizations</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="studentOrgDropdown">
+                        <div class="search-container">
+                          <input type="text" class="search-input" placeholder="Search organizations...">
+                        </div>
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-item">
+                  <label for="officeDeptFilter" class="filter-sublabel">Office/Department</label>
+                  <div class="enhanced-multi-select-wrapper">
+                    <div class="enhanced-multi-select" id="officeDeptFilter">
+                      <div class="select-display" data-placeholder="Select Offices/Departments">
+                        <span class="selected-text">All Offices/Departments</span>
+                        <span class="dropdown-arrow">▼</span>
+                      </div>
+                      <div class="select-dropdown" id="officeDeptDropdown">
+                        <div class="search-container">
+                          <input type="text" class="search-input" placeholder="Search offices/departments...">
+                        </div>
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Third Row: Sort By, Date From and Date To -->
+              <div class="filter-controls">
+                <div class="filter-item">
+                  <label for="sortByFilter" class="filter-sublabel">Sort By</label>
+                  <select id="sortByFilter" class="filter-input">
+                    <option value="deadline-asc">Deadline (Soonest First)</option>
+                    <option value="deadline-desc">Deadline (Latest First)</option>
+                    <option value="date-desc">Date Submitted (Newest)</option>
+                    <option value="date-asc">Date Submitted (Oldest)</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                  <input type="date" id="dateFromFilter" class="filter-input">
+                </div>
+                <div class="filter-item">
+                  <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                  <input type="date" id="dateToFilter" class="filter-input">
+                </div>
+                <div class="filter-item" style="visibility: hidden;"></div>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button id="clearFilters" class="clear-filters-btn">
+                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="6" width="18" height="14" rx="2"/>
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <line x1="1" y1="6" x2="23" y2="6"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                Clear All
+              </button>
+              <div class="results-count">
+                <span id="resultsCount">Showing all requests</span>
               </div>
             </div>
           </div>
         </div>
-        <div class="filter-item">
-          <label for="studentFilter" class="filter-sublabel">User</label>
-          <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
-        </div>
-      </div>
-      
-      <!-- Second Row: Student Organization and Office/Department Side by Side -->
-      <div class="filter-controls">
-        <div class="filter-item">
-          <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
-          <div class="enhanced-multi-select-wrapper">
-            <div class="enhanced-multi-select" id="studentOrgFilter">
-              <div class="select-display" data-placeholder="Select Student Organizations">
-                <span class="selected-text">All Student Organizations</span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              <div class="select-dropdown" id="studentOrgDropdown">
-                <div class="search-container">
-                  <input type="text" class="search-input" placeholder="Search organizations...">
-                </div>
-                <div class="options-container">
-                  <!-- JavaScript will populate this -->
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="filter-item">
-          <label for="officeDeptFilter" class="filter-sublabel">Office/Department</label>
-          <div class="enhanced-multi-select-wrapper">
-            <div class="enhanced-multi-select" id="officeDeptFilter">
-              <div class="select-display" data-placeholder="Select Offices/Departments">
-                <span class="selected-text">All Offices/Departments</span>
-                <span class="dropdown-arrow">▼</span>
-              </div>
-              <div class="select-dropdown" id="officeDeptDropdown">
-                <div class="search-container">
-                  <input type="text" class="search-input" placeholder="Search offices/departments...">
-                </div>
-                <div class="options-container">
-                  <!-- JavaScript will populate this -->
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Third Row: Date From and Date To -->
-      <div class="filter-controls">
-        <div class="filter-item">
-          <label for="dateFromFilter" class="filter-sublabel">Date From</label>
-          <input type="date" id="dateFromFilter" class="filter-input">
-        </div>
-        <div class="filter-item">
-          <label for="dateToFilter" class="filter-sublabel">Date To</label>
-          <input type="date" id="dateToFilter" class="filter-input">
-        </div>
-        <!-- Empty divs to maintain grid alignment if needed -->
-        <div class="filter-item" style="visibility: hidden;"></div>
-      </div>
-      
-    </div>
-    <div class="filter-actions">
-      <button id="clearFilters" class="clear-filters-btn">
-        <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="3" y="6" width="18" height="14" rx="2"/>
-          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          <line x1="1" y1="6" x2="23" y2="6"/>
-          <line x1="10" y1="11" x2="10" y2="17"/>
-          <line x1="14" y1="11" x2="14" y2="17"/>
-        </svg>
-        Clear All
-      </button>
-      <div class="results-count">
-        <span id="resultsCount">Showing all requests</span>
-      </div>
-    </div>
-  </div>
-</div>
 
         <!-- Table -->
         <section class="table-section" style="overflow-x: auto;">
-          <table class="requests-table" style="width: 100%; border-collapse: collapse; background: white;">
+          <table class="requests-table" style="border-collapse: collapse; background: white; min-width: 960px;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
               <tr>
                 <th>Request ID</th>
                 <th>User</th>
-                <th>Title</th>
+                <th>Project Title</th>
                 <th>Office/Department/Organization</th>
                 <th>Status</th>
                 <th>Assigned Units</th>
@@ -329,7 +366,7 @@
                   data-request-id="<%= request._id.toString().slice(-6) %>"
                   data-type="Service Request"
                   data-title="<%= request.title %>"
-                  data-status="<%= request.status.toLowerCase() %>"
+                  data-status="<%= request.status %>"
                   data-organization="<%= request.displayOrganization || request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
                   data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
@@ -349,8 +386,8 @@
                   data-student="<%= displayUserName %>">
                 <td><%= request._id.toString().slice(-6) %></td>
                 <td><%= displayUserName %></td>
-                <td><%= request.title %></td>
-                <td><%= request.displayOrganization || request.organization %></td>
+                <td><div class="table-cell-wrapper"><%= request.title %></div></td>
+                <td><div class="table-cell-wrapper"><%= request.displayOrganization || request.organization %></div></td>
                 <td>
                   <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                     <%= request.status %>
@@ -403,6 +440,30 @@
             </svg>
             Back to Dashboard
           </a>
+          
+          <!-- Pagination Controls -->
+          <div class="pagination-controls" id="paginationControls">
+            <button class="pagination-btn pagination-nav" id="prevPageBtn" disabled>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <div class="pagination-numbers" id="paginationNumbers">
+              <!-- Page numbers will be inserted here by JavaScript -->
+            </div>
+            <button class="pagination-btn pagination-nav" id="nextPageBtn" disabled>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+          
+          <button class="trash-btn" onclick="openTrashModal()" title="View Deleted Requests">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Trash
+          </button>
         </div>
       </section>
   </div>
@@ -411,7 +472,7 @@
 <div id="detailsModal" class="modal" style="display:none;">
   <div class="modal-content unit-modal-wide">
     <!-- Modal Header -->
-    <div class="modal-header unit-modal-header">
+    <div class="modal-header unit-modal-header service-header-color" id="modalHeader">
       <div class="modal-title-section">
         <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <rect x="4" y="4" width="16" height="16" rx="2"/>
@@ -419,15 +480,30 @@
           <line x1="8" y1="12" x2="16" y2="12"/>
           <line x1="8" y1="16" x2="12" y2="16"/>
         </svg>
-        <h2>Service Request Details</h2>
-        <span class="type-badge">SERVICE</span>
+        <h2 id="modalTitle">Service Request Details</h2>
+        <span class="type-badge" id="modalTypeBadge">SERVICE</span>
       </div>
-      <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
+      <div class="modal-header-actions">
+        <button class="modal-action-btn edit-btn" onclick="openEditMode()" title="Edit Request">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit
+        </button>
+        <button class="modal-action-btn delete-btn" onclick="openDeleteConfirm()" title="Archive Request">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"></path>
+          </svg>
+          Archive
+        </button>
+        <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Two Column Layout -->
@@ -505,16 +581,14 @@
                 <select id="adminUnitsSelect" name="assignedUnits">
                   <option value="">Not yet assigned</option>
                   <optgroup label="Recommended Units (based on request type)">
-                    <option value="Social Media Unit" class="recommended-unit" id="social-media-option">⭐ Social Media Unit</option>
-                    <option value="Graphics Unit" class="recommended-unit" id="graphics-option">⭐ Graphics Unit</option>
-                    <option value="Multimedia Unit" class="recommended-unit" id="multimedia-option">⭐ Multimedia Unit</option>
-                    <option value="Public Relations Unit" class="recommended-unit" id="pr-option">⭐ Public Relations Unit</option>
+                    <% units.forEach(unit => { %>
+                    <option value="<%= unit %>" class="recommended-unit">⭐ <%= unit %></option>
+                    <% }); %>
                   </optgroup>
                   <optgroup label="All Available Units">
-                    <option value="Social Media Unit">Social Media Unit</option>
-                    <option value="Graphics Unit">Graphics Unit</option>
-                    <option value="Multimedia Unit">Multimedia Unit</option>
-                    <option value="Public Relations Unit">Public Relations Unit</option>
+                    <% units.forEach(unit => { %>
+                    <option value="<%= unit %>"><%= unit %></option>
+                    <% }); %>
                   </optgroup>
                 </select>
                 <div class="current-value">
@@ -562,32 +636,147 @@
         <!-- Files Section -->
         <div id="file-preview"></div>
 
-        <!-- Revision History Section -->
-        <div id="revisionHistorySection" class="details-section" style="display: none;">
-          <h3>📋 Revision History</h3>
-          <div class="details-content">
-            <div id="revisionHistoryContainer" class="revision-history-timeline">
-              <!-- Dynamically populated by JavaScript -->
+        <!-- Quick Actions removed - Use button in left column instead -->
+      </div>
+
+      <!-- RIGHT COLUMN: Communication & History -->
+      <div class="unit-right-column">
+        <!-- Team Conversation Button -->
+        <div class="unit-info-card unit-conversation-trigger">
+          <button id="openTeamChatBtn" class="unit-chat-button">
+            <span class="unit-chat-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            <div class="unit-chat-text">
+              <strong>Open Request Discussion</strong>
+              <small>Communicate with users and units</small>
             </div>
+            <span class="unit-chat-arrow">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Revision History Section (appears in right column) -->
+        <div id="revisionHistorySection" class="unit-action-panel revision-history-panel">
+          <div class="unit-panel-header revision-header">
+            <h3>
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: -2px; margin-right: 8px;">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+              Revision History
+            </h3>
+            <p>Complete timeline of all revisions and resubmissions</p>
           </div>
+          <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
         </div>
 
         <!-- Additional File Upload Toggle -->
-        <div id="additionalFileToggleSection" style="display: none;">
+        <div id="additionalFileToggleSection" class="admin-action-panel" style="display: none;">
           <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <label class="toggle-switch" style="margin: 0;">
-              <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
-              <span class="toggle-slider"></span>
-            </label>
-            <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label class="toggle-switch" style="margin: 0;">
+                <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
             </div>
             <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
               This will permit users to add more files when revising their requests
             </div>
           </div>
-
+          
           <style>
+            /* User Suggestions Dropdown Styles */
+            .user-suggestions-dropdown {
+              position: absolute;
+              top: 100%;
+              left: 0;
+              right: 0;
+              background: white;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+              max-height: 300px;
+              overflow-y: auto;
+              z-index: 1000;
+              margin-top: 4px;
+            }
+            
+            .user-suggestion-item {
+              padding: 12px 16px;
+              cursor: pointer;
+              border-bottom: 1px solid #f3f4f6;
+              transition: background-color 0.2s ease;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            
+            .user-suggestion-item:last-child {
+              border-bottom: none;
+            }
+            
+            .user-suggestion-item:hover {
+              background-color: #f0fdf4;
+            }
+            
+            .user-suggestion-avatar {
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #43a047, #66bb6a);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: 600;
+              font-size: 14px;
+              flex-shrink: 0;
+            }
+            
+            .user-suggestion-info {
+              flex: 1;
+              min-width: 0;
+            }
+            
+            .user-suggestion-name {
+              font-weight: 600;
+              color: #1e293b;
+              font-size: 14px;
+              margin-bottom: 2px;
+            }
+            
+            .user-suggestion-email {
+              font-size: 12px;
+              color: #64748b;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            
+            .user-suggestions-empty {
+              padding: 16px;
+              text-align: center;
+              color: #64748b;
+              font-size: 14px;
+            }
+            
+            .user-suggestions-loading {
+              padding: 16px;
+              text-align: center;
+              color: #64748b;
+              font-size: 14px;
+            }
+            
             /* Toggle Switch Styles */
             .toggle-switch {
               position: relative;
@@ -635,123 +824,7 @@
               width: 0;
               height: 0;
             }
-
-            /* Enhanced Conversation Message Styles */
-            .message {
-              margin-bottom: 1.5rem;
-              max-width: 70%;
-              display: flex;
-              flex-direction: column;
-            }
-
-            .admin-message {
-              align-self: flex-end;
-              margin-left: auto;
-              margin-right: 0;
-            }
-
-            .user-message {
-              align-self: flex-start;
-              margin-left: 0;
-              margin-right: auto;
-            }
-
-            .message-content {
-              padding: 0.75rem;
-              border-radius: 1rem;
-              background: #f3f4f6;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-              position: relative;
-            }
-
-            .admin-message .message-content {
-              background: var(--primary-green);
-              color: white;
-              border-bottom-right-radius: 0.25rem;
-            }
-
-            .user-message .message-content {
-              background: white;
-              color: #374151;
-              border: 1px solid #e5e7eb;
-              border-bottom-left-radius: 0.25rem;
-            }
-
-            .message-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 0.5rem;
-              font-size: 0.875rem;
-            }
-
-            .admin-message .message-header {
-              color: rgba(255, 255, 255, 0.9);
-            }
-
-            .user-message .message-header {
-              color: #6b7280;
-            }
-
-            .message-time {
-              opacity: 0.8;
-              font-size: 0.75rem;
-            }
-
-            .message-text {
-              word-wrap: break-word;
-              line-height: 1.5;
-            }
-
-            /* Format Button Hover Effects */
-            .format-btn:hover {
-              background: #f3f4f6;
-              border-color: var(--primary-green);
-            }
           </style>
-        </div>
-
-        <!-- Quick Actions removed - Use button in left column instead -->
-      </div>
-
-      <!-- RIGHT COLUMN: Communication & History -->
-      <div class="unit-right-column">
-        <!-- Team Conversation Button -->
-        <div class="unit-info-card unit-conversation-trigger">
-          <button id="openTeamChatBtn" class="unit-chat-button">
-            <span class="unit-chat-icon">
-              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </span>
-            <div class="unit-chat-text">
-              <strong>Open Request Discussion</strong>
-              <small>Communicate with users and units</small>
-            </div>
-            <span class="unit-chat-arrow">
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12 5 19 12 12 19"/>
-              </svg>
-            </span>
-          </button>
-        </div>
-
-        <!-- Revision History Section (appears in right column) -->
-        <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
-          <div class="unit-panel-header revision-header">
-            <h3>
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                <path d="M3 21v-5h5"/>
-              </svg>
-              Revision History
-            </h3>
-            <p>Complete timeline of all revisions and resubmissions</p>
-          </div>
-          <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
         </div>
       </div>
     </div>
@@ -841,7 +914,7 @@
 
         <!-- Message Input -->
         <div class="unit-message-input-wrapper">
-          <div id="messageEditor" style="background: white; min-height: 80px; border: 1px solid #e2e8f0; border-radius: 8px; flex: 1;"></div>
+          <div id="messageInput" contenteditable="true" role="textbox" aria-multiline="true" placeholder="Type your message..." style="background: white; min-height: 80px; border: 1px solid #e2e8f0; border-radius: 8px; flex: 1;"></div>
           <button id="sendMessageBtn" class="unit-send-btn">
             <span>Send</span>
             <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -859,6 +932,98 @@
   // Define current user role for conversation
   window.currentUserRole = 'admin';
   window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
+</script>
+
+<!-- Conversation formatting + send handler (WYSIWYG) -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendMessageBtn');
+    const toolbar = document.querySelector('.unit-format-toolbar');
+
+    // Toolbar formatting
+    if (toolbar && messageInput && messageInput.isContentEditable !== false) {
+      toolbar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.format-btn');
+        if (!btn) return;
+        const format = btn.dataset.chatFormat;
+        if (!format) return;
+        messageInput.focus();
+        switch(format) {
+          case 'bold': document.execCommand('bold'); break;
+          case 'italic': document.execCommand('italic'); break;
+          case 'underline': document.execCommand('underline'); break;
+        }
+      });
+
+      // Keyboard shortcuts and Enter to send
+      messageInput.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+          e.preventDefault(); document.execCommand('bold'); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+          e.preventDefault(); document.execCommand('italic'); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+          e.preventDefault(); document.execCommand('underline'); return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn && sendBtn.click();
+        }
+      });
+    }
+
+    // Send handler
+    if (sendBtn && messageInput) {
+      sendBtn.addEventListener('click', async () => {
+        const modal = document.getElementById('conversationModal');
+        const requestId = modal?.dataset?.requestId || window.currentConversationId || window.currentRequestId;
+        if (!requestId) {
+          alert('No request selected. Please open a request first.');
+          return;
+        }
+
+        const content = messageInput.isContentEditable ? (messageInput.innerHTML || '').trim() : (messageInput.value || '').trim();
+        const plain = messageInput.isContentEditable ? (messageInput.textContent || '').trim() : (messageInput.value || '').trim();
+
+        if ((!content || content === '<br>' || plain === '') && (window.chatFiles ? window.chatFiles.length === 0 : true)) {
+          alert('Please enter a message or attach files');
+          return;
+        }
+
+        try {
+          let response;
+          if (window.chatFiles && window.chatFiles.length > 0) {
+            const formData = new FormData();
+            formData.append('content', content || '');
+            window.chatFiles.forEach(f => formData.append('chatFiles', f));
+            response = await fetch(`/api/conversation/${requestId}/message`, { method: 'POST', body: formData });
+          } else {
+            response = await fetch(`/api/conversation/${requestId}/message`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ content }) });
+          }
+
+          if (!response.ok) {
+            const err = await response.text();
+            throw new Error(err || 'Failed to send message');
+          }
+
+          const data = await response.json();
+          if (data.success) {
+            if (messageInput.isContentEditable) messageInput.innerHTML = '';
+            else messageInput.value = '';
+            if (typeof clearAllChatFiles === 'function') clearAllChatFiles();
+            if (typeof openConversation === 'function') await openConversation(requestId);
+          } else {
+            alert(data.message || 'Failed to send message');
+          }
+        } catch (err) {
+          console.error('Error sending message', err);
+          alert('Failed to send message');
+        }
+      });
+    }
+  });
 </script>
 
 <!-- Update Confirmation Modal -->
@@ -920,7 +1085,420 @@
   </div>
 </div>
 
+<!-- Trash Modal -->
+<div id="trashModal" class="modal" style="display:none;">
+  <div class="modal-content trash-modal-content">
+    <div class="modal-header unit-modal-header trash-header-color">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <h2>Deleted Requests</h2>
+      </div>
+      <button class="close-modal-btn" onclick="closeTrashModal()" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="trash-modal-body">
+      <div class="trash-info-banner">
+        <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
+        </svg>
+        <span>These requests are hidden from active views. You can restore or permanently delete them.</span>
+      </div>
+
+      <div class="trash-table-container">
+        <table class="trash-requests-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Title</th>
+              <th>Organization</th>
+              <th>Requester</th>
+              <th>Deleted By</th>
+              <th>Deleted On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="trashTableBody">
+            <!-- Populated by JavaScript -->
+          </tbody>
+        </table>
+        <div id="trashEmptyState" class="trash-empty-state" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
+            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+          </svg>
+          <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No deleted requests</p>
+          <p style="color: #6b7280;">Deleted requests will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Service Request Modal -->
+<div id="requestModal" class="modal" style="display:none;">
+  <div class="modal-content unit-modal-wide">
+    <div class="modal-header unit-modal-header service-header-color">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <h2 class="modal-title">Create a Service Request</h2>
+        <span class="type-badge">SERVICE</span>
+      </div>
+      <button class="close-modal-btn" onclick="document.getElementById('requestModal').style.display='none'" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form class="modal-form" action="/submit-service-request" method="POST" enctype="multipart/form-data">
+        <div class="form-group full-width" style="position: relative;">
+          <label for="requestForUser">Create Request For User: <span style="color: #dc2626;">*</span></label>
+          <input type="text" id="requestForUser" name="requestForUser" required placeholder="Search user by name or email..." autocomplete="off" />
+          <div id="userSuggestionsDropdown" class="user-suggestions-dropdown" style="display: none;"></div>
+          <input type="hidden" id="requestForUserId" name="requestForUserId" required />
+          <small style="color: #6b7280; margin-top: 0.25rem; display: block;">Type to search for a user. This request will be created on behalf of the selected user.</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="projectTitle">Name of Request/Project Title:</label>
+          <input type="text" id="projectTitle" name="projectTitle" required placeholder="Enter project title..." />
+        </div>
+        
+        <div class="form-group">
+          <label for="organization">Organization:</label>
+          <input type="text" id="organization" name="organization" placeholder="Enter organization/department" required />
+        </div>
+
+        <div class="form-group full-width">
+          <label for="uploadServiceFile">Upload Files:</label>
+          <div class="file-upload-group" id="serviceFileUploadGroup">
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <p class="upload-text">Drop your files here</p>
+            <p class="upload-subtext">or click to browse from your device</p>
+            <input type="file" id="uploadServiceFile" name="uploadServiceFile" class="file-input-hidden" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" />
+            <button type="button" class="browse-file-btn" onclick="event.stopPropagation(); document.getElementById('uploadServiceFile').click()">
+              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+              </svg>
+              Choose Files
+            </button>
+            <div class="upload-progress" id="serviceUploadProgress">
+              <div class="progress-bar"><div class="progress-fill" id="serviceProgressFill"></div></div>
+            </div>
+          </div>
+          <div class="file-management" id="serviceFileManagement" style="display: none;">
+            <div class="file-actions">
+              <span id="serviceFilesCount">0 files selected</span>
+              <button type="button" class="clear-all-btn" id="serviceClearAllBtn" onclick="clearAllServiceFiles()">Clear All Files</button>
+            </div>
+            <div class="selected-files-container" id="serviceSelectedFiles"></div>
+            <div class="files-summary" id="serviceFilesSummary">Total size: 0 MB</div>
+          </div>
+          <small style="color: #6b7280; margin-top: 0.5rem;">Optional: Attach relevant documents (Max 10MB per file)</small>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Relevant Links (Optional):</label>
+          <small style="color: #6b7280; display: block; margin-bottom: 0.5rem;">💡 Reminder: Please ensure links have public access</small>
+          <div id="linksContainer"></div>
+          <button type="button" id="addLinkBtn" class="add-link-btn">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Add Link
+          </button>
+        </div>
+
+        <div class="form-group deadline-group full-width">
+          <label for="deadline">Deadline:</label>
+          <input type="date" id="deadline" name="deadline" required />
+          <small style="color: var(--primary-green); margin-top: 0.25rem; font-weight: 600;">When do you need this completed?</small>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="description">Description:</label>
+          <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
+          <input type="hidden" id="description" name="description" required>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="specificRequestType">Select Specific Request Type:</label>
+          <div style="display: flex; gap: 1rem; align-items: flex-start;">
+            <div style="flex: 1;">
+              <select id="specificRequestType" name="specificRequestType" class="form-control" style="margin-bottom: 0.5rem;">
+                <option value="" disabled selected>Select from predefined types...</option>
+              </select>
+              <small style="color: #6b7280; font-size: 0.875rem;">Choose from approved request types</small>
+            </div>
+            <div style="flex: 0 0 auto; padding-top: 0.5rem;"><span style="color: #6b7280; font-size: 0.875rem;">or</span></div>
+            <div style="flex: 1;">
+              <input type="text" id="customRequestType" name="customRequestType" class="form-control" placeholder="Enter custom request type..." style="margin-bottom: 0.5rem;" maxlength="100">
+              <small style="color: #6b7280; font-size: 0.875rem;">Custom types need admin approval</small>
+            </div>
+          </div>
+          <input type="hidden" id="finalRequestType" name="finalRequestType" required>
+        </div>
+
+        <div class="form-group full-width">
+          <label class="checkbox-container">
+            <input type="checkbox" id="meetingRequest" name="meetingRequest">
+            <div class="checkbox-text">
+              Request a meeting with SCO for collaboration and conceptualization
+              <div class="checkbox-description">Check this if you would like to schedule a meeting to discuss your request in detail.</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="cancelModalBtn">Cancel</button>
+          <button type="submit">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Request Modal -->
+<div id="editRequestModal" class="confirmation-modal">
+  <div class="confirmation-modal-content edit-modal-content">
+    <div class="confirmation-header">
+      <div class="modal-title-section">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        <h3 style="display: inline-block; vertical-align: middle; margin: 0;">Edit Request</h3>
+      </div>
+      <div class="modal-header-actions">
+        <button class="close-modal-btn" onclick="closeEditModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="confirmation-body edit-modal-body">
+      <!-- Non-editable Requestor Information -->
+      <div class="edit-info-section">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+          Requestor Information (Read-only)
+        </h4>
+        <div class="edit-readonly-grid">
+          <div class="edit-readonly-item">
+            <span class="edit-readonly-label">Requested By:</span>
+            <span class="edit-readonly-value" id="editRequestor">Loading...</span>
+          </div>
+          <div class="edit-readonly-item">
+            <span class="edit-readonly-label">Organization:</span>
+            <span class="edit-readonly-value" id="editOrganizationReadonly">Loading...</span>
+          </div>
+          <div class="edit-readonly-item">
+            <span class="edit-readonly-label">Request Type:</span>
+            <span class="edit-readonly-value" id="editRequestType">Service Request</span>
+          </div>
+          <div class="edit-readonly-item">
+            <span class="edit-readonly-label">Date Submitted:</span>
+            <span class="edit-readonly-value" id="editDateSubmitted">Loading...</span>
+          </div>
+          <div class="edit-readonly-item" id="editSpecificTypeContainer" style="display: none;">
+            <span class="edit-readonly-label">Specific Type:</span>
+            <span class="edit-readonly-value" id="editSpecificType">N/A</span>
+          </div>
+        </div>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+
+      <!-- Editable Form -->
+      <form id="editRequestForm">
+        <div class="edit-form-group">
+          <label for="editTitle">Title <span class="required">*</span></label>
+          <input type="text" id="editTitle" required class="edit-input" placeholder="Enter request title">
+        </div>
+        
+        <div class="edit-form-group">
+          <label for="editDescription">Description <span class="required">*</span></label>
+          <textarea id="editDescription" required class="edit-textarea" rows="5" placeholder="Enter detailed description"></textarea>
+        </div>
+        
+        <div class="edit-form-group">
+          <label for="editSpecificRequestType">Specific Request Type</label>
+          <div style="display: flex; gap: 1rem; align-items: flex-start;">
+            <div style="flex: 1;">
+              <select id="editSpecificRequestType" class="edit-input" style="margin-bottom: 0.5rem; width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <option value="">Select type</option>
+              </select>
+              <small style="color: #6b7280; font-size: 0.875rem;">Choose from approved request types</small>
+            </div>
+            <div style="flex: 0 0 auto; padding-top: 0.5rem;"><span style="color: #6b7280; font-size: 0.875rem;">or</span></div>
+            <div style="flex: 1;">
+              <input type="text" id="editCustomRequestType" class="edit-input" style="margin-bottom: 0.5rem;" placeholder="Enter custom type..." maxlength="100">
+              <small style="color: #6b7280; font-size: 0.875rem;">Custom types need approval</small>
+            </div>
+          </div>
+          <input type="hidden" id="editFinalRequestType" name="editFinalRequestType">
+        </div>
+
+        <div class="edit-form-row">
+          <div class="edit-form-group">
+            <label for="editDeadline">Deadline</label>
+            <input type="date" id="editDeadline" class="edit-input">
+          </div>
+          <div class="edit-form-group" id="editLinksContainer" style="display: none;">
+            <label for="editLinks">Links</label>
+            <input type="text" id="editLinks" class="edit-input" placeholder="Separate multiple links with commas">
+            <small style="color: #6b7280; font-size: 12px; margin-top: 4px; display: block;">Enter URLs separated by commas</small>
+          </div>
+        </div>
+
+        <div class="confirmation-actions">
+          <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn-confirm">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header" style="background-color: #dc2626; color: white;">
+      <h3>
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Archive Request
+      </h3>
+      <button class="modal-close" onclick="closeDeleteConfirm()">✕</button>
+    </div>
+    <div class="confirmation-body">
+      <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+        <p style="margin: 0; color: #991b1b; font-size: 0.95rem;">
+          <strong>Warning:</strong> This action will move the request to archive. The request will be hidden from active views but can be restored later.
+        </p>
+      </div>
+      <p>Are you sure you want to archive this request?</p>
+        <div style="margin-top: 15px;">
+          <label for="archiveReason" style="display:block; margin-bottom:5px; font-weight:bold; color:#374151;">Archiving Reason (Required)</label>
+          <textarea id="archiveReason" rows="3" placeholder="Explain why this request is being archived" style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:8px; font-size:14px; box-sizing:border-box;" required></textarea>
+        </div>
+
+      <div class="confirmation-actions" style="margin-top: 24px;">
+        <button class="btn-cancel" onclick="closeDeleteConfirm()">Cancel</button>
+        <button class="btn-danger" onclick="confirmDelete()">Archive Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div id="restoreConfirmModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header">
+      <h3>Confirm Restore</h3>
+      <button class="modal-close" onclick="closeRestoreModal()">✕</button>
+    </div>
+    <div class="confirmation-body">
+      <p>Are you sure you want to restore this request? It will be moved back to the active requests list.</p>
+      <div class="confirmation-actions">
+        <button class="btn-cancel" onclick="closeRestoreModal()">Cancel</button>
+        <button class="btn-confirm" onclick="confirmRestore()">Restore Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Permanent Delete Confirmation Modal -->
+<div id="permanentDeleteModal" class="confirmation-modal">
+  <div class="confirmation-modal-content">
+    <div class="confirmation-header warning">
+      <h3>⚠️ Confirm Permanent Deletion</h3>
+      <button class="modal-close" onclick="closePermanentDeleteModal()">✕</button>
+    </div>
+    <div class="confirmation-body">
+      <p style="color: #dc2626; font-weight: 600;">This action cannot be undone!</p>
+      <p>Are you sure you want to permanently delete this request? All associated data will be lost forever.</p>
+      <div class="confirmation-actions">
+        <button class="btn-cancel" onclick="closePermanentDeleteModal()">Cancel</button>
+        <button class="btn-danger" onclick="confirmPermanentDelete()">Delete Forever</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================================
+   SHARED ADMIN EDIT MODAL FUNCTIONALITY
+   File: public/javascripts/ejs/admin-edit-modal.js
+   Purpose: Provides shared edit/delete modal functionality for all admin pages
+   =========================================== -->
+<script src="/javascripts/ejs/admin-edit-modal.js"></script>
+<!-- ===========================================
+   SHARED ADMIN TRASH MODAL FUNCTIONALITY
+   File: public/javascripts/ejs/admin-trash-modal.js
+   Purpose: Provides shared trash modal functionality for all admin pages
+   =========================================== -->
+<script src="/javascripts/ejs/admin-trash-modal.js"></script>
+<script>
+  // Initialize with default request type for services page
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.AdminEditModal) {
+      window.AdminEditModal.setDefaultRequestType('Service Request');
+    }
+    // Initialize trash modal for services page
+    if (window.AdminTrashModal) {
+      window.AdminTrashModal.init({
+        entityType: 'requests',
+        fetchEndpoint: '/api/admin/deleted-requests',
+        restoreEndpoint: '/admin/request/restore',
+        permanentDeleteEndpoint: '/admin/request/permanent-delete',
+        typeFilter: 'Service Request',
+        reloadOnRestore: true
+      });
+    }
+  });
+</script>
+
+<!-- Pass database values to JavaScript for filters -->
+<script>
+  // These values are fetched from the database and passed to the client
+  window.filterDataFromDatabase = {
+    requestStatuses: <%- JSON.stringify(requestStatuses || []) %>,
+    organizations: <%- JSON.stringify(organizations || []) %>,
+    offices: <%- JSON.stringify(offices || []) %>,
+    units: <%- JSON.stringify(units || []) %>
+  };
+</script>
+
 <script src="/javascripts/ejs/services.js"></script>
+<script src="/javascripts/status-handler.js"></script>
 <script>
 // Sidebar hover effect
 const sidebar = document.getElementById('adminSidebar');
@@ -992,7 +1570,310 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+<<<<<<< HEAD
+=======
+
+// ==========================================
+// TRASH MODAL FUNCTIONALITY - Using Shared Module
+// ==========================================
+// Now handled by admin-trash-modal.js (shared module)
+
+// Show notification helper
+function showNotification(message, type = 'success') {
+  let container = document.getElementById('notificationContainer');
+  
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'notificationContainer';
+    container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    `;
+    document.body.appendChild(container);
+  }
+
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.style.cssText = `
+    min-width: 300px;
+    padding: 16px 20px;
+    background: ${type === 'success' ? '#10b981' : '#ef4444'};
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.3s ease-out;
+  `;
+
+  notification.innerHTML = `
+    <svg style="width: 20px; height: 20px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none">
+      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span style="flex: 1;">${message}</span>
+    <button onclick="this.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; padding: 0; font-size: 20px; line-height: 1;">✕</button>
+  `;
+
+  container.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => notification.remove(), 300);
+  }, 5000);
+}
+>>>>>>> main
 </script>
+
+<script>
+// ===== QUILL RICH TEXT EDITOR FOR CREATE SERVICE REQUEST MODAL =====
+let serviceDescriptionQuill = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize Quill Editor for Description
+  if (document.getElementById('descriptionEditor')) {
+    serviceDescriptionQuill = new Quill('#descriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Enter detailed description of your service request...',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['link'],
+          ['clean']
+        ]
+      }
+    });
+  }
+
+  // Set minimum date for deadline
+  const deadlineInput = document.getElementById('deadline');
+  if (deadlineInput) {
+    const today = new Date().toISOString().split('T')[0];
+    deadlineInput.setAttribute('min', today);
+  }
+
+  // Load request types from database
+  fetch('/api/request-types?requestCategory=Service Request')
+    .then(res => {
+      if (!res.ok) {
+        console.warn('Failed to fetch request types:', res.status);
+        return null;
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (!data || !data.types) {
+        console.warn('No request types returned from API');
+        return;
+      }
+      const select = document.getElementById('specificRequestType');
+      if (select) {
+        data.types.forEach(type => {
+          const option = document.createElement('option');
+          option.value = type;
+          option.textContent = type;
+          select.appendChild(option);
+        });
+      }
+    })
+    .catch(err => console.warn('Error loading request types:', err));
+
+  // Handle request type selection
+  const specificType = document.getElementById('specificRequestType');
+  const customType = document.getElementById('customRequestType');
+  const finalType = document.getElementById('finalRequestType');
+
+  if (specificType && customType && finalType) {
+    specificType.addEventListener('change', function() {
+      if (this.value) {
+        customType.value = '';
+        finalType.value = this.value;
+      }
+    });
+
+    customType.addEventListener('input', function() {
+      if (this.value.trim()) {
+        specificType.value = '';
+        finalType.value = this.value.trim();
+      }
+    });
+  }
+});
+
+// ===== LINKS MANAGEMENT =====
+document.getElementById('addLinkBtn')?.addEventListener('click', function() {
+  const container = document.getElementById('linksContainer');
+  const linkItem = document.createElement('div');
+  linkItem.className = 'link-item';
+  linkItem.innerHTML = `
+    <input type="url" name="links[]" placeholder="Enter URL (e.g., https://example.com)" pattern="https?://.+" />
+    <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()">
+      <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  `;
+  container.appendChild(linkItem);
+});
+
+// ===== FILE UPLOAD HANDLING =====
+const uploadServiceFile = document.getElementById('uploadServiceFile');
+const serviceFileUploadGroup = document.getElementById('serviceFileUploadGroup');
+const serviceFileManagement = document.getElementById('serviceFileManagement');
+const serviceSelectedFiles = document.getElementById('serviceSelectedFiles');
+const serviceFilesCount = document.getElementById('serviceFilesCount');
+const serviceFilesSummary = document.getElementById('serviceFilesSummary');
+
+let selectedServiceFiles = [];
+
+if (uploadServiceFile) {
+  uploadServiceFile.addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`${file.name} exceeds 10MB limit`);
+        return;
+      }
+      if (!selectedServiceFiles.find(f => f.name === file.name && f.size === file.size)) {
+        selectedServiceFiles.push(file);
+      }
+    });
+    updateServiceFileDisplay();
+  });
+
+  serviceFileUploadGroup.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    serviceFileUploadGroup.classList.add('dragover');
+  });
+
+  serviceFileUploadGroup.addEventListener('dragleave', () => {
+    serviceFileUploadGroup.classList.remove('dragover');
+  });
+
+  serviceFileUploadGroup.addEventListener('drop', (e) => {
+    e.preventDefault();
+    serviceFileUploadGroup.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files);
+    files.forEach(file => {
+      if (file.size <= 10 * 1024 * 1024 && !selectedServiceFiles.find(f => f.name === file.name)) {
+        selectedServiceFiles.push(file);
+      }
+    });
+    updateServiceFileDisplay();
+  });
+
+  serviceFileUploadGroup.addEventListener('click', () => uploadServiceFile.click());
+}
+
+function updateServiceFileDisplay() {
+  if (selectedServiceFiles.length === 0) {
+    serviceFileManagement.style.display = 'none';
+    serviceFileUploadGroup.classList.remove('has-file');
+    return;
+  }
+
+  serviceFileManagement.style.display = 'block';
+  serviceFileUploadGroup.classList.add('has-file');
+  serviceFilesCount.textContent = `${selectedServiceFiles.length} file${selectedServiceFiles.length > 1 ? 's' : ''} selected`;
+  
+  const totalSize = selectedServiceFiles.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024);
+  serviceFilesSummary.textContent = `Total size: ${totalSize.toFixed(2)} MB`;
+
+  serviceSelectedFiles.innerHTML = selectedServiceFiles.map((file, index) => `
+    <div class="file-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; transition: all 0.3s ease;">
+      <div class="file-item-info" style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+        <svg class="file-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14,2 14,8 20,8"></polyline>
+        </svg>
+        <div class="file-item-details" style="flex: 1;">
+          <div class="file-item-name" style="margin: 0 0 0.25rem 0; font-size: 0.875rem; font-weight: 600; color: #334155; word-break: break-all;">${file.name}</div>
+          <div class="file-item-size" style="margin: 0; font-size: 0.75rem; color: #64748b;">${(file.size / (1024 * 1024)).toFixed(2)} MB • ${file.type || 'Unknown type'}</div>
+        </div>
+      </div>
+      <button type="button" class="file-delete-btn" onclick="removeServiceFile(${index})" title="Remove file" style="background: #ef4444; color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; font-weight: bold; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeServiceFile(index) {
+  selectedServiceFiles.splice(index, 1);
+  updateServiceFileDisplay();
+  const dt = new DataTransfer();
+  selectedServiceFiles.forEach(file => dt.items.add(file));
+  uploadServiceFile.files = dt.files;
+}
+
+window.clearAllServiceFiles = function() {
+  selectedServiceFiles = [];
+  uploadServiceFile.value = '';
+  updateServiceFileDisplay();
+};
+
+function getServiceFileIcon(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const icons = {
+    'pdf': '📄', 'doc': '📝', 'docx': '📝', 'xls': '📊', 'xlsx': '📊',
+    'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'webp': '🖼️'
+  };
+  return icons[ext] || '📎';
+}
+
+// ===== FORM SUBMISSION =====
+document.querySelector('#requestModal form')?.addEventListener('submit', function(event) {
+  event.preventDefault();
+  
+  // Get Quill content
+  if (serviceDescriptionQuill) {
+    const description = serviceDescriptionQuill.root.innerHTML;
+    document.getElementById('description').value = description;
+    
+    if (!serviceDescriptionQuill.getText().trim()) {
+      alert('Please enter a description');
+      return false;
+    }
+  }
+
+  // Validate request type (predefined or custom)
+  const specificType = document.getElementById('specificRequestType').value;
+  const customType = document.getElementById('customRequestType').value.trim();
+  const finalType = document.getElementById('finalRequestType');
+
+  if (!specificType && !customType) {
+    document.getElementById('requestTypeError').style.display = 'block';
+    return false;
+  }
+
+  finalType.value = specificType || customType;
+  document.getElementById('requestTypeError').style.display = 'none';
+
+  // Update file input with selected files
+  const dt = new DataTransfer();
+  selectedServiceFiles.forEach(file => dt.items.add(file));
+  uploadServiceFile.files = dt.files;
+
+  // Submit form
+  this.submit();
+});
+
+// Modal close handlers
+document.getElementById('cancelModalBtn')?.addEventListener('click', () => {
+  document.getElementById('requestModal').style.display = 'none';
+  const form = document.querySelector('#requestModal form');
+  if (form) form.reset();
+  if (serviceDescriptionQuill) serviceDescriptionQuill.setContents([]);
+  selectedServiceFiles = [];
+  updateServiceFileDisplay();
+});
+</script>
+
 <script src="/javascripts/status-handler.js"></script>
 
 <%- include('../partials/chatbot-widget') %>

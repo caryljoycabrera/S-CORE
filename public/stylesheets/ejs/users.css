@@ -34,8 +34,22 @@
   gap: 0.5rem !important;
 }
 
+.section-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-header-text {
+  flex: 1;
+  min-width: 250px;
+}
+
 .section-header h1 {
-  margin: 0 !important;
+  margin: 0 0 0.5rem 0 !important;
   font-size: 1.75rem;
   font-weight: 700;
   color: #1e293b;
@@ -43,10 +57,16 @@
 }
 
 .section-header p {
-  margin: 0 !important;
+  margin-bottom: 0.5rem;
   color: #6b7280;
   font-size: 0.95rem;
   line-height: 1.5;
+}
+
+.action-button-container {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 /* Tabs - Below description, before divider - LEFT ALIGNED */
@@ -274,6 +294,52 @@ hr {
   transform: none !important;
 }
 
+/* ========================================
+   CONFIRMATION MODAL BUTTONS
+   ======================================== */
+
+.btn-cancel,
+.btn-confirm,
+.btn-danger {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm {
+  background: #10b981;
+  color: white;
+}
+
+.btn-confirm:hover {
+  background: #059669;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
 /* Responsive adjustments */
 @media (max-width: 1400px) {
   .grid-header-info,
@@ -305,7 +371,11 @@ hr {
    ======================================== */
 
 .back-to-dashboard-container {
-  margin: 0rem 3rem 1.5rem 3rem;
+  margin: 2rem 3rem 1.5rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
 }
 
 .back-to-dashboard-btn {
@@ -321,6 +391,7 @@ hr {
   font-size: 1rem;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  margin-right: 20rem;
 }
 
 .back-to-dashboard-btn:hover {
@@ -1263,11 +1334,11 @@ hr {
 @keyframes dropdownSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -1454,7 +1525,7 @@ hr {
   position: fixed;
   top: 100px;
   right: 20px;
-  z-index: 99999;
+  z-index: 150000; /* Higher than confirmation modal */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1816,23 +1887,27 @@ hr {
 
 .user-admin-form-section {
   background: linear-gradient(135deg, #ffffff, #f8fafc);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 2.5rem;
   margin-bottom: 2rem;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  border: 3px solid transparent;
+  background-image: 
+    linear-gradient(135deg, #ffffff, #f8fafc),
+    linear-gradient(135deg, var(--primary-green), #20c997);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(64, 139, 78, 0.1);
   position: relative;
+  transition: all 0.3s ease;
 }
 
-.user-admin-form-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(135deg, var(--primary-green), #20c997);
-  border-radius: 20px 20px 0 0;
+.user-admin-form-section:hover {
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(64, 139, 78, 0.2);
+  transform: translateY(-2px);
 }
 
 .user-admin-form-section h3 {
@@ -2322,22 +2397,22 @@ hr {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.9);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes slideDown {
   from {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
   to {
     opacity: 0;
-    transform: translateY(20px) scale(0.9);
+    transform: translateY(20px);
   }
 }
 
@@ -2695,11 +2770,11 @@ hr {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 10001; /* Higher than quick action modal */
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100000; /* Much higher than user modal */
   justify-content: center;
   align-items: center;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
 }
 
 /* When modal is shown with flex display */
@@ -2715,4 +2790,194 @@ hr {
   margin: auto;
   transform: translateY(0);
   opacity: 1 !important;
+  z-index: 100001; /* Ensure content is above backdrop */
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+}
+
+/* ========================================
+   CONFIRMATION MODAL STYLES
+   ======================================== */
+
+/* Confirmation Modal Styles */
+.confirmation-modal {
+  display: none;
+  position: fixed;
+  z-index: 99999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.confirmation-modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirmation-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.confirmation-header {
+  background: #dc2626;
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px 12px 0 0;
+}
+
+.confirmation-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confirmation-body {
+  padding: 2rem;
+}
+
+.confirmation-message {
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.confirmation-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.confirmation-btn-confirm {
+  background: #dc2626;
+  color: white;
+}
+
+.confirmation-btn-confirm:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.confirmation-btn-cancel {
+  background: #6b7280;
+  color: white;
+}
+
+.confirmation-btn-cancel:hover {
+  background: #4b5563;
+}
+
+/* ========================================
+   PAGINATION CONTROLS
+   ======================================== */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 2rem 3rem 1.5rem 3rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-numbers {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pagination-btn {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn.pagination-nav {
+  padding: 0 0.5rem;
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+  background: #f3f4f6;
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-btn.active {
+  background: var(--primary-green);
+  color: white;
+  border-color: var(--primary-green);
+}
+
+.pagination-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pagination-ellipsis {
+  padding: 0 0.5rem;
+  color: #9ca3af;
+  font-weight: 500;
 }

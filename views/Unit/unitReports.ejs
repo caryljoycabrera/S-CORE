@@ -13,6 +13,112 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
   <script src="/javascripts/unit-navbar.js"></script>
+  <style>
+    /* Unit Content Area */
+    .unit-content-area {
+      padding: 2rem;
+      background: #f3f4f6;
+      min-height: calc(100vh - 80px);
+    }
+
+    .unit-page-header {
+      margin-bottom: 2rem;
+    }
+
+    .unit-page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .unit-page-header p {
+      color: #6b7280;
+      font-size: 1rem;
+    }
+
+    /* Reports Container */
+    .reports-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Report Cards */
+    .report-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 1px solid #e5e7eb;
+    }
+
+    .report-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .report-header h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .report-header p {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+
+    .report-actions {
+      margin-top: 1rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2d7a4a 0%, #1e3a5f 100%);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      font-size: 0.875rem;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(45, 122, 74, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .unit-content-area {
+        padding: 1rem;
+      }
+
+      .reports-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .unit-page-header h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <!-- Unit Sidebar Navigation -->
@@ -38,25 +144,22 @@
         </div>
         <a href="/unit/dashboard" class="text-wrapper">S-CORE UNIT</a>
       </div>
-
-      <span class="text-wrapper-2">Welcome, <%= user.fName %> <%= user.lName %>!</span>
+      
+      <span class="text-wrapper-2"><%= unitTeam %> Unit Reports</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
-
+        
         <div class="dropdown-wrapper">
-          <div class="dropdown">
-            <button class="dropbtn">
-              <img src="<%= user.profilePicture || '/Picture/default-profile.png' %>" alt="Profile" class="profile-pic">
-              <span class="profile-name"><%= user.fName %> <%= user.lName %></span>
-              <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6,9 12,15 18,9"></polyline>
-              </svg>
-            </button>
-            <div class="dropdown-content">
-              <a href="/unit/profile">Profile</a>
-              <a href="/logout">Logout</a>
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/unit/profile">My Profile</a>
+            <a href="/logout">Logout</a>
           </div>
         </div>
       </div>
@@ -119,7 +222,93 @@
     </div>
   </div>
 
+  <!-- Announcement Detail Modal -->
+  <div id="announcementDetailModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+      <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+          <h2 id="modalTitle" class="modal-title" style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #1f2937;"></h2>
+          <span id="modalDate" style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem; display: block;"></span>
+        </div>
+        <button onclick="closeAnnouncementModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div id="modalContent" style="line-height: 1.6; color: #1f2937;"></div>
+        <div id="modalMeta" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>From:</strong> <span id="modalFrom"></span></p>
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Priority:</strong> <span id="modalPriority"></span></p>
+        </div>
+      </div>
+      <div class="modal-actions" style="padding: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button onclick="closeAnnouncementModal()" style="padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: 2px solid #e5e7eb; background: #f3f4f6; color: #374151; transition: all 0.2s ease;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Open announcement detail modal
+    async function openAnnouncementDetail(announcementId) {
+      try {
+        // Fetch announcement details from API
+        const response = await fetch(`/api/announcements/${announcementId}`);
+        const result = await response.json();
+        
+        if (!response.ok || !result.success) {
+          console.error('Failed to fetch announcement:', result.message);
+          return;
+        }
+
+        const announcement = result.announcement;
+
+        // Update modal content
+        document.getElementById('modalTitle').textContent = announcement.title;
+        document.getElementById('modalDate').textContent = new Date(announcement.createdAt).toLocaleDateString('en-US', { 
+          month: 'long', 
+          day: 'numeric', 
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        // Render HTML content (from Quill editor)
+        document.getElementById('modalContent').innerHTML = announcement.content;
+        
+        document.getElementById('modalFrom').textContent = announcement.sentBy 
+          ? `${announcement.sentBy.fName} ${announcement.sentBy.lName}` 
+          : 'Admin';
+        
+        const priorityText = announcement.priority === 'high' ? 'Urgent' : 
+                             announcement.priority === 'medium' ? 'Important' : 'Low';
+        document.getElementById('modalPriority').textContent = priorityText;
+        
+        // Show modal
+        document.getElementById('announcementDetailModal').style.display = 'flex';
+        
+        // Mark as read
+        await fetch(`/api/announcements/${announcementId}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } catch (error) {
+        console.error('Error opening announcement:', error);
+      }
+    }
+
+    // Close announcement detail modal
+    function closeAnnouncementModal() {
+      document.getElementById('announcementDetailModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('announcementDetailModal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAnnouncementModal();
+      }
+    });
+
+    // Make openAnnouncementDetail available globally
+    window.openAnnouncementDetail = openAnnouncementDetail;
+
     function generateTaskSummary() {
       alert('Task Summary Report generation coming soon!');
     }
@@ -136,5 +325,8 @@
       alert('Activity Report generation coming soon!');
     }
   </script>
+  
+  <!-- Include notification system -->
+  <script src="/javascripts/ejs/Unit/unit-notifications.js"></script>
 </body>
 </html>

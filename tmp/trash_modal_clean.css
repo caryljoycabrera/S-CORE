@@ -1,0 +1,97 @@
+/* =============================================================================
+   TRASH MODAL STYLES
+   ============================================================================= */
+
+.trash-modal-content {
+    max-width: 1200px;
+    width: 95vw;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.trash-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.trash-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 1rem;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 14px;
+    color: #92400e;
+}
+
+.trash-table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.trash-requests-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.trash-requests-table thead {
+    background: #f8f9fa;
+}
+
+.trash-requests-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+}
+
+.trash-requests-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.trash-request-row:hover {
+    background: #f9fafb;
+}
+
+.trash-empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}
+
+.trash-empty-state svg {
+    margin-bottom: 1rem;
+}
+
+.trash-empty-state p {
+    margin: 0.5rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.trash-empty-state p:last-child {
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+/* Status/type badges stay on one line */
+.requests-table .status-badge,
+.requests-table .type-badge,
+.trash-requests-table .status-badge,
+.trash-requests-table .type-badge {
+    white-space: nowrap !important;
+    display: inline-block;
+}

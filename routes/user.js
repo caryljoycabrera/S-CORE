@@ -2,134 +2,123 @@
 // This module handles all user-facing routes and functionality
 // Includes dashboard, profile management, request submission, and user APIs
 
+console.log('[USER ROUTES] Module loaded');
+
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
 const Page = require('../models/Page');
+const BroadcastMessage = require('../models/BroadcastMessage');
 const { requireLogin } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
+const { getAutoAssignedUnit, getDefaultDeadlineDays } = require('../utils/settingsHelpers');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { requestLimiter } = require('../middleware/rateLimiter');
-
-/**
- * Request Type to Unit Mapping
- * Automatically assigns requests to appropriate units based on specificRequestType
- */
-const requestTypeToUnitMapping = {
-  // Graphics & Design Services (Service Requests)
-  "Creation of New Graphics/Pubmat": "Graphics",
-  "Creation of New Logo/Branding Element": "Graphics",
-
-  // Multimedia Services (Service Requests)
-  "Event Photo & Video Coverage": "Multimedia",
-  "Photo/Video Editing Service": "Multimedia",
-
-  // Content & Communications (Service Requests)
-  "Magazine Content Creation": "Public Relations",
-  "Social Media Content Sharing/Posting": "Social Media",
-
-  // Content & Communications Services (Approval Requests)
-  "Content Posting": "Public Relations",
-  "Social Media Monitoring": "Social Media",
-  "Caption Approval": "Public Relations",
-  "Publication Design": "Graphics",
-  "Proofreading": "Public Relations",
-
-  // Multimedia Services (Approval Requests)
-  "Graphics Design": "Graphics",
-  "Media Coverage": "Multimedia"
-};
-
-/**
- * Get auto-assigned unit for a specific request type
- * @param {string} specificRequestType - The type of request
- * @returns {string} The assigned unit name or empty string if not found
- */
-function getAutoAssignedUnit(specificRequestType) {
-  return requestTypeToUnitMapping[specificRequestType] || '';
-}
+const { sanitizeText, sanitizeMongoId, sanitizeString, sanitizeName, sanitizeEmail, sanitizePhone, escapeHtml } = require('../utils/sanitize');
 
 /**
  * GET /
  * Homepage route - serves the public homepage with SCO information
- * If user is logged in, redirects to dashboard
+ * If user is logged in, redirects to appropriate dashboard based on role
  */
 router.get('/', async (req, res) => {
   try {
     if (req.session.userId) {
-      // If user is logged in, redirect to their dashboard
-      return res.redirect('/dashboard');
-    }
-    
-    // Try to get homepage content from database
-    let pageContent = await Page.findOne({ slug: 'home' });
-    
-    // If no content exists in database, try to load from JSON file
-    if (!pageContent) {
-      try {
-        const dataPath = path.join(__dirname, '..', 'data', 'homepage.json');
-        if (fs.existsSync(dataPath)) {
-          const jsonData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-          pageContent = { content: jsonData };
-          console.log('[HOMEPAGE] Loaded content from JSON fallback');
-        }
-      } catch (jsonError) {
-        console.log('[HOMEPAGE] No JSON fallback found, using defaults');
+      // If user is logged in, redirect to their appropriate dashboard based on role
+      const role = req.session.role;
+      if (role === 'admin') {
+        return res.redirect('/admin');
+      } else if (role === 'unit') {
+        return res.redirect('/unit/dashboard');
+      } else {
+        return res.redirect('/dashboard');
       }
     }
     
-    // If still no content, use empty object (homepage will use defaults)
-    const content = pageContent?.content || {};
+    // Load default content from JSON file
+    let content = {};
+    try {
+      const dataPath = path.join(__dirname, '..', 'data', 'homepage.json');
+      if (fs.existsSync(dataPath)) {
+        content = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        console.log('[HOMEPAGE] Loaded default content from JSON');
+      }
+    } catch (jsonError) {
+      console.log('[HOMEPAGE] Error loading JSON defaults:', jsonError);
+    }
+    
+    // Try to get homepage content from database and merge (database overrides defaults)
+    const pageContent = await Page.findOne({ slug: 'home' });
+    if (pageContent?.content) {
+      content = { ...content, ...pageContent.content };
+      console.log('[HOMEPAGE] Merged content from database');
+    }
     
     // If not logged in, show the public homepage with content
     res.render('homepage', { content });
   } catch (error) {
     console.error('[HOMEPAGE] Error loading homepage:', error);
-    // Render with empty content on error
-    res.render('homepage', { content: {} });
+    // Only send response if headers haven't been sent yet
+    if (!res.headersSent) {
+      res.render('homepage', { content: {} });
+    }
   }
 });
 
 /**
  * GET /dashboard
  * User dashboard with statistics and recent activity
+ * Redirects admin and unit users to their proper dashboards
  */
 router.get('/dashboard', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
 
-    // Get approval request statistics
-    const totalApprovals = await RequestApproval.countDocuments({ userId: user._id });
+    // Redirect admin and unit users to their proper dashboards
+    if (user.role === 'admin') {
+      return res.redirect('/admin');
+    } else if (user.role === 'unit') {
+      return res.redirect('/unit/dashboard');
+    }
+
+    // Get approval request statistics (exclude archived/deleted)
+    const totalApprovals = await RequestApproval.countDocuments({ userId: user._id, isDeleted: { $ne: true } });
     const approvedApprovals = await RequestApproval.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^approved$/i }
     });
     const pendingApprovals = await RequestApproval.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^pending$/i }
     });
     const revisionApprovals = await RequestApproval.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^revision$/i }
     });
 
-    // Get service request statistics
-    const totalServices = await ServiceRequest.countDocuments({ userId: user._id });
+    // Get service request statistics (exclude archived/deleted)
+    const totalServices = await ServiceRequest.countDocuments({ userId: user._id, isDeleted: { $ne: true } });
     const approvedServices = await ServiceRequest.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^approved$/i }
     });
     const pendingServices = await ServiceRequest.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^pending$/i }
     });
     const revisionServices = await ServiceRequest.countDocuments({
       userId: user._id,
+      isDeleted: { $ne: true },
       status: { $regex: /^revision$/i }
     });
 
@@ -139,15 +128,15 @@ router.get('/dashboard', requireLogin, async (req, res) => {
     const pendingRequests = pendingApprovals + pendingServices;
     const inReviewRequests = revisionApprovals + revisionServices;
 
-    // Get recent activity from both request types
+    // Get recent activity from both request types (exclude archived/deleted)
     const approvalActivity = await RequestApproval
-      .find({ userId: user._id })
+      .find({ userId: user._id, isDeleted: { $ne: true } })
       .sort({ updatedAt: -1 })
       .limit(3)
       .lean();
 
     const serviceActivity = await ServiceRequest
-      .find({ userId: user._id })
+      .find({ userId: user._id, isDeleted: { $ne: true } })
       .sort({ updatedAt: -1 })
       .limit(3)
       .lean();
@@ -156,6 +145,117 @@ router.get('/dashboard', requireLogin, async (req, res) => {
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
       .slice(0, 3);
 
+    // Fetch announcements for this user
+    // Show announcements where scheduledTime is not set OR scheduledTime <= now
+    // Also filter by expiresAt to only show non-expired announcements
+    let announcements = [];
+    let page = parseInt(req.query.page) || 1;
+    let totalPages = 1;
+    let hasNextPage = false;
+    let hasPrevPage = false;
+    let isNewUser = false;
+    
+    try {
+      const now = new Date();
+      const limit = 10;
+      const skip = (page - 1) * limit;
+
+      // Check if user is "new" (created within 3 months)
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(now.getMonth() - 3);
+      isNewUser = user.createdAt > threeMonthsAgo;
+
+      let dateFilter = {};
+      if (isNewUser) {
+        // For new users, only show announcements from the last 3 months
+        const threeMonthsAgoAnnouncements = new Date();
+        threeMonthsAgoAnnouncements.setMonth(now.getMonth() - 3);
+        dateFilter = { createdAt: { $gte: threeMonthsAgoAnnouncements } };
+      }
+
+      announcements = await BroadcastMessage
+        .find({
+          $and: [
+            {
+              $or: [
+                { expiresAt: { $gte: now } },
+                { expiresAt: { $exists: false } },
+                { expiresAt: null }
+              ]
+            },
+            {
+              $or: [
+                { isVisibleToAll: true },
+                { 'recipients.userId': user._id }
+              ]
+            },
+            {
+              $or: [
+                { scheduledTime: { $exists: false } },
+                { scheduledTime: null },
+                { scheduledTime: { $lte: now } }
+              ]
+            },
+            dateFilter // Add date filter for new users
+          ]
+        })
+        .populate('sentBy', 'fName lName role')
+        .sort({ createdAt: -1 }) // Sort by newest first
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      // Get total count for pagination
+      const totalAnnouncements = await BroadcastMessage.countDocuments({
+        $and: [
+          {
+            $or: [
+              { expiresAt: { $gte: now } },
+              { expiresAt: { $exists: false } },
+              { expiresAt: null }
+            ]
+          },
+          {
+            $or: [
+              { isVisibleToAll: true },
+              { 'recipients.userId': user._id }
+            ]
+          },
+          {
+            $or: [
+              { scheduledTime: { $exists: false } },
+              { scheduledTime: null },
+              { scheduledTime: { $lte: now } }
+            ]
+          },
+          dateFilter
+        ]
+      });
+
+      totalPages = Math.ceil(totalAnnouncements / limit);
+      hasNextPage = page < totalPages;
+      hasPrevPage = page > 1;
+      
+
+      
+      // Add isRead status for the current user
+      announcements = announcements.map(announcement => {
+        const recipientEntry = announcement.recipients?.find(
+          r => r.userId && r.userId.toString() === user._id.toString()
+        );
+        return {
+          ...announcement,
+          isRead: recipientEntry ? recipientEntry.isRead : false,
+          readAt: recipientEntry ? recipientEntry.readAt : null
+        };
+      });
+      
+      console.log('[/dashboard] Announcements found:', announcements.length);
+    } catch (error) {
+      console.log('[/dashboard] BroadcastMessage query error:', error.message);
+      // Continue without announcements if model doesn't work as expected
+    }
+
     res.render('User/userPage', {
       name: `${user.fName} ${user.lName}`,
       user,
@@ -163,11 +263,19 @@ router.get('/dashboard', requireLogin, async (req, res) => {
       approvedRequests,
       pendingRequests,
       inReviewRequests,
-      recentActivity
+      recentActivity,
+      announcements,
+      currentPage: page,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      isNewUser
     });
   } catch (err) {
     console.error('User dashboard load error:', err);
-    res.status(500).render('error', { message: 'Failed to load dashboard.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load dashboard.' });
+    }
   }
 });
 
@@ -180,7 +288,7 @@ router.get('/request-approvals', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    let approvals = await RequestApproval.find({ userId: user._id }).lean();
+    let approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
 
     // Status priority for sorting approvals
     const statusPriority = {
@@ -230,7 +338,15 @@ router.get('/request-approvals', async (req, res) => {
       organization: r.organization || 'N/A'
     }));
 
-    res.render('User/Requestapproval', { approvals, user, allRequests });
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    
+    res.render('User/Requestapproval', { 
+      approvals, 
+      user, 
+      allRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
   } catch (err) {
     console.error('Error loading approvals:', err);
     res.status(500).send('Error loading page');
@@ -246,7 +362,7 @@ router.get('/service-requests', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    let serviceRequests = await ServiceRequest.find({ userId: user._id })
+    let serviceRequests = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true } })
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
       .lean();
 
@@ -299,11 +415,21 @@ router.get('/service-requests', async (req, res) => {
       specificRequestType: r.specificRequestType || 'Not specified'
     }));
 
-    res.render('User/ServiceRequest', { user, serviceRequests, allRequests });
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    
+    res.render('User/ServiceRequest', { 
+      user, 
+      serviceRequests, 
+      allRequests,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
+    });
 
   } catch (err) {
     console.error('Error loading service requests:', err);
-    res.status(500).render('error', { message: 'Error loading page' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Error loading page' });
+    }
   }
 });
 
@@ -316,8 +442,8 @@ router.get('/all-requests', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    const approvals = await RequestApproval.find({ userId: user._id }).lean();
-    const services = await ServiceRequest.find({ userId: user._id }).lean();
+    const approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
+    const services = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
 
     // Combine all requests
     const allRequests = [
@@ -406,7 +532,9 @@ router.get('/all-requests', async (req, res) => {
     res.render('User/allRequestsUser', { user, approvals, serviceRequests: services, allRequests });
   } catch (err) {
     console.error('Error loading all requests:', err);
-    res.status(500).render('error', { message: 'Error loading page' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Error loading page' });
+    }
   }
 });
 
@@ -418,13 +546,15 @@ router.get('/api/user-deadlines', requireLogin, async (req, res) => {
   try {
     console.log('User fetching all requests from database...');
 
-    // Fetch ALL current user's approval requests and service requests
+    // Fetch ALL current user's approval requests and service requests (exclude archived/deleted)
     const approvals = await RequestApproval.find({
-      userId: req.session.userId
+      userId: req.session.userId,
+      isDeleted: { $ne: true }
     }).select('deadline title status createdAt').lean();
 
     const services = await ServiceRequest.find({
-      userId: req.session.userId
+      userId: req.session.userId,
+      isDeleted: { $ne: true }
     }).select('deadline title status createdAt').lean();
 
     console.log(`Found ${approvals.length} approval requests and ${services.length} service requests for user`);
@@ -499,9 +629,10 @@ router.get('/api/user-deadlines/:date/details', requireLogin, async (req, res) =
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
 
-    // Fetch approval requests for current user
+    // Fetch approval requests for current user (exclude archived/deleted)
     const approvals = await RequestApproval.find({
       userId: req.session.userId,
+      isDeleted: { $ne: true },
       $or: [
         {
           deadline: {
@@ -529,9 +660,10 @@ router.get('/api/user-deadlines/:date/details', requireLogin, async (req, res) =
     .select('_id title description organization deadline createdAt userId status')
     .lean();
 
-    // Fetch service requests for current user
+    // Fetch service requests for current user (exclude archived/deleted)
     const services = await ServiceRequest.find({
       userId: req.session.userId,
+      isDeleted: { $ne: true },
       $or: [
         {
           deadline: {
@@ -609,7 +741,9 @@ router.get('/profile', async (req, res) => {
     res.render('User/profile', { user });
   } catch (err) {
     console.error('Error loading profile:', err);
-    res.status(500).render('error', { message: 'Failed to load profile page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load profile page.' });
+    }
   }
 });
 
@@ -624,7 +758,9 @@ router.get('/user-guide', async (req, res) => {
     res.render('User/guide', { user });
   } catch (err) {
     console.error('Error loading user guide:', err);
-    res.status(500).render('error', { message: 'Failed to load guide page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load guide page.' });
+    }
   }
 });
 
@@ -689,22 +825,74 @@ router.post('/profile/update-popup', async (req, res) => {
 
 /**
  * POST /profile/change-password-popup
- * Updates user password
+ * Updates user password with validation
  */
 router.post('/profile/change-password-popup', async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  if (!req.session.userId) return res.status(401).send('Unauthorized');
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
   try {
     const user = await User.findById(req.session.userId);
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).send('Incorrect old password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Verify current password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+
+    // Validate new password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'New passwords do not match' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/\d/.test(newPassword) || !/[a-zA-Z]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must contain at least one letter and one number' });
+    }
+
+    // Update password
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
-    res.status(200).send('Password updated');
+    
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
-    console.error('Popup password update error:', err);
-    res.status(500).send('Password change failed');
+    console.error('Password update error:', err);
+    res.status(500).json({ success: false, message: 'Password change failed' });
+  }
+});
+
+/**
+ * POST /profile/request-password-reset
+ * Send password reset email from profile page
+ */
+router.post('/profile/request-password-reset', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send reset email
+    const emailService = require('../services/emailService');
+    await emailService.sendPasswordReset(user.email, `${user.fName} ${user.lName}`, resetToken);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Password reset link sent to your email',
+      resetToken: resetToken
+    });
+  } catch (err) {
+    console.error('Password reset request error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send reset email' });
   }
 });
 
@@ -838,9 +1026,9 @@ router.post('/submit-request-approval', requestLimiter, upload.array('upload', 2
       throw new Error('Organization must be a single string value');
     }
 
-    // Calculate 3 working days from now
+    // Calculate deadline from settings (default 7 days)
     const { addWorkingDays } = require('../utils/helpers');
-    const deadline = addWorkingDays(new Date(), 3);
+    const deadline = addWorkingDays(new Date(), getDefaultDeadlineDays());
 
     // Auto-assign unit based on request type
     const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);
@@ -1191,18 +1379,7 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
       request.files = [...(request.files || []), ...additionalFilePaths];
     }
 
-    // Update the most recent revision history entry with response
-    if (request.revisionHistory && request.revisionHistory.length > 0) {
-      const latestRevision = request.revisionHistory[request.revisionHistory.length - 1];
-      latestRevision.respondedBy = req.session.userId;
-      latestRevision.respondedAt = new Date();
-      latestRevision.responseNotes = resubmissionNotes || 'Resubmitted with updates';
-      latestRevision.responseFiles = additionalFilePaths;
-      latestRevision.status = 'responded';
-    }
-
-    // CREATE NEW REVISION HISTORY ENTRY for the resubmission (visible to user)
-    // Use the existing schema structure - this represents a "responded" revision
+    // CREATE NEW REVISION HISTORY ENTRY for the resubmission (separate from unit feedback)
     const newResubmission = {
       respondedBy: req.session.userId,
       respondedAt: new Date(),
@@ -1220,37 +1397,6 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
     request.awaitingResubmission = false;
     await request.save();
     console.log('✅ Request saved with new resubmission entry');
-
-    // Add message to conversation
-    const Conversation = require('../models/Conversation');
-    let conversation = await Conversation.findOne({ approvalRequestId: requestId });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        approvalRequestId: requestId,
-        requestType: 'approval',
-        messages: []
-      });
-    }
-
-    // Add resubmission message with attachments
-    const attachments = additionalFilePaths.map(filename => ({
-      filename: filename,
-      originalname: filename,
-      mimetype: 'application/octet-stream',
-      size: 0,
-      path: `/uploads/${filename}`
-    }));
-
-    conversation.messages.push({
-      senderId: req.session.userId,
-      senderRole: 'user',
-      content: `✅ **Revision Response**\n\nI have addressed the revision feedback and resubmitted the request.\n\n${resubmissionNotes || 'No additional notes provided.'}`,
-      attachments: attachments,
-      timestamp: new Date()
-    });
-
-    await conversation.save();
 
     // Notify unit members and admins
     try {
@@ -1281,25 +1427,36 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     const { revisionNotes } = req.body;
     const userId = req.session.userId;
 
+    console.log('[REVISION] Request ID:', id);
+    console.log('[REVISION] User ID:', userId);
+    console.log('[REVISION] Revision Notes length:', revisionNotes ? revisionNotes.length : 0);
+    console.log('[REVISION] Revision Notes (first 100 chars):', revisionNotes ? revisionNotes.substring(0, 100) : 'EMPTY');
+
     // Find the service request
     const request = await ServiceRequest.findById(id);
     
     if (!request) {
+      console.log('[REVISION] Request not found:', id);
       return res.status(404).json({ success: false, message: 'Service request not found' });
     }
 
+    console.log('[REVISION] Found request - Status:', request.status, '| RevisionCount:', request.revisionCount, '| UserId:', request.userId);
+
     // Verify user owns this request
     if (request.userId.toString() !== userId) {
+      console.log('[REVISION] Unauthorized - Request owner:', request.userId, '| Session user:', userId);
       return res.status(403).json({ success: false, message: 'Unauthorized to request revision for this request' });
     }
 
     // Verify request is in Completed or For Checking status
     if (request.status !== 'Completed' && request.status !== 'For Checking') {
-      return res.status(400).json({ success: false, message: 'Only completed or for-checking requests can be sent for revision' });
+      console.log('[REVISION] Invalid status - Current status:', request.status);
+      return res.status(400).json({ success: false, message: `Only completed or for-checking requests can be sent for revision. Current status: "${request.status}"` });
     }
 
     // Check revision limit (2 revisions maximum)
     if (request.revisionCount >= 2) {
+      console.log('[REVISION] Revision limit reached -', request.revisionCount);
       return res.status(400).json({ 
         success: false, 
         message: 'This task has reached its 2-revision limit. For further changes, please submit a new Service Request and reference this one.' 
@@ -1308,6 +1465,7 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
 
     // Validate revision notes
     if (!revisionNotes || revisionNotes.trim() === '') {
+      console.log('[REVISION] Empty revision notes');
       return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
     }
 
@@ -1326,10 +1484,10 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     // Create the revision entry with proper types
     const mongoose = require('mongoose');
     const revisionEntry = {
-      requestedBy: new mongoose.Types.ObjectId(userId),
-      requestedAt: new Date(),
-      revisionNotes: String(revisionNotes),
-      revisionFiles: revisionFiles,
+      respondedBy: new mongoose.Types.ObjectId(userId),
+      respondedAt: new Date(),
+      responseNotes: String(revisionNotes),
+      responseFiles: revisionFiles,
       status: 'for_revision',
       revisionType: 'revision_requested',
       revisionNumber: request.revisionCount // Track which revision cycle this belongs to
@@ -1341,26 +1499,9 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     // Save the request
     await request.save();
 
-    // Add message to conversation
-    const Conversation = require('../models/Conversation');
-    let conversation = await Conversation.findOne({ serviceRequestId: id });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        serviceRequestId: id,
-        requestType: 'service',
-        messages: []
-      });
-    }
-
-    conversation.messages.push({
-      senderId: userId,
-      senderRole: 'user',
-      content: `🔄 **Revision Request #${request.revisionCount}**\n\n${revisionNotes}\n\n_Revisions remaining: ${2 - request.revisionCount}_`,
-      timestamp: new Date()
-    });
-
-    await conversation.save();
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
 
     // Notify unit team about the revision request
     try {
@@ -1368,6 +1509,8 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
     } catch (notifError) {
       console.error('Error sending revision request notification:', notifError);
     }
+
+    console.log('[REVISION] SUCCESS - Request saved with revision count:', request.revisionCount);
 
     res.json({ 
       success: true, 
@@ -1407,20 +1550,38 @@ router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) =>
       return res.status(400).json({ success: false, message: 'Only requests with status "For Checking" can be marked as complete' });
     }
 
-    // Update status to Completed
-    request.status = 'Completed';
+    // Update status to Approved (not Completed yet - unit needs to finalize)
+    request.status = 'Approved';
+    
+    // Add approval entry to revision history
+    if (!Array.isArray(request.revisionHistory)) {
+      request.revisionHistory = [];
+    }
+    const mongoose = require('mongoose');
+    request.revisionHistory.push({
+      respondedBy: new mongoose.Types.ObjectId(userId),
+      respondedAt: new Date(),
+      responseNotes: 'Deliverables approved by requestor',
+      status: 'approved',
+      revisionType: 'approved_by_requestor'
+    });
+    
     await request.save();
 
-    // Notify unit team that request was marked complete
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
+
+    // Notify unit team that deliverables were approved
     try {
-      await notificationService.notifyServiceCompleted(request._id, userId, request.assignedUnits);
+      await notificationService.notifyServiceApproved(request._id, userId, request.assignedUnits);
     } catch (notifError) {
-      console.error('Error sending completion notification:', notifError);
+      console.error('Error sending approval notification:', notifError);
     }
 
     res.json({ 
       success: true, 
-      message: 'Service request marked as complete successfully!'
+      message: 'Deliverables approved successfully! Unit can now complete the task.'
     });
   } catch (error) {
     console.error('Error marking service as complete:', error);
@@ -1431,9 +1592,9 @@ router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) =>
 /**
  * POST /user/approval/request-revision/:id
  * User-initiated revision request for completed approval requests
- * Allows users to request changes with specific feedback (2 revision limit)
+ * Allows users to request changes with specific feedback and file uploads (2 revision limit)
  */
-router.post('/user/approval/request-revision/:id', requireLogin, async (req, res) => {
+router.post('/user/approval/request-revision/:id', upload.array('revisionFiles', 10), requireLogin, async (req, res) => {
   try {
     const { id } = req.params;
     const { revisionNotes } = req.body;
@@ -1469,31 +1630,39 @@ router.post('/user/approval/request-revision/:id', requireLogin, async (req, res
       return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
     }
 
+    // Get uploaded file names
+    const revisionFiles = req.files ? req.files.map(file => file.filename) : [];
+
+    // Ensure revisionHistory is initialized as an array
+    if (!Array.isArray(request.revisionHistory)) {
+      request.revisionHistory = [];
+    }
+
     // Increment revision count
     request.revisionCount += 1;
     request.status = 'For Revision';
+    
+    // Create the revision entry with proper types
+    const mongoose = require('mongoose');
+    const revisionEntry = {
+      respondedBy: new mongoose.Types.ObjectId(userId),
+      respondedAt: new Date(),
+      responseNotes: String(revisionNotes),
+      responseFiles: revisionFiles,
+      status: 'for_revision',
+      revisionType: 'revision_requested',
+      revisionNumber: request.revisionCount // Track which revision cycle this belongs to
+    };
+    
+    // Add to revision history
+    request.revisionHistory.push(revisionEntry);
+    
+    // Save the request
     await request.save();
 
-    // Add message to conversation
-    const Conversation = require('../models/Conversation');
-    let conversation = await Conversation.findOne({ approvalRequestId: id });
-    
-    if (!conversation) {
-      conversation = new Conversation({
-        approvalRequestId: id,
-        requestType: 'approval',
-        messages: []
-      });
-    }
-
-    conversation.messages.push({
-      senderId: userId,
-      senderRole: 'user',
-      content: `🔄 **Revision Request #${request.revisionCount}**\n\n${revisionNotes}\n\n_Revisions remaining: ${2 - request.revisionCount}_`,
-      timestamp: new Date()
-    });
-
-    await conversation.save();
+    // Broadcast active requests update to admins
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
 
     // Notify unit team about the revision request
     try {
@@ -1528,7 +1697,9 @@ router.get('/settings', requireLogin, (req, res) => {
     });
   } catch (error) {
     console.error('Error loading settings page:', error);
-    res.status(500).render('error', { error: error.message });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: error.message });
+    }
   }
 });
 
@@ -1908,17 +2079,35 @@ router.delete('/settings/account', requireLogin, async (req, res) => {
     }
 
     // Delete profile picture if exists
+    // Delete profile picture if exists (use non-blocking async fs)
     if (user.profilePicture) {
       const filePath = path.join(UPLOADS_DIR, user.profilePicture);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      try {
+        await fs.promises.unlink(filePath).catch(err => {
+          if (err && err.code !== 'ENOENT') console.error('Error deleting profile picture:', err);
+        });
+      } catch (err) {
+        console.error('Error deleting profile picture:', err);
       }
     }
 
-    // Delete user and related data
-    await User.findByIdAndDelete(userId);
-    await ServiceRequest.deleteMany({ requesterId: userId });
-    await RequestApproval.deleteMany({ requesterId: userId });
+    // Delete user and related data. Run related deletes in parallel to avoid blocking.
+    try {
+      const deleteOps = [
+        User.findByIdAndDelete(userId),
+        ServiceRequest.deleteMany({ requesterId: userId }),
+        RequestApproval.deleteMany({ requesterId: userId })
+      ];
+
+      const results = await Promise.allSettled(deleteOps);
+      results.forEach((r, idx) => {
+        if (r.status === 'rejected') {
+          console.error('Error in delete operation', idx, r.reason);
+        }
+      });
+    } catch (err) {
+      console.error('Unexpected error deleting user and related data:', err);
+    }
 
     // Clear user session
     req.logout((err) => {

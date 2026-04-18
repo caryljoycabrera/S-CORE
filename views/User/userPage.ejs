@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>S-CORE Dashboard</title>
+  <title>S-CORE User Dashboard</title>
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
@@ -835,6 +835,50 @@ It's already a flex container, but we need to add two key properties:
   white-space: nowrap;
 }
 
+/* Calendar Navigation Fix - Ensure month navigation arrows are always visible */
+.calendar-nav-btn {
+  flex-shrink: 0 !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  width: 38px !important;
+}
+
+.calendar-month-year {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+.calendar-month-controls {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  min-width: 0 !important;
+}
+
+.calendar-controls {
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+.calendar-maximize-btn {
+  flex-shrink: 0 !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  width: 32px !important;
+}
+
+/* Additional Calendar Navigation Visibility for Mobile */
+.calendar-month-controls button {
+  visibility: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* Responsive Design - OPTIMIZED FOR ALL SCREEN SIZES */
 @media (max-width: 1200px) and (min-width: 769px) {
   .student-side {
@@ -1355,7 +1399,7 @@ It's already a flex container, but we need to add two key properties:
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <!-- Profile Avatar (shows when expanded) -->
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -1458,7 +1502,7 @@ It's already a flex container, but we need to add two key properties:
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -1562,22 +1606,91 @@ It's already a flex container, but we need to add two key properties:
               <path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/>
             </svg>
             <h3>Announcements</h3>
+            <% if (typeof isNewUser !== 'undefined' && isNewUser) { %>
+              <span class="new-user-badge" style="background: #17a2b8; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-left: 8px;">New User</span>
+            <% } %>
+            <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+              <span class="announcements-badge"><%= announcements.filter(a => !a.isRead).length %> new</span>
+            <% } %>
           </div>
           <div class="announcements-content" id="announcements-content">
-            <!-- No announcements message - will be shown by default -->
-            <div class="no-announcements">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-                <path d="M13 11h.01M11 11h.01"/>
-              </svg>
-              <p>No announcements yet.</p>
-              <span>Check back later for updates!</span>
-              <div class="quick-tip">
-                <strong>Quick Tip:</strong> Remember to submit all service requests at least 
-                <strong>one week</strong> in advance!
+            <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+              <% announcements.forEach(function(announcement) { %>
+                <div class="announcement-item <%= announcement.priority === 'high' ? 'urgent' : '' %> <%= announcement.isRead ? 'read' : 'unread' %>" 
+                     data-id="<%= announcement._id %>"
+                     onclick="openAnnouncementDetail('<%= announcement._id %>'); event.stopPropagation();"
+                     style="cursor: pointer;">
+                  <div class="announcement-header-row">
+                    <h4 class="announcement-title"><%= announcement.title %></h4>
+                    <span class="announcement-date">
+                      <%= new Date(announcement.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                    </span>
+                  </div>
+                  <% 
+                    // Strip HTML tags for preview
+                    const plainText = announcement.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+                    const previewText = plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
+                  %>
+                  <p class="announcement-message"><%= previewText %></p>
+                  <div class="announcement-from">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>From: <%= announcement.sentBy ? announcement.sentBy.fName + ' ' + announcement.sentBy.lName : 'Admin' %></span>
+                  </div>
+                  <% if (announcement.priority === 'high') { %>
+                    <span class="announcement-badge urgent">Urgent</span>
+                  <% } else if (announcement.priority === 'medium') { %>
+                    <span class="announcement-badge info">Important</span>
+                  <% } %>
+                  <% if (!announcement.isRead) { %>
+                    <span class="announcement-badge success" style="margin-left: 0.5rem;">New</span>
+                  <% } %>
+                </div>
+              <% }); %>
+              
+              <!-- Pagination Controls -->
+              <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.5rem;">
+                  <% if (hasPrevPage) { %>
+                    <a href="?page=<%= currentPage - 1 %>" class="pagination-btn" style="padding: 0.5rem 1rem; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Previous</a>
+                  <% } else { %>
+                    <span></span>
+                  <% } %>
+                  
+                  <span style="font-size: 0.875rem; color: #6b7280;">Page <%= currentPage %> of <%= totalPages %></span>
+                  
+                  <% if (hasNextPage) { %>
+                    <a href="?page=<%= currentPage + 1 %>" class="pagination-btn" style="padding: 0.5rem 1rem; background: #007bff; color: white; text-decoration: none; border-radius: 4px;">Next</a>
+                  <% } else { %>
+                    <span></span>
+                  <% } %>
+                </div>
+              <% } %>
+              
+            <% } else { %>
+              <!-- No announcements message -->
+              <div class="no-announcements">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                  <path d="M13 11h.01M11 11h.01"/>
+                </svg>
+                <p>No announcements yet.</p>
+                <span>Check back later for updates!</span>
+                <% if (typeof isNewUser !== 'undefined' && isNewUser) { %>
+                  <div class="quick-tip" style="margin-top: 1rem; padding: 0.75rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
+                    <strong>Welcome!</strong> As a new user, you're currently seeing announcements from the last 3 months. You'll see all announcements once you've been with us longer.
+                  </div>
+                <% } else { %>
+                  <div class="quick-tip">
+                    <strong>Quick Tip:</strong> Remember to submit all service requests at least 
+                    <strong>one week</strong> in advance!
+                  </div>
+                <% } %>
               </div>
-            </div>
+            <% } %>
           </div>
         </div>
       </div>
@@ -1855,74 +1968,120 @@ It's already a flex container, but we need to add two key properties:
     </div>
   </div>
 
-
-<script>
-// Announcements Manager
-const announcementsManager = {
-  currentDate: new Date('<%= new Date().toISOString() %>'),
-  announcements: [], // Empty by default - will be populated from backend in future
-  
-  init() {
-    this.loadAnnouncements();
-  },
-  
-  loadAnnouncements() {
-    const container = document.getElementById('announcements-content');
-    if (!container) return;
-    
-    // Filter announcements that are still valid (posted within last 30 days)
-    const validAnnouncements = this.announcements.filter(announcement => {
-      const postedDate = new Date(announcement.date);
-      const daysDiff = Math.floor((this.currentDate - postedDate) / (1000 * 60 * 60 * 24));
-      return daysDiff <= 30;
-    });
-    
-    if (validAnnouncements.length === 0) {
-      // Show "no announcements" message (already in HTML)
-      return;
-    }
-    
-    // If there are announcements, render them
-    container.innerHTML = validAnnouncements.map(announcement => this.renderAnnouncement(announcement)).join('');
-  },
-  
-  renderAnnouncement(announcement) {
-    const iconType = announcement.type || 'default';
-    const iconClass = iconType === 'success' ? 'success' : iconType === 'info' ? 'info' : '';
-    const icons = {
-      default: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
-      success: '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
-      info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
-    };
-    
-    return `
-      <div class="announcement-item">
-        <div class="announcement-icon ${iconClass}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            ${icons[iconType]}
-          </svg>
+  <!-- Announcement Detail Modal -->
+  <div id="announcementDetailModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+      <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+          <h2 id="modalTitle" class="modal-title" style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #1f2937;"></h2>
+          <span id="modalDate" style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem; display: block;"></span>
         </div>
-        <div class="announcement-text">
-          <h4>${announcement.title}</h4>
-          <p>${announcement.message}</p>
-          <span class="announcement-date">${this.getTimeAgo(announcement.date)}</span>
+        <button onclick="closeAnnouncementModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div id="modalContent" style="line-height: 1.6; color: #1f2937;"></div>
+        <div id="modalMeta" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>From:</strong> <span id="modalFrom"></span></p>
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Priority:</strong> <span id="modalPriority"></span></p>
         </div>
       </div>
-    `;
-  },
-  
-  getTimeAgo(date) {
-    const postedDate = new Date(date);
-    const daysDiff = Math.floor((this.currentDate - postedDate) / (1000 * 60 * 60 * 24));
-    
-    if (daysDiff === 0) return 'Posted today';
-    if (daysDiff === 1) return 'Posted 1 day ago';
-    if (daysDiff < 7) return `Posted ${daysDiff} days ago`;
-    if (daysDiff < 14) return 'Posted 1 week ago';
-    if (daysDiff < 30) return `Posted ${Math.floor(daysDiff / 7)} weeks ago`;
-    return 'Posted over a month ago';
+      <div class="modal-actions" style="padding: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button onclick="closeAnnouncementModal()" style="padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: 2px solid #e5e7eb; background: #f3f4f6; color: #374151; transition: all 0.2s ease;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// Store announcements data globally for modal access
+const announcementsData = <%- JSON.stringify(announcements || []) %>;
+
+// Open announcement detail modal
+async function openAnnouncementDetail(announcementId) {
+  const announcement = announcementsData.find(a => a._id === announcementId);
+  if (!announcement) {
+    console.error('Announcement not found:', announcementId);
+    return;
   }
-};
+
+  // Update modal content
+  document.getElementById('modalTitle').textContent = announcement.title;
+  document.getElementById('modalDate').textContent = new Date(announcement.createdAt).toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  // Render HTML content (from Quill editor)
+  document.getElementById('modalContent').innerHTML = announcement.content;
+  
+  document.getElementById('modalFrom').textContent = announcement.sentBy 
+    ? `${announcement.sentBy.fName} ${announcement.sentBy.lName}` 
+    : 'Admin';
+  
+  const priorityText = announcement.priority === 'high' ? 'Urgent' : 
+                       announcement.priority === 'medium' ? 'Important' : 'Low';
+  document.getElementById('modalPriority').textContent = priorityText;
+  
+  // Show modal
+  document.getElementById('announcementDetailModal').style.display = 'flex';
+  
+  // Mark as read if not already
+  if (!announcement.isRead) {
+    markAnnouncementAsRead(announcementId);
+  }
+}
+
+// Close announcement detail modal
+function closeAnnouncementModal() {
+  document.getElementById('announcementDetailModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('announcementDetailModal')?.addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeAnnouncementModal();
+  }
+});
+
+// Mark announcement as read
+async function markAnnouncementAsRead(announcementId) {
+  try {
+    const response = await fetch(`/api/announcements/${announcementId}/read`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      // Update UI - mark as read
+      const item = document.querySelector(`.announcement-item[data-id="${announcementId}"]`);
+      if (item) {
+        item.classList.remove('unread');
+        item.classList.add('read');
+        // Remove "New" badge
+        const newBadge = item.querySelector('.announcement-badge.success');
+        if (newBadge) newBadge.remove();
+      }
+      
+      // Update badge count in header
+      const badge = document.querySelector('.announcements-badge');
+      if (badge) {
+        const currentCount = parseInt(badge.textContent) || 0;
+        if (currentCount > 1) {
+          badge.textContent = `${currentCount - 1} new`;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    }
+  } catch (error) {
+    console.log('Error marking announcement as read:', error);
+  }
+}
+
 
 // Header Dropdown Manager
 const headerDropdown = {
@@ -1966,7 +2125,6 @@ function toggleDropdown() {
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
   headerDropdown.init();
-  announcementsManager.init(); // Initialize announcements
 });
 
 // Close dropdown if clicking outside
@@ -2128,7 +2286,9 @@ document.querySelectorAll('.action-card').forEach(card => {
         month === today.getMonth() &&
         year === today.getFullYear();
       
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      // Create date and extract ISO format to match API response format
+      const localDate = new Date(year, month, day);
+      const dateStr = localDate.toISOString().split('T')[0];
       const deadlineClasses = getDeadlineClasses(dateStr);
       const deadlineIndicators = createDeadlineIndicators(dateStr);
       

@@ -736,12 +736,12 @@ document.getElementById('passwordForm').onsubmit = async function (e) {
     return;
   }
 
-  if (!newPassword.match(/[0-9]/)) {
-    showError('Password must contain at least one number');
+  if (!/\d/.test(newPassword) || !/[a-zA-Z]/.test(newPassword)) {
+    showError('Password must contain at least one letter and one number');
     return;
   }
 
-  if (!newPassword.match(/[^a-zA-Z0-9]/)) {
+  if (!/[^a-zA-Z0-9]/.test(newPassword)) {
     showError('Password must contain at least one special character');
     return;
   }
@@ -750,10 +750,16 @@ document.getElementById('passwordForm').onsubmit = async function (e) {
     const res = await fetch('/admin/profile/change-password-popup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify({
+        oldPassword: data.oldPassword,
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmNewPassword
+      })
     });
 
-    if (res.ok) {
+    const result = await res.json();
+    
+    if (result.success) {
       showSuccess('Password updated successfully!', () => {
         closeModal('passwordModal');
         form.reset();
@@ -764,13 +770,131 @@ document.getElementById('passwordForm').onsubmit = async function (e) {
         document.getElementById('updatePasswordBtn').disabled = true;
       });
     } else {
-      const err = await res.text();
-      showError(err);
+      showError(result.message || 'Failed to update password');
     }
   } catch (error) {
+    console.error('Password update error:', error);
     showError('An error occurred while updating the password');
   }
 };
+
+// Request password reset via email
+async function requestPasswordReset(event) {
+  if (event) event.preventDefault();
+  
+  // Close password modal and show reset modal
+  closeModal('passwordModal');
+  showResetPasswordModal();
+}
+
+// Show reset password modal
+function showResetPasswordModal() {
+  const modal = document.createElement('div');
+  modal.id = 'resetPasswordModal';
+  modal.className = 'modal';
+  modal.style.display = 'flex';
+  
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 520px; border-radius: 24px; overflow: hidden;">
+      <div style="padding: 2rem 2.5rem; text-align: center; background: rgba(255, 255, 255, 0.98);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 style="color: #408b4e; font-size: 1.75rem; margin: 0; font-weight: 700;">Reset Password</h2>
+          <span class="close" onclick="closeResetModal()" style="font-size: 2rem; cursor: pointer; color: #64748b;">&times;</span>
+        </div>
+        
+        <div id="resetStepOne">
+          <p style="color: #6b7280; font-size: 15px; margin-bottom: 1.5rem;">
+            We'll send a password reset link to your email. You can reset your password immediately from this page.
+          </p>
+          <button onclick="sendResetEmail()" class="button" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #408b4e, #275730); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+            Send Reset Link
+          </button>
+          <button onclick="closeResetModal()" style="width: 100%; padding: 12px; background: white; color: #666; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: all 0.3s ease;">
+            Cancel
+          </button>
+        </div>
+        
+        <div id="resetStepTwo" style="display: none;">
+          <div style="background: #e8f5e9; border: 2px solid #408b4e; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <svg style="width: 48px; height: 48px; margin: 0 auto 12px; display: block;" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#408b4e" stroke-width="2"/>
+              <path d="M8 12l2 2 4-4" stroke="#408b4e" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <strong style="font-size: 18px; color: #275730; display: block; margin-bottom: 8px;">Email Sent!</strong>
+            <p style="color: #408b4e; font-size: 14px; margin: 0;">
+              A password reset link has been sent to your email address.
+            </p>
+          </div>
+          
+          <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left;">
+            <strong style="font-size: 15px; color: #1e293b; display: block; margin-bottom: 12px;">Reset your password now:</strong>
+            <button onclick="openResetPage()" class="button" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #408b4e, #275730); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M15 3h6v6M10 14L21 3M21 12v9H3V3h9"/>
+              </svg>
+              Open Reset Page
+            </button>
+            <p style="color: #64748b; font-size: 13px; margin-top: 10px; text-align: center;">
+              This link will expire in 1 hour for security reasons.
+            </p>
+          </div>
+          
+          <button onclick="closeResetModal()" style="width: 100%; padding: 12px; background: white; color: #408b4e; border: 2px solid #408b4e; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+// Send reset email
+async function sendResetEmail() {
+  const button = document.querySelector('#resetStepOne button');
+  button.disabled = true;
+  button.textContent = 'Sending...';
+  
+  try {
+    const res = await fetch('/admin/profile/request-password-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      window.resetToken = result.resetToken;
+      document.getElementById('resetStepOne').style.display = 'none';
+      document.getElementById('resetStepTwo').style.display = 'block';
+    } else {
+      showError(result.message || 'Failed to send reset email');
+      closeResetModal();
+    }
+  } catch (error) {
+    console.error('Password reset request error:', error);
+    showError('An error occurred while requesting password reset');
+    closeResetModal();
+  }
+}
+
+// Open reset page in new tab
+function openResetPage() {
+  if (window.resetToken) {
+    const resetUrl = window.location.origin + '/reset-password/' + window.resetToken;
+    window.open(resetUrl, '_blank');
+  }
+}
+
+// Close reset modal
+function closeResetModal() {
+  const modal = document.getElementById('resetPasswordModal');
+  if (modal) {
+    modal.remove();
+  }
+  window.resetToken = null;
+}
 
 // Enhanced picture modal functionality - Updated for new layout
 let selectedFile = null;

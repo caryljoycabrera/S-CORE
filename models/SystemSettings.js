@@ -56,25 +56,61 @@ const systemSettingsSchema = new mongoose.Schema({
     default: true
   },
 
+  // Automated Archiving Settings
+  archiveCompletedAfterDays: {
+    type: Number,
+    default: 30 // Archive Completed requests after 30 days
+  },
+  archiveApprovedAfterDays: {
+    type: Number,
+    default: 30 // Archive Approved requests after 30 days
+  },
+  archiveRevisionAfterDays: {
+    type: Number,
+    default: 14 // Archive For Revision requests with no activity after 14 days
+  },
+  allowUserReactivation: {
+    type: Boolean,
+    default: false // If true, regular users can restore their own archived requests
+  },
+
   // Units & Organizations Settings
   units: [{
-    _id: mongoose.Schema.Types.ObjectId,
-    name: String,
-    email: String,
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active'
-    }
+    type: String
   }],
   organizations: [{
-    _id: mongoose.Schema.Types.ObjectId,
+    type: String
+  }],
+
+  // Offices/Departments Settings
+  offices: [{
+    type: String
+  }],
+
+  // Request Management Settings
+  requestStatuses: [{
+    type: String,
+    default: ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived']
+  }],
+  userRoles: [{
     name: String,
-    status: {
-      type: String,
-      enum: ['active', 'inactive'],
-      default: 'active'
-    }
+    permissions: [{
+      type: String
+    }]
+  }],
+  announcementPriorities: [{
+    type: String,
+    default: ['low', 'medium', 'high']
+  }],
+  announcementTypes: [{
+    type: String,
+    default: ['Event', 'News', 'Reminder', 'Update', 'Maintenance']
+  }],
+
+  // Request Type to Unit Mappings
+  requestTypeMappings: [{
+    requestType: String,
+    recommendedUnit: String
   }],
 
   // Notification Settings
@@ -144,28 +180,6 @@ const systemSettingsSchema = new mongoose.Schema({
   maintenanceMessage: {
     type: String,
     default: 'System is under maintenance. Please try again later.'
-  },
-
-  // Feature Flags
-  enableAnnouncements: {
-    type: Boolean,
-    default: true
-  },
-  enableUserSearch: {
-    type: Boolean,
-    default: true
-  },
-  enableDarkMode: {
-    type: Boolean,
-    default: true
-  },
-  enableAnalytics: {
-    type: Boolean,
-    default: true
-  },
-  enableMobileApp: {
-    type: Boolean,
-    default: false
   },
 
   // Audit & Logging

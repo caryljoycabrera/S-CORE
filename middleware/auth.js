@@ -43,7 +43,7 @@ async function requireAuth(req, res, next) {
 
   } catch (err) {
     console.error('Authentication error:', err);
-    res.status(500).json({ success: false, message: 'Authentication error' });
+    return res.status(500).json({ success: false, message: 'Authentication error' });
   }
 }
 
@@ -70,13 +70,27 @@ async function requireAdmin(req, res, next) {
       });
     }
 
+    // Check if user's email is verified
+    if (!user.emailVerified) {
+      return res.status(403).render('error', {
+        message: 'Please verify your email address before accessing the system.'
+      });
+    }
+
+    // Check if user is approved
+    if (user.status !== 'approved') {
+      return res.status(403).render('error', {
+        message: 'Your account is pending admin approval. Please wait for verification.'
+      });
+    }
+
     // User is authenticated and has admin privileges
     req.user = user; // Make user available to route handlers
     next();
 
   } catch (err) {
     console.error('Admin authentication error:', err);
-    res.status(500).render('error', {
+    return res.status(500).render('error', {
       message: 'Server error during authentication'
     });
   }
@@ -127,6 +141,14 @@ async function requireUnit(req, res, next) {
       });
     }
 
+    // Check if user's email is verified
+    if (!user.emailVerified) {
+      console.log('[requireUnit] ERROR: User email not verified');
+      return res.status(403).render('error', {
+        message: 'Please verify your email address before accessing the system.'
+      });
+    }
+
     // Check if user is approved
     if (user.status !== 'approved') {
       console.log('[requireUnit] ERROR: User status is not approved. Status is:', user.status);
@@ -143,7 +165,47 @@ async function requireUnit(req, res, next) {
   } catch (err) {
     console.error('[requireUnit] EXCEPTION during authentication:', err);
     console.error('[requireUnit] Stack trace:', err.stack);
-    res.status(500).render('error', {
+    return res.status(500).render('error', {
+      message: 'Server error during authentication'
+    });
+  }
+}
+
+/**
+ * requireAdminAPI Middleware
+ * Ensures user is both authenticated AND has admin privileges for API routes
+ * Returns JSON responses instead of HTML for API endpoints
+ */
+async function requireAdminAPI(req, res, next) {
+  try {
+    // First check if user is logged in
+    if (!req.session?.userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    // Fetch user from database to verify admin status
+    const User = require('../models/User');
+    const user = await User.findById(req.session.userId);
+
+    // Check if user exists and has admin role
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    // User is authenticated and has admin privileges
+    req.user = user; // Make user available to route handlers
+    next();
+
+  } catch (err) {
+    console.error('Admin API authentication error:', err);
+    return res.status(500).json({
+      success: false,
       message: 'Server error during authentication'
     });
   }
@@ -153,5 +215,6 @@ module.exports = {
   requireLogin,
   requireAuth,
   requireAdmin,
+  requireAdminAPI,
   requireUnit
 };

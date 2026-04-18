@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Request for Service</title>
+  <title>Request Services - S-CORE</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
+  <link rel="stylesheet" href="/stylesheets/ejs/table-fixes.css" />
   <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/user-navbar.css" />
-  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-modal-two-column.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -142,43 +144,106 @@
   }
 }
 
-/* Modal Styles - z-index handled by modal-centered.css */
+/* Modal Styles (allrequests) */
 .modal {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
   background-color: rgba(0,0,0,0.5);
   display: none;
   justify-content: center;
   align-items: center;
-  /* z-index removed - using global modal-centered.css (99999) to ensure backdrop covers sidebar */
   padding: 20px;
+  z-index: 100000;
 }
 
-.modal-content {
-  background: white;
-  border-radius: 1rem;
-  max-width: 800px;
-  width: 95%;
-  max-height: 90vh;
-  box-shadow: var(--card-shadow);
+#conversationModal {
+  z-index: 100002 !important;
+}
+
+.modal.show,
+.modal[style*="flex"],
+.modal[style*="display: block"],
+.modal[style*="display:block"] {
+  display: flex !important;
+}
+
+.modal .modal-content,
+.confirmation-modal .confirmation-modal-content,
+.edit-modal .edit-modal-content,
+.calendar-modal .calendar-modal-content,
+.deadline-details-modal .deadline-details-modal-content,
+.notification-modal .notification-modal-content {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+.unit-modal-wide {
+  max-width: 1600px !important;
+  width: 95% !important;
+  max-height: 95vh !important;
   overflow: hidden;
+}
+
+.modal-content,
+.confirmation-modal-content,
+.edit-modal-content,
+.calendar-modal-content,
+.deadline-details-modal-content,
+.notification-modal-content {
+  z-index: 100001 !important;
+  position: relative !important;
+  margin: auto !important;
+  background: white !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3) !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  overflow-x: visible !important;
+  transform: translateY(0) !important;
   display: flex;
   flex-direction: column;
 }
 
-.modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: min(800px, calc(100vw - 120px)) !important;
+  width: 90% !important;
+  max-height: 95vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
-.modal-body {
-  flex: 1;
+.modal-content {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: var(--card-shadow-hover);
+  animation: fadeIn 0.3s ease-in-out;
+  max-height: 90vh;
   overflow-y: auto;
-  padding: 0;
+}
+
+/* Ensure wide modal wins over tighter modal-content sizing */
+.unit-modal-wide {
+  max-width: 1600px !important;
+  width: 95% !important;
+  max-height: 95vh !important;
+}
+
+.modal[style*="display: flex"],
+.modal[style*="display:flex"],
+.modal[style*="display: block"],
+.modal[style*="display:block"],
+#teamConversationModal[style*="display: flex"],
+#teamConversationModal[style*="display:flex"] {
+  pointer-events: auto !important;
 }
 
 .modal-form {
@@ -683,7 +748,7 @@
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  max-height: 300px;
+  max-height: 400px;
   overflow: hidden;
   animation: dropdownSlideIn 0.2s ease-out;
 }
@@ -1283,6 +1348,7 @@
   background: linear-gradient(135deg, #f0fdf4, #f7fee7);
   border-radius: 16px;
   border: 1px solid #bbf7d0;
+  width: 45rem;
 }
 
 .chat-btn-enhanced {
@@ -1480,59 +1546,209 @@
   gap: 0.5rem;
 }
 
-/* Form Validation Error Styles */
-.form-error-message {
-  color: #dc2626;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-  display: none;
-  align-items: center;
-  gap: 0.5rem;
-  animation: fadeIn 0.3s ease-in;
-}
-
-.form-error-message.show {
-  display: flex;
-}
-
-.form-group.has-error input,
-.form-group.has-error select,
-.form-group.has-error textarea,
-.form-group.has-error .file-upload-group {
-  border-color: #dc2626 !important;
-  background-color: #fef2f2;
-}
-
-.form-group.has-error label {
-  color: #dc2626;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
+/* Tablet responsiveness */
+@media (max-width: 1024px) {
+  .unit-modal-wide {
+    max-width: 95%;
+    margin: 1rem;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .unit-modal-body {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .unit-left-column,
+  .unit-right-column {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Page header responsive */
+  .page-header-container {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .action-button-container {
+    width: 100%;
+  }
+
+  .action-button-container .view-all-btn,
+  .action-button-container button {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Navigation tabs */
+  .nav-tabs {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 150px;
+    text-align: center;
+  }
+
+  .filter-section {
+    padding: 1rem;
+  }
+
+  .filter-controls {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .filter-item.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .modal-form {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .modal-form {
-    grid-template-columns: 1fr;
+  /* Main container */
+  .student-side {
+    padding: 0.5rem;
+    overflow-x: hidden;
+  }
+
+  .activity-section {
+    padding: 0.75rem;
+    overflow-x: hidden;
+  }
+
+  /* Page header */
+  .page-header-container {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .user-info-section {
+    width: 100%;
+  }
+
+  .user-info-section h2 {
+    font-size: 1.25rem;
+  }
+
+  .user-info-section p {
+    font-size: 0.875rem;
+  }
+
+  /* Action buttons */
+  .action-button-container {
+    width: 100%;
+  }
+
+  .action-button-container .view-all-btn,
+  .action-button-container button {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Navigation tabs */
+  .nav-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    overflow-x: hidden;
+  }
+
+  .tab-btn {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    text-align: center;
+    border-radius: 6px;
+  }
+
+  /* Modal adjustments */
+  .modal-content {
+    max-width: 95%;
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+
+  .unit-modal-wide {
+    max-width: 100%;
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+  }
+
+  .modal-header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
+  .close {
+    font-size: 1.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* Modal body two-column layout */
+  .unit-modal-body {
+    flex-direction: column;
     gap: 1rem;
     padding: 1rem;
   }
-  
-  .modal-content {
-    max-width: 95%;
-    margin: 10px;
+
+  .unit-left-column,
+  .unit-right-column {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Form layout */
+  .modal-form {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem;
   }
   
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .form-group label {
+    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Form actions */
   .form-actions {
     flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+  }
+
+  .form-actions button {
+    width: 100%;
   }
   
   .file-actions {
@@ -1540,25 +1756,368 @@
     gap: 0.5rem;
   }
 
+  .file-actions button {
+    width: 100%;
+  }
+
+  /* Details section */
   .details-content {
-    padding: 1rem;
+    padding: 0.75rem;
   }
   
   .details-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .file-grid {
-    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
   
   .details-section {
-    padding: 1.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .details-section h3 {
+    font-size: 1rem;
+  }
+
+  .details-field {
+    padding: 0.5rem;
+  }
+
+  .details-label {
+    font-size: 0.75rem;
+  }
+
+  .details-value {
+    font-size: 0.875rem;
+  }
+
+  /* File preview */
+  .file-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
   
   .enhanced-file-preview {
-    padding: 1.5rem;
+    padding: 1rem;
+  }
+
+  .enhanced-file-item {
+    padding: 0.75rem;
+  }
+
+  .file-name-enhanced {
+    font-size: 0.875rem;
+  }
+
+  .file-icon-enhanced {
+    font-size: 1.5rem;
+  }
+
+  /* File upload */
+  .file-upload-group {
+    padding: 1.5rem 1rem;
+  }
+
+  .upload-icon {
+    font-size: 2rem;
+  }
+
+  .upload-text {
+    font-size: 0.875rem;
+  }
+
+  .upload-subtext {
+    font-size: 0.75rem;
+  }
+
+  .selected-files-container {
+    max-height: 200px;
+  }
+
+  .file-item {
+    padding: 0.5rem;
+  }
+
+  .file-item-name {
+    font-size: 0.875rem;
+  }
+
+  .file-item-size {
+    font-size: 0.75rem;
+  }
+
+  /* Links section */
+  .link-item {
+    padding: 0.5rem;
+  }
+
+  .link-item input[type="url"] {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .add-link-btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Description section */
+  .description-section {
+    padding: 1rem;
+  }
+
+  .description-content {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+  }
+
+  /* Revision history */
+  .revision-history-timeline {
+    padding: 0.75rem;
+  }
+
+  .revision-conversation-item {
+    margin-bottom: 0.75rem;
+  }
+
+  .revision-message-bubble {
+    padding: 0.75rem;
+  }
+
+  .revision-number-badge {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .revision-author {
+    font-size: 0.875rem;
+  }
+
+  .revision-timestamp {
+    font-size: 0.75rem;
+  }
+
+  .content-label {
+    font-size: 0.75rem;
+  }
+
+  .content-text {
+    font-size: 0.875rem;
+  }
+
+  .attachments-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Resubmission form */
+  .requestor-resubmission-section {
+    padding: 1rem;
+  }
+
+  .resubmission-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-resubmit,
+  .btn-clarification {
+    width: 100%;
+    padding: 0.625rem 1rem;
+  }
+
+  /* Filter section */
+  .filter-section {
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+  }
+
+  .filter-controls {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .filter-item {
+    width: 100%;
+  }
+
+  .enhanced-multi-select-wrapper,
+  .custom-select-wrapper {
+    width: 100%;
+  }
+
+  .select-display {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .filter-input {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .select-dropdown {
+    font-size: 0.875rem;
+  }
+
+  /* Table section */
+  .table-section {
+    padding: 0.5rem;
+    overflow-x: auto;
+  }
+
+  table {
+    font-size: 0.813rem;
+  }
+
+  th, td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  /* Buttons */
+  .chat-btn-enhanced,
+  .download-btn-enhanced {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .browse-file-btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Modal actions */
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 0;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  /* Status badges */
+  .status-badge-large {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .deadline-badge-large {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .revision-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* Checkbox container */
+  .checkbox-container {
+    padding: 0.75rem;
+  }
+
+  .checkbox-text {
+    font-size: 0.875rem;
+  }
+
+  .checkbox-description {
+    font-size: 0.75rem;
+  }
+
+  /* Message styles */
+  .message-content {
+    padding: 0.75rem;
+  }
+
+  .message-text {
+    font-size: 0.875rem;
+  }
+
+  .message-time {
+    font-size: 0.75rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .modal-content {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  .unit-modal-wide {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .modal-header {
+    padding: 0.75rem;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+  }
+
+  .unit-modal-body {
+    padding: 0.75rem;
+  }
+
+  .modal-form {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .details-section,
+  .description-section,
+  .enhanced-file-preview,
+  .requestor-revision-section,
+  .requestor-resubmission-section {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .details-section h3,
+  .description-section h3 {
+    font-size: 0.938rem;
+  }
+
+  .filter-section {
+    padding: 0.5rem;
+  }
+
+  .select-dropdown {
+    max-height: 200px;
+  }
+
+  .options-container {
+    max-height: 150px;
+  }
+
+  table {
+    font-size: 0.75rem;
+  }
+
+  th, td {
+    padding: 0.375rem 0.25rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 0.813rem;
+  }
+
+  .file-upload-group {
+    padding: 1rem 0.75rem;
+  }
+
+  .upload-icon {
+    font-size: 1.75rem;
   }
 }
 
@@ -1611,43 +2170,46 @@
 }
 
 /* ========================================
-   REQUESTOR MODAL (SERVICE REQUEST PAGE)
-   Two-column layout for revision history
+   UNIT TWO-COLUMN MODAL LAYOUT (shared)
+   Matches allRequestsUser/admin modal layout
    ======================================== */
 
-.requestor-modal-body {
+.unit-modal-body {
   display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 0 !important;
-  padding: 0 !important;
+  grid-template-columns: 1fr 700px !important;
+  gap: 2rem !important;
+  padding: 2rem !important;
   max-height: calc(95vh - 120px) !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scroll-behavior: smooth !important;
 }
 
-.requestor-modal-body.two-column {
-  grid-template-columns: 1fr 850px !important;
-  gap: 2rem !important;
-  padding: 2rem !important;
-}
-
-.requestor-left-column,
-.requestor-right-column {
+.unit-left-column,
+.unit-right-column {
   overflow: visible !important;
-  min-height: fit-content;
+  min-height: 0 !important;
 }
 
-.requestor-left-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.requestor-right-column {
+.unit-left-column {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  min-height: fit-content;
+}
+
+.unit-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: fit-content;
+}
+
+@media (max-width: 1400px) {
+  .unit-modal-body {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
 }
 
 /* Revision Section Styles */
@@ -1657,6 +2219,7 @@
   padding: 1.5rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  width: 45rem;
 }
 
 .requestor-section-header h3 {
@@ -1745,16 +2308,16 @@
 
 .revision-author {
   font-weight: 600;
-  color: #1e293b;
-  font-size: 0.9375rem;
+  color: #1f2937;
+  font-size: 0.95rem;
 }
 
 .revision-timestamp {
-  font-size: 0.8125rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  color: #6b7280;
+  white-space: nowrap;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.25rem;
 }
 
@@ -1774,28 +2337,28 @@
 .content-text {
   color: #374151;
   line-height: 1.6;
-  font-size: 0.9375rem;
+  font-size: 0.925rem;
 }
 
 .message-attachments-section {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #e5e7eb;
 }
 
 .attachments-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
   margin-bottom: 0.75rem;
 }
 
 .attachments-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.75rem;
+  grid-template-columns: 1fr;
 }
 
 /* Resubmission Form Styles */
@@ -1812,19 +2375,17 @@
 }
 
 .form-group label {
-  display: block;
   font-weight: 600;
+  font-size: 0.875rem;
   color: #374151;
   margin-bottom: 0.5rem;
-  font-size: 0.9375rem;
+  display: block;
 }
 
 #resubmissionEditor,
 #serviceRevisionEditor {
-  border: 1px solid #d1d5db;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  background: white;
-  min-height: 150px;
 }
 
 .form-group input[type="file"] {
@@ -1893,12 +2454,11 @@
 .btn-clarification {
   flex: 1;
   padding: 0.875rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 0.9375rem;
-  border: none;
   cursor: pointer;
   transition: all 0.3s ease;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1957,8 +2517,8 @@
 
 /* Revision File Cards */
 .revision-file-card {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0.75rem;
   display: flex;
@@ -1968,14 +2528,15 @@
 }
 
 .revision-file-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .revision-file-icon {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 6px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1988,9 +2549,9 @@
 }
 
 .revision-file-name {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #1f2937;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2007,23 +2568,23 @@
 }
 
 .revision-file-btn {
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  background: #f1f5f9;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #64748b;
-  text-decoration: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: linear-gradient(135deg, var(--primary-green), #059669);
+  color: white;
 }
 
 .revision-file-btn:hover {
-  background: #e2e8f0;
-  color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* Revision History Badge Styles */
@@ -2089,20 +2650,55 @@
   text-decoration-color: #6b7280;
   text-underline-offset: 2px;
 }
+
+/* Mobile Responsiveness for Requestor Modal */
+@media (max-width: 1400px) {
+  .requestor-modal-body.two-column {
+    grid-template-columns: 1fr 650px !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .requestor-modal-body.two-column {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  
+  .requestor-right-column {
+    display: block !important;
+  }
+}
+
+.type-badge {
+  padding: 0.375rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  flex-shrink: 0;
+  right: 30rem;
+}
 </style>
 </head>
 
 <body>
   <!-- SIDEBAR NAVIGATION -->
   <div class="user-sidebar" id="userSidebar">
+    <!-- Profile Section at Top -->
     <div class="sidebar-profile">
       <a href="/profile" class="sidebar-profile-link" title="Go to Profile">
         <div class="sidebar-profile-icon-container">
+          <!-- SVG Icon (shows when collapsed) -->
           <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <!-- Profile Avatar (shows when expanded) -->
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -2151,8 +2747,18 @@
         </svg>
         <span class="sidebar-label">Request Services</span>
       </a>
+      
+      <a href="/user-guide" class="sidebar-item" title="Help & Guide">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span class="sidebar-label">Help & Guide</span>
+      </a>
     </div>
     
+    <!-- Logout Button at Bottom -->
     <div class="sidebar-bottom">
       <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2165,7 +2771,7 @@
     </div>
   </div>
 
-  <!-- Main Content -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="user-main-content">
     <!-- HEADER -->
     <div class="overlap">
@@ -2195,7 +2801,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -2211,7 +2817,7 @@
         <!-- Page Header with User Info and Action Button -->
         <div class="page-header-container">
           <div class="user-info-section">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                  alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
               <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
@@ -2307,7 +2913,7 @@
                       </div>
                       <div class="select-dropdown" id="organizationDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search my organizations...">
+                          <input type="text" class="search-input select2-search__field" id="organizationSearch" placeholder="Search my organizations..." autocomplete="off" aria-label="Search organizations">
                         </div>
                         <div class="options-container">
                           <!-- Options populated by JavaScript -->
@@ -2325,7 +2931,7 @@
                       </div>
                       <div class="select-dropdown" id="organizationDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search my departments...">
+                          <input type="text" class="search-input select2-search__field" id="departmentSearch" placeholder="Search my departments..." autocomplete="off" aria-label="Search departments">
                         </div>
                         <div class="options-container">
                           <!-- Options populated by JavaScript -->
@@ -2385,7 +2991,7 @@
               <% allRequests.forEach(request => { %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
-                  data-type="<%= request.type %>"
+                  data-type="Service Request"
                   data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status %>"
@@ -2396,7 +3002,8 @@
                   data-deadline="<%= request.deadline ? new Date(request.deadline).toISOString().slice(0, 10) : '' %>"
                   data-description="<%= request.description %>" 
                   data-file="<%= request.file ? request.file : '' %>"
-                  data-files="<%= request.files ? request.files.join(',') : '' %>">
+                  data-files="<%= request.files ? request.files.join(',') : '' %>"
+                  data-revision-count="<%= request.revisionCount || 0 %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
                   <td><%= request.organization %></td>
@@ -2432,11 +3039,12 @@
             </tbody>
           </table>
 
-          <% if (!allRequests || allRequests.length === 0) { %>
-          <div class="no-requests-message">
-            <p>No requests found.</p>
+          <!-- Pagination Controls -->
+          <div id="paginationControls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+            <button id="prevPageBtn" onclick="previousPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Previous page">← Previous</button>
+            <div id="pageInfo" style="font-weight: 500; color: #64748b;">Page 1</div>
+            <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
           </div>
-          <% } %>
         </section>
 
         <!-- Back to Dashboard Button -->
@@ -2456,7 +3064,7 @@
   <!-- Create Service Request Modal -->
   <div id="requestModal" class="modal" style="display:none;">
     <div class="modal-content unit-modal-wide">
-      <div class="modal-header unit-modal-header">
+      <div class="modal-header unit-modal-header" style="background: #f97316 !important; padding: 20px; color: white;">
         <div class="modal-title-section">
           <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
@@ -2477,14 +3085,6 @@
           <div class="form-group">
             <label for="projectTitle">Name of Request/Project Title:</label>
             <input type="text" id="projectTitle" name="projectTitle" required placeholder="Enter project title..." />
-            <div class="form-error-message" id="projectTitleError">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span>Please enter a project title</span>
-            </div>
           </div>
           
           <div class="form-group">
@@ -2525,14 +3125,6 @@
             <% } else { %>
               <input type="text" id="organization" name="organization" placeholder="Enter organization/department" required />
             <% } %>
-            <div class="form-error-message" id="organizationError">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span>Please select or enter an organization</span>
-            </div>
           </div>
 
           <!-- Row 2: File Upload (Full Width) -->
@@ -2612,14 +3204,6 @@
             <label for="deadline">Deadline:</label>
             <input type="date" id="deadline" name="deadline" required min="<%= new Date().toISOString().slice(0,10) %>" />
             <small style="color: var(--primary-green); margin-top: 0.25rem; font-weight: 600;">When do you need this completed?</small>
-            <div class="form-error-message" id="deadlineError">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span>Please select a deadline</span>
-            </div>
           </div>
 
           <!-- Row 4: Description (Full Width) -->
@@ -2627,14 +3211,6 @@
             <label for="description">Description:</label>
             <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
             <input type="hidden" id="description" name="description" required>
-            <div class="form-error-message" id="descriptionError">
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span>Please enter a description</span>
-            </div>
           </div>
 
 <div class="form-group full-width">
@@ -2642,7 +3218,7 @@
   <div style="display: flex; gap: 1rem; align-items: flex-start;">
     <div style="flex: 1;">
       <select id="specificRequestType" name="specificRequestType" class="form-control" style="margin-bottom: 0.5rem;">
-        <option value="" disabled selected>Select from predefined types...</option>
+        <option value="" disabled selected>Select type</option>
         <!-- Predefined types will be populated by JavaScript -->
       </select>
       <small style="color: #6b7280; font-size: 0.875rem;">Choose from approved request types</small>
@@ -2912,17 +3488,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Function to get all link values
-  function getLinkValues() {
-    const linkInputs = linksContainer.querySelectorAll('input[type="url"]');
-    const links = [];
-    linkInputs.forEach(input => {
-      const value = input.value.trim();
-      if (value) {
-        links.push(value);
-      }
-    });
-    return links;
-  }
+  // NOTE: This is now defined globally below DOMContentLoaded
 
   // Handle dropdown selection
   if (specificRequestTypeSelect) {
@@ -2979,64 +3545,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // Form validation before submission
   if (serviceRequestForm) {
     serviceRequestForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      // Clear all previous errors
-      clearServiceFormErrors();
-
-      let hasErrors = false;
-      let firstErrorField = null;
-
-      // Validate project title
-      const projectTitle = document.getElementById('projectTitle');
-      if (!projectTitle || !projectTitle.value.trim()) {
-        showServiceFieldError('projectTitle', 'projectTitleError');
-        hasErrors = true;
-        if (!firstErrorField) firstErrorField = projectTitle;
-      }
-
-      // Validate organization
-      const organization = document.getElementById('organization');
-      if (!organization || !organization.value.trim()) {
-        showServiceFieldError('organization', 'organizationError');
-        hasErrors = true;
-        if (!firstErrorField) firstErrorField = organization;
-      }
-
-      // Validate deadline
-      const deadline = document.getElementById('deadline');
-      if (!deadline || !deadline.value) {
-        showServiceFieldError('deadline', 'deadlineError');
-        hasErrors = true;
-        if (!firstErrorField) firstErrorField = deadline;
-      }
-
-      // Validate description
-      if (serviceDescriptionQuill) {
-        const descriptionText = serviceDescriptionQuill.getText().trim();
-        const descriptionHTML = serviceDescriptionQuill.root.innerHTML;
-        document.getElementById('description').value = descriptionHTML;
-        
-        if (!descriptionText) {
-          showServiceFieldError('descriptionEditor', 'descriptionError');
-          hasErrors = true;
-          if (!firstErrorField) firstErrorField = document.getElementById('descriptionEditor');
-        }
-      }
-
-      // Validate request type
       const finalType = finalRequestTypeInput ? finalRequestTypeInput.value.trim() : '';
-      if (!finalType) {
-        showRequestTypeError();
-        hasErrors = true;
-        if (!firstErrorField) firstErrorField = specificRequestTypeSelect || customRequestTypeInput;
-      }
 
-      // If there are errors, focus on first error field and return
-      if (hasErrors) {
-        if (firstErrorField) {
-          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          if (firstErrorField.focus) firstErrorField.focus();
+      if (!finalType) {
+        e.preventDefault();
+        showRequestTypeError();
+        // Focus on dropdown first
+        if (specificRequestTypeSelect) {
+          specificRequestTypeSelect.focus();
         }
         return;
       }
@@ -3046,6 +3562,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const isCustomType = finalType && !dropdownOptions.includes(finalType);
 
       if (isCustomType) {
+        e.preventDefault();
         pendingCustomType = finalType;
 
         // Show custom type confirmation modal
@@ -3057,70 +3574,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // Allow normal submission for predefined types
-      this.submit();
-    });
-  }
-
-  // Helper function to show field error
-  function showServiceFieldError(fieldId, errorId) {
-    const field = document.getElementById(fieldId);
-    const error = document.getElementById(errorId);
-    
-    if (field) {
-      const formGroup = field.closest('.form-group');
-      if (formGroup) {
-        formGroup.classList.add('has-error');
-      }
-    }
-    
-    if (error) {
-      error.classList.add('show');
-    }
-  }
-
-  // Helper function to clear all form errors
-  function clearServiceFormErrors() {
-    document.querySelectorAll('.form-group.has-error').forEach(group => {
-      group.classList.remove('has-error');
-    });
-    
-    document.querySelectorAll('.form-error-message.show').forEach(error => {
-      error.classList.remove('show');
-    });
-  }
-
-  // Clear errors on input/change
-  ['projectTitle', 'organization', 'deadline'].forEach(fieldId => {
-    const field = document.getElementById(fieldId);
-    if (field) {
-      field.addEventListener('input', function() {
-        const formGroup = this.closest('.form-group');
-        if (formGroup) formGroup.classList.remove('has-error');
-        
-        const errorId = fieldId + 'Error';
-        const error = document.getElementById(errorId);
-        if (error) error.classList.remove('show');
-      });
-      
-      field.addEventListener('change', function() {
-        const formGroup = this.closest('.form-group');
-        if (formGroup) formGroup.classList.remove('has-error');
-        
-        const errorId = fieldId + 'Error';
-        const error = document.getElementById(errorId);
-        if (error) error.classList.remove('show');
-      });
-    }
-  });
-
-  // Clear description error on Quill editor change
-  if (serviceDescriptionQuill) {
-    serviceDescriptionQuill.on('text-change', function() {
-      const formGroup = document.getElementById('descriptionEditor').closest('.form-group');
-      if (formGroup) formGroup.classList.remove('has-error');
-      
-      const error = document.getElementById('descriptionError');
-      if (error) error.classList.remove('show');
     });
   }
 
@@ -3167,6 +3620,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 });
+
+// Function to get all link values (moved outside DOMContentLoaded for global access)
+function getLinkValues() {
+  const linksContainer = document.getElementById('linksContainer');
+  const linkInputs = linksContainer.querySelectorAll('input[type="url"]');
+  const links = [];
+  linkInputs.forEach(input => {
+    const value = input.value.trim();
+    if (value) {
+      links.push(value);
+    }
+  });
+  return links;
+}
+
 </script>
         </form>
       </div>
@@ -3196,30 +3664,26 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 
-  <!-- Request Details Modal -->
   <div id="detailsModal" class="modal" style="display:none;">
     <div class="modal-content unit-modal-wide">
-      <!-- Modal Header -->
-      <div class="modal-header unit-modal-header">
+      <div class="modal-header unit-modal-header" id="detailsModalHeader" style="background: rgb(249, 115, 22) !important; padding: 20px;">
         <div class="modal-title-section">
-          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="detailsModalIcon">
+            <path d="M3 12h2m14 0h2M9 7v2m6 0V7m-6 6v2m6 0v-2M9 3h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
           </svg>
-          <div>
-            <h2>Request Details</h2>
-            <span class="unit-modal-subtitle">View and manage your service request</span>
-          </div>
+          <h2 class="modal-title" id="detailsModalTitle" style="color: white !important;">Service Details</h2>
+          <span class="type-badge" id="modalTypeBadge">SERVICE</span>
         </div>
         <button class="close-modal-btn" onclick="document.getElementById('detailsModal').style.display='none'" aria-label="Close">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
       
       <div class="modal-body unit-modal-body">
-        <!-- Left Column: Request Details -->
+        <!-- LEFT COLUMN: Request Details -->
         <div class="unit-left-column">
         <div class="details-content">
           <!-- General Information Section -->
@@ -3229,7 +3693,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="details-grid">
     <div class="details-field">
       <div class="details-label">Request Type</div>
-      <div class="details-value">Service Request</div>
+      <div class="details-value" id="detailType"></div>
     </div>
     
     <!-- ADD THIS NEW FIELD -->
@@ -3293,37 +3757,59 @@ document.addEventListener('DOMContentLoaded', function() {
           <!-- Files Section -->
           <div id="file-preview"></div>
 
+          <!-- Chat Section -->
+          <div class="chat-section" id="chatButtonSectionLeft" style="display: none;">
+            <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15);">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div style="text-align: left;">
+                    <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
+                    <div style="font-size: 0.875rem; color: #047857;">Communicate with SCO support</div>
+                  </div>
+                </div>
+                <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+            </button>
+          </div>
         </div>
         </div>
         
-        <!-- Right Column: Communication & History -->
-        <div class="unit-right-column">
-          <!-- Team Conversation Button -->
-          <div class="unit-info-card unit-conversation-trigger">
-            <button id="openChatFromDetailsModal" class="unit-chat-button">
-              <span class="unit-chat-icon">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        <!-- RIGHT COLUMN: Revision History & Resubmission Form -->
+        <div class="unit-right-column" id="requestorRightColumn">
+          <!-- Chat Section -->
+          <div class="chat-section" id="chatButtonSection" style="display: block;">
+            <button id="openChatFromDetailsModalRight" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15)';">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div style="text-align: left;">
+                    <div style="font-weight: 600; font-size: 1rem; color: #065f46; margin-bottom: 0.25rem;">Open Team Discussion</div>
+                    <div style="font-size: 0.875rem; color: #047857;">Communicate with SCO support</div>
+                  </div>
+                </div>
+                <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2.5" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                  <polyline points="9 18 15 12 9 6"/>
                 </svg>
-              </span>
-              <div class="unit-chat-text">
-                <strong>Open Request Discussion</strong>
-                <small>Communicate with SCO support</small>
               </div>
-              <span class="unit-chat-arrow">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                  <polyline points="12 5 19 12 12 19"/>
-                </svg>
-              </span>
             </button>
           </div>
-          
+
           <!-- Revision History Section -->
-          <div id="revisionHistorySection" class="unit-action-panel revision-history-panel" style="display: none;">
-            <div class="unit-panel-header revision-header">
+          <div id="revisionHistorySection" class="requestor-revision-section">
+            <div class="requestor-section-header">
               <h3>
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: -2px; margin-right: 8px;">
                   <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
                   <path d="M21 3v5h-5"/>
                   <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
@@ -3331,40 +3817,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 </svg>
                 Revision History
               </h3>
-              <p>Complete timeline of all revisions and resubmissions</p>
             </div>
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
             </div>
-            
             <!-- Action Buttons for Service Requests with "For Checking" status -->
-            <div id="serviceActionButtons" class="unit-action-buttons" style="margin-top: 1.5rem; display: none;">
-              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" class="unit-btn unit-btn-revision">
-                <span class="btn-icon">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </span>
+            <div id="serviceActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
+              <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
+                    style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
                 <span id="revisionFormToggleText">Request Revision</span>
-              </button>
-              <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" class="unit-btn unit-btn-approve">
-                <span class="btn-icon">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </span>
-                <span>Mark as Complete</span>
-              </button>
+            </button>
+            <div id="revisionLimitWarning" style="display: none; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 1rem 1.25rem; color: #92400e; font-size: 0.875rem; align-items: flex-start; gap: 0.75rem; width: 100%;">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 2px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <div>
+                <strong style="display: block; margin-bottom: 0.25rem;">Revision Limit Reached</strong>
+                <span>You have used all 2 revision requests for this service request. If you need further changes, please submit a new service request and reference this one.</span>
+              </div>
             </div>
+            <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" 
+                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Approve
+            </button>
           </div>
+          </div>
+
+          
 
           <!-- Service Revision Request Form -->
           <div id="serviceRevisionFormSection" class="requestor-resubmission-section" style="display: none;">
             <div class="requestor-section-header">
               <h3>
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
                 Request Revision
@@ -3394,9 +3887,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="file-upload-area" style="border: 2px dashed #e2e8f0; border-radius: 8px; padding: 2rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" 
                      onclick="document.getElementById('serviceRevisionFiles').click()">
                   <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                   </svg>
                   <p style="color: #64748b; margin: 0 0 0.5rem 0;">Drop files here or click to browse</p>
                   <small style="color: #94a3b8;">PDF, DOC, DOCX, XLS, XLSX, images (Max 10MB each)</small>
@@ -3412,7 +3903,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" id="submitServiceRevisionBtn" class="btn-resubmit" onclick="handleServiceRevision()" 
                         style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; padding: 0.875rem 2rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                   </svg>
                   Submit Revision Request
@@ -3520,6 +4011,64 @@ document.addEventListener('DOMContentLoaded', function() {
               </svg>
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Archived Request Restoration Modal -->
+  <div id="archivedRequestModal" class="modal" style="display:none;">
+    <div class="modal-content unit-conversation-modal">
+      <div class="modal-header unit-modal-header">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"/>
+            <polyline points="7 10 12 15 17 10"/>
+          </svg>
+          <h2>Request Archived</h2>
+          <span class="unit-conversation-subtitle">Request Restoration</span>
+        </div>
+        <button class="close-modal-btn" id="closeArchivedModal" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="unit-conversation-body" style="padding: 2rem;">
+        <div id="archivedRequestContent">
+          <!-- Request details will be populated here -->
+          <div style="text-align: center; color: #64748b;">
+            <div style="font-size: 1.5rem; margin-bottom: 1rem;">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Restoration Request Form -->
+        <div id="restorationFormSection" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+          <h3 style="margin-bottom: 1rem; color: #1e293b; font-size: 1.125rem;">Request Restoration</h3>
+          <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.9375rem;">If you believe this request should be restored, please provide a reason below. Administrators will review your request.</p>
+          
+          <form id="archivedRestorationForm" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div>
+              <label for="restorationReason" style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 500;">Reason for Restoration:</label>
+              <textarea 
+                id="restorationReason" 
+                name="reason" 
+                rows="5" 
+                placeholder="Explain why this request should be restored..."
+                style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.9375rem;"
+                required></textarea>
+              <small style="display: block; margin-top: 0.25rem; color: #94a3b8;">Minimum 10 characters</small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+              <button type="button" class="close-modal-btn" onclick="document.getElementById('archivedRequestModal').style.display='none'" style="background: #f1f5f9; color: #1e293b; padding: 0.625rem 1.25rem; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
+              <button type="submit" style="background: #059669; color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Submit Restoration Request</button>
+            </div>
+
+            <div id="submissionStatus" style="display: none; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9375rem;"></div>
+          </form>
         </div>
       </div>
     </div>
@@ -3989,7 +4538,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeModalBtn = document.getElementById('closeModalBtn');
     const cancelModalBtn = document.getElementById('cancelModalBtn');
     const detailModal = document.getElementById("detailsModal");
-    const closeDetailsModal = document.getElementById("closeDetailsModal");
     const clearFiltersBtn = document.getElementById("clearFilters");
     const tableBody = document.getElementById("requestsTableBody");
     const allRows = Array.from(document.querySelectorAll('.request-row'));
@@ -4000,6 +4548,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendMessageBtn = document.getElementById("sendMessageBtn");
     const openChatFromDetailsModal = document.getElementById("openChatFromDetailsModal");
     const deadlineWarningModal = document.getElementById('deadlineWarningModal');
+
+    // Pagination variables
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let filteredRows = [];
     const closeDeadlineWarningModal = document.getElementById('closeDeadlineWarningModal');
     const serviceRequestForm = document.querySelector('#requestModal form');
 
@@ -4106,22 +4659,30 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
+    // Initialize pagination
+    filteredRows = allRows;
+    updateTableDisplay();
+
     // Modal close handlers
-    if (openModalBtn) openModalBtn.onclick = () => requestModal.style.display = 'flex';
-    if (closeModalBtn) closeModalBtn.onclick = () => requestModal.style.display = 'none';
-    if (cancelModalBtn) cancelModalBtn.onclick = () => requestModal.style.display = 'none';
-    if (closeDetailsModal) {
-      closeDetailsModal.onclick = () => {
-        const modalBody = document.querySelector('.requestor-modal-body');
-        const modalContent = document.querySelector('.requestor-modal-content');
-        const rightColumn = document.getElementById('requestorRightColumn');
+    if (openModalBtn) {
+      openModalBtn.onclick = () => {
+        requestModal.style.display = 'flex';
         
-        detailModal.style.display = 'none';
-        if (modalBody) modalBody.classList.remove('two-column');
-        if (modalContent) modalContent.classList.remove('has-revisions');
-        if (rightColumn) rightColumn.style.display = 'none';
+        // Auto-populate organization field when modal opens
+        const organizationInput = document.getElementById('organization');
+        if (organizationInput && userOrganizations.length > 0) {
+          if (organizationInput.tagName === 'INPUT') {
+            // If it's an input field, set the value
+            organizationInput.value = userOrganizations[0];
+          } else if (organizationInput.tagName === 'SELECT') {
+            // If it's a select dropdown, set the selected option
+            organizationInput.value = userOrganizations[0];
+          }
+        }
       };
     }
+    if (closeModalBtn) closeModalBtn.onclick = () => requestModal.style.display = 'none';
+    if (cancelModalBtn) cancelModalBtn.onclick = () => requestModal.style.display = 'none';
     if (closeConversationModal) closeConversationModal.onclick = () => conversationModal.style.display = 'none';
     if (closeDeadlineWarningModal) {
       closeDeadlineWarningModal.onclick = () => {
@@ -4133,8 +4694,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.onclick = function(event) {
       if (event.target === requestModal) requestModal.style.display = 'none';
       if (event.target === detailModal) {
-        const modalBody = document.querySelector('.requestor-modal-body');
-        const modalContent = document.querySelector('.requestor-modal-content');
+        const modalBody = document.querySelector('.unit-modal-body');
+        const modalContent = document.querySelector('.unit-modal-wide');
         const rightColumn = document.getElementById('requestorRightColumn');
         
         detailModal.style.display = 'none';
@@ -4154,6 +4715,14 @@ document.addEventListener('DOMContentLoaded', function() {
       };
     }
 
+    // Chat functionality for right column button
+    const openChatFromDetailsModalRight = document.getElementById('openChatFromDetailsModalRight');
+    if (openChatFromDetailsModalRight) {
+      openChatFromDetailsModalRight.onclick = function() {
+        openChat(currentConversationId);
+      };
+    }
+
     function openChat(serviceRequestId) {
       currentConversationId = serviceRequestId;
       loadConversation(serviceRequestId);
@@ -4164,6 +4733,29 @@ document.addEventListener('DOMContentLoaded', function() {
       try {
         const response = await fetch(`/api/conversation/${serviceRequestId}`);
         const conversation = await response.json();
+        
+        // Handle archived/deleted requests (410 Gone status)
+        if (response.status === 410 || conversation.archived) {
+          if (messagesContainer) {
+            messagesContainer.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+                <div style="text-align: center;">
+                  <div style="font-size: 2rem; margin-bottom: 1rem;">🗂️</div>
+                  <p><strong>This request has been archived</strong></p>
+                  <small style="display: block; margin-top: 0.5rem;">An administrator has archived this request. You can request restoration by providing a reason below.</small>
+                </div>
+              </div>
+            `;
+          }
+          // Disable message form and show restoration option
+          const messageForm = document.getElementById('conversationForm');
+          if (messageForm) messageForm.style.display = 'none';
+          const restorationSection = document.getElementById('requestRestorationForm') || document.getElementById('resubmissionFormSection');
+          if (restorationSection && restorationSection.style) {
+            restorationSection.style.display = 'block';
+          }
+          return;
+        }
         
         if (messagesContainer) messagesContainer.innerHTML = '';
         
@@ -4497,24 +5089,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Filter functionality
     function filterRequests() {
-      console.log('[ServiceRequest] filterRequests called');
       const selectedStatuses = getSelectedStatuses();
       const titleValue = document.getElementById('titleFilter') ? document.getElementById('titleFilter').value.toLowerCase() : '';
       const organizationValue = organizationFilter ? organizationFilter.getSelectedValues() : ['all'];
       const dateFromValue = document.getElementById('dateFromFilter') ? document.getElementById('dateFromFilter').value : '';
       const dateToValue = document.getElementById('dateToFilter') ? document.getElementById('dateToFilter').value : '';
 
-      console.log('[ServiceRequest] Filter values:', {
-        selectedStatuses,
-        titleValue,
-        organizationValue,
-        dateFromValue,
-        dateToValue
-      });
-
-      let visibleCount = 0;
-
-      allRows.forEach(row => {
+      filteredRows = allRows.filter(row => {
         const rowStatus = row.dataset.status || '';
         const rowStatusNormalized = normalizeStatus(rowStatus);
         const rowTitle = row.dataset.title ? row.dataset.title.toLowerCase() : '';
@@ -4522,19 +5103,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const rowDate = row.dataset.date || '';
 
         const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes('all') || selectedStatuses.includes(rowStatusNormalized);
-        
-        if (row.dataset.id && rowStatus.toLowerCase().includes('checking')) {
-          console.log('[ServiceRequest] Row with "checking" status:', {
-            id: row.dataset.id.slice(-6),
-            originalStatus: rowStatus,
-            normalizedStatus: rowStatusNormalized,
-            selectedStatuses: selectedStatuses,
-            statusMatch: statusMatch
-          });
-        }
         const titleMatch = (titleValue === '' || rowTitle.includes(titleValue));
         
-        // Organization filter logic
         let organizationMatch = true;
         if (organizationFilter && organizationValue.length > 0 && !organizationValue.includes('all')) {
           organizationMatch = organizationValue.some(org => 
@@ -4554,29 +5124,68 @@ document.addEventListener('DOMContentLoaded', function() {
           dateMatch = dateMatch && (rowDateObj <= toDate);
         }
 
-        const isVisible = statusMatch && titleMatch && organizationMatch && dateMatch;
-        row.style.display = isVisible ? '' : 'none';
-        
-        if (isVisible) visibleCount++;
+        return statusMatch && titleMatch && organizationMatch && dateMatch;
       });
 
-      const totalCount = allRows.length;
-      console.log('[ServiceRequest] Filter results:', {
-        visibleCount,
-        totalCount,
-        percentVisible: Math.round((visibleCount / totalCount) * 100) + '%'
-      });
+      currentPage = 1;
+      updateTableDisplay();
+      toggleNoResultsMessage(filteredRows.length === 0);
+    }
+
+    function updateTableDisplay() {
+      // Hide all rows first
+      allRows.forEach(row => row.style.display = 'none');
+
+      // Calculate pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const rowsToShow = filteredRows.slice(startIndex, endIndex);
+
+      // Show paginated rows
+      rowsToShow.forEach(row => row.style.display = '');
+
+      // Update pagination controls
+      const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+      const pageInfo = document.getElementById('pageInfo');
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
       
-      const resultsCount = document.getElementById('resultsCount');
-      if (resultsCount) {
-        if (visibleCount === totalCount) {
-          resultsCount.textContent = `Showing all ${totalCount} requests`;
-        } else {
-          resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} requests`;
-        }
+      if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+      if (prevBtn) {
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
+      }
+      if (nextBtn) {
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+        nextBtn.style.opacity = currentPage === totalPages || totalPages === 0 ? '0.5' : '1';
       }
 
-      toggleNoResultsMessage(visibleCount === 0);
+      // Hide pagination if only one page
+      const paginationControls = document.getElementById('paginationControls');
+      if (paginationControls) {
+        if (totalPages <= 1) {
+          paginationControls.style.display = 'none';
+        } else {
+          paginationControls.style.display = 'flex';
+        }
+      }
+    }
+
+    function nextPage() {
+      const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        updateTableDisplay();
+        document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        updateTableDisplay();
+        document.querySelector('.table-section').scrollIntoView({ behavior: 'smooth' });
+      }
     }
     
     function toggleNoResultsMessage(show) {
@@ -4654,10 +5263,12 @@ document.querySelectorAll('.request-row').forEach(row => {
     const detailUnits = document.getElementById("detailUnits");
     const detailDatetime = document.getElementById("detailDatetime");
     const detailSpecificType = document.getElementById("detailSpecificType");
+    const detailType = document.getElementById("detailType");
     
     // Populate fields
     if (detailTitle) detailTitle.innerText = row.dataset.title || '';
     if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified';
+    if (detailType) detailType.innerText = row.dataset.type || '';
     
     // CRITICAL FIX: Display the exact organization from the request
     const requestOrganization = row.dataset.organization || 'N/A';
@@ -4677,6 +5288,16 @@ document.querySelectorAll('.request-row').forEach(row => {
           const status = row.dataset.status || '';
           detailStatus.innerText = status;
           detailStatusBadge.className = `status-badge-large ${status.toLowerCase().replace(/\s+/g, '-')}`;
+          
+          // Always show right column for two-column layout
+          const requestorRightColumn = document.getElementById("requestorRightColumn");
+          const modalBody = document.querySelector('.unit-modal-body');
+          if (requestorRightColumn) {
+            requestorRightColumn.style.display = 'flex';
+          }
+          if (modalBody) {
+            modalBody.classList.add('two-column');
+          }
         }
 
         // Enhanced deadline handling
@@ -4722,15 +5343,29 @@ document.querySelectorAll('.request-row').forEach(row => {
           createEnhancedFilePreview(allFiles, previewContainer);
         }
         
-        // Chat functionality - conversation is always available in right column
+        // Right column layout + chat state
         currentConversationId = row.dataset.id;
-        const requestType = row.dataset.type;
-        
-        // Load revision history for service requests
-        if (requestType === "Service Request") {
-          loadServiceRevisionHistory(currentConversationId);
-        }
-        
+        const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
+        const chatButtonSectionRight = document.querySelector('.unit-right-column .chat-section[id="chatButtonSection"]');
+        const modalBody = document.querySelector('.unit-modal-body');
+        const rightColumn = document.getElementById('requestorRightColumn');
+        const serviceActionButtons = document.getElementById('serviceActionButtons');
+        const showServiceRevisionFormBtn = document.getElementById('showServiceRevisionFormBtn');
+        const markServiceCompleteBtn2 = document.getElementById('markServiceCompleteBtn2');
+        const resubmissionSection = document.getElementById('resubmissionFormSection');
+
+        if (chatButtonSectionLeft) chatButtonSectionLeft.style.display = 'none';
+        if (chatButtonSectionRight) chatButtonSectionRight.style.display = 'block';
+        if (modalBody) modalBody.classList.add('two-column');
+        if (rightColumn) rightColumn.style.display = 'flex';
+
+        // Revision history + service actions
+        loadServiceRevisionHistory(currentConversationId);
+        if (serviceActionButtons) serviceActionButtons.style.display = 'flex';
+        if (showServiceRevisionFormBtn) showServiceRevisionFormBtn.style.display = 'inline-flex';
+        if (markServiceCompleteBtn2) markServiceCompleteBtn2.style.display = 'inline-flex';
+        if (resubmissionSection) resubmissionSection.style.display = 'none';
+
         if (detailModal) detailModal.style.display = 'flex';
       });
     });
@@ -5934,9 +6569,85 @@ window.openConversationModal = function(requestId, requestType) {
   }
 };
 
+/**
+ * Open archived request restoration modal
+ */
+window.openArchivedRequestModal = function(requestId, requestType) {
+  console.log('Opening archived request restoration modal for:', requestId, requestType);
+  
+  const modal = document.getElementById('archivedRequestModal');
+  const contentDiv = document.getElementById('archivedRequestContent');
+  const form = document.getElementById('archivedRestorationForm');
+  
+  if (!modal || !contentDiv) {
+    console.error('Archived request modal elements not found');
+    return;
+  }
+
+  // Fetch archived request details
+  fetch(`/api/conversation/${requestId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.archived) {
+        // Display archived request information
+        contentDiv.innerHTML = `
+          <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <p style="color: #92400e; margin: 0; font-weight: 500;">
+              <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; display: inline; vertical-align: middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              This request has been archived by an administrator.
+            </p>
+          </div>
+
+          <div style="background: #f1f5f9; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Title</label>
+              <p style="margin: 0; color: #1e293b; font-weight: 500;">${data.title || 'Untitled Request'}</p>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Status</label>
+              <p style="margin: 0; color: #1e293b;"><span class="status-badge archived">${data.status || 'Archived'}</span></p>
+            </div>
+            <div>
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Archived On</label>
+              <p style="margin: 0; color: #1e293b;">${new Date(data.deletedAt).toLocaleString()}</p>
+            </div>
+          </div>
+        `;
+        modal.style.display = 'flex';
+        
+        // Reset form
+        if (form) {
+          form.reset();
+          document.getElementById('submissionStatus').style.display = 'none';
+        }
+      } else {
+        contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
+        modal.style.display = 'flex';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching archived request:', error);
+      contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
+      modal.style.display = 'flex';
+    });
+};
+
 // Auto-open modal if URL contains modal parameters
 document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
+  
+  // Handle archived request restoration modal
+  if (urlParams.get('modal') === 'archived' && urlParams.has('requestId') && urlParams.get('type') === 'service') {
+    const requestId = urlParams.get('requestId');
+    console.log('Auto-opening archived request modal for:', requestId);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      window.openArchivedRequestModal(requestId, 'service');
+    }, 500);
+  }
   
   // Handle regular modal opening
   if (urlParams.has('modal') && urlParams.has('requestId') && urlParams.get('type') === 'service') {
@@ -5958,6 +6669,69 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
       window.openConversationModal(requestId, 'service');
     }, 500);
+  }
+  
+  // Handle restoration form submission
+  const restorationForm = document.getElementById('archivedRestorationForm');
+  if (restorationForm) {
+    restorationForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const requestId = new URLSearchParams(window.location.search).get('requestId');
+      const reason = document.getElementById('restorationReason').value.trim();
+      const statusDiv = document.getElementById('submissionStatus');
+      
+      if (!reason || reason.length < 10) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#7f1d1d';
+        statusDiv.style.borderLeft = '4px solid #ef4444';
+        statusDiv.innerHTML = '❌ Please provide at least 10 characters explaining the reason.';
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/request-restoration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requestId: requestId,
+            requestType: 'service',
+            reason: reason
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#dcfce7';
+          statusDiv.style.color = '#166534';
+          statusDiv.style.borderLeft = '4px solid #22c55e';
+          statusDiv.innerHTML = '✅ ' + result.message;
+          
+          // Reset form after 2 seconds
+          setTimeout(() => {
+            restorationForm.reset();
+            statusDiv.style.display = 'none';
+            document.getElementById('archivedRequestModal').style.display = 'none';
+          }, 2000);
+        } else {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#fee2e2';
+          statusDiv.style.color = '#7f1d1d';
+          statusDiv.style.borderLeft = '4px solid #ef4444';
+          statusDiv.innerHTML = '❌ ' + (result.message || 'Failed to submit restoration request');
+        }
+      } catch (error) {
+        console.error('Error submitting restoration request:', error);
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#7f1d1d';
+        statusDiv.style.borderLeft = '4px solid #ef4444';
+        statusDiv.innerHTML = '❌ Error submitting request. Please try again.';
+      }
+    });
   }
 });
   </script>
@@ -6091,8 +6865,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('[Service] Request ID:', requestId);
         const historyContainer = document.getElementById('revisionHistoryContainer');
         const rightColumn = document.getElementById('requestorRightColumn');
-        const modalBody = document.querySelector('.requestor-modal-body');
-        const modalContent = document.querySelector('.requestor-modal-content');
+        const modalBody = document.querySelector('.unit-modal-body');
+        const modalContent = document.querySelector('.unit-modal-wide');
         const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
         
         console.log('[Service] Elements check:');
@@ -6105,6 +6879,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Always show two-column layout for service requests
+        if (rightColumn) {
+            rightColumn.style.display = 'flex';
+            console.log('[Service] ✅ Right column always visible for service requests');
+        }
+        if (modalBody) {
+            modalBody.classList.add('two-column');
+            console.log('[Service] ✅ Two-column layout always activated for service requests');
+        }
+        
         try {
             console.log('[Service] Fetching API...');
             const response = await fetch(`/api/service-revision-history/${requestId}`);
@@ -6113,8 +6897,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 console.log('[Service] ❌ Non-JSON response');
-                if (rightColumn) rightColumn.style.display = 'none';
-                if (modalBody) modalBody.classList.remove('two-column');
+                // Show empty revision history
+                historyContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #64748b;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>No revision history available yet.</p>
+                        <small>Revision history will appear here when updates are made to your request.</small>
+                    </div>
+                `;
                 return;
             }
             
@@ -6129,15 +6921,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (revisionsToShow.length > 0) {
                     console.log('[Service] ✅ Displaying revision history');
                     
-                    // Show two-column layout
-                    if (rightColumn) {
-                        rightColumn.style.display = 'flex';
-                        console.log('[Service] ✅ Right column visible');
-                    }
-                    if (modalBody) {
-                        modalBody.classList.add('two-column');
-                        console.log('[Service] ✅ Two-column layout activated');
-                    }
                     if (modalContent) modalContent.classList.add('has-revisions');
                     
                     historyContainer.innerHTML = '';
@@ -6148,23 +6931,60 @@ document.addEventListener('DOMContentLoaded', function() {
                         historyContainer.appendChild(entry);
                     });
                     
+                    // Count how many revision_requested entries exist (this is the actual revision count)
+                    const actualRevisionCount = revisionsToShow.filter(r => r.type === 'revision_requested').length;
+                    
                     // Check if request has status that allows revision
                     const row = document.querySelector(`tr[data-id="${requestId}"]`);
                     const status = row ? row.dataset.status : '';
                     
                     const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
-                    console.log('[Service] Normalized status:', normalizedStatus);
+                    console.log('[Service] Normalized status:', normalizedStatus, 'Actual revision count:', actualRevisionCount);
                     
                     // IMPORTANT: Keep form hidden by default - shown when user clicks "Request Revision" button
-                    if ((normalizedStatus === 'completed' || normalizedStatus === 'for-checking') && serviceRevisionSection) {
-                        console.log('[Service] Status allows revision');
+                    if (normalizedStatus === 'for-checking' && serviceRevisionSection) {
+                        console.log('[Service] Status is For Checking - checking revision limit');
                         serviceRevisionSection.style.display = 'none';
                         
-                        // Show the action buttons
+                        // Show the action buttons container
                         const actionButtons = document.getElementById('serviceActionButtons');
+                        const revisionButton = document.getElementById('showServiceRevisionFormBtn');
+                        const warningMessage = document.getElementById('revisionLimitWarning');
+                        
                         if (actionButtons) {
                             actionButtons.style.display = 'flex';
-                            console.log('[Service] ✅ Action buttons displayed');
+                            console.log('[Service] ✅ Action buttons container displayed');
+                        }
+                        
+                        // Check if revision limit has been reached (max 2 revisions)
+                        if (actualRevisionCount >= 2) {
+                            // Hide the revision button completely
+                            if (revisionButton) {
+                                revisionButton.style.display = 'none';
+                            }
+                            
+                            // Show warning message
+                            if (warningMessage) {
+                                warningMessage.style.display = 'flex';
+                            }
+                            
+                            console.log('[Service] ⚠️ Revision limit reached:', actualRevisionCount, '/ 2');
+                        } else {
+                            // Show revision button
+                            if (revisionButton) {
+                                revisionButton.style.display = 'inline-flex';
+                                revisionButton.disabled = false;
+                                revisionButton.style.opacity = '1';
+                                revisionButton.style.cursor = 'pointer';
+                                revisionButton.title = `Request Revision (${actualRevisionCount}/2 used)`;
+                            }
+                            
+                            // Hide warning message
+                            if (warningMessage) {
+                                warningMessage.style.display = 'none';
+                            }
+                            
+                            console.log('[Service] ✅ Revision button shown:', actualRevisionCount, '/ 2 used');
                         }
                         
                         // Initialize Quill editor if not already initialized
@@ -6182,24 +7002,58 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             });
                         }
-                    } else if (serviceRevisionSection) {
-                        serviceRevisionSection.style.display = 'none';
+                    } else {
+                        // Hide action buttons for Approved, Completed, or other statuses
+                        const actionButtons = document.getElementById('serviceActionButtons');
+                        if (actionButtons) {
+                            actionButtons.style.display = 'none';
+                            console.log('[Service] Action buttons hidden for status:', normalizedStatus);
+                        }
+                        if (serviceRevisionSection) {
+                            serviceRevisionSection.style.display = 'none';
+                        }
                     }
                 } else {
-                    if (rightColumn) rightColumn.style.display = 'none';
-                    if (modalBody) modalBody.classList.remove('two-column');
+                    // No revisions to show, but still show the section with empty message
                     if (modalContent) modalContent.classList.remove('has-revisions');
+                    historyContainer.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #64748b;">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p>No revision history available yet.</p>
+                            <small>Revision history will appear here when updates are made to your request.</small>
+                        </div>
+                    `;
                 }
             } else {
-                if (rightColumn) rightColumn.style.display = 'none';
-                if (modalBody) modalBody.classList.remove('two-column');
+                // API call successful but no revisions
                 if (modalContent) modalContent.classList.remove('has-revisions');
+                historyContainer.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #64748b;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p>No revision history available yet.</p>
+                        <small>Revision history will appear here when updates are made to your request.</small>
+                    </div>
+                `;
             }
         } catch (error) {
             console.error('[Service] Error loading revision history:', error);
-            if (rightColumn) rightColumn.style.display = 'none';
-            if (modalBody) modalBody.classList.remove('two-column');
+            // Show error message in revision history section
             if (modalContent) modalContent.classList.remove('has-revisions');
+            historyContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #dc2626;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <p>Unable to load revision history.</p>
+                    <small>Please try refreshing the page.</small>
+                </div>
+            `;
         }
     }
 
@@ -6209,9 +7063,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const entry = document.createElement('div');
         
         const isUnitAction = revision.requestedBy || 
-                             revision.type === 'deliverable_submitted' || 
-                             revision.type === 'completed';
-        const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+                             (revision.type === 'deliverable_submitted' || 
+                              revision.type === 'completed' ||
+                              revision.type === 'message');
+        const isRequestorAction = revision.respondedBy || 
+                                  (revision.type === 'revision_requested' && !revision.requestedBy) ||
+                                  (revision.type === 'message' && !revision.requestedBy) ||
+                                  revision.type === 'initial';
         
         entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
         
@@ -6245,11 +7103,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (revision.type === 'deliverable_submitted') {
             typeLabel = 'Deliverables Uploaded';
             badgeClass = 'badge-resubmitted';
+        } else if (revision.type === 'approved_by_requestor') {
+            typeLabel = '✓ Approved';
+            badgeClass = 'badge-approved';
         } else if (revision.type === 'completed') {
             typeLabel = '✓ Completed';
             badgeClass = 'badge-approved';
         } else if (revision.type === 'revision_requested') {
             typeLabel = 'Revision Requested';
+            badgeClass = 'badge-revision';
+        } else if (revision.type === 'message') {
+            typeLabel = 'Message';
+            badgeClass = 'badge-revision';
+        } else if (revision.type === 'initial') {
+            typeLabel = 'Initial Request';
             badgeClass = 'badge-revision';
         } else {
             typeLabel = 'Update';
@@ -6262,14 +7129,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (revision.requestedBy) {
             if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
                 authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
-                if (revision.requestedBy.unitTeam) {
+                if (revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A') {
                     authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
+                } else {
+                    authorUnit = ' (User)';
                 }
             }
         } else if (revision.respondedBy) {
             if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
                 authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
+                authorUnit = ' (User)';
             }
+        } else if (revision.type === 'initial' && revision.by) {
+            authorName = revision.by;
+            authorUnit = ' (User)';
         }
         
         const isLast = index === total - 1;
@@ -6283,6 +7156,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         <polyline points="8 12 11 15 16 9"/>
                     </svg>
                     <span style="color: #10b981; font-weight: 600;">Service Request Completed!</span>
+                </div>
+            `;
+        } else if (revision.type === 'approved_by_requestor') {
+            statusIndicator = `
+                <div class="status-indicator approved">
+                    <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="8 12 11 15 16 9"/>
+                    </svg>
+                    <span style="color: #10b981; font-weight: 600;">Approved - Awaiting Unit Completion</span>
                 </div>
             `;
         } else if (isLast) {
@@ -6309,9 +7192,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        const content = isUnitAction ? 
-            (revision.revisionNotes || 'Deliverables submitted') : 
-            (revision.responseNotes || 'Revision requested');
+        const content = revision.type === 'message' ? 
+            (revision.revisionNotes || revision.responseNotes || 'Message') :
+            revision.type === 'initial' ?
+            (revision.description || 'Initial request submitted') :
+            (isUnitAction ? 
+                (revision.revisionNotes || 'Deliverables submitted') : 
+                (revision.responseNotes || 'Revision requested'));
         
         const files = revision.deliverableFiles || revision.responseFiles || [];
         
@@ -6335,7 +7222,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <div class="message-content-section">
-                    <div class="content-label">${isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:'}</div>
+                    <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : revision.type === 'initial' ? 'REQUEST:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
                     <div class="content-text">${displayFormattedText(content)}</div>
                 </div>
                 
@@ -6388,10 +7275,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return formatted;
     }
 
+    // Helper function to truncate long filenames intelligently
+    function truncateFilename(filename, maxLength = 50) {
+        if (!filename || filename.length <= maxLength) return filename;
+        
+        const ext = filename.split('.').pop();
+        const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
+        const availableLength = maxLength - ext.length - 4; // 4 for "...."
+        
+        if (availableLength < 10) {
+            // Very short limit, just show start and extension
+            return nameWithoutExt.substring(0, 10) + '...' + ext;
+        }
+        
+        // Show start and end of filename with ellipsis in middle
+        const startLength = Math.ceil(availableLength * 0.6);
+        const endLength = Math.floor(availableLength * 0.4);
+        
+        return nameWithoutExt.substring(0, startLength) + '...' + nameWithoutExt.substring(nameWithoutExt.length - endLength) + '.' + ext;
+    }
+
     function createRevisionFileCard(file) {
         console.log('📁 [ServiceRequest] Creating file card for:', file);
         const filename = typeof file === 'string' ? file : (file.filename || file.name || file);
         const displayName = typeof file === 'object' ? (file.originalname || file.filename || file.name) : file;
+        const truncatedName = truncateFilename(displayName, 45);
         const ext = filename.split('.').pop().toLowerCase();
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
         const isPDF = ext === 'pdf';
@@ -6437,7 +7345,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </svg>
                 </div>
                 <div class="revision-file-info">
-                    <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
+                    <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(truncatedName)}</div>
                     <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
                 </div>
                 <div class="revision-file-actions">
@@ -6482,9 +7390,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const revisionText = serviceRevisionQuill.root.innerHTML;
+        const revisionTextPlain = serviceRevisionQuill.getText().trim();
         
         // Validate revision text
-        if (!revisionText || revisionText.trim() === '<p><br></p>' || revisionText.trim() === '') {
+        if (!revisionText || revisionText.trim() === '<p><br></p>' || revisionTextPlain === '') {
             if (typeof window.showAlert === 'function') {
                 window.showAlert('error', 'Please describe what needs to be revised before submitting.');
             } else {
@@ -6505,15 +7414,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        console.log('[Service] Submitting revision for request:', currentConversationId);
+        console.log('[Service] Revision text (HTML):', revisionText);
+        console.log('[Service] Revision text (plain):', revisionTextPlain);
+        console.log('[Service] Files count:', filesInput && filesInput.files.length || 0);
+        
         try {
             const response = await fetch(`/user/service/request-revision/${currentConversationId}`, {
                 method: 'POST',
                 body: formData
             });
             
+            console.log('[Service] Response status:', response.status);
             const result = await response.json();
+            console.log('[Service] Response:', result);
             
-            if (result.success) {
+            if (response.ok && result.success) {
                 if (typeof window.showAlert === 'function') {
                     window.showAlert('success', result.message || 'Revision request submitted successfully!');
                 } else {
@@ -6551,35 +7467,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Toggle service revision form visibility
     function toggleServiceRevisionForm() {
-        const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
-        const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
-        const toggleText = document.getElementById('revisionFormToggleText');
-        
-        if (serviceRevisionSection) {
-            const isVisible = serviceRevisionSection.style.display === 'block';
-            
-            if (isVisible) {
-                // Hide the form
-                serviceRevisionSection.style.display = 'none';
-                if (toggleText) toggleText.textContent = 'Request Revision';
-                if (toggleBtn) {
-                    toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-                }
-            } else {
-                // Show the form
-                serviceRevisionSection.style.display = 'block';
-                if (toggleText) toggleText.textContent = 'Hide Revision Form';
-                if (toggleBtn) {
-                    toggleBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-                }
-                
-                // Scroll to the form
-                setTimeout(() => {
-                    serviceRevisionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 100);
+      const serviceRevisionSection = document.getElementById('serviceRevisionFormSection');
+      const toggleBtn = document.getElementById('showServiceRevisionFormBtn');
+      const toggleText = document.getElementById('revisionFormToggleText');
+
+      if (!serviceRevisionSection) {
+        console.error('[Service] Service revision section not found');
+        return;
+      }
+
+      const isVisible = serviceRevisionSection.style.display === 'block';
+
+      if (isVisible) {
+        serviceRevisionSection.style.display = 'none';
+        if (toggleText) toggleText.textContent = 'Request Revision';
+        if (toggleBtn) toggleBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+      } else {
+        serviceRevisionSection.style.display = 'block';
+        if (toggleText) toggleText.textContent = 'Hide Revision Form';
+        if (toggleBtn) toggleBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+
+        if (!serviceRevisionQuill) {
+          serviceRevisionQuill = new Quill('#serviceRevisionEditor', {
+            theme: 'snow',
+            placeholder: 'Describe what needs to be revised or improved... ',
+            modules: {
+              toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+              ]
             }
+          });
         }
+
+        setTimeout(() => {
+          serviceRevisionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
     }
+
+    // Expose service revision functions to global scope
+    window.handleServiceRevision = handleServiceRevision;
+    window.toggleServiceRevisionForm = toggleServiceRevisionForm;
 
     // Handle marking service as complete (accept deliverables)
     async function handleMarkServiceComplete() {
@@ -6589,7 +7520,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Confirm action
-        if (!confirm('Are you sure you want to mark this service request as complete? This means you accept the deliverables and the request will be closed.')) {
+        if (!confirm('Are you sure you want to approve these deliverables? The unit will then finalize the task.')) {
             return;
         }
         
@@ -6604,7 +7535,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             
             if (result.success) {
-                showAlert('success', result.message || 'Service request marked as complete!');
+                showAlert('success', result.message || 'Deliverables approved successfully!');
+                
+                // Hide action buttons after approval
+                const actionButtons = document.getElementById('serviceActionButtons');
+                if (actionButtons) actionButtons.style.display = 'none';
                 
                 // Close modal and refresh page
                 setTimeout(() => {
@@ -6612,7 +7547,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     location.reload();
                 }, 1500);
             } else {
-                showAlert('error', result.message || 'Failed to mark as complete. Please try again.');
+                showAlert('error', result.message || 'Failed to approve deliverables. Please try again.');
             }
         } catch (error) {
             console.error('[Service] Error marking as complete:', error);

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registration Page</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
 <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
 <link rel="stylesheet" href="/stylesheets/no-animations.css" />
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -77,6 +78,41 @@ body::before {
 }
 
 .register-container img.logo:hover {
+  transform: scale(1.05);
+}
+
+.back-button-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #408b4e;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: rgba(64, 139, 78, 0.1);
+}
+
+.back-button:hover {
+  background: rgba(64, 139, 78, 0.2);
+  color: #275730;
+  transform: translateY(-1px);
+}
+
+.logo-link {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.logo-link:hover {
   transform: scale(1.05);
 }
 
@@ -182,6 +218,15 @@ body::before {
   color: #9ca3af;
   font-weight: 400;
   transition: color 0.3s ease;
+}
+
+/* Uppercase only the typed value for CYS field, not placeholder */
+#cys {
+  text-transform: uppercase;
+}
+
+#cys::placeholder {
+  text-transform: none;
 }
 
 .input-group:focus-within input::placeholder {
@@ -805,7 +850,6 @@ body::before {
   font-weight: 500;
   border: 1px solid #fca5a5;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
-  animation: shake 0.5s ease-in-out;
 }
 
 .success-message {
@@ -851,6 +895,17 @@ body::before {
   10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .register-container {
     padding: 30px 24px;
@@ -893,7 +948,16 @@ body::before {
   .add-org-button {
     width: 100%;
   }
-}
+
+  .back-button-container {
+    top: 16px;
+    left: 16px;
+  }
+
+  .back-button {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 /* Office/Department Multiple Selection Styling */
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
   background: linear-gradient(135deg, #198754, #20c997) !important;
@@ -960,36 +1024,158 @@ body::before {
 </head>
 <body>
    <div class="register-container">
-    <img class="logo" src="/Picture/logo.jpg" alt="Logo" />
+    <div class="back-button-container">
+      <a href="/about-s-core" class="back-button" title="Back to Homepage">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back
+      </a>
+    </div>
+    
+    <a href="/about-s-core" class="logo-link">
+      <img class="logo" src="/Picture/logo.jpg" alt="Logo" />
+    </a>
     
     <h1 class="welcome-text">Welcome!</h1>
     <p class="subtitle">Create your account to get started</p>
 
-    <form action="/register" method="POST" id="registerForm">
-      <!-- User Type Selection -->
-      <div class="input-group has-icon">
-        <svg class="user-type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
-        <div class="user-type-dropdown">
-          <select name="userType" id="userType" required onchange="toggleUserTypeFields()">
-            <option value="" disabled <%= typeof formData === 'undefined' || !formData.userType ? 'selected' : '' %>>Select User Type</option>
-            <option value="student" <%= typeof formData !== 'undefined' && formData.userType === 'student' ? 'selected' : '' %>>🎓 Student</option>
-            <option value="nonstudent" <%= typeof formData !== 'undefined' && formData.userType === 'nonstudent' ? 'selected' : '' %>>💼 Staff/Faculty</option>
-          </select>
+    <!-- Invitation Notice (shows when registering via invitation) -->
+    <% if (typeof invitationData !== 'undefined' && invitationData && invitationData.autoApprove) { %>
+    <div style="background: #d4edda; color: #155724; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px solid #28a745; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);">
+      <div>
+        <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #155724;">
+          ✓ You're Invited to Join S-CORE!
+        </h3>
+        <p style="margin: 0 0 12px 0; font-size: 14px; line-height: 1.6; color: #155724;">
+          An administrator has invited you to create an account. 
+          <strong>Your account will be automatically approved</strong> once you complete this registration.
+        </p>
+        <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #c3e6cb;">
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #155724;">
+            ✓ Some information has been pre-filled for your convenience<br>
+            ✓ You can sign in immediately after registration<br>
+            ✓ No need to wait for admin approval
+          </p>
         </div>
+      </div>
+    </div>
+    <% } %>
+
+    <form action="<%= typeof invitationData !== 'undefined' && invitationData ? '/register-invitation' : '/register' %>" method="POST" id="registerForm">
+      <!-- Hidden field for invitation token -->
+      <% if (typeof invitationData !== 'undefined' && invitationData && invitationData.invitationToken) { %>
+      <input type="hidden" name="invitationToken" value="<%= invitationData.invitationToken %>" />
+      <% } %>
+      <!-- User Type Selection with Buttons -->
+      <div class="user-type-selection" id="userTypeSelection" style="margin-bottom: 30px;">
+        <!-- New Microsoft User Notice (only shows during user type selection) -->
+        <% if (typeof microsoftNewUser !== 'undefined' && microsoftNewUser) { %>
+        <div style="background: #e8f5e9; color: #2e7d32; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 2px solid #408b4e; box-shadow: 0 2px 8px rgba(64, 139, 78, 0.15);">
+          <div>
+            <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #1b5e20;">Welcome to S-CORE!</h3>
+            <p style="margin: 0 0 12px 0; font-size: 14px; line-height: 1.6; color: #2e7d32;">
+              We noticed this is your <strong>first time</strong> signing in with your Microsoft account. 
+              Please <strong>select your account type and complete the registration form</strong> to create your S-CORE account.
+            </p>
+            <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #c8e6c9;">
+              <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #2e7d32;">
+                ✓ Your email has been verified through Microsoft<br>
+                ✓ Some fields will be pre-filled from your profile<br>
+                ✓ Admin approval is required before you can access the system
+              </p>
+            </div>
+          </div>
+        </div>
+        <% } %>
+        
+        <label style="display: block; font-size: 15px; font-weight: 600; color: #333; margin-bottom: 15px; text-align: center;">
+          Select Your Account Type
+        </label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <!-- Student Button -->
+          <button type="button" class="user-type-btn" data-type="student" onclick="selectUserType('student')" style="
+            padding: 20px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+          " onmouseover="this.style.borderColor='#408b4e'; this.style.background='#f1f8f4'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(64,139,78,0.15)';" onmouseout="if(!this.classList.contains('active')) { this.style.borderColor='#e0e0e0'; this.style.background='white'; this.style.transform='translateY(0)'; this.style.boxShadow='none'; }">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+              <path d="M12 12h.01"/>
+            </svg>
+            <span>Student</span>
+          </button>
+          
+          <!-- Staff/Faculty Button -->
+          <button type="button" class="user-type-btn" data-type="nonstudent" onclick="selectUserType('nonstudent')" style="
+            padding: 20px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+          " onmouseover="this.style.borderColor='#408b4e'; this.style.background='#f1f8f4'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(64,139,78,0.15)';" onmouseout="if(!this.classList.contains('active')) { this.style.borderColor='#e0e0e0'; this.style.background='white'; this.style.transform='translateY(0)'; this.style.boxShadow='none'; }">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Staff/Faculty</span>
+          </button>
+        </div>
+        <input type="hidden" name="userType" id="userType" required />
+      </div>
+
+      <!-- Back Button (initially hidden) -->
+      <div id="backButtonContainer" style="display: none; margin-bottom: 20px;">
+        <button type="button" onclick="goBackToUserTypeSelection()" style="
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 18px;
+          background: white;
+          border: 2px solid #408b4e;
+          border-radius: 8px;
+          color: #408b4e;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-size: 14px;
+        " onmouseover="this.style.background='#f1f8f4';" onmouseout="this.style.background='white';">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span>Change Account Type</span>
+        </button>
       </div>
 
       <!-- Student-Specific Fields -->
-      <div id="studentFields" class="student-fields">
+      <div id="studentFields" class="student-fields" style="display:none;">
         <div class="name-row">
           <div class="input-group">
             <input type="text" name="firstName" placeholder="First Name" 
                   value="<%= typeof formData !== 'undefined' ? formData.firstName || '' : '' %>" required />
           </div>
           <div class="input-group">
-            <input type="text" name="middleName" placeholder="Middle Name" 
+            <input type="text" name="middleName" placeholder="Middle Name (Optional)" 
                   value="<%= typeof formData !== 'undefined' ? formData.middleName || '' : '' %>" />
           </div>
         </div>
@@ -998,9 +1184,10 @@ body::before {
                 value="<%= typeof formData !== 'undefined' ? formData.lastName || '' : '' %>" required />
         </div>
         <div class="input-group">
-          <input type="text" name="studentId" id="studentId" placeholder="Student ID" 
+              <input type="text" name="studentId" id="studentId" placeholder="Student ID" 
                 value="<%= typeof formData !== 'undefined' ? formData.studentId || '' : '' %>" 
                 required title="Student ID must be exactly 9 digits"/>
+              <div id="studentIdError" style="color:#ef4444; font-size:13px; margin-top:4px; display:none;"></div>
         </div>
 
         <!-- Student Organization Selection -->
@@ -1031,8 +1218,8 @@ body::before {
         </div>
 
         <div class="input-group">
-          <input type="text" name="cys" placeholder="Course / Year / Section" 
-                value="<%= typeof formData !== 'undefined' ? formData.cys || '' : '' %>" required />
+          <input type="text" name="cys" id="cys" placeholder="Course / Year / Section (e.g., BIT43)" 
+                value="<%= typeof formData !== 'undefined' ? formData.cys || '' : '' %>" required maxlength="5" />
         </div>
       </div>
 
@@ -1044,7 +1231,7 @@ body::before {
                   value="<%= typeof formData !== 'undefined' ? formData.firstName || '' : '' %>" required />
           </div>
           <div class="input-group">
-            <input type="text" name="middleName" placeholder="Middle Name" 
+            <input type="text" name="middleName" placeholder="Middle Name (Optional)" 
                   value="<%= typeof formData !== 'undefined' ? formData.middleName || '' : '' %>" />
           </div>
         </div>
@@ -1082,7 +1269,7 @@ body::before {
       </div>
 
       <!-- Common Fields (visible for both user types) -->
-      <div id="commonFields">
+      <div id="commonFields" style="display:none;">
         <div class="input-group">
           <input type="tel" name="phoneNumber" placeholder="Phone Number" 
                 value="<%= typeof formData !== 'undefined' ? formData.phoneNumber || '' : '' %>" required />
@@ -1138,10 +1325,43 @@ body::before {
         <% if (typeof error !== 'undefined' && error) { %>
         <div class="error-message"><%- error %></div>
         <% } %>
+        <% if (typeof success !== 'undefined' && success) { %>
+        <div class="success-message" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #c3e6cb;">
+          <%- success %>
+        </div>
+        <% } %>
 
         <button type="submit" class="register-button">Create Account</button>
       </div>
     </form>
+    
+    <!-- OR Divider -->
+    <div style="display: flex; align-items: center; gap: 15px; margin: 25px 0;">
+      <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent);"></div>
+      <span style="color: #666; font-size: 13px; font-weight: 500; white-space: nowrap;">OR CONTINUE WITH</span>
+      <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent);"></div>
+    </div>
+
+    <!-- Microsoft OAuth Sign In Button -->
+    <a href="/clerk/sign-in" 
+       class="microsoft-oauth-button"
+       style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px; background: white; border: 2px solid #e0e0e0; border-radius: 10px; text-decoration: none; color: #333; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;"
+       onmouseover="this.style.background='#f8f9fa'; this.style.borderColor='#408b4e'; this.style.boxShadow='0 4px 12px rgba(64,139,78,0.15)';"
+       onmouseout="this.style.background='white'; this.style.borderColor='#e0e0e0'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)';">
+      <svg width="20" height="20" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 0H0v11h11V0z" fill="#F25022"/>
+        <path d="M23 0H12v11h11V0z" fill="#7FBA00"/>
+        <path d="M11 12H0v11h11V12z" fill="#00A4EF"/>
+        <path d="M23 12H12v11h11V12z" fill="#FFB900"/>
+      </svg>
+      <span>Continue with Microsoft Account</span>
+    </a>
+
+    <div style="text-align: center; margin-top: 10px;">
+      <small style="color: #666; font-size: 12px;">
+        Only @dlsud.edu.ph accounts are allowed
+      </small>
+    </div>
     
     <p class="login-text">
       Already have an account?
@@ -1151,28 +1371,295 @@ body::before {
 </body>
 
 <script>
-// User type icon update function
-function updateUserTypeIcon() {
-  const select = document.getElementById('userType');
-  const icon = document.querySelector('.user-type-icon');
+// Check for Microsoft OAuth profile and pre-fill fields
+<% if (typeof microsoftProfile !== 'undefined' && microsoftProfile) { %>
+  window.microsoftProfile = {
+    email: '<%= microsoftProfile.email %>',
+    firstName: '<%= microsoftProfile.firstName || "" %>',
+    lastName: '<%= microsoftProfile.lastName || "" %>',
+    emailVerified: <%= microsoftProfile.emailVerified || false %>
+  };
+<% } %>
+
+// Check for invitation data and pre-fill fields
+<% if (typeof invitationData !== 'undefined' && invitationData) { %>
+  window.invitationData = {
+    email: '<%= invitationData.email %>',
+    firstName: '<%= invitationData.firstName || "" %>',
+    lastName: '<%= invitationData.lastName || "" %>',
+    middleName: '<%= invitationData.middleName || "" %>',
+    phoneNumber: '<%= invitationData.phoneNumber || "" %>',
+    userType: '<%= invitationData.userType || "" %>',
+    studentId: '<%= invitationData.studentId || "" %>',
+    studentOrganization: <%- JSON.stringify(invitationData.studentOrganization || []) %>,
+    cys: '<%= invitationData.cys || "" %>',
+    affiliation: <%- JSON.stringify(invitationData.affiliation || []) %>,
+    autoApprove: <%= invitationData.autoApprove || false %>,
+    invitationToken: '<%= invitationData.invitationToken || "" %>'
+  };
   
-  if (select.value === 'student') {
-    icon.innerHTML = `
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-      <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-    `;
-  } else if (select.value === 'nonstudent') {
-    icon.innerHTML = `
-      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-      <circle cx="8.5" cy="7" r="4"></circle>
-      <path d="M20 8v6M23 11h-6"></path>
-    `;
-  } else {
-    icon.innerHTML = `
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-      <circle cx="12" cy="7" r="4"></circle>
-    `;
+  // Helper function to capitalize only first letter
+  function capitalizeFirstLetter(str) {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   }
+  
+  // Function to pre-fill invitation data into visible fields
+  function preFillInvitationData() {
+    const invitation = window.invitationData;
+    if (!invitation) return;
+    
+    console.log('Pre-filling invitation data:', invitation);
+    
+    // Pre-fill email and make it readonly
+    if (invitation.email) {
+      const emailInputs = document.querySelectorAll('input[name="email"]');
+      emailInputs.forEach(input => {
+        input.value = invitation.email;
+        input.readOnly = true;
+        input.style.background = '#f0f0f0';
+        input.style.cursor = 'not-allowed';
+      });
+    }
+    
+    // Pre-fill name fields if available
+    if (invitation.firstName) {
+      const firstNameInputs = document.querySelectorAll('input[name="firstName"]');
+      firstNameInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.firstName;
+        }
+      });
+    }
+    
+    if (invitation.lastName) {
+      const lastNameInputs = document.querySelectorAll('input[name="lastName"]');
+      lastNameInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.lastName;
+        }
+      });
+    }
+    
+    if (invitation.middleName) {
+      const middleNameInputs = document.querySelectorAll('input[name="middleName"]');
+      middleNameInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.middleName;
+        }
+      });
+    }
+    
+    if (invitation.phoneNumber) {
+      const phoneInputs = document.querySelectorAll('input[name="phoneNumber"]');
+      phoneInputs.forEach(input => {
+        if (input.offsetParent !== null) {
+          input.value = invitation.phoneNumber;
+        }
+      });
+    }
+    
+    // Auto-select user type if provided
+    if (invitation.userType) {
+      selectUserType(invitation.userType);
+      
+      // Wait for form to be visible, then pre-fill user-type-specific fields
+      setTimeout(() => {
+        if (invitation.userType === 'student') {
+          if (invitation.studentId) {
+            const studentIdInput = document.getElementById('studentId');
+            if (studentIdInput) studentIdInput.value = invitation.studentId;
+          }
+          
+          if (invitation.cys) {
+            const cysInput = document.getElementById('cys');
+            if (cysInput) cysInput.value = invitation.cys;
+          }
+          
+          if (invitation.studentOrganization && invitation.studentOrganization.length > 0) {
+            const orgSelect = $('#studentOrganizations');
+            if (orgSelect.length) {
+              orgSelect.val(invitation.studentOrganization).trigger('change');
+            }
+          }
+        } else if (invitation.userType === 'nonstudent') {
+          if (invitation.affiliation && invitation.affiliation.length > 0) {
+            const affiliationSelect = $('#affiliation');
+            if (affiliationSelect.length) {
+              affiliationSelect.val(invitation.affiliation).trigger('change');
+            }
+          }
+        }
+      }, 500);
+    }
+  }
+  
+  // Function to pre-fill Microsoft data into visible fields
+  function preFillMicrosoftData() {
+    const profile = window.microsoftProfile;
+    if (!profile) return;
+    
+    // Pre-fill name fields if available (capitalize first letter only)
+    if (profile.firstName) {
+      const firstNameInputs = document.querySelectorAll('input[name="firstName"]');
+      firstNameInputs.forEach(input => {
+        if (input.offsetParent !== null) { // Only fill visible fields
+          input.value = capitalizeFirstLetter(profile.firstName);
+        }
+      });
+    }
+    
+    if (profile.lastName) {
+      const lastNameInputs = document.querySelectorAll('input[name="lastName"]');
+      lastNameInputs.forEach(input => {
+        if (input.offsetParent !== null) { // Only fill visible fields
+          input.value = capitalizeFirstLetter(profile.lastName);
+        }
+      });
+    }
+    
+    // Pre-fill email field and make it readonly
+    if (profile.email) {
+      const emailInputs = document.querySelectorAll('input[name="email"]');
+      emailInputs.forEach(input => {
+        if (input.offsetParent !== null) { // Only fill visible fields
+          input.value = profile.email;
+          input.readOnly = true;
+          input.style.background = '#f0f0f0';
+          input.style.cursor = 'not-allowed';
+        }
+      });
+    }
+  }
+<% } %>
+
+// Check for error/success messages in URL
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const error = urlParams.get('error');
+  const microsoft = urlParams.get('microsoft');
+  
+  if (error) {
+    let errorMessage = '';
+    switch(error) {
+      case 'no_session':
+        errorMessage = 'Microsoft sign-in failed. Please try again.';
+        break;
+      case 'invalid_domain':
+        errorMessage = 'Only @dlsud.edu.ph email addresses are allowed.';
+        break;
+      case 'oauth_failed':
+        errorMessage = 'Authentication failed. Please try again or use regular registration.';
+        break;
+      default:
+        errorMessage = 'An error occurred during Microsoft sign-in.';
+    }
+    
+    const messageContainer = document.getElementById('messageContainer');
+    if (messageContainer) {
+      messageContainer.innerHTML = `
+        <div class="error-message">${errorMessage}</div>
+      `;
+    }
+  }
+});
+
+// User type icon update function - removed as icons are now in buttons
+
+function selectUserType(type) {
+  // Update hidden input
+  document.getElementById('userType').value = type;
+  
+  // Hide user type selection
+  document.getElementById('userTypeSelection').style.display = 'none';
+  
+  // Show back button
+  document.getElementById('backButtonContainer').style.display = 'block';
+  
+  // Show/hide fields with smooth animation
+  const studentFields = document.getElementById('studentFields');
+  const nonStudentFields = document.getElementById('nonStudentFields');
+  const commonFields = document.getElementById('commonFields');
+  
+  if (type === 'student') {
+    // Hide non-student fields
+    nonStudentFields.style.display = 'none';
+    
+    // Show student fields with fade-in
+    studentFields.style.display = 'block';
+    studentFields.style.animation = 'fadeIn 0.4s ease-in';
+    
+    // Show common fields
+    if (commonFields) {
+      commonFields.style.display = 'block';
+      commonFields.style.animation = 'fadeIn 0.4s ease-in';
+    }
+  } else if (type === 'nonstudent') {
+    // Hide student fields
+    studentFields.style.display = 'none';
+    
+    // Show non-student fields with fade-in
+    nonStudentFields.style.display = 'block';
+    nonStudentFields.style.animation = 'fadeIn 0.4s ease-in';
+    
+    // Show common fields
+    if (commonFields) {
+      commonFields.style.display = 'block';
+      commonFields.style.animation = 'fadeIn 0.4s ease-in';
+    }
+  }
+  
+  // Trigger the field toggle for any additional logic
+  toggleUserTypeFields();
+  
+  // Pre-fill Microsoft profile data after fields are visible
+  if (window.microsoftProfile) {
+    preFillMicrosoftData();
+  }
+  
+  // Pre-fill invitation data after fields are visible
+  if (window.invitationData) {
+    preFillInvitationData();
+  }
+  
+  // Scroll to form fields smoothly
+  setTimeout(() => {
+    const formFields = type === 'student' ? studentFields : nonStudentFields;
+    formFields.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+function goBackToUserTypeSelection() {
+  // Clear user type value
+  document.getElementById('userType').value = '';
+  
+  // Hide back button
+  document.getElementById('backButtonContainer').style.display = 'none';
+  
+  // Show user type selection
+  const userTypeSelection = document.getElementById('userTypeSelection');
+  userTypeSelection.style.display = 'block';
+  userTypeSelection.style.animation = 'fadeIn 0.4s ease-in';
+  
+  // Hide all form fields
+  document.getElementById('studentFields').style.display = 'none';
+  document.getElementById('nonStudentFields').style.display = 'none';
+  document.getElementById('commonFields').style.display = 'none';
+  
+  // Reset button styles
+  const buttons = document.querySelectorAll('.user-type-btn');
+  buttons.forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.borderColor = '#e0e0e0';
+    btn.style.background = 'white';
+    btn.style.boxShadow = 'none';
+    btn.style.transform = 'translateY(0)';
+  });
+  
+  // Scroll to top of form
+  setTimeout(() => {
+    userTypeSelection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
 function toggleUserTypeFields() {
@@ -1181,18 +1668,63 @@ function toggleUserTypeFields() {
   const nonStudentFields = document.getElementById('nonStudentFields');
   const commonFields = document.getElementById('commonFields');
 
-  // Update icon based on selection
-  updateUserTypeIcon();
+  // Helper to clear all inputs/selects in a section
+  function clearFields(section) {
+    section.querySelectorAll('input').forEach(input => {
+      input.value = '';
+      input.style.borderColor = '';
+      input.removeAttribute('required');
+    });
+    section.querySelectorAll('select').forEach(select => {
+      if (select.multiple) {
+        $(select).val([]).trigger('change');
+      } else {
+        select.value = '';
+      }
+      select.removeAttribute('required');
+    });
+  }
+
+  // Clear common fields (phone, email, username, passwords)
+  function clearCommonFields() {
+    const commonInputs = commonFields.querySelectorAll('input');
+    commonInputs.forEach(input => {
+      if (input.name !== 'terms') { // Don't clear terms checkbox
+        input.value = '';
+        input.style.borderColor = '';
+      }
+    });
+    // Uncheck terms
+    const termsCheckbox = document.querySelector('input[name="terms"]');
+    if (termsCheckbox) termsCheckbox.checked = false;
+    // Clear password strength indicator
+    const strengthIndicator = document.getElementById('passwordStrength');
+    if (strengthIndicator) strengthIndicator.style.display = 'none';
+    // Clear any messages
+    const messageContainer = document.getElementById('messageContainer');
+    if (messageContainer) messageContainer.innerHTML = '';
+  }
 
   if (userType === 'student') {
+    clearFields(nonStudentFields);
+    clearFields(studentFields);
+    clearCommonFields();
+    // Update counters
+    if (typeof updateOrganizationCounter === 'function') updateOrganizationCounter();
+    if (typeof updateOfficeCounter === 'function') updateOfficeCounter();
+
     studentFields.style.display = 'block';
     nonStudentFields.style.display = 'none';
     commonFields.style.display = 'block';
 
-    // Enable student fields
+    // Enable student fields and set required attributes
     studentFields.querySelectorAll('input, select').forEach(input => {
       input.disabled = false;
       if (input.dataset.name) input.name = input.dataset.name;
+      // Set required for student-specific fields
+      if (input.id === 'studentId' || input.id === 'studentYear' || input.id === 'studentProgram' || input.id === 'studentOrganization') {
+        input.setAttribute('required', 'required');
+      }
     });
 
     // Disable non-student fields
@@ -1205,14 +1737,25 @@ function toggleUserTypeFields() {
     });
 
   } else if (userType === 'nonstudent') {
+    clearFields(studentFields);
+    clearFields(nonStudentFields);
+    clearCommonFields();
+    // Update counters
+    if (typeof updateOrganizationCounter === 'function') updateOrganizationCounter();
+    if (typeof updateOfficeCounter === 'function') updateOfficeCounter();
+
     studentFields.style.display = 'none';
     nonStudentFields.style.display = 'block';
     commonFields.style.display = 'block';
 
-    // Enable non-student fields
+    // Enable non-student fields and set required attributes
     nonStudentFields.querySelectorAll('input, select').forEach(input => {
       input.disabled = false;
       if (input.dataset.name) input.name = input.dataset.name;
+      // Set required for non-student-specific fields
+      if (input.id === 'nonStudentOffice') {
+        input.setAttribute('required', 'required');
+      }
     });
 
     // Disable student fields
@@ -1225,6 +1768,9 @@ function toggleUserTypeFields() {
     });
   } else {
     // No user type selected
+    clearFields(studentFields);
+    clearFields(nonStudentFields);
+    clearCommonFields();
     studentFields.style.display = 'none';
     nonStudentFields.style.display = 'none';
     commonFields.style.display = 'none';
@@ -1285,10 +1831,25 @@ function checkPasswordStrength(password) {
 function showMessage(message, type = 'error') {
   const container = document.getElementById('messageContainer');
   container.innerHTML = `<div class="${type}-message">${message}</div>`;
-  
+
   setTimeout(() => {
     container.innerHTML = '';
   }, 5000);
+}
+
+// Function for instant validation messages that persist until fixed
+function showInstantMessage(message, type = 'error') {
+  const container = document.getElementById('messageContainer');
+  container.innerHTML = `<div class="${type}-message">${message}</div>`;
+  // Don't auto-clear - let user interaction clear it
+}
+
+// Function to clear instant messages when validation passes
+function clearInstantMessage() {
+  const container = document.getElementById('messageContainer');
+  if (container) {
+    container.innerHTML = '';
+  }
 }
 
 // Enhanced feedback system
@@ -1373,7 +1934,6 @@ function addCustomOrganization() {
     input.focus();
     return;
   }
-  
   if (orgName.length < 3) {
     showFeedback('Organization name must be at least 3 characters long.', 'error');
     input.focus();
@@ -1388,26 +1948,39 @@ function addCustomOrganization() {
     return;
   }
 
-  // Add new option
-  if (select.find(`option[value="${orgName}"]`).length === 0) {
-    const newOption = new Option(orgName, orgName, true, true);
-    select.append(newOption);
-  }
-
-  const current = select.val() || [];
-  if (!current.includes(orgName)) {
-    current.push(orgName);
-    select.val(current).trigger('change');
-  }
-
-  input.value = '';
-  showFeedback(`"${orgName}" has been added successfully!`, 'success');
-  updateOrganizationCounter();
-  
-  // Auto-hide feedback after 3 seconds
-  setTimeout(hideFeedback, 3000);
+  // Add to database via API
+  $.ajax({
+    url: '/api/add-organization',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ name: orgName }),
+    success: function(response) {
+      // Add new option to select2
+      if (select.find(`option[value="${orgName}"]`).length === 0) {
+        const newOption = new Option(orgName, orgName, true, true);
+        select.append(newOption);
+      }
+      const current = select.val() || [];
+      if (!current.includes(orgName)) {
+        current.push(orgName);
+        select.val(current).trigger('change');
+      }
+      input.value = '';
+      showFeedback(`"${orgName}" has been added successfully!`, 'success');
+      updateOrganizationCounter();
+      setTimeout(hideFeedback, 3000);
+    },
+    error: function(xhr) {
+      if (xhr.responseJSON && xhr.responseJSON.message) {
+        showFeedback(xhr.responseJSON.message, 'error');
+      } else {
+        showFeedback('Failed to add organization. Please try again.', 'error');
+      }
+    }
+  });
 }
 
+// Toggle custom organization input
 function toggleCustomOrg() {
   const customOrgContainer = document.getElementById('customOrgContainer');
   const isVisible = customOrgContainer.style.display !== 'none';
@@ -1441,390 +2014,535 @@ function checkPasswordRequirements(password) {
   };
 }
 
-// Real-time Student ID formatting
-document.getElementById('studentId')?.addEventListener('input', function(e) {
-  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9);
+// Name validation: only letters, spaces, hyphens, apostrophes allowed
+function isValidName(name) {
+  return /^[a-zA-Z\s\-']+$/.test(name);
+}
+
+// Validation function for firstName with priority
+function validateFirstName(input, showError = true) {
+  const value = input.value.trim();
   
-  // Real-time validation
-  if (this.value.length > 0 && this.value.length !== 9) {
-    this.style.borderColor = '#ef4444';
-  } else if (this.value.length === 9) {
-    this.style.borderColor = '#10b981';
+  if (!value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('First name is required.', 'error');
+    return false;
+  } else if (!isValidName(value)) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('First name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+    return false;
   } else {
-    this.style.borderColor = '';
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for lastName with priority
+function validateLastName(input, showError = true) {
+  const value = input.value.trim();
+  
+  if (!value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Last name is required.', 'error');
+    return false;
+  } else if (!isValidName(value)) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Last name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+    return false;
+  } else {
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for middleName
+function validateMiddleName(input, showError = true) {
+  const value = input.value.trim();
+  
+  if (value && !isValidName(value)) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Middle name must only contain letters, spaces, hyphens, or apostrophes.', 'error');
+    return false;
+  } else {
+    input.style.borderColor = value ? '#10b981' : '';
+    if (showError && value) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for email
+function validateEmail(input, showError = true) {
+  const value = input.value.trim();
+  
+  if (!value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Email address is required.', 'error');
+    return false;
+  } else if (!isValidEmail(value)) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Please enter a valid email address.', 'error');
+    return false;
+  } else {
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for username
+function validateUsername(input, showError = true) {
+  const value = input.value.trim();
+  
+  if (!value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Username is required.', 'error');
+    return false;
+  } else if (value.length < 4) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Username must be at least 4 characters long.', 'error');
+    return false;
+  } else {
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for password
+function validatePassword(input, showError = true) {
+  const value = input.value;
+  const passwordCheck = checkPasswordRequirements(value);
+  
+  if (!value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Password is required.', 'error');
+    return false;
+  } else if (!passwordCheck.isValid) {
+    input.style.borderColor = '#ef4444';
+    if (showError) {
+      // Show the first failing requirement
+      if (!passwordCheck.length) {
+        showInstantMessage('Password must be at least 8 characters long.', 'error');
+      } else if (!passwordCheck.hasLetter) {
+        showInstantMessage('Password must contain at least one letter.', 'error');
+      } else if (!passwordCheck.hasNumber) {
+        showInstantMessage('Password must contain at least one number.', 'error');
+      }
+    }
+    return false;
+  } else {
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for confirmPassword
+function validateConfirmPassword(confirmInput, passwordInput, showError = true) {
+  const confirmValue = confirmInput.value;
+  const passwordValue = passwordInput.value;
+  
+  if (!confirmValue) {
+    confirmInput.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Please confirm your password.', 'error');
+    return false;
+  } else if (confirmValue !== passwordValue) {
+    confirmInput.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Passwords do not match.', 'error');
+    return false;
+  } else {
+    confirmInput.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for phoneNumber
+function validatePhoneNumber(input, showError = true) {
+  const value = input.value.replace(/\D/g, ''); // Remove non-digits for validation
+  
+  if (!value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Phone number is required.', 'error');
+    return false;
+  } else if (value.length !== 4 && value.length !== 11) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Phone number must be either 4 digits (telephone) or 11 digits (cellphone).', 'error');
+    return false;
+  } else {
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for studentId
+function validateStudentId(input, showError = true) {
+  const value = input.value.replace(/\D/g, '');
+  input.value = value.slice(0, 9); // Format to max 9 digits
+  
+  if (!input.value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Student ID is required for student registration.', 'error');
+    return false;
+  } else if (input.value.length !== 9) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Student ID must be exactly 9 digits.', 'error');
+    return false;
+  } else {
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Validation function for CYS
+function validateCYS(input, showError = true) {
+  const value = input.value.trim();
+  
+  if (!value) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Course/Year/Section is required for student registration.', 'error');
+    return false;
+  } else if (!/^[A-Z]{3}[0-9]{2}$/.test(value)) {
+    input.style.borderColor = '#ef4444';
+    if (showError) showInstantMessage('Course/Year/Section must be 3 letters followed by 2 numbers (e.g., BSN21, ICT31).', 'error');
+    return false;
+  } else {
+    input.style.borderColor = '#10b981';
+    if (showError) clearInstantMessage();
+    return true;
+  }
+}
+
+// Real-time CYS formatting
+document.getElementById('cys')?.addEventListener('input', function(e) {
+  let value = e.target.value.toUpperCase();
+  let formatted = '';
+  
+  for (let i = 0; i < value.length && i < 5; i++) {
+    const char = value[i];
+    if (i < 3) {
+      if (/[A-Z]/.test(char)) formatted += char;
+    } else {
+      if (/[0-9]/.test(char)) formatted += char;
+    }
+  }
+  
+  e.target.value = formatted;
+  validateCYS(e.target, true);
+});
+
+// Real-time phone number formatting (allow only digits)
+document.querySelector('input[name="phoneNumber"]')?.addEventListener('input', function(e) {
+  const value = e.target.value.replace(/\D/g, '');
+  e.target.value = value;
+  validatePhoneNumber(e.target, true);
+});
+
+// Real-time Student ID formatting (allow only digits, max 9)
+document.getElementById('studentId')?.addEventListener('input', function(e) {
+  validateStudentId(e.target, true);
+});
+
+// Set up real-time validation for all fields
+document.querySelector('input[name="firstName"]')?.addEventListener('input', function(e) {
+  validateFirstName(e.target, true);
+});
+
+document.querySelector('input[name="lastName"]')?.addEventListener('input', function(e) {
+  validateLastName(e.target, true);
+});
+
+document.querySelector('input[name="middleName"]')?.addEventListener('input', function(e) {
+  validateMiddleName(e.target, true);
+});
+
+document.querySelector('input[name="email"]')?.addEventListener('input', function(e) {
+  validateEmail(e.target, true);
+});
+
+document.querySelector('input[name="username"]')?.addEventListener('input', function(e) {
+  validateUsername(e.target, true);
+});
+
+document.querySelector('input[name="password"]')?.addEventListener('input', function(e) {
+  checkPasswordStrength(e.target.value); // Update password strength indicator
+  validatePassword(e.target, true);
+  // Also revalidate confirm password if it has a value
+  const confirmInput = document.querySelector('input[name="confirmPassword"]');
+  if (confirmInput && confirmInput.value) {
+    validateConfirmPassword(confirmInput, e.target, true);
   }
 });
 
-// Real-time email validation
-document.querySelector('input[name="email"]')?.addEventListener('blur', function(e) {
-  if (this.value && !isValidEmail(this.value)) {
-    this.style.borderColor = '#ef4444';
-    showMessage('Please enter a valid email address.', 'error');
-  } else if (this.value) {
-    this.style.borderColor = '#10b981';
-  } else {
-    this.style.borderColor = '';
+document.querySelector('input[name="confirmPassword"]')?.addEventListener('input', function(e) {
+  const passwordInput = document.querySelector('input[name="password"]');
+  validateConfirmPassword(e.target, passwordInput, true);
+});
+
+// Organization selection validation
+$('#studentOrganization').on('change', function() {
+  const val = $(this).val();
+  if (val && val.length > 0) {
+    clearInstantMessage();
   }
 });
 
-// Enhanced form validation
+// Office selection validation
+$('#nonStudentOffice').on('change', function() {
+  const val = $(this).val();
+  if (val && val.length > 0) {
+    clearInstantMessage();
+  }
+});
+
+// Terms checkbox validation
+document.querySelector('input[name="terms"]')?.addEventListener('change', function(e) {
+  if (e.target.checked) {
+    clearInstantMessage();
+  }
+});
 document.querySelector('form').addEventListener('submit', function(e) {
+  e.preventDefault(); // Prevent default submission first
+  
   const userType = document.getElementById('userType').value;
-  const firstName = document.querySelector('input[name="firstName"]').value.trim();
-  const lastName = document.querySelector('input[name="lastName"]').value.trim();
-  const email = document.querySelector('input[name="email"]').value.trim();
-  const username = document.querySelector('input[name="username"]').value.trim();
-  const password = document.querySelector('input[name="password"]').value;
-  const confirmPassword = document.querySelector('input[name="confirmPassword"]').value;
-  const phoneNumber = document.querySelector('input[name="phoneNumber"]').value.trim();
+  const firstNameInput = document.querySelector('input[name="firstName"]');
+  const lastNameInput = document.querySelector('input[name="lastName"]');
+  const middleNameInput = document.querySelector('input[name="middleName"]');
+  const emailInput = document.querySelector('input[name="email"]');
+  const usernameInput = document.querySelector('input[name="username"]');
+  const passwordInput = document.querySelector('input[name="password"]');
+  const confirmPasswordInput = document.querySelector('input[name="confirmPassword"]');
+  const phoneNumberInput = document.querySelector('input[name="phoneNumber"]');
   const terms = document.querySelector('input[name="terms"]').checked;
 
-  // Check user type selection
+  // Validate in order - stop at first error
+  
+  // 1. Check user type selection
   if (!userType) {
-    e.preventDefault();
-    showMessage('Please select a user type (Student or Staff/Faculty).', 'error');
-    document.getElementById('userType').focus();
+    showInstantMessage('Please select a user type (Student or Staff/Faculty).', 'error');
+    document.getElementById('userTypeSelection')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  // Check required fields
-  if (!firstName || !lastName) {
-    e.preventDefault();
-    showMessage('First name and last name are required.', 'error');
+  // 2. Validate first name
+  if (!validateFirstName(firstNameInput, true)) {
+    firstNameInput.focus();
+    firstNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  // Email validation
-  if (!email) {
-    e.preventDefault();
-    showMessage('Email address is required.', 'error');
+  // 3. Validate last name
+  if (!validateLastName(lastNameInput, true)) {
+    lastNameInput.focus();
+    lastNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  if (!isValidEmail(email)) {
-    e.preventDefault();
-    showMessage('Please enter a valid email address (e.g., user@example.com).', 'error');
-    document.querySelector('input[name="email"]').focus();
+  // 4. Validate middle name (if provided)
+  if (!validateMiddleName(middleNameInput, true)) {
+    middleNameInput.focus();
+    middleNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  // Username validation
-  if (!username) {
-    e.preventDefault();
-    showMessage('Username is required.', 'error');
-    return false;
-  }
-
-  if (username.length < 4) {
-    e.preventDefault();
-    showMessage('Username must be at least 4 characters long.', 'error');
-    return false;
-  }
-
-  // Phone number validation
-  if (!phoneNumber) {
-    e.preventDefault();
-    showMessage('Phone number is required.', 'error');
-    return false;
-  }
-
-  // Student-specific validation
+  // 5. Student-specific validation
   if (userType === 'student') {
-    const studentId = document.getElementById('studentId')?.value;
+    const studentIdInput = document.getElementById('studentId');
+    const cysInput = document.getElementById('cys');
     const studentOrg = $('#studentOrganization').val();
-    const cys = document.querySelector('input[name="cys"]')?.value.trim();
 
-    if (!studentId) {
-      e.preventDefault();
-      showMessage('Student ID is required for student registration.', 'error');
+    if (!validateStudentId(studentIdInput, true)) {
+      studentIdInput.focus();
+      studentIdInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
 
-    const studentIdPattern = /^\d{9}$/;
-    if (!studentIdPattern.test(studentId)) {
-      e.preventDefault();
-      showMessage('Student ID must be exactly 9 digits.', 'error');
-      document.getElementById('studentId').focus();
+    if (!validateCYS(cysInput, true)) {
+      cysInput.focus();
+      cysInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
 
     if (!studentOrg || studentOrg.length === 0) {
-      e.preventDefault();
-      showMessage('Please select at least one student organization.', 'error');
-      return false;
-    }
-
-    if (!cys) {
-      e.preventDefault();
-      showMessage('Course/Year/Section is required for student registration.', 'error');
+      showInstantMessage('Please select at least one student organization.', 'error');
+      $('#studentOrganization').select2('open');
       return false;
     }
   }
 
-  // Non-student validation
+  // 6. Non-student validation
   if (userType === 'nonstudent') {
     const affiliation = $('#nonStudentOffice').val();
     
     if (!affiliation || affiliation.length === 0) {
-      e.preventDefault();
-      showMessage('Please select at least one office/department.', 'error');
+      showInstantMessage('Please select at least one office/department.', 'error');
+      $('#nonStudentOffice').select2('open');
       return false;
     }
   }
 
-  // Password validation
-  if (!password) {
-    e.preventDefault();
-    showMessage('Password is required.', 'error');
+  // 7. Validate phone number
+  if (!validatePhoneNumber(phoneNumberInput, true)) {
+    phoneNumberInput.focus();
+    phoneNumberInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  const passwordCheck = checkPasswordRequirements(password);
-  if (!passwordCheck.isValid) {
-    e.preventDefault();
-    let errorMsg = 'Password must: ';
-    const errors = [];
-    if (!passwordCheck.length) errors.push('be at least 8 characters');
-    if (!passwordCheck.hasNumber) errors.push('contain at least one number');
-    if (!passwordCheck.hasLetter) errors.push('contain at least one letter');
-    errorMsg += errors.join(', ');
-    showMessage(errorMsg, 'error');
+  // 8. Validate email
+  if (!validateEmail(emailInput, true)) {
+    emailInput.focus();
+    emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  if (password !== confirmPassword) {
-    e.preventDefault();
-    showMessage('Passwords do not match. Please re-enter your password.', 'error');
+  // 9. Validate username
+  if (!validateUsername(usernameInput, true)) {
+    usernameInput.focus();
+    usernameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  // Terms validation
+  // 10. Validate password
+  if (!validatePassword(passwordInput, true)) {
+    passwordInput.focus();
+    passwordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+
+  // 11. Validate confirm password
+  if (!validateConfirmPassword(confirmPasswordInput, passwordInput, true)) {
+    confirmPasswordInput.focus();
+    confirmPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+
+  // 12. Terms validation
   if (!terms) {
-    e.preventDefault();
-    showMessage('You must agree to the Terms and Conditions to register.', 'error');
+    showInstantMessage('You must agree to the Terms and Conditions to register.', 'error');
+    document.querySelector('input[name="terms"]').focus();
+    document.querySelector('.terms-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return false;
   }
 
-  // If all validations pass, show loading state
+  // If all client-side validations pass, submit via AJAX to catch server errors
+  
   const submitBtn = this.querySelector('button[type="submit"]');
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Creating Account...';
   }
 
-  return true;
-});
-
-// Real-time password confirmation validation
-const passwordInput = document.querySelector('input[name="password"]');
-const confirmPasswordInput = document.querySelector('input[name="confirmPassword"]');
-
-function validatePasswordMatch() {
-  if (confirmPasswordInput.value && passwordInput.value !== confirmPasswordInput.value) {
-    confirmPasswordInput.setCustomValidity('Passwords do not match');
-    confirmPasswordInput.style.borderColor = '#ef4444';
-  } else {
-    confirmPasswordInput.setCustomValidity('');
-    confirmPasswordInput.style.borderColor = '';
+  // Collect form data as URLSearchParams for proper encoding
+  const formData = new FormData(this);
+  const urlEncodedData = new URLSearchParams();
+  
+  for (const [key, value] of formData.entries()) {
+    urlEncodedData.append(key, value);
   }
-}
 
-passwordInput.addEventListener('input', function() {
-  checkPasswordStrength(this.value);
-  validatePasswordMatch();
-});
+  // Get the form action (respects invitation vs regular registration)
+  const formAction = this.getAttribute('action') || '/register';
 
-confirmPasswordInput.addEventListener('input', validatePasswordMatch);
-
-// Phone number formatting
-document.querySelector('input[name="phoneNumber"]').addEventListener('input', function(e) {
-  let value = e.target.value.replace(/\D/g, '');
-  e.target.value = value;
-});
-
-// Organization and office options (shortened for example)
-const organizationOptions = [
-        "University Student Government (USG)",
-        "Internal Audit Service (IAS)",
-        "University Student Election Commission (USEC)",
-        "Office of the Solicitor General (OSG)",
-        "College of Business Administration and Accountancy Student Government (CBAASG)",
-        "Business Management Program Council (BMPC)",
-        "Junior Philippine Institute of Accountants (JPIA)",
-        "Marketing Management Program Council (MMPC)",
-        "College of Education Student Government (COEdSG)",
-        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-        "Architecture Program Council (ArchPC)",
-        "Civil Engineering Program Council (CEEPC)",
-        "Computer Engineering Program Council (CpEPC)",
-        "Electrical Engineering Program Council (EEEPC)",
-        "Electronics Engineering Program Council (ECEPC)",
-        "Industrial Engineering Program Council (IEEPC)",
-        "Mechanical Engineering Program Council (MEEPC)",
-        "Multimedia Arts Program Council (MMAPC)",
-        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-        "College of Criminal Justice Education Student Government (CCJESG)",
-        "Criminology Program Council (CrimPC)",
-        "Forensic Science Program Council (FScPC)",
-        "College of Liberal Arts and Communication Student Government (CLACSG)",
-        "Communication Program Council (CPC)",
-        "International Development Program Council (IDPC)",
-        "Political Science Program Council (PSPC)",
-        "Psychology Program Council (PPC)",
-        "College of Science Student Government (COSSG)",
-        "Applied Mathematics Program Council (AMPC)",
-        "Biology Program Council (BioPC)",
-        "College of Information and Computer Studies Student Government (CICSSG)",
-        "Computer Science Program Council (CSPC)",
-        "Information Technology Program Council (ITPC)",
-        "DLSU-D Chorale (CHORALE)",
-        "Lasallian Symphony Orchestra (LSO)",
-        "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-        "Lasallian Pop Band (LPB)",
-        "Teatro Lasalliana (TEATRO)",
-        "Visual and Performing Arts Production Unit (VPAPU)",
-        "Heraldo Filipino",
-        "Vicissitude",
-        "Council of Student Organizations (CSO)",
-        "Business Operations Management Society (BOMS)",
-        "Junior Marketing Association (JMA)",
-        "DLSU-D Psychological Society (DPS)",
-        "DLSU-D Pre-Medical Society (DPMS)",
-        "Hotel and Restaurant Management Society (HRMS)",
-        "Turismo Lasalleño Society (TLS)",
-        "Lasallian Educators Society (LES)",
-        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-        "DLSU-D Pre-Law Society (DPLS)",
-        "Astraeus Literary and Arts Guild",
-        "Accounting Enrichment Society (ACES)",
-        "Circle of Student Assistants (COSA)",
-        "DLSU-D Lifters",
-        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-        "DLSU-D United Patriots Football Club",
-        "Junior Financial Executives Institute of the Philippines (JFINEX)",
-        "Marché Société (MS)",
-        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-        "SINAG Society of Leaders (SISOL)",
-        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-        "LS Verde of Campus Sustainability Office",
-        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-        "Green FM of Communications and Journalism Department",
-        "International Students' Association (ISA) of International Students Office",
-        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+  // Submit via fetch to handle server-side errors
+  fetch(formAction, {
+    method: 'POST',
+    body: urlEncodedData,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json'
+    }
+  })
+  .then(async response => {
+    // Check content type to determine how to parse response
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      // Success - redirect to login
+      if (data.success || data.redirect) {
+        window.location.href = data.redirect || '/login';
+        return;
+      }
+    } else {
+      // Server returned HTML - check for error
+      const html = await response.text();
       
-];
+      // Try to extract error message from the HTML using multiple patterns
+      let errorMessage = null;
+      
+      // Pattern 1: error-message class
+      const errorMatch1 = html.match(/class="error-message"[^>]*>([^<]+)</);
+      if (errorMatch1 && errorMatch1[1]) {
+        errorMessage = errorMatch1[1].trim();
+      }
+      
+      // Pattern 2: Look for error in EJS rendered content
+      const errorMatch2 = html.match(/<div[^>]*class="[^"]*error[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+      if (!errorMessage && errorMatch2 && errorMatch2[1]) {
+        errorMessage = errorMatch2[1].replace(/<[^>]+>/g, '').trim();
+      }
+      
+      // Pattern 3: Check for common error keywords in content
+      if (!errorMessage) {
+        if (html.includes('already registered') || html.includes('already taken')) {
+          const emailMatch = html.match(/email[^.]*already[^.]*\./i);
+          const usernameMatch = html.match(/username[^.]*already[^.]*\./i);
+          if (emailMatch) errorMessage = 'This email is already registered. Please use a different email.';
+          else if (usernameMatch) errorMessage = 'This username is already taken. Please choose a different username.';
+        }
+      }
+      
+      // If we found an error, throw it
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+      
+      // Check response status - if not ok, it's an error
+      if (!response.ok) {
+        throw new Error('Registration failed. Please check your information and try again.');
+      }
+      
+      // If response is OK and no error found, assume success
+      window.location.href = '/login';
+    }
+  })
+  .catch(error => {
+    // Show the server error message
+    showInstantMessage(error.message || 'Registration failed. Please try again.', 'error');
+    
+    // Re-enable the submit button
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+    }
+  });
 
-const officeOptions = [
-          "Office of the President",
-          "Office of the Chief Administrative Officer",
-          "Office of the Provost",
-          "Office of the Chief Lasallian Mission Officer",
-          "Office of the Principal",
-          "Corporate and Executive Management Office",
-          "Center for Heritage Conservation",
-          "Museo De La Salle",
-          "Risk, Compliance and Audit Office",
-          "University Chaplain",
-          "Office of the Vice President for Administrative Services",
-          "Office of the Vice President for Finance",
-          "Office of the Vice President for Global Engagement and External Relations",
-          "Human Resource Management Office",
-          "Strategic Communications Office",
-          "Ancillary and Asset Management Office",
-          "Legal Counsel",
-          "Data Protection Office",
-          "Campus Development Office",
-          "Buildings and Facilities Maintenance Office",
-          "Campus Sustainability Office",
-          "General Services Office",
-          "Green Architecture and Campus Planning Office",
-          "Information and Communications Technology Center",
-          "Accounting Office",
-          "Treasury Office",
-          "Advancement and Alumni Relations Office",
-          "Lasallian Community Development Center",
-          "Linkages and Scholarship Office",
-          "Office of the Vice Provost for Academics",
-          "Office of the Deputy Provost for Research",
-          "Academic Planning and Quality Management",
-          "College of Law",
-          "College of Professional and Graduate Studies",
-          "School of Innovative and Flexible Learning",
-          "School of Governance, Public Service, and Corporate Leadership",
-          "Aklatang Emilio Aguinaldo-Information Resource Center",
-          "Center for Student Admissions",
-          "University Registrar",
-          "Cavite Studies Center",
-          "University Research Office",
-          "Herminia D. Torres Quality Assurance Office",
-          "Center for Innovative Learning Program",
-          "Center for Curriculum Development and Instruction",
-          "Language Learning Center",
-          "Center for Artificial Intelligence",
-          "Center for Creative Program",
-          "Academy of Continuing Education",
-          "College of Business Administration and Accountancy",
-          "Accountancy Department",
-          "Allied Business Department",
-          "Business Management Department",
-          "Marketing Department",
-          "College of Criminal Justice Education",
-          "College of Education",
-          "Physical Education Department",
-          "Professional Education Department",
-          "Religious Education Department",
-          "College of Engineering, Architecture and Technology",
-          "Architecture Department",
-          "Engineering Department",
-          "Graphics Design and Multimedia Department",
-          "Center of Technology",
-          "College of Information and Computer Studies",
-          "Computer Studies Department",
-          "Information Technology Department",
-          "College of Liberal Arts and Communication",
-          "Communication and Journalism Department",
-          "Languages and Literature Department",
-          "Social Sciences Department",
-          "Philosophy and Psychology Department",
-          "College of Tourism and Hospitality Management",
-          "Hospitality Management Department",
-          "Tourism Management Department",
-          "College of Science",
-          "Biological Sciences Department",
-          "Mathematics & Statistics Department",
-          "Physical Sciences Department",
-          "Office of Student Services",
-          "Student Development and Activities Office",
-          "Student Welfare and Formation Office",
-          "Student Wellness Center",
-          "NSTP-CWTS",
-          "Campus Ministry Office",
-          "DLS Bahay Pag-asa Dasmariñas",
-          "Night College",
-          "Sports Development Office",
-          "University Lasallian Family Office",
-          "Basic Education",
-          "Office of the Associate Principal for Academics and Research",
-          "Office of the Associate Principal for Administrative Services and Student Affairs",
-          "Dormitory",
-          "Materials Reproduction Office / Food Services Office",
-          "Retreat and Conference Center / Sports & Recreation Complex",
-          "Warehouse Office",
-          "Safety & Health Office",
-          "Purchasing Office",
-          "Transportation Office",
-          "Facilities Maintenance Office",
-          "Housekeeping & Grounds",
-          "De La Salle Dasmariñas Alumni Association",
-          "DLSU-D Development Cooperative",
-          "Faculty Organization",
-          "KABALIKAT ng DLSU-D Inc.",
-          "Parents Organization La Salle Cavite",
-          "Human Resource Management Office"
-];
+  return false;
+});
+
+// Phone number validation: only 4 digits (telephone) or 11 digits (cellphone)
+document.querySelector('input[name="phoneNumber"]').addEventListener('blur', function(e) {
+  const value = e.target.value.trim();
+  if (value && !(value.length === 4 || value.length === 11)) {
+    e.target.style.borderColor = '#ef4444';
+    showMessage('Phone number must be either 4 digits (telephone) or 11 digits (cellphone).', 'error');
+  } else if (value.length === 4 || value.length === 11) {
+    e.target.style.borderColor = '#10b981';
+  } else {
+    e.target.style.borderColor = '';
+  }
+});
+
+// Organization and office options from database
+const organizationOptions = <%- JSON.stringify(organizations || []) %>;
+const officeOptions = <%- JSON.stringify(offices || []) %>;
 
 $(document).ready(function () {
   // Initialize Student Organization Select2
@@ -1838,7 +2556,8 @@ $(document).ready(function () {
     placeholder: "Search or select organizations",
     allowClear: true,
     width: '100%',
-    closeOnSelect: false,
+    closeOnSelect: true,
+    minimumResultsForSearch: Infinity,
     templateResult: function(data) {
       if (!data.id) return data.text;
       return $(`<div style="padding: 4px 0;">${data.text}</div>`);
@@ -1870,7 +2589,8 @@ $(document).ready(function () {
     placeholder: "Select office(s)/department(s)",
     allowClear: true,
     width: "100%",
-    closeOnSelect: false
+    closeOnSelect: true,
+    minimumResultsForSearch: Infinity
   });
 
   // Set up office counter and click handlers
@@ -1980,7 +2700,6 @@ function addCustomOffice() {
     input.focus();
     return;
   }
-  
   if (officeName.length < 3) {
     showOfficeFeedback('Office/department name must be at least 3 characters long.', 'error');
     input.focus();
@@ -1995,24 +2714,36 @@ function addCustomOffice() {
     return;
   }
 
-  // Add new option
-  if (select.find(`option[value="${officeName}"]`).length === 0) {
-    const newOption = new Option(officeName, officeName, true, true);
-    select.append(newOption);
-  }
-
-  const current = select.val() || [];
-  if (!current.includes(officeName)) {
-    current.push(officeName);
-    select.val(current).trigger('change');
-  }
-
-  input.value = '';
-  showOfficeFeedback(`"${officeName}" has been added successfully!`, 'success');
-  updateOfficeCounter();
-  
-  // Auto-hide feedback after 3 seconds
-  setTimeout(hideOfficeFeedback, 3000);
+  // Add to database via API
+  $.ajax({
+    url: '/api/add-office',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({ name: officeName }),
+    success: function(response) {
+      // Add new option to select2
+      if (select.find(`option[value="${officeName}"]`).length === 0) {
+        const newOption = new Option(officeName, officeName, true, true);
+        select.append(newOption);
+      }
+      const current = select.val() || [];
+      if (!current.includes(officeName)) {
+        current.push(officeName);
+        select.val(current).trigger('change');
+      }
+      input.value = '';
+      showOfficeFeedback(`"${officeName}" has been added successfully!`, 'success');
+      updateOfficeCounter();
+      setTimeout(hideOfficeFeedback, 3000);
+    },
+    error: function(xhr) {
+      if (xhr.responseJSON && xhr.responseJSON.message) {
+        showOfficeFeedback(xhr.responseJSON.message, 'error');
+      } else {
+        showOfficeFeedback('Failed to add office/department. Please try again.', 'error');
+      }
+    }
+  });
 }
 
 // Office feedback system

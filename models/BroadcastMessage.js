@@ -29,6 +29,19 @@ const broadcastMessageSchema = new mongoose.Schema({
     default: 'medium'
   },
 
+  // Announcement type
+  type: {
+    type: String,
+    default: 'News'
+  },
+
+  // Announcement status
+  status: {
+    type: String,
+    enum: ['active', 'scheduled', 'archived'],
+    default: 'active'
+  },
+
   // Recipients and their read status
   recipients: [{
     // Reference to each recipient user
@@ -65,9 +78,28 @@ const broadcastMessageSchema = new mongoose.Schema({
     default: true
   },
 
+  // Scheduled send time
+  scheduledTime: {
+    type: Date
+  },
+
   // Optional expiration date
   expiresAt: {
     type: Date
+  },
+
+  // Soft delete fields
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  deletedAt: {
+    type: Date
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

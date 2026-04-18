@@ -4,6 +4,7 @@
 
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
@@ -12,17 +13,48 @@ const BroadcastMessage = require('../models/BroadcastMessage');
 const SystemSettings = require('../models/SystemSettings');
 const RequestType = require('../models/RequestType');
 const Page = require('../models/Page');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requireAdminAPI } = require('../middleware/auth');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
+const emailService = require('../services/emailService');
 const settingsService = require('../services/settingsService');
 const reportService = require('../services/reportService');
 const announcementService = require('../services/announcementService');
+const { runArchivingTasks } = require('../services/archivingService');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
+const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
+
+// Helper to get admin/staff name for notifications
+async function getAdminNameString(req) {
+  try {
+    if (!req.user || !req.user._id) return 'Admin';
+    let adminName = 'Administrator';
+    const adminFirstName = req.user.fName ? String(req.user.fName).trim() : '';
+    const adminLastName = req.user.lName ? String(req.user.lName).trim() : '';
+    
+    if (adminFirstName && adminLastName) {
+      adminName = `${adminFirstName} ${adminLastName}`;
+    } else {
+      const freshAdmin = await User.findById(req.user._id);
+      if (freshAdmin) {
+        const freshFirst = freshAdmin.fName ? String(freshAdmin.fName).trim() : '';
+        const freshLast = freshAdmin.lName ? String(freshAdmin.lName).trim() : '';
+        if (freshFirst && freshLast) {
+          adminName = `${freshFirst} ${freshLast}`;
+        }
+      }
+    }
+    const roleStr = (req.user.role === 'staff' || req.user.userType === 'staff') ? 'Staff' : 'Admin';
+    return `${roleStr} ${adminName}`;
+  } catch (err) {
+    console.error('Error in getAdminNameString:', err);
+    return 'Admin';
+  }
+}
 
 // Debug: indicate admin routes module loaded
 console.log('[routes/admin] admin routes module loaded');
@@ -34,11 +66,11 @@ console.log('[routes/admin] admin routes module loaded');
 router.get('/admin', requireAdmin, async (req, res) => {
   try {
     const users = await User.find().lean();
-    const approvals = await RequestApproval.find().populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
 
-    // Filter by status
-    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending')
+    // Filter by status - only pending AND unassigned for pending assignment KPI
+    const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending' && (!a.assignedUnits || a.assignedUnits === 'Not yet assigned'))
       .map(a => {
         // Determine display organization
         let displayOrganization = a.organization || 'N/A';
@@ -55,7 +87,7 @@ router.get('/admin', requireAdmin, async (req, res) => {
         }
         return { ...a, requestType: 'approval', displayOrganization };
       });
-    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending')
+    const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending' && (!s.assignedUnits || s.assignedUnits === 'Not yet assigned'))
       .map(s => {
         // Determine display organization
         let displayOrganization = s.organization || 'N/A';
@@ -86,11 +118,11 @@ router.get('/admin', requireAdmin, async (req, res) => {
     const totalRequests = approvals.length + serviceRequests.length;
     const totalPending = totalRequests - completedReqs.length;
 
-    // Get pending requests for admin action list (sorted by most recent)
+    // Get pending requests for admin action list (sorted by oldest first)
     // Convert any pending status to approved
   const allPendingRequests = [...pendingApprovals, ...pendingServices]
       .map(req => ({ ...req, status: 'approved' }))
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     // Calculate requests by unit (from user's organization)
     const allRequests = [...approvals, ...serviceRequests];
@@ -121,8 +153,13 @@ router.get('/admin', requireAdmin, async (req, res) => {
       let priorityLabel = 'No Deadline';
       let priorityColor = '#6b7280';
       
-      if (deadline && deadline >= now) {
-        if (deadline <= oneDayFromNow) {
+      if (deadline) {
+        if (deadline < now) {
+          // Overdue tasks are critical priority
+          priority = 'critical';
+          priorityLabel = 'Overdue';
+          priorityColor = '#dc2626';
+        } else if (deadline <= oneDayFromNow) {
           priority = 'critical';
           priorityLabel = 'Critical';
           priorityColor = '#dc2626';
@@ -169,9 +206,17 @@ router.get('/admin', requireAdmin, async (req, res) => {
       if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
         return priorityOrder[a.priority] - priorityOrder[b.priority];
       }
-      // If same priority, sort by deadline (earliest first)
+      // If same priority, sort by deadline (earliest first for upcoming, most overdue first for past due)
       if (a.deadline && b.deadline) {
-        return new Date(a.deadline) - new Date(b.deadline);
+        const aDeadline = new Date(a.deadline);
+        const bDeadline = new Date(b.deadline);
+        if (aDeadline < now && bDeadline < now) {
+          // Both overdue - most overdue (earliest deadline) first
+          return aDeadline - bDeadline;
+        } else {
+          // At least one not overdue - earliest deadline first
+          return aDeadline - bDeadline;
+        }
       }
       if (a.deadline) return -1;
       if (b.deadline) return 1;
@@ -287,6 +332,8 @@ router.get('/admin', requireAdmin, async (req, res) => {
       totalUnassigned: unassignedTasks.length
     };
 
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    
     res.render('Admin/adminpage', {
       user: req.user,
       name: `${req.user.fName}`,
@@ -298,11 +345,15 @@ router.get('/admin', requireAdmin, async (req, res) => {
       recentRequests: recentRequests,
       urgentTasks: urgentAndOverdueTasks,
       revisionRequests: requestsWithRevisions,
-      stats
+      stats,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses()
     });
   } catch (err) {
     console.error('Error loading admin dashboard:', err);
-    res.status(500).render('error', { message: 'Failed to load admin page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load admin page.' });
+    }
   }
 });
 
@@ -312,14 +363,17 @@ router.get('/admin', requireAdmin, async (req, res) => {
  */
 router.get('/admin/analytics', requireAdmin, async (req, res) => {
   try {
-    const approvals = await RequestApproval.find().populate('userId').lean();
-    const serviceRequests = await ServiceRequest.find().populate('userId').lean();
+    // Filter by last month for consistency with auto-applied monthly filter
+    const now = new Date();
+    const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
+    
+    const approvals = await RequestApproval.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ createdAt: { $gte: lastMonth }, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
 
     const pendingApprovals = approvals.filter(a => a.status?.toLowerCase() === 'pending');
     const pendingServices = serviceRequests.filter(s => s.status?.toLowerCase() === 'pending');
 
     // Get ALL unassigned tasks with priority classification
-    const now = new Date();
     const oneDayFromNow = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
     const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
     const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
@@ -394,23 +448,99 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     
     const urgentCount = unassignedTasks.filter(t => t.priority === 'critical' || t.priority === 'urgent').length;
 
+    // Calculate dynamic KPIs
+    const completedRequests = allRequests.filter(r => r.status?.toLowerCase() === 'completed');
+    const inProgressRequests = allRequests.filter(r => r.status?.toLowerCase() === 'in progress' || r.status?.toLowerCase() === 'in_progress');
+    const inRevisionRequests = allRequests.filter(r => r.status?.toLowerCase() === 'revision required' || r.status?.toLowerCase() === 'revision_required');
+
+    // Calculate Average Turnaround Time (days from creation to completion)
+    let avgTurnaroundTime = 2.5; // default
+    if (completedRequests.length > 0) {
+      const turnaroundTimes = completedRequests
+        .filter(r => r.createdAt && r.updatedAt)
+        .map(r => {
+          const createdDate = new Date(r.createdAt);
+          const completedDate = new Date(r.updatedAt);
+          return (completedDate - createdDate) / (1000 * 60 * 60 * 24); // convert to days
+        });
+      if (turnaroundTimes.length > 0) {
+        avgTurnaroundTime = (turnaroundTimes.reduce((a, b) => a + b, 0) / turnaroundTimes.length).toFixed(1);
+      }
+    }
+
+    // Calculate Completion Rate (percentage)
+    let completionRate = 85; // default
+    if (allRequests.length > 0) {
+      completionRate = Math.round((completedRequests.length / allRequests.length) * 100);
+    }
+
+    // Calculate Average Response Time (hours from creation to first assignment/status change)
+    let avgResponseTime = 4.2; // default
+    let responseTimeUnit = 'hrs';
+    const responseTimesInHours = allRequests
+      .filter(r => r.createdAt && r.updatedAt)
+      .map(r => {
+        const createdDate = new Date(r.createdAt);
+        const firstUpdateDate = new Date(r.updatedAt);
+        return (firstUpdateDate - createdDate) / (1000 * 60 * 60); // convert to hours
+      });
+    if (responseTimesInHours.length > 0) {
+      const avgHours = responseTimesInHours.reduce((a, b) => a + b, 0) / responseTimesInHours.length;
+      if (avgHours >= 24) {
+        avgResponseTime = (avgHours / 24).toFixed(1);
+        responseTimeUnit = 'days';
+      } else {
+        avgResponseTime = avgHours.toFixed(1);
+        responseTimeUnit = 'hrs';
+      }
+    }
+
+    // Count overdue tasks
+    const overdueTasks = allRequests.filter(r => {
+      return r.deadline && new Date(r.deadline) < now && 
+             (r.status?.toLowerCase() !== 'completed');
+    }).length;
+
+    // Count active requests (in progress + in revision)
+    const activeRequests = inProgressRequests.length + inRevisionRequests.length;
+
     const stats = {
       totalApprovals: approvals.length,
       totalServices: serviceRequests.length,
       pendingApprovals: pendingApprovals.length,
       pendingServices: pendingServices.length,
       urgentUnassigned: urgentCount,
-      totalUnassigned: unassignedTasks.length
+      totalUnassigned: unassignedTasks.length,
+      // Dynamic KPIs
+      avgTurnaroundTime: parseFloat(avgTurnaroundTime),
+      completionRate: completionRate,
+      avgResponseTime: parseFloat(avgResponseTime),
+      responseTimeUnit: responseTimeUnit,
+      overdueTasks: overdueTasks,
+      activeRequests: activeRequests,
+      completedRequests: completedRequests.length,
+      inProgressRequests: inProgressRequests.length,
+      inRevisionRequests: inRevisionRequests.length
     };
+
+    const { getUnits, getRequestStatuses, getRequestTypes } = require('../utils/settingsHelpers');
+    const units = getUnits();
+    const requestStatuses = getRequestStatuses();
+    const requestTypes = getRequestTypes();
 
     res.render('Admin/analytics', {
       user: req.user,
       stats,
-      unassignedTasks
+      unassignedTasks,
+      units,
+      requestStatuses,
+      requestTypes
     });
   } catch (err) {
     console.error('Error loading analytics page:', err);
-    res.status(500).render('error', { message: 'Failed to load analytics page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load analytics page.' });
+    }
   }
 });
 
@@ -425,42 +555,9 @@ router.get('/admin/profile', async (req, res) => {
     res.render('Admin/profileadmin', { user });
   } catch (err) {
     console.error('Error loading admin profile:', err);
-    res.status(500).render('error', { message: 'Failed to load profile page.' });
-  }
-});
-
-/**
- * GET /admin/announcement
- * Render admin announcement page
- */
-router.get('/admin/announcement', requireAdmin, async (req, res) => {
-  try {
-    console.log('[routes/admin] GET /admin/announcement accessed by:', req.session?.userId || 'no-session');
-    // Load users and organizations for selection
-    const users = await User.find().select('fName lName email organization affiliation studentOrganization').lean();
-
-    // Build a list of organizations from various possible fields
-    const orgs = new Set();
-    users.forEach(u => {
-      if (u.organization) orgs.add(u.organization);
-      if (u.affiliation) {
-        if (Array.isArray(u.affiliation)) u.affiliation.forEach(a => a && orgs.add(a));
-        else orgs.add(u.affiliation);
-      }
-      if (u.studentOrganization) {
-        if (Array.isArray(u.studentOrganization)) u.studentOrganization.forEach(a => a && orgs.add(a));
-        else orgs.add(u.studentOrganization);
-      }
-    });
-
-    res.render('Admin/Announcementpage', {
-      user: req.user,
-      users,
-      organizations: Array.from(orgs).filter(Boolean).sort()
-    });
-  } catch (err) {
-    console.error('Error loading announcement page:', err);
-    res.status(500).render('error', { message: 'Failed to load announcement page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load profile page.' });
+    }
   }
 });
 
@@ -523,7 +620,9 @@ router.post('/admin/announcement/send', requireAdmin, async (req, res) => {
     res.redirect('/admin?announcement=sent');
   } catch (err) {
     console.error('Error sending announcement:', err);
-    res.status(500).render('error', { message: 'Failed to send announcement.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to send announcement.' });
+    }
   }
 });
 
@@ -533,7 +632,7 @@ router.post('/admin/announcement/send', requireAdmin, async (req, res) => {
  */
 router.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
-    let approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
+    let approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -561,10 +660,20 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
       };
     });
 
-    res.render('Admin/approvals', { approvals: approvals, user: req.user });
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    res.render('Admin/approvals', { 
+      approvals: approvals, 
+      user: req.user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
+    });
   } catch (err) {
     console.error('Error fetching admin approvals:', err);
-    res.status(500).render('error', { message: 'Server error' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Server error' });
+    }
   }
 });
 
@@ -575,7 +684,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
 router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    let approvals = await RequestApproval.find()
+    let approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .lean();
 
@@ -628,7 +737,16 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
       return 0;
     });
 
-    res.render('Admin/approvals', { approvals, user: req.user, openModalId: id });
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    res.render('Admin/approvals', { 
+      approvals, 
+      user: req.user, 
+      openModalId: id,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
+    });
   } catch (err) {
     console.error('Error loading admin approvals:', err);
     res.status(500).send('Error loading approvals page');
@@ -641,7 +759,7 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
  */
 router.get('/admin/services', requireAdmin, async (req, res) => {
   try {
-    let serviceRequests = await ServiceRequest.find()
+    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -697,7 +815,15 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
 
-    res.render('Admin/services', { serviceRequests: serviceRequestsWithDisplay, user: req.user });
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    res.render('Admin/services', { 
+      serviceRequests: serviceRequestsWithDisplay, 
+      user: req.user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
+    });
   } catch (err) {
     console.error('Error loading admin services:', err);
     res.status(500).send('Error loading services page');
@@ -711,7 +837,7 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
 router.get('/admin/services/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    let serviceRequests = await ServiceRequest.find()
+    let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
       .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file allowAdditionalFileUpload createdAt updatedAt')
       .lean();
@@ -766,7 +892,16 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
 
-    res.render('Admin/services', { serviceRequests: serviceRequestsWithDisplay, user: req.user, openModalId: id });
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    res.render('Admin/services', { 
+      serviceRequests: serviceRequestsWithDisplay, 
+      user: req.user, 
+      openModalId: id,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
+    });
   } catch (err) {
     console.error('Error loading admin services:', err);
     res.status(500).send('Error loading services page');
@@ -778,16 +913,26 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
  * Admin view of all users for management
  */
 router.get('/admin/users', requireAdmin, async (req, res) => {
-  const users = await User.find().lean();
+  const users = await User.find({ isDeleted: { $ne: true } }).lean();
+  const settingsHelpers = require('../utils/settingsHelpers');
 
   const usersWithDisplay = users.map(user => ({
     ...user,
     displayOrganization: user.userType === 'nonstudent'
-  ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
-  : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
+      ? (Array.isArray(user.affiliation) ? user.affiliation.join(', ') : user.affiliation)
+      : (Array.isArray(user.studentOrganization) ? user.studentOrganization.join(', ') : user.studentOrganization)
   }));
 
-  res.render('Admin/users', { users: usersWithDisplay, user: req.user });
+  res.render('Admin/users', {
+    users: usersWithDisplay,
+    user: req.user,
+    units: settingsHelpers.getUnits(),
+    userRoles: settingsHelpers.getUserRoles(),
+    organizations: settingsHelpers.getOrganizations(),
+    offices: settingsHelpers.getOffices(),
+    organizationsData: settingsHelpers.getOrganizations(),
+    officesData: settingsHelpers.getOffices()
+  });
 });
 
 /**
@@ -797,7 +942,7 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
 router.get('/admin/all-requests', requireAdmin, async (req, res) => {
   try {
     // Fetch with proper population and error handling (exclude deleted items)
-    const approvals = await RequestApproval.find({ isDeleted: { $ne: true } })
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate({
         path: 'userId',
         select: 'fName lName userType affiliation studentOrganization',
@@ -805,7 +950,7 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       })
       .lean();
 
-    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true } })
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate({
         path: 'userId',
         select: 'fName lName userType affiliation studentOrganization',
@@ -930,111 +1075,230 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       return 0;
     });
 
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    
     res.render('Admin/allrequestsadmin', {
       allRequests,
-      user: req.user
+      user: req.user,
+      units: getUnits(),
+      requestStatuses: getRequestStatuses(),
+      organizations: getOrganizations(),
+      offices: getOffices()
     });
   } catch (err) {
     console.error('Error loading all admin requests:', err);
-    res.status(500).render('error', { message: 'Failed to load all requests page.' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load all requests page.' });
+    }
   }
 });
 
 /**
  * GET /admin/archive
- * View archived (deleted) requests
+ * Redirects to the Archive Manager tab inside the Configuration page.
+ * Kept for backward compatibility with any existing links.
  */
-router.get('/admin/archive', requireAdmin, async (req, res) => {
+router.get('/admin/archive', requireAdmin, (req, res) => {
+  res.redirect('/admin/configuration?tab=archivemanager');
+});
+
+
+
+/**
+ * POST /a POST /admin/request/restore
+ * Restore archived/deleted request back to its previous status
+ */
+router.post('/admin/request/restore', requireAdmin, async (req, res) => {
   try {
-    // Fetch only deleted/archived requests
-    const approvals = await RequestApproval.find({ isDeleted: true })
-      .populate({
-        path: 'userId',
-        select: 'fName lName userType affiliation studentOrganization',
-        options: { strictPopulate: false }
-      })
-      .populate({
-        path: 'deletedBy',
-        select: 'fName lName'
-      })
-      .lean();
+    const { requestId, requestType, newStatus } = req.body;
 
-    const serviceRequests = await ServiceRequest.find({ isDeleted: true })
-      .populate({
-        path: 'userId',
-        select: 'fName lName userType affiliation studentOrganization',
-        options: { strictPopulate: false }
-      })
-      .populate({
-        path: 'deletedBy',
-        select: 'fName lName'
-      })
-      .lean();
+    if (!requestId || !requestType) {
+      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
+    }
 
-    // Process archived requests
-    const archivedRequests = [
-      ...approvals.map(r => {
-        let userName = 'System User';
-        let displayOrganization = r.organization || 'N/A';
-        let deletedByName = 'Unknown';
+    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
 
-        if (r.userId && r.userId.fName) {
-          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
-          displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
+    // Read the current document to get previousStatus before modifying
+    const existing = await Model.findById(requestId).lean();
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Determine the status to restore to:
+    //   - If newStatus is provided (from the UI modal choice), use it
+    //   - If previousStatus was saved (by archive or delete), use it
+    //   - Otherwise fall back to 'Pending'
+    const restoreStatus = newStatus || existing.previousStatus || 'Pending';
+
+    // Build the update: clear archive/delete flags and restore the original status
+    const updateDoc = {
+      status: restoreStatus,
+      isDeleted: false,
+      $unset: {
+        deletedAt: 1,
+        deletedBy: 1,
+        previousStatus: 1,
+        archivedAt: 1,
+        archivedBy: 1
+      }
+    };
+
+    const request = await Model.findByIdAndUpdate(requestId, updateDoc, { new: true });
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Notify the user with the actual restored status
+    try {
+      const adminId = req.user._id;
+      const User = require('../models/User');
+      
+      // Determine the correct page URL based on request type
+      const userPageUrl = requestType === 'Request Approval' 
+        ? `/request-approvals?openModalId=${requestId}` 
+        : `/service-requests?openModalId=${requestId}`;
+      
+      // Get admin name - handle both Mongoose Document and plain objects
+      let adminName = 'Administrator';
+      const adminFirstName = req.user.fName ? String(req.user.fName).trim() : '';
+      const adminLastName = req.user.lName ? String(req.user.lName).trim() : '';
+      
+      if (adminFirstName && adminLastName) {
+        adminName = `${adminFirstName} ${adminLastName}`;
+      } else if (!adminFirstName || !adminLastName) {
+        // If req.user doesn't have the names, fetch fresh from DB
+        try {
+          const freshAdmin = await User.findById(adminId);
+          if (freshAdmin) {
+            const freshFirst = freshAdmin.fName ? String(freshAdmin.fName).trim() : '';
+            const freshLast = freshAdmin.lName ? String(freshAdmin.lName).trim() : '';
+            if (freshFirst && freshLast) {
+              adminName = `${freshFirst} ${freshLast}`;
+            }
+          }
+        } catch (dbErr) {
+          console.error('Error fetching admin from DB:', dbErr);
         }
-
-        if (r.deletedBy && r.deletedBy.fName) {
-          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+      }
+      
+      console.log('[Restore Notification] Admin name being used:', adminName);
+      
+      await notificationService.notifySystem(
+        request.userId, 
+        'Request Restored', 
+        `Admin ${adminName} has restored your ${requestType.toLowerCase()} "${request.title}" and is now active (status: ${restoreStatus}).`, 
+        'medium', 
+        userPageUrl
+      );
+      
+      // Notify Units if assigned
+      if (request.assignedUnits) {
+        const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
+        const unitIds = unitMembers.map(u => u._id);
+        if (unitIds.length > 0) {
+          const unitNotificationUrl = requestType === 'Request Approval'
+            ? `/unit/task-approvals?modal=request&requestId=${requestId}&type=approval`
+            : `/unit/task-services?modal=request&requestId=${requestId}&type=service`;
+          await notificationService.notifySystem(
+            unitIds,
+            'Request Restored',
+            `Admin ${adminName} has restored the ${requestType.toLowerCase()} "${request.title}" assigned to your unit (status: ${restoreStatus}).`,
+            'medium',
+            unitNotificationUrl
+          );
         }
+      }
+      
+      // Notify OTHER admin users (exclude performing admin)
+      const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+      const otherAdminIds = otherAdmins.map(a => a._id);
+      if (otherAdminIds.length > 0) {
+        const adminMessage = `Admin ${adminName} has restored the ${requestType.toLowerCase()} "${request.title}" to status: ${restoreStatus}.`;
+        await notificationService.notifySystem(otherAdminIds, 'Request Restored', adminMessage, 'medium', `/admin/configuration?tab=archivemanager&openModalId=${requestId}`);
+      }
+    } catch (notifError) {
+      console.error('Error sending notification:', notifError);
+    }
 
-        return {
-          ...r,
-          type: "Request Approval",
-          displayOrganization,
-          userName,
-          deletedByName,
-          datetime: r.datetime || r.createdAt
-        };
-      }),
-      ...serviceRequests.map(r => {
-        let userName = 'System User';
-        let displayOrganization = r.organization || 'N/A';
-        let deletedByName = 'Unknown';
-
-        if (r.userId && r.userId.fName) {
-          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
-          displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
-        }
-
-        if (r.deletedBy && r.deletedBy.fName) {
-          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
-        }
-
-        return {
-          ...r,
-          type: "Service Request",
-          displayOrganization,
-          userName,
-          deletedByName,
-          datetime: r.datetime || r.createdAt
-        };
-      })
-    ];
-
-    // Sort by deleted date (most recent first)
-    archivedRequests.sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
-
-    res.render('Admin/archive', {
-      archivedRequests,
-      user: req.user
+    res.json({ 
+      success: true, 
+      message: `Request restored to "${restoreStatus}" status successfully`,
+      restoredStatus: restoreStatus
     });
-  } catch (err) {
-    console.error('Error loading archived requests:', err);
-    res.status(500).render('error', { message: 'Failed to load archived requests page.' });
+  } catch (error) {
+    console.error('Error restoring request:', error);
+    res.status(500).json({ success: false, message: 'Failed to restore request' });
+  }
+});
+
+/**
+ * POST /admin/run-archiving-now
+ * Manually trigger the archiving job immediately — for testing/admin use.
+ * Admin-only. Safe to run at any time; only archives requests that meet the day-limit rules.
+ */
+router.post('/admin/run-archiving-now', requireAdmin, async (req, res) => {
+  try {
+    console.log(`[ADMIN] Manual archiving triggered by user ${req.session.userId}`);
+    const result = await runArchivingTasks();
+    return res.json({
+      success: true,
+      message: `Archiving complete. ${result.totalArchived} request(s) archived this run.`,
+      totalArchived: result.totalArchived
+    });
+  } catch (error) {
+    console.error('[ADMIN] Manual archiving failed:', error);
+    return res.status(500).json({ success: false, message: 'Archiving job failed. Check server logs.' });
+  }
+});
+
+/**
+ * GET /api/admin/archived-records
+ * Fetch all archived and manually deleted requests with display fields computed.
+ * Consolidated from the configuration page's initial load logic.
+ */
+router.get('/api/admin/archived-records', requireAdmin, async (req, res) => {
+  try {
+    const [manualApprovals, manualServices, autoArchivedApprovals, autoArchivedServices] = await Promise.all([
+      RequestApproval.find({ status: 'Archived', archiveReason: { $exists: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+      ServiceRequest.find({ status: 'Archived', archiveReason: { $exists: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+      RequestApproval.find({ status: 'Archived', archivedBy: 'system' }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+      ServiceRequest.find({ status: 'Archived', archivedBy: 'system' }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean()
+    ]);
+
+    const buildEntry = (r, type, source) => {
+      let userName = 'System User';
+      let displayOrganization = r.organization || 'N/A';
+      let deletedByName = source === 'auto' ? 'System (Auto-Archive)' : 'Unknown';
+      if (r.userId && r.userId.fName) {
+        userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+        displayOrganization = r.userId.userType === 'nonstudent'
+          ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+          : r.organization || 'N/A';
+      }
+      return { 
+        ...r, 
+        type, 
+        displayOrganization, 
+        userName, 
+        deletedByName, 
+        archiveSource: source,
+        datetime: r.datetime || r.createdAt,
+        deletedAt: source === 'auto' ? (r.archivedAt || r.updatedAt) : r.deletedAt 
+      };
+    };
+
+    const archivedRequests = [
+      ...manualApprovals.map(r => buildEntry(r, 'Request Approval', 'deleted')),
+      ...manualServices.map(r => buildEntry(r, 'Service Request', 'deleted')),
+      ...autoArchivedApprovals.map(r => buildEntry(r, 'Request Approval', 'auto')),
+      ...autoArchivedServices.map(r => buildEntry(r, 'Service Request', 'auto')),
+    ].sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
+
+    res.json({ success: true, data: archivedRequests });
+  } catch (error) {
+    console.error('[API] Error fetching archived records:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch archived records' });
   }
 });
 
@@ -1200,6 +1464,69 @@ router.get('/api/admin/deleted-users', requireAdmin, async (req, res) => {
 });
 
 /**
+ * POST /api/admin/delete-user
+ * Soft delete a user (move to trash)
+ */
+router.post('/api/admin/delete-user', requireAdminAPI, async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if user is already deleted
+    if (user.isDeleted) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is already deleted'
+      });
+    }
+
+    // Soft delete the user
+    const deletedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: req.user._id
+      },
+      { new: true }
+    );
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User moved to trash successfully',
+      user: deletedUser
+    });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete user'
+    });
+  }
+});
+
+/**
  * POST /api/admin/restore-user/:userId
  * Restore a deleted user
  */
@@ -1347,6 +1674,46 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             await notificationService.notifyApprovalRejected(requestId, approval.userId._id, req.user._id);
           } else if (statusLower === 'for revision') {
             await notificationService.notifyApprovalRevision(requestId, approval.userId._id, req.user._id);
+          } else if (statusLower === 'archived' || statusLower === 'deleted') {
+            const titleStr = approval.title || 'Untitled Request';
+            const requestorId = approval.userId._id || approval.userId;
+            const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
+            // Only notify requestor if they are NOT the admin performing the action
+            if (String(requestorId) !== String(adminId)) {
+              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
+              await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/request-approvals?openModalId=${requestId}`);
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const User = require('../models/User');
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const adminMessage = `${adminNameFull} has manually ${statusLower} the request "${titleStr}".`;
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              await notificationService.notifySystem(otherAdminIds, `Request ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
+            }
+          } else {
+            // General fallback: notify the user of any intermediate status updates (e.g. "pending", "in progress")
+            const titleStr = approval.title || 'Untitled Request';
+            const requestorId = approval.userId._id || approval.userId;
+            const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
+            
+            if (String(requestorId) !== String(adminId)) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+              await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/request-approvals?openModalId=${requestId}`);
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const User = require('../models/User');
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const adminMessage = `${adminNameFull} has changed the approval "${titleStr}" to status: ${capitalizedStatus}.`;
+              await notificationService.notifySystem(otherAdminIds, `Approval ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
+            }
           }
         }
       } else if (requestType === 'Service Request') {
@@ -1360,6 +1727,54 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
             await notificationService.notifyServiceRejected(requestId, service.userId._id, req.user._id);
           } else if (statusLower === 'completed') {
             await notificationService.notifyServiceCompleted(requestId, service.userId._id, req.user._id);
+          } else if (statusLower === 'archived' || statusLower === 'deleted') {
+            const titleStr = service.title || 'Untitled Request';
+            const requestorId = service.userId._id || service.userId;
+            const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
+            // Only notify requestor if they are NOT the admin performing the action
+            if (String(requestorId) !== String(adminId)) {
+              const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
+              await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/service-requests?openModalId=${requestId}`);
+            }
+            // Notify Units - send to unit-specific task pages with archived modal parameters
+            const User = require('../models/User');
+            if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+              const unitMembers = await User.find({ unitTeam: assignedUnits, role: 'unit' }, '_id');
+              const unitIds = unitMembers.map(u => u._id);
+              if (unitIds.length > 0) {
+                await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was ${statusLower} by ${adminNameFull}.`, 'medium', `/unit/task-services?modal=archived&requestId=${requestId}&type=service`);
+              }
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const adminMessage = `${adminNameFull} has manually ${statusLower} the request "${titleStr}".`;
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              await notificationService.notifySystem(otherAdminIds, `Request ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
+            }
+          } else {
+            // General fallback: notify the user of any intermediate service status updates (e.g. "pending", "in progress")
+            const titleStr = service.title || 'Untitled Request';
+            const requestorId = service.userId._id || service.userId;
+            const adminId = req.user._id;
+            const adminNameFull = await getAdminNameString(req);
+            
+            if (String(requestorId) !== String(adminId)) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+              await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/service-requests?openModalId=${requestId}`);
+            }
+            // Notify OTHER admin users (exclude performing admin)
+            const User = require('../models/User');
+            const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+            const otherAdminIds = otherAdmins.map(a => a._id);
+            if (otherAdminIds.length > 0) {
+              const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+              const adminMessage = `${adminNameFull} has changed the service request "${titleStr}" to status: ${capitalizedStatus}.`;
+              await notificationService.notifySystem(otherAdminIds, `Service ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${requestId}`);
+            }
           }
         }
       }
@@ -1396,13 +1811,18 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
  * Updates approval request status and assigned units
  */
 router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
-  const { requestId, status, assignedUnits } = req.body;
+  const { requestId, status, assignedUnits, deadline } = req.body;
 
   try {
     const update = {
       status: status || 'Pending',
       assignedUnits: assignedUnits || 'Not yet assigned'
     };
+
+    // Add deadline if provided
+    if (deadline) {
+      update.deadline = new Date(deadline);
+    }
 
     // Set allowAdditionalFileUpload to true when status is set to "For revision"
     if (status?.toLowerCase() === 'for revision') {
@@ -1413,6 +1833,9 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
 
     // Send notification to user
     try {
+      const adminId = req.user._id;
+      const User = require('../models/User');
+      
       if (result && result.userId) {
         const statusLower = status?.toLowerCase();
         
@@ -1422,6 +1845,37 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
           await notificationService.notifyApprovalRejected(requestId, result.userId._id, req.user._id);
         } else if (statusLower === 'for revision') {
           await notificationService.notifyApprovalRevision(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'archived' || statusLower === 'deleted') {
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminNameFull = await getAdminNameString(req);
+          // Only notify requestor if they are NOT the admin performing the action
+          if (String(requestorId) !== String(adminId)) {
+            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
+            await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/request-approvals?openModalId=${result._id}`);
+          }
+        } else {
+          // General fallback: notify the user of any intermediate approval status updates (e.g. "pending", "in progress")
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminNameFull = await getAdminNameString(req);
+          
+          if (String(requestorId) !== String(adminId)) {
+            const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+            const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+            await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/request-approvals?openModalId=${result._id}`);
+          }
+        }
+        
+        // Notify OTHER admin users (exclude performing admin)
+        const adminNameFull = await getAdminNameString(req);
+        const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+        const otherAdminIds = otherAdmins.map(a => a._id);
+        if (otherAdminIds.length > 0) {
+          const titleStr = result.title || 'Untitled Request';
+          const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+          const adminMessage = `${adminNameFull} has changed the approval "${titleStr}" to status: ${capitalizedStatus}.`;
+          await notificationService.notifySystem(otherAdminIds, `Approval ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${result._id}`);
         }
       }
     } catch (notifError) {
@@ -1466,7 +1920,7 @@ router.post('/api/admin/approval/mark-viewed', requireAdmin, async (req, res) =>
       success: true,
       message: 'Request marked as viewed',
       viewedAt: now,
-      viewedBy: req.user.fName + ' ' + req.user.lName
+      viewedBy: `${req.user.fName || ''} ${req.user.lName || ''}`.trim() || 'Unknown'
     });
   } catch (err) {
     console.error('Error marking approval as viewed:', err);
@@ -1505,7 +1959,7 @@ router.post('/api/admin/service/mark-viewed', requireAdmin, async (req, res) => 
       success: true,
       message: 'Request marked as viewed',
       viewedAt: now,
-      viewedBy: req.user.fName + ' ' + req.user.lName
+      viewedBy: `${req.user.fName || ''} ${req.user.lName || ''}`.trim() || 'Unknown'
     });
   } catch (err) {
     console.error('Error marking service as viewed:', err);
@@ -1537,6 +1991,9 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
 
     // Send notification to user
     try {
+      const adminId = req.user._id;
+      const User = require('../models/User');
+      
       if (result && result.userId) {
         const statusLower = status?.toLowerCase();
         
@@ -1546,6 +2003,44 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
           await notificationService.notifyServiceRejected(requestId, result.userId._id, req.user._id);
         } else if (statusLower === 'completed') {
           await notificationService.notifyServiceCompleted(requestId, result.userId._id, req.user._id);
+        } else if (statusLower === 'archived' || statusLower === 'deleted') {
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminNameFull = await getAdminNameString(req);
+          // Only notify requestor if they are NOT the admin performing the action
+          if (String(requestorId) !== String(adminId)) {
+            const userMessage = `Your request "${titleStr}" was manually ${statusLower} by ${adminNameFull}. You can request restoration by providing a reason in the request details.`;
+            await notificationService.notifySystem(requestorId, 'Request Archived', userMessage, 'medium', `/service-requests?openModalId=${result._id}`);
+          }
+          if (assignedUnits && assignedUnits !== 'Not yet assigned') {
+            const unitMembers = await User.find({ unitTeam: assignedUnits, role: 'unit' }, '_id');
+            const unitIds = unitMembers.map(u => u._id);
+            if (unitIds.length > 0) {
+              await notificationService.notifySystem(unitIds, 'Request Archived', `The request "${titleStr}" assigned to your unit was ${statusLower} by ${adminNameFull}.`, 'medium', `/admin/services?openModalId=${result._id}`);
+            }
+          }
+        } else {
+          // General fallback: notify the user of any intermediate service status updates (e.g. "pending", "in progress")
+          const titleStr = result.title || 'Untitled Request';
+          const requestorId = result.userId._id || result.userId;
+          const adminNameFull = await getAdminNameString(req);
+          
+          if (String(requestorId) !== String(adminId)) {
+            const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+            const userMessage = `Your request "${titleStr}" status was updated to ${capitalizedStatus} by ${adminNameFull}.`;
+            await notificationService.notifySystem(requestorId, `Request ${capitalizedStatus}`, userMessage, 'medium', `/service-requests?openModalId=${result._id}`);
+          }
+        }
+        
+        // Notify OTHER admin users (exclude performing admin)
+        const adminNameFull = await getAdminNameString(req);
+        const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+        const otherAdminIds = otherAdmins.map(a => a._id);
+        if (otherAdminIds.length > 0) {
+          const titleStr = result.title || 'Untitled Request';
+          const capitalizedStatus = statusLower.charAt(0).toUpperCase() + statusLower.slice(1);
+          const adminMessage = `${adminNameFull} has changed the service request "${titleStr}" to status: ${capitalizedStatus}.`;
+          await notificationService.notifySystem(otherAdminIds, `Service ${capitalizedStatus}`, adminMessage, 'medium', `/admin/all-requests?openModalId=${result._id}`);
         }
       }
     } catch (notifError) {
@@ -1576,7 +2071,42 @@ router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => 
       return res.status(400).json({ success: false, message: 'Deadline must be in the future' });
     }
 
-    await ServiceRequest.findByIdAndUpdate(requestId, { deadline: deadlineDate });
+    const result = await ServiceRequest.findByIdAndUpdate(
+      requestId, 
+      { deadline: deadlineDate },
+      { new: true }
+    ).populate('userId');
+
+    // Send notification to user about deadline change
+    try {
+      if (result && result.userId) {
+        const adminId = req.user._id;
+        const requestorId = result.userId._id || result.userId;
+        const titleStr = result.title || 'Untitled Request';
+        const adminNameFull = await getAdminNameString(req);
+        
+        // Only notify requestor if they are NOT the admin performing the action
+        if (String(requestorId) !== String(adminId)) {
+          const formattedDeadline = deadlineDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric'
+          });
+          const message = `The deadline for your request "${titleStr}" has been updated to ${formattedDeadline} by ${adminNameFull}.`;
+          await notificationService.createNotification(
+            requestorId,
+            'Request Deadline Updated',
+            message,
+            'info',
+            `/service-requests?openModalId=${result._id}`
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending deadline update notification:', notifError);
+      // Don't fail the deadline update if notification fails
+    }
+
     res.json({ success: true, message: 'Deadline updated successfully' });
   } catch (err) {
     console.error('Error updating deadline:', err);
@@ -1591,6 +2121,7 @@ router.post('/admin/service/update-deadline', requireAdmin, async (req, res) => 
 router.post('/admin/user/update', requireAdmin, async (req, res) => {
   try {
     const { userId, role } = req.body;
+    let { unitTeam } = req.body;
 
     if (!userId || !role) {
       return res.status(400).json({
@@ -1599,11 +2130,30 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
-    if (!['user', 'admin'].includes(role)) {
+    if (!['user', 'admin', 'unit'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be either "user" or "admin".'
+        message: 'Invalid role. Must be "user", "admin", or "unit".'
       });
+    }
+
+    // If role is unit, unitTeam is required
+    if (role === 'unit') {
+      if (!unitTeam) {
+        unitTeam = 'N/A'; // Allow empty, will set to first unit
+      }
+      if (unitTeam === 'N/A') {
+        // Set to first available unit
+        const availableUnits = settingsHelpers.getUnits();
+        if (availableUnits.length > 0) {
+          unitTeam = availableUnits[0];
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'No units configured. Please configure units in the admin settings first.'
+          });
+        }
+      }
     }
 
     const user = await User.findById(userId);
@@ -1614,9 +2164,17 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
+    // Prepare update object
+    const updateData = { role: role };
+    if (role === 'unit') {
+      updateData.unitTeam = unitTeam;
+    } else {
+      updateData.unitTeam = 'N/A';
+    }
+
     const result = await User.findByIdAndUpdate(
       userId,
-      { role: role },
+      updateData,
       { new: true, runValidators: false }
     );
 
@@ -1627,13 +2185,55 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
+    // Send email notification about role change
+    try {
+      const fullName = `${result.fName} ${result.lName}`;
+      
+      if (role === 'admin') {
+        await emailService.sendRoleChangedToAdmin(result.email, fullName);
+        console.log(`✅ Role changed to admin email sent to ${result.email}`);
+      } else if (role === 'unit') {
+        await emailService.sendRoleChangedToUnit(result.email, fullName, result.unitTeam);
+        console.log(`✅ Role changed to unit email sent to ${result.email}`);
+      } else if (role === 'user') {
+        await emailService.sendRoleChangedToUser(result.email, fullName);
+        console.log(`✅ Role changed to user email sent to ${result.email}`);
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending role change email:', emailError);
+      // Don't fail the role update if email fails
+    }
+
+    // Send in-app notification about role change
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const roleLabels = {
+        'admin': 'Administrator',
+        'unit': `Unit Team - ${result.unitTeam}`,
+        'user': 'Regular User'
+      };
+      const roleLabel = roleLabels[role] || role;
+      const message = `Your account role was changed to ${roleLabel} by ${adminNameFull}.`;
+      await notificationService.createNotification(
+        result._id,
+        'Role Updated',
+        message,
+        'info',
+        '/profile'
+      );
+    } catch (notifError) {
+      console.error('Error sending role change notification:', notifError);
+      // Don't fail the role update if notification fails
+    }
+
     res.json({
       success: true,
       message: 'User role updated successfully',
       user: {
         id: result._id,
         name: `${result.fName} ${result.lName}`,
-        role: result.role
+        role: result.role,
+        unitTeam: result.unitTeam
       }
     });
 
@@ -1673,10 +2273,25 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
       });
     }
 
-    // Update user status
+    // Update user status and email verification for approved users
+    const updateData = { status: newStatus };
+    
+    // When approving, mark email as verified AND reset role to 'user' (requestor) as default
+    if (action === 'approve') {
+      updateData.emailVerified = true;
+      updateData.role = 'user';
+      updateData.unitTeam = 'N/A';
+    }
+    
+    // When resetting to pending, reset role to 'user' (requestor)
+    if (action === 'reset') {
+      updateData.role = 'user';
+      updateData.unitTeam = 'N/A';
+    }
+    
     const user = await User.findByIdAndUpdate(
       userId, 
-      { status: newStatus }, 
+      updateData, 
       { new: true }
     ).populate('role');
 
@@ -1689,16 +2304,54 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
 
     // Send appropriate notification
     try {
+      const fullName = `${user.fName} ${user.lName}`;
+      
       if (action === 'approve') {
+        // Send email notification about account approval
+        try {
+          await emailService.sendAccountApproved(user.email, fullName);
+          console.log(`✅ Account approval email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('❌ Error sending account approval email:', emailError);
+          // Don't fail the approval if email fails
+        }
+
+        // Send in-app notification
         if (user.role === 'unit') {
           await notificationService.notifyUnitApproved(userId, req.user._id);
         } else {
           await notificationService.notifyUserApproved(userId, req.user._id);
         }
       } else if (action === 'deny') {
+        // Send email notification about account denial
+        try {
+          await emailService.sendAccountDenied(user.email, fullName);
+          console.log(`✅ Account denied email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('❌ Error sending account denied email:', emailError);
+        }
+        
+        // Send in-app notification
         await notificationService.notifyUserDenied(userId, req.user._id);
+      } else if (action === 'reset') {
+        // Send email notification about reset to pending
+        try {
+          await emailService.sendAccountResetToPending(user.email, fullName);
+          console.log(`✅ Account reset to pending email sent to ${user.email}`);
+        } catch (emailError) {
+          console.error('❌ Error sending account reset email:', emailError);
+        }
+        
+        // Send in-app notification
+        const adminNameFull = await getAdminNameString(req);
+        await notificationService.notifySystem(
+          userId, 
+          'Account Reset', 
+          `Your account status was reset to pending by ${adminNameFull}. Please await further review.`, 
+          'high', 
+          '/profile'
+        );
       }
-      // Reset action doesn't send notification
     } catch (notificationError) {
       console.error('Error sending notification:', notificationError);
       // Don't fail the request if notification fails
@@ -1715,6 +2368,295 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Internal server error while updating user status' 
+    });
+  }
+});
+
+/**
+ * POST /admin/user/update-info
+ * Updates user personal information (name, email, phone, etc.)
+ */
+router.post('/admin/user/update-info', requireAdmin, async (req, res) => {
+  try {
+    const { userId, fName, mName, lName, username, email, phoneNumber, cys, organization } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required.'
+      });
+    }
+
+    // Validate required fields
+    if (!fName || !lName || !username || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'First name, last name, username, and email are required.'
+      });
+    }
+
+    // Check if username is already taken by another user
+    const existingUsername = await User.findOne({ 
+      username: username, 
+      _id: { $ne: userId } 
+    });
+    
+    if (existingUsername) {
+      return res.status(400).json({
+        success: false,
+        message: 'Username is already taken by another user.'
+      });
+    }
+
+    // Check if email is already taken by another user
+    const existingEmail = await User.findOne({ 
+      email: email, 
+      _id: { $ne: userId } 
+    });
+    
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already registered to another user.'
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.'
+      });
+    }
+
+    // Prepare update data
+    const updateData = {
+      fName: fName.trim(),
+      mName: mName ? mName.trim() : '',
+      lName: lName.trim(),
+      username: username.trim(),
+      email: email.trim(),
+      phoneNumber: phoneNumber ? phoneNumber.trim() : ''
+    };
+
+    // Update student-specific fields
+    if (user.userType === 'student') {
+      updateData.cys = cys ? cys.trim() : '';
+      updateData.studentOrg = Array.isArray(organization) ? organization : [];
+    } else {
+      // Update non-student organization/affiliation
+      updateData.affiliation = Array.isArray(organization) ? organization : [];
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update user information.'
+      });
+    }
+
+    // Send in-app notification about info update
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const message = `Your account information was updated by ${adminNameFull}.`;
+      await notificationService.createNotification(
+        updatedUser._id,
+        'Profile Updated',
+        message,
+        'info',
+        '/profile'
+      );
+    } catch (notifError) {
+      console.error('Error sending profile update notification:', notifError);
+      // Don't fail the update if notification fails
+    }
+
+    res.json({
+      success: true,
+      message: 'User information updated successfully.',
+      user: {
+        id: updatedUser._id,
+        fName: updatedUser.fName,
+        mName: updatedUser.mName,
+        lName: updatedUser.lName,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phoneNumber: updatedUser.phoneNumber,
+        cys: updatedUser.cys,
+        organization: user.userType === 'student' ? updatedUser.studentOrg : updatedUser.affiliation
+      }
+    });
+
+  } catch (err) {
+    console.error('Error updating user info:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error: Failed to update user information.'
+    });
+  }
+});
+
+/**
+ * POST /admin/user/create-invitation
+ * Creates a user invitation with pre-filled data
+ */
+router.post('/admin/user/create-invitation', requireAdmin, async (req, res) => {
+  try {
+    const crypto = require('crypto');
+    const { 
+      email, 
+      firstName, 
+      lastName,
+      middleName,
+      phoneNumber,
+      userType,
+      studentId,
+      studentOrganization,
+      cys,
+      affiliation 
+    } = req.body;
+
+    // Validate email
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address is required'
+      });
+    }
+
+    const emailLower = email.toLowerCase().trim();
+
+    // Check if it's @dlsud.edu.ph domain
+    if (!emailLower.endsWith('@dlsud.edu.ph')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email must be a valid @dlsud.edu.ph address'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: emailLower });
+    
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'A user with this email already exists in the system'
+      });
+    }
+
+    // Generate invitation token
+    const invitationToken = crypto.randomBytes(32).toString('hex');
+    const invitationExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create pre-filled user data object
+    const preFilledData = {
+      email: emailLower,
+      firstName: firstName?.trim() || '',
+      lastName: lastName?.trim() || '',
+      middleName: middleName?.trim() || '',
+      phoneNumber: phoneNumber?.trim() || '',
+      userType: userType || '',
+      studentId: studentId?.trim() || '',
+      studentOrganization: studentOrganization || [],
+      cys: cys?.trim().toUpperCase() || '',
+      affiliation: affiliation || []
+    };
+
+    // Create incomplete user with invitation token
+    // Default to 'nonstudent' if userType not specified to avoid student field validation
+    const finalUserType = preFilledData.userType || 'nonstudent';
+    
+    const incompleteUser = new User({
+      email: emailLower,
+      fName: preFilledData.firstName || 'Pending',
+      lName: preFilledData.lastName || 'Registration',
+      mName: preFilledData.middleName || '',
+      username: `temp_${invitationToken.slice(0, 8)}`, // Temporary username
+      password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10), // Random password
+      phoneNumber: preFilledData.phoneNumber || '00000000000', // Placeholder
+      userType: finalUserType,
+      status: 'invited',
+      emailVerified: false,
+      verificationToken: invitationToken,
+      verificationTokenExpiry: invitationExpiry,
+      invitationData: JSON.stringify(preFilledData),
+      agreedToTerms: false,
+      // Add placeholder values for required student fields if userType is student
+      ...(finalUserType === 'student' && {
+        studentId: preFilledData.studentId || 'PENDING',
+        cys: preFilledData.cys || 'PENDING'
+      })
+    });
+
+    // Add optional student fields if provided
+    if (finalUserType === 'student' && preFilledData.studentOrganization.length > 0) {
+      incompleteUser.studentOrganization = preFilledData.studentOrganization;
+    }
+    
+    // Add non-student fields if provided
+    if (finalUserType === 'nonstudent' && preFilledData.affiliation.length > 0) {
+      incompleteUser.affiliation = preFilledData.affiliation;
+    }
+
+    await incompleteUser.save();
+
+    // Send invitation email
+    const invitationLink = `${process.env.APP_URL || 'http://localhost:8080'}/register-invitation/${invitationToken}`;
+    
+    let emailResult;
+    let emailError = null;
+    
+    try {
+      emailResult = await emailService.sendUserInvitation(
+        emailLower,
+        preFilledData.firstName || 'User',
+        invitationLink,
+        preFilledData
+      );
+    } catch (emailErr) {
+      // Email failed but user was created - log error and continue with fallback
+      console.error('[INVITATION] Email sending failed:', emailErr.message);
+      emailError = emailErr;
+      emailResult = { success: false, devMode: true, error: emailErr.message };
+    }
+
+    // Determine response message based on email service mode
+    let responseMessage = 'Invitation created successfully';
+    let showLink = false;
+    
+    if (emailError) {
+      // Email failed - provide link as fallback
+      responseMessage = `Invitation created but email failed to send to ${emailLower}. Error: ${emailError.message}`;
+      showLink = true;
+      console.log('⚠️  Invitation link (email failed):', invitationLink);
+    } else if (emailResult.devMode) {
+      responseMessage = 'Invitation created (DEV MODE - No email sent). Check server console for invitation link.';
+      showLink = true;
+      console.log('🔗 Invitation link (DEV MODE):', invitationLink);
+    } else if (emailResult.success) {
+      responseMessage = 'Invitation email sent successfully to ' + emailLower;
+    }
+
+    res.json({
+      success: true,
+      message: responseMessage,
+      invitationLink: showLink || process.env.NODE_ENV === 'development' ? invitationLink : undefined,
+      devMode: emailResult.devMode || false,
+      emailSent: emailResult.success && !emailError,
+      emailError: emailError ? emailError.message : null
+    });
+
+  } catch (error) {
+    console.error('[INVITATION] Error creating invitation:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create invitation: ' + error.message
     });
   }
 });
@@ -1883,22 +2825,78 @@ router.post('/admin/profile/update-popup', requireAdmin, async (req, res) => {
 
 /**
  * POST /admin/profile/change-password-popup
- * Updates admin password
+ * Updates admin password with validation
  */
 router.post('/admin/profile/change-password-popup', async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  if (!req.session.userId) return res.status(401).send('Unauthorized');
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
   try {
     const user = await User.findById(req.session.userId);
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).send('Incorrect old password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Verify current password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+
+    // Validate new password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'New passwords do not match' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/\d/.test(newPassword) || !/[a-zA-Z]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must contain at least one letter and one number' });
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password must contain at least one special character' });
+    }
+
+    // Update password
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
-    res.status(200).send('Password updated');
+    
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
-    console.error('Popup password update error:', err);
-    res.status(500).send('Password change failed');
+    console.error('Password update error:', err);
+    res.status(500).json({ success: false, message: 'Password change failed' });
+  }
+});
+
+/**
+ * POST /admin/profile/request-password-reset
+ * Send password reset email from profile page
+ */
+router.post('/admin/profile/request-password-reset', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpiry = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // Send reset email
+    const emailService = require('../services/emailService');
+    await emailService.sendPasswordReset(user.email, `${user.fName} ${user.lName}`, resetToken);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Password reset link sent to your email',
+      resetToken: resetToken
+    });
+  } catch (err) {
+    console.error('Password reset request error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send reset email' });
   }
 });
 
@@ -2035,8 +3033,12 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
     // Build query based on filters
     let query = {};
     
-    // Date range filter
-    if (dateRange || (startDate && endDate)) {
+    // Date range filter - skip if all other filters are default
+    const isDefaultFilters = (!units || units.includes('all')) && 
+                            (!requestType || requestType === 'all') && 
+                            (!status || status === 'all');
+    
+    if (dateRange && dateRange !== 'monthly' || (startDate && endDate) || !isDefaultFilters) {
       let dateFilter = {};
       const now = new Date();
       
@@ -2077,30 +3079,40 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
     // Status filter
     if (status && status !== 'all') {
       query.status = new RegExp(status, 'i');
+    } else {
+      query.status = { $nin: ['Archived', 'ARCHIVED', 'archived'] };
     }
     
     // Fetch data based on request type
     let approvals = [];
     let services = [];
     
-    if (!requestType || requestType === 'all' || requestType === 'approval') {
+    if (!requestType || requestType === 'all') {
+      // Fetch all requests
       approvals = await RequestApproval.find(query).populate('userId').lean();
-    }
-    
-    if (!requestType || requestType === 'all' || requestType === 'service') {
+      approvals = approvals.map(req => ({ ...req, requestType: 'approval' }));
       services = await ServiceRequest.find(query).populate('userId').lean();
+      services = services.map(req => ({ ...req, requestType: 'service' }));
+    } else {
+      // Filter by specific request type
+      const approvalQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      const serviceQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      
+      approvals = await RequestApproval.find(approvalQuery).populate('userId').lean();
+      approvals = approvals.map(req => ({ ...req, requestType: 'approval' }));
+      services = await ServiceRequest.find(serviceQuery).populate('userId').lean();
+      services = services.map(req => ({ ...req, requestType: 'service' }));
     }
     
-    // Calculate KPIs
+    // Calculate KPIs based on filtered data
     const totalRequests = approvals.length + services.length;
     const pendingRequests = [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length;
     const inRevision = [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'for revision').length;
-    
-    // Calculate average turnaround time (placeholder calculation)
     const completedRequests = [...approvals, ...services].filter(r => 
       r.status?.toLowerCase() === 'completed' || r.status?.toLowerCase() === 'approved'
     );
     
+    // Calculate average turnaround time
     let totalDays = 0;
     completedRequests.forEach(req => {
       if (req.updatedAt && req.createdAt) {
@@ -2108,8 +3120,33 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
         totalDays += days;
       }
     });
-    
     const avgTurnaround = completedRequests.length > 0 ? (totalDays / completedRequests.length).toFixed(1) : 0;
+    
+    // Calculate average response time (hours from creation to first update)
+    let totalResponseHours = 0;
+    const responseTimeRequests = [...approvals, ...services].filter(r => r.createdAt && r.updatedAt);
+    responseTimeRequests.forEach(req => {
+      const hours = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60);
+      totalResponseHours += hours;
+    });
+    const avgResponseTimeHours = responseTimeRequests.length > 0 ? (totalResponseHours / responseTimeRequests.length) : 0;
+    
+    // Convert to appropriate unit (days if >= 24 hours)
+    let avgResponseTime, responseTimeUnit;
+    if (avgResponseTimeHours >= 24) {
+      avgResponseTime = (avgResponseTimeHours / 24).toFixed(1);
+      responseTimeUnit = 'days';
+    } else {
+      avgResponseTime = avgResponseTimeHours.toFixed(1);
+      responseTimeUnit = 'hrs';
+    }
+    
+    // Count overdue tasks
+    const now = new Date();
+    const overdueTasks = [...approvals, ...services].filter(r => {
+      return r.deadline && new Date(r.deadline) < now && 
+             (r.status?.toLowerCase() !== 'completed' && r.status?.toLowerCase() !== 'rejected');
+    }).length;
     
     // Top requestors calculation
     const orgCounts = {};
@@ -2134,24 +3171,132 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
       }
     });
     
+    // Turnaround time by unit calculation
+    const unitTurnaround = {};
+    const unitRequestCount = {};
+    [...approvals, ...services].forEach(req => {
+      if (req.assignedUnits && req.updatedAt && req.createdAt && 
+          (req.status?.toLowerCase() === 'completed' || req.status?.toLowerCase() === 'approved')) {
+        const days = Math.ceil((new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60 * 24));
+        if (!unitTurnaround[req.assignedUnits]) {
+          unitTurnaround[req.assignedUnits] = 0;
+          unitRequestCount[req.assignedUnits] = 0;
+        }
+        unitTurnaround[req.assignedUnits] += days;
+        unitRequestCount[req.assignedUnits] += 1;
+      }
+    });
+    
+    // Calculate average turnaround by unit
+    const turnaroundByUnit = {};
+    Object.keys(unitTurnaround).forEach(unit => {
+      turnaroundByUnit[unit] = unitRequestCount[unit] > 0 ? 
+        Math.round(unitTurnaround[unit] / unitRequestCount[unit]) : 0;
+    });
+    
+    // Total workload by unit calculation (all requests assigned to each unit)
+    const totalWorkload = {};
+    [...approvals, ...services].forEach(req => {
+      if (req.assignedUnits) {
+        totalWorkload[req.assignedUnits] = (totalWorkload[req.assignedUnits] || 0) + 1;
+      }
+    });
+    
+    // Response time by unit calculation (time from assignment to first update)
+    const unitResponseTime = {};
+    const unitResponseCount = {};
+    [...approvals, ...services].forEach(req => {
+      if (req.assignedUnits && req.updatedAt && req.createdAt) {
+        // For response time, we want time from creation to first meaningful update
+        // This approximates when the unit started working on it
+        const hours = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60);
+        if (!unitResponseTime[req.assignedUnits]) {
+          unitResponseTime[req.assignedUnits] = 0;
+          unitResponseCount[req.assignedUnits] = 0;
+        }
+        unitResponseTime[req.assignedUnits] += hours;
+        unitResponseCount[req.assignedUnits] += 1;
+      }
+    });
+    
+    // Calculate average response time by unit
+    const responseTimeByUnit = {};
+    Object.keys(unitResponseTime).forEach(unit => {
+      responseTimeByUnit[unit] = unitResponseCount[unit] > 0 ? 
+        Math.round(unitResponseTime[unit] / unitResponseCount[unit]) : 0;
+    });
+    
+    // Filtered results data
+    const allFilteredRequests = [...approvals, ...services];
+    
+    // Status breakdown for filtered data
+    const statusBreakdown = {};
+    allFilteredRequests.forEach(req => {
+      let rawStatus = req.status || 'Unknown';
+      let status = rawStatus.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
+      statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+    });
+    
+    // Type breakdown for filtered data
+    const typeBreakdown = {
+      'Approval': approvals.length,
+      'Service': services.length
+    };
+    
     // Send response
     res.json({
       success: true,
       kpis: {
         totalRequests,
-        avgTurnaround,
+        avgTurnaround: parseFloat(avgTurnaround),
         pendingAssignment: pendingRequests,
-        inRevision
+        inRevision,
+        completed: completedRequests.length,
+        overdue: overdueTasks,
+        activeRequests: [...approvals, ...services].filter(r => 
+          r.status?.toLowerCase() === 'in progress' || r.status?.toLowerCase() === 'for revision'
+        ).length,
+        avgResponseTime: parseFloat(avgResponseTime),
+        responseTimeUnit
       },
       charts: {
         topRequestors: topOrgs,
-        unitWorkload,
+        unitWorkload: {
+          labels: Object.keys(unitWorkload),
+          data: Object.values(unitWorkload)
+        },
+        turnaroundByUnit: {
+          labels: Object.keys(turnaroundByUnit),
+          data: Object.values(turnaroundByUnit)
+        },
+        totalWorkload: {
+          labels: Object.keys(totalWorkload),
+          data: Object.values(totalWorkload)
+        },
+        responseTimeByUnit: {
+          labels: Object.keys(responseTimeByUnit),
+          data: Object.values(responseTimeByUnit)
+        },
         statusBreakdown: {
-          pending: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length,
-          inProgress: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'in progress').length,
-          awaiting: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'awaiting approval' || r.status?.toLowerCase() === 'approved').length,
-          revision: inRevision,
-          completed: [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'completed').length
+          labels: ['Pending', 'In Progress', 'Awaiting', 'Revision', 'Completed'],
+          data: [
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'pending').length,
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'in progress').length,
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'awaiting approval' || r.status?.toLowerCase() === 'approved').length,
+            inRevision,
+            [...approvals, ...services].filter(r => r.status?.toLowerCase() === 'completed').length
+          ]
+        }
+      },
+      filtered: {
+        requests: allFilteredRequests.slice(0, 100), // Limit to 100 for performance
+        statusBreakdown: {
+          labels: Object.keys(statusBreakdown),
+          data: Object.values(statusBreakdown)
+        },
+        typeBreakdown: {
+          labels: Object.keys(typeBreakdown),
+          data: Object.values(typeBreakdown)
         }
       }
     });
@@ -2165,93 +3310,9 @@ router.post('/api/admin/analytics', requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * GET /api/admin/revision-hotspot
- * Get top requests by revision count
- */
-router.get('/api/admin/revision-hotspot', requireAdmin, async (req, res) => {
-  try {
-    // Fetch all requests with populated user data
-    const approvals = await RequestApproval.find()
-      .populate('userId', 'fName lName')
-      .lean();
-    
-    const services = await ServiceRequest.find()
-      .populate('userId', 'fName lName')
-      .lean();
-    
-    // Combine and calculate total revisions (placeholder - you may need to add revision tracking)
-    const allRequests = [
-      ...approvals.map(r => ({
-        ...r,
-        type: 'Approval Request',
-        // Placeholder revision counts - replace with actual revision tracking
-        majorRevisions: Math.floor(Math.random() * 4),
-        minorRevisions: Math.floor(Math.random() * 3),
-        userName: r.userId ? `${r.userId.fName} ${r.userId.lName}` : 'Unknown'
-      })),
-      ...services.map(r => ({
-        ...r,
-        type: 'Service Request',
-        majorRevisions: Math.floor(Math.random() * 4),
-        minorRevisions: Math.floor(Math.random() * 3),
-        userName: r.userId ? `${r.userId.fName} ${r.userId.lName}` : 'Unknown'
-      }))
-    ];
-    
-    // Sort by total revisions
-    allRequests.forEach(r => {
-      r.totalRevisions = r.majorRevisions + r.minorRevisions;
-    });
-    
-    const topRevisions = allRequests
-      .sort((a, b) => b.totalRevisions - a.totalRevisions)
-      .slice(0, 10);
-    
-    res.json({
-      success: true,
-      data: topRevisions
-    });
-    
-  } catch (err) {
-    console.error('Error fetching revision hotspot data:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch revision data'
-    });
-  }
-});
+
 
 // ==================== REPORTS ROUTES ====================
-
-/**
- * GET /admin/reports
- * Render the Report Generation Page
- * Accessible by admin users only
- */
-router.get('/admin/reports', requireAdmin, async (req, res) => {
-  try {
-    // Get unread notification count for the user
-    const unreadCount = await Notification.countDocuments({
-      recipient: req.user._id,
-      read: false
-    });
-
-    // Get available filters for report page
-    const availableFilters = await reportService.getAvailableFilters();
-
-    res.render('admin/reports', {
-      user: req.user,
-      unreadCount: unreadCount,
-      availableFilters: availableFilters
-    });
-  } catch (error) {
-    console.error('Error rendering reports page:', error);
-    res.status(500).render('error', {
-      message: 'Error loading reports page'
-    });
-  }
-});
 
 /**
  * GET /api/admin/report-data
@@ -2680,10 +3741,40 @@ router.put('/admin/request/edit', requireAdmin, async (req, res) => {
       requestId,
       { $set: updates },
       { new: true, runValidators: true }
-    );
+    ).populate('userId');
 
     if (!request) {
       return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Send notification to user about request edit
+    try {
+      if (request && request.userId) {
+        const adminId = req.user._id;
+        const requestorId = request.userId._id || request.userId;
+        const titleStr = request.title || 'Untitled Request';
+        const adminNameFull = await getAdminNameString(req);
+        
+        // Only notify requestor if they are NOT the admin performing the action
+        if (String(requestorId) !== String(adminId)) {
+          const requestTypeLabel = requestType === 'Request Approval' ? 'Request Approval' : 'Service Request';
+          const message = `Your ${requestTypeLabel} "${titleStr}" was edited by ${adminNameFull}.`;
+          const actionUrl = requestType === 'Request Approval' 
+            ? `/request-approvals?openModalId=${request._id}`
+            : `/service-requests?openModalId=${request._id}`;
+          
+          await notificationService.createNotification(
+            requestorId,
+            `${requestTypeLabel} Updated`,
+            message,
+            'info',
+            actionUrl
+          );
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending request edit notification:', notifError);
+      // Don't fail the request update if notification fails
     }
 
     res.json({ 
@@ -2703,7 +3794,7 @@ router.put('/admin/request/edit', requireAdmin, async (req, res) => {
  */
 router.post('/admin/request/delete', requireAdmin, async (req, res) => {
   try {
-    const { requestId, requestType } = req.body;
+    const { requestId, requestType, archiveReason } = req.body;
 
     if (!requestId || !requestType) {
       return res.status(400).json({ success: false, message: 'Request ID and type are required' });
@@ -2711,29 +3802,70 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
 
     const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
     
-    // Soft delete by setting isDeleted flag
+    // Read current status first so restore can return to it
+    const existing = await Model.findById(requestId).select('status').lean();
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    // Set status to Archived instead of moving to trash
+    const updateFields = { 
+      status: 'Archived',
+      archiveReason: archiveReason || 'No reason provided',
+      previousStatus: existing.status,   // ← save so restore knows where to send it back
+      archivedBy: 'admin',
+      archivedAt: new Date()
+    };
+
+    // Clear restorationRequests when re-archiving to remove old restoration history
+    const unsetFields = {
+      restorationRequests: 1
+    };
+
     const request = await Model.findByIdAndUpdate(
       requestId,
-      { 
-        isDeleted: true,
-        deletedAt: new Date(),
-        deletedBy: req.user._id
+      {
+        $set: updateFields,
+        $unset: unsetFields
       },
       { new: true }
     );
+
 
     if (!request) {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
 
-    // Create notification for the user who submitted the request
+    // Notify requestor and assigned units (but NOT the admin who performed the action)
     try {
-      await notificationService.createNotification({
-        userId: request.userId,
-        message: `Your ${requestType.toLowerCase()} "${request.title}" has been archived by an administrator`,
-        link: '/user/my-requests',
-        type: 'system'
-      });
+      const titleStr = request.title || 'Untitled Request';
+      const requestorId = request.userId._id || request.userId;
+      const adminId = req.user._id;
+      
+      // Determine the correct notification URL based on request type - use archived modal format
+      const notificationUrl = requestType === 'Request Approval' 
+        ? `/request-approvals?modal=archived&requestId=${request._id}&type=approval`
+        : `/service-requests?modal=archived&requestId=${request._id}&type=service`;
+
+      // 1. User Notification - ONLY if the requestor is NOT the admin performing the action
+      const userMessage = `Your request "${titleStr}" was manually deleted by an administrator. You can request restoration by providing a reason.`;
+      if (request.userId && String(requestorId) !== String(adminId)) {
+        await notificationService.notifySystem(requestorId, 'Request Deleted', userMessage, 'high', notificationUrl);
+      }
+
+      // 2. Unit Notification - send to unit task pages with archived modal parameters
+      if (request.assignedUnits) {
+        const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
+        const unitIds = unitMembers.map(u => u._id);
+        if (unitIds.length > 0) {
+          const unitMessage = `The request "${titleStr}" assigned to your unit was manually deleted by an administrator.`;
+          // For units, send to unit-specific task pages with archived modal parameters
+          const unitNotificationUrl = requestType === 'Request Approval'
+            ? `/unit/task-approvals?modal=archived&requestId=${request._id}&type=approval`
+            : `/unit/task-services?modal=archived&requestId=${request._id}&type=service`;
+          await notificationService.notifySystem(unitIds, 'Request Deleted', unitMessage, 'medium', unitNotificationUrl);
+        }
+      }
     } catch (notifError) {
       console.error('Error sending notification:', notifError);
     }
@@ -2749,54 +3881,10 @@ router.post('/admin/request/delete', requireAdmin, async (req, res) => {
 });
 
 /**
- * POST /admin/request/restore
- * Restore archived request
- */
-router.post('/admin/request/restore', requireAdmin, async (req, res) => {
-  try {
-    const { requestId, requestType } = req.body;
-
-    if (!requestId || !requestType) {
-      return res.status(400).json({ success: false, message: 'Request ID and type are required' });
-    }
-
-    const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
-    
-    // Restore by unsetting isDeleted flag
-    const request = await Model.findByIdAndUpdate(
-      requestId,
-      { 
-        isDeleted: false,
-        $unset: { deletedAt: 1, deletedBy: 1 }
-      },
-      { new: true }
-    );
-
-    if (!request) {
-      return res.status(404).json({ success: false, message: 'Request not found' });
-    }
-
-    // Create notification for the user who submitted the request
-    try {
-      await notificationService.createNotification({
-        userId: request.userId,
-        message: `Your ${requestType.toLowerCase()} "${request.title}" has been restored from archive`,
-        link: '/user/my-requests',
-        type: 'system'
-      });
-    } catch (notifError) {
-      console.error('Error sending notification:', notifError);
-    }
-
-    res.json({ 
-      success: true, 
-      message: 'Request restored successfully'
-    });
-  } catch (error) {
-    console.error('Error restoring request:', error);
-    res.status(500).json({ success: false, message: 'Failed to restore request' });
+ *
   }
 });
+
 
 /**
  * DELETE /admin/request/permanent-delete
@@ -3117,7 +4205,9 @@ router.get('/admin/settings', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading settings page:', error);
-    res.status(500).render('error', { message: 'Failed to load settings' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load settings' });
+    }
   }
 });
 
@@ -3170,7 +4260,11 @@ router.put('/admin/settings/request-management', requireAdmin, async (req, res) 
       maxMinorRevisions,
       defaultDeadlineDays,
       autoApproveAfterRevisions,
-      requireUnitReview
+      requireUnitReview,
+      archiveCompletedAfterDays,
+      archiveApprovedAfterDays,
+      archiveRevisionAfterDays,
+      allowUserReactivation
     } = req.body;
 
     const updates = {
@@ -3178,7 +4272,11 @@ router.put('/admin/settings/request-management', requireAdmin, async (req, res) 
       maxMinorRevisions: parseInt(maxMinorRevisions),
       defaultDeadlineDays: parseInt(defaultDeadlineDays),
       autoApproveAfterRevisions: autoApproveAfterRevisions === 'true' || autoApproveAfterRevisions === true,
-      requireUnitReview: requireUnitReview === 'true' || requireUnitReview === true
+      requireUnitReview: requireUnitReview === 'true' || requireUnitReview === true,
+      archiveCompletedAfterDays: parseInt(archiveCompletedAfterDays),
+      archiveApprovedAfterDays: parseInt(archiveApprovedAfterDays),
+      archiveRevisionAfterDays: parseInt(archiveRevisionAfterDays),
+      allowUserReactivation: allowUserReactivation === 'true' || allowUserReactivation === true
     };
 
     const settings = await settingsService.updateSettings(updates, req.session.userId);
@@ -3317,7 +4415,9 @@ router.get('/admin/reports', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading reports page:', error);
-    res.status(500).render('error', { message: 'Failed to load reports' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load reports' });
+    }
   }
 });
 
@@ -3397,17 +4497,29 @@ router.get('/admin/reports/summary', requireAdmin, async (req, res) => {
 });
 
 /**
- * POST /admin/reports/export-csv
- * Export report data as CSV
+ * POST /admin/reports/export
+ * Export report data as PDF or Excel
  */
-router.post('/admin/reports/export-csv', requireAdmin, async (req, res) => {
+router.post('/admin/reports/export', requireAdmin, async (req, res) => {
+  console.log('Export route called');
   try {
+    console.log('Export request received:', req.body);
+    console.log('User:', req.user ? req.user._id : 'No user');
+    console.log('User role:', req.user ? req.user.role : 'No role');
     const {
       startDate,
       endDate,
       units,
       requestType,
-      statuses
+      statuses,
+      format = 'pdf', // Default to PDF, can be 'pdf' or 'excel'
+      orientation = 'portrait', // Default to portrait, can be 'portrait' or 'landscape'
+      fileName,
+      title,
+      description,
+      headerColor,
+      headerTextsColor,
+      paperSize
     } = req.body;
 
     const filters = {
@@ -3415,51 +4527,68 @@ router.post('/admin/reports/export-csv', requireAdmin, async (req, res) => {
       endDate,
       units: units && Array.isArray(units) ? units : (units ? [units] : []),
       requestType,
-      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : [])
-    };
-
-    const reportData = await reportService.generateReport(filters);
-    const csv = reportService.exportToCSV(reportData);
-
-    res.setHeader('Content-Type', 'text/csv;charset=utf-8;');
-    res.setHeader('Content-Disposition', `attachment;filename=report-${Date.now()}.csv`);
-    res.send(csv);
-  } catch (error) {
-    console.error('Error exporting CSV:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * POST /admin/reports/export-pdf
- * Export report data as PDF (returns HTML for client-side PDF generation)
- */
-router.post('/admin/reports/export-pdf', requireAdmin, async (req, res) => {
-  try {
-    const {
-      startDate,
-      endDate,
-      units,
-      requestType,
-      statuses
-    } = req.body;
-
-    const filters = {
-      startDate,
-      endDate,
-      units: units && Array.isArray(units) ? units : (units ? [units] : []),
-      requestType,
-      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : [])
+      statuses: statuses && Array.isArray(statuses) ? statuses : (statuses ? [statuses] : []),
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
     };
 
     const reportData = await reportService.generateReport(filters);
     const summary = await reportService.getReportSummary(filters);
-    const html = reportService.exportToPDF(reportData, summary);
 
-    res.setHeader('Content-Type', 'text/html;charset=utf-8;');
-    res.send(html);
+    console.log('Report data generated:', reportData.length, 'records');
+    console.log('Summary:', summary);
+
+    let buffer, contentType, fileExtension;
+
+    if (format === 'excel') {
+      // Generate Excel
+      buffer = await reportService.exportToExcel(reportData, summary, { headerColor, headerTextsColor, title, description });
+      contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      fileExtension = 'xlsx';
+    } else {
+      // Generate PDF (default)
+      buffer = await reportService.generatePDF(reportData, summary, orientation, { title, description, headerColor, headerTextsColor, paperSize });
+      contentType = 'application/pdf';
+      fileExtension = 'pdf';
+    }
+
+    // Save to ReportHistory in MongoDB
+    const ReportHistory = require('../models/ReportHistory');
+
+    const fullFileName = fileName ? `${fileName}.${fileExtension}` : `s-core-report-${Date.now()}.${fileExtension}`;
+
+    console.log('Attempting to save report to history...');
+
+    try {
+      // Save to database
+      const reportHistory = new ReportHistory({
+        reportType: format === 'excel' ? 'report_excel' : 'report_pdf',
+        generatedBy: req.user._id,
+        fileName: fullFileName,
+        fileData: buffer,
+        fileSize: buffer.length,
+        filters,
+        options: { fileName: fileName || 's-core-report', title: title || 'S-CORE Analytics Report', description: description || '', headerColor: headerColor || '#10b981', headerTextsColor: headerTextsColor || '#ffffff', paperSize: paperSize || 'A4', orientation: orientation || 'landscape' },
+        reportData: reportData,
+        recordCount: reportData.length
+      });
+
+      console.log('Created ReportHistory instance, generatedBy:', req.user._id, 'fileSize:', buffer.length);
+      await reportHistory.save();
+      console.log('Report saved to history successfully with ID:', reportHistory._id);
+    } catch (saveError) {
+      console.error('Error saving report to history:', saveError);
+      console.error('Save error details:', saveError.message, saveError.stack);
+      // Don't fail the export if history save fails
+    }
+
+    console.log('Buffer generated, size:', buffer.length);
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${fullFileName}"`);
+    res.send(buffer);
   } catch (error) {
-    console.error('Error exporting PDF:', error);
+    console.error('Error exporting report:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -3481,6 +4610,552 @@ router.get('/admin/reports/filters', requireAdmin, async (req, res) => {
   }
 });
 
+/**
+ * GET /admin/reports/history
+ * Get report history for all admin users
+ */
+router.get('/admin/reports/history', requireAdmin, async (req, res) => {
+  try {
+    console.log('Fetching report history for admins');
+    const ReportHistory = require('../models/ReportHistory');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Build query - show all reports for admins
+    const query = {};
+    if (req.query.type) {
+      query.reportType = req.query.type;
+    }
+    
+    // Handle deleted reports filtering
+    if (req.query.deletedOnly === 'true') {
+      // Only show deleted reports
+      query.isDeleted = true;
+      console.log('🗑️  DELETED ONLY MODE - Filtering for isDeleted: true');
+    } else if (req.query.includeDeleted !== 'true') {
+      // Filter out deleted reports unless explicitly requested
+      query.isDeleted = false;
+      console.log('📊 ACTIVE ONLY MODE - Filtering for isDeleted: false');
+    } else {
+      console.log('📋 ALL REPORTS MODE - No isDeleted filter');
+    }
+
+    console.log('History query:', query);
+    console.log('Query params received:', { 
+      deletedOnly: req.query.deletedOnly, 
+      includeDeleted: req.query.includeDeleted,
+      type: req.query.type 
+    });
+
+    const reports = await ReportHistory.find(query)
+      .sort({ generatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-fileData')
+      .populate('generatedBy', 'fName lName firstName lastName')
+      .lean();
+
+    const total = await ReportHistory.countDocuments(query);
+
+    console.log('Found', reports.length, 'reports, total:', total);
+    console.log('Sample report isDeleted values:', reports.slice(0, 3).map(r => ({ 
+      _id: r._id, 
+      fileName: r.fileName, 
+      isDeleted: r.isDeleted 
+    })));
+    console.log('Sample report:', reports[0] ? { _id: reports[0]._id, fileName: reports[0].fileName, generatedAt: reports[0].generatedAt } : 'No reports');
+
+    res.json({
+      success: true,
+      reports,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching report history:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/debug
+ * Debug endpoint to check database state
+ */
+router.get('/admin/reports/debug', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const allReports = await ReportHistory.find({}).select('_id fileName isDeleted deletedAt').lean();
+    const deletedReports = await ReportHistory.find({ isDeleted: true }).select('_id fileName isDeleted deletedAt').lean();
+    const activeReports = await ReportHistory.find({ isDeleted: false }).select('_id fileName isDeleted deletedAt').lean();
+    
+    res.json({
+      success: true,
+      total: allReports.length,
+      deleted: deletedReports.length,
+      active: activeReports.length,
+      allReports: allReports.map(r => ({
+        id: r._id.toString(),
+        fileName: r.fileName,
+        isDeleted: r.isDeleted,
+        deletedAt: r.deletedAt
+      }))
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/download/:id
+ * Download a report from history
+ */
+router.get('/admin/reports/download/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id,
+      isDeleted: false
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    if (!report.fileData || report.fileData.length === 0) {
+      console.error('Report file data is missing or empty:', report._id);
+      return res.status(500).json({ success: false, message: 'Report file data is corrupted or missing' });
+    }
+
+    const contentType = report.reportType === 'report_excel' 
+      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      : 'application/pdf';
+
+    console.log('Downloading report:', {
+      id: report._id,
+      fileName: report.fileName,
+      fileSize: report.fileData.length,
+      contentType: contentType
+    });
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${report.fileName}"`);
+    res.setHeader('Content-Length', report.fileData.length);
+    res.send(report.fileData);
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/reports/history/:id
+ * Soft delete a report from history
+ */
+router.delete('/admin/reports/history/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id,
+      isDeleted: false
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    await report.softDelete();
+
+    res.json({ success: true, message: 'Report deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/reports/history/:id/hard
+ * Permanently delete a report from history
+ */
+router.delete('/admin/reports/history/:id/hard', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    await ReportHistory.deleteOne({ _id: req.params.id });
+
+    res.json({ success: true, message: 'Report permanently deleted successfully' });
+  } catch (error) {
+    console.error('Error permanently deleting report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/reports/history/:id/restore
+ * Restore a soft-deleted report
+ */
+router.post('/admin/reports/history/:id/restore', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.id,
+      isDeleted: true
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Deleted report not found' });
+    }
+
+    await report.restore();
+
+    res.json({ success: true, message: 'Report restored successfully' });
+  } catch (error) {
+    console.error('Error restoring report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/history/:id/details
+ * Get report details for viewing/editing
+ */
+router.get('/admin/reports/history/:id/details', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findById(req.params.id)
+      .select('-fileData')
+      .populate('generatedBy', 'fName lName firstName lastName email')
+      .lean();
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error('Error fetching report details:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * PUT /admin/reports/history/:id
+ * Update report metadata and regenerate PDF/Excel with new settings
+ */
+router.put('/admin/reports/history/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const { fileName, title, description, headerColor, headerTextsColor, paperSize, orientation, regenerate } = req.body;
+
+    const report = await ReportHistory.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // Initialize options if it doesn't exist
+    if (!report.options) {
+      report.options = {};
+    }
+
+    // Update options object
+    if (fileName !== undefined) report.options.fileName = fileName;
+    if (title !== undefined) report.options.title = title;
+    if (description !== undefined) report.options.description = description;
+    if (headerColor !== undefined) report.options.headerColor = headerColor;
+    if (headerTextsColor !== undefined) report.options.headerTextsColor = headerTextsColor;
+    if (paperSize !== undefined) report.options.paperSize = paperSize;
+    if (orientation !== undefined) report.options.orientation = orientation;
+
+    // Regenerate the file with new settings if requested
+    if (regenerate && report.reportData && report.reportData.length > 0) {
+      try {
+        const reportService = require('../services/reportService');
+        
+        console.log('Regenerating report with settings:', {
+          title: title || report.options.title,
+          orientation: orientation || report.options.orientation || 'landscape',
+          paperSize: paperSize || report.options.paperSize || 'A4',
+          reportType: report.reportType,
+          recordCount: report.reportData.length
+        });
+
+        if (report.reportType === 'report_pdf' || !report.reportType) {
+          const pdfBuffer = await reportService.generatePDF(
+            report.reportData, 
+            {}, 
+            orientation || report.options.orientation || 'landscape', 
+            {
+              title: title || report.options.title || 'S-CORE Report',
+              description: description !== undefined ? description : (report.options.description || ''),
+              headerColor: headerColor || report.options.headerColor || '#10b981',
+              headerTextsColor: headerTextsColor || report.options.headerTextsColor || '#ffffff',
+              paperSize: paperSize || report.options.paperSize || 'A4'
+            }
+          );
+          
+          if (!pdfBuffer || pdfBuffer.length === 0) {
+            throw new Error('Generated PDF buffer is empty');
+          }
+
+          report.fileData = pdfBuffer;
+          report.fileSize = pdfBuffer.length;
+          report.reportType = 'report_pdf';
+          
+          // Update fileName to have .pdf extension
+          if (fileName) {
+            report.fileName = `${fileName}.pdf`;
+          } else if (!report.fileName.endsWith('.pdf')) {
+            const baseFileName = report.fileName.replace(/\.[^/.]+$/, '');
+            report.fileName = `${baseFileName}.pdf`;
+          }
+          
+          console.log('PDF regenerated successfully, size:', pdfBuffer.length);
+        } else if (report.reportType === 'report_excel') {
+          const excelBuffer = await reportService.generateExcel(report.reportData, {
+            title: title || report.options.title || 'S-CORE Report',
+            description: description !== undefined ? description : (report.options.description || ''),
+            headerColor: headerColor || report.options.headerColor || '#10b981',
+            headerTextsColor: headerTextsColor || report.options.headerTextsColor || '#ffffff'
+          });
+          
+          if (!excelBuffer || excelBuffer.length === 0) {
+            throw new Error('Generated Excel buffer is empty');
+          }
+
+          report.fileData = excelBuffer;
+          report.fileSize = excelBuffer.length;
+          
+          // Update fileName to have .xlsx extension
+          if (fileName) {
+            report.fileName = `${fileName}.xlsx`;
+          } else if (!report.fileName.endsWith('.xlsx')) {
+            const baseFileName = report.fileName.replace(/\.[^/.]+$/, '');
+            report.fileName = `${baseFileName}.xlsx`;
+          }
+          
+          console.log('Excel regenerated successfully, size:', excelBuffer.length);
+        }
+      } catch (regenerateError) {
+        console.error('Error regenerating report file:', regenerateError);
+        console.error('Stack trace:', regenerateError.stack);
+        return res.status(500).json({ 
+          success: false, 
+          message: `Failed to regenerate report: ${regenerateError.message}` 
+        });
+      }
+    } else if (fileName) {
+      // Update fileName without regeneration - keep the existing extension
+      const fileExtension = report.fileName.split('.').pop();
+      report.fileName = `${fileName}.${fileExtension}`;
+    }
+
+    report.markModified('options');
+    report.markModified('fileData');
+    await report.save();
+
+    res.json({ success: true, message: 'Report updated successfully' });
+  } catch (error) {
+    console.error('Error updating report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/reports/duplicate/:id
+ * Duplicate an existing report
+ */
+router.post('/admin/reports/duplicate/:id', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const originalReport = await ReportHistory.findById(req.params.id);
+
+    if (!originalReport) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // Create a new report with the same data
+    const duplicatedReport = new ReportHistory({
+      reportType: originalReport.reportType,
+      generatedBy: req.user._id,
+      fileName: `Copy of ${originalReport.fileName}`,
+      fileData: originalReport.fileData,
+      fileSize: originalReport.fileSize,
+      filters: originalReport.filters,
+      options: {
+        ...originalReport.options,
+        fileName: `Copy of ${originalReport.options.fileName || originalReport.fileName}`
+      },
+      reportData: originalReport.reportData,
+      recordCount: originalReport.recordCount
+    });
+
+    await duplicatedReport.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Report duplicated successfully',
+      reportId: duplicatedReport._id
+    });
+  } catch (error) {
+    console.error('Error duplicating report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/reports/history/:id/download-excel
+ * Download report as Excel (converts if necessary)
+ */
+router.get('/admin/reports/history/:id/download-excel', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const reportService = require('../services/reportService');
+    
+    const report = await ReportHistory.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    if (!report.reportData || report.reportData.length === 0) {
+      return res.status(400).json({ success: false, message: 'No report data available for Excel export' });
+    }
+
+    // Generate Excel from the report data
+    const excelBuffer = await reportService.generateExcel(report.reportData, {
+      title: report.options.title || 'S-CORE Report',
+      description: report.options.description || '',
+      headerColor: report.options.headerColor || '#10b981',
+      headerTextsColor: report.options.headerTextsColor || '#ffffff'
+    });
+
+    const fileName = report.fileName.replace('.pdf', '.xlsx');
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('Error downloading Excel:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * POST /admin/analytics/export-pdf
+ * Export analytics data as PDF
+ */
+router.post('/admin/analytics/export-pdf', requireAdmin, async (req, res) => {
+  try {
+    const { analyticsData } = req.body;
+
+    console.log('📊 Received analytics data for PDF export:', JSON.stringify(analyticsData, null, 2));
+
+    // Generate PDF using the report service
+    const pdfBuffer = await reportService.generateAnalyticsPDF(analyticsData);
+
+    // Save to ReportHistory in MongoDB
+    const ReportHistory = require('../models/ReportHistory');
+
+    const fileName = `analytics-report-${Date.now()}.pdf`;
+
+    // Save to database with PDF data
+    const reportHistory = new ReportHistory({
+      reportType: 'analytics_pdf',
+      generatedBy: req.user._id,
+      fileName,
+      pdfData: pdfBuffer,
+      fileSize: pdfBuffer.length,
+      filters: analyticsData.filters || {}
+    });
+
+    await reportHistory.save();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error exporting analytics PDF:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/reports/history
+ * Get reports history for current user
+ */
+router.get('/admin/analytics/reports/history', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+
+    const reports = await ReportHistory.find({
+      generatedBy: req.user._id
+    })
+    .sort({ generatedAt: -1 })
+    .limit(50); // Limit to last 50 reports
+
+    res.json({
+      success: true,
+      reports: reports.map(report => ({
+        _id: report._id,
+        reportType: report.reportType,
+        fileName: report.fileName,
+        generatedAt: report.generatedAt,
+        fileSize: report.fileSize,
+        downloadCount: report.downloadCount,
+        filters: report.filters
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching reports history:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics/reports/download/:reportId
+ * Download a specific report
+ */
+router.get('/admin/analytics/reports/download/:reportId', requireAdmin, async (req, res) => {
+  try {
+    const ReportHistory = require('../models/ReportHistory');
+    const report = await ReportHistory.findOne({
+      _id: req.params.reportId,
+      generatedBy: req.user._id
+    });
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found' });
+    }
+
+    // Increment download count
+    report.downloadCount += 1;
+    await report.save();
+
+    // Send PDF data from MongoDB
+    const fileName = report.fileName;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
+    res.send(report.pdfData);
+  } catch (error) {
+    console.error('Error downloading report:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ========================================
 // ANNOUNCEMENT MANAGEMENT ROUTES
 // ========================================
@@ -3491,9 +5166,13 @@ router.get('/admin/reports/filters', requireAdmin, async (req, res) => {
  */
 router.get('/admin/announcement', requireAdmin, async (req, res) => {
   try {
+    const { getUnits } = require('../utils/settingsHelpers');
+    const settingsService = require('../services/settingsService');
     const user = await User.findById(req.session.userId);
     const result = await announcementService.getAnnouncements(1, 50);
     const stats = await announcementService.getStatistics();
+    const units = getUnits();
+    const settings = await settingsService.getSettings();
     const unreadCount = await Notification.countDocuments({
       recipient: req.session.userId,
       isRead: false
@@ -3503,11 +5182,18 @@ router.get('/admin/announcement', requireAdmin, async (req, res) => {
       user: user,
       announcements: result.announcements,
       stats: stats,
+      units: units,
+      announcementPriorities: (settings.announcementPriorities || ['low', 'medium', 'high']).map(p => p.toLowerCase()),
+      announcementTypes: settings.announcementTypes || ['Event', 'News', 'Reminder', 'Update', 'Maintenance'],
+      organizations: settings.organizations || [],
+      offices: settings.offices || [],
       unreadCount: unreadCount
     });
   } catch (error) {
     console.error('Error loading announcements page:', error);
-    res.status(500).render('error', { message: 'Failed to load announcements' });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load announcements' });
+    }
   }
 });
 
@@ -3538,8 +5224,10 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
       title,
       content,
       priority,
+      type,
       recipientType,
       organization,
+      office,
       recipients,
       scheduledTime
     } = req.body;
@@ -3552,11 +5240,13 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
       title,
       content,
       priority: priority || 'medium',
+      type: type || 'News',
       recipientType: recipientType || 'all',
       organization,
+      office,
       recipients: recipients && Array.isArray(recipients) ? recipients : [],
       scheduledTime,
-      createdBy: req.session.userId
+      sentBy: req.session.userId
     });
 
     res.json({
@@ -3571,17 +5261,54 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
 });
 
 /**
+ * POST /admin/announcement/upload
+ * Upload files/images for announcements
+ */
+router.post('/admin/announcement/upload', requireAdmin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No file uploaded' 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'File uploaded successfully',
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: `/uploads/${req.file.filename}`
+    });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'File upload failed' 
+    });
+  }
+});
+
+/**
  * PUT /admin/announcement/:id
  * Update announcement
  */
 router.put('/admin/announcement/:id', requireAdmin, async (req, res) => {
   try {
-    const { title, content, priority } = req.body;
+    const { title, content, priority, type, recipientType, organization, office, recipients, scheduledTime } = req.body;
 
     const announcement = await announcementService.updateAnnouncement(req.params.id, {
       title,
       content,
-      priority
+      priority,
+      type,
+      recipientType,
+      organization,
+      office,
+      recipients: recipients && Array.isArray(recipients) ? recipients : undefined,
+      scheduledTime: scheduledTime ? new Date(scheduledTime) : null
     });
 
     res.json({
@@ -3597,11 +5324,11 @@ router.put('/admin/announcement/:id', requireAdmin, async (req, res) => {
 
 /**
  * DELETE /admin/announcement/:id
- * Delete announcement
+ * Soft delete announcement
  */
 router.delete('/admin/announcement/:id', requireAdmin, async (req, res) => {
   try {
-    await announcementService.deleteAnnouncement(req.params.id);
+    await announcementService.deleteAnnouncement(req.params.id, req.session.userId);
 
     res.json({
       success: true,
@@ -3609,6 +5336,64 @@ router.delete('/admin/announcement/:id', requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /admin/announcements/deleted
+ * Get deleted announcements for trash
+ */
+router.get('/admin/announcements/deleted', requireAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+
+    const result = await announcementService.getDeletedAnnouncements(page, limit);
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error fetching deleted announcements:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * PUT /admin/announcement/:id/restore
+ * Restore deleted announcement
+ */
+router.put('/admin/announcement/:id/restore', requireAdmin, async (req, res) => {
+  try {
+    const announcement = await announcementService.restoreAnnouncement(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Announcement restored successfully',
+      data: announcement
+    });
+  } catch (error) {
+    console.error('Error restoring announcement:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /admin/announcement/:id/permanent
+ * Permanently delete announcement
+ */
+router.delete('/admin/announcement/:id/permanent', requireAdmin, async (req, res) => {
+  try {
+    await announcementService.permanentlyDeleteAnnouncement(req.params.id);
+
+    res.json({
+      success: true,
+      message: 'Announcement permanently deleted'
+    });
+  } catch (error) {
+    console.error('Error permanently deleting announcement:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -3692,17 +5477,35 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
     const unitAnalytics = await reportService.getUnitAnalytics();
     const userAnalytics = await reportService.getUserAnalytics();
 
+    const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+    const units = getUnits();
+    const requestStatuses = getRequestStatuses();
+    
+    // Get actual request types from database
+    const serviceRequestTypes = await ServiceRequest.distinct('specificRequestType', { 
+      specificRequestType: { $exists: true, $ne: null, $ne: '' } 
+    });
+    const approvalRequestTypes = await RequestApproval.distinct('specificRequestType', { 
+      specificRequestType: { $exists: true, $ne: null, $ne: '' } 
+    });
+    const requestTypes = [...new Set([...serviceRequestTypes, ...approvalRequestTypes])].filter(type => type);
+
     res.render('Admin/analytics', {
       user: req.user,
       title: 'Analytics',
       analytics: analytics,
       requestTypeAnalytics: requestTypeAnalytics,
       unitAnalytics: unitAnalytics,
-      userAnalytics: userAnalytics
+      userAnalytics: userAnalytics,
+      units,
+      requestStatuses,
+      requestTypes
     });
   } catch (error) {
     console.error('Error loading analytics page:', error);
-    res.status(500).render('error', { error: error.message });
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: error.message });
+    }
   }
 });
 
@@ -3822,11 +5625,319 @@ router.get('/admin/configuration', requireAdmin, async (req, res) => {
       });
       await pageContent.save();
     }
+
+    // Get system settings
+    let settings = await settingsService.getSettings();
     
+    // Track if we need to save defaults
+    let needsSave = false;
+    const defaultUpdates = {};
+
+    // Initialize default units if not set
+    if (!settings.units || settings.units.length === 0) {
+      defaultUpdates.units = ['Graphics', 'Multimedia', 'Public Relations', 'Social Media'];
+      needsSave = true;
+    }
+
+    // Initialize default organizations if not set
+    if (!settings.organizations || settings.organizations.length === 0) {
+      defaultUpdates.organizations = [
+        "University Student Government (USG)",
+        "Internal Audit Service (IAS)",
+        "University Student Election Commission (USEC)",
+        "Office of the Solicitor General (OSG)",
+        "College of Business Administration and Accountancy Student Government (CBAASG)",
+        "Business Management Program Council (BMPC)",
+        "Junior Philippine Institute of Accountants (JPIA)",
+        "Marketing Management Program Council (MMPC)",
+        "College of Education Student Government (COEdSG)",
+        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
+        "Architecture Program Council (ArchPC)",
+        "Civil Engineering Program Council (CEEPC)",
+        "Computer Engineering Program Council (CpEPC)",
+        "Electrical Engineering Program Council (EEEPC)",
+        "Electronics Engineering Program Council (ECEPC)",
+        "Industrial Engineering Program Council (IEEPC)",
+        "Mechanical Engineering Program Council (MEEPC)",
+        "Multimedia Arts Program Council (MMAPC)",
+        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
+        "College of Criminal Justice Education Student Government (CCJESG)",
+        "Criminology Program Council (CrimPC)",
+        "Forensic Science Program Council (FScPC)",
+        "College of Liberal Arts and Communication Student Government (CLACSG)",
+        "Communication Program Council (CPC)",
+        "International Development Program Council (IDPC)",
+        "Political Science Program Council (PSPC)",
+        "Psychology Program Council (PPC)",
+        "College of Science Student Government (COSSG)",
+        "Applied Mathematics Program Council (AMPC)",
+        "Biology Program Council (BioPC)",
+        "College of Information and Computer Studies Student Government (CICSSG)",
+        "Computer Science Program Council (CSPC)",
+        "Information Technology Program Council (ITPC)",
+        "DLSU-D Chorale (CHORALE)",
+        "Lasallian Symphony Orchestra (LSO)",
+        "La Salle Filipiniana Dance Company (LSFDC)",
+        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
+        "Lasallian Pop Band (LPB)",
+        "Teatro Lasalliana (TEATRO)",
+        "Visual and Performing Arts Production Unit (VPAPU)",
+        "Heraldo Filipino",
+        "Vicissitude",
+        "Council of Student Organizations (CSO)",
+        "Business Operations Management Society (BOMS)",
+        "Junior Marketing Association (JMA)",
+        "DLSU-D Psychological Society (DPS)",
+        "DLSU-D Pre-Medical Society (DPMS)",
+        "Hotel and Restaurant Management Society (HRMS)",
+        "Turismo Lasalleño Society (TLS)",
+        "Lasallian Educators Society (LES)",
+        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
+        "DLSU-D Pre-Law Society (DPLS)",
+        "Astraeus Literary and Arts Guild",
+        "Accounting Enrichment Society (ACES)",
+        "Circle of Student Assistants (COSA)",
+        "DLSU-D Lifters",
+        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
+        "DLSU-D United Patriots Football Club",
+        "Junior Financial Executives Institute of the Philippines (JFINEX)",
+        "Marché Société (MS)",
+        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
+        "SINAG Society of Leaders (SISOL)",
+        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
+        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
+        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
+        "LS Verde of Campus Sustainability Office",
+        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
+        "Green FM of Communications and Journalism Department",
+        "International Students' Association (ISA) of International Students Office",
+        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
+      ];
+      needsSave = true;
+    }
+
+    // Initialize default offices if not set
+    if (!settings.offices || settings.offices.length === 0) {
+      defaultUpdates.offices = [
+        "Office of the President",
+        "Office of the Chief Administrative Officer",
+        "Office of the Provost",
+        "Office of the Chief Lasallian Mission Officer",
+        "Office of the Principal",
+        "Corporate and Executive Management Office",
+        "Center for Heritage Conservation",
+        "Museo De La Salle",
+        "Risk, Compliance and Audit Office",
+        "University Chaplain",
+        "Office of the Vice President for Administrative Services",
+        "Office of the Vice President for Finance",
+        "Office of the Vice President for Global Engagement and External Relations",
+        "Human Resource Management Office",
+        "Strategic Communications Office",
+        "Ancillary and Asset Management Office",
+        "Legal Counsel",
+        "Data Protection Office",
+        "Campus Development Office",
+        "Buildings and Facilities Maintenance Office",
+        "Campus Sustainability Office",
+        "General Services Office",
+        "Green Architecture and Campus Planning Office",
+        "Information and Communications Technology Center",
+        "Accounting Office",
+        "Treasury Office",
+        "Advancement and Alumni Relations Office",
+        "Lasallian Community Development Center",
+        "Linkages and Scholarship Office",
+        "Office of the Vice Provost for Academics",
+        "Office of the Deputy Provost for Research",
+        "Academic Planning and Quality Management",
+        "College of Law",
+        "College of Professional and Graduate Studies",
+        "School of Innovative and Flexible Learning",
+        "School of Governance, Public Service, and Corporate Leadership",
+        "Aklatang Emilio Aguinaldo-Information Resource Center",
+        "Center for Student Admissions",
+        "University Registrar",
+        "Cavite Studies Center",
+        "University Research Office",
+        "Herminia D. Torres Quality Assurance Office",
+        "Center for Innovative Learning Program",
+        "Center for Curriculum Development and Instruction",
+        "Language Learning Center",
+        "Center for Artificial Intelligence",
+        "Center for Creative Program",
+        "Academy of Continuing Education",
+        "College of Business Administration and Accountancy",
+        "Accountancy Department",
+        "Allied Business Department",
+        "Business Management Department",
+        "Marketing Department",
+        "College of Criminal Justice Education",
+        "College of Education",
+        "Physical Education Department",
+        "Professional Education Department",
+        "Religious Education Department",
+        "College of Engineering, Architecture and Technology",
+        "Architecture Department",
+        "Engineering Department",
+        "Graphics Design and Multimedia Department",
+        "Center of Technology",
+        "College of Information and Computer Studies",
+        "Computer Studies Department",
+        "Information Technology Department",
+        "College of Liberal Arts and Communication",
+        "Communication and Journalism Department",
+        "Languages and Literature Department",
+        "Social Sciences Department",
+        "Philosophy and Psychology Department",
+        "College of Tourism and Hospitality Management",
+        "Hospitality Management Department",
+        "Tourism Management Department",
+        "College of Science",
+        "Biological Sciences Department",
+        "Mathematics & Statistics Department",
+        "Physical Sciences Department",
+        "Office of Student Services",
+        "Student Development and Activities Office",
+        "Student Welfare and Formation Office",
+        "Student Wellness Center",
+        "NSTP-CWTS",
+        "Campus Ministry Office",
+        "DLS Bahay Pag-asa Dasmariñas",
+        "Night College",
+        "Sports Development Office",
+        "University Lasallian Family Office",
+        "Basic Education",
+        "Office of the Associate Principal for Academics and Research",
+        "Office of the Associate Principal for Administrative Services and Student Affairs",
+        "Dormitory",
+        "Materials Reproduction Office / Food Services Office",
+        "Retreat and Conference Center / Sports & Recreation Complex",
+        "Warehouse Office",
+        "Safety & Health Office",
+        "Purchasing Office",
+        "Transportation Office",
+        "Facilities Maintenance Office",
+        "Housekeeping & Grounds",
+        "De La Salle Dasmariñas Alumni Association",
+        "DLSU-D Development Cooperative",
+        "Faculty Organization",
+        "KABALIKAT ng DLSU-D Inc.",
+        "Parents Organization La Salle Cavite",
+        "Human Resource Management Office"
+      ];
+      needsSave = true;
+    }
+
+    // Initialize default request type mappings if not set
+    if (!settings.requestTypeMappings || settings.requestTypeMappings.length === 0) {
+      defaultUpdates.requestTypeMappings = [
+        { requestType: 'Creation of New Graphics/Pubmat', recommendedUnit: 'Graphics' },
+        { requestType: 'Creation of New Logo/Branding Element', recommendedUnit: 'Graphics' },
+        { requestType: 'Event Photo & Video Coverage', recommendedUnit: 'Multimedia' },
+        { requestType: 'Photo/Video Editing Service', recommendedUnit: 'Multimedia' },
+        { requestType: 'Magazine Content Creation', recommendedUnit: 'Public Relations' },
+        { requestType: 'Social Media Content Sharing/Posting', recommendedUnit: 'Social Media' },
+        { requestType: 'Content Posting', recommendedUnit: 'Public Relations' },
+        { requestType: 'Social Media Monitoring', recommendedUnit: 'Social Media' },
+        { requestType: 'Caption Approval', recommendedUnit: 'Public Relations' },
+        { requestType: 'Publication Design', recommendedUnit: 'Graphics' },
+        { requestType: 'Proofreading', recommendedUnit: 'Public Relations' },
+        { requestType: 'Graphics Design', recommendedUnit: 'Graphics' },
+        { requestType: 'Media Coverage', recommendedUnit: 'Multimedia' }
+      ];
+      needsSave = true;
+    }
+
+    // Initialize default request statuses if not set
+    if (!settings.requestStatuses || settings.requestStatuses.length === 0) {
+      defaultUpdates.requestStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived'];
+      needsSave = true;
+    }
+
+    // User roles are now automatically initialized by server.js and settingsService
+    // No need to check here as they are always populated on server startup
+
+    // Initialize default announcement priorities if not set
+    if (!settings.announcementPriorities || settings.announcementPriorities.length === 0) {
+      defaultUpdates.announcementPriorities = ['low', 'medium', 'high'];
+      needsSave = true;
+    }
+
+    // Initialize default announcement types if not set
+    if (!settings.announcementTypes || settings.announcementTypes.length === 0) {
+      defaultUpdates.announcementTypes = ['Event', 'News', 'Reminder', 'Update', 'Maintenance'];
+      needsSave = true;
+    }
+
+    // Save defaults to database if needed
+    if (needsSave) {
+      await settingsService.updateSettings(defaultUpdates);
+      settings = await settingsService.getSettings(); // Reload settings with defaults
+      console.log('[ADMIN] Initialized default system settings in database');
+    }
+
+    // Get request types
+    let requestTypes = [];
+    try {
+      requestTypes = await RequestType.find({}).sort({ name: 1 });
+      if (!Array.isArray(requestTypes)) {
+        requestTypes = [];
+      }
+    } catch (error) {
+      console.error('Error fetching request types:', error);
+      requestTypes = [];
+    }
+    
+    // Fetch archived requests for the Archive Manager tab (safe — falls back to [] on error)
+    let archivedRequests = [];
+    try {
+      const [deletedApprovals, deletedServices, autoArchivedApprovals, autoArchivedServices] = await Promise.all([
+        RequestApproval.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
+        ServiceRequest.find({ isDeleted: true }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).populate({ path: 'deletedBy', select: 'fName lName' }).lean(),
+        RequestApproval.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean(),
+        ServiceRequest.find({ status: 'Archived', isDeleted: { $ne: true } }).populate({ path: 'userId', select: 'fName lName userType affiliation', options: { strictPopulate: false } }).lean()
+      ]);
+      const buildEntry = (r, type, source) => {
+        let userName = 'System User';
+        let displayOrganization = r.organization || 'N/A';
+        let deletedByName = source === 'auto' ? 'System (Auto-Archive)' : 'Unknown';
+        if (r.userId && r.userId.fName) {
+          userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
+          displayOrganization = r.userId.userType === 'nonstudent'
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
+            : r.organization || 'N/A';
+        }
+        if (source === 'deleted' && r.deletedBy && r.deletedBy.fName) {
+          deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();
+        }
+        return { ...r, type, displayOrganization, userName, deletedByName, archiveSource: source,
+          datetime: r.datetime || r.createdAt,
+          deletedAt: source === 'auto' ? (r.archivedAt || r.updatedAt) : r.deletedAt };
+      };
+      archivedRequests = [
+        ...deletedApprovals.map(r => buildEntry(r, 'Request Approval', 'deleted')),
+        ...deletedServices.map(r => buildEntry(r, 'Service Request', 'deleted')),
+        ...autoArchivedApprovals.map(r => buildEntry(r, 'Request Approval', 'auto')),
+        ...autoArchivedServices.map(r => buildEntry(r, 'Service Request', 'auto')),
+      ].sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
+    } catch (archiveError) {
+      console.error('[ADMIN] Could not load archive data for config page:', archiveError.message);
+    }
+
+    // Get system-defined statuses, excluding 'Archived' for restoration
+    const allStatuses = (settings && settings.requestStatuses) || ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected'];
+    const restoreStatuses = allStatuses.filter(s => s.toLowerCase() !== 'archived');
+
     res.render('Admin/configuration', {
       name: user.firstName,
       user: user,
       pageContent: pageContent.content || {},
+      settings: settings,
+      requestTypes: requestTypes,
+      archivedRequests,
+      restoreStatuses,
+      allowUserReactivation: settings ? settings.allowUserReactivation : false,
       success: req.query.success,
       error: req.query.error
     });
@@ -3846,14 +5957,21 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       heroTitle, heroTitleHighlight, heroSubtitle,
       pledgeSectionTitle,
       aboutSectionTitle, aboutSectionSubtitle,
-      aboutMission, aboutVision,
+      aboutMissionTitle, aboutMission, aboutVisionTitle, aboutVision,
+      gallerySectionTitle, gallerySectionSubtitle, galleryEmbedUrl,
       servicesSectionTitle, servicesSectionSubtitle,
       teamSectionTitle, teamSectionSubtitle,
       contactSectionTitle, contactIntroText,
       socialSectionTitle,
       footerTagline, footerText,
       heroPrimaryButtonText, heroPrimaryButtonLink,
-      heroSecondaryButtonText, heroSecondaryButtonLink
+      heroSecondaryButtonText, heroSecondaryButtonLink,
+      // S-CORE Section
+      sCoreSectionTitle,
+      sCorePlatformDescription, sCoreWhatIsTitle, sCoreWhatIsDescription,
+      sCoreWhyTitle, sCoreWhyDescription, sCoreDashboardImage,
+      sCoreLoginButtonText, sCoreLoginButtonLink, sCoreLoginButtonStyle,
+      sCoreSignupButtonText, sCoreSignupButtonLink, sCoreSignupButtonStyle
     } = req.body;
     
     // Handle array fields
@@ -3966,9 +6084,14 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       pledgeItems: pledgeItems.length > 0 ? pledgeItems : pageContent.content?.pledgeItems || [],
       aboutSectionTitle: aboutSectionTitle || pageContent.content?.aboutSectionTitle,
       aboutSectionSubtitle: aboutSectionSubtitle || pageContent.content?.aboutSectionSubtitle,
+      aboutMissionTitle: aboutMissionTitle || pageContent.content?.aboutMissionTitle,
       aboutMission: aboutMission || pageContent.content?.aboutMission,
+      aboutVisionTitle: aboutVisionTitle || pageContent.content?.aboutVisionTitle,
       aboutVision: aboutVision || pageContent.content?.aboutVision,
       aboutFeatures: aboutFeatures.length > 0 ? aboutFeatures : pageContent.content?.aboutFeatures || [],
+      gallerySectionTitle: gallerySectionTitle || pageContent.content?.gallerySectionTitle,
+      gallerySectionSubtitle: gallerySectionSubtitle || pageContent.content?.gallerySectionSubtitle,
+      galleryEmbedUrl: galleryEmbedUrl || pageContent.content?.galleryEmbedUrl,
       servicesSectionTitle: servicesSectionTitle || pageContent.content?.servicesSectionTitle,
       servicesSectionSubtitle: servicesSectionSubtitle || pageContent.content?.servicesSectionSubtitle,
       services: services.length > 0 ? services : pageContent.content?.services || [],
@@ -3986,7 +6109,21 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       heroPrimaryButtonText: heroPrimaryButtonText || pageContent.content?.heroPrimaryButtonText,
       heroPrimaryButtonLink: heroPrimaryButtonLink || pageContent.content?.heroPrimaryButtonLink,
       heroSecondaryButtonText: heroSecondaryButtonText || pageContent.content?.heroSecondaryButtonText,
-      heroSecondaryButtonLink: heroSecondaryButtonLink || pageContent.content?.heroSecondaryButtonLink
+      heroSecondaryButtonLink: heroSecondaryButtonLink || pageContent.content?.heroSecondaryButtonLink,
+      // S-CORE Section
+      sCoreSectionTitle: sCoreSectionTitle || pageContent.content?.sCoreSectionTitle,
+      sCorePlatformDescription: sCorePlatformDescription || pageContent.content?.sCorePlatformDescription,
+      sCoreWhatIsTitle: sCoreWhatIsTitle || pageContent.content?.sCoreWhatIsTitle,
+      sCoreWhatIsDescription: sCoreWhatIsDescription || pageContent.content?.sCoreWhatIsDescription,
+      sCoreWhyTitle: sCoreWhyTitle || pageContent.content?.sCoreWhyTitle,
+      sCoreWhyDescription: sCoreWhyDescription || pageContent.content?.sCoreWhyDescription,
+      sCoreDashboardImage: sCoreDashboardImage || pageContent.content?.sCoreDashboardImage,
+      sCoreLoginButtonText: sCoreLoginButtonText || pageContent.content?.sCoreLoginButtonText,
+      sCoreLoginButtonLink: sCoreLoginButtonLink || pageContent.content?.sCoreLoginButtonLink,
+      sCoreLoginButtonStyle: sCoreLoginButtonStyle || pageContent.content?.sCoreLoginButtonStyle,
+      sCoreSignupButtonText: sCoreSignupButtonText || pageContent.content?.sCoreSignupButtonText,
+      sCoreSignupButtonLink: sCoreSignupButtonLink || pageContent.content?.sCoreSignupButtonLink,
+      sCoreSignupButtonStyle: sCoreSignupButtonStyle || pageContent.content?.sCoreSignupButtonStyle
     };
     
     pageContent.updatedBy = req.session.userId;
@@ -4005,11 +6142,957 @@ router.post('/admin/configuration', requireAdmin, async (req, res) => {
       console.error('[ADMIN] Failed to save JSON backup:', jsonError);
     }
     
-    res.redirect('/admin/configuration?success=Homepage content updated successfully');
+    // Notify OTHER admin users (exclude performing admin)
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const adminId = req.user ? req.user._id : req.session.userId;
+      const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+      const otherAdminIds = otherAdmins.map(a => a._id);
+      
+      const submittedTab = req.body.tabName || 'homepage';
+      const layoutName = submittedTab === 'aboutscore' ? 'About S-Core' : 'Homepage';
+
+      if (otherAdminIds.length > 0) {
+        await notificationService.notifySystem(
+          otherAdminIds, 
+          `${layoutName} Content Updated`, 
+          `The ${layoutName} layout was updated by ${adminNameFull}.`, 
+          'low', 
+          `/admin/configuration?tab=${submittedTab}`
+        );
+      }
+    } catch (notifError) {
+      console.error('[ADMIN] Failed to notify admins of homepage update:', notifError);
+    }
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, message: 'Homepage content updated successfully' });
+    } else {
+      const targetTab = req.body.tabName === 'aboutscore' ? 'aboutscore' : 'homepage';
+      return res.redirect(`/admin/configuration?tab=${targetTab}&success=Homepage content updated successfully`);
+    }
   } catch (error) {
     console.error('[ADMIN] Error saving configuration:', error);
-    res.redirect('/admin/configuration?error=Failed to save homepage content');
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, message: 'Failed to save homepage content' });
+    } else {
+      const targetTab = req.body.tabName === 'aboutscore' ? 'aboutscore' : 'homepage';
+      return res.redirect(`/admin/configuration?tab=${targetTab}&error=Failed to save homepage content`);
+    }
   }
 });
 
+/**
+ * POST /admin/archive-settings
+ * Save ONLY archiving-related settings (safe subset — no page content fields required).
+ * Called by the Archive Manager tab's "Save Settings" button.
+ */
+router.post('/admin/archive-settings', requireAdmin, async (req, res) => {
+  try {
+    const settingsService = require('../services/settingsService');
+
+    const completedDays = parseInt(req.body.archiveCompletedAfterDays, 10);
+    const approvedDays  = parseInt(req.body.archiveApprovedAfterDays,  10);
+    const revisionDays  = parseInt(req.body.archiveRevisionAfterDays,  10);
+    const allowReactivation = req.body.allowUserReactivation === 'true' || req.body.allowUserReactivation === 'on';
+
+    const updates = {};
+    if (!isNaN(completedDays)) updates.archiveCompletedAfterDays = completedDays;
+    if (!isNaN(approvedDays))  updates.archiveApprovedAfterDays  = approvedDays;
+    if (!isNaN(revisionDays))  updates.archiveRevisionAfterDays  = revisionDays;
+    updates.allowUserReactivation = allowReactivation;
+
+    await settingsService.updateSettings(updates);
+
+    console.log(`[ADMIN] Archive settings saved: completed=${completedDays}d, approved=${approvedDays}d, revision=${revisionDays}d, reactivation=${allowReactivation}`);
+    return res.json({ success: true, message: 'Archive settings saved.' });
+  } catch (error) {
+    console.error('[ADMIN] Error saving archive settings:', error);
+    return res.status(500).json({ success: false, message: 'Failed to save archive settings.' });
+  }
+});
+
+router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    
+    // Process organizations from textarea
+    const organizations = req.body.organizationsList ? 
+      req.body.organizationsList.split('\n').map(org => org.trim()).filter(org => org) : 
+      [];
+
+    // Process units and their request types
+    const units = [];
+    const requestTypeMappings = [];
+    
+    if (req.body.unitName && Array.isArray(req.body.unitName)) {
+      for (let index = 0; index < req.body.unitName.length; index++) {
+        const unitName = req.body.unitName[index];
+        if (unitName && unitName.trim()) {
+          units.push(unitName.trim());
+          
+          // Process request types for this unit
+          const unitRequestTypesText = req.body.unitRequestTypes[index] || '';
+          const requestTypesForUnit = unitRequestTypesText
+            .split('\n')
+            .map(rt => rt.trim())
+            .filter(rt => rt);
+          
+          // Create mappings for each request type to this unit
+          for (const requestType of requestTypesForUnit) {
+            requestTypeMappings.push({
+              requestType: requestType,
+              recommendedUnit: unitName.trim()
+            });
+
+            // Sync to RequestType collection
+            await RequestType.findOneAndUpdate(
+              { name: requestType },
+              { 
+                $set: {
+                  assignedUnit: unitName.trim(),
+                  status: 'approved',
+                  reviewedBy: user._id,
+                  reviewedAt: new Date()
+                },
+                $setOnInsert: {
+                  name: requestType,
+                  submittedBy: user._id
+                }
+              },
+              { upsert: true, new: true }
+            );
+          }
+        }
+      }
+    }
+
+    // Process offices/departments
+    const offices = req.body.officesList ? 
+      req.body.officesList.split('\n').map(office => office.trim()).filter(office => office) : 
+      [];
+
+    // Process request statuses
+    const requestStatuses = req.body.requestStatuses ? 
+      req.body.requestStatuses.split('\n').map(status => status.trim()).filter(status => status) : 
+      ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected', 'Archived'];
+
+    // Process user roles with simplified permissions
+    const userRoles = [];
+    if (req.body.roleName && Array.isArray(req.body.roleName)) {
+      req.body.roleName.forEach((roleName, index) => {
+        if (roleName && roleName.trim()) {
+          // Get the access level from radio button (roleAccessLevel_0, roleAccessLevel_1, etc.)
+          const accessLevel = req.body[`roleAccessLevel_${index}`] || 'user';
+          
+          console.log(`[ADMIN] Role ${index}: ${roleName}, Access Level: ${accessLevel}`);
+          
+          // Convert access level to permission array matching users.ejs system
+          let permissions = [];
+          switch(accessLevel) {
+            case 'user':
+              permissions = ['user']; // Submits Requests
+              break;
+            case 'unit':
+              permissions = ['unit']; // Works on Tasks
+              break;
+            case 'admin':
+              permissions = ['admin']; // Full System Access
+              break;
+            default:
+              permissions = ['user'];
+          }
+          
+          userRoles.push({
+            name: roleName.trim(),
+            permissions: permissions
+          });
+        }
+      });
+    }
+    
+    console.log('[ADMIN] Processed user roles:', JSON.stringify(userRoles, null, 2));
+
+    // Process announcement priorities
+    const announcementPriorities = req.body.announcementPriorities ? 
+      req.body.announcementPriorities.split('\n').map(priority => priority.trim()).filter(priority => priority) : 
+      ['low', 'medium', 'high'];
+
+    // Process announcement types
+    const announcementTypes = req.body.announcementTypes ? 
+      req.body.announcementTypes.split('\n').map(type => type.trim()).filter(type => type) : 
+      ['Event', 'News', 'Reminder', 'Update', 'Maintenance'];
+
+    // Process allowed file types
+    const allowedFileTypes = req.body.allowedFileTypes ? 
+      req.body.allowedFileTypes.split('\n').map(type => type.trim()).filter(type => type) : 
+      ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'doc', 'docx', 'xlsx', 'xls', 'txt', 'pptx'];
+
+    // Update system settings
+    const updateData = {
+      // Core configurations
+      organizations: organizations,
+      units: units,
+      offices: offices,
+      requestStatuses: requestStatuses,
+      userRoles: userRoles,
+      announcementPriorities: announcementPriorities,
+      announcementTypes: announcementTypes,
+      requestTypeMappings: requestTypeMappings,
+      
+      // General settings
+      siteTitle: req.body.siteTitle,
+      siteDescription: req.body.siteDescription,
+      timezone: req.body.timezone,
+      dateFormat: req.body.dateFormat,
+      logo: req.body.logo || null,
+      favicon: req.body.favicon || null,
+      
+      // Request management settings
+      maxRevisions: parseInt(req.body.maxRevisions) || 3,
+      maxMinorRevisions: parseInt(req.body.maxMinorRevisions) || 2,
+      defaultDeadlineDays: parseInt(req.body.defaultDeadlineDays) || 7,
+      autoApproveAfterRevisions: req.body.autoApproveAfterRevisions === 'on',
+      requireUnitReview: req.body.requireUnitReview === 'on',
+      
+      // File storage settings
+      maxFileSize: parseInt(req.body.maxFileSize) || 50,
+      allowedFileTypes: allowedFileTypes,
+      storageType: req.body.storageType || 'local',
+      retainAllRevisionFiles: req.body.retainAllRevisionFiles === 'on',
+      autoDeleteOldFilesAfterDays: req.body.autoDeleteOldFilesAfterDays ? parseInt(req.body.autoDeleteOldFilesAfterDays) : null,
+      
+      // Notification settings
+      enableEmailNotifications: req.body.enableEmailNotifications === 'on',
+      notificationFrequency: req.body.notificationFrequency || 'immediate',
+      emailFrom: req.body.emailFrom,
+      smtpHost: req.body.smtpHost,
+      smtpPort: parseInt(req.body.smtpPort) || 587,
+      
+      // Maintenance & backup
+      maintenanceMode: req.body.maintenanceMode === 'on',
+      maintenanceMessage: req.body.maintenanceMessage,
+      backupEnabled: req.body.backupEnabled === 'on',
+      backupFrequency: req.body.backupFrequency || 'weekly',
+      backupRetentionDays: parseInt(req.body.backupRetentionDays) || 90,
+      
+      // Audit & logging
+      enableDetailedLogs: req.body.enableDetailedLogs === 'on',
+      trackUserActions: req.body.trackUserActions === 'on',
+      logRetentionDays: parseInt(req.body.logRetentionDays) || 90,
+
+      // Automated archiving settings
+      archiveCompletedAfterDays: parseInt(req.body.archiveCompletedAfterDays) || 30,
+      archiveRevisionAfterDays: parseInt(req.body.archiveRevisionAfterDays) || 14,
+      allowUserReactivation: req.body.allowUserReactivation === 'on',
+      
+      // Metadata
+      updatedBy: user._id,
+      updatedAt: new Date()
+    };
+
+    console.log('[ADMIN] Saving userRoles to database:', JSON.stringify(updateData.userRoles, null, 2));
+    
+    await settingsService.updateSettings(updateData);
+    
+    // Notify OTHER admin users (exclude performing admin)
+    try {
+      const adminNameFull = await getAdminNameString(req);
+      const adminId = user._id; // Loaded from req.session.userId at start of function
+      const otherAdmins = await User.find({ role: 'admin', _id: { $ne: adminId } }, '_id');
+      const otherAdminIds = otherAdmins.map(a => a._id);
+      
+      if (otherAdminIds.length > 0) {
+        await notificationService.notifySystem(
+          otherAdminIds, 
+          'System Configuration Updated', 
+          `The system configuration (units, roles, statuses) was updated by ${adminNameFull}.`, 
+          'low', 
+          '/admin/configuration?tab=system'
+        );
+      }
+    } catch (notifError) {
+      console.error('[ADMIN] Failed to notify admins of system configuration update:', notifError);
+    }
+    
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, message: 'System configuration updated successfully' });
+    } else {
+      return res.redirect('/admin/configuration?success=System configuration updated successfully');
+    }
+  } catch (error) {
+    console.error('[ADMIN] Error saving system configuration:', error);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, message: 'Failed to save system configuration' });
+    } else {
+      return res.redirect('/admin/configuration?error=Failed to save system configuration');
+    }
+  }
+});
+
+/**
+ * GET /admin/analytics-data/top-requestors
+ * Get top requestors for pie chart
+ */
+router.get('/admin/analytics-data/top-requestors', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).populate('userId').lean();
+    const allRequests = [...approvals, ...serviceRequests];
+
+    // Group by organization
+    const organizationMap = {};
+    allRequests.forEach(req => {
+      const org = req.organization || req.userId?.studentOrganization?.[0] || req.userId?.affiliation?.[0] || 'Unknown';
+      organizationMap[org] = (organizationMap[org] || 0) + 1;
+    });
+
+    // Sort and get top 8
+    const topRequestors = Object.entries(organizationMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }));
+
+    res.json({
+      success: true,
+      labels: topRequestors.map(r => r.name),
+      data: topRequestors.map(r => r.count)
+    });
+  } catch (error) {
+    console.error('Error loading top requestors:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/request-volume
+ * Get request volume over time with optional filters
+ */
+router.get('/admin/analytics-data/request-volume', requireAdmin, async (req, res) => {
+  try {
+    console.log('Request volume query:', req.query);
+    
+    const days = parseInt(req.query.days) || 30;
+    const { dateRange, units, requestType, status, startDate, endDate } = req.query;
+    
+    // Build query based on filters
+    let query = {};
+    
+    // Date range filter
+    if (dateRange && dateRange !== 'monthly' || (startDate && endDate) || days !== 30) {
+      let dateFilter = {};
+      const now = new Date();
+      
+      if (startDate && endDate) {
+        // Custom date range
+        dateFilter.$gte = new Date(startDate);
+        dateFilter.$lte = new Date(endDate);
+      } else {
+        // Standard date ranges
+        switch (dateRange) {
+          case 'daily':
+            dateFilter.$gte = new Date(now.setHours(0, 0, 0, 0));
+            break;
+          case 'weekly':
+            dateFilter.$gte = new Date(now.setDate(now.getDate() - 7));
+            break;
+          case 'monthly':
+            dateFilter.$gte = new Date(now.setMonth(now.getMonth() - 1));
+            break;
+          case 'quarterly':
+            dateFilter.$gte = new Date(now.setMonth(now.getMonth() - 3));
+            break;
+          case 'annually':
+            dateFilter.$gte = new Date(now.setFullYear(now.getFullYear() - 1));
+            break;
+          default:
+            // Default to days parameter
+            dateFilter.$gte = new Date(now.setDate(now.getDate() - days));
+        }
+      }
+      
+      if (Object.keys(dateFilter).length > 0) {
+        query.createdAt = dateFilter;
+      }
+    }
+    
+    // Unit filter
+    if (units && units !== 'all') {
+      const unitArray = units.split(',');
+      query.assignedUnits = { $in: unitArray };
+    }
+    
+    // Status filter
+    if (status && status !== 'all') {
+      query.status = new RegExp(status, 'i');
+    } else {
+      query.status = { $nin: ['Archived', 'ARCHIVED', 'archived'] };
+    }
+    
+    // Fetch data based on request type
+    let approvals = [];
+    let services = [];
+    
+    // Add isDeleted filter to exclude soft-deleted items
+    query.isDeleted = { $ne: true };
+    
+    console.log('Final query:', query);
+    console.log('Request type filter:', requestType);
+    
+    if (!requestType || requestType === 'all') {
+      // Fetch all requests
+      console.log('Fetching all requests');
+      approvals = await RequestApproval.find(query).populate('userId').lean();
+      services = await ServiceRequest.find(query).populate('userId').lean();
+    } else {
+      // Filter by specific request type
+      console.log('Filtering by request type:', requestType);
+      const approvalQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      const serviceQuery = { ...query, specificRequestType: new RegExp(requestType, 'i') };
+      
+      console.log('Approval query:', approvalQuery);
+      console.log('Service query:', serviceQuery);
+      
+      approvals = await RequestApproval.find(approvalQuery).populate('userId').lean();
+      services = await ServiceRequest.find(serviceQuery).populate('userId').lean();
+    }
+    
+    console.log('Found approvals:', approvals.length);
+    console.log('Found services:', services.length);
+
+    // Calculate date range for the chart
+    let startDateFilter, endDateFilter;
+    if (query.createdAt && query.createdAt.$gte) {
+      startDateFilter = new Date(query.createdAt.$gte);
+      endDateFilter = query.createdAt.$lte || new Date();
+    } else {
+      // Default to last N days
+      endDateFilter = new Date();
+      startDateFilter = new Date(endDateFilter);
+      startDateFilter.setDate(startDateFilter.getDate() - days);
+    }
+
+    const dateMap = {};
+    
+    // Initialize date map for the filtered date range
+    const totalDays = Math.ceil((endDateFilter - startDateFilter) / (1000 * 60 * 60 * 24));
+    for (let i = 0; i <= totalDays; i++) {
+      const date = new Date(startDateFilter);
+      date.setDate(date.getDate() + i);
+      const key = date.toISOString().split('T')[0];
+      dateMap[key] = { approvals: 0, services: 0 };
+    }
+
+    // Count approvals by date
+    approvals.forEach(a => {
+      const date = new Date(a.createdAt).toISOString().split('T')[0];
+      if (dateMap[date]) dateMap[date].approvals++;
+    });
+
+    // Count services by date
+    services.forEach(s => {
+      const date = new Date(s.createdAt).toISOString().split('T')[0];
+      if (dateMap[date]) dateMap[date].services++;
+    });
+
+    const labels = Object.keys(dateMap).sort();
+    const approvalData = labels.map(d => dateMap[d].approvals);
+    const serviceData = labels.map(d => dateMap[d].services);
+
+    console.log('Response data - labels:', labels);
+    console.log('Response data - approvals:', approvalData);
+    console.log('Response data - services:', serviceData);
+
+    res.json({
+      success: true,
+      labels,
+      approvals: approvalData,
+      services: serviceData
+    });
+  } catch (error) {
+    console.error('Error loading request volume:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/active-workload
+ * Get active workload by unit
+ */
+router.get('/admin/analytics-data/active-workload', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({
+      status: { $in: ['in progress', 'in_progress', 'In Progress'] }
+    }).lean();
+    const serviceRequests = await ServiceRequest.find({
+      status: { $in: ['in progress', 'in_progress', 'In Progress'] }
+    }).lean();
+
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
+
+    // Initialize unit counts
+    units.forEach(unit => {
+      unitMap[unit] = 0;
+    });
+
+    // Count by assigned units
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned') {
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit] !== undefined) unitMap[unit]++;
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits] !== undefined) unitMap[req.assignedUnits]++;
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      labels: Object.keys(unitMap),
+      data: Object.values(unitMap)
+    });
+  } catch (error) {
+    console.error('Error loading active workload:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/turnaround-by-unit
+ * Get average turnaround time by unit
+ */
+router.get('/admin/analytics-data/turnaround-by-unit', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({
+      status: 'completed'
+    }).lean();
+    const serviceRequests = await ServiceRequest.find({
+      status: 'completed'
+    }).lean();
+
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
+
+    // Initialize unit turnaround times
+    units.forEach(unit => {
+      unitMap[unit] = { total: 0, count: 0 };
+    });
+
+    // Calculate turnaround times
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned' && req.createdAt && req.updatedAt) {
+        const turnaroundDays = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60 * 24);
+        
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit]) {
+              unitMap[unit].total += turnaroundDays;
+              unitMap[unit].count++;
+            }
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits]) {
+            unitMap[req.assignedUnits].total += turnaroundDays;
+            unitMap[req.assignedUnits].count++;
+          }
+        }
+      }
+    });
+
+    // Calculate averages
+    const averages = {};
+    Object.entries(unitMap).forEach(([unit, data]) => {
+      averages[unit] = data.count > 0 ? (data.total / data.count).toFixed(1) : 0;
+    });
+
+    res.json({
+      success: true,
+      labels: Object.keys(averages),
+      data: Object.values(averages).map(v => parseFloat(v))
+    });
+  } catch (error) {
+    console.error('Error loading turnaround by unit:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
+
+
+
+/**
+ * GET /admin/analytics-data/total-workload
+ * Get total workload by unit
+ */
+router.get('/admin/analytics-data/total-workload', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
+
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
+
+    // Initialize unit counts
+    units.forEach(unit => {
+      unitMap[unit] = 0;
+    });
+
+    // Count requests by unit
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned') {
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit] !== undefined) {
+              unitMap[unit]++;
+            }
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits] !== undefined) {
+            unitMap[req.assignedUnits]++;
+          }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      labels: Object.keys(unitMap),
+      data: Object.values(unitMap)
+    });
+  } catch (error) {
+    console.error('Error loading total workload:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/analytics-data/response-time-by-unit
+ * Get average response time by unit
+ */
+router.get('/admin/analytics-data/response-time-by-unit', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
+    const serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
+
+    const unitMap = {};
+    const { getUnits } = require('../utils/settingsHelpers');
+    const units = getUnits();
+
+    // Initialize unit response times
+    units.forEach(unit => {
+      unitMap[unit] = { total: 0, count: 0 };
+    });
+
+    // Calculate response times (time from creation to first update)
+    [...approvals, ...serviceRequests].forEach(req => {
+      if (req.assignedUnits && req.assignedUnits !== 'Not yet assigned' && req.createdAt && req.updatedAt) {
+        const responseHours = (new Date(req.updatedAt) - new Date(req.createdAt)) / (1000 * 60 * 60);
+        
+        if (Array.isArray(req.assignedUnits)) {
+          req.assignedUnits.forEach(unit => {
+            if (unitMap[unit]) {
+              unitMap[unit].total += responseHours;
+              unitMap[unit].count++;
+            }
+          });
+        } else if (typeof req.assignedUnits === 'string') {
+          if (unitMap[req.assignedUnits]) {
+            unitMap[req.assignedUnits].total += responseHours;
+            unitMap[req.assignedUnits].count++;
+          }
+        }
+      }
+    });
+
+    // Calculate averages
+    const averages = {};
+    Object.entries(unitMap).forEach(([unit, data]) => {
+      averages[unit] = data.count > 0 ? Math.round(data.total / data.count) : 0;
+    });
+
+    res.json({
+      success: true,
+      labels: Object.keys(averages),
+      data: Object.values(averages)
+    });
+  } catch (error) {
+    console.error('Error loading response time by unit:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/admin/dashboard-kpis
+ * Fetch all dashboard KPI metrics
+ */
+router.get('/api/admin/dashboard-kpis', requireAdmin, async (req, res) => {
+  try {
+    console.log('[API] Dashboard KPIs requested by user:', req.user._id);
+    const approvals = await RequestApproval.find().lean();
+    const serviceRequests = await ServiceRequest.find().lean();
+    const allRequests = [...approvals, ...serviceRequests];
+    
+    // Count pending assignments (pending requests that are not yet assigned to a unit)
+    const pendingAssignment = allRequests.filter(r => 
+      r.status?.toLowerCase() === 'pending' && 
+      (!r.assignedUnits || r.assignedUnits === 'Not yet assigned')
+    ).length;
+    
+    // Count awaiting approval (requests that are completed/approved by units and waiting for final admin approval)
+    // For ServiceRequest: 'For Checking' or 'Approved' status
+    // For RequestApproval: 'Approved' status (since they go directly to approved)
+    const awaitingApproval = [
+      ...serviceRequests.filter(r => r.status?.toLowerCase() === 'for checking' || r.status?.toLowerCase() === 'approved'),
+      ...approvals.filter(r => r.status?.toLowerCase() === 'approved')
+    ].length;
+    
+    // Count in revision (requests sent back for changes)
+    const inRevision = allRequests.filter(r => r.status?.toLowerCase() === 'for revision' || r.status?.toLowerCase() === 'for-revision').length;
+    
+    // Count unassigned tasks with priority breakdown
+    const now = new Date();
+    const unassignedApprovals = approvals.filter(a => 
+      (!a.assignedUnits || a.assignedUnits === 'Not yet assigned') && 
+      a.status?.toLowerCase() !== 'completed' && a.status?.toLowerCase() !== 'cancelled' &&
+      a.status?.toLowerCase() !== 'rejected' && a.status?.toLowerCase() !== 'archived'
+    );
+    const unassignedServices = serviceRequests.filter(s => 
+      (!s.assignedUnits || s.assignedUnits === 'Not yet assigned') && 
+      s.status?.toLowerCase() !== 'completed' && s.status?.toLowerCase() !== 'cancelled' &&
+      s.status?.toLowerCase() !== 'rejected' && s.status?.toLowerCase() !== 'archived'
+    );
+    const allUnassigned = [...unassignedApprovals, ...unassignedServices];
+    
+    // Calculate urgent unassigned (deadline within 3 days OR overdue - all treated as urgent)
+    const urgentUnassigned = allUnassigned.filter(task => {
+      if (!task.deadline) return false;
+      const deadline = new Date(task.deadline);
+      const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+      return daysLeft <= 3; // Includes overdue tasks (negative days)
+    }).length;
+    
+    const totalUnassigned = allUnassigned.length;
+    
+    // Count completed this month
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const completedThisMonth = allRequests.filter(r => {
+      const updatedAt = new Date(r.updatedAt);
+      return r.status?.toLowerCase() === 'completed' && updatedAt >= firstDayOfMonth;
+    }).length;
+    
+    // Count upcoming deadlines (within 7 days)
+    const sevenDaysFromNow = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+    const upcomingDeadlines = allRequests.filter(r => {
+      const deadline = new Date(r.deadline);
+      return deadline > now && deadline <= sevenDaysFromNow && r.status?.toLowerCase() !== 'completed';
+    }).length;
+    
+    // Count overdue (deadline passed but not completed)
+    const overdue = allRequests.filter(r => {
+      const deadline = new Date(r.deadline);
+      return deadline < now && r.status?.toLowerCase() !== 'completed';
+    }).length;
+    
+    console.log('Real-time KPI data:', {
+      pendingAssignment,
+      awaitingApproval,
+      inRevision,
+      urgentUnassigned,
+      totalUnassigned,
+      completedThisMonth,
+      upcomingDeadlines,
+      overdue
+    });
+    
+    res.json({
+      success: true,
+      pendingAssignment,
+      awaitingApproval,
+      inRevision,
+      urgentUnassigned,
+      totalUnassigned,
+      completedThisMonth,
+      upcomingDeadlines,
+      overdue
+    });
+  } catch (error) {
+    console.error('Error loading dashboard KPIs:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/admin/incoming-requests
+ * Fetch incoming requests (awaiting assignment)
+ */
+router.get('/api/admin/incoming-requests', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().populate('userId', 'fName lName').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId', 'fName lName').lean();
+    
+    // Get incoming (pending, unassigned) requests
+    const incomingApprovals = approvals.filter(a => 
+      a.status?.toLowerCase() === 'pending' && (!a.assignedUnits || a.assignedUnits === 'Not yet assigned')
+    ).map(a => ({
+      _id: a._id,
+      title: a.title,
+      type: 'Approval Request',
+      requesterName: a.userId ? `${a.userId.fName} ${a.userId.lName}` : 'Unknown',
+      createdAt: a.createdAt
+    }));
+    
+    const incomingServices = serviceRequests.filter(s => 
+      s.status?.toLowerCase() === 'pending' && (!s.assignedUnits || s.assignedUnits === 'Not yet assigned')
+    ).map(s => ({
+      _id: s._id,
+      title: s.title,
+      type: 'Service Request',
+      requesterName: s.userId ? `${s.userId.fName} ${s.userId.lName}` : 'Unknown',
+      createdAt: s.createdAt
+    }));
+    
+    const allIncoming = [...incomingApprovals, ...incomingServices]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+    
+    res.json({
+      success: true,
+      data: allIncoming
+    });
+  } catch (error) {
+    console.error('Error loading incoming requests:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/admin/urgent-overdue-tasks
+ * Fetch urgent and overdue tasks
+ */
+router.get('/api/admin/urgent-overdue-tasks', requireAdmin, async (req, res) => {
+  try {
+    const approvals = await RequestApproval.find().populate('userId', 'fName lName').lean();
+    const serviceRequests = await ServiceRequest.find().populate('userId', 'fName lName').lean();
+    const allRequests = [...approvals, ...serviceRequests];
+    
+    const now = new Date();
+    const oneDayFromNow = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
+    const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+    
+    const urgentAndOverdue = allRequests
+      .filter(req => {
+        if (req.status?.toLowerCase() === 'completed') return false;
+        const deadline = new Date(req.deadline);
+        const isOverdue = deadline < now;
+        const isCritical = deadline <= oneDayFromNow;
+        const isUrgent = deadline <= threeDaysFromNow;
+        return isOverdue || isCritical || isUrgent;
+      })
+      .map(req => {
+        const isService = serviceRequests.some(s => s._id.toString() === req._id.toString());
+        const deadline = new Date(req.deadline);
+        const isOverdue = deadline < now;
+        
+        let priority = 'normal';
+        if (isOverdue) {
+          priority = 'critical';
+        } else if (deadline <= oneDayFromNow) {
+          priority = 'critical';
+        } else if (deadline <= threeDaysFromNow) {
+          priority = 'urgent';
+        }
+        
+        return {
+          _id: req._id,
+          title: req.title,
+          type: isService ? 'Service Request' : 'Approval Request',
+          status: req.status,
+          deadline: req.deadline,
+          priority
+        };
+      })
+      .sort((a, b) => {
+        // Sort by priority (critical first, then urgent)
+        const priorityOrder = { critical: 0, urgent: 1, normal: 2 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      })
+      .slice(0, 5);
+    
+    res.json({
+      success: true,
+      data: urgentAndOverdue
+    });
+  } catch (error) {
+    console.error('Error loading urgent/overdue tasks:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /admin/test-email
+ * Test email configuration - sends a test email to verify SMTP is working
+ */
+router.get('/admin/test-email', requireAdmin, async (req, res) => {
+  try {
+    const testEmail = req.user.email; // Send to current admin's email
+    
+    console.log('[TEST EMAIL] Attempting to send test email to:', testEmail);
+    
+    // Check if email service has transporter configured
+    if (!emailService.transporter) {
+      return res.json({
+        success: false,
+        devMode: true,
+        message: 'Email service is in DEV MODE - SMTP not configured. Check your .env file for SMTP settings.',
+        details: 'Required: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD'
+      });
+    }
+    
+    // Send test email
+    const mailOptions = {
+      from: `"S-CORE Test" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+      to: testEmail,
+      subject: 'S-CORE Email Service Test',
+      html: `
+        <h2>✅ Email Service is Working!</h2>
+        <p>This is a test email from S-CORE.</p>
+        <p>If you received this, your SMTP configuration is correct.</p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">
+          Sent at: ${new Date().toLocaleString()}<br>
+          To: ${testEmail}
+        </p>
+      `
+    };
+    
+    const result = await emailService.transporter.sendMail(mailOptions);
+    
+    console.log('[TEST EMAIL] ✅ Test email sent successfully:', result.messageId);
+    
+    res.json({
+      success: true,
+      message: `Test email sent successfully to ${testEmail}`,
+      messageId: result.messageId,
+      details: 'Check your inbox (and spam folder) for the test email.'
+    });
+    
+  } catch (error) {
+    console.error('[TEST EMAIL] ❌ Error sending test email:', error);
+    res.json({
+      success: false,
+      message: 'Failed to send test email',
+      error: error.message,
+      details: 'Check server console for detailed error. Common issues: invalid credentials, blocked by Gmail, incorrect SMTP settings.'
+    });
+  }
+});
+
+
 module.exports = router;
+

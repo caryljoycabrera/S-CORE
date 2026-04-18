@@ -149,7 +149,7 @@ class UnitNotificationSystem {
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span class="notification-badge" id="notification-badge">0</span>
+          <span class="notification-badge empty" id="notification-badge">0</span>
         </button>
 
         <div class="notification-dropdown" id="notification-dropdown">
@@ -565,7 +565,7 @@ class UnitNotificationSystem {
         </div>
         <div class="notification-content">
           <h4 class="notification-item-title">${this.escapeHtml(notification.title)}</h4>
-          <p class="notification-item-message">${this.escapeHtml(notification.message)}</p>
+          <p class="notification-item-message">${this.processNotificationMessage(notification.message, notification.type)}</p>
           <div class="notification-meta">
             <span class="notification-time">${timeAgo}</span>
             ${showSender ? `<span class="notification-sender">from ${this.escapeHtml(notification.sender.name)}</span>` : ''}
@@ -596,11 +596,37 @@ class UnitNotificationSystem {
       'approval_rejected': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
       'approval_revision': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
       'new_message': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+      'announcement': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
       'system': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
       'unit_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17,11 19,13 23,9"></polyline></svg>'
     };
 
     return icons[type] || icons['system'];
+  }
+
+  /**
+   * Process notification message - detect attachments and format appropriately
+   */
+  processNotificationMessage(message, type) {
+    // For announcements, detect attachment types
+    if (type === 'announcement') {
+      const hasImages = /<img\s/i.test(message);
+      const hasFileLinks = /<a\s[^>]*href="\/uploads\/[^>]*>📎/i.test(message);
+      
+      if (hasImages && hasFileLinks) {
+        return '📎 File Attachment & 🖼️ Image Attachment';
+      } else if (hasImages) {
+        return '🖼️ Image Attachment';
+      } else if (hasFileLinks) {
+        return '📎 File Attachment';
+      } else {
+        // Strip HTML tags for regular text content
+        return message.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+      }
+    }
+    
+    // For other notification types, escape HTML normally
+    return this.escapeHtml(message);
   }
 
   /**
@@ -631,7 +657,22 @@ class UnitNotificationSystem {
           }
         }
 
-        // Handle navigation based on URL type
+        // Handle announcement notifications specially - open announcement modal
+        if (type === 'announcement') {
+          console.log('📢 Unit announcement notification clicked - opening modal');
+          this.closeDropdown();
+          // Get the announcement ID from the notification's relatedId
+          const announcement = this.notifications.find(n => (n._id || n.id) === id);
+          if (announcement && announcement.relatedId) {
+            console.log('📂 Unit opening announcement modal with ID:', announcement.relatedId);
+            this.openAnnouncementModalFromNotification(announcement.relatedId);
+          } else {
+            console.warn('⚠️ Unit could not find announcement ID for notification:', id);
+          }
+          return;
+        }
+
+        // Handle navigation based on URL type for other notifications
         if (url && url !== 'undefined' && url !== '') {
           console.log('🔗 Unit handling notification navigation with URL:', url);
           this.closeDropdown();
@@ -665,6 +706,26 @@ class UnitNotificationSystem {
   }
 
   /**
+   * Open announcement modal from notification click
+   */
+  openAnnouncementModalFromNotification(announcementId) {
+    console.log('🎯 Unit openAnnouncementModalFromNotification called with ID:', announcementId);
+    
+    // Try multiple ways to open the announcement modal
+    if (typeof openAnnouncementDetail === 'function') {
+      console.log('✅ Calling unit openAnnouncementDetail function');
+      openAnnouncementDetail(announcementId);
+    } else if (window.openAnnouncementDetail && typeof window.openAnnouncementDetail === 'function') {
+      console.log('✅ Using window.openAnnouncementDetail');
+      window.openAnnouncementDetail(announcementId);
+    } else {
+      console.warn('⚠️ Unit openAnnouncementDetail function not found on page - navigating to dashboard');
+      // Fallback: navigate to dashboard (which has the announcement modal)
+      window.location.href = `/unit/dashboard?announcement=${announcementId}`;
+    }
+  }
+
+  /**
    * Handle notification navigation - opens modals or navigates to pages
    */
   handleNotificationNavigation(url, type) {
@@ -685,19 +746,64 @@ class UnitNotificationSystem {
         return;
       }
 
-      // Handle unit-specific navigation
-      if (urlObj.pathname.includes('/unit/')) {
-        console.log('🏢 Unit navigation to unit page:', url);
+      // Check if this is an announcement notification
+      if (type === 'announcement') {
+        console.log('📢 Unit announcement notification clicked');
+        this.closeDropdown();
+        
+        // If there's a relatedId, try to open the announcement modal
+        const relatedId = params.get('relatedId') || url.match(/announcement[\/=]([a-f0-9]{24})/i)?.[1];
+        if (relatedId && typeof window.openAnnouncementDetail === 'function') {
+          console.log('✅ Opening announcement modal with ID:', relatedId);
+          window.openAnnouncementDetail(relatedId);
+          return;
+        }
+        
+        // Fallback to navigation
         window.location.href = url;
         return;
       }
 
-      // Check if this is a modal-opening URL
+      // Check if this is a message/conversation notification
+      if (type === 'new_message' && params.has('conversation')) {
+        const requestId = params.get('requestId');
+        const requestType = params.get('type');
+        
+        console.log('💬 Unit message notification clicked:', { requestId, requestType });
+        
+        const currentPath = window.location.pathname;
+        const targetPath = urlObj.pathname;
+
+        // Check if we're already on the correct page
+        if (currentPath === targetPath) {
+          console.log('✅ Unit on correct page, opening conversation modal...');
+          this.closeDropdown();
+          
+          // Try to open the modal directly if the page has the function
+          if (typeof window.openRequestModal === 'function') {
+            window.openRequestModal(requestId, requestType);
+          } else if (typeof window.openConversationModal === 'function') {
+            window.openConversationModal(requestId, requestType);
+          } else {
+            // If functions don't exist, navigate with parameters
+            window.location.href = url;
+          }
+          return;
+        } else {
+          // Navigate to the correct page with conversation parameters
+          console.log('🔄 Unit navigating to correct page for conversation:', url);
+          window.location.href = url;
+          return;
+        }
+      }
+
+      // Check if this is a modal-opening URL FIRST (before generic unit nav)
       if (params.has('modal') && params.has('requestId')) {
         const requestId = params.get('requestId');
         const requestType = params.get('type');
+        const modalType = params.get('modal');
 
-        console.log('📋 Unit modal detected:', { requestId, requestType });
+        console.log('📋 Unit modal detected:', { requestId, requestType, modalType });
 
         // Check if we're on the correct page for this request type
         const currentPath = window.location.pathname;
@@ -706,17 +812,33 @@ class UnitNotificationSystem {
         if (currentPath === targetPath) {
           // We're on the right page, try to open modal
           console.log('✅ Unit on correct page, opening modal...');
-          this.openRequestModal(requestId, requestType);
+          this.closeDropdown();
+          // Handle archived modals differently
+          if (modalType === 'archived' && typeof window.openArchivedRequestModal === 'function') {
+            console.log('📦 Opening archived request modal:', { requestId, requestType });
+            window.openArchivedRequestModal(requestId, requestType);
+          } else {
+            // For regular modals, just navigate - alltasks.js will handle modal opening on page load
+            window.location.href = url;
+          }
         } else {
           // Navigate to the correct page with modal parameters
           console.log('🔄 Unit navigating to correct page:', url);
           window.location.href = url;
         }
-      } else {
-        // Regular navigation
-        console.log('🔗 Unit regular navigation to:', url);
-        window.location.href = url;
+        return; // Exit after handling modal URL
       }
+
+      // Handle unit-specific navigation (for non-modal URLs)
+      if (urlObj.pathname.includes('/unit/')) {
+        console.log('🏢 Unit navigation to unit page:', url);
+        window.location.href = url;
+        return;
+      }
+
+      // Regular navigation
+      console.log('🔗 Unit regular navigation to:', url);
+      window.location.href = url;
     } catch (error) {
       console.error('❌ Unit error handling notification navigation:', error);
       // Fallback to regular navigation

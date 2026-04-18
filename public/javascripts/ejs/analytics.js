@@ -14,13 +14,46 @@ document.getElementById('dateRangeFilter').addEventListener('change', function()
     customDateRange.style.display = 'none';
     customDateRangeEnd.style.display = 'none';
   }
+  
+  // Auto-apply filters when date range changes
+  debouncedApplyFilters();
 });
 
-// Apply Filters
-document.getElementById('applyFilters').addEventListener('click', applyAnalyticsFilters);
+// Auto-apply filters for real-time updates
+document.getElementById('unitFilter').addEventListener('change', debouncedApplyFilters);
+document.getElementById('requestTypeFilter').addEventListener('change', debouncedApplyFilters);
+document.getElementById('statusFilter').addEventListener('change', debouncedApplyFilters);
+document.getElementById('customStartDate').addEventListener('change', debouncedApplyFilters);
+document.getElementById('customEndDate').addEventListener('change', debouncedApplyFilters);
 
 // Reset Filters
 document.getElementById('resetFilters').addEventListener('click', resetAnalyticsFilters);
+
+// Debounce function to limit API calls
+let filterTimeout;
+function debouncedApplyFilters() {
+  clearTimeout(filterTimeout);
+  updateResetButtonState();
+  filterTimeout = setTimeout(() => {
+    applyAnalyticsFilters();
+  }, 500); // Wait 500ms after user stops changing filters
+}
+
+function updateResetButtonState() {
+  const dateRange = document.getElementById('dateRangeFilter').value;
+  const isUnitDefault = document.getElementById('unitFilter').value === 'all';
+  const isTypeDefault = document.getElementById('requestTypeFilter').value === 'all';
+  const isStatusDefault = document.getElementById('statusFilter').value === 'all';
+  
+  const isDefault = dateRange === 'monthly' && isUnitDefault && isTypeDefault && isStatusDefault;
+  const resetBtn = document.getElementById('resetFilters');
+  
+  if (isDefault) {
+    resetBtn.classList.remove('active');
+  } else {
+    resetBtn.classList.add('active');
+  }
+}
 
 function applyAnalyticsFilters() {
   const dateRange = document.getElementById('dateRangeFilter').value;
@@ -50,9 +83,6 @@ function applyAnalyticsFilters() {
     customEndDate
   };
   
-  // Show loading state
-  showLoadingState();
-  
   // Send filter request to backend
   fetch('/api/admin/analytics', {
     method: 'POST',
@@ -64,7 +94,15 @@ function applyAnalyticsFilters() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      updateDashboardWithFilters(data.data);
+      updateDashboardWithFilters(data, filterData);
+      
+      // Update Request Volume chart with filtered data
+      if (typeof loadVolumeData === 'function') {
+        loadVolumeData(filterData);
+      } else {
+        console.log('loadVolumeData not available yet for main filters');
+        window.pendingVolumeFilters = filterData;
+      }
     } else {
       alert('Error applying filters: ' + data.message);
     }
@@ -72,15 +110,60 @@ function applyAnalyticsFilters() {
   .catch(error => {
     console.error('Error applying filters:', error);
     alert('Error applying filters. Please try again.');
-  })
-  .finally(() => {
-    hideLoadingState();
   });
 }
 
+function updateDashboardWithFilters(data) {
+  if (!data || Object.keys(data).length === 0) return;
+
+  if (document.getElementById('kpi-total-requests') && data.kpis) {
+    document.getElementById('kpi-total-requests').textContent = data.kpis.totalRequests || 0;
+    
+    const avgTurnaround = document.getElementById('kpi-avg-turnaround');
+    if (avgTurnaround) avgTurnaround.innerHTML = `<span class="kpi-number">${data.kpis.avgTurnaround || 0}</span><span class="kpi-unit">days</span>`;
+    
+    const pendingAssignment = document.getElementById('kpi-pending-assignment');
+    if (pendingAssignment) pendingAssignment.textContent = data.kpis.pendingAssignment || 0;
+    
+    const inRevision = document.getElementById('kpi-in-revision');
+    if (inRevision) inRevision.textContent = data.kpis.inRevision || 0;
+    
+    const completionRateElem = document.getElementById('kpi-completion-rate');
+    if (completionRateElem) {
+      const completionRate = data.kpis.totalRequests > 0 
+        ? Math.round(((data.kpis.completed || 0) / data.kpis.totalRequests) * 100) 
+        : 0;
+      completionRateElem.innerHTML = `<span class="kpi-number">${completionRate}</span><span class="kpi-unit">%</span>`;
+    }
+    
+    const responseTimeElem = document.getElementById('kpi-response-time');
+    if (responseTimeElem) responseTimeElem.innerHTML = `<span class="kpi-number">${data.kpis.avgResponseTime || 0}</span><span class="kpi-unit">${data.kpis.responseTimeUnit || 'hrs'}</span>`;
+    
+    const overdueTasks = document.getElementById('kpi-overdue-tasks');
+    if (overdueTasks) overdueTasks.textContent = data.kpis.overdue || 0;
+    
+    const activeRequests = document.getElementById('kpi-active-requests');
+    if (activeRequests) activeRequests.textContent = data.kpis.activeRequests || 0;
+  }
+
+  if (data.charts) {
+    if (data.charts.topRequestors) updateTopRequestorsChart(data.charts.topRequestors);
+    if (data.charts.unitWorkload) updateActiveWorkloadChart(data.charts.unitWorkload);
+    if (data.charts.turnaroundByUnit) updateTurnaroundByUnitChart(data.charts.turnaroundByUnit);
+    if (data.charts.totalWorkload) updateTotalWorkloadChart(data.charts.totalWorkload);
+    if (data.charts.responseTimeByUnit) updateResponseTimeByUnitChart(data.charts.responseTimeByUnit);
+  }
+
+  showFilteredResults(data);
+}
+
 function resetAnalyticsFilters() {
+  // Clear any pending filter timeout
+  clearTimeout(filterTimeout);
+  
+  // Reset all filter values
   document.getElementById('dateRangeFilter').value = 'monthly';
-  document.getElementById('unitFilter').selectedIndex = 0;
+  document.getElementById('unitFilter').value = 'all';
   document.getElementById('requestTypeFilter').value = 'all';
   document.getElementById('statusFilter').value = 'all';
   document.getElementById('customDateRange').style.display = 'none';
@@ -88,60 +171,29 @@ function resetAnalyticsFilters() {
   document.getElementById('customStartDate').value = '';
   document.getElementById('customEndDate').value = '';
   
-  // Reload page to reset all data
-  window.location.reload();
+  updateResetButtonState();
+  // Apply filters immediately with reset values
+  applyAnalyticsFilters();
 }
 
-function updateDashboardWithFilters(data) {
-  // Update KPIs
-  document.getElementById('kpi-total-requests').textContent = data.kpis.totalRequests;
+// Automatically apply monthly filter on page load
+function applyMonthlyFilterOnLoad() {
+  // Set the date range filter to monthly
+  document.getElementById('dateRangeFilter').value = 'monthly';
   
-  const avgTurnaround = document.getElementById('kpi-avg-turnaround');
-  avgTurnaround.innerHTML = `<span class="kpi-number">${data.kpis.avgTurnaround}</span><span class="kpi-unit">days</span>`;
+  // Ensure other filters are at default values
+  document.getElementById('unitFilter').value = 'all';
+  document.getElementById('requestTypeFilter').value = 'all';
+  document.getElementById('statusFilter').value = 'all';
   
-  document.getElementById('kpi-pending-assignment').textContent = data.kpis.pendingAssignment;
-  document.getElementById('kpi-in-revision').textContent = data.kpis.inRevision;
+  // Hide custom date range if visible
+  document.getElementById('customDateRange').style.display = 'none';
+  document.getElementById('customDateRangeEnd').style.display = 'none';
   
-  // Calculate and update completion rate
-  const completionRate = data.kpis.totalRequests > 0 
-    ? Math.round((data.kpis.completed / data.kpis.totalRequests) * 100) 
-    : 0;
-  document.getElementById('kpi-completion-rate').innerHTML = `<span class="kpi-number">${completionRate}</span><span class="kpi-unit">%</span>`;
+  updateResetButtonState();
   
-  // Update response time (placeholder - can be calculated from actual data)
-  document.getElementById('kpi-response-time').innerHTML = `<span class="kpi-number">4.2</span><span class="kpi-unit">hrs</span>`;
-  
-  // Update Charts
-  updateTopRequestorsChart(data.charts.topRequestors);
-  updateRequestVolumeChart(data.charts.requestVolume);
-  updateActiveWorkloadChart(data.charts.unitWorkload);
-  updateTurnaroundByUnitChart(data.charts.turnaroundByUnit);
-  updateCurrentStatusChart(data.charts.statusBreakdown);
-  
-  // Update Quick Stats
-  document.getElementById('stat-completion-rate').textContent = completionRate + '%';
-  document.getElementById('stat-response-time').textContent = '4.2 hrs';
-  document.getElementById('stat-overdue').textContent = data.kpis.overdue || 0;
-}
-
-function showLoadingState() {
-  // Add loading overlay or spinner
-  const overlay = document.createElement('div');
-  overlay.id = 'loading-overlay';
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-  `;
-  overlay.innerHTML = '<div style="color: white; font-size: 1.5rem;">Loading...</div>';
-  document.body.appendChild(overlay);
+  // Apply filters via API rather than trying to access undefined local data
+  applyAnalyticsFilters();
 }
 
 function hideLoadingState() {
@@ -156,11 +208,17 @@ function hideLoadingState() {
    ============================================ */
 
 // Initialize all charts on page load
-let topRequestorsChart, requestVolumeChart, activeWorkloadChart, turnaroundByUnitChart, currentStatusChart;
+let topRequestorsChart, activeWorkloadChart, turnaroundByUnitChart, totalWorkloadChart, responseTimeByUnitChart;
+let filteredStatusChart, filteredTypeChart;
 
 document.addEventListener('DOMContentLoaded', function() {
   initializeCharts();
-  loadRevisionHotspot();
+  loadAnalyticsData();
+  
+  // Automatically apply monthly filter on page load
+  setTimeout(() => {
+    applyMonthlyFilterOnLoad();
+  }, 500); // Small delay to ensure charts are initialized
 });
 
 function initializeCharts() {
@@ -169,9 +227,9 @@ function initializeCharts() {
   topRequestorsChart = new Chart(topRequestorsCtx, {
     type: 'pie',
     data: {
-      labels: ['CAFA', 'CS', 'COE', 'CAS', 'CEA', 'CON', 'CBA'],
+      labels: [],
       datasets: [{
-        data: [25, 20, 18, 15, 12, 7, 3],
+        data: [],
         backgroundColor: [
           '#3b82f6',
           '#10b981',
@@ -179,7 +237,8 @@ function initializeCharts() {
           '#ef4444',
           '#8b5cf6',
           '#06b6d4',
-          '#ec4899'
+          '#ec4899',
+          '#14b8a6'
         ],
         borderWidth: 2,
         borderColor: '#ffffff'
@@ -214,108 +273,30 @@ function initializeCharts() {
     }
   });
 
-  // Request Volume Over Time Line Chart
-  const requestVolumeCtx = document.getElementById('requestVolumeChart').getContext('2d');
-  requestVolumeChart = new Chart(requestVolumeCtx, {
-    type: 'line',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      datasets: [
-        {
-          label: 'Approval Requests',
-          data: [30, 35, 40, 38, 42, 45, 50, 48, 52, 55, 60, 58],
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Service Requests',
-          data: [20, 22, 25, 28, 30, 32, 35, 33, 38, 40, 42, 45],
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          borderWidth: 3,
-          fill: true,
-          tension: 0.4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            padding: 15,
-            font: {
-              size: 12,
-              family: 'Inter'
-            }
-          }
-        },
-        tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          padding: 12,
-          titleFont: {
-            size: 14
-          },
-          bodyFont: {
-            size: 13
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
-          },
-          ticks: {
-            font: {
-              family: 'Inter'
-            }
-          }
-        },
-        x: {
-          grid: {
-            display: false
-          },
-          ticks: {
-            font: {
-              family: 'Inter'
-            }
-          }
-        }
-      }
-    }
-  });
-
   // Active Workload by Unit Bar Chart
   const activeWorkloadCtx = document.getElementById('activeWorkloadChart').getContext('2d');
   activeWorkloadChart = new Chart(activeWorkloadCtx, {
     type: 'bar',
     data: {
-      labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+      labels: [],
       datasets: [{
         label: 'Active Tasks',
-        data: [15, 22, 18, 12],
+        data: [],
         backgroundColor: [
           'rgba(59, 130, 246, 0.8)',
           'rgba(16, 185, 129, 0.8)',
           'rgba(245, 158, 11, 0.8)',
-          'rgba(139, 92, 246, 0.8)'
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(6, 182, 212, 0.8)'
         ],
         borderColor: [
           '#3b82f6',
           '#10b981',
           '#f59e0b',
-          '#8b5cf6'
+          '#8b5cf6',
+          '#ec4899',
+          '#06b6d4'
         ],
         borderWidth: 2,
         borderRadius: 8
@@ -371,21 +352,25 @@ function initializeCharts() {
   turnaroundByUnitChart = new Chart(turnaroundByUnitCtx, {
     type: 'bar',
     data: {
-      labels: ['Social Media', 'Graphics', 'Multimedia', 'Public Relations'],
+      labels: [],
       datasets: [{
         label: 'Avg. Days',
-        data: [2.5, 3.2, 2.8, 2.1],
+        data: [],
         backgroundColor: [
           'rgba(59, 130, 246, 0.8)',
           'rgba(16, 185, 129, 0.8)',
           'rgba(245, 158, 11, 0.8)',
-          'rgba(139, 92, 246, 0.8)'
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(6, 182, 212, 0.8)'
         ],
         borderColor: [
           '#3b82f6',
           '#10b981',
           '#f59e0b',
-          '#8b5cf6'
+          '#8b5cf6',
+          '#ec4899',
+          '#06b6d4'
         ],
         borderWidth: 2,
         borderRadius: 8
@@ -444,20 +429,195 @@ function initializeCharts() {
     }
   });
 
-  // Current Status Donut Chart
-  const currentStatusCtx = document.getElementById('currentStatusChart').getContext('2d');
-  currentStatusChart = new Chart(currentStatusCtx, {
+  // Total Workload by Unit Bar Chart
+  const totalWorkloadCtx = document.getElementById('totalWorkloadChart').getContext('2d');
+  totalWorkloadChart = new Chart(totalWorkloadCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Total Requests',
+        data: [],
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(6, 182, 212, 0.8)'
+        ],
+        borderColor: [
+          '#3b82f6',
+          '#10b981',
+          '#f59e0b',
+          '#8b5cf6',
+          '#ec4899',
+          '#06b6d4'
+        ],
+        borderWidth: 2,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          titleFont: {
+            size: 14
+          },
+          bodyFont: {
+            size: 13
+          },
+          callbacks: {
+            label: function(context) {
+              return `Total Requests: ${context.parsed.y}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          },
+          ticks: {
+            font: {
+              family: 'Inter'
+            },
+            callback: function(value) {
+              return value;
+            }
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            font: {
+              family: 'Inter',
+              size: 11
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Response Time by Unit Bar Chart
+  const responseTimeByUnitCtx = document.getElementById('responseTimeByUnitChart').getContext('2d');
+  responseTimeByUnitChart = new Chart(responseTimeByUnitCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Avg. Hours',
+        data: [],
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(6, 182, 212, 0.8)'
+        ],
+        borderColor: [
+          '#3b82f6',
+          '#10b981',
+          '#f59e0b',
+          '#8b5cf6',
+          '#ec4899',
+          '#06b6d4'
+        ],
+        borderWidth: 2,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          titleFont: {
+            size: 14
+          },
+          bodyFont: {
+            size: 13
+          },
+          callbacks: {
+            label: function(context) {
+              return `Avg. Response: ${context.parsed.y} hours`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Response Time (Hours)',
+            font: {
+              family: 'Inter',
+              size: 12,
+              weight: '500'
+            }
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          },
+          ticks: {
+            font: {
+              family: 'Inter'
+            },
+            callback: function(value) {
+              return value + ' hrs';
+            }
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            font: {
+              family: 'Inter',
+              size: 11
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Filtered Status Distribution Donut Chart
+  const filteredStatusCtx = document.getElementById('filteredStatusChart').getContext('2d');
+  filteredStatusChart = new Chart(filteredStatusCtx, {
     type: 'doughnut',
     data: {
-      labels: ['Pending', 'In Progress', 'For Revision', 'Completed', 'Approved'],
+      labels: [],
       datasets: [{
-        data: [15, 22, 8, 40, 15],
+        data: [],
         backgroundColor: [
-          '#f59e0b',
-          '#3b82f6',
-          '#ef4444',
-          '#10b981',
-          '#8b5cf6'
+          '#f59e0b', // Pending
+          '#3b82f6', // In Progress
+          '#ef4444', // Revision
+          '#10b981', // Completed
+          '#8b5cf6', // Approved
+          '#06b6d4', // Rejected
+          '#14b8a6'  // Cancelled
         ],
         borderWidth: 3,
         borderColor: '#ffffff'
@@ -484,7 +644,52 @@ function initializeCharts() {
               const label = context.label || '';
               const value = context.parsed || 0;
               const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((value / total) * 100).toFixed(1);
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Filtered Request Type Distribution Pie Chart
+  const filteredTypeCtx = document.getElementById('filteredTypeChart').getContext('2d');
+  filteredTypeChart = new Chart(filteredTypeCtx, {
+    type: 'pie',
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        backgroundColor: [
+          '#3b82f6', // Approval
+          '#10b981'  // Service
+        ],
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 15,
+            font: {
+              size: 12,
+              family: 'Inter'
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
               return `${label}: ${value} (${percentage}%)`;
             }
           }
@@ -495,100 +700,382 @@ function initializeCharts() {
 }
 
 /* ============================================
+   LOAD DATA FROM APIS
+   ============================================ */
+
+function loadAnalyticsData() {
+  // Load all chart data in parallel
+  Promise.all([
+    fetch('/admin/analytics-data/top-requestors').then(r => r.json()),
+    fetch('/admin/analytics-data/active-workload').then(r => r.json()),
+    fetch('/admin/analytics-data/turnaround-by-unit').then(r => r.json()),
+    fetch('/admin/analytics-data/total-workload').then(r => r.json()),
+    fetch('/admin/analytics-data/response-time-by-unit').then(r => r.json())
+  ])
+  .then(([topReq, workload, turnaround, totalWorkload, responseTime]) => {
+    // Update charts with fetched data
+    if (topReq.success) updateTopRequestorsChart(topReq);
+    if (workload.success) updateActiveWorkloadChart(workload);
+    if (turnaround.success) updateTurnaroundByUnitChart(turnaround);
+    if (totalWorkload.success) updateTotalWorkloadChart(totalWorkload);
+    if (responseTime.success) updateResponseTimeByUnitChart(responseTime);
+  })
+  .catch(error => console.error('Error loading analytics data:', error));
+}
+
+/* ============================================
    CHART UPDATE FUNCTIONS
    ============================================ */
 
 function updateTopRequestorsChart(data) {
   if (!data || !topRequestorsChart) return;
-  
-  topRequestorsChart.data.labels = data.labels;
-  topRequestorsChart.data.datasets[0].data = data.values;
+
+  // Handle both object format (from API) and array format (from initial load)
+  let labels = [];
+  let chartData = [];
+
+  if (typeof data === 'object' && !Array.isArray(data)) {
+    // Convert object to arrays
+    const entries = Object.entries(data);
+    labels = entries.map(([org]) => org);
+    chartData = entries.map(([, count]) => count);
+  } else {
+    // Handle array format
+    labels = data.labels || [];
+    chartData = data.data || [];
+  }
+
+  // If no data, show empty state with a single slice
+  if (labels.length === 0 || chartData.length === 0 || chartData.every(val => val === 0)) {
+    labels = ['No Data Available'];
+    chartData = [1]; // Use 1 to show the slice, but we'll style it differently
+    topRequestorsChart.data.datasets[0].backgroundColor = ['#f3f4f6'];
+    topRequestorsChart.data.datasets[0].borderColor = ['#d1d5db'];
+  } else {
+    // Reset colors for normal data
+    topRequestorsChart.data.datasets[0].backgroundColor = [
+      '#3b82f6',
+      '#10b981',
+      '#f59e0b',
+      '#ef4444',
+      '#8b5cf6',
+      '#06b6d4',
+      '#ec4899',
+      '#14b8a6'
+    ];
+    topRequestorsChart.data.datasets[0].borderColor = '#ffffff';
+  }
+
+  topRequestorsChart.data.labels = labels;
+  topRequestorsChart.data.datasets[0].data = chartData;
   topRequestorsChart.update();
 }
 
 function updateRequestVolumeChart(data) {
   if (!data || !requestVolumeChart) return;
   
-  requestVolumeChart.data.labels = data.labels;
-  requestVolumeChart.data.datasets[0].data = data.approvals;
-  requestVolumeChart.data.datasets[1].data = data.services;
+  requestVolumeChart.data.labels = data.labels || [];
+  requestVolumeChart.data.datasets[0].data = data.approvals || [];
+  requestVolumeChart.data.datasets[1].data = data.services || [];
   requestVolumeChart.update();
 }
 
 function updateActiveWorkloadChart(data) {
-  if (!data || !activeWorkloadChart) return;
+  if (!activeWorkloadChart) return;
   
-  activeWorkloadChart.data.labels = data.labels;
-  activeWorkloadChart.data.datasets[0].data = data.values;
+  if (!data || !data.labels || !data.data || data.data.length === 0) {
+    // Show empty state
+    activeWorkloadChart.data.labels = ['No Data'];
+    activeWorkloadChart.data.datasets[0].data = [1];
+    activeWorkloadChart.data.datasets[0].backgroundColor = ['#e5e7eb'];
+    activeWorkloadChart.options.plugins.legend.display = false;
+  } else {
+    // Show actual data
+    activeWorkloadChart.data.labels = data.labels;
+    activeWorkloadChart.data.datasets[0].data = data.data;
+    activeWorkloadChart.data.datasets[0].backgroundColor = [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
+    ];
+    activeWorkloadChart.options.plugins.legend.display = true;
+  }
   activeWorkloadChart.update();
 }
 
 function updateTurnaroundByUnitChart(data) {
-  if (!data || !turnaroundByUnitChart) return;
+  if (!turnaroundByUnitChart) return;
   
-  turnaroundByUnitChart.data.labels = data.labels;
-  turnaroundByUnitChart.data.datasets[0].data = data.values;
+  if (!data || !data.labels || !data.data || data.data.length === 0) {
+    // Show empty state
+    turnaroundByUnitChart.data.labels = ['No Data'];
+    turnaroundByUnitChart.data.datasets[0].data = [1];
+    turnaroundByUnitChart.data.datasets[0].backgroundColor = ['#e5e7eb'];
+    turnaroundByUnitChart.options.plugins.legend.display = false;
+  } else {
+    // Show actual data
+    turnaroundByUnitChart.data.labels = data.labels;
+    turnaroundByUnitChart.data.datasets[0].data = data.data;
+    turnaroundByUnitChart.data.datasets[0].backgroundColor = [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
+    ];
+    turnaroundByUnitChart.options.plugins.legend.display = true;
+  }
   turnaroundByUnitChart.update();
 }
 
-function updateCurrentStatusChart(data) {
-  if (!data || !currentStatusChart) return;
+function updateTotalWorkloadChart(data) {
+  if (!totalWorkloadChart) return;
   
-  currentStatusChart.data.labels = data.labels;
-  currentStatusChart.data.datasets[0].data = data.values;
-  currentStatusChart.update();
+  if (!data || !data.labels || !data.data || data.data.length === 0) {
+    // Show empty state
+    totalWorkloadChart.data.labels = ['No Data'];
+    totalWorkloadChart.data.datasets[0].data = [1];
+    totalWorkloadChart.data.datasets[0].backgroundColor = ['#e5e7eb'];
+    totalWorkloadChart.options.plugins.legend.display = false;
+  } else {
+    // Show actual data
+    totalWorkloadChart.data.labels = data.labels;
+    totalWorkloadChart.data.datasets[0].data = data.data;
+    totalWorkloadChart.data.datasets[0].backgroundColor = [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
+    ];
+    totalWorkloadChart.options.plugins.legend.display = true;
+  }
+  totalWorkloadChart.update();
+}
+
+function updateResponseTimeByUnitChart(data) {
+  if (!responseTimeByUnitChart) return;
+
+  if (!data || !data.labels || !data.data || data.data.length === 0) {
+    // Show empty state
+    responseTimeByUnitChart.data.labels = ['No Data'];
+    responseTimeByUnitChart.data.datasets[0].data = [1];
+    responseTimeByUnitChart.data.datasets[0].backgroundColor = ['#e5e7eb'];
+    responseTimeByUnitChart.options.plugins.legend.display = false;
+    responseTimeByUnitChart.options.scales.y.title.text = 'Response Time';
+    responseTimeByUnitChart.options.plugins.tooltip.callbacks.label = function(context) {
+      return `Avg. Response: ${context.parsed.y} hours`;
+    };
+    responseTimeByUnitChart.options.scales.y.ticks.callback = function(value) {
+      return value + ' hrs';
+    };
+  } else {
+    // Process data to convert hours to days if needed
+    const processedData = data.data.map(hours => {
+      if (hours >= 24) {
+        return Math.round((hours / 24) * 10) / 10; // Convert to days with 1 decimal place
+      }
+      return hours;
+    });
+
+    // Determine if we should show days or hours
+    const maxValue = Math.max(...data.data);
+    const useDays = maxValue >= 24;
+
+    // Show actual data
+    responseTimeByUnitChart.data.labels = data.labels;
+    responseTimeByUnitChart.data.datasets[0].data = processedData;
+    responseTimeByUnitChart.data.datasets[0].backgroundColor = [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
+    ];
+    responseTimeByUnitChart.options.plugins.legend.display = true;
+
+    // Update y-axis title and tooltip based on unit
+    responseTimeByUnitChart.options.scales.y.title.text = useDays ? 'Response Time (Days)' : 'Response Time (Hours)';
+
+    // Update tooltip to show correct unit
+    responseTimeByUnitChart.options.plugins.tooltip.callbacks.label = function(context) {
+      const value = context.parsed.y;
+      const unit = useDays ? 'days' : 'hours';
+      return `${context.label}: ${value} ${unit}`;
+    };
+
+    // Update y-axis ticks to show correct unit
+    responseTimeByUnitChart.options.scales.y.ticks.callback = function(value) {
+      const unit = useDays ? ' days' : ' hrs';
+      return value + unit;
+    };
+  }
+  responseTimeByUnitChart.update();
+}
+
+function updateFilteredStatusChart(data) {
+  if (!filteredStatusChart) return;
+  
+  if (!data || !data.labels || !data.data || data.data.length === 0) {
+    // Show empty state
+    filteredStatusChart.data.labels = ['No Data'];
+    filteredStatusChart.data.datasets[0].data = [1];
+    filteredStatusChart.data.datasets[0].backgroundColor = ['#e5e7eb'];
+    filteredStatusChart.options.plugins.legend.display = false;
+  } else {
+    // Show actual data
+    filteredStatusChart.data.labels = data.labels;
+    filteredStatusChart.data.datasets[0].data = data.data;
+    
+    // Status color mapping
+    const statusColorMap = {
+      'Pending': '#fbbf24',
+      'In Progress': '#3b82f6',
+      'For Revision': '#f59e0b',
+      'Completed': '#10b981',
+      'Approved': '#10b981',
+      'Rejected': '#ef4444',
+      'Cancelled': '#9ca3af',
+      'Queued': '#0ea5e9',
+      'For Checking': '#a855f7',
+      'Draft': '#9ca3af'
+    };
+    
+    filteredStatusChart.data.datasets[0].backgroundColor = data.labels.map(label => statusColorMap[label] || '#9ca3af');
+    filteredStatusChart.options.plugins.legend.display = true;
+  }
+  filteredStatusChart.update();
+}
+
+function updateFilteredTypeChart(data) {
+  if (!filteredTypeChart) return;
+  
+  if (!data || !data.labels || !data.data || data.data.length === 0) {
+    // Show empty state
+    filteredTypeChart.data.labels = ['No Data'];
+    filteredTypeChart.data.datasets[0].data = [1];
+    filteredTypeChart.data.datasets[0].backgroundColor = ['#e5e7eb'];
+    filteredTypeChart.options.plugins.legend.display = false;
+  } else {
+    // Show actual data
+    filteredTypeChart.data.labels = data.labels;
+    filteredTypeChart.data.datasets[0].data = data.data;
+    filteredTypeChart.data.datasets[0].backgroundColor = [
+      '#3b82f6', // Approval
+      '#10b981'  // Service
+    ];
+    filteredTypeChart.options.plugins.legend.display = true;
+  }
+  filteredTypeChart.update();
 }
 
 /* ============================================
-   REVISION HOTSPOT TABLE
+   FILTERED RESULTS SECTION
    ============================================ */
 
-function loadRevisionHotspot() {
-  fetch('/api/admin/revision-hotspot')
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        populateRevisionHotspotTable(data.data);
-      } else {
-        showRevisionHotspotError('Failed to load revision data');
-      }
-    })
-    .catch(error => {
-      console.error('Error loading revision hotspot:', error);
-      showRevisionHotspotError('Error loading revision data');
-    });
+let currentFilteredPage = 1;
+const itemsPerPage = 10;
+let filteredRequestsData = [];
+
+function showFilteredResults(data) {
+  const section = document.getElementById('filteredResultsSection');
+  const countElement = document.getElementById('filtered-count');
+  
+  // Always show the filtered results section
+  section.style.display = 'block';
+  
+  if (data.filtered && data.filtered.requests && data.filtered.requests.length > 0) {
+    countElement.textContent = data.filtered.requests.length;
+    
+    // Update filtered charts
+    updateFilteredStatusChart(data.filtered.statusBreakdown);
+    updateFilteredTypeChart(data.filtered.typeBreakdown);
+    
+    // Populate filtered table
+    filteredRequestsData = data.filtered.requests;
+    currentFilteredPage = 1;
+    renderFilteredTablePage();
+  } else {
+    countElement.textContent = '0';
+    
+    // Show empty state for charts
+    updateFilteredStatusChart(null);
+    updateFilteredTypeChart(null);
+    
+    // Show empty table message
+    filteredRequestsData = [];
+    renderFilteredTablePage();
+  }
 }
 
-function populateRevisionHotspotTable(requests) {
-  const tbody = document.getElementById('revision-hotspot-tbody');
+function renderFilteredTablePage() {
+  const tbody = document.getElementById('filteredRequestsTbody');
+  const pagination = document.getElementById('filteredPagination');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  const indicator = document.getElementById('pageIndicator');
+  const rangeIndicator = document.getElementById('pageEntryRange');
   
-  if (!requests || requests.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" class="table-empty">No requests with revisions found</td></tr>';
+  if (!filteredRequestsData || filteredRequestsData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No requests match the current filters. Try adjusting your filter criteria.</td></tr>';
+    if(pagination) pagination.style.display = 'none';
     return;
   }
   
-  tbody.innerHTML = requests.map(request => `
-    <tr>
-      <td>${request.title || 'N/A'}</td>
-      <td>
-        <span class="type-badge ${request.type}">${request.type === 'approval' ? 'Approval' : 'Service'}</span>
-      </td>
-      <td>${request.requester}</td>
-      <td>${request.unit || 'Unassigned'}</td>
-      <td><span class="revision-count major">${request.majorRevisions}</span></td>
-      <td><span class="revision-count minor">${request.minorRevisions}</span></td>
-      <td><span class="revision-count total">${request.totalRevisions}</span></td>
-      <td><span class="status-badge ${request.status.toLowerCase().replace(/\s+/g, '-')}">${request.status}</span></td>
-      <td>
-        <a href="/admin/${request.type === 'approval' ? 'approvals' : 'services'}?id=${request._id}" class="btn-view">View</a>
-      </td>
-    </tr>
-  `).join('');
+  const totalPages = Math.ceil(filteredRequestsData.length / itemsPerPage);
+  if (currentFilteredPage < 1) currentFilteredPage = 1;
+  if (currentFilteredPage > totalPages) currentFilteredPage = totalPages;
+  
+  const startIndex = (currentFilteredPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const pageData = filteredRequestsData.slice(startIndex, endIndex);
+  
+  populateFilteredRequestsTable(pageData);
+  
+  if (pagination) {
+    pagination.style.display = 'flex';
+    
+    if (rangeIndicator) {
+      const actualEndIndex = Math.min(endIndex, filteredRequestsData.length);
+      const actualStartIndex = filteredRequestsData.length === 0 ? 0 : startIndex + 1;
+      rangeIndicator.textContent = `Showing ${actualStartIndex}-${actualEndIndex} of ${filteredRequestsData.length}`;
+    }
+
+    if (totalPages > 1) {
+      indicator.parentElement.style.display = 'flex';
+      indicator.textContent = `Page ${currentFilteredPage} of ${totalPages}`;
+      prevBtn.disabled = currentFilteredPage === 1;
+      nextBtn.disabled = currentFilteredPage === totalPages;
+      prevBtn.style.opacity = currentFilteredPage === 1 ? '0.5' : '1';
+      nextBtn.style.opacity = currentFilteredPage === totalPages ? '0.5' : '1';
+    } else {
+      indicator.parentElement.style.display = 'none';
+    }
+  }
 }
 
-function showRevisionHotspotError(message) {
-  const tbody = document.getElementById('revision-hotspot-tbody');
-  tbody.innerHTML = `<tr><td colspan="9" class="table-empty">${message}</td></tr>`;
+window.changeFilteredPage = function(newPage) {
+  currentFilteredPage = newPage;
+  renderFilteredTablePage();
+};
+
+function populateFilteredRequestsTable(requests) {
+  const tbody = document.getElementById('filteredRequestsTbody');
+  
+  if (!requests || requests.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No requests match the current filters. Try adjusting your filter criteria.</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = requests.map(request => {
+    const statusClass = request.status ? request.status.toLowerCase().replace(/\s+/g, '-') : 'unknown';
+    const typeClass = request.requestType ? request.requestType.toLowerCase() : 'unknown';
+    
+    return `
+      <tr>
+        <td>${(request._id || '').toString().slice(-8).toUpperCase()}</td>
+        <td>${request.title || request.description || 'No title'}</td>
+        <td>
+          <span class="type-badge ${typeClass}">${request.specificRequestType || (request.requestType === 'service' ? 'SERVICE' : 'APPROVAL')}</span>
+        </td>
+        <td>${request.requester || request.userId?.fName + ' ' + request.userId?.lName || 'Unknown'}</td>
+        <td>${request.unit || request.assignedUnits || 'Unassigned'}</td>
+        <td>
+          <span class="status-badge ${statusClass}">${request.status || 'Unknown'}</span>
+        </td>
+        <td>${request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'N/A'}</td>
+        <td>
+          <a href="/admin/${request.requestType === 'service' ? 'services' : 'approvals'}?openModalId=${request._id}" class="btn-view">View</a>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // Dropdown toggle function

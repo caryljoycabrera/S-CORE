@@ -1,0 +1,740 @@
+/* ==========================================
+   ADMIN TRASH MODAL STYLES
+   ==========================================
+   Shared CSS for trash/archive modals across admin pages
+   Used by: allrequestsadmin.ejs, approvals.ejs, services.ejs, users.ejs
+   ========================================== */
+
+/* ==========================================
+   TRASH BUTTON
+   ========================================== */
+/* Trash button styling */
+.trash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: #fef3c7;
+  color: #92400e;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+  margin-left: 25rem;
+}
+
+.trash-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3);
+  background: #92400e;
+  color: #ffffff;
+}
+
+.trash-btn svg {
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   TRASH MODAL CONTAINER
+   ========================================== */
+#trashModal.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#trashModal.modal.show {
+  display: flex !important;
+}
+
+/* ==========================================
+   TRASH MODAL CONTENT
+   ========================================== */
+.trash-modal-content {
+  background: white !important;
+  border-radius: 16px !important;
+  width: 95% !important;
+  max-width: 1200px !important;
+  max-height: 85vh !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: trashModalSlideIn 0.3s ease-out;
+}
+
+@keyframes trashModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================
+   TRASH MODAL HEADER
+   ========================================== */
+.trash-modal-content .modal-header,
+.trash-modal-content .unit-modal-header,
+.trash-header-color {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+  border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+}
+
+.trash-modal-content .modal-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trash-modal-content .modal-title-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.9;
+}
+
+.trash-modal-content .modal-title-section h2,
+.trash-modal-content .modal-title-section h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.trash-modal-content .close-modal-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.trash-modal-content .close-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+/* ==========================================
+   TRASH MODAL BODY
+   ========================================== */
+.trash-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ==========================================
+   INFO BANNER
+   ========================================== */
+.trash-info-banner {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+  border: 1px solid #67e8f9;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  color: #0e7490;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.trash-info-banner svg {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-right: 12px;
+}
+
+.trash-info-banner.warning-banner {
+  background: linear-gradient(135deg, #fefce8 0%, #fef08a 100%);
+  border-color: #facc15;
+  color: #854d0e;
+}
+
+/* ==========================================
+   TRASH TABLE CONTAINER
+   ========================================== */
+.trash-table-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow-x: auto;
+  background: white;
+}
+
+/* ==========================================
+   TRASH TABLE
+   ========================================== */
+.trash-requests-table {
+  width: 100%;
+  min-width: max-content;
+  table-layout: auto !important;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+/* Actions column - ensure buttons are visible */
+.trash-requests-table th:last-child,
+.trash-requests-table td:last-child {
+  min-width: 220px;
+  white-space: nowrap;
+}
+
+.trash-requests-table thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.trash-requests-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 700;
+  color: #374151;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  width: auto !important;
+}
+
+.trash-requests-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s ease;
+}
+
+.trash-requests-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.trash-requests-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.trash-requests-table td {
+  padding: 14px 16px;
+  color: #4b5563;
+  vertical-align: middle;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  width: auto !important;
+}
+
+/* ==========================================
+   TYPE BADGES
+   ========================================== */
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.type-badge.type-approval {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.type-badge.type-service {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+/* Role badges for users trash modal */
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.role-badge.role-admin {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.role-badge.role-unit {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.role-badge.role-user {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+/* ==========================================
+   ACTION BUTTONS
+   ========================================== */
+.trash-requests-table .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer !important;
+  transition: all 0.2s ease;
+  border: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+}
+
+.trash-requests-table .action-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  pointer-events: none; /* Prevent SVG from capturing clicks */
+}
+
+/* Restore Button */
+.trash-requests-table .restore-btn {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.trash-requests-table .restore-btn:hover {
+  background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Permanent Delete Button */
+.trash-requests-table .delete-btn-permanent {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  margin-left: 8px;
+}
+
+.trash-requests-table .delete-btn-permanent:hover {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Actions cell styling */
+.trash-requests-table td:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+/* ==========================================
+   EMPTY STATE
+   ========================================== */
+.trash-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.trash-empty-state svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 20px;
+  opacity: 0.4;
+  color: #9ca3af;
+}
+
+.trash-empty-state p:first-of-type {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.trash-empty-state p:last-of-type {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ==========================================
+   RESTORE CONFIRMATION MODAL
+   ========================================== */
+#restoreConfirmModal.confirmation-modal,
+#trashRestoreConfirmModal.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10001;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#restoreConfirmModal .confirmation-modal-content,
+#trashRestoreConfirmModal .confirmation-modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: confirmModalSlideIn 0.25s ease-out;
+}
+
+@keyframes confirmModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#restoreConfirmModal .confirmation-header,
+#trashRestoreConfirmModal .confirmation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+#restoreConfirmModal .confirmation-header h3,
+#trashRestoreConfirmModal .confirmation-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#restoreConfirmModal .confirmation-body,
+#trashRestoreConfirmModal .confirmation-body {
+  padding: 24px;
+}
+
+#restoreConfirmModal .confirmation-body p,
+#trashRestoreConfirmModal .confirmation-body p {
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+/* ==========================================
+   PERMANENT DELETE CONFIRMATION MODAL
+   ========================================== */
+#permanentDeleteModal.confirmation-modal,
+#trashPermanentDeleteModal.confirmation-modal,
+#permanentDeleteConfirmModal.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10001;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#permanentDeleteModal .confirmation-modal-content,
+#trashPermanentDeleteModal .confirmation-modal-content,
+#permanentDeleteConfirmModal .modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: confirmModalSlideIn 0.25s ease-out;
+}
+
+#permanentDeleteModal .confirmation-header,
+#trashPermanentDeleteModal .confirmation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+#permanentDeleteModal .confirmation-header.warning,
+#trashPermanentDeleteModal .confirmation-header.warning {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+}
+
+#permanentDeleteModal .confirmation-header h3,
+#trashPermanentDeleteModal .confirmation-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#permanentDeleteModal .confirmation-body,
+#trashPermanentDeleteModal .confirmation-body {
+  padding: 24px;
+}
+
+/* Warning Box */
+.permanent-delete-warning {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-left: 4px solid #dc2626;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 0 8px 8px 0;
+}
+
+.permanent-delete-warning p {
+  margin: 0 !important;
+  color: #991b1b !important;
+  font-size: 14px !important;
+  font-weight: 500;
+}
+
+/* ==========================================
+   CONFIRMATION BUTTONS
+   ========================================== */
+.trash-modal-actions,
+.confirmation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.btn-restore {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-restore:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-permanent-delete {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-permanent-delete:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ==========================================
+   LOADING STATE
+   ========================================== */
+.trash-loading {
+  text-align: center;
+  padding: 40px 24px;
+  color: #6b7280;
+}
+
+.trash-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #dc2626;
+  border-radius: 50%;
+  animation: trashSpinner 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes trashSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+@media (max-width: 768px) {
+  .trash-modal-content {
+    max-width: 95%;
+    max-height: 90vh;
+    margin: 10px;
+  }
+
+  .trash-modal-content .modal-header,
+  .trash-modal-content .unit-modal-header {
+    padding: 16px 20px;
+  }
+
+  .trash-modal-content .modal-title-section h2,
+  .trash-modal-content .modal-title-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .trash-modal-body {
+    padding: 16px;
+  }
+
+  .trash-requests-table {
+    font-size: 13px;
+  }
+
+  .trash-requests-table th,
+  .trash-requests-table td {
+    padding: 10px 12px;
+  }
+
+  .trash-requests-table .action-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .trash-requests-table .delete-btn-permanent {
+    margin-left: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trash-info-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .trash-info-banner svg {
+    margin-right: 0;
+  }
+
+  .trash-modal-actions,
+  .confirmation-actions {
+    flex-direction: column;
+  }
+
+  .btn-cancel,
+  .btn-restore,
+  .btn-permanent-delete {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ==========================================
+   FADE OUT ANIMATION FOR REMOVED ROWS
+   ========================================== */
+.trash-request-row.fade-out {
+  animation: trashRowFadeOut 0.4s ease-out forwards;
+}
+
+@keyframes trashRowFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(20px);
+    height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+}

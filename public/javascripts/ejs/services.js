@@ -1,6 +1,11 @@
 
 console.log('🚀 Starting Services Admin script...');
 
+// Global variable to store available units from database
+let availableUnits = [];
+// Global variable to store available request statuses from database
+let availableStatuses = [];
+
 // Global dropdown manager to ensure only one dropdown is open at a time
 const DropdownManager = {
   activeDropdown: null,
@@ -426,8 +431,151 @@ class EnhancedMultiSelect {
   }
 }
 
+// Global helper functions
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function displayFormattedText(text) {
+  if (!text) return '';
+  if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>') || text.includes('<b>') || text.includes('<i>')) {
+    return text;
+  }
+  let formatted = escapeHtml(text);
+  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+  formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+  formatted = formatted.replace(/\n/g, '<br>');
+  return formatted;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
+  
+  // ==========================================
+  // CREATE REQUEST MODAL HANDLER
+  // ==========================================
+  const openModalBtn = document.getElementById('openModalBtn');
+  const requestModal = document.getElementById('requestModal');
+  
+  if (openModalBtn && requestModal) {
+    openModalBtn.onclick = () => {
+      requestModal.style.display = 'flex';
+      // Clear user search when opening modal
+      const userInput = document.getElementById('requestForUser');
+      const userIdInput = document.getElementById('requestForUserId');
+      if (userInput) userInput.value = '';
+      if (userIdInput) userIdInput.value = '';
+    };
+  }
+  
+  // ==========================================
+  // USER SEARCH FUNCTIONALITY
+  // ==========================================
+  const requestForUserInput = document.getElementById('requestForUser');
+  const requestForUserIdInput = document.getElementById('requestForUserId');
+  const userSuggestionsDropdown = document.getElementById('userSuggestionsDropdown');
+  
+  let userSearchTimeout;
+  let usersCache = [];
+  
+  if (requestForUserInput && userSuggestionsDropdown) {
+    // Debounced search function
+    requestForUserInput.addEventListener('input', function() {
+      clearTimeout(userSearchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length < 2) {
+        userSuggestionsDropdown.style.display = 'none';
+        requestForUserIdInput.value = '';
+        return;
+      }
+      
+      // Show loading state
+      userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-loading">Searching users...</div>';
+      userSuggestionsDropdown.style.display = 'block';
+      
+      userSearchTimeout = setTimeout(async () => {
+        try {
+          console.log('[USER SEARCH] Fetching users for query:', query);
+          const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+          console.log('[USER SEARCH] Response status:', response.status, response.statusText);
+          
+          if (!response.ok) {
+            console.error('[USER SEARCH] Request failed with status:', response.status);
+            const contentType = response.headers.get('content-type');
+            console.error('[USER SEARCH] Content-Type:', contentType);
+            
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = await response.json();
+              console.error('[USER SEARCH] Error response:', errorData);
+            } else {
+              const errorText = await response.text();
+              console.error('[USER SEARCH] Error response (text):', errorText.substring(0, 200));
+            }
+            
+            userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">Error: Unable to search users. Please check your permissions.</div>';
+            return;
+          }
+          
+          const users = await response.json();
+          console.log('[USER SEARCH] Found users:', users.length, users);
+          usersCache = users;
+          
+          if (users.length === 0) {
+            userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">No users found</div>';
+          } else {
+            // Populate dropdown with rich suggestions
+            userSuggestionsDropdown.innerHTML = users.map(user => {
+              const initials = `${user.fName.charAt(0)}${user.lName.charAt(0)}`.toUpperCase();
+              return `
+                <div class="user-suggestion-item" data-user-id="${user._id}" data-user-name="${user.fName} ${user.lName}" data-user-email="${user.email}">
+                  <div class="user-suggestion-avatar">${initials}</div>
+                  <div class="user-suggestion-info">
+                    <div class="user-suggestion-name">${user.fName} ${user.lName}</div>
+                    <div class="user-suggestion-email">${user.email}</div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+            
+            // Add click handlers to suggestion items
+            const suggestionItems = userSuggestionsDropdown.querySelectorAll('.user-suggestion-item');
+            suggestionItems.forEach(item => {
+              item.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                const userEmail = this.getAttribute('data-user-email');
+                
+                requestForUserInput.value = `${userName} (${userEmail})`;
+                requestForUserIdInput.value = userId;
+                userSuggestionsDropdown.style.display = 'none';
+                
+                console.log('[USER SEARCH] Selected user:', { userId, userName, userEmail });
+              });
+            });
+          }
+        } catch (error) {
+          console.error('[USER SEARCH] Error searching users:', error);
+          userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">Error loading users</div>';
+        }
+      }, 300);
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!requestForUserInput.contains(e.target) && !userSuggestionsDropdown.contains(e.target)) {
+        userSuggestionsDropdown.style.display = 'none';
+      }
+    });
+    
+    // Clear hidden ID if user manually changes input
+    requestForUserInput.addEventListener('keydown', function() {
+      requestForUserIdInput.value = '';
+    });
+  }
   
   // Debug: Check all rows for allowAdditionalUpload data
   console.log('🚀 Page loaded - checking all data attributes...');
@@ -442,18 +590,50 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Initialize enhanced multi-select dropdowns
+  // Get filter data from database (passed from server via EJS)
+  const dbData = window.filterDataFromDatabase || {};
+  const statusOptions = dbData.requestStatuses || ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'];
+  const orgOptions = dbData.organizations || studentOrganizations;
+  const officeOptions = dbData.offices || officesDepartments;
+  const unitOptions = dbData.units || [];
+  
+  // Initialize enhanced multi-select dropdowns with database values
   const statusFilter = new EnhancedMultiSelect('statusFilter', 
-    ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'], 
+    statusOptions, 
     'Select Status', false);
+  
+  const statusFilterContainer = document.getElementById('statusFilter');
+  if (statusFilterContainer) {
+    statusFilterContainer.__instance = statusFilter;
+  }
+  
+  // Initialize assigned unit filter
+  const assignedUnitFilter = new EnhancedMultiSelect('assignedUnitFilter',
+    unitOptions,
+    'Select Assigned Unit', false);
+  
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.__instance = assignedUnitFilter;
+  }
     
   const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
-    studentOrganizations, 
+    orgOptions, 
     'Select Student Organizations', true);
+  
+  const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+  if (studentOrgFilterContainer) {
+    studentOrgFilterContainer.__instance = studentOrgFilter;
+  }
     
   const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
-    officesDepartments, 
+    officeOptions, 
     'Select Offices/Departments', true);
+  
+  const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+  if (officeDeptFilterContainer) {
+    officeDeptFilterContainer.__instance = officeDeptFilter;
+  }
 
   // Global variables
   let detailModal = document.getElementById("detailsModal");
@@ -480,19 +660,21 @@ document.addEventListener('DOMContentLoaded', function() {
       element: row,
       requestId: row.dataset.requestId,
       type: row.dataset.type,
-      title: row.dataset.title.toLowerCase(),
-      status: row.dataset.status.toLowerCase(),
-      organization: row.dataset.organization.toLowerCase(),
-      units: row.dataset.units.toLowerCase(),
-      student: row.dataset.student.toLowerCase(),
+      title: row.dataset.title?.toLowerCase() || '',
+      status: row.dataset.status?.toLowerCase() || '',
+      organization: row.dataset.organization?.toLowerCase() || '',
+      units: row.dataset.units?.toLowerCase() || '',
+      student: row.dataset.student?.toLowerCase() || '',
       datetime: row.dataset.datetime,
       date: row.dataset.date,
-      description: row.dataset.description.toLowerCase()
+      deadline: row.dataset.deadline,
+      description: row.dataset.description?.toLowerCase() || ''
     }));
 
     // Get filter elements
     const requestIdFilter = document.getElementById('requestIdFilter');
     const studentFilter = document.getElementById('studentFilter');
+    const sortByFilter = document.getElementById('sortByFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     const clearFiltersBtn = document.getElementById('clearFilters');
@@ -508,20 +690,214 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Enhanced dropdown change listeners
-    document.getElementById('statusFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('studentOrgFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('officeDeptFilter').addEventListener('selectionChange', applyFilters);
+    if (statusFilterContainer) {
+      statusFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (assignedUnitFilterContainer) {
+      assignedUnitFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (studentOrgFilterContainer) {
+      studentOrgFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (officeDeptFilterContainer) {
+      officeDeptFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
 
     if (dateFromFilter) {
-      dateFromFilter.addEventListener('change', applyFilters);
+      dateFromFilter.addEventListener('change', () => {
+        // Set minimum date for "Date To" based on "Date From" selection
+        if (dateToFilter && dateFromFilter.value) {
+          dateToFilter.min = dateFromFilter.value;
+          if (dateToFilter.value && dateToFilter.value < dateFromFilter.value) {
+            dateToFilter.value = '';
+          }
+        } else if (dateToFilter) {
+          dateToFilter.min = '';
+        }
+        applyFilters();
+      });
     }
 
     if (dateToFilter) {
       dateToFilter.addEventListener('change', applyFilters);
     }
+    
+    if (sortByFilter) {
+      sortByFilter.addEventListener('change', applyFilters);
+    }
 
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+    
+    // Pagination variables
+    const ITEMS_PER_PAGE = 10;
+    let currentPage = 1;
+    let filteredData = [];
+    
+    // Pagination elements
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    
+    if (prevPageBtn) {
+      prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          displayPage();
+        }
+      });
+    }
+    
+    if (nextPageBtn) {
+      nextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayPage();
+        }
+      });
+    }
+    
+    function displayPage() {
+      const tableBody = document.getElementById('requestsTableBody');
+      if (!tableBody) return;
+      
+      const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      
+      // Hide all rows first
+      allRequestsData.forEach(request => {
+        request.element.style.display = 'none';
+      });
+      
+      // Show only the rows for current page and reorder them
+      const pageData = filteredData.slice(startIndex, endIndex);
+      pageData.forEach(request => {
+        tableBody.appendChild(request.element);
+        request.element.style.display = '';
+      });
+      
+      // Update pagination controls
+      renderPaginationNumbers(totalPages);
+      if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+      if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+      
+      updateResultsCount(filteredData.length);
+    }
+    
+    function renderPaginationNumbers(totalPages) {
+      if (!paginationNumbers) return;
+      
+      paginationNumbers.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      // First page button
+      if (startPage > 1) {
+        paginationNumbers.appendChild(createPageButton(1));
+        if (startPage > 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+      }
+      
+      // Page number buttons
+      for (let i = startPage; i <= endPage; i++) {
+        paginationNumbers.appendChild(createPageButton(i));
+      }
+      
+      // Last page button
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+        paginationNumbers.appendChild(createPageButton(totalPages));
+      }
+    }
+    
+    function createPageButton(pageNum) {
+      const btn = document.createElement('button');
+      btn.className = 'pagination-btn' + (pageNum === currentPage ? ' active' : '');
+      btn.textContent = pageNum;
+      btn.addEventListener('click', () => {
+        currentPage = pageNum;
+        displayPage();
+      });
+      return btn;
+    }
+    
+    // Sort data function
+    function sortData(data, sortValue) {
+      // Statuses that should be sorted to the bottom in this order: completed, approved, rejected, archived
+      const bottomStatuses = ['completed', 'approved', 'rejected', 'archived'];
+      
+      const [field, direction] = sortValue.split('-');
+      const isAsc = direction === 'asc';
+      
+      data.sort((a, b) => {
+        // Check if either request has a final status
+        const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
+        const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
+        
+        // Always push final statuses to the bottom
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        
+        // If both are final statuses, sort by status order then newest to oldest
+        if (aIsBottom && bIsBottom) {
+          const aIndex = bottomStatuses.indexOf(a.status?.toLowerCase());
+          const bIndex = bottomStatuses.indexOf(b.status?.toLowerCase());
+          if (aIndex !== bIndex) return aIndex - bIndex;
+          // Same status, sort by date newest first
+          const dateA = new Date(a.date || 0);
+          const dateB = new Date(b.date || 0);
+          return dateB - dateA;
+        }
+        
+        // Both are active statuses, sort normally by selected field
+        let valA, valB;
+        
+        switch (field) {
+          case 'deadline':
+            // Get deadline from element's dataset
+            valA = a.element?.dataset?.deadline || '';
+            valB = b.element?.dataset?.deadline || '';
+            // Put items without deadline at the end (but before bottom statuses)
+            if (!valA && valB) return isAsc ? 1 : -1;
+            if (valA && !valB) return isAsc ? -1 : 1;
+            if (!valA && !valB) return 0;
+            break;
+          case 'date':
+            valA = a.date || '';
+            valB = b.date || '';
+            break;
+          default:
+            valA = a.date || '';
+            valB = b.date || '';
+        }
+        
+        if (valA < valB) return isAsc ? -1 : 1;
+        if (valA > valB) return isAsc ? 1 : -1;
+        return 0;
+      });
     }
 
     // Apply filters function
@@ -530,89 +906,82 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const filters = {
         requestId: requestIdFilter ? requestIdFilter.value.toLowerCase().trim() : '',
-        status: statusFilter.getSelectedValues(),
+        status: statusFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        assignedUnit: assignedUnitFilterContainer?.__instance?.getSelectedValues() || ['all'],
         student: studentFilter ? studentFilter.value.toLowerCase().trim() : '',
-        studentOrg: studentOrgFilter.getSelectedValues(),
-        officeDept: officeDeptFilter.getSelectedValues(),
+        studentOrg: studentOrgFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        officeDept: officeDeptFilterContainer?.__instance?.getSelectedValues() || ['all'],
         dateFrom: dateFromFilter ? dateFromFilter.value : '',
         dateTo: dateToFilter ? dateToFilter.value : ''
       };
 
       console.log('Applied filters:', filters);
 
-      let visibleCount = 0;
-
-      allRequestsData.forEach(request => {
-        let shouldShow = true;
-
+      // Filter the data
+      filteredData = allRequestsData.filter(request => {
         // Request ID filter
-        if (filters.requestId && !request.requestId.toLowerCase().includes(filters.requestId)) {
-          shouldShow = false;
+        if (filters.requestId && !request.requestId?.toLowerCase().includes(filters.requestId)) {
+          return false;
         }
 
-        // Status filter (multi-select)
+        // Status filter (multi-select, case-insensitive)
         if (filters.status.length > 0 && !filters.status.includes('all')) {
-          if (!filters.status.includes(request.status)) {
-            shouldShow = false;
-          }
+          const statusMatch = filters.status.some(s => s.toLowerCase() === request.status?.toLowerCase());
+          if (!statusMatch) return false;
+        }
+        
+        // Assigned Unit filter (case-insensitive)
+        if (filters.assignedUnit.length > 0 && !filters.assignedUnit.includes('all')) {
+          const unitMatch = filters.assignedUnit.some(u => request.units?.toLowerCase().includes(u.toLowerCase()));
+          if (!unitMatch) return false;
         }
 
         // Student filter
-        if (filters.student && !request.student.includes(filters.student)) {
-          shouldShow = false;
+        if (filters.student && !request.student?.includes(filters.student)) {
+          return false;
         }
 
         // Organization filter (multi-select)
-        let organizationMatch = true;
         const hasStudentOrgSelection = filters.studentOrg.length > 0 && !filters.studentOrg.includes('all');
         const hasOfficeDeptSelection = filters.officeDept.length > 0 && !filters.officeDept.includes('all');
         
         if (hasStudentOrgSelection || hasOfficeDeptSelection) {
-          organizationMatch = false;
+          let organizationMatch = false;
           
           // Check student organizations
           if (hasStudentOrgSelection) {
             organizationMatch = filters.studentOrg.some(org => 
-              request.organization.includes(org.toLowerCase())
+              request.organization?.includes(org.toLowerCase())
             );
           }
           
           // Check office/departments (OR logic with student orgs)
           if (!organizationMatch && hasOfficeDeptSelection) {
             organizationMatch = filters.officeDept.some(dept => 
-              request.organization.includes(dept.toLowerCase())
+              request.organization?.includes(dept.toLowerCase())
             );
           }
-        }
-
-        if (!organizationMatch) {
-          shouldShow = false;
+          
+          if (!organizationMatch) return false;
         }
 
         // Date range filter
-        if (filters.dateFrom || filters.dateTo) {
-          const requestDate = request.date;
-          
-          if (filters.dateFrom && requestDate < filters.dateFrom) {
-            shouldShow = false;
-          }
-          
-          if (filters.dateTo && requestDate > filters.dateTo) {
-            shouldShow = false;
-          }
-        }
+        if (filters.dateFrom && request.date && request.date < filters.dateFrom) return false;
+        if (filters.dateTo && request.date && request.date > filters.dateTo) return false;
 
-        // Show/hide row
-        if (shouldShow) {
-          request.element.style.display = '';
-          visibleCount++;
-        } else {
-          request.element.style.display = 'none';
-        }
+        return true;
       });
+      
+      // Then sort the filtered data
+      const sortValue = sortByFilter?.value || 'deadline-asc';
+      sortData(filteredData, sortValue);
+      
+      // Reset to first page and display
+      currentPage = 1;
+      displayPage();
 
       // Update results count
-      updateResultsCount(visibleCount);
+      updateResultsCount(filteredData.length);
     }
 
     // Clear all filters
@@ -622,23 +991,24 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear text inputs
       if (requestIdFilter) requestIdFilter.value = '';
       if (studentFilter) studentFilter.value = '';
-      if (dateFromFilter) dateFromFilter.value = '';
-      if (dateToFilter) dateToFilter.value = '';
+      if (sortByFilter) sortByFilter.value = 'deadline-asc';
+      if (dateFromFilter) {
+        dateFromFilter.value = '';
+      }
+      if (dateToFilter) {
+        dateToFilter.value = '';
+        dateToFilter.min = '';
+      }
       
       // Reset enhanced dropdowns
-      statusFilter.reset();
-      studentOrgFilter.reset();
-      officeDeptFilter.reset();
+      statusFilterContainer?.__instance?.reset();
+      assignedUnitFilterContainer?.__instance?.reset();
+      studentOrgFilterContainer?.__instance?.reset();
+      officeDeptFilterContainer?.__instance?.reset();
 
-      // Show all rows
-      allRequestsData.forEach(request => {
-        request.element.style.display = '';
-      });
-
-      // Update results count
-      updateResultsCount(allRequestsData.length);
-      
-      showNotification('All filters cleared', 'info');
+      // Reset pagination and apply filters
+      currentPage = 1;
+      applyFilters();
     }
 
     // Update results count
@@ -666,8 +1036,8 @@ document.addEventListener('DOMContentLoaded', function() {
       };
     }
 
-    // Initial results count
-    updateResultsCount(allRequestsData.length);
+    // Initial filter application (apply sort and show first page)
+    applyFilters();
     
     console.log('✅ Filters initialized successfully');
   }
@@ -918,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     } else {
-      console.error('[Services] Message input element not found!');
+      console.log('[Services] Message input element not found (may load later via conversation modal)');
     }
     
     // Close modal when clicking outside
@@ -1023,13 +1393,8 @@ document.addEventListener('DOMContentLoaded', function() {
       clearFilesBtn.addEventListener('click', clearAllChatFiles);
     }
     
-    const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
-    chatFormatBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        const format = this.getAttribute('data-chat-format');
-        applyChatFormat(format);
-      });
-    });
+    // Toolbar formatting is now handled by inline script in services.ejs for contenteditable
+    // Legacy textarea support kept in applyChatFormat function
   }
 
   function handleChatFileSelect(event) {
@@ -1147,12 +1512,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function applyChatFormat(format) {
     console.log('[Services] Apply format:', format);
-    const textarea = document.getElementById('messageInput');
-    if (!textarea) {
+    const input = document.getElementById('messageInput');
+    if (!input) {
       console.error('[Services] Message input not found');
       return;
     }
 
+    // Check if input is contenteditable (WYSIWYG mode)
+    if (input.isContentEditable) {
+      // Use execCommand for contenteditable
+      console.log('[Services] Using execCommand for format:', format);
+      switch(format) {
+        case 'bold':
+          document.execCommand('bold', false, null);
+          break;
+        case 'italic':
+          document.execCommand('italic', false, null);
+          break;
+        case 'underline':
+          document.execCommand('underline', false, null);
+          break;
+      }
+      input.focus();
+      return;
+    }
+
+    // Fallback for textarea (legacy)
+    const textarea = input;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
@@ -1217,8 +1603,17 @@ document.addEventListener('DOMContentLoaded', function() {
       plainText = window.messageQuill.getText().trim();
     } else {
       const messageInput = document.getElementById('messageInput');
-      content = messageInput ? messageInput.value.trim() : '';
-      plainText = content;
+      if (messageInput) {
+        // Check if input is contenteditable (WYSIWYG mode)
+        if (messageInput.isContentEditable) {
+          content = messageInput.innerHTML.trim();
+          plainText = messageInput.textContent.trim();
+        } else {
+          // Fallback for textarea
+          content = messageInput.value.trim();
+          plainText = content;
+        }
+      }
     }
     
     console.log('[Services] Message content:', content || '(empty)');
@@ -1282,12 +1677,20 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('[Services] Message sent successfully');
       
-      // Clear message input (Quill or textarea)
+      // Clear message input (Quill or contenteditable/textarea)
       if (window.messageQuill) {
         window.messageQuill.setText('');
       } else {
         const messageInput = document.getElementById('messageInput');
-        if (messageInput) messageInput.value = '';
+        if (messageInput) {
+          // Check if input is contenteditable (WYSIWYG mode)
+          if (messageInput.isContentEditable) {
+            messageInput.innerHTML = '';
+          } else {
+            // Fallback for textarea
+            messageInput.value = '';
+          }
+        }
       }
       
       clearAllChatFiles();
@@ -1306,8 +1709,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitsSelect = document.getElementById('adminUnitsSelect');
     const deadlineInput = document.getElementById('adminDeadlineInput');
     
-    if (statusSelect) statusSelect.value = originalValues.status || '';
-    if (unitsSelect) unitsSelect.value = originalValues.units || '';
+    if (statusSelect) {
+      statusSelect.value = originalValues.status || '';
+      const currentStatusValue = document.getElementById('currentStatusValue');
+      if (currentStatusValue) currentStatusValue.textContent = originalValues.status || '';
+    }
+    
+    if (unitsSelect) {
+      unitsSelect.value = originalValues.units === 'Not yet assigned' ? '' : (originalValues.units || '');
+      const currentUnitsValue = document.getElementById('currentUnitsValue');
+      if (currentUnitsValue) currentUnitsValue.textContent = originalValues.units || 'Not yet assigned';
+    }
+    
     if (deadlineInput) deadlineInput.value = originalValues.deadline || '';
     
     showNotification('Changes cancelled - form reset to original values', 'info');
@@ -1315,8 +1728,17 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Show update confirmation modal
   function showUpdateConfirmation() {
-    const changes = getFormChanges();
-    
+      const statusSelect = document.getElementById('adminStatusSelect');
+      if (statusSelect && statusSelect.value === 'Archived' && originalValues.status !== 'Archived') {
+        if (typeof window.openDeleteConfirm === 'function') {
+          window.openDeleteConfirm({
+            requestId: currentRequestId,
+            requestType: currentRequestType
+          });
+          return;
+        }
+      }
+
     if (changes.length === 0) {
       showNotification('No changes detected', 'info');
       return;
@@ -1408,10 +1830,17 @@ document.addEventListener('DOMContentLoaded', function() {
           if (success) updatedData.units = unitsSelect.value || 'Not yet assigned';
         } else if (change.field === 'Deadline') {
           const deadlineInput = document.getElementById('adminDeadlineInput');
-          success = await updateRequestDeadline(currentRequestId, deadlineInput.value);
-          if (success) {
-            const newDate = new Date(deadlineInput.value);
-            updatedData.formattedDeadline = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
+          // Use local date (YYYY-MM-DD or datetime-local) as-is, no manual UTC+8 conversion
+          let deadlineValue = deadlineInput.value;
+          if (deadlineValue) {
+            // If input type is date, convert to Date object for formatting
+            const newDate = new Date(deadlineValue);
+            success = await updateRequestDeadline(currentRequestId, deadlineValue);
+            if (success) {
+              updatedData.formattedDeadline = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
+            }
+          } else {
+            success = await updateRequestDeadline(currentRequestId, '');
           }
         }
         
@@ -1432,6 +1861,18 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           reopenModalAfterUpdate(currentRequestId);
         }, 1000);
+
+        // Also refresh the page shortly after to ensure all server-side
+        // changes (deliverables, revision history, etc.) are reflected
+        // across the UI. This is a simple and reliable fallback when
+        // partial client-side re-rendering isn't available.
+        setTimeout(() => {
+          try {
+            window.location.reload();
+          } catch (e) {
+            console.error('Auto-reload failed:', e);
+          }
+        }, 1800);
       }
       
     } catch (error) {
@@ -1557,14 +1998,20 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update display elements
         const deadlineElement = document.getElementById('detailDeadlineInfo');
         const currentDeadlineValue = document.getElementById('currentDeadlineValue');
-        
-        if (deadlineElement && currentDeadlineValue) {
-          const newDate = new Date(newDeadline);
-          const formattedDate = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
-          deadlineElement.innerText = formattedDate;
-          currentDeadlineValue.innerText = newDate.toLocaleString();
+        const deadlineInput = document.getElementById('adminDeadlineInput');
+        const newDate = new Date(newDeadline);
+        const formattedDate = `${newDate.getMonth() + 1}/${newDate.getDate()}/${newDate.getFullYear()}`;
+        if (deadlineElement) deadlineElement.innerText = formattedDate;
+        if (currentDeadlineValue) currentDeadlineValue.innerText = newDate.toLocaleString();
+        if (deadlineInput) {
+          // Set input value as local datetime-local string
+          const year = newDate.getFullYear();
+          const month = String(newDate.getMonth() + 1).padStart(2, '0');
+          const day = String(newDate.getDate()).padStart(2, '0');
+          const hours = String(newDate.getHours()).padStart(2, '0');
+          const minutes = String(newDate.getMinutes()).padStart(2, '0');
+          deadlineInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
-        
         return true;
       } else {
         console.error('Deadline update failed:', result.message);
@@ -1724,9 +2171,13 @@ document.addEventListener('DOMContentLoaded', function() {
     populateFilePreview(rowData);
 
     // Show/hide additional file upload toggle based on status
+    // Hide for terminal statuses: Approved, Completed, Rejected, Archived
     const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
     if (additionalFileToggleSection) {
-      if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
+      const terminalStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      const currentStatusLower = (rowData.status || '').toLowerCase();
+      
+      if (!terminalStatuses.includes(currentStatusLower)) {
         additionalFileToggleSection.style.display = 'block';
         // Add event listener for the toggle
         const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
@@ -1770,6 +2221,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     }
+    
+    // Load revision history (pass status to determine visibility)
+    loadRevisionHistory(rowData.id, rowData.status);
   }
   
   // Populate admin form
@@ -1779,22 +2233,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentStatusValue = document.getElementById('currentStatusValue');
     
     if (statusSelect && currentStatusValue) {
-      const statusOptions = [
-        { value: 'Pending', label: 'Pending' },
-        { value: 'Queued', label: 'Queued' },
-        { value: 'In Progress', label: 'In Progress' },
-        { value: 'Approved', label: 'Approved' },
-        { value: 'For Revision', label: 'For Revision' },
-        { value: 'Completed', label: 'Completed' },
-        { value: 'Rejected', label: 'Rejected' },
-        { value: 'Archived', label: 'Archived' }
-      ];
+      // Ensure statuses are loaded from database
+      if (availableStatuses.length === 0) {
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.requestStatuses && dbData.requestStatuses.length > 0) {
+          availableStatuses = dbData.requestStatuses;
+        } else {
+          // Fallback to default statuses
+          availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', 'Approved', 'Completed', 'Rejected', 'Archived'];
+        }
+      }
       
-      statusSelect.innerHTML = statusOptions.map(option => 
-        `<option value="${option.value}" ${option.value === rowData.status ? 'selected' : ''}>${option.label}</option>`
-      ).join('');
+      const statusOptions = availableStatuses.map(status => ({
+        value: status,
+        label: status
+      }));
       
-      currentStatusValue.textContent = rowData.status;
+      // Compare status values case-insensitively so values from dataset
+      // (which may differ in casing) still match option values from DB
+      const rowStatusLower = (rowData.status || '').toString().toLowerCase();
+      let selectedFound = false;
+      statusSelect.innerHTML = statusOptions.map(option => {
+        const optVal = option.value || '';
+        const isSelected = optVal.toString().toLowerCase() === rowStatusLower && rowStatusLower !== '';
+        if (isSelected) selectedFound = true;
+        return `<option value="${optVal}" ${isSelected ? 'selected' : ''}>${option.label}</option>`;
+      }).join('');
+
+      // Display a friendly current value: prefer the matched option label,
+      // otherwise show a capitalized fallback of the stored value
+      if (selectedFound) {
+        const matched = statusOptions.find(o => (o.value || '').toString().toLowerCase() === rowStatusLower);
+        currentStatusValue.textContent = matched ? matched.label : (rowData.status || 'N/A');
+      } else {
+        const fallback = rowData.status ? (rowData.status.toString().charAt(0).toUpperCase() + rowData.status.toString().slice(1)) : 'N/A';
+        currentStatusValue.textContent = fallback;
+      }
     }
     
     // Populate units
@@ -1802,6 +2277,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentUnitsValue = document.getElementById('currentUnitsValue');
 
     if (unitsSelect && currentUnitsValue) {
+      // Ensure units are loaded from database (consistent with approvals.js)
+      if (availableUnits.length === 0) {
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.units && dbData.units.length > 0) {
+          availableUnits = dbData.units;
+        } else {
+          // Fallback to default units
+          availableUnits = ['Graphics Unit', 'Multimedia Unit', 'Public Relations Unit', 'Social Media Unit'];
+        }
+      }
+      
       // Define recommendation mapping for service requests
       const recommendationMapping = {
         'Creation of New Graphics/Pubmat': ['Graphics Unit'],
@@ -1819,15 +2306,16 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Service request type:', specificType, 'Recommended units:', recommendedUnits);
 
       if (unitsSelect) {
-        // Clear existing options and rebuild with recommendations
-        unitsSelect.innerHTML = `
-          <option value="">Not yet assigned</option>
-          <option value="Social Media Unit" ${recommendedUnits.includes('Social Media Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Social Media Unit') ? '★ ' : ''}Social Media Unit</option>
-          <option value="Graphics Unit" ${recommendedUnits.includes('Graphics Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Graphics Unit') ? '★ ' : ''}Graphics Unit</option>
-          <option value="Multimedia Unit" ${recommendedUnits.includes('Multimedia Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Multimedia Unit') ? '★ ' : ''}Multimedia Unit</option>
-          <option value="Public Relations Unit" ${recommendedUnits.includes('Public Relations Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Public Relations Unit') ? '★ ' : ''}Public Relations Unit</option>
-        `;
-
+        // Clear existing options and rebuild with recommendations from database
+        let optionsHtml = '<option value="">Not yet assigned</option>';
+        
+        // Add units from database
+        availableUnits.forEach(unit => {
+          const isRecommended = recommendedUnits.includes(unit);
+          optionsHtml += `<option value="${unit}" ${isRecommended ? 'class="recommended-unit"' : ''}>${isRecommended ? '★ ' : ''}${unit}</option>`;
+        });
+        
+        unitsSelect.innerHTML = optionsHtml;
         unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
       }
 
@@ -2427,8 +2915,11 @@ window.openImagePreview = function(imageUrl, fileName) {
     }
   }
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> main
   // ==========================================
   // REVISION HISTORY FUNCTIONS (Admin Services)
   // ==========================================
@@ -2464,9 +2955,12 @@ window.openImagePreview = function(imageUrl, fileName) {
     };
     
     try {
+<<<<<<< HEAD
       if (historySection) historySection.style.display = 'block';
       if (historyContainer) historyContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem; border-width: 0.2em;"><span class="visually-hidden">Loading...</span></div><p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">Loading revision history...</p></div>';
       
+=======
+>>>>>>> main
       const response = await fetch(`/api/service-revision-history/${requestId}`);
       console.log('[Admin Services - Revision History] Response status:', response.status);
       
@@ -2610,7 +3104,10 @@ window.openImagePreview = function(imageUrl, fileName) {
     return '';
   }
 
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> main
   // Initialize everything
   try {
     initializeModalHandlers();
@@ -2925,7 +3422,7 @@ console.log('✅ Services Admin script loaded successfully');
           <strong>${window.escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
           <span class="message-time">${time}</span>
         </div>
-        <div class="message-content">${window.formatText(msg.content || '')}</div>
+        <div class="message-content">${displayFormattedText(msg.content || '')}</div>
         ${attachmentsHTML}
         ${readReceiptsHTML}
       </div>

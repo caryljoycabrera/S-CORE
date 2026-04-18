@@ -28,204 +28,29 @@ const DropdownManager = {
   }
 };
 
-// Organization and Office data arrays (simplified for brevity)
-const studentOrganizations = [
- "University Student Government (USG)",
-        "Internal Audit Service (IAS)",
-        "University Student Election Commission (USEC)",
-        "Office of the Solicitor General (OSG)",
-        "College of Business Administration and Accountancy Student Government (CBAASG)",
-        "Business Management Program Council (BMPC)",
-        "Junior Philippine Institute of Accountants (JPIA)",
-        "Marketing Management Program Council (MMPC)",
-        "College of Education Student Government (COEdSG)",
-        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-        "Architecture Program Council (ArchPC)",
-        "Civil Engineering Program Council (CEEPC)",
-        "Computer Engineering Program Council (CpEPC)",
-        "Electrical Engineering Program Council (EEEPC)",
-        "Electronics Engineering Program Council (ECEPC)",
-        "Industrial Engineering Program Council (IEEPC)",
-        "Mechanical Engineering Program Council (MEEPC)",
-        "Multimedia Arts Program Council (MMAPC)",
-        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-        "College of Criminal Justice Education Student Government (CCJESG)",
-        "Criminology Program Council (CrimPC)",
-        "Forensic Science Program Council (FScPC)",
-        "College of Liberal Arts and Communication Student Government (CLACSG)",
-        "Communication Program Council (CPC)",
-        "International Development Program Council (IDPC)",
-        "Political Science Program Council (PSPC)",
-        "Psychology Program Council (PPC)",
-        "College of Science Student Government (COSSG)",
-        "Applied Mathematics Program Council (AMPC)",
-        "Biology Program Council (BioPC)",
-        "College of Information and Computer Studies Student Government (CICSSG)",
-        "Computer Science Program Council (CSPC)",
-        "Information Technology Program Council (ITPC)",
-        "DLSU-D Chorale (CHORALE)",
-        "Lasallian Symphony Orchestra (LSO)",
-        "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-        "Lasallian Pop Band (LPB)",
-        "Teatro Lasalliana (TEATRO)",
-        "Visual and Performing Arts Production Unit (VPAPU)",
-        "Heraldo Filipino",
-        "Vicissitude",
-        "Council of Student Organizations (CSO)",
-        "Business Operations Management Society (BOMS)",
-        "Junior Marketing Association (JMA)",
-        "DLSU-D Psychological Society (DPS)",
-        "DLSU-D Pre-Medical Society (DPMS)",
-        "Hotel and Restaurant Management Society (HRMS)",
-        "Turismo Lasalleño Society (TLS)",
-        "Lasallian Educators Society (LES)",
-        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-        "DLSU-D Pre-Law Society (DPLS)",
-        "Astraeus Literary and Arts Guild",
-        "Accounting Enrichment Society (ACES)",
-        "Circle of Student Assistants (COSA)",
-        "DLSU-D Lifters",
-        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-        "DLSU-D United Patriots Football Club",
-        "Junior Financial Executives Institute of the Philippines (JFINEX)",
-        "Marché Société (MS)",
-        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-        "SINAG Society of Leaders (SISOL)",
-        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-        "LS Verde of Campus Sustainability Office",
-        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-        "Green FM of Communications and Journalism Department",
-        "International Students' Association (ISA) of International Students Office",
-        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
-];
-
-const officesDepartments = [
-  "Office of the President",
-          "Office of the Chief Administrative Officer",
-          "Office of the Provost",
-          "Office of the Chief Lasallian Mission Officer",
-          "Office of the Principal",
-          "Corporate and Executive Management Office",
-          "Center for Heritage Conservation",
-          "Museo De La Salle",
-          "Risk, Compliance and Audit Office",
-          "University Chaplain",
-          "Office of the Vice President for Administrative Services",
-          "Office of the Vice President for Finance",
-          "Office of the Vice President for Global Engagement and External Relations",
-          "Human Resource Management Office",
-          "Strategic Communications Office",
-          "Ancillary and Asset Management Office",
-          "Legal Counsel",
-          "Data Protection Office",
-          "Campus Development Office",
-          "Buildings and Facilities Maintenance Office",
-          "Campus Sustainability Office",
-          "General Services Office",
-          "Green Architecture and Campus Planning Office",
-          "Information and Communications Technology Center",
-          "Accounting Office",
-          "Treasury Office",
-          "Advancement and Alumni Relations Office",
-          "Lasallian Community Development Center",
-          "Linkages and Scholarship Office",
-          "Office of the Vice Provost for Academics",
-          "Office of the Deputy Provost for Research",
-          "Academic Planning and Quality Management",
-          "College of Law",
-          "College of Professional and Graduate Studies",
-          "School of Innovative and Flexible Learning",
-          "School of Governance, Public Service, and Corporate Leadership",
-          "Aklatang Emilio Aguinaldo-Information Resource Center",
-          "Center for Student Admissions",
-          "University Registrar",
-          "Cavite Studies Center",
-          "University Research Office",
-          "Herminia D. Torres Quality Assurance Office",
-          "Center for Innovative Learning Program",
-          "Center for Curriculum Development and Instruction",
-          "Language Learning Center",
-          "Center for Artificial Intelligence",
-          "Center for Creative Program",
-          "Academy of Continuing Education",
-          "College of Business Administration and Accountancy",
-          "Accountancy Department",
-          "Allied Business Department",
-          "Business Management Department",
-          "Marketing Department",
-          "College of Criminal Justice Education",
-          "College of Education",
-          "Physical Education Department",
-          "Professional Education Department",
-          "Religious Education Department",
-          "College of Engineering, Architecture and Technology",
-          "Architecture Department",
-          "Engineering Department",
-          "Graphics Design and Multimedia Department",
-          "Center of Technology",
-          "College of Information and Computer Studies",
-          "Computer Studies Department",
-          "Information Technology Department",
-          "College of Liberal Arts and Communication",
-          "Communication and Journalism Department",
-          "Languages and Literature Department",
-          "Social Sciences Department",
-          "Philosophy and Psychology Department",
-          "College of Tourism and Hospitality Management",
-          "Hospitality Management Department",
-          "Tourism Management Department",
-          "College of Science",
-          "Biological Sciences Department",
-          "Mathematics & Statistics Department",
-          "Physical Sciences Department",
-          "Office of Student Services",
-          "Student Development and Activities Office",
-          "Student Welfare and Formation Office",
-          "Student Wellness Center",
-          "NSTP-CWTS",
-          "Campus Ministry Office",
-          "DLS Bahay Pag-asa Dasmariñas",
-          "Night College",
-          "Sports Development Office",
-          "University Lasallian Family Office",
-          "Basic Education",
-          "Office of the Associate Principal for Academics and Research",
-          "Office of the Associate Principal for Administrative Services and Student Affairs",
-          "Dormitory",
-          "Materials Reproduction Office / Food Services Office",
-          "Retreat and Conference Center / Sports & Recreation Complex",
-          "Warehouse Office",
-          "Safety & Health Office",
-          "Purchasing Office",
-          "Transportation Office",
-          "Facilities Maintenance Office",
-          "Housekeeping & Grounds",
-          "De La Salle Dasmariñas Alumni Association",
-          "DLSU-D Development Cooperative",
-          "Faculty Organization",
-          "KABALIKAT ng DLSU-D Inc.",
-          "Parents Organization La Salle Cavite",
-          "Human Resource Management Office"
-];
+// Note: Organization and Office data are now fetched from the database
+// and passed via window.filterDataFromDatabase from the EJS template
 
 // Enhanced Multi-Select Class
 class EnhancedMultiSelect {
   constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
     this.container = document.getElementById(containerId);
-    this.options = options;
+    if (!this.container) {
+      console.error(`EnhancedMultiSelect: Container with id '${containerId}' not found`);
+      return;
+    }
+    this.options = options || [];
     this.placeholder = placeholder;
     this.selectedValues = new Set(['all']);
     this.isOpen = false;
-    this.filteredOptions = [...options];
+    this.filteredOptions = [...this.options];
     this.hasSearch = hasSearch;
 
     this.init();
   }
 
   init() {
+    if (!this.container) return;
     this.setupElements();
     this.populateOptions();
     this.attachEventListeners();
@@ -235,17 +60,25 @@ class EnhancedMultiSelect {
   setupElements() {
     this.display = this.container.querySelector('.select-display');
     this.dropdown = this.container.querySelector('.select-dropdown');
-    this.searchInput = this.dropdown.querySelector('.search-input');
-    this.optionsContainer = this.dropdown.querySelector('.options-container');
-    this.selectedText = this.display.querySelector('.selected-text');
+    this.searchInput = this.dropdown?.querySelector('.search-input');
+    this.optionsContainer = this.dropdown?.querySelector('.options-container');
+    this.selectedText = this.display?.querySelector('.selected-text');
   }
 
   populateOptions() {
+    if (!this.optionsContainer) {
+      console.error('EnhancedMultiSelect: Options container not found');
+      return;
+    }
+    
+    // Clear existing options first
+    this.optionsContainer.innerHTML = '';
+    
     // Add "All" option
     const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
     this.optionsContainer.appendChild(allOption);
 
-    // Add other options
+    // Add other options from data
     this.options.forEach(option => {
       const optionElement = this.createOption(option, option);
       this.optionsContainer.appendChild(optionElement);
@@ -264,6 +97,11 @@ class EnhancedMultiSelect {
   }
 
   attachEventListeners() {
+    if (!this.display || !this.optionsContainer || !this.dropdown) {
+      console.error('EnhancedMultiSelect: Required elements not found for event listeners');
+      return;
+    }
+
     this.display.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toggle();
@@ -360,6 +198,8 @@ class EnhancedMultiSelect {
   }
 
   updateDisplay() {
+    if (!this.selectedText) return;
+    
     const selectedArray = Array.from(this.selectedValues);
 
     if (selectedArray.includes('all') || selectedArray.length === 0) {
@@ -575,13 +415,14 @@ class EnhancedSingleSelect {
 // Global modal variables and functions (must be accessible globally)
 let detailModal;
 let updateConfirmationModal;
+let cancelConfirmationModal;
 let currentRequestId = null;
 let currentRequestType = null;
 let originalValues = {};
 let allRequestsData = [];
 
 // Global enhanced dropdown instances
-let typeFilter, statusFilter, studentOrgFilter, officeDeptFilter;
+let statusFilter, studentOrgFilter, officeDeptFilter;
 
 // Modal opening functions - MUST be global
 function openModalFromRow(row) {
@@ -606,6 +447,7 @@ function openModalFromRow(row) {
 }
 
 function openModal(rowData) {
+  console.log('Opening modal for request:', rowData.requestId);
   // Mark notification as read when opening request
   if (typeof window.markNotificationReadForRequest === 'function') {
     window.markNotificationReadForRequest(rowData.id, rowData.type);
@@ -619,6 +461,7 @@ function openModal(rowData) {
   const modalBody = detailModal.querySelector('.details-modal-body');
   modalBody.scrollTop = 0;
 
+  console.log('Setting modal display to flex');
   detailModal.style.display = 'flex';
 }
 
@@ -647,20 +490,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Initialize enhanced multi-select for type filter (with checkboxes like Status)
-  typeFilter = new EnhancedMultiSelect('typeFilter',
-    ['Request Approval', 'Service Request'],
-    'Select Type', false);
-  
-  // Store instance reference on container
-  const typeFilterContainer = document.getElementById('typeFilter');
-  if (typeFilterContainer) {
-    typeFilterContainer.__instance = typeFilter;
-  }
+  // Get filter data from database (passed from server via EJS)
+  const dbData = window.filterDataFromDatabase || {};
+  const statusOptions = dbData.requestStatuses || [];
+  const orgOptions = dbData.organizations || [];
+  const officeOptions = dbData.offices || [];
+  const unitOptions = dbData.units || [];
 
-  // Initialize enhanced multi-select dropdowns
+  // Initialize enhanced multi-select dropdowns with database values
   statusFilter = new EnhancedMultiSelect('statusFilter',
-    ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'],
+    statusOptions,
     'Select Status', false);
   
   const statusFilterContainer = document.getElementById('statusFilter');
@@ -668,8 +507,18 @@ document.addEventListener('DOMContentLoaded', function() {
     statusFilterContainer.__instance = statusFilter;
   }
 
+  // Initialize assigned unit filter
+  const assignedUnitFilter = new EnhancedMultiSelect('assignedUnitFilter',
+    unitOptions,
+    'Select Assigned Unit', false);
+  
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.__instance = assignedUnitFilter;
+  }
+
   studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter',
-    studentOrganizations,
+    orgOptions,
     'Select Student Organizations', true);
   
   const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
@@ -678,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter',
-    officesDepartments,
+    officeOptions,
     'Select Offices/Departments', true);
   
   const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
@@ -689,10 +538,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize global modal variables
   detailModal = document.getElementById("detailsModal");
   updateConfirmationModal = document.getElementById("updateConfirmationModal");
+  cancelConfirmationModal = document.getElementById("cancelConfirmationModal");
 
   console.log('🔍 DOM Elements Check:', {
     detailModal: !!detailModal,
     updateConfirmationModal: !!updateConfirmationModal,
+    cancelConfirmationModal: !!cancelConfirmationModal,
     requestRows: document.querySelectorAll('.request-row').length
   });
 
@@ -730,20 +581,21 @@ function initializeFilters() {
 
   const requestIdFilter = document.getElementById('requestIdFilter');
   const studentFilter = document.getElementById('studentFilter');
+  const sortByFilter = document.getElementById('sortByFilter');
   const dateFromFilter = document.getElementById('dateFromFilter');
   const dateToFilter = document.getElementById('dateToFilter');
   const clearFiltersBtn = document.getElementById('clearFilters');
   const resultsCount = document.getElementById('resultsCount');
 
   // Event listeners setup
-  const typeFilterContainer = document.getElementById('typeFilter');
-  if (typeFilterContainer) {
-    typeFilterContainer.addEventListener('selectionChange', applyFilters);
-  }
-
   const statusFilterContainer = document.getElementById('statusFilter');
   if (statusFilterContainer) {
     statusFilterContainer.addEventListener('selectionChange', applyFilters);
+  }
+
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.addEventListener('selectionChange', applyFilters);
   }
 
   const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
@@ -765,35 +617,279 @@ function initializeFilters() {
   }
 
   if (dateFromFilter) {
-    dateFromFilter.addEventListener('change', applyFilters);
+    dateFromFilter.addEventListener('change', () => {
+      // Set minimum date for "Date To" based on "Date From" selection
+      if (dateToFilter && dateFromFilter.value) {
+        dateToFilter.min = dateFromFilter.value;
+        // If current "Date To" is earlier than "Date From", clear it
+        if (dateToFilter.value && dateToFilter.value < dateFromFilter.value) {
+          dateToFilter.value = '';
+        }
+      } else if (dateToFilter) {
+        dateToFilter.min = '';
+      }
+      applyFilters();
+    });
   }
 
   if (dateToFilter) {
     dateToFilter.addEventListener('change', applyFilters);
   }
 
+  if (sortByFilter) {
+    sortByFilter.addEventListener('change', () => {
+      console.log('Sort filter changed to:', sortByFilter.value);
+      applyFilters();
+    });
+  }
+
   if (clearFiltersBtn) {
     clearFiltersBtn.addEventListener('click', clearAllFilters);
   }
 
-  function applyFilters() {
-    const filters = getFilterValues();
-    let visibleCount = 0;
-
-    allRequestsData.forEach(request => {
-      const shouldShow = testFilters(request, filters);
-      request.element.style.display = shouldShow ? '' : 'none';
-      if (shouldShow) visibleCount++;
+  // Pagination variables
+  const ITEMS_PER_PAGE = 10;
+  let currentPage = 1;
+  let filteredData = [];
+  
+  // Pagination elements
+  const prevPageBtn = document.getElementById('prevPageBtn');
+  const nextPageBtn = document.getElementById('nextPageBtn');
+  const paginationNumbers = document.getElementById('paginationNumbers');
+  
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        displayPage();
+      }
     });
+  }
+  
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+      if (currentPage < totalPages) {
+        currentPage++;
+        displayPage();
+      }
+    });
+  }
+  
+  function goToPage(page) {
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+    if (page >= 1 && page <= totalPages) {
+      currentPage = page;
+      displayPage();
+    }
+  }
+  
+  function renderPaginationNumbers(totalPages) {
+    if (!paginationNumbers) return;
+    
+    paginationNumbers.innerHTML = '';
+    
+    // Determine which page numbers to show
+    const maxVisiblePages = 5;
+    let startPage = 1;
+    let endPage = totalPages;
+    
+    if (totalPages > maxVisiblePages) {
+      // Calculate start and end pages
+      const halfVisible = Math.floor(maxVisiblePages / 2);
+      
+      if (currentPage <= halfVisible + 1) {
+        // Near the beginning
+        startPage = 1;
+        endPage = maxVisiblePages;
+      } else if (currentPage >= totalPages - halfVisible) {
+        // Near the end
+        startPage = totalPages - maxVisiblePages + 1;
+        endPage = totalPages;
+      } else {
+        // In the middle
+        startPage = currentPage - halfVisible;
+        endPage = currentPage + halfVisible;
+      }
+    }
+    
+    // Add first page and ellipsis if needed
+    if (startPage > 1) {
+      paginationNumbers.appendChild(createPageButton(1));
+      if (startPage > 2) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'pagination-ellipsis';
+        ellipsis.textContent = '...';
+        paginationNumbers.appendChild(ellipsis);
+      }
+    }
+    
+    // Add page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      paginationNumbers.appendChild(createPageButton(i));
+    }
+    
+    // Add ellipsis and last page if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'pagination-ellipsis';
+        ellipsis.textContent = '...';
+        paginationNumbers.appendChild(ellipsis);
+      }
+      paginationNumbers.appendChild(createPageButton(totalPages));
+    }
+  }
+  
+  function createPageButton(pageNum) {
+    const btn = document.createElement('button');
+    btn.className = 'pagination-btn' + (pageNum === currentPage ? ' active' : '');
+    btn.textContent = pageNum;
+    btn.addEventListener('click', () => goToPage(pageNum));
+    return btn;
+  }
 
-    updateResultsCount(visibleCount);
+  function applyFilters() {
+    console.log('Applying filters...');
+    const filters = getFilterValues();
+    const sortValue = sortByFilter?.value || 'deadline-asc';
+    console.log('Sort value:', sortValue);
+    
+    // Reset to first page when filters change
+    currentPage = 1;
+
+    // First, filter the data
+    filteredData = allRequestsData.filter(request => testFilters(request, filters));
+    console.log(`Filtered to ${filteredData.length} requests`);
+    
+    // Then sort the filtered data
+    sortData(filteredData, sortValue);
+    console.log('Data sorted');
+    
+    // Display the current page
+    displayPage();
+    console.log('Page displayed');
+  }
+  
+  function displayPage() {
+    const tableBody = document.getElementById('requestsTableBody');
+    if (!tableBody) return;
+    
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    
+    // Hide all rows first
+    allRequestsData.forEach(request => {
+      request.element.style.display = 'none';
+    });
+    
+    // Show only the rows for current page and reorder them
+    const pageData = filteredData.slice(startIndex, endIndex);
+    pageData.forEach(request => {
+      tableBody.appendChild(request.element);
+      request.element.style.display = '';
+    });
+    
+    // Update pagination controls
+    renderPaginationNumbers(totalPages);
+    if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+    if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+    
+    updateResultsCount(filteredData.length);
+  }
+
+  function sortData(data, sortValue) {
+    // Statuses that should be sorted to the bottom (completed/closed requests)
+    const bottomStatusPriority = {
+      completed: 1,
+      approved: 2,
+      rejected: 3,
+      archived: 4
+    };
+
+    const getBottomPriority = (status) => {
+      if (!status) return null;
+      const key = status.toLowerCase();
+      return Object.prototype.hasOwnProperty.call(bottomStatusPriority, key)
+        ? bottomStatusPriority[key]
+        : null;
+    };
+
+    const getSortDateValue = (item, field) => {
+      if (field === 'deadline') {
+        return item.element?.dataset?.deadline || '';
+      }
+      // For date-based sorts and default, use the request date
+      return item.date || '';
+    };
+
+    const [field, direction] = sortValue.split('-');
+    const isAsc = direction === 'asc';
+
+    data.sort((a, b) => {
+      const aPriority = getBottomPriority(a.status);
+      const bPriority = getBottomPriority(b.status);
+
+      const aIsBottom = aPriority !== null;
+      const bIsBottom = bPriority !== null;
+
+      // Non-bottom requests should always come before bottom ones
+      if (aIsBottom && !bIsBottom) return 1;
+      if (!aIsBottom && bIsBottom) return -1;
+
+      // If both are bottom-status requests, enforce fixed ordering
+      if (aIsBottom && bIsBottom) {
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+
+        // Same bottom status: sort newest to oldest by date/deadline
+        const valA = getSortDateValue(a, field);
+        const valB = getSortDateValue(b, field);
+
+        if (!valA && valB) return 1;
+        if (valA && !valB) return -1;
+        if (!valA && !valB) return 0;
+
+        if (valA < valB) return 1;
+        if (valA > valB) return -1;
+        return 0;
+      }
+
+      // For non-bottom requests, keep existing sort behavior
+      let valA = '';
+      let valB = '';
+
+      switch (field) {
+        case 'deadline': {
+          valA = a.element?.dataset?.deadline || '';
+          valB = b.element?.dataset?.deadline || '';
+          // Put items without deadline at the end (within the non-bottom group)
+          if (!valA && valB) return isAsc ? 1 : -1;
+          if (valA && !valB) return isAsc ? -1 : 1;
+          if (!valA && !valB) return 0;
+          break;
+        }
+        case 'date':
+        default:
+          valA = a.date || '';
+          valB = b.date || '';
+      }
+
+      if (valA < valB) return isAsc ? -1 : 1;
+      if (valA > valB) return isAsc ? 1 : -1;
+      return 0;
+    });
   }
 
   function getFilterValues() {
     return {
       requestId: requestIdFilter?.value?.toLowerCase().trim() || '',
-      type: typeFilterContainer?.__instance?.getSelectedValues() || ['all'],
       status: statusFilterContainer?.__instance?.getSelectedValues() || ['all'],
+      assignedUnit: assignedUnitFilterContainer?.__instance?.getSelectedValues() || ['all'],
       student: studentFilter?.value?.toLowerCase().trim() || '',
       studentOrg: studentOrgFilterContainer?.__instance?.getSelectedValues() || ['all'],
       officeDept: officeDeptFilterContainer?.__instance?.getSelectedValues() || ['all'],
@@ -808,14 +904,16 @@ function initializeFilters() {
       return false;
     }
 
-    // Type filter (multi-select with array)
-    if (filters.type.length > 0 && !filters.type.includes('all') && !filters.type.includes(request.type)) {
-      return false;
+    // Status filter (case-insensitive comparison)
+    if (filters.status.length > 0 && !filters.status.includes('all')) {
+      const statusMatch = filters.status.some(s => s.toLowerCase() === request.status?.toLowerCase());
+      if (!statusMatch) return false;
     }
 
-    // Status filter
-    if (filters.status.length > 0 && !filters.status.includes('all') && !filters.status.includes(request.status)) {
-      return false;
+    // Assigned Unit filter (case-insensitive comparison)
+    if (filters.assignedUnit.length > 0 && !filters.assignedUnit.includes('all')) {
+      const unitMatch = filters.assignedUnit.some(u => request.units?.toLowerCase().includes(u.toLowerCase()));
+      if (!unitMatch) return false;
     }
 
     // Student filter
@@ -823,18 +921,18 @@ function initializeFilters() {
       return false;
     }
 
-    // Organization filters (OR logic)
+    // Organization filters (OR logic, case-insensitive)
     const hasStudentOrgFilter = filters.studentOrg.length > 0 && !filters.studentOrg.includes('all');
     const hasOfficeDeptFilter = filters.officeDept.length > 0 && !filters.officeDept.includes('all');
 
     if (hasStudentOrgFilter || hasOfficeDeptFilter) {
       let matches = false;
 
-      if (hasStudentOrgFilter && filters.studentOrg.some(org => request.organization?.includes(org.toLowerCase()))) {
+      if (hasStudentOrgFilter && filters.studentOrg.some(org => request.organization?.toLowerCase().includes(org.toLowerCase()))) {
         matches = true;
       }
 
-      if (hasOfficeDeptFilter && filters.officeDept.some(dept => request.organization?.includes(dept.toLowerCase()))) {
+      if (hasOfficeDeptFilter && filters.officeDept.some(dept => request.organization?.toLowerCase().includes(dept.toLowerCase()))) {
         matches = true;
       }
 
@@ -851,19 +949,23 @@ function initializeFilters() {
   function clearAllFilters() {
     if (requestIdFilter) requestIdFilter.value = '';
     if (studentFilter) studentFilter.value = '';
-    if (dateFromFilter) dateFromFilter.value = '';
-    if (dateToFilter) dateToFilter.value = '';
+    if (sortByFilter) sortByFilter.value = 'deadline-asc';
+    if (dateFromFilter) {
+      dateFromFilter.value = '';
+    }
+    if (dateToFilter) {
+      dateToFilter.value = '';
+      dateToFilter.min = '';
+    }
 
-    typeFilterContainer?.__instance?.reset();
     statusFilterContainer?.__instance?.reset();
+    assignedUnitFilterContainer?.__instance?.reset();
     studentOrgFilterContainer?.__instance?.reset();
     officeDeptFilterContainer?.__instance?.reset();
 
-    allRequestsData.forEach(request => {
-      request.element.style.display = '';
-    });
-
-    updateResultsCount(allRequestsData.length);
+    // Reset pagination and apply filters
+    currentPage = 1;
+    applyFilters();
   }
 
   function updateResultsCount(count) {
@@ -881,7 +983,8 @@ function initializeFilters() {
     };
   }
 
-  updateResultsCount(allRequestsData.length);
+  // Initial sort and display with pagination
+  applyFilters();
 }
 
 // Modal system
@@ -893,23 +996,33 @@ function initializeModalHandlers() {
 
   window.onclick = function(event) {
     if (event.target === detailModal) closeModal();
-    if (event.target === updateConfirmationModal) updateConfirmationModal?.classList?.remove('show');
+    if (event.target === updateConfirmationModal) {
+      updateConfirmationModal.classList.remove('show');
+      updateConfirmationModal.style.display = 'none';
+    }
+    if (event.target === cancelConfirmationModal) {
+      cancelConfirmationModal.classList.remove('show');
+      cancelConfirmationModal.style.display = 'none';
+    }
   };
 }
 
 function initializeRichModalHandlers() {
+  console.log('🟢 initializeRichModalHandlers called');
   const updateBtn = document.getElementById('adminUpdateBtn');
   const cancelBtn = document.getElementById('adminCancelBtn');
+  console.log('🟢 updateBtn:', !!updateBtn, 'cancelBtn:', !!cancelBtn);
 
   if (updateBtn) {
     updateBtn.onclick = showUpdateConfirmation;
+    console.log('🟢 updateBtn.onclick set');
   }
 
   if (cancelBtn) {
     cancelBtn.onclick = () => {
       resetFormToOriginalValues();
-      updateConfirmationModal?.classList?.remove('show');
     };
+    console.log('🟢 cancelBtn.onclick set');
   }
 
   // Confirmation modal handlers
@@ -921,38 +1034,74 @@ function initializeRichModalHandlers() {
   }
 
   if (cancelConfirmBtn) {
-    cancelConfirmBtn.onclick = () => updateConfirmationModal?.classList?.remove('show');
+    cancelConfirmBtn.onclick = () => {
+      if (updateConfirmationModal) {
+        updateConfirmationModal.classList.remove('show');
+        updateConfirmationModal.style.display = 'none';
+      }
+    };
+  }
+
+  // Cancel confirmation modal handlers
+  const confirmCancelChangesBtn = document.getElementById('confirmCancelChangesBtn');
+  const cancelCancelBtn = document.getElementById('cancelCancelBtn');
+
+  if (confirmCancelChangesBtn) {
+    confirmCancelChangesBtn.onclick = () => {
+      resetFormToOriginalValues();
+      const cancelModal = document.getElementById('cancelConfirmationModal');
+      if (cancelModal) {
+        cancelModal.classList.remove('show');
+        cancelModal.style.display = 'none';
+      }
+      if (updateConfirmationModal) {
+        updateConfirmationModal.classList.remove('show');
+        updateConfirmationModal.style.display = 'none';
+      }
+    };
+  }
+
+  if (cancelCancelBtn) {
+    cancelCancelBtn.onclick = () => {
+      const cancelModal = document.getElementById('cancelConfirmationModal');
+      if (cancelModal) {
+        cancelModal.classList.remove('show');
+        cancelModal.style.display = 'none';
+      }
+    };
   }
 }
 
 // Conversation functionality
 function initializeConversationModal() {
   const chatBtn = document.getElementById('openChatFromModal');
-  const conversationModal = document.getElementById('conversationModal');
-  const closeBtn = document.getElementById('closeConversationModal');
-  const sendBtn = document.getElementById('sendMessageBtn');
-  const input = document.getElementById('messageInput');
+  const conversationModal = document.getElementById('teamConversationModal');
+  const closeBtn = document.getElementById('closeTeamConversationModal');
+  const sendBtn = document.getElementById('sendTeamMessageBtn');
+  const input = document.getElementById('teamMessageInput');
 
   if (chatBtn) {
-    chatBtn.onclick = () => currentRequestId && openConversation(currentRequestId);
-  }
-
-  if (closeBtn) {
-    closeBtn.onclick = () => conversationModal.style.display = 'none';
-  }
-
-  if (sendBtn) {
-    sendBtn.onclick = sendMessage;
-  }
-
-  if (input) {
-    input.onkeypress = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
+    chatBtn.onclick = () => {
+      console.log('[AllRequestsAdmin] Chat button clicked, currentRequestId:', currentRequestId);
+      if (currentRequestId) {
+        window.openTeamConversationModal(currentRequestId);
+      } else {
+        console.error('[AllRequestsAdmin] No currentRequestId set!');
       }
     };
   }
+
+  if (closeBtn) {
+    closeBtn.onclick = () => {
+      if (conversationModal) conversationModal.style.display = 'none';
+    };
+  }
+
+  if (sendBtn) {
+    // send button listener is attached later in the file to avoid duplicate handlers
+  }
+
+  // message input key handling is attached later to avoid duplicate handlers
 
   if (conversationModal) {
     conversationModal.onclick = (e) => {
@@ -984,6 +1133,9 @@ function openModal(rowData) {
   }
 
   detailModal.style.display = 'flex';
+
+  // Initialize modal handlers after modal is displayed
+  initializeRichModalHandlers();
 }
 
 function populateModalData(rowData) {
@@ -1017,12 +1169,13 @@ function populateModalData(rowData) {
   setDetailText('detailDatetime', rowData.datetime);
   setElementHTML('detailDescription', rowData.description || 'No description provided');
 
-  // Handle deadline visibility
+  // Handle deadline visibility based on whether a deadline exists
   const deadlineElements = ['deadlineInfo', 'adminDeadlineField'];
+  const hasDeadline = rowData.formattedDeadline && rowData.formattedDeadline !== 'N/A';
   deadlineElements.forEach(id => {
     const element = document.getElementById(id);
     if (element) {
-      element.style.display = rowData.type === 'Service Request' ? 'block' : 'none';
+      element.style.display = hasDeadline ? 'block' : 'none';
     }
   });
 
@@ -1066,86 +1219,87 @@ function populateAdminForm(rowData) {
     deadlineDisplay: rowData.formattedDeadline
   };
 
-  // Show/hide additional file upload toggle based on status
+  // Initialize additional file upload toggle checkbox state
+  // Note: Visibility is controlled by populateFilePreview() based on request status
   const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
   if (additionalFileToggleSection) {
-    if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
-      additionalFileToggleSection.style.display = 'block';
+    // Initialize checkbox state based on allowAdditionalUpload data
+    // Check for both possible checkbox IDs
+    const checkbox = document.getElementById('allowAdditionalFileUpload') || 
+                    document.getElementById('toggleAdditionalFileUploadBtn');
+    if (checkbox) {
+      // Try multiple methods to get the allowAdditionalUpload value
+      let allowAdditionalUpload = 'false';
       
-      // Initialize checkbox state based on allowAdditionalUpload data
-      // Check for both possible checkbox IDs
-      const checkbox = document.getElementById('allowAdditionalFileUpload') || 
-                      document.getElementById('toggleAdditionalFileUploadBtn');
-      if (checkbox) {
-        // Try multiple methods to get the allowAdditionalUpload value
-        let allowAdditionalUpload = 'false';
-        
-        // Method 1: From rowData (converted from dataset)
-        if (rowData.allowAdditionalUpload !== undefined) {
-          allowAdditionalUpload = rowData.allowAdditionalUpload;
-        }
-        // Method 2: From HTML attribute directly
-        else {
-          const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
-          if (currentRow) {
-            allowAdditionalUpload = currentRow.getAttribute('data-allow-additional-upload') || 'false';
-          }
-        }
-        
-        console.log('🔍 Checkbox initialization:', {
-          currentRequestId,
-          'rowData.allowAdditionalUpload': rowData.allowAdditionalUpload,
-          'final allowAdditionalUpload': allowAdditionalUpload,
-          'will check': allowAdditionalUpload === 'true'
-        });
-        
-        checkbox.checked = allowAdditionalUpload === 'true';
+      // Method 1: From rowData (converted from dataset)
+      if (rowData.allowAdditionalUpload !== undefined) {
+        allowAdditionalUpload = rowData.allowAdditionalUpload;
       }
-    } else {
-      additionalFileToggleSection.style.display = 'none';
+      // Method 2: From HTML attribute directly
+      else {
+        const currentRow = document.querySelector(`tr[data-id="${currentRequestId}"]`);
+        if (currentRow) {
+          allowAdditionalUpload = currentRow.getAttribute('data-allow-additional-upload') || 'false';
+        }
+      }
+      
+      console.log('🔍 Checkbox initialization:', {
+        currentRequestId,
+        'rowData.allowAdditionalUpload': rowData.allowAdditionalUpload,
+        'final allowAdditionalUpload': allowAdditionalUpload,
+        'will check': allowAdditionalUpload === 'true'
+      });
+      
+      checkbox.checked = allowAdditionalUpload === 'true';
     }
   }
 
-  // Status dropdown
+  // Status dropdown - set value from current request data (dropdown options are pre-populated from database)
   const statusSelect = document.getElementById('adminStatusSelect');
   if (statusSelect) {
-    const options = getStatusOptions(rowData.type);
-    // Add current value as first option with special label
-    const currentOption = `<option value="${rowData.status}" selected>${rowData.status}</option>`;
-    const otherOptions = options.filter(opt => opt !== rowData.status).map(opt => `<option value="${opt}">${opt}</option>`).join('');
-    statusSelect.innerHTML = currentOption + otherOptions;
-    document.getElementById('currentStatusValue').textContent = rowData.status;
+    statusSelect.value = rowData.status;
+    const currentStatusValue = document.getElementById('currentStatusValue');
+    if (currentStatusValue) {
+      currentStatusValue.textContent = rowData.status;
+    }
   }
 
-  // Units dropdown
+  // Units dropdown - set value from current request data (dropdown options are pre-populated from database)
   const unitsSelect = document.getElementById('adminUnitsSelect');
   if (unitsSelect) {
-    populateUnitsDropdown(rowData);
-    document.getElementById('currentUnitsValue').textContent = rowData.units;
+    const currentUnitsValue = rowData.units === 'Not yet assigned' ? '' : rowData.units;
+    unitsSelect.value = currentUnitsValue;
+    const currentUnitsValueEl = document.getElementById('currentUnitsValue');
+    if (currentUnitsValueEl) {
+      currentUnitsValueEl.textContent = rowData.units;
+    }
   }
 
-  // Deadline (for service requests)
-  if (rowData.type === 'Service Request') {
-    const deadlineInput = document.getElementById('adminDeadlineInput');
-    if (deadlineInput && rowData.formattedDeadline) {
-      try {
-        deadlineInput.value = formatDateForInput(rowData.formattedDeadline);
-        originalValues.deadline = deadlineInput.value;
-      } catch (e) {
-        console.error('Error setting deadline:', e);
-      }
+  // Deadline (if available)
+  const deadlineInput = document.getElementById('adminDeadlineInput');
+  if (deadlineInput && rowData.formattedDeadline && rowData.formattedDeadline !== 'N/A') {
+    try {
+      deadlineInput.value = formatDateForInput(rowData.formattedDeadline);
+      originalValues.deadline = deadlineInput.value;
+    } catch (e) {
+      console.error('Error setting deadline:', e);
     }
-    document.getElementById('currentDeadlineValue').textContent = rowData.formattedDeadlineDisplay || rowData.formattedDeadline;
+  }
+
+  const currentDeadlineValueEl = document.getElementById('currentDeadlineValue');
+  if (currentDeadlineValueEl) {
+    currentDeadlineValueEl.textContent =
+      rowData.formattedDeadlineDisplay || rowData.formattedDeadline || 'N/A';
   }
 }
 
 function getStatusOptions(type) {
-  const baseStatuses = ['approved', 'rejected', 'archived'];
+  const baseStatuses = ['Approved', 'Rejected', 'Archived'];
 
   if (type === 'Request Approval') {
-    return ['Pending', 'Queued', 'In Progress', 'For Revision', ...baseStatuses];
+    return ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', ...baseStatuses];
   } else {
-    return ['Pending', 'Queued', 'In Progress', 'For Revision', 'completed', ...baseStatuses];
+    return ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', 'Completed', ...baseStatuses];
   }
 }
 
@@ -1224,11 +1378,14 @@ function populateFilePreview(rowData) {
     allFiles = [rowData.file.trim()];
   }
 
-  // Show toggle section only when there are files and the request allows additional uploads
+  // Show toggle section based on status (case-insensitive) - show for statuses that allow revisions
   const toggleSection = document.getElementById('additionalFileToggleSection');
   if (toggleSection) {
-    // For now, show it when there are files (can be refined later based on request status)
-    toggleSection.style.display = allFiles.length > 0 ? 'block' : 'none';
+    const status = (rowData.status || '').toLowerCase();
+    // Show toggle for these statuses (case-insensitive comparison)
+    const revisionStatuses = ['pending', 'queued', 'in progress', 'for checking', 'for revision'];
+    const shouldShowToggle = revisionStatuses.includes(status);
+    toggleSection.style.display = shouldShowToggle ? 'block' : 'none';
   }
 
   if (allFiles.length > 0) {
@@ -1488,8 +1645,12 @@ function initializeRowClickHandlers() {
   console.log('🖱️ Initializing row click handlers...');
 
   const rows = document.querySelectorAll('.request-row');
-  rows.forEach(row => {
-    row.addEventListener('click', () => openModalFromRow(row));
+  console.log(`Found ${rows.length} request rows`);
+  rows.forEach((row, index) => {
+    row.addEventListener('click', () => {
+      console.log(`Row ${index} clicked, opening modal for request:`, row.dataset.requestId);
+      openModalFromRow(row);
+    });
     row.style.cursor = 'pointer';
   });
 
@@ -1511,6 +1672,113 @@ document.addEventListener("click", function(event) {
   }
 });
 
+// Show notification function - displays styled modal notifications
+function showNotification(message, type = 'success') {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1005000 !important;
+    animation: fadeIn 0.3s ease-out;
+  `;
+  
+  // Create modal content
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+    z-index: 1005001 !important;
+  `;
+  
+  // Determine colors based on type
+  let headerColor, icon;
+  switch(type) {
+    case 'success':
+      headerColor = 'var(--primary-green)';
+      icon = '✅';
+      break;
+    case 'error':
+      headerColor = '#ef4444';
+      icon = '❌';
+      break;
+    case 'info':
+    default:
+      headerColor = '#3b82f6';
+      icon = 'ℹ️';
+      break;
+  }
+  
+  modal.innerHTML = `
+    <div style="background: ${headerColor}; color: white; padding: 1.5rem; text-align: center; border-radius: 12px 12px 0 0;">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">${icon}</div>
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">
+        ${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Information'}
+      </h3>
+    </div>
+    <div style="padding: 2rem; text-align: center;">
+      <p style="margin: 0 0 1.5rem 0; font-size: 1rem; color: #374151; line-height: 1.5;">${message}</p>
+      <button id="notificationOkBtn" style="
+        background: ${headerColor};
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      ">OK</button>
+    </div>
+  `;
+  
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  // Add event listeners
+  const okBtn = modal.querySelector('#notificationOkBtn');
+  
+  function closeNotificationModal() {
+    overlay.style.animation = 'fadeOut 0.3s ease-out';
+    modal.style.animation = 'slideDown 0.3s ease-out';
+    setTimeout(() => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      document.body.style.overflow = '';
+    }, 300);
+  }
+  
+  okBtn.addEventListener('click', closeNotificationModal);
+  
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeNotificationModal();
+    }
+  });
+  
+  // Auto close after 5 seconds for success/info messages
+  if (type === 'success' || type === 'info') {
+    setTimeout(closeNotificationModal, 5000);
+  }
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
+
 // Missing modal handlers - these need to be implemented based on the EJS template
 function showUpdateConfirmation() {
   // Get current form values
@@ -1521,6 +1789,17 @@ function showUpdateConfirmation() {
   const currentStatus = statusSelect ? statusSelect.value : '';
   const currentUnits = unitsSelect ? unitsSelect.value : '';
   const currentDeadline = deadlineInput ? deadlineInput.value : '';
+
+  // Intercept Archived status
+  if (currentStatus === 'Archived' && originalValues.status !== 'Archived') {
+    if (typeof window.openDeleteConfirm === 'function') {
+      window.openDeleteConfirm({
+        requestId: currentRequestId,
+        requestType: currentRequestType
+      });
+      return;
+    }
+  }
 
   // Compare with original values
   const changes = [];
@@ -1566,28 +1845,48 @@ function showUpdateConfirmation() {
 
     if (updateConfirmationModal) {
       updateConfirmationModal.classList.add('show');
+      updateConfirmationModal.style.display = 'flex';
     }
   } else {
     console.log('No changes detected');
+    showNotification('No changes detected', 'info');
+  }
+}
+
+function showCancelConfirmation() {
+  console.log('🔴 showCancelConfirmation called');
+  const modal = document.getElementById('cancelConfirmationModal');
+  console.log('🔴 cancelConfirmationModal element:', modal);
+  if (modal) {
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    console.log('🔴 Modal should now be visible');
+  } else {
+    console.error('🔴 cancelConfirmationModal not found in DOM!');
   }
 }
 
 function resetFormToOriginalValues() {
   const statusSelect = document.getElementById('adminStatusSelect');
   if (statusSelect) {
-    const options = getStatusOptions(currentRequestType);
-    statusSelect.innerHTML = options.map(opt => `<option value="${opt}" ${opt === originalValues.status ? 'selected' : ''}>${opt}</option>`).join('');
+    statusSelect.value = originalValues.status || '';
+    const currentStatusValue = document.getElementById('currentStatusValue');
+    if (currentStatusValue) currentStatusValue.textContent = originalValues.status || '';
   }
 
   const unitsSelect = document.getElementById('adminUnitsSelect');
   if (unitsSelect) {
-    unitsSelect.value = originalValues.units === 'Not yet assigned' ? '' : originalValues.units;
+    unitsSelect.value = originalValues.units === 'Not yet assigned' ? '' : (originalValues.units || '');
+    const currentUnitsValue = document.getElementById('currentUnitsValue');
+    if (currentUnitsValue) currentUnitsValue.textContent = originalValues.units || 'Not yet assigned';
   }
 
   const deadlineInput = document.getElementById('adminDeadlineInput');
   if (deadlineInput && originalValues.deadline) {
     deadlineInput.value = originalValues.deadline;
   }
+  
+  showNotification('Changes cancelled - form reset to original values', 'info');
 }
 
 async function performUpdate() {
@@ -1602,9 +1901,14 @@ async function performUpdate() {
     requestId: currentRequestId,
     status: statusSelect?.value || '',
     assignedUnits: unitsSelect?.value || 'Not yet assigned',
-    deadline: deadlineInput?.value || null,
     requestType: currentRequestType
   };
+
+  // Only include deadline if it was actually changed from the original value
+  const currentDeadline = deadlineInput?.value || null;
+  if (currentDeadline && currentDeadline !== originalValues.deadline) {
+    updateData.deadline = currentDeadline;
+  }
 
   console.log('Update data:', updateData);
 
@@ -1636,6 +1940,7 @@ async function performUpdate() {
       // Close modals
       if (updateConfirmationModal) {
         updateConfirmationModal.classList.remove('show');
+        updateConfirmationModal.style.display = 'none';
       }
       if (detailModal) {
         detailModal.style.display = 'none';
@@ -1643,20 +1948,31 @@ async function performUpdate() {
 
       console.log('Update completed successfully');
 
-      // Optional: Show success message
-      alert('Request updated successfully!');
+      // Show success notification modal
+      showNotification('Request updated successfully!', 'success');
+
+      // Refresh the page shortly after to ensure server-side changes
+      // (deliverables, revision history, etc.) are reflected in the UI.
+      setTimeout(() => {
+        try {
+          window.location.reload();
+        } catch (e) {
+          console.error('Auto-reload failed:', e);
+        }
+      }, 1400);
 
     } else {
       console.error('Update failed:', result.message);
-      alert('Failed to update request: ' + result.message);
+      showNotification('Failed to update request: ' + result.message, 'error');
     }
   } catch (error) {
     console.error('Error performing update:', error);
-    alert('Error updating request: ' + error.message);
+    showNotification('Error updating request: ' + error.message, 'error');
 
     // Revert modals on error
     if (updateConfirmationModal) {
       updateConfirmationModal.classList.remove('show');
+      updateConfirmationModal.style.display = 'none';
     }
   }
 }
@@ -2086,9 +2402,41 @@ function clearAllChatFiles() {
 }
 
 function applyChatFormat(format) {
-    const textarea = document.getElementById('teamMessageInput');
-    if (!textarea) return;
+  const input = document.getElementById('teamMessageInput');
+  if (!input) return;
 
+  // If the input is a contenteditable element, use execCommand for WYSIWYG
+  if (input.isContentEditable) {
+    input.focus();
+    const selection = window.getSelection();
+    if (!selection) return;
+
+    let selectionInside = false;
+    for (let i = 0; i < selection.rangeCount; i++) {
+      const node = selection.getRangeAt(i).commonAncestorContainer;
+      if (input.contains(node)) { selectionInside = true; break; }
+    }
+
+    if (!selectionInside) {
+      const range = document.createRange();
+      range.selectNodeContents(input);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    switch (format) {
+      case 'bold': document.execCommand('bold'); break;
+      case 'italic': document.execCommand('italic'); break;
+      case 'underline': document.execCommand('underline'); break;
+    }
+    input.focus();
+    return;
+  }
+
+  // Fallback for legacy textarea inputs: insert markdown-like markers
+  const textarea = input; // treat same variable name
+  if (textarea && typeof textarea.selectionStart !== 'undefined') {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
@@ -2099,23 +2447,25 @@ function applyChatFormat(format) {
     let newCursorPos = end;
 
     switch(format) {
-        case 'bold':
-            formattedText = `**${selectedText}**`;
-            newCursorPos = start + formattedText.length;
-            break;
-        case 'italic':
-            formattedText = `*${selectedText}*`;
-            newCursorPos = start + formattedText.length;
-            break;
-        case 'underline':
-            formattedText = `__${selectedText}__`;
-            newCursorPos = start + formattedText.length;
-            break;
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        newCursorPos = start + formattedText.length;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        newCursorPos = start + formattedText.length;
+        break;
+      case 'underline':
+        formattedText = `<u>${selectedText}</u>`;
+        newCursorPos = start + formattedText.length;
+        break;
     }
 
     textarea.value = beforeText + formattedText + afterText;
     textarea.focus();
     textarea.setSelectionRange(newCursorPos, newCursorPos);
+    return;
+  }
 }
 
 // PDF Viewer Functions
@@ -2162,23 +2512,44 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentConversationRequestId = null;
 
 window.openTeamConversationModal = function(requestId) {
+    console.log('[AllRequestsAdmin] openTeamConversationModal called with requestId:', requestId);
     currentConversationRequestId = requestId;
+    console.log('[AllRequestsAdmin] Set currentConversationRequestId to:', currentConversationRequestId);
     const modal = document.getElementById('teamConversationModal');
+    console.log('[AllRequestsAdmin] Modal element found:', !!modal);
     if (modal && requestId) {
         loadTeamConversation(requestId);
         modal.style.display = 'flex';
+        console.log('[AllRequestsAdmin] Modal opened successfully');
+    } else {
+        console.error('[AllRequestsAdmin] Cannot open modal - modal:', !!modal, 'requestId:', requestId);
     }
 };
 
 function loadTeamConversation(requestId) {
+    console.log('[AllRequestsAdmin] ========== LOADING CONVERSATION ==========');
+    console.log('[AllRequestsAdmin] Request ID:', requestId);
     const container = document.getElementById('teamMessagesContainer');
-    if (!container) return;
+    if (!container) {
+        console.error('[AllRequestsAdmin] Container not found!');
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #64748b;">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+                <p>Loading conversation...</p>
+            </div>
+        </div>
+    `;
 
     fetch(`/api/conversation/${requestId}`)
         .then(response => {
+            console.log('[AllRequestsAdmin] Conversation fetch status:', response.status);
             if (!response.ok) {
                 return response.text().then(text => {
-                    console.error('Server error response:', text);
+                    console.error('[AllRequestsAdmin] Server error response:', text);
                     let errorMsg = 'Failed to load conversation';
                     if (response.status === 401) errorMsg = 'Session expired. Please log in again.';
                     else if (response.status === 403) errorMsg = 'Access denied.';
@@ -2188,14 +2559,29 @@ function loadTeamConversation(requestId) {
             return response.json();
         })
         .then(data => {
-            if (data.conversation && data.conversation.length > 0) {
+            console.log('[AllRequestsAdmin] Conversation data received:', data);
+            console.log('[AllRequestsAdmin] Raw data structure:', JSON.stringify(Object.keys(data)));
+            
+            // Extract messages from response - check both data.conversation and data.messages
+            const messages = data.conversation || data.messages || [];
+            console.log('[AllRequestsAdmin] Extracted messages array:', messages);
+            console.log('[AllRequestsAdmin] Displaying', messages.length, 'messages');
+            
+            if (messages && messages.length > 0) {
                 container.innerHTML = '';
-                data.conversation.forEach(msg => {
+                messages.forEach(msg => {
                     const messageDiv = createMessageElement(msg);
                     container.appendChild(messageDiv);
                 });
                 container.scrollTop = container.scrollHeight;
+                
+                // Mark messages as read
+                console.log('[AllRequestsAdmin] Marking messages as read');
+                fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' })
+                    .then(() => console.log('[AllRequestsAdmin] Messages marked as read'))
+                    .catch(err => console.error('[AllRequestsAdmin] Error marking as read:', err));
             } else {
+                console.log('[AllRequestsAdmin] No messages found, showing empty state');
                 container.innerHTML = `
                     <div class="unit-messages-empty">
                         <div class="empty-icon">
@@ -2210,8 +2596,18 @@ function loadTeamConversation(requestId) {
             }
         })
         .catch(error => {
-            console.error('Error loading conversation:', error);
-            alert('Failed to load conversation');
+            console.error('[AllRequestsAdmin] Error loading conversation:', error);
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <p>Failed to load conversation</p>
+                    <small>${error.message}</small>
+                </div>
+            `;
         });
 }
 
@@ -2248,6 +2644,7 @@ function createMessageElement(msg) {
     
     let attachmentsHTML = '';
     if (msg.attachments && msg.attachments.length > 0) {
+        console.log('[AllRequests] Message has attachments:', msg.attachments.length);
         attachmentsHTML = msg.attachments.map(file => {
             const ext = file.filename.split('.').pop().toLowerCase();
             const isPdf = ext === 'pdf';
@@ -2302,7 +2699,7 @@ function createMessageElement(msg) {
         }).join('');
     }
     
-    // Create read receipts HTML
+    // Build read receipts HTML
     let readReceiptsHTML = '';
     if (msg.readBy && msg.readBy.length > 0) {
         const readByList = msg.readBy.map(reader => {
@@ -2312,15 +2709,17 @@ function createMessageElement(msg) {
                 hour: '2-digit',
                 minute: '2-digit'
             });
-            return `<div style="font-size: 0.7rem; color: #6b7280; margin-top: 0.15rem;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-right: 2px;">
-                    <polyline points="20 6 9 17 4 12"/>
-                    <polyline points="20 6 9 17" style="opacity: 0.5;"/>
-                </svg>
-                Read by ${escapeHtml(reader.userName)} at ${readTime}
-            </div>`;
+            return `
+                <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M1 12l5 5L23 3"></path>
+                        <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+                    </svg>
+                    <span>Read by ${escapeHtml(reader.userName)} at ${readTime}</span>
+                </div>
+            `;
         }).join('');
-        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.25rem;">${readByList}</div>`;
+        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
     }
     
     div.innerHTML = `
@@ -2329,7 +2728,7 @@ function createMessageElement(msg) {
                 <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
                 <span class="message-time">${time}</span>
             </div>
-            <div class="message-content">${formatText(msg.content || '')}</div>
+            <div class="message-content">${displayFormattedText(msg.content || '')}</div>
             ${attachmentsHTML}
             ${readReceiptsHTML}
         </div>
@@ -2410,6 +2809,25 @@ async function loadApprovalRevisionHistory(requestId) {
         return;
     }
     
+    // Helper function to show empty state
+    const showEmptyState = () => {
+        if (historySection) {
+            historySection.style.display = 'block';
+        }
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
+    };
+    
     try {
           if (historySection) historySection.style.display = 'block';
           if (historyContainer) historyContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem; border-width: 0.2em;"><span class="visually-hidden">Loading...</span></div><p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">Loading revision history...</p></div>';
@@ -2419,7 +2837,7 @@ async function loadApprovalRevisionHistory(requestId) {
         
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Approval Revision History] API returned non-JSON response');
-            if (historySection) historySection.style.display = 'none';
+            showEmptyState();
             return;
         }
         
@@ -2458,20 +2876,17 @@ async function loadApprovalRevisionHistory(requestId) {
                     rightColumn.style.display = 'flex';
                 }
             } else {
-                // No revisions to show
-                if (historySection) historySection.style.display = 'none';
-                resetModalLayout();
+                // No revisions to show - display empty state
+                showEmptyState();
             }
         } else {
             console.log('[Approval Revision History] No revisions available');
-            if (historySection) historySection.style.display = 'none';
-            resetModalLayout();
+            showEmptyState();
         }
     } catch (error) {
         console.error('[Approval Revision History] Error loading:', error);
-        // Don't show error to user, just hide the section
-        if (historySection) historySection.style.display = 'none';
-        resetModalLayout();
+        // Show empty state on error
+        showEmptyState();
     }
 }
 
@@ -2592,16 +3007,41 @@ function createRevisionEntry(revision, index, total) {
 // Send team message
 window.sendTeamMessage = function() {
     console.log('[AllRequestsAdmin] Send team message triggered');
-    const input = document.getElementById('teamMessageInput');
-    if (!input || !currentConversationRequestId) {
-        console.error('[AllRequestsAdmin] Missing input or request ID:', {
-            input: !!input,
-            currentConversationRequestId
-        });
+    
+    // Check if conversation modal is open
+    const modal = document.getElementById('teamConversationModal');
+    if (!modal || modal.style.display !== 'flex') {
+        console.warn('[AllRequestsAdmin] Conversation modal is not open, ignoring send');
         return;
     }
+    
+    const input = document.getElementById('teamMessageInput');
+    
+    // Use currentConversationRequestId OR window.currentConversationId (from inline script)
+    const requestId = currentConversationRequestId || window.currentConversationId;
+    
+    if (!input || !requestId) {
+        console.error('[AllRequestsAdmin] Missing input or request ID:', {
+            input: !!input,
+            currentConversationRequestId,
+            'window.currentConversationId': window.currentConversationId,
+            modalDisplay: modal?.style.display
+        });
+        alert('Cannot send message. Please open a conversation first.');
+        return;
+    }
+    
+    // Sync the variables
+    currentConversationRequestId = requestId;
 
-    const content = input.value.trim();
+    // Support both contenteditable (WYSIWYG) and legacy textarea inputs
+    let content = '';
+    if (input.isContentEditable) {
+      // Use innerHTML so formatting (bold/italic/underline) is preserved as HTML
+      content = input.innerHTML.trim();
+    } else {
+      content = (input.value || '').trim();
+    }
     console.log('[AllRequestsAdmin] Message content:', content || '(empty)');
     console.log('[AllRequestsAdmin] Files to send:', chatFiles.length);
     
@@ -2620,8 +3060,8 @@ window.sendTeamMessage = function() {
         formData.append('chatFiles', file);
     });
 
-    console.log('[AllRequestsAdmin] Sending to:', `/api/conversation/${currentConversationRequestId}/message`);
-    fetch(`/api/conversation/${currentConversationRequestId}/message`, {
+    console.log('[AllRequestsAdmin] Sending to:', `/api/conversation/${requestId}/message`);
+    fetch(`/api/conversation/${requestId}/message`, {
         method: 'POST',
         body: formData
     })
@@ -2641,11 +3081,16 @@ window.sendTeamMessage = function() {
     .then(data => {
         console.log('[AllRequestsAdmin] Response data:', data);
         if (data.success) {
-            console.log('[AllRequestsAdmin] Message sent successfully');
-            input.value = '';
-            clearAllChatFiles();
-            loadTeamConversation(currentConversationRequestId);
+        console.log('[AllRequestsAdmin] Message sent successfully');
+        // Clear the input appropriately depending on type
+        if (input.isContentEditable) {
+          input.innerHTML = '';
         } else {
+          input.value = '';
+        }
+        clearAllChatFiles();
+        loadTeamConversation(requestId);
+      } else {
             console.error('[AllRequestsAdmin] Server error:', data);
             alert(data.message || 'Failed to send message');
         }
@@ -2717,9 +3162,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const openChatBtn = document.getElementById('openTeamChatBtn');
     if (openChatBtn) {
         openChatBtn.addEventListener('click', function() {
-            const requestId = document.getElementById('detailsModalRequestId')?.value;
-            if (requestId) {
-                openTeamConversationModal(requestId);
+            // Use the global currentRequestId that's set when details modal opens
+            if (currentRequestId) {
+                console.log('[AllRequestsAdmin] Opening conversation for request:', currentRequestId);
+                openTeamConversationModal(currentRequestId);
+            } else {
+                console.error('[AllRequestsAdmin] No request ID available');
+                alert('No request selected. Please open a request first.');
             }
         });
     }
@@ -2772,7 +3221,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     } else {
-        console.error('[AllRequestsAdmin] Message input element not found!');
+        console.log('[AllRequestsAdmin] Message input element not found (may load later via conversation modal)');
     }
 });
 
@@ -2841,36 +3290,46 @@ async function loadRevisionHistory(requestId) {
         } else {
             console.log('[Admin Revision History] No revisions to display');
             
-            // Reset to single column layout when no revisions - keep original size
-            const modalContent = document.querySelector('#detailsModal .modal-content');
-            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-            
-            if (modalContent && modalBody) {
-                modalContent.style.maxWidth = '900px';
-                modalBody.classList.remove('has-revisions');
-            }
-            
+            // Always show revision history section with empty state message
             if (historySection) {
-                historySection.style.display = 'none';
+                historySection.style.display = 'block';
             }
+            
+            // Show empty state message
+            historyContainer.innerHTML = `
+                <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                    </svg>
+                    <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                    <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('[Admin Revision History] Error loading revision history:', error);
         
-        // Reset to single column layout on error - keep original size
-        const modalContent = document.querySelector('#detailsModal .modal-content');
-        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-        
-        if (modalContent && modalBody) {
-            modalContent.style.maxWidth = '900px';
-            modalBody.classList.remove('has-revisions');
-        }
-        
+        // Always show revision history section with error/empty state
         if (historySection) {
-            historySection.style.display = 'none';
+            historySection.style.display = 'block';
         }
+        
+        // Show empty state message
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
     }
 }
 
@@ -3255,42 +3714,56 @@ async function loadServiceRevisionHistory(requestId) {
                 
                 console.log('[Service Revision History] ✅ Two-column layout enabled');
             } else {
-                // No revisions to show, but keep section visible for service requests
+                // No revisions to show, but keep section visible with empty state
                 console.log('[Service Revision History] No revisions after filtering');
-                if (historySection) historySection.style.display = 'block'; // Keep visible even without revisions
-                const modalContent = document.querySelector('#detailsModal .modal-content');
-                const modalBody = document.querySelector('#detailsModal .unit-modal-body');
-                const rightColumn = document.querySelector('#detailsModal .unit-right-column');
-                if (modalContent && modalBody) {
-                    modalContent.style.maxWidth = '900px';
-                    modalBody.classList.remove('has-revisions');
-                }
-                if (rightColumn) rightColumn.style.display = 'none';
+                if (historySection) historySection.style.display = 'block';
+                historyContainer.innerHTML = `
+                    <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M3 21v-5h5"/>
+                        </svg>
+                        <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                        <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+                    </div>
+                `;
             }
         } else {
             console.log('[Service Revision History] No revisions to display');
-            if (historySection) historySection.style.display = 'none';
-            const modalContent = document.querySelector('#detailsModal .modal-content');
-            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-            if (modalContent && modalBody) {
-                modalContent.style.maxWidth = '900px';
-                modalBody.classList.remove('has-revisions');
-            }
-            if (rightColumn) rightColumn.style.display = 'none';
+            // Always show revision history section with empty state
+            if (historySection) historySection.style.display = 'block';
+            historyContainer.innerHTML = `
+                <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                    </svg>
+                    <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                    <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+                </div>
+            `;
         }
     } catch (error) {
         console.error('[Service Revision History] ❌ ERROR:', error);
         console.error('[Service Revision History] Error stack:', error.stack);
-        if (historySection) historySection.style.display = 'none';
-        const modalContent = document.querySelector('#detailsModal .modal-content');
-        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-        if (modalContent && modalBody) {
-            modalContent.style.maxWidth = '900px';
-            modalBody.classList.remove('has-revisions');
-        }
-        if (rightColumn) rightColumn.style.display = 'none';
+        // Always show revision history section with empty state
+        if (historySection) historySection.style.display = 'block';
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
     }
 }
 
@@ -3307,9 +3780,10 @@ function createServiceRevisionEntry(revision, index, total) {
     
     // Determine if this is a unit action or requestor action
     const isUnitAction = revision.requestedBy || 
-                         revision.type === 'deliverable_submitted' || 
-                         revision.type === 'completed';
-    const isRequestorAction = revision.respondedBy || revision.type === 'revision_requested';
+                         (revision.type === 'deliverable_submitted' || 
+                          revision.type === 'completed');
+    const isRequestorAction = revision.respondedBy || 
+                              (revision.type === 'revision_requested' && !revision.requestedBy);
     
     entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
     
@@ -3494,4 +3968,485 @@ function displayFormattedText(text) {
     formatted = formatted.replace(/\n/g, '<br>');
     
     return formatted;
+}
+
+// ==========================================
+// ADD REQUEST MODAL FUNCTIONALITY
+// ==========================================
+
+// Quill editor instances
+let approvalQuillEditor = null;
+let serviceQuillEditor = null;
+
+// Modal open/close functions
+window.openAddApprovalModal = function() {
+  const modal = document.getElementById('addApprovalModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    initializeApprovalModal();
+  }
+};
+
+window.closeAddApprovalModal = function() {
+  const modal = document.getElementById('addApprovalModal');
+  if (modal) {
+    modal.style.display = 'none';
+    resetApprovalForm();
+  }
+};
+
+window.openAddServiceModal = function() {
+  const modal = document.getElementById('addServiceModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    initializeServiceModal();
+  }
+};
+
+window.closeAddServiceModal = function() {
+  const modal = document.getElementById('addServiceModal');
+  if (modal) {
+    modal.style.display = 'none';
+    resetServiceForm();
+  }
+};
+
+// Initialize approval modal
+function initializeApprovalModal() {
+  // Initialize Quill editor if not already initialized
+  if (!approvalQuillEditor && typeof Quill !== 'undefined') {
+    approvalQuillEditor = new Quill('#approvalDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Describe your request in detail...',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['link'],
+          ['clean']
+        ]
+      }
+    });
+  }
+
+  // Initialize file upload
+  initializeApprovalFileUpload();
+}
+
+// Initialize service modal
+function initializeServiceModal() {
+  // Initialize Quill editor if not already initialized
+  if (!serviceQuillEditor && typeof Quill !== 'undefined') {
+    serviceQuillEditor = new Quill('#serviceDescriptionEditor', {
+      theme: 'snow',
+      placeholder: 'Describe your service request in detail...',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          ['link'],
+          ['clean']
+        ]
+      }
+    });
+  }
+
+  // Load request types
+  loadServiceRequestTypes();
+  
+  // Initialize file upload
+  initializeServiceFileUpload();
+}
+
+// Load service request types
+async function loadServiceRequestTypes() {
+  try {
+    const response = await fetch('/api/request-types?requestCategory=Service Request');
+    const data = await response.json();
+    
+    const select = document.getElementById('serviceSpecificRequestType');
+    if (select && data.requestTypes) {
+      select.innerHTML = '<option value="" disabled selected>Select from predefined types...</option>';
+      data.requestTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.typeName;
+        option.textContent = type.typeName;
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading request types:', error);
+  }
+}
+
+// File upload handlers for approval
+let approvalSelectedFiles = [];
+
+function initializeApprovalFileUpload() {
+  const fileInput = document.getElementById('approvalUpload');
+  const fileUploadGroup = document.getElementById('approvalFileUploadGroup');
+  const clearAllBtn = document.getElementById('approvalClearAllBtn');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', handleApprovalFileSelect);
+  }
+
+  if (fileUploadGroup) {
+    // Drag and drop
+    fileUploadGroup.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.add('dragover');
+    });
+
+    fileUploadGroup.addEventListener('dragleave', () => {
+      fileUploadGroup.classList.remove('dragover');
+    });
+
+    fileUploadGroup.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      handleApprovalFiles(files);
+    });
+
+    fileUploadGroup.addEventListener('click', () => {
+      fileInput.click();
+    });
+  }
+
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', clearAllApprovalFiles);
+  }
+}
+
+function handleApprovalFileSelect(event) {
+  const files = Array.from(event.target.files);
+  handleApprovalFiles(files);
+}
+
+function handleApprovalFiles(files) {
+  approvalSelectedFiles = [...approvalSelectedFiles, ...files];
+  updateApprovalFileDisplay();
+}
+
+function updateApprovalFileDisplay() {
+  const fileManagement = document.getElementById('approvalFileManagement');
+  const filesContainer = document.getElementById('approvalSelectedFiles');
+  const filesCount = document.getElementById('approvalFilesCount');
+  const filesSummary = document.getElementById('approvalFilesSummary');
+
+  if (approvalSelectedFiles.length > 0) {
+    fileManagement.style.display = 'block';
+    filesCount.textContent = `${approvalSelectedFiles.length} file${approvalSelectedFiles.length > 1 ? 's' : ''} selected`;
+
+    let totalSize = 0;
+    filesContainer.innerHTML = '';
+
+    approvalSelectedFiles.forEach((file, index) => {
+      totalSize += file.size;
+      const fileItem = createFileCard(file, index, 'approval');
+      filesContainer.innerHTML += fileItem;
+    });
+
+    const totalSizeMb = totalSize / (1024 * 1024);
+    filesSummary.textContent = `Total size: ${totalSizeMb.toFixed(2)} MB`;
+  } else {
+    fileManagement.style.display = 'none';
+  }
+}
+
+function clearAllApprovalFiles() {
+  approvalSelectedFiles = [];
+  document.getElementById('approvalUpload').value = '';
+  updateApprovalFileDisplay();
+}
+
+window.removeApprovalFile = function(index) {
+  approvalSelectedFiles.splice(index, 1);
+  updateApprovalFileDisplay();
+};
+
+// File upload handlers for service
+let serviceSelectedFiles = [];
+
+function initializeServiceFileUpload() {
+  const fileInput = document.getElementById('serviceUpload');
+  const fileUploadGroup = document.getElementById('serviceFileUploadGroup');
+  const clearAllBtn = document.getElementById('serviceClearAllBtn');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', handleServiceFileSelect);
+  }
+
+  if (fileUploadGroup) {
+    // Drag and drop
+    fileUploadGroup.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.add('dragover');
+    });
+
+    fileUploadGroup.addEventListener('dragleave', () => {
+      fileUploadGroup.classList.remove('dragover');
+    });
+
+    fileUploadGroup.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileUploadGroup.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      handleServiceFiles(files);
+    });
+
+    fileUploadGroup.addEventListener('click', () => {
+      fileInput.click();
+    });
+  }
+
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', clearAllServiceFiles);
+  }
+}
+
+function handleServiceFileSelect(event) {
+  const files = Array.from(event.target.files);
+  handleServiceFiles(files);
+}
+
+function handleServiceFiles(files) {
+  serviceSelectedFiles = [...serviceSelectedFiles, ...files];
+  updateServiceFileDisplay();
+}
+
+function updateServiceFileDisplay() {
+  const fileManagement = document.getElementById('serviceFileManagement');
+  const filesContainer = document.getElementById('serviceSelectedFiles');
+  const filesCount = document.getElementById('serviceFilesCount');
+  const filesSummary = document.getElementById('serviceFilesSummary');
+
+  if (serviceSelectedFiles.length > 0) {
+    fileManagement.style.display = 'block';
+    filesCount.textContent = `${serviceSelectedFiles.length} file${serviceSelectedFiles.length > 1 ? 's' : ''} selected`;
+
+    let totalSize = 0;
+    filesContainer.innerHTML = '';
+
+    serviceSelectedFiles.forEach((file, index) => {
+      totalSize += file.size;
+      const fileItem = createFileCard(file, index, 'service');
+      filesContainer.innerHTML += fileItem;
+    });
+
+    const totalSizeMb = totalSize / (1024 * 1024);
+    filesSummary.textContent = `Total size: ${totalSizeMb.toFixed(2)} MB`;
+  } else {
+    fileManagement.style.display = 'none';
+  }
+}
+
+function clearAllServiceFiles() {
+  serviceSelectedFiles = [];
+  document.getElementById('serviceUpload').value = '';
+  updateServiceFileDisplay();
+}
+
+window.removeServiceFile = function(index) {
+  serviceSelectedFiles.splice(index, 1);
+  updateServiceFileDisplay();
+};
+
+// Create file card HTML
+function createFileCard(file, index, type) {
+  const fileExt = file.name.split('.').pop().toLowerCase();
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+  const sizeKb = (file.size / 1024).toFixed(1);
+  const removeFn = type === 'approval' ? 'removeApprovalFile' : 'removeServiceFile';
+
+  return `
+    <div class="file-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid #f3f4f6; transition: all 0.3s ease;">
+      <div class="file-item-info" style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: #3b82f6;">
+          <path d="M4 4h16v16H4z" />
+        </svg>
+        <div class="file-item-details" style="flex: 1;">
+          <p class="file-item-name" style="margin: 0 0 0.25rem 0; font-size: 0.875rem; font-weight: 600; color: #334155; word-break: break-all;">${file.name}</p>
+          <p class="file-item-size" style="margin: 0; font-size: 0.75rem; color: #64748b;">${sizeKb} KB</p>
+        </div>
+      </div>
+      <button type="button" class="file-delete-btn" onclick="${removeFn}(${index})" style="background: #ef4444; color: white; border: none; padding: 0.375rem 0.75rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s ease; font-weight: bold; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">×</button>
+    </div>
+  `;
+}
+
+// Links management for approval
+window.addApprovalLink = function() {
+  const container = document.getElementById('approvalLinksContainer');
+  const linkGroup = document.createElement('div');
+  linkGroup.className = 'link-input-group';
+  linkGroup.innerHTML = `
+    <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+    <button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)">×</button>
+  `;
+  container.appendChild(linkGroup);
+};
+
+window.removeApprovalLink = function(button) {
+  const linkGroup = button.closest('.link-input-group');
+  linkGroup.remove();
+};
+
+// Links management for service
+window.addServiceLink = function() {
+  const container = document.getElementById('serviceLinksContainer');
+  const linkGroup = document.createElement('div');
+  linkGroup.className = 'link-input-group';
+  linkGroup.innerHTML = `
+    <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+    <button type="button" class="remove-link-btn" onclick="removeServiceLink(this)">×</button>
+  `;
+  container.appendChild(linkGroup);
+};
+
+window.removeServiceLink = function(button) {
+  const linkGroup = button.closest('.link-input-group');
+  linkGroup.remove();
+};
+
+// Form submission handlers
+document.addEventListener('DOMContentLoaded', function() {
+  const approvalForm = document.getElementById('addApprovalForm');
+  const serviceForm = document.getElementById('addServiceForm');
+
+  if (approvalForm) {
+    approvalForm.addEventListener('submit', handleApprovalSubmit);
+  }
+
+  if (serviceForm) {
+    serviceForm.addEventListener('submit', handleServiceSubmit);
+  }
+});
+
+async function handleApprovalSubmit(event) {
+  event.preventDefault();
+  
+  if (approvalQuillEditor) {
+    const description = document.getElementById('approvalDescription');
+    description.value = approvalQuillEditor.root.innerHTML;
+  }
+
+  const form = event.target;
+  const formData = new FormData(form);
+
+  approvalSelectedFiles.forEach(file => {
+    formData.append('upload', file);
+  });
+
+  try {
+    const response = await fetch('/submit-request-approval', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      window.showSuccessAlert('Request submitted successfully!');
+      closeAddApprovalModal();
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      window.showErrorAlert('Failed to submit request. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error submitting approval request:', error);
+    window.showErrorAlert('An error occurred. Please try again.');
+  }
+}
+
+async function handleServiceSubmit(event) {
+  event.preventDefault();
+  
+  if (serviceQuillEditor) {
+    const description = document.getElementById('serviceDescription');
+    description.value = serviceQuillEditor.root.innerHTML;
+  }
+
+  const predefinedType = document.getElementById('serviceSpecificRequestType').value;
+  const customType = document.getElementById('serviceCustomRequestType').value;
+  const finalTypeInput = document.getElementById('serviceFinalRequestType');
+  
+  if (customType.trim()) {
+    finalTypeInput.value = customType.trim();
+  } else if (predefinedType) {
+    finalTypeInput.value = predefinedType;
+  } else {
+    window.showErrorAlert('Please select or enter a request type.');
+    return;
+  }
+
+  const form = event.target;
+  const formData = new FormData(form);
+
+  serviceSelectedFiles.forEach(file => {
+    formData.append('upload', file);
+  });
+
+  try {
+    const response = await fetch('/submit-service-request', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      window.showSuccessAlert('Service request submitted successfully!');
+      closeAddServiceModal();
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      window.showErrorAlert('Failed to submit service request. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error submitting service request:', error);
+    window.showErrorAlert('An error occurred. Please try again.');
+  }
+}
+
+function resetApprovalForm() {
+  const form = document.getElementById('addApprovalForm');
+  if (form) form.reset();
+  
+  if (approvalQuillEditor) {
+    approvalQuillEditor.setText('');
+  }
+  
+  approvalSelectedFiles = [];
+  updateApprovalFileDisplay();
+  
+  const linksContainer = document.getElementById('approvalLinksContainer');
+  if (linksContainer) {
+    linksContainer.innerHTML = `
+      <div class="link-input-group">
+        <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+        <button type="button" class="remove-link-btn" onclick="removeApprovalLink(this)" style="display: none;">×</button>
+      </div>
+    `;
+  }
+}
+
+function resetServiceForm() {
+  const form = document.getElementById('addServiceForm');
+  if (form) form.reset();
+  
+  if (serviceQuillEditor) {
+    serviceQuillEditor.setText('');
+  }
+  
+  serviceSelectedFiles = [];
+  updateServiceFileDisplay();
+  
+  const linksContainer = document.getElementById('serviceLinksContainer');
+  if (linksContainer) {
+    linksContainer.innerHTML = `
+      <div class="link-input-group">
+        <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
+        <button type="button" class="remove-link-btn" onclick="removeServiceLink(this)" style="display: none;">×</button>
+      </div>
+    `;
+  }
 }

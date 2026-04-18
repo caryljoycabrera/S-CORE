@@ -43,12 +43,12 @@
   z-index: 100000 !important;
 }
 
-/* Match main page header color - Light Blue for Approvals */
+/* Match main page header color - Red Gradient for Messages */
 #conversationModal .unit-modal-header,
 .unit-conversation-modal .unit-modal-header {
-  background: #dbeafe !important;
-  color: #1e40af !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
 }
 
 .unit-conversation-subtitle {
@@ -809,7 +809,7 @@ body:has(.modal[style*="display:block"]) .admin-sidebar {
 }
 
 .close-modal-btn:active {
-  transform: scale(0.95);
+  
 }
 
 /* ==========================================

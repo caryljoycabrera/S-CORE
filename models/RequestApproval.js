@@ -51,7 +51,7 @@ const requestApprovalSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'Pending',
-    enum: ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Archived']
+    enum: ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Completed', 'Archived']
   },
 
   // Administrative assignment
@@ -80,6 +80,19 @@ const requestApprovalSchema = new mongoose.Schema({
   links: [{
     type: String
   }],
+
+  // Completion tracking
+  completedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  completedAt: {
+    type: Date
+  },
+  finalRemarks: {
+    type: String,
+    trim: true
+  },
 
   // Revision tracking (2 revision limit)
   revisionCount: {
@@ -137,7 +150,7 @@ const requestApprovalSchema = new mongoose.Schema({
     }],
     status: {
       type: String,
-      enum: ['pending', 'responded', 'resolved'],
+      enum: ['pending', 'responded', 'resolved', 'completed', 'approved'],  // Added 'approved' for complete-approval status
       default: 'pending'
     }
   }],
@@ -159,6 +172,44 @@ const requestApprovalSchema = new mongoose.Schema({
   deletedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  previousStatus: {
+    type: String
+  },
+
+  // Restoration requests when archived/deleted
+  restorationRequests: [{
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    requestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    reason: {
+      type: String,
+      trim: true
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    }
+  }],
+
+  // Archive reason (why it was archived) and archive source (manual vs auto-archive)
+  archiveReason: {
+    type: String,
+    trim: true
+  },
+  archivedBy: {
+    type: String,
+    enum: ['system', 'admin'],
+    default: 'admin'
+  },
+  archivedAt: {
+    type: Date
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

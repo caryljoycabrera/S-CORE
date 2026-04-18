@@ -228,13 +228,14 @@ body:has(.modal[style*="display: block"]) .unit-sidebar {
   flex-direction: column;
   padding: 1rem 0;
   flex: 1;
+  opacity: 1 !important;
 }
 
 .unit-sidebar-item {
   display: flex;
   align-items: center;
   padding: 1rem 1.25rem;
-  color: rgba(255, 255, 255, 1);
+  color: white !important; /* Force permanent full white */
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -246,13 +247,13 @@ body:has(.modal[style*="display: block"]) .unit-sidebar {
 
 .unit-sidebar-item:hover {
   background: rgba(255, 255, 255, 0.15);
-  color: white;
+  color: white; /* Full white on hover */
   transform: translateX(4px);
 }
 
 .unit-sidebar-item.active {
   background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
+  color: white !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   border-left: 4px solid white;
   padding-left: calc(1.25rem - 4px);
@@ -280,7 +281,7 @@ body:has(.modal[style*="display: block"]) .unit-sidebar {
   transition: all 0.2s ease-in-out;
   stroke: currentColor;
   fill: none;
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .unit-sidebar-item:hover .unit-sidebar-icon {
@@ -588,16 +589,23 @@ body:has(.modal[style*="display: block"]) .unit-sidebar {
   transition: background 0.2s ease;
   flex-shrink: 0;
   order: -1;
+  z-index: 10001; /* Ensure clickable above everything */
+  position: relative;
 }
 
 .unit-menu-toggle:hover {
   background: rgba(255, 255, 255, 0.25);
 }
 
+.unit-menu-toggle:active {
+  
+}
+
 .unit-menu-toggle svg {
   width: 24px;
   height: 24px;
   display: block;
+  pointer-events: none; /* Ensure clicks go to button */
 }
 
 /* Mobile sidebar backdrop */

@@ -8,6 +8,24 @@ const socketService = require('./socketService');
 
 class NotificationService {
   /**
+   * Helper to format an admin/staff name based on their user ID
+   */
+  async _getAdminNameString(adminId) {
+    if (!adminId) return 'Admin';
+    try {
+      const User = require('../models/User');
+      const admin = await User.findById(adminId, 'fName lName role userType');
+      if (admin && admin.fName && admin.lName) {
+        const roleStr = (admin.role === 'staff' || admin.userType === 'staff') ? 'Staff' : 'Admin';
+        return `${roleStr} ${admin.fName.trim()} ${admin.lName.trim()}`;
+      }
+    } catch (e) {
+      console.error('Error fetching admin name for notification:', e);
+    }
+    return 'Admin';
+  }
+
+  /**
    * Create a new notification
    * @param {Object} data - Notification data
    * @returns {Object} Created notification
@@ -102,23 +120,32 @@ class NotificationService {
   }
 
   // Notify user when their service request is approved
-  async notifyServiceApproved(serviceId, userId, adminId, assignedUnits = null) {
+  async notifyServiceApproved(serviceId, requestorId, adminId, assignedUnits) {
     try {
-      const message = assignedUnits 
-        ? `Your service request has been approved and assigned to: ${assignedUnits}`
-        : 'Your service request has been approved';
+      const adminNameFull = await this._getAdminNameString(adminId);
+      // Notify unit team that requestor approved their deliverables
+      const unitMembers = await User.find({ 
+        unitTeam: assignedUnits,
+        role: 'unit'
+      });
 
-      await this.createNotification({
-        recipient: userId,
+      const notificationData = {
         sender: adminId,
-        title: 'Service Request Approved',
-        message: message,
-        type: 'service_approved',
+        title: 'Deliverables Approved',
+        message: `${adminNameFull} approved the deliverables. Please complete the task with final remarks.`,
+        type: 'deliverables_approved',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
         priority: 'high',
-        actionUrl: `/service-requests?modal=true&requestId=${serviceId}&type=service`
-      });
+        actionUrl: `/unit/task-services?modal=true&requestId=${serviceId}&type=service`
+      };
+
+      for (const member of unitMembers) {
+        await this.createNotification({
+          ...notificationData,
+          recipient: member._id
+        });
+      }
     } catch (error) {
       console.error('Error notifying service approval:', error);
     }
@@ -127,9 +154,10 @@ class NotificationService {
   // Notify user when their service request is rejected
   async notifyServiceRejected(serviceId, userId, adminId, reason = null) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       const message = reason 
-        ? `Your service request was rejected. Reason: ${reason}`
-        : 'Your service request was rejected';
+        ? `Your service request was rejected by ${adminNameFull}. Reason: ${reason}`
+        : `Your service request was rejected by ${adminNameFull}.`;
 
       await this.createNotification({
         recipient: userId,
@@ -150,11 +178,12 @@ class NotificationService {
   // Notify user when their service request is completed
   async notifyServiceCompleted(serviceId, userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Service Request Completed',
-        message: 'Your service request has been completed successfully',
+        message: `Your service request has been completed successfully by ${adminNameFull}.`,
         type: 'service_completed',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
@@ -240,11 +269,12 @@ class NotificationService {
   // Notify user when their approval request is approved
   async notifyApprovalApproved(approvalId, userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Approval Request Approved',
-        message: 'Your approval request has been approved',
+        message: `Your approval request has been approved by ${adminNameFull}.`,
         type: 'approval_approved',
         relatedId: approvalId,
         relatedModel: 'RequestApproval',
@@ -259,9 +289,10 @@ class NotificationService {
   // Notify user when their approval request is rejected
   async notifyApprovalRejected(approvalId, userId, adminId, reason = null) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       const message = reason 
-        ? `Your approval request was rejected. Reason: ${reason}`
-        : 'Your approval request was rejected';
+        ? `Your approval request was rejected by ${adminNameFull}. Reason: ${reason}`
+        : `Your approval request was rejected by ${adminNameFull}.`;
 
       await this.createNotification({
         recipient: userId,
@@ -282,9 +313,10 @@ class NotificationService {
   // Notify user when their approval request needs revision
   async notifyApprovalRevision(approvalId, userId, adminId, message = null) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       const notificationMessage = message 
-        ? `Your approval request needs revision: ${message}`
-        : 'Your approval request needs revision. Please check and resubmit.';
+        ? `Your approval request needs revision (marked by ${adminNameFull}): ${message}`
+        : `Your approval request needs revision based on feedback from ${adminNameFull}. Please check and resubmit.`;
 
       await this.createNotification({
         recipient: userId,
@@ -395,12 +427,13 @@ class NotificationService {
   // Notify user when their account is approved
   async notifyUserApproved(userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       // Send the welcome notification
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Welcome to S-CORE!',
-        message: 'Your account has been approved! Click here to learn how to navigate the system and get started.',
+        message: `Your account has been approved by ${adminNameFull}! Click here to learn how to navigate the system and get started.`,
         type: 'user_approved',
         relatedId: userId,
         relatedModel: 'User',
@@ -418,12 +451,13 @@ class NotificationService {
   // Notify unit member when their account is approved
   async notifyUnitApproved(userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       // Send the unit welcome notification - use special URL to trigger modal
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Welcome to S-CORE Unit Team!',
-        message: 'Your unit account has been approved! Click here to learn how to process tasks and manage your workflow.',
+        message: `Your unit account has been approved by ${adminNameFull}! Click here to learn how to process tasks and manage your workflow.`,
         type: 'unit_approved',
         relatedId: userId,
         relatedModel: 'User',
@@ -441,11 +475,12 @@ class NotificationService {
   // Notify user when their account is denied
   async notifyUserDenied(userId, adminId) {
     try {
+      const adminNameFull = await this._getAdminNameString(adminId);
       await this.createNotification({
         recipient: userId,
         sender: adminId,
         title: 'Account Access Denied',
-        message: 'Your account registration was not approved. Please contact the administrator for more information.',
+        message: `Your account registration was not approved by ${adminNameFull}. Please contact the administrator for more information.`,
         type: 'user_denied',
         relatedId: userId,
         relatedModel: 'User',
@@ -481,6 +516,13 @@ class NotificationService {
         } else if (requestType === 'approval') {
           actionUrl = `/admin/approvals?conversation=true&requestId=${requestId}&type=approval`;
         }
+      } else if (recipient.role === 'unit') {
+        // Unit recipients - open conversation modal in unit pages
+        if (requestType === 'service') {
+          actionUrl = `/unit/task-services?conversation=true&requestId=${requestId}&type=service`;
+        } else if (requestType === 'approval') {
+          actionUrl = `/unit/task-approvals?conversation=true&requestId=${requestId}&type=approval`;
+        }
       } else {
         // User recipients - open conversation modal in user pages
         if (requestType === 'service') {
@@ -511,18 +553,19 @@ class NotificationService {
    */
 
   // Send system notification
-  async notifySystem(recipientIds, title, message, priority = 'medium') {
+async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl = null) {
     try {
       if (!Array.isArray(recipientIds)) {
         recipientIds = [recipientIds];
       }
 
-      const notifications = recipientIds.map(recipientId => 
+      const notifications = recipientIds.map(recipientId =>
         this.createNotification({
           recipient: recipientId,
           title: title,
           message: message,
           type: 'system',
+          actionUrl: actionUrl,
           priority: priority
         })
       );
@@ -571,32 +614,65 @@ class NotificationService {
   async getUserNotifications(userId, page = 1, limit = 20, unreadOnly = false) {
     try {
       const skip = (page - 1) * limit;
+      const now = new Date();
       
       const query = { recipient: userId };
       if (unreadOnly) {
         query.isRead = false;
       }
 
-      const notifications = await Notification.find(query)
+      // Get all notifications without limit first to filter by scheduled time
+      const allNotifications = await Notification.find(query)
         .populate('sender', 'fName lName role')
         .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
         .lean();
 
-      const unreadCount = await Notification.countDocuments({ 
-        recipient: userId, 
-        isRead: false 
-      });
+      // Filter out announcements that haven't reached their scheduled time yet
+      const BroadcastMessage = require('../models/BroadcastMessage');
+      let filteredNotifications = [];
 
-      const totalCount = await Notification.countDocuments({ recipient: userId });
+      for (const notification of allNotifications) {
+        // If it's not an announcement or doesn't have a related BroadcastMessage, include it
+        if (notification.type !== 'announcement' || !notification.relatedId) {
+          filteredNotifications.push(notification);
+          continue;
+        }
+
+        // For announcements, check if the scheduled time has passed
+        try {
+          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime sentBy').lean();
+          if (announcement) {
+            // Skip announcement if this user created it
+            if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
+              continue;
+            }
+
+            // Include announcement if it has no scheduled time or if the scheduled time has passed
+            if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
+              filteredNotifications.push(notification);
+            }
+          } else {
+            // If announcement doesn't exist, include the notification (deleted announcement case)
+            filteredNotifications.push(notification);
+          }
+        } catch (err) {
+          console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
+          // Include notification if there's an error checking schedule
+          filteredNotifications.push(notification);
+        }
+      }
+
+      // Apply pagination to filtered notifications
+      const paginatedNotifications = filteredNotifications.slice(skip, skip + limit);
+
+      const unreadCount = await this.getUnreadCount(userId);
 
       return { 
-        notifications, 
+        notifications: paginatedNotifications, 
         unreadCount, 
-        totalCount,
+        totalCount: filteredNotifications.length,
         currentPage: page,
-        totalPages: Math.ceil(totalCount / limit)
+        totalPages: Math.ceil(filteredNotifications.length / limit)
       };
     } catch (error) {
       console.error('Error getting user notifications:', error);
@@ -1015,6 +1091,7 @@ class NotificationService {
   }
 
   // Notify admins when unit uploads deliverable
+  // Notify admins when unit uploads deliverables
   async notifyAdminUnitDeliverable(serviceId, unitMemberId, serviceData, filesCount) {
     try {
       const admins = await User.find({ role: 'admin', status: 'approved' });
@@ -1042,6 +1119,64 @@ class NotificationService {
       console.log(`✅ Unit deliverable notification sent to ${admins.length} admins`);
     } catch (error) {
       console.error('Error notifying admins of unit deliverable:', error);
+    }
+  }
+
+  // Notify requestor when unit uploads deliverables
+  async notifyRequestorDeliverableUploaded(serviceId, unitMemberId, serviceData) {
+    try {
+      console.log('🚀 [DELIVERABLE NOTIFICATION] Starting notification process');
+      console.log('🚀 notifyRequestorDeliverableUploaded called with:', {
+        serviceId,
+        unitMemberId,
+        serviceDataUserId: serviceData.userId,
+        serviceDataUserIdType: typeof serviceData.userId,
+        hasUserId: !!serviceData.userId
+      });
+      
+      if (!serviceData.userId) {
+        console.error('❌ [DELIVERABLE NOTIFICATION] No userId found in serviceData!');
+        return;
+      }
+      
+      const unitMember = await User.findById(unitMemberId);
+      const unitName = unitMember ? unitMember.unitTeam : 'Unit';
+      console.log('👤 [DELIVERABLE NOTIFICATION] Unit member found:', unitName);
+      
+      // Extract userId - handle both populated and unpopulated cases
+      const requestorId = serviceData.userId?._id || serviceData.userId;
+      
+      console.log('📧 [DELIVERABLE NOTIFICATION] Preparing to send notification to requestor:', {
+        requestorId,
+        requestorIdString: requestorId?.toString(),
+        requestorIdType: typeof requestorId,
+        unitName,
+        serviceId: serviceId?.toString()
+      });
+      
+      if (!requestorId) {
+        console.error('❌ [DELIVERABLE NOTIFICATION] RequestorId is null or undefined!');
+        return;
+      }
+
+      console.log('📝 [DELIVERABLE NOTIFICATION] Calling createNotification...');
+      const notification = await this.createNotification({
+        recipient: requestorId,
+        sender: unitMemberId,
+        title: 'Deliverables Ready for Review',
+        message: `${unitName} team uploaded deliverables for your service request. Please review and approve or request revisions.`,
+        type: 'deliverables_uploaded',
+        relatedId: serviceId,
+        relatedModel: 'ServiceRequest',
+        priority: 'high',
+        actionUrl: `/service-requests?modal=true&requestId=${serviceId}&type=service`
+      });
+      
+      console.log(`✅ [DELIVERABLE NOTIFICATION] Notification created successfully:`, notification?._id);
+    } catch (error) {
+      console.error('❌ [DELIVERABLE NOTIFICATION] Error notifying requestor of deliverable upload:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
     }
   }
 
@@ -1123,23 +1258,43 @@ class NotificationService {
   // Notify unit when user requests revision on completed task
   async notifyUnitRevisionRequested(requestId, requestorId, assignedUnits, revisionCount) {
     try {
+      console.log('🔄 [REVISION NOTIFICATION] Starting notification process');
+      console.log('🔄 notifyUnitRevisionRequested called with:', {
+        requestId,
+        requestorId,
+        assignedUnits,
+        revisionCount
+      });
+      
       const unitsArray = typeof assignedUnits === 'string' 
         ? assignedUnits.split(',').map(u => u.trim()).filter(u => u && u !== 'Not yet assigned')
         : Array.isArray(assignedUnits)
           ? assignedUnits.filter(u => u && u !== 'Not yet assigned')
           : [assignedUnits].filter(u => u && u !== 'Not yet assigned');
 
-      if (unitsArray.length === 0) return;
+      console.log('🔄 [REVISION NOTIFICATION] Units array:', unitsArray);
+
+      if (unitsArray.length === 0) {
+        console.warn('⚠️ [REVISION NOTIFICATION] No valid units found');
+        return;
+      }
 
       const unitMembers = await User.find({
         role: 'unit',
         unitTeam: { $in: unitsArray }
       });
 
-      if (unitMembers.length === 0) return;
+      console.log('🔄 [REVISION NOTIFICATION] Found unit members:', unitMembers.length);
+
+      if (unitMembers.length === 0) {
+        console.warn('⚠️ [REVISION NOTIFICATION] No unit members found for teams:', unitsArray);
+        return;
+      }
 
       const requestor = await User.findById(requestorId);
       const revisionsRemaining = 2 - revisionCount;
+
+      console.log('🔄 [REVISION NOTIFICATION] Requestor:', requestor ? `${requestor.fName} ${requestor.lName}` : 'Unknown');
 
       const notificationData = {
         title: 'Revision Requested',
@@ -1152,14 +1307,93 @@ class NotificationService {
         actionUrl: `/unit/all-tasks?modal=true&requestId=${requestId}&type=service`
       };
 
-      const notifications = unitMembers.map(member => 
-        this.createNotification({ ...notificationData, recipient: member._id })
-      );
+      console.log('🔄 [REVISION NOTIFICATION] Sending to', unitMembers.length, 'unit members');
+
+      const notifications = unitMembers.map(member => {
+        console.log('🔄 [REVISION NOTIFICATION] Creating notification for:', member.fName, member.lName);
+        return this.createNotification({ ...notificationData, recipient: member._id });
+      });
       
       await Promise.all(notifications);
-      console.log(`✅ User revision request notification sent to ${unitMembers.length} unit members`);
+      console.log(`✅ [REVISION NOTIFICATION] Revision request notification sent to ${unitMembers.length} unit members`);
     } catch (error) {
-      console.error('Error notifying unit of revision request:', error);
+      console.error('❌ [REVISION NOTIFICATION] Error notifying unit of revision request:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+  }
+
+  // Helper method to check if an announcement notification should be shown
+  async isAnnouncementNotificationValid(notification) {
+    try {
+      // If it's not an announcement, always include it
+      if (notification.type !== 'announcement' || !notification.relatedId) {
+        return true;
+      }
+
+      // For announcements, check if the scheduled time has passed
+      const BroadcastMessage = require('../models/BroadcastMessage');
+      const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime').lean();
+      
+      if (!announcement) {
+        // If announcement doesn't exist, include the notification (deleted announcement case)
+        return true;
+      }
+
+      // Include if no scheduled time or if scheduled time has passed
+      const now = new Date();
+      return !announcement.scheduledTime || new Date(announcement.scheduledTime) <= now;
+    } catch (err) {
+      console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
+      // Include notification if there's an error checking schedule
+      return true;
+    }
+  }
+
+  // Get unread notification count, filtering out scheduled announcements
+  async getUnreadCount(userId) {
+    try {
+      const now = new Date();
+      
+      // Get all unread notifications
+      const unreadNotifications = await Notification.find({
+        recipient: userId,
+        isRead: false
+      }).select('type relatedId relatedModel').lean();
+
+      // Filter out announcements that haven't reached their scheduled time yet
+      const BroadcastMessage = require('../models/BroadcastMessage');
+      let validCount = 0;
+
+      for (const notification of unreadNotifications) {
+        if (notification.type !== 'announcement' || !notification.relatedId) {
+          validCount++;
+          continue;
+        }
+
+        try {
+          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime sentBy').lean();
+          if (!announcement) {
+            validCount++;
+          } else {
+            // Skip if this user created the announcement
+            if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
+              continue;
+            }
+            if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
+              validCount++;
+            }
+          }
+        } catch (err) {
+          console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
+          validCount++;
+        }
+      }
+
+      return validCount;
+    } catch (error) {
+      console.error('Error getting unread notification count:', error);
+      throw error;
     }
   }
 }

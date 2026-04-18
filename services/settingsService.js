@@ -85,14 +85,19 @@ const updateSettings = async (updates, userId = null) => {
       settings = new SystemSettings();
     }
     
-    // Apply all updates
+    // Apply updates
     Object.keys(updates).forEach(key => {
       settings[key] = updates[key];
+      if (key === 'userRoles') {
+        console.log('[Settings Service] Setting userRoles:', JSON.stringify(updates[key], null, 2));
+      }
     });
     
     settings.updatedBy = userId;
     settings.updatedAt = new Date();
+    console.log('[Settings Service] About to save userRoles:', JSON.stringify(settings.userRoles, null, 2));
     await settings.save();
+    console.log('[Settings Service] Saved to database');
     
     // Update cache
     cachedSettings = settings;
@@ -108,22 +113,29 @@ const updateSettings = async (updates, userId = null) => {
  * Get specific setting value
  */
 const getSetting = (key, defaultValue = null) => {
-  if (!cachedSettings) {
-    return defaultValue;
-  }
-  
-  const keys = key.split('.');
-  let value = cachedSettings;
-  
-  for (let i = 0; i < keys.length; i++) {
-    if (value && typeof value === 'object') {
-      value = value[keys[i]];
-    } else {
+  try {
+    if (!cachedSettings) {
+      console.warn(`[Settings Service] Settings not loaded yet, returning default for ${key}`);
       return defaultValue;
     }
+    
+    const keys = key.split('.');
+    let value = cachedSettings;
+    
+    for (let i = 0; i < keys.length; i++) {
+      if (value && typeof value === 'object') {
+        value = value[keys[i]];
+      } else {
+        console.warn(`[Settings Service] Key ${keys[i]} not found in settings, returning default for ${key}`);
+        return defaultValue;
+      }
+    }
+    
+    return value !== undefined ? value : defaultValue;
+  } catch (error) {
+    console.error(`[Settings Service] Error getting setting ${key}:`, error);
+    return defaultValue;
   }
-  
-  return value !== undefined ? value : defaultValue;
 };
 
 /**

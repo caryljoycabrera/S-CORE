@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Guide - S-CORE</title>
+  <title>Help & Guide - S-CORE</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/stylesheets/notifications.css">
   <link rel="stylesheet" href="/stylesheets/user-navbar.css">
@@ -26,13 +26,13 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <!-- Profile Avatar (shows when expanded) -->
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
         <div class="sidebar-profile-info">
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
-          <p class="sidebar-profile-role"><%= user.userType || 'User' %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : (user.userType === 'student' ? 'Student' : (user.userType || 'User')) %></p>
         </div>
         <span class="sidebar-profile-arrow">→</span>
       </a>
@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!-- Main Content -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="user-main-content">
     <!-- HEADER -->
     <div class="overlap">
@@ -120,7 +120,7 @@
         <a href="/dashboard" class="text-wrapper">S-CORE</a>
       </div>
       
-      <span class="text-wrapper-2">User Guide</span>
+      <span class="text-wrapper-2">Help & Guide</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
@@ -129,7 +129,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -159,13 +159,8 @@
         <h2>Getting Started</h2>
       </div>
       <p>Welcome to S-CORE! This is your official portal for all communication with the Strategic Communications Office (SCO). This guide will help you submit your requests correctly.</p>
-      <div class="guide-image-placeholder" style="background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 8px; padding: 80px 20px; text-align: center; margin: 24px 0; color: #6b7280;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 12px; opacity: 0.5;">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21,15 16,10 5,21"></polyline>
-        </svg>
-        <p style="margin: 0; font-weight: 600;">Add Screenshot: User Dashboard</p>
+      <div class="guide-image-container" style="text-align: center; margin: 24px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <img src="/Picture/dashboard_ss.png" alt="User Dashboard Screenshot" style="width: 100%; max-width: 800px; height: auto; border-radius: 8px; display: block; margin: 0 auto;" />
       </div>
       <div class="guide-step">
         <h4>Your Dashboard</h4>
@@ -257,13 +252,13 @@
         <li>Attach all necessary files.</li>
         <li>Click "Submit."</li>
       </ul>
-      <div class="guide-image-placeholder" style="background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 8px; padding: 80px 20px; text-align: center; margin: 24px 0; color: #6b7280;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 12px; opacity: 0.5;">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21,15 16,10 5,21"></polyline>
-        </svg>
-        <p style="margin: 0; font-weight: 600;">Add Screenshot: A request form modal (Service or Approval)</p>
+      <div class="guide-images-container" style="display: flex; gap: 20px; margin: 24px 0; justify-content: center; flex-wrap: wrap;">
+        <div class="form-image-wrapper" style="flex: 1; min-width: 0; max-width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <img src="/Picture/approvalform.png" alt="Request for Approval Form" style="width: 100%; height: auto; border-radius: 8px; display: block;" />
+        </div>
+        <div class="form-image-wrapper" style="flex: 1; min-width: 0; max-width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <img src="/Picture/serviceform.png" alt="Request for Service Form" style="width: 100%; height: auto; border-radius: 8px; display: block;" />
+        </div>
       </div>
       <div class="guide-warning">
         <strong>CRITICAL RULE:</strong> Once you click "Submit," your request is locked and cannot be edited. You can only upload new files if an SCO member sets your task status to "For Revision". Please double-check your submission before you submit it.
@@ -281,14 +276,9 @@
         </div>
         <h2>Understanding Your Request Status</h2>
       </div>
-      <p>Your dashboard will show the status of your tasks. Here is what they mean:</p>
-      <div class="guide-image-placeholder" style="background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 8px; padding: 80px 20px; text-align: center; margin: 24px 0; color: #6b7280;">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 12px; opacity: 0.5;">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21,15 16,10 5,21"></polyline>
-        </svg>
-        <p style="margin: 0; font-weight: 600;">Add Screenshot: Request status badges (Pending, In Progress, For Revision, etc.)</p>
+      <p>Your request page will show the status of your tasks. Here is what they mean:</p>
+      <div class="guide-image-container" style="text-align: center; margin: 24px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <img src="/Picture/status.png" alt="User Dashboard Screenshot" style="width: 100%; max-width: 800px; height: auto; border-radius: 8px; display: block; margin: 0 auto;" />
       </div>
       <ul>
         <li><strong>Pending:</strong> Your request has been submitted and is in the queue for an Admin to review and assign to a unit team.</li>

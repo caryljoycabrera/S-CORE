@@ -1,16 +1,21 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Manage Users</title>
+  <title>User Accounts - S-CORE</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
+  <link rel="stylesheet" href="/stylesheets/ejs/table-fixes.css" />
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/users.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-edit-modal.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/admin-trash-modal.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
   <script src="/javascripts/alert-handler.js"></script>
 </head>
 <body>
@@ -21,11 +26,13 @@
     <div class="sidebar-profile">
       <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
         <div class="sidebar-profile-icon-container">
+          <!-- SVG Icon (shows when collapsed) -->
           <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <!-- Profile Avatar (shows when expanded) -->
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -94,16 +101,15 @@
       </a>
       <a href="/admin/announcement" class="sidebar-item" title="Announcements">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 9.5v5a1 1 0 0 1-1 1h-2.5L14 20v-6H9a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1h5l4.5-4V8.5H21a1 1 0 0 1 1 1z"></path>
-          <path d="M3 11v2a7 7 0 0 0 7 7v-2a5 5 0 0 1-5-5v-2H3z"></path>
+          <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
         </svg>
         <span class="sidebar-label">Announcements</span>
       </a>
 
-      <a href="/admin/configuration" class="sidebar-item" title="Configuration">
+      
+        <a href="/admin/configuration" class="sidebar-item" title="Configuration">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M12 1v6m0 6v6m8.66-12.66l-4.24 4.24m-6.84 6.84l-4.24 4.24M23 12h-6m-6 0H5m17.66 4.66l-4.24-4.24m-6.84-6.84L6.34 1.42"></path>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><circle cx="12" cy="12" r="3"></circle>
         </svg>
         <span class="sidebar-label">Configuration</span>
       </a>
@@ -129,8 +135,9 @@
     </div>
   </div>
 
-  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="admin-main-content">
+    <!-- HEADER -->
     <div class="overlap">
       <!-- Left Group: Hamburger, Logo, Title -->
       <div class="header-left-group">
@@ -149,7 +156,7 @@
         <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
       </div>
       
-      <span class="text-wrapper-2">Manage Users</span>
+      <span class="text-wrapper-2">User Accounts</span>
 
       <div class="header-right-section">
         <%- include('../partials/notifications') %>
@@ -158,7 +165,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -171,8 +178,23 @@
 
     <section class="activity-section">
       <div class="section-header">
-        <h1>Registered Users</h1>
-        <p>View and manage user accounts</p>
+        <div class="section-header-content">
+          <div class="section-header-text">
+            <h1>Registered Users</h1>
+            <p>View and manage user accounts</p>
+          </div>
+          <div class="action-button-container">
+            <button class="view-all-btn" id="openCreateUserModalBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              + Create User
+            </button>
+          </div>
+        </div>
       </div>
       
    
@@ -217,7 +239,7 @@
                   <input type="text" id="cysFilter" class="filter-input" placeholder="Search CYS...">
                 </div>
                 <div class="filter-item">
-                  <label for="roleFilter" class="filter-sublabel">Role</label>
+                  <label class="filter-sublabel">Role</label>
                   <div class="enhanced-multi-select-wrapper">
                     <div class="enhanced-multi-select" id="roleFilter">
                       <div class="select-display" data-placeholder="Select Roles">
@@ -235,7 +257,7 @@
               <!-- Third Row: Office/Department and Student Organization ONLY - with dropdown-row class -->
               <div class="filter-controls dropdown-row">
                 <div class="filter-item">
-                  <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
+                  <label class="filter-sublabel">Student Organization</label>
                   <div class="enhanced-multi-select-wrapper">
                     <div class="enhanced-multi-select" id="studentOrgFilter">
                       <div class="select-display" data-placeholder="Select Student Organizations">
@@ -244,7 +266,7 @@
                       </div>
                       <div class="select-dropdown" id="studentOrgDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search organizations...">
+                          <input type="text" id="studentOrgSearch" class="search-input" placeholder="Search organizations..." aria-label="Search student organizations">
                         </div>
                         <div class="options-container"></div>
                       </div>
@@ -252,7 +274,7 @@
                   </div>
                 </div>
                 <div class="filter-item">
-                  <label for="affiliationFilter" class="filter-sublabel">Office/Department</label>
+                  <label class="filter-sublabel">Office/Department</label>
                   <div class="enhanced-multi-select-wrapper">
                     <div class="enhanced-multi-select" id="affiliationFilter">
                       <div class="select-display" data-placeholder="Select Offices/Departments">
@@ -261,7 +283,7 @@
                       </div>
                       <div class="select-dropdown" id="affiliationDropdown">
                         <div class="search-container">
-                          <input type="text" class="search-input" placeholder="Search offices/departments...">
+                          <input type="text" id="affiliationSearch" class="search-input" placeholder="Search offices/departments..." aria-label="Search offices/departments">
                         </div>
                         <div class="options-container"></div>
                       </div>
@@ -323,7 +345,7 @@
               <% users.forEach(u => { %>
               <div class="grid-row" 
                 data-id="<%= u._id %>"
-                data-user-id="<%= u._id.toString().slice(-6) %>"
+                data-user-id="<%= u._id %>"
                 data-username="<%= u.username %>"
                 data-fullname="<%= u.fName %> <%= u.lName %>"
                 data-fname="<%= u.fName %>"
@@ -350,7 +372,7 @@
                   <div class="grid-col-email"><%= u.email %></div>
                   <div class="grid-col-role">
                     <span class="role-badge <%= u.role === 'admin' ? 'role-admin' : (u.role === 'unit' ? 'role-unit' : 'role-user') %>">
-                      <%= u.role.toUpperCase() %><% if (u.role === 'unit' && u.unitTeam && u.unitTeam !== 'N/A') { %> - <%= u.unitTeam %><% } %>
+                      <%= (u.role ? (u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()) : '') %><% if (u.role === 'unit' && u.unitTeam && u.unitTeam !== 'N/A') { %> - <%= u.unitTeam %><% } %>
                     </span>
                   </div>
                   <div class="grid-col-date">
@@ -376,6 +398,15 @@
               </div>
               <% }) %>
             </div>
+            <!-- Client-side no-results message (shown when filters match nothing) -->
+            <div id="noResultsClient" class="no-results-client" style="display: none; padding: 2rem; text-align: center; color: #6b7280;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5" style="margin-bottom: 0.5rem;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <div style="font-weight:600; margin-top: 0.25rem;">No users match your filters</div>
+              <div style="font-size: 0.9rem; margin-top: 0.25rem;">Try clearing filters or adjusting your search.</div>
+            </div>
           </div>
 
           <% if (users.length === 0) { %>
@@ -385,7 +416,21 @@
           <% } %>
         </section>
 
-        <!-- Back to Dashboard Button -->
+        <!-- Pagination Controls -->
+        <div class="pagination-controls" id="paginationControls" style="display: none;">
+          <button class="pagination-btn pagination-nav" id="prevPage" aria-label="Previous page">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="pagination-numbers" id="paginationNumbers"></div>
+          <button class="pagination-btn pagination-nav" id="nextPage" aria-label="Next page">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
         <div class="back-to-dashboard-container">
           <a href="/admin" class="back-to-dashboard-btn">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -393,14 +438,14 @@
             </svg>
             Back to Dashboard
           </a>
-          <button class="trash-btn" id="trashBtn" title="View Deleted Users">
+          <button class="trash-btn" onclick="openTrashModal()" title="View Deleted Users">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
               <line x1="10" y1="11" x2="10" y2="17"/>
               <line x1="14" y1="11" x2="14" y2="17"/>
             </svg>
-            View Deleted
+            Trash
           </button>
         </div>
       </section>
@@ -408,6 +453,264 @@
   </div>
 
 
+  
+<!-- Trash Modal - View Deleted Users -->
+<div id="trashModal" class="modal" style="display:none;">
+  <div class="modal-content trash-modal-content">
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <h2>Deleted Users</h2>
+      </div>
+      <button class="close-modal-btn" onclick="closeTrashModal()" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="trash-modal-body">
+      <div class="trash-info-banner">
+        <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
+        </svg>
+        <span>These users are hidden from active views. You can restore or permanently delete them.</span>
+      </div>
+
+      <div class="trash-table-container">
+        <table class="trash-requests-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Deleted By</th>
+              <th>Deleted On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="trashTableBody">
+            <!-- Populated by JavaScript -->
+          </tbody>
+        </table>
+        <div id="trashEmptyState" class="trash-empty-state" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
+            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+          </svg>
+          <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No deleted users</p>
+          <p style="color: #6b7280;">Deleted users will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div id="restoreConfirmModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 500px; margin: auto;">
+    <header class="modal-header">
+      <span class="modal-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+        </svg>
+        Restore User
+      </span>
+      <span class="close" onclick="closeRestoreConfirm()">&times;</span>
+    </header>
+    <div class="modal-body" style="padding: 2rem;">
+      <p id="restoreConfirmMessage" style="margin-bottom: 2rem; color: #374151; line-height: 1.6;">Are you sure you want to restore this user?</p>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button type="button" class="user-admin-btn user-admin-btn-secondary" onclick="closeRestoreConfirm()">
+          Cancel
+        </button>
+        <button type="button" class="user-admin-btn user-admin-btn-primary" id="confirmRestoreBtn" onclick="confirmRestore()">
+          Restore
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Permanent Delete Confirmation Modal -->
+<div id="permanentDeleteConfirmModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 500px; margin: auto;">
+    <header class="modal-header">
+      <span class="modal-title">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Permanently Delete User
+      </span>
+      <span class="close" onclick="closePermanentDeleteConfirm()">&times;</span>
+    </header>
+    <div class="modal-body" style="padding: 2rem;">
+      <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
+        <p style="margin: 0; color: #991b1b; font-size: 0.95rem;">
+          <strong>Warning:</strong> This action cannot be undone. The user and all associated data will be permanently deleted.
+        </p>
+      </div>
+      <p id="permanentDeleteMessage" style="margin-bottom: 2rem; color: #374151; line-height: 1.6;">Are you sure you want to permanently delete this user?</p>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button type="button" class="user-admin-btn user-admin-btn-secondary" onclick="closePermanentDeleteConfirm()">
+          Cancel
+        </button>
+        <button type="button" class="user-admin-btn user-admin-btn-danger" id="confirmPermanentDeleteBtn" onclick="confirmPermanentDelete()" style="background: #dc2626; color: white;">
+          Permanently Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create User Modal -->
+<div id="createUserModal" class="modal" style="display:none;">
+  <div class="modal-content unit-modal-wide">
+    <div class="modal-header unit-modal-header">
+      <div class="modal-title-section">
+        <svg class="modal-title-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="8.5" cy="7" r="4"></circle>
+          <line x1="20" y1="8" x2="20" y2="14"></line>
+          <line x1="23" y1="11" x2="17" y2="11"></line>
+        </svg>
+        <h2 class="modal-title">Create User Invitation</h2>
+      </div>
+      <button class="close-modal-btn" id="closeCreateUserModal" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="createUserForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <p style="color: #6b7280; margin: -0.5rem 0 0.5rem 0;">
+          Send an invitation email to create a new user account. The user will receive a link to complete registration with auto-approval.
+        </p>
+        
+        <!-- Email (Required) -->
+        <div class="form-group">
+          <label for="userEmail" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #374151;">
+            Email Address <span style="color: #ef4444;">*</span>
+          </label>
+          <input type="email" id="userEmail" name="email" required 
+                 placeholder="user@dlsud.edu.ph"
+                 pattern=".*@dlsud\.edu\.ph$"
+                 style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+          <small style="color: #6b7280; display: block; margin-top: 0.25rem;">Must be a valid @dlsud.edu.ph email address</small>
+        </div>
+        
+        <!-- Optional fields section -->
+        <div style="border-top: 2px solid #e5e7eb; padding-top: 1rem;">
+          <h3 style="font-size: 16px; font-weight: 600; color: #374151; margin-bottom: 1rem;">
+            Optional Pre-filled Information
+          </h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <!-- First Name -->
+            <div class="form-group">
+              <label for="userFirstName" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">First Name</label>
+              <input type="text" id="userFirstName" name="firstName" placeholder="Juan"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+            
+            <!-- Last Name -->
+            <div class="form-group">
+              <label for="userLastName" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Last Name</label>
+              <input type="text" id="userLastName" name="lastName" placeholder="Dela Cruz"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <!-- Middle Name -->
+            <div class="form-group">
+              <label for="userMiddleName" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Middle Name</label>
+              <input type="text" id="userMiddleName" name="middleName" placeholder="Santos"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+            
+            <!-- Phone Number -->
+            <div class="form-group">
+              <label for="userPhoneNumber" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Phone Number</label>
+              <input type="text" id="userPhoneNumber" name="phoneNumber" placeholder="09123456789"
+                     style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+          </div>
+          
+          <!-- User Type -->
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="createUserType" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">User Type</label>
+            <select id="createUserType" name="userType" 
+                    style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+              <option value="">Select user type (optional)...</option>
+              <option value="student">Student</option>
+              <option value="nonstudent">Staff/Faculty</option>
+            </select>
+          </div>
+          
+          <!-- Student-specific fields -->
+          <div id="createStudentFields" style="display: none; margin-top: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label for="createStudentId" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Student ID</label>
+                <input type="text" id="createStudentId" name="studentId" maxlength="9" placeholder="123456789"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+              </div>
+              
+              <div class="form-group">
+                <label for="createCYS" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Course/Year/Section</label>
+                <input type="text" id="createCYS" name="cys" placeholder="BSN21"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; text-transform: uppercase;">
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 1rem;">
+              <label for="createStudentOrg" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Student Organizations</label>
+              <select id="createStudentOrg" name="studentOrganization" multiple class="select2-multiple"
+                      style="width: 100%;">
+                <% organizationsData.forEach(org => { %>
+                  <option value="<%= org %>"><%= org %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Non-student fields -->
+          <div id="createNonStudentFields" style="display: none; margin-top: 1rem;">
+            <div class="form-group">
+              <label for="createAffiliation" style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: #374151;">Office/Department</label>
+              <select id="createAffiliation" name="affiliation" multiple class="select2-multiple"
+                      style="width: 100%;">
+                <% officesData.forEach(office => { %>
+                  <option value="<%= office %>"><%= office %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-actions" style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 2px solid #e5e7eb; margin-top: 0.5rem;">
+          <button type="button" id="cancelCreateUser" class="modal-btn modal-btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" class="modal-btn modal-btn-primary" id="submitCreateUser">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            Send Invitation
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <!-- Enhanced User Details Modal - Inspired by profile.ejs -->
 <div id="userModal" class="modal" style="display:none;">
@@ -420,7 +723,28 @@
       </svg>
       User Profile Management
     </span>
-      <span class="close" id="closeUserModal">&times;</span>
+      <div class="modal-header-actions">
+        <button class="modal-action-btn edit-btn" onclick="openEditUserModal()" title="Edit User Information">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit
+        </button>
+        <button class="modal-action-btn delete-btn" onclick="openDeleteConfirm()" title="Delete User">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete
+        </button>
+        <button class="close-modal-btn" onclick="closeUserDetailsModal()" aria-label="Close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
     </header>
     <div class="modal-body user-details-modal-body">
       <div class="user-details-content">
@@ -554,28 +878,58 @@
                   </div>
                   
                   <div class="dropdown-options" id="customDropdownOptions" style="display: none;">
-                    <div class="dropdown-option" data-value="user" onclick="selectCustomRole('user', 'Requestor (User) - Submits requests')">
-                      <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                      </svg>
-                      <span>Requestor (User) - Submits requests</span>
-                    </div>
-                    <div class="dropdown-option" data-value="unit" onclick="selectCustomRole('unit', 'Unit Member - Works on tasks')">
-                      <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                      </svg>
-                      <span>Unit Member - Works on tasks</span>
-                    </div>
-                    <div class="dropdown-option" data-value="admin" onclick="selectCustomRole('admin', 'Administrator - Full System Access')">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                      </svg>
-                      <span>Administrator - Full System Access</span>
-                    </div>
+                    <% if (typeof userRoles !== 'undefined' && userRoles.length > 0) { %>
+                      <% userRoles.forEach(role => { %>
+                        <% const roleName = typeof role === 'string' ? role : role.name; %>
+                        <% const rolePerms = typeof role === 'string' ? [] : (role.permissions || []); %>
+                        <% const displayText = roleName; %>
+                        <% const value = rolePerms.includes('admin') ? 'admin' : (rolePerms.includes('unit') ? 'unit' : 'user'); %>
+                        <div class="dropdown-option" data-value="<%= value %>" onclick="selectCustomRole('<%= value %>', '<%= displayText %>')">
+                          <% if (value === 'user') { %>
+                            <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                              <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                          <% } else if (value === 'unit') { %>
+                            <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="9" cy="7" r="4"></circle>
+                              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                          <% } else if (value === 'admin') { %>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
+                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                            </svg>
+                          <% } %>
+                          <span><%= displayText %></span>
+                        </div>
+                      <% }) %>
+                    <% } else { %>
+                      <!-- Fallback to hardcoded if not loaded -->
+                      <div class="dropdown-option" data-value="user" onclick="selectCustomRole('user', 'Requestor (User) - Submits requests')">
+                        <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                          <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <span>Requestor (User) - Submits requests</span>
+                      </div>
+                      <div class="dropdown-option" data-value="unit" onclick="selectCustomRole('unit', 'Unit Member - Works on tasks')">
+                        <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Unit Member - Works on tasks</span>
+                      </div>
+                      <div class="dropdown-option" data-value="admin" onclick="selectCustomRole('admin', 'Administrator - Full System Access')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b">
+                          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                        </svg>
+                        <span>Administrator - Full System Access</span>
+                      </div>
+                    <% } %>
                   </div>
           
           <input type="hidden" name="role" id="editRole" value="user">
@@ -609,11 +963,12 @@
             Assign to Unit Team
           </label>
           <select name="unitTeam" id="editUnitTeam" class="filter-select" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
-            <option value="N/A">N/A (No Unit)</option>
-            <option value="Graphics">Graphics Unit</option>
-            <option value="Multimedia">Multimedia Unit</option>
-            <option value="Public Relations">Public Relations Unit</option>
-            <option value="Social Media">Social Media Unit</option>
+            <option value="">Select a Unit</option>
+            <% if (typeof units !== 'undefined' && units.length > 0) { %>
+              <% units.forEach(unit => { %>
+                <option value="<%= unit %>"><%= unit %></option>
+              <% }) %>
+            <% } %>
           </select>
           <small style="color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem; display: block;">
             Select which SCO unit team this member belongs to. They will only see tasks assigned to their specific unit.
@@ -671,123 +1026,201 @@
   </div>
 </div>
 
-<!-- Trash Modal - View Deleted Users -->
-<div id="trashModal" class="modal" style="display:none;">
-  <div class="modal-content trash-modal-content">
-    <div class="modal-header unit-modal-header">
-      <div class="modal-title-section">
-        <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        <h2>Deleted Users</h2>
-      </div>
-      <button class="close-modal-btn" onclick="closeTrashModal()" aria-label="Close">
+<!-- Edit User Information Modal -->
+<div id="editUserModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <header class="modal-header">
+      <span class="modal-title">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M6 18L18 6M6 6l12 12"/>
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Edit User Information
+      </span>
+      <button class="close-modal-btn" onclick="closeEditUserModal()" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
-    </div>
-
-    <div class="trash-modal-body">
-      <div class="trash-info-banner">
-        <svg viewBox="0 0 24 24" fill="none" style="width: 20px; height: 20px; margin-right: 10px;">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="#0891b2"/>
-        </svg>
-        <span>These users are hidden from active views. You can restore or permanently delete them.</span>
-      </div>
-
-      <div class="trash-table-container">
-        <table class="trash-requests-table">
-          <thead>
-            <tr>
-              <th>User ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Deleted By</th>
-              <th>Deleted On</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="trashTableBody">
-            <!-- Populated by JavaScript -->
-          </tbody>
-        </table>
-        <div id="trashEmptyState" class="trash-empty-state" style="display: none;">
-          <svg viewBox="0 0 24 24" fill="none" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;">
-            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" fill="currentColor"/>
+    </header>
+    
+    <div class="modal-body">
+      <!-- Editable Information Section -->
+      <div class="edit-form-section">
+        <h3>
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
-          <p style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No deleted users</p>
-          <p style="color: #6b7280;">Deleted users will appear here</p>
-        </div>
+          Editable Information
+        </h3>
+        
+        <form id="editUserForm">
+          <input type="hidden" id="editUserFormId" name="userId" />
+          
+          <div class="form-grid">
+            <!-- Name Fields -->
+            <div class="form-group">
+              <label for="editFirstName">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                First Name
+              </label>
+              <input type="text" id="editFirstName" name="fName" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="editMiddleName">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Middle Name (Optional)
+              </label>
+              <input type="text" id="editMiddleName" name="mName" />
+            </div>
+            
+            <div class="form-group">
+              <label for="editLastName">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Last Name
+              </label>
+              <input type="text" id="editLastName" name="lName" required />
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="form-group">
+              <label for="editUsername">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Username
+              </label>
+              <input type="text" id="editUsername" name="username" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="editEmail">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                Email Address
+              </label>
+              <input type="email" id="editEmail" name="email" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="editPhone">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                Phone Number (Optional)
+              </label>
+              <input type="tel" id="editPhone" name="phoneNumber" />
+            </div>
+            
+            <!-- Student-specific fields -->
+            <div class="form-group" id="editCysGroup" style="display: none;">
+              <label for="editCys">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 14l9-5-9-5-9 5 9 5z"/>
+                  <path d="M12 14l6.16-3.422a12.083 12.083 0 0 1 .665 6.479A11.952 11.952 0 0 0 12 20.055a11.952 11.952 0 0 0-6.824-2.998 12.078 12.078 0 0 1 .665-6.479L12 14z"/>
+                </svg>
+                Course/Year/Section
+              </label>
+              <input type="text" id="editCys" name="cys" placeholder="e.g., BSIT 3-1" />
+            </div>
+            
+            <!-- Organization/Affiliation -->
+            <div class="form-group" id="editOrgGroup">
+              <label for="editOrganization" id="editOrgLabel">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
+                </svg>
+                Organization/Affiliation
+              </label>
+              <select id="editOrganization" name="organization" multiple="multiple" style="width: 100%"></select>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- Restore Confirmation Modal -->
-<div id="restoreConfirmModal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 500px; margin: auto;">
-    <header class="modal-header">
-      <span class="modal-title">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+    
+    <div class="modal-footer">
+      <button type="button" class="modal-btn modal-btn-secondary" onclick="closeEditUserModal()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
-        Restore User
-      </span>
-      <span class="close" onclick="closeRestoreConfirm()">&times;</span>
-    </header>
-    <div class="modal-body" style="padding: 2rem;">
-      <p id="restoreConfirmMessage" style="margin-bottom: 2rem; color: #374151; line-height: 1.6;">Are you sure you want to restore this user?</p>
-      <div style="display: flex; gap: 1rem; justify-content: center;">
-        <button type="button" class="user-admin-btn user-admin-btn-secondary" onclick="closeRestoreConfirm()">
-          Cancel
-        </button>
-        <button type="button" class="user-admin-btn user-admin-btn-primary" id="confirmRestoreBtn" onclick="confirmRestore()">
-          Restore
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Permanent Delete Confirmation Modal -->
-<div id="permanentDeleteConfirmModal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 500px; margin: auto;">
-    <header class="modal-header">
-      <span class="modal-title">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/>
-          <line x1="9" y1="9" x2="15" y2="15"/>
+        Cancel
+      </button>
+      <button type="button" class="modal-btn modal-btn-primary" onclick="saveUserChanges()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17,21 17,13 7,13 7,21"/>
+          <polyline points="7,3 7,8 15,8"/>
         </svg>
-        Permanently Delete User
-      </span>
-      <span class="close" onclick="closePermanentDeleteConfirm()">&times;</span>
-    </header>
-    <div class="modal-body" style="padding: 2rem;">
-      <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
-        <p style="margin: 0; color: #991b1b; font-size: 0.95rem;">
-          <strong>Warning:</strong> This action cannot be undone. The user and all associated data will be permanently deleted.
-        </p>
-      </div>
-      <p id="permanentDeleteMessage" style="margin-bottom: 2rem; color: #374151; line-height: 1.6;">Are you sure you want to permanently delete this user?</p>
-      <div style="display: flex; gap: 1rem; justify-content: center;">
-        <button type="button" class="user-admin-btn user-admin-btn-secondary" onclick="closePermanentDeleteConfirm()">
-          Cancel
-        </button>
-        <button type="button" class="user-admin-btn user-admin-btn-danger" id="confirmPermanentDeleteBtn" onclick="confirmPermanentDelete()" style="background: #dc2626; color: white;">
-          Permanently Delete
-        </button>
-      </div>
+        Save Changes
+      </button>
     </div>
   </div>
 </div>
-
 
 
 <!-- Shared Data Arrays -->
-<script src="/javascripts/shared-data.js"></script>
+<script>
+  const userRolesData = <%- JSON.stringify(userRoles || []) %>;
+  const organizationsData = <%- JSON.stringify(organizations || []) %>;
+  const officesData = <%- JSON.stringify(offices || []) %>;
+</script>
+
+<!-- ===========================================
+   SHARED ADMIN TRASH MODAL FUNCTIONALITY
+   File: public/javascripts/ejs/admin-trash-modal.js
+   Purpose: Provides shared trash modal functionality for all admin pages
+   =========================================== -->
+<script src="/javascripts/ejs/admin-trash-modal.js"></script>
+<!-- ===========================================
+   SHARED ADMIN EDIT MODAL FUNCTIONALITY
+   File: public/javascripts/ejs/admin-edit-modal.js
+   Purpose: Provides shared edit/delete modal functionality for admin pages
+   =========================================== -->
+<script src="/javascripts/ejs/admin-edit-modal.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  // Initialize trash modal for users page
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.AdminTrashModal) {
+      window.AdminTrashModal.init({
+        entityType: 'users',
+        fetchEndpoint: '/api/admin/deleted-users',
+        restoreEndpoint: '/api/admin/restore-user',
+        permanentDeleteEndpoint: '/api/admin/delete-user-permanently',
+        reloadOnRestore: true
+      });
+    }
+  });
+</script>
 
 <!-- External JavaScript File -->
 <script src="/javascripts/ejs/users.js"></script>
+
+<!-- Spin animation for loading indicators -->
+<style>
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<!-- Create User Modal functionality now handled in users.js -->
+</script>

@@ -1,0 +1,49 @@
+<% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+  <% announcements.forEach(function(announcement) { %>
+    <div class="announcement-item <%= announcement.priority === 'high' ? 'urgent' : '' %> <%= announcement.isRead ? 'read' : 'unread' %>"
+         data-id="<%= announcement._id %>"
+         onclick="openAnnouncementDetail('<%= announcement._id %>'); event.stopPropagation();"
+         style="cursor: pointer;">
+      <div class="announcement-header-row">
+        <h4 class="announcement-title"><%= announcement.title %></h4>
+        <span class="announcement-date">
+          <%= new Date(announcement.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+        </span>
+      </div>
+      <%
+        // Strip HTML tags for preview
+        const plainText = announcement.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+        const previewText = plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
+      %>
+      <p class="announcement-message"><%= previewText %></p>
+      <div class="announcement-from">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>From: <%= announcement.sentBy ? announcement.sentBy.fName + ' ' + announcement.sentBy.lName : 'Admin' %></span>
+      </div>
+      <% if (announcement.priority === 'high') { %>
+        <span class="announcement-badge urgent">Urgent</span>
+      <% } else if (announcement.priority === 'medium') { %>
+        <span class="announcement-badge info">Important</span>
+      <% } %>
+      <% if (!announcement.isRead) { %>
+        <span class="announcement-badge success" style="margin-left: 0.5rem;">New</span>
+      <% } %>
+    </div>
+  <% }); %>
+<% } else { %>
+  <div class="no-announcements">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+      <path d="M13 11h.01M11 11h.01"/>
+    </svg>
+    <p>No announcements yet.</p>
+    <span>Check back later for updates!</span>
+    <div class="quick-tip">
+      <strong>Quick Tip:</strong> Remember to review and respond to assigned tasks promptly to meet deadlines!
+    </div>
+  </div>
+<% } %>

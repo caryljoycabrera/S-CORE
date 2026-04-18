@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Profile - <%= user.unitTeam %> Unit</title>
+  <title>My Profile - S-CORE</title>
   <!-- ===========================================
        UNIT PROFILE PAGE STYLES CONNECTION
        ===========================================
@@ -31,6 +31,1334 @@ body.profile-page .student-side > .div {
   margin-left: 0;
   margin-right: 0;
 }
+
+/* Enhanced Modal Styling - REMOVED TO USE GLOBAL MODAL-CENTERED.CSS */
+/* The modal-centered.css file now handles all modal widths consistently across the app */
+/* DO NOT override .modal-content width here - it causes modals to be too wide */
+
+.modal-header {
+  padding: 2rem 2.5rem 1rem 2.5rem;
+  border-bottom: 2px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.modal-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.close {
+  font-size: 2rem;
+  font-weight: 300;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  line-height: 1;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Enhanced Form Layout - Only for profile update modal */
+.modal-form {
+  padding: 2rem 2.5rem;
+}
+
+.profile-update-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 2.5rem;
+  align-items: start;
+}
+
+/* Password form stays single column */
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Form Sections */
+.form-section {
+  display: contents;
+}
+
+.section-title {
+  grid-column: 1 / -1;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 2rem 0 1rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.section-title:first-child {
+  margin-top: 0;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+}
+
+/* Enhanced Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-group label .required {
+  color: #ef4444;
+  font-size: 0.75rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  background-color: #ffffff;
+  color: #1e293b;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 4px rgba(64, 139, 78, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-group input:disabled {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.form-group input:disabled:focus {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Enhanced Organization Section */
+.organization-section {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #d1fae5;
+  margin: 1rem 0;
+}
+
+.organization-section label {
+  color: #065f46;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Enhanced Custom Organization Section */
+.custom-org-section {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fefefe, #f8fafc);
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.custom-org-section.expanded {
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border-color: var(--primary-green);
+  box-shadow: 0 8px 25px rgba(64, 139, 78, 0.1);
+}
+
+/* Form Actions */
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  border-top: 2px solid #f1f5f9;
+}
+
+.password-form .form-actions {
+  grid-column: auto;
+}
+
+.form-actions button {
+  padding: 0.875rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  min-width: 120px;
+}
+
+.form-actions button[type="submit"] {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+.form-actions button[type="submit"]:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 139, 78, 0.4);
+}
+
+.form-actions button[type="button"] {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #e2e8f0;
+  color: #475569;
+  transform: translateY(-1px);
+}
+
+/* Student/Staff Specific Styling */
+.student-info-grid {
+  display: contents;
+}
+
+.academic-info {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #a8fcd1;
+  margin-top: 1rem;
+}
+
+.office-section {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #93c5fd;
+  margin: 1rem 0;
+}
+
+/* Mobile Responsiveness - Using global modal-centered.css */
+@media (max-width: 768px) {
+  .modal-header {
+    padding: 1.5rem;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .profile-update-form {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .academic-info {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small mobile - global modal styles apply */
+}
+
+/* =========================== */
+/* SELECT2 BASIC STYLING      */
+/* =========================== */
+.select2-container--default .select2-selection--single {
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.375rem;
+  background-color: #fff;
+  min-height: 38px;
+}
+
+.select2-container {
+  z-index: 999999 !important;
+}
+
+.select2-dropdown {
+  z-index: 999999 !important;
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Special class for dropdowns inside modals */
+.select2-dropdown-above-modal {
+  z-index: 999999 !important;
+}
+
+.select2-container--default .select2-results__option {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background-color: #198754;
+}
+
+/* =========================== */
+/* SELECT2 MULTIPLE SELECTION */
+/* =========================== */
+.select2-container--default .select2-selection--multiple {
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  padding: 8px;
+  background-color: #fff;
+  min-height: 45px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.select2-container--default .select2-selection--multiple:focus-within {
+  border-color: #198754;
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+}
+
+/* =========================== */
+/* ORGANIZATION CHOICE TAGS   */
+/* =========================== */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background: linear-gradient(135deg, #198754, #20c997);
+  border: none;
+  color: white;
+  font-weight: 500;
+  padding: 8px 30px 8px 12px;
+  margin: 3px 6px 3px 0;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+  background: linear-gradient(135deg, #157347, #198754);
+}
+
+/* Hide default remove button */
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  display: none !important;
+}
+
+/* Custom minus icon */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:before {
+  content: "−";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:before {
+  opacity: 1;
+}
+
+/* Hover tooltip */
+.select2-container--default .select2-selection--multiple .select2-selection__choice:hover:after {
+  content: "Click to remove";
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* =========================== */
+/* ORGANIZATION COUNTER       */
+/* =========================== */
+.org-counter {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.org-counter.has-selections {
+  color: #198754;
+  font-weight: 500;
+}
+
+/* =========================== */
+/* CUSTOM ORGANIZATION SECTION */
+/* =========================== */
+.toggle-org-button {
+  background: none;
+  color: #198754;
+  font-size: 0.875rem;
+  padding: 8px 12px;
+  margin: 0;
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.toggle-org-button:hover {
+  background-color: rgba(25, 135, 84, 0.1);
+  border-color: rgba(25, 135, 84, 0.3);
+  transform: translateY(-1px);
+}
+
+.toggle-org-button:before {
+  content: "➕";
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.toggle-org-button.expanded:before {
+  content: "➖";
+  transform: rotate(180deg);
+}
+
+/* =========================== */
+/* ADD ORGANIZATION INPUT      */
+/* =========================== */
+.custom-org-input-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: stretch;
+}
+
+.custom-org-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.custom-org-input:focus {
+  outline: none;
+  border-color: #198754;
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+}
+
+.add-org-button {
+  background: linear-gradient(135deg, #198754, #20c997);
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 10px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-org-button:hover {
+  background: linear-gradient(135deg, #157347, #198754);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+}
+
+.add-org-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.3);
+}
+
+.add-org-button:before {
+  content: "+";
+  font-size: 16px;
+  color: white;
+}
+
+/* =========================== */
+/* FEEDBACK MESSAGES          */
+/* =========================== */
+.org-added-feedback {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 0.875rem;
+  border: 1px solid #c3e6cb;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.org-added-feedback.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.org-added-feedback.success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.org-added-feedback.warning {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-color: #ffeaa7;
+}
+
+.org-added-feedback.error {
+  background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+  color: #721c24;
+  border-color: #f1aeb5;
+}
+
+/* =========================== */
+/* ORGANIZATION TAGS DISPLAY   */
+/* =========================== */
+.org-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.org-tag {
+  background: linear-gradient(135deg, #198754, #20c997);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(25, 135, 84, 0.2);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  display: inline-block;
+  position: relative;
+}
+
+.org-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
+  background: linear-gradient(135deg, #157347, #198754);
+}
+
+.org-tag.single {
+  background: linear-gradient(135deg, #198754, #20c997);
+}
+
+.org-tag.single:hover {
+  background: linear-gradient(135deg, #157347, #198754);
+}
+
+.org-tag[title] {
+  cursor: help;
+}
+
+.no-organizations {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* For responsive design */
+@media (max-width: 768px) {
+  .org-tags-container {
+    gap: 6px;
+  }
+  
+  .org-tag {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    white-space: normal; 
+    word-break: break-word; 
+    max-width: calc(100vw - 60px); 
+  }
+}
+
+/* Enhanced password input styling - Seamless layout */
+.password-input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: white;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.password-input-container:focus-within {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1);
+}
+
+.password-input-container input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background-color: transparent;
+  color: #1f2937;
+  transition: all 0.3s ease;
+  box-shadow: none !important;
+}
+
+.password-input-container input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.password-toggle-btn {
+  background: var(--primary-green);
+  border: none;
+  cursor: pointer;
+  padding: 0 1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.password-toggle-btn:hover {
+  background: #2d5a35;
+  transform: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.password-toggle-btn:active {
+  background: #1e3a21;
+  transform: none;
+}
+
+.password-toggle-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: white;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.password-toggle-btn:hover svg {
+  stroke: #f0f9ff;
+  transform: scale(1.1);
+}
+
+/* Remove any conflicting input styling */
+.form-group input[type="password"],
+.form-group input[type="text"].password-input {
+  padding-right: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Password strength indicator styles */
+.password-strength {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: left;
+}
+
+.strength-bar {
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.strength-weak { 
+  background: linear-gradient(135deg, #ef4444, #dc2626); 
+  width: 33%; 
+}
+
+.strength-medium { 
+  background: linear-gradient(135deg, #f59e0b, #d97706); 
+  width: 66%; 
+}
+
+.strength-strong { 
+  background: linear-gradient(135deg, #10b981, #059669); 
+  width: 100%; 
+}
+
+/* Password validation messages */
+.password-validation {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.validation-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+.validation-item.valid {
+  color: #059669;
+}
+
+.validation-item.invalid {
+  color: #dc2626;
+}
+
+.validation-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* Password match indicator */
+.password-match-indicator {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.password-match-indicator.match {
+  color: #059669;
+}
+
+.password-match-indicator.no-match {
+  color: #dc2626;
+}
+
+.password-match-indicator.empty {
+  color: #6b7280;
+}
+
+/* Enhanced Picture Upload Modal - New Layout */
+.picture-modal-body {
+  padding: 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Current Picture Section at the top */
+.current-picture-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 2rem;
+  border-radius: 16px;
+  border: 2px solid #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.current-picture-header img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  margin-bottom: 1rem;
+}
+
+.current-picture-header h4 {
+  margin: 0 0 0.5rem 0;
+  color: #334155;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.current-picture-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Upload Section - Side by side layout */
+.upload-selection-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Drag & Drop Upload Area */
+.file-upload-container {
+  position: relative;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #fefefe, #f8fafc);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.file-upload-container:hover {
+  border-color: var(--primary-green);
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(64, 139, 78, 0.1);
+}
+
+.file-upload-container.dragover {
+  border-color: var(--primary-green);
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  box-shadow: 0 0 0 4px rgba(64, 139, 78, 0.1);
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem auto;
+  color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.file-upload-container:hover .upload-icon,
+.file-upload-container.dragover .upload-icon {
+  color: var(--primary-green);
+}
+
+.upload-text {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.upload-subtext {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.file-input-hidden {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.browse-button {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.browse-button:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+/* Selected Image Preview */
+.selected-image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #fefefe, #f8fafc);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem;
+  min-height: 200px;
+  justify-content: center;
+  text-align: center;
+}
+
+.selected-image-preview.has-image {
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border-color: var(--primary-green);
+}
+
+.selected-image-preview h4 {
+  margin: 0 0 1rem 0;
+  color: #334155;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.no-image-placeholder {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Image Preview */
+.preview-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 1rem;
+}
+
+.preview-info {
+  background: #f1f5f9;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #475569;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* Action Buttons Section */
+.picture-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #f1f5f9;
+}
+
+.action-section {
+  padding: 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.upload-section {
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border: 2px solid #d1fae5;
+}
+
+.delete-section {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 2px solid #fecaca;
+}
+
+.action-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.upload-section h4 {
+  color: #065f46;
+}
+
+.delete-section h4 {
+  color: #991b1b;
+}
+
+.action-section p {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.action-section button {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.upload-action-btn {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+.upload-action-btn:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(64, 139, 78, 0.4);
+}
+
+.upload-action-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.delete-action-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.delete-action-btn:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .upload-selection-section {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .picture-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .current-picture-header img {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* =========================== */
+/* NOTIFICATION MODAL STYLING  */
+/* =========================== */
+.notification-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.notification-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.notification-content {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+}
+
+.notification-modal.show .notification-content {
+  transform: translateY(0);
+}
+
+.notification-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1rem auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.notification-icon.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.notification-icon.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.notification-icon.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.notification-icon.info {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.notification-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+
+.notification-message {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.notification-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.notification-btn.primary {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+}
+
+.notification-btn.primary:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+}
+
+.notification-btn.secondary {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.notification-btn.secondary:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.notification-btn.danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.notification-btn.danger:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+}
+
+/* Loading spinner for async actions */
+.notification-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .notification-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .notification-actions {
+    flex-direction: column;
+  }
+  
+  .notification-btn {
+    width: 100%;
+  }
+}
+
+/* =========================== */
+/* SELECT2 COMPREHENSIVE FIXES */
+/* =========================== */
+
+/* Modal container scrolls vertically */
+.modal {
+  overflow-y: auto !important; /* Allow vertical scrolling */
+  overflow-x: hidden !important; /* Prevent horizontal scroll */
+}
+
+/* Force Select2 to appear on top of everything */
+.select2-container,
+.select2-container--default,
+.select2-container--open {
+  z-index: 999999 !important;
+}
+
+.select2-dropdown,
+.select2-dropdown--above,
+.select2-dropdown--below {
+  z-index: 999999 !important;
+}
+
+/* Ensure Select2 search is accessible */
+.select2-search,
+.select2-search--dropdown {
+  z-index: 999999 !important;
+}
+
+/* Make sure Select2 results are visible */
+.select2-results,
+.select2-results__options {
+  z-index: 999999 !important;
+}
+
+/* Body-appended Select2 containers */
+body > .select2-container--open,
+body > .select2-container--default {
+  z-index: 999999 !important;
+}
+
+/* Specific modal-related Select2 */
+#updateProfileModal .select2-container,
+#updateProfileModal ~ .select2-container,
+.modal ~ .select2-container {
+  z-index: 999999 !important;
+}
+
+/* Prevent pointer-events issues */
+.select2-dropdown {
+  pointer-events: auto !important;
+}
+
+/* Allow dropdown to overflow - these sections are inside scrollable modal-content */
+.organization-section,
+.office-section {
+  position: relative; /* Create stacking context */
+  overflow: visible !important; /* Allow dropdown to escape */
+}
+
+.form-group {
+  position: relative; /* Create stacking context */
+}
 </style>
 
 </head>
@@ -38,7 +1366,7 @@ body.profile-page .student-side > .div {
   <!-- Unit Sidebar Navigation (using partials) -->
   <%- include('../partials/unit-navbar', { user: user, activePage: 'profile' }) %>
 
-  <!-- MAIN CONTENT WITH SIDEBAR -->
+  <!-- MAIN CONTENT WITH HEADER -->
   <div class="unit-main-content">
     <!-- HEADER -->
     <div class="overlap">
@@ -68,7 +1396,7 @@ body.profile-page .student-side > .div {
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -84,7 +1412,7 @@ body.profile-page .student-side > .div {
         <!-- LEFT SIDEBAR - Profile Card -->
         <div class="section-header">
           <div class="profile-info">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                  alt="Profile Picture" class="profile-pic-large" />
             <h2><%= user.fName %> <%= user.lName %></h2>
             <p><%= user.unitTeam %> Unit</p>
@@ -531,6 +1859,11 @@ body.profile-page .student-side > .div {
               </svg>
               <span>Please enter your current password</span>
             </div>
+            <div style="margin-top: 8px; text-align: right;">
+              <a href="#" onclick="requestPasswordReset(event)" style="color: #408b4e; font-size: 13px; text-decoration: none; font-weight: 500; transition: all 0.3s ease;">
+                Forgot your password?
+              </a>
+            </div>
           </div>
           
           <div class="form-group">
@@ -622,7 +1955,7 @@ body.profile-page .student-side > .div {
           
           <!-- Current Picture Section at the top -->
           <div class="current-picture-header">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                  alt="Current Profile Picture" id="currentProfileImg" />
             <h4>Current Picture</h4>
             <p>This is your current profile picture that others will see.</p>

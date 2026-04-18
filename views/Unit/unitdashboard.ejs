@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= unitTeam %> Unit Dashboard - S-CORE</title>
+  <title>S-CORE <%= unitTeam %> Unit Dashboard</title>
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
@@ -51,7 +51,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -249,15 +249,14 @@
             <h3>My Urgent Tasks</h3>
           </div>
           
-          <% if (urgentTasks && urgentTasks.length > 0) { %>
-            <%
-              const approvalTasks = urgentTasks.filter(t => !t.serviceType);
-              const serviceTasks = urgentTasks.filter(t => t.serviceType);
-              const hasApprovals = approvalTasks.length > 0;
-              const hasServices = serviceTasks.length > 0;
-            %>
-            
-            <!-- Tab Navigation -->
+            <% if (urgentTasks && urgentTasks.length > 0) { %>
+              <%
+                const excludedStatuses = ['completed', 'approved', 'rejected', 'archived', 'deleted'];
+                const approvalTasks = urgentTasks.filter(t => !t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
+                const serviceTasks = urgentTasks.filter(t => t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
+                const hasApprovals = approvalTasks.length > 0;
+                const hasServices = serviceTasks.length > 0;
+              %>            <!-- Tab Navigation -->
             <div class="urgent-tasks-tabs">
               <button class="urgent-tab-btn active" data-tab="approvals" onclick="switchUrgentTab('approvals')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -382,20 +381,59 @@
               <path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/>
             </svg>
             <h3>Announcements</h3>
+            <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+              <span class="announcements-badge"><%= announcements.filter(a => !a.isRead).length %> new</span>
+            <% } %>
           </div>
           <div class="announcements-content" id="announcements-content">
-            <div class="no-announcements">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-                <path d="M13 11h.01M11 11h.01"/>
-              </svg>
-              <p>No announcements yet.</p>
-              <span>Check back later for updates!</span>
-              <div class="quick-tip">
-                <strong>Quick Tip:</strong> Remember to review and respond to assigned tasks promptly to meet deadlines!
+            <% if (typeof announcements !== 'undefined' && announcements.length > 0) { %>
+              <% announcements.forEach(function(announcement) { %>
+                <div class="announcement-item <%= announcement.priority === 'high' ? 'urgent' : '' %> <%= announcement.isRead ? 'read' : 'unread' %>" 
+                     data-id="<%= announcement._id %>"
+                     onclick="openAnnouncementDetail('<%= announcement._id %>'); event.stopPropagation();"
+                     style="cursor: pointer;">                  <div class="announcement-header-row">
+                    <h4 class="announcement-title"><%= announcement.title %></h4>
+                    <span class="announcement-date">
+                      <%= new Date(announcement.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                    </span>
+                  </div>
+                  <% 
+                    // Strip HTML tags for preview
+                    const plainText = announcement.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+                    const previewText = plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
+                  %>
+                  <p class="announcement-message"><%= previewText %></p>
+                  <div class="announcement-from">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>From: <%= announcement.sentBy ? announcement.sentBy.fName + ' ' + announcement.sentBy.lName : 'Admin' %></span>
+                  </div>
+                  <% if (announcement.priority === 'high') { %>
+                    <span class="announcement-badge urgent">Urgent</span>
+                  <% } else if (announcement.priority === 'medium') { %>
+                    <span class="announcement-badge info">Important</span>
+                  <% } %>
+                  <% if (!announcement.isRead) { %>
+                    <span class="announcement-badge success" style="margin-left: 0.5rem;">New</span>
+                  <% } %>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="no-announcements">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                  <path d="M13 11h.01M11 11h.01"/>
+                </svg>
+                <p>No announcements yet.</p>
+                <span>Check back later for updates!</span>
+                <div class="quick-tip">
+                  <strong>Quick Tip:</strong> Remember to review and respond to assigned tasks promptly to meet deadlines!
+                </div>
               </div>
-            </div>
+            <% } %>
           </div>
         </div>
 
@@ -801,13 +839,87 @@
     </div>
   </div>
 
-
+  <!-- Announcement Detail Modal -->
+  <div id="announcementDetailModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+      <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+          <h2 id="modalTitle" class="modal-title" style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #1f2937;"></h2>
+          <span id="modalDate" style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem; display: block;"></span>
+        </div>
+        <button onclick="closeAnnouncementModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div id="modalContent" style="line-height: 1.6; color: #1f2937;"></div>
+        <div id="modalMeta" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>From:</strong> <span id="modalFrom"></span></p>
+          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Priority:</strong> <span id="modalPriority"></span></p>
+        </div>
+      </div>
+      <div class="modal-actions" style="padding: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button onclick="closeAnnouncementModal()" style="padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: 2px solid #e5e7eb; background: #f3f4f6; color: #374151; transition: all 0.2s ease;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Include Scripts -->
   <script src="/javascripts/notifications.js"></script>
   
   <!-- Chart.js Data -->
   <script>
+    // Store announcements data globally for modal access
+    const announcementsData = <%- JSON.stringify(announcements || []) %>;
+
+    // Open announcement detail modal
+    async function openAnnouncementDetail(announcementId) {
+      const announcement = announcementsData.find(a => a._id === announcementId);
+      if (!announcement) {
+        console.error('Announcement not found:', announcementId);
+        return;
+      }
+
+      // Update modal content
+      document.getElementById('modalTitle').textContent = announcement.title;
+      document.getElementById('modalDate').textContent = new Date(announcement.createdAt).toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Render HTML content (from Quill editor)
+      document.getElementById('modalContent').innerHTML = announcement.content;
+      
+      document.getElementById('modalFrom').textContent = announcement.sentBy 
+        ? `${announcement.sentBy.fName} ${announcement.sentBy.lName}` 
+        : 'Admin';
+      
+      const priorityText = announcement.priority === 'high' ? 'Urgent' : 
+                           announcement.priority === 'medium' ? 'Important' : 'Low';
+      document.getElementById('modalPriority').textContent = priorityText;
+      
+      // Show modal
+      document.getElementById('announcementDetailModal').style.display = 'flex';
+      
+      // Mark as read if not already
+      if (!announcement.isRead) {
+        markAnnouncementAsRead(announcementId);
+      }
+    }
+
+    // Close announcement detail modal
+    function closeAnnouncementModal() {
+      document.getElementById('announcementDetailModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('announcementDetailModal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAnnouncementModal();
+      }
+    });
+
     const taskBreakdownData = {
       labels: <%- JSON.stringify((taskBreakdown && taskBreakdown.labels) || ['No Tasks']) %>,
       data: <%- JSON.stringify((taskBreakdown && taskBreakdown.data) || [1]) %>,
@@ -819,6 +931,43 @@
     const requesterComplianceData = <%- JSON.stringify(requesterCompliance || []) %>;
     
     const taskTimeline = <%- JSON.stringify(taskTimeline || []) %>;
+
+    // Mark announcement as read
+    async function markAnnouncementAsRead(announcementId) {
+      try {
+        const response = await fetch(`/api/announcements/${announcementId}/read`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          // Update UI - mark as read
+          const item = document.querySelector(`.announcement-item[data-id="${announcementId}"]`);
+          if (item) {
+            item.classList.remove('unread');
+            item.classList.add('read');
+            // Remove "New" badge
+            const newBadge = item.querySelector('.announcement-badge.success');
+            if (newBadge) newBadge.remove();
+          }
+          
+          // Update badge count in header
+          const badge = document.querySelector('.announcements-badge');
+          if (badge) {
+            const currentCount = parseInt(badge.textContent) || 0;
+            if (currentCount > 1) {
+              badge.textContent = `${currentCount - 1} new`;
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Error marking announcement as read:', error);
+      }
+    }
 
     // Urgent Tasks Tab Switching
     function switchUrgentTab(tabName) {
@@ -839,6 +988,486 @@
     }
   </script>
   
+  <!-- Mobile Responsive Styles -->
+  <style>
+    /* ==========================================
+       TABLET RESPONSIVENESS (1024px and below)
+       ========================================== */
+    @media (max-width: 1024px) {
+      .student-side {
+        padding: 1.5rem 1rem !important;
+      }
+
+      /* Unified grid - 2 columns on tablet */
+      .dashboard-unified-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+      }
+
+      /* Some items span full width */
+      .calendar-standalone,
+      .workload-snapshot-card {
+        grid-column: 1 / -1;
+      }
+
+      /* Action cards - 2 columns */
+      .action-cards-section {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+      }
+
+      /* Performance metrics - 2 columns */
+      .performance-metrics-section {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ==========================================
+       MOBILE RESPONSIVENESS (768px and below)
+       ========================================== */
+    @media (max-width: 768px) {
+      /* Main container - prevent horizontal scroll */
+      .unit-main-content {
+        padding-top: 35px !important;
+        margin-left: 0 !important;
+        overflow-x: hidden;
+        width: 100%;
+      }
+
+      .header-left-group {
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+        min-width: 0;
+        flex-shrink: 1;
+      }
+
+      .header-left-group .group {
+        display: none;
+      }
+
+      .text-wrapper-2 {
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      /* Container adjustments - prevent gaps */
+      .student-side {
+        padding: 1rem 0.5rem !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        overflow-x: hidden;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .student-side > .div {
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      /* Action cards - Stack vertically on mobile */
+      .action-cards-section {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0;
+        margin: 0;
+      }
+
+      .action-cards-section .action-card {
+        width: 100%;
+        padding: 1.25rem;
+      }
+
+      /* Guidelines */
+      .guidelines-container {
+        margin: 1.5rem 0;
+        padding: 1rem;
+      }
+
+      .guideline-item {
+        padding: 0.875rem;
+      }
+
+      .guideline-number {
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+      }
+
+      .guideline-text {
+        font-size: 0.875rem;
+      }
+
+      /* Unified grid - Convert to single column on mobile */
+      .dashboard-unified-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+      }
+
+      /* All grid items span full width */
+      .calendar-standalone,
+      .urgent-tasks-panel,
+      .announcements-panel,
+      .chart-card,
+      .requester-chart-panel,
+      .workload-snapshot-card {
+        grid-column: 1;
+        padding: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* Table responsiveness - horizontal scrolling */
+      .table-wrapper,
+      .workload-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+        margin-top: 1rem;
+        box-shadow: inset 0 0 0 1px #e5e7eb;
+      }
+
+      .workload-snapshot-table,
+      .activity-table {
+        min-width: 600px;
+        font-size: 0.875rem;
+      }
+
+      .workload-table-wrapper table {
+        min-width: 100%;
+      }
+
+      /* Table cells - prevent vertical stacking */
+      .workload-snapshot-table th,
+      .workload-snapshot-table td,
+      .activity-table th,
+      .activity-table td {
+        white-space: nowrap;
+        padding: 0.75rem 0.5rem;
+        vertical-align: middle;
+      }
+
+      /* Chart containers - responsive sizing */
+      .chart-content canvas,
+      .chart-wrapper canvas {
+        max-height: 250px;
+      }
+
+      /* Performance metrics - stack vertically */
+      .performance-metrics-section {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0;
+        margin-top: 1.5rem;
+        width: 100%;
+      }
+
+      .metric-card {
+        padding: 1.25rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .metric-value {
+        font-size: 1.75rem;
+      }
+
+      .metric-label {
+        font-size: 0.875rem;
+      }
+
+      .metric-change {
+        font-size: 0.75rem;
+      }
+
+      /* Timeline chart */
+      .timeline-chart-card {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* Recent activity table */
+      .recent-activity-table-card {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* Guide card */
+      .guide-card-container {
+        margin: 1.5rem 0 !important;
+        padding: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .guide-card-content h3 {
+        font-size: 1.125rem;
+      }
+
+      /* Calendar specific */
+      .calendar-grid {
+        font-size: 0.813rem;
+      }
+
+      .calendar-day {
+        min-height: 60px;
+      }
+
+      /* Urgent tasks tabs */
+      .urgent-tabs {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .urgent-tab-btn {
+        flex: 1;
+        min-width: 100px;
+        font-size: 0.875rem;
+      }
+    }
+
+    /* ==========================================
+       SMALL MOBILE (480px and below)
+       ========================================== */
+    @media (max-width: 480px) {
+      .text-wrapper-2 {
+        font-size: 0.9rem;
+      }
+
+      .student-side {
+        padding: 0.75rem 0.25rem !important;
+      }
+
+      .action-card-icon {
+        width: 40px;
+        height: 40px;
+      }
+
+      .action-card-title {
+        font-size: 0.938rem;
+      }
+
+      .action-card-description {
+        font-size: 0.813rem;
+      }
+
+      .dashboard-unified-grid {
+        gap: 1rem;
+        padding: 0;
+      }
+
+      .calendar-standalone,
+      .urgent-tasks-panel,
+      .announcements-panel,
+      .chart-card,
+      .requester-chart-panel,
+      .workload-snapshot-card,
+      .metric-card,
+      .timeline-chart-card,
+      .recent-activity-table-card,
+      .guidelines-container,
+      .guide-card-container {
+        padding: 0.75rem;
+      }
+
+      .metric-value {
+        font-size: 1.5rem;
+      }
+
+      .chart-content canvas,
+      .chart-wrapper canvas {
+        max-height: 200px;
+      }
+
+      .workload-snapshot-table,
+      .activity-table {
+        font-size: 0.813rem;
+        min-width: 500px;
+      }
+
+      .workload-snapshot-table th,
+      .workload-snapshot-table td,
+      .activity-table th,
+      .activity-table td {
+        padding: 0.5rem 0.375rem;
+      }
+
+      .calendar-day {
+        min-height: 50px;
+      }
+    }
+      .chart-card {
+        grid-column: 1;
+        grid-row: 4;
+      }
+
+      /* Requester chart - spans full width */
+      .requester-chart-panel {
+        grid-column: 1;
+        grid-row: 5;
+      }
+
+      /* Workload snapshot - spans full width */
+      .workload-snapshot-card {
+        grid-column: 1;
+        grid-row: 6;
+      }
+
+      /* Table responsiveness - horizontal scrolling */
+      .table-wrapper,
+      .workload-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .workload-snapshot-table,
+      .activity-table {
+        min-width: 600px; /* Prevents squishing */
+        font-size: 0.85rem;
+      }
+
+      .workload-table-wrapper table {
+        margin: 0 auto;
+      }
+
+      /* Chart containers - responsive sizing */
+      .chart-content canvas,
+      .chart-wrapper canvas {
+        max-width: 100%;
+        max-height: 250px;
+      }
+
+      /* Metrics cards - responsive grid */
+      .performance-metrics-section {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+
+      /* Timeline chart - responsive */
+      .timeline-chart-card .chart-content canvas {
+        max-height: 200px;
+      }
+
+      /* Cards and charts - mobile-friendly sizing */
+      .panel-content,
+      .calendar-content,
+      .chart-content,
+      .timeline-chart-card,
+      .recent-activity-table-card {
+        padding: 1rem;
+      }
+
+      /* Guidelines container - mobile adjustments */
+      .guidelines-container {
+        margin: 1.5rem 0;
+        padding: 1rem;
+      }
+
+      .guidelines-title {
+        font-size: 1rem;
+      }
+
+      /* Urgent tasks - mobile stacking */
+      .urgent-tasks-list {
+        gap: 0.75rem;
+      }
+
+      .task-item-compact {
+        padding: 0.75rem;
+      }
+
+      /* Tab navigation - mobile friendly */
+      .urgent-tasks-tabs {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .urgent-tab-btn {
+        flex: 1;
+        min-width: 120px;
+        font-size: 0.85rem;
+      }
+
+      /* Help & Guide Card */
+      .guide-card-container {
+        margin-top: 1.5rem;
+      }
+
+      .dashboard-guide-card {
+        padding: 1rem;
+        gap: 1rem;
+      }
+
+      .guide-card-content h3 {
+        font-size: 1.1rem;
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 480px) {
+      /* Even smaller spacing and fonts */
+      .student-side {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+
+      .action-cards-section {
+        gap: 0.75rem;
+      }
+
+      .dashboard-unified-grid {
+        gap: 0.75rem;
+      }
+
+      /* Metrics cards - single column */
+      .performance-metrics-section {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+
+      /* Smaller chart heights */
+      .chart-content canvas,
+      .chart-wrapper canvas,
+      .timeline-chart-card .chart-content canvas {
+        max-height: 180px;
+      }
+
+      /* Compact task items */
+      .task-item-compact {
+        padding: 0.5rem;
+      }
+
+      .task-compact-title {
+        font-size: 0.9rem;
+      }
+
+      .task-compact-info,
+      .task-compact-deadline {
+        font-size: 0.8rem;
+      }
+
+      /* Smaller tab buttons */
+      .urgent-tab-btn {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+
+  <script src="/socket.io/socket.io.js"></script>
   <script src="/javascripts/ejs/Unit/unitdashboard.js"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>System Settings - Admin</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/status-badges-new.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
@@ -394,7 +395,7 @@
       <div class="admin-header-right">
         <%- include('../partials/notifications') %>
         <div class="admin-profile-dropdown">
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %>" class="admin-profile-img" />
           <div class="admin-dropdown-menu">
             <a href="/admin/profile">My Profile</a>
@@ -524,6 +525,8 @@
               <input type="checkbox" id="requireUnitReview" name="requireUnitReview" checked>
               <label for="requireUnitReview">Require unit team review before approval</label>
             </div>
+
+
 
             <div class="settings-button-group">
               <button type="submit" class="settings-btn settings-btn-primary">Save Changes</button>
@@ -815,6 +818,10 @@
           document.getElementById('defaultDeadlineDays').value = settings.defaultDeadlineDays || 7;
           document.getElementById('autoApproveAfterRevisions').checked = settings.autoApproveAfterRevisions || false;
           document.getElementById('requireUnitReview').checked = settings.requireUnitReview !== false;
+          document.getElementById('archiveCompletedAfterDays').value = settings.archiveCompletedAfterDays || 30;
+          document.getElementById('archiveApprovedAfterDays').value = settings.archiveApprovedAfterDays || 30;
+          document.getElementById('archiveRevisionAfterDays').value = settings.archiveRevisionAfterDays || 14;
+          document.getElementById('allowUserReactivation').checked = settings.allowUserReactivation || false;
 
           // Populate Notification Settings
           document.getElementById('enableEmailNotifications').checked = settings.enableEmailNotifications !== false;
@@ -886,7 +893,11 @@
         maxMinorRevisions: document.getElementById('maxMinorRevisions').value,
         defaultDeadlineDays: document.getElementById('defaultDeadlineDays').value,
         autoApproveAfterRevisions: document.getElementById('autoApproveAfterRevisions').checked,
-        requireUnitReview: document.getElementById('requireUnitReview').checked
+        requireUnitReview: document.getElementById('requireUnitReview').checked,
+        archiveCompletedAfterDays: document.getElementById('archiveCompletedAfterDays').value,
+        archiveApprovedAfterDays: document.getElementById('archiveApprovedAfterDays').value,
+        archiveRevisionAfterDays: document.getElementById('archiveRevisionAfterDays').value,
+        allowUserReactivation: document.getElementById('allowUserReactivation').checked
       };
 
       try {

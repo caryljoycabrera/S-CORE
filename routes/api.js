@@ -7,17 +7,24 @@ const router = express.Router();
 const User = require('../models/User');
 const RequestApproval = require('../models/RequestApproval');
 const ServiceRequest = require('../models/ServiceRequest');
+const RequestType = require('../models/RequestType');
 const Conversation = require('../models/Conversation');
 const { requireLogin, requireAdmin } = require('../middleware/auth');
 const { upload } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const { apiLimiter } = require('../middleware/rateLimiter');
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
 const { getOrganizations, getOffices, getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
 const settingsService = require('../services/settingsService');
 const { sanitizeText, sanitizeMongoId, sanitizeString } = require('../utils/sanitize');
 const chatbotService = require('../services/chatbotService');
+=======
+const { getOrganizations, getOffices, getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+const settingsService = require('../services/settingsService');
+const { sanitizeText, sanitizeMongoId, sanitizeString } = require('../utils/sanitize');
+>>>>>>> main
 
 /**
  * POST /api/add-organization
@@ -70,7 +77,10 @@ router.post('/api/add-office', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
+<<<<<<< HEAD
 >>>>>>> Stashed changes
+=======
+>>>>>>> main
 
 /**
  * POST /api/users/verify
@@ -78,12 +88,13 @@ router.post('/api/add-office', async (req, res) => {
  */
 router.post('/api/users/verify', requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
+    // Sanitize and validate userId to prevent NoSQL injection
+    const userId = sanitizeMongoId(req.body.userId);
 
     if (!userId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'User ID is required' 
+        message: 'Valid User ID is required' 
       });
     }
 
@@ -118,12 +129,13 @@ router.post('/api/users/verify', requireAdmin, async (req, res) => {
  */
 router.post('/api/users/deny', requireAdmin, async (req, res) => {
   try {
-    const { userId } = req.body;
+    // Sanitize and validate userId to prevent NoSQL injection
+    const userId = sanitizeMongoId(req.body.userId);
 
     if (!userId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'User ID is required' 
+        message: 'Valid User ID is required' 
       });
     }
 
@@ -147,6 +159,81 @@ router.post('/api/users/deny', requireAdmin, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Internal server error while denying user' 
+    });
+  }
+});
+
+/**
+ * GET /api/system-data
+ * Public API endpoint for system configuration data (organizations, offices, units, requestStatuses)
+ */
+router.get('/api/system-data', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      data: {
+        organizations: getOrganizations(),
+        offices: getOffices(),
+        units: getUnits(),
+        requestStatuses: getRequestStatuses()
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching system data:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch system data'
+    });
+  }
+});
+
+/**
+ * GET /api/users/search
+ * Admin API endpoint to search for users by name or email
+ * Query params: q (search query string)
+ */
+router.get('/api/users/search', requireAdmin, async (req, res) => {
+  try {
+    console.log('[API /api/users/search] Request received with query:', req.query.q);
+    console.log('[API /api/users/search] User session:', req.session?.userId, 'Role:', req.user?.role);
+    
+    const query = sanitizeString(req.query.q, 100);
+    console.log('[API /api/users/search] Sanitized query:', query);
+    
+    if (!query || query.length < 2) {
+      console.log('[API /api/users/search] Query too short, returning empty array');
+      return res.json([]);
+    }
+
+    // Search for users by first name, last name, or email
+    const searchCriteria = {
+      $and: [
+        { isDeleted: { $ne: true } }, // Exclude deleted users
+        { status: 'approved' }, // Only approved users
+        {
+          $or: [
+            { fName: { $regex: query, $options: 'i' } },
+            { lName: { $regex: query, $options: 'i' } },
+            { email: { $regex: query, $options: 'i' } }
+          ]
+        }
+      ]
+    };
+    
+    console.log('[API /api/users/search] Search criteria:', JSON.stringify(searchCriteria, null, 2));
+    
+    const users = await User.find(searchCriteria)
+    .select('_id fName lName email userType')
+    .limit(10)
+    .lean();
+
+    console.log('[API /api/users/search] Found', users.length, 'users');
+    res.json(users);
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to search users' 
     });
   }
 });
@@ -313,6 +400,224 @@ router.get('/api/deadlines/:date/details', requireLogin, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/calendar-requests
+ * Admin calendar endpoint to get all requests with deadlines grouped by date
+ */
+router.get('/api/admin/calendar-requests', apiLimiter, requireAdmin, async (req, res) => {
+  try {
+    console.log('Admin fetching calendar requests from database...');
+
+    // Fetch all approval requests and service requests with deadlines
+    const approvalRequests = await RequestApproval.find({
+      deadline: { $exists: true, $ne: null }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    const serviceRequests = await ServiceRequest.find({
+      deadline: { $exists: true, $ne: null }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    console.log(`Found ${approvalRequests.length} approval requests and ${serviceRequests.length} service requests with deadlines`);
+
+    res.json({
+      success: true,
+      approvalRequests: approvalRequests,
+      serviceRequests: serviceRequests
+    });
+  } catch (error) {
+    console.error('Error fetching admin calendar requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch admin calendar requests',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/admin/calendar-requests/:date/details
+ * Admin calendar endpoint for detailed request info for a specific date
+ */
+router.get('/api/admin/calendar-requests/:date/details', requireAdmin, async (req, res) => {
+  try {
+    const { date } = req.params;
+    console.log(`Fetching detailed admin calendar requests for date: ${date}`);
+
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date format. Use YYYY-MM-DD',
+        date: date,
+        approvals: [],
+        services: [],
+        totalCount: 0
+      });
+    }
+
+    // Create date range for the entire day (Asia/Manila timezone)
+    // Parse date string as local date to avoid timezone conversion issues
+    const [year, month, day] = date.split('-').map(Number);
+    const startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    console.log(`Searching between ${startDate.toISOString()} and ${endDate.toISOString()}`);
+
+    // Fetch detailed requests
+    const approvals = await RequestApproval.find({
+      deadline: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    const services = await ServiceRequest.find({
+      deadline: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    })
+    .populate('userId', 'fName lName userType affiliation studentOrganization')
+    .select('_id title description organization deadline createdAt userId status dateType')
+    .lean();
+
+    console.log(`Found ${approvals.length} approvals, ${services.length} services for ${date}`);
+
+    // Process the data
+    const processedApprovals = approvals.map(approval => ({
+      ...approval,
+      displayOrganization: approval.userId?.userType === 'nonstudent'
+        ? (Array.isArray(approval.userId.affiliation) ? approval.userId.affiliation.join(', ') : approval.userId.affiliation)
+        : approval.organization || 'N/A'
+    }));
+
+    const processedServices = services.map(service => ({
+      ...service,
+      displayOrganization: service.userId?.userType === 'nonstudent'
+        ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
+        : service.organization || 'N/A'
+    }));
+
+    const response = {
+      success: true,
+      date: date,
+      approvals: processedApprovals,
+      services: processedServices,
+      totalCount: processedApprovals.length + processedServices.length
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching detailed admin calendar requests:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch detailed admin calendar requests',
+      date: req.params.date || 'unknown',
+      approvals: [],
+      services: [],
+      totalCount: 0
+    });
+  }
+});
+
+/**
+ * GET /api/request/:requestId
+ * Fetch minimal request details (used by Unit archived request modal)
+ */
+router.get('/api/request/:requestId', apiLimiter, requireLogin, async (req, res) => {
+  try {
+    const requestId = sanitizeMongoId(req.params.requestId);
+    if (!requestId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid Request ID is required'
+      });
+    }
+
+    const user = await User.findById(req.session.userId).select('role unitTeam').lean();
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const projection = 'title status previousStatus deletedAt archivedAt archiveReason isDeleted assignedUnits originalAssignedUnits userId updatedAt';
+
+    const serviceRequest = await ServiceRequest.findById(requestId).select(projection).lean();
+    const approvalRequest = serviceRequest
+      ? null
+      : await RequestApproval.findById(requestId).select(projection).lean();
+
+    const requestDoc = serviceRequest || approvalRequest;
+    const requestType = serviceRequest ? 'service' : (approvalRequest ? 'approval' : null);
+
+    if (!requestDoc || !requestType) {
+      return res.status(404).json({
+        success: false,
+        message: 'Request not found'
+      });
+    }
+
+    // Access control
+    const sessionUserId = String(req.session.userId);
+    const requestorId = requestDoc.userId ? String(requestDoc.userId) : null;
+
+    if (user.role === 'admin') {
+      // Admin can access any request
+    } else if (user.role === 'unit') {
+      const userUnit = (user.unitTeam || '').toString().trim().toLowerCase();
+      const assignedUnit = (requestDoc.assignedUnits || '').toString().trim().toLowerCase();
+      const originalUnit = (requestDoc.originalAssignedUnits || '').toString().trim().toLowerCase();
+
+      if (!userUnit || (assignedUnit !== userUnit && originalUnit !== userUnit)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+    } else {
+      // Regular user can only access their own request
+      if (!requestorId || requestorId !== sessionUserId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+    }
+
+    const statusStr = (requestDoc.status || '').toString();
+    const isArchived = Boolean(requestDoc.isDeleted) || statusStr.toLowerCase() === 'archived';
+
+    return res.json({
+      success: true,
+      requestId,
+      requestType,
+      archived: isArchived,
+      title: requestDoc.title || 'Untitled Request',
+      status: requestDoc.status,
+      previousStatus: requestDoc.previousStatus,
+      // Unit UI expects `deletedAt`; fall back to `archivedAt`/`updatedAt` when not present
+      deletedAt: requestDoc.deletedAt || requestDoc.archivedAt || requestDoc.updatedAt || null
+    });
+  } catch (error) {
+    console.error('Error fetching request details:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch request details'
+    });
+  }
+});
+
+/**
  * GET /api/conversation/:requestId
  * API endpoint to get conversation for a specific request
  */
@@ -333,6 +638,23 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
 
     // Check access permissions
     const targetRequest = serviceRequest || approvalRequest;
+
+    // Check if request is deleted/archived
+    if (targetRequest.isDeleted) {
+      console.log(`Request ${requestId} is archived/deleted. Returning archive notification.`);
+      
+      // Return special response for archived request so frontend can display restoration option
+      return res.status(410).json({
+        archived: true,
+        requestId: requestId,
+        title: targetRequest.title || 'Untitled Request',
+        status: targetRequest.status,
+        previousStatus: targetRequest.previousStatus,
+        deletedAt: targetRequest.deletedAt,
+        archiveReason: targetRequest.archiveReason,
+        message: 'This request has been archived by an administrator. You can request restoration by providing a reason in the details below.'
+      });
+    }
 
     // Handle missing user data
     if (!targetRequest.userId) {
@@ -387,7 +709,7 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
     // Format response with message data including sender names and read receipts
     const formattedMessages = conversation.messages.map(msg => ({
       _id: msg._id,
-      senderName: msg.senderId ? `${msg.senderId.fName} ${msg.senderId.lName}` : 'Unknown',
+      senderName: msg.senderId ? `${msg.senderId.fName || ''} ${msg.senderId.lName || ''}`.trim() || 'Unknown' : 'Unknown',
       senderRole: msg.senderRole,
       content: msg.content,
       attachments: msg.attachments || [],
@@ -434,8 +756,13 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, up
       return res.status(404).json({ error: 'Request not found' });
     }
 
-    // Check access permissions
+    // Check if request is deleted/archived
     const targetRequest = serviceRequest || approvalRequest;
+    if (targetRequest.isDeleted) {
+      return res.status(410).json({ error: 'Cannot send message to an archived request' });
+    }
+
+    // Check access permissions
     if (user.role !== 'admin' && user.role !== 'unit' && targetRequest.userId.toString() !== req.session.userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -545,7 +872,7 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, up
       message: {
         _id: conversation.messages[conversation.messages.length - 1]._id,
         senderName: conversation.messages[conversation.messages.length - 1].senderId ? 
-          `${conversation.messages[conversation.messages.length - 1].senderId.fName} ${conversation.messages[conversation.messages.length - 1].senderId.lName}` : 'Unknown',
+          `${conversation.messages[conversation.messages.length - 1].senderId.fName || ''} ${conversation.messages[conversation.messages.length - 1].senderId.lName || ''}`.trim() || 'Unknown' : 'Unknown',
         senderRole: conversation.messages[conversation.messages.length - 1].senderRole,
         content: conversation.messages[conversation.messages.length - 1].content,
         attachments: conversation.messages[conversation.messages.length - 1].attachments || [],
@@ -595,34 +922,32 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
     // Build revision history from revisionHistory field in the request
     const revisions = [];
 
-    // Add initial submission
-    revisions.push({
-      type: 'initial',
-      timestamp: approvalRequest.createdAt,
-      by: approvalRequest.userId ? `${approvalRequest.userId.fName} ${approvalRequest.userId.lName}` : 'Unknown',
-      description: approvalRequest.description || '',
-      files: approvalRequest.files || []
-    });
-
     // Add all revisions from revisionHistory array
     if (approvalRequest.revisionHistory && approvalRequest.revisionHistory.length > 0) {
       for (const revision of approvalRequest.revisionHistory) {
-        // Check if this is a unit action (requestedBy) or user resubmission (respondedBy only)
-        const isUnitAction = revision.requestedBy && !revision.respondedBy;
-        const isUserResubmission = revision.respondedBy && !revision.requestedBy;
+        // Check action types based on fields and revision type
+        // IMPORTANT: Check if BOTH fields exist AND have meaningful values to determine if combined
+        const hasRequestedBy = revision.requestedBy && revision.requestedBy.toString() !== '';
+        const hasRespondedBy = revision.respondedBy && revision.respondedBy.toString() !== '';
+        
+        const isUnitAction = hasRequestedBy && !hasRespondedBy;
+        const isUserResubmission = hasRespondedBy && !hasRequestedBy;
+        const isCombined = hasRequestedBy && hasRespondedBy;
+        
+        // Log to debug doubling issue
+        console.log('🔍 [API] Processing revision:', {
+          hasRequestedBy,
+          hasRespondedBy,
+          isUnitAction,
+          isUserResubmission,
+          isCombined,
+          revisionNotes: revision.revisionNotes?.substring(0, 50),
+          status: revision.status
+        });
         
         if (isUnitAction) {
           // This is a unit requesting revision
           let requestedByUser = await User.findById(revision.requestedBy).select('fName lName unitTeam');
-          
-          console.log('🔍 [API] Unit action revision:', {
-            revisionNotes: revision.revisionNotes,
-            notes: revision.notes,
-            description: revision.description,
-            hasRevisionNotes: !!revision.revisionNotes,
-            revisionNotesType: typeof revision.revisionNotes,
-            requestedByUser
-          });
           
           revisions.push({
             requestedBy: requestedByUser ? {
@@ -641,15 +966,6 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
           // This is a user resubmitting after revision
           let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
           
-          console.log('🔍 [API] User resubmission:', {
-            responseNotes: revision.responseNotes,
-            notes: revision.notes,
-            description: revision.description,
-            hasResponseNotes: !!revision.responseNotes,
-            responseNotesType: typeof revision.responseNotes,
-            respondedByUser
-          });
-          
           revisions.push({
             respondedBy: respondedByUser ? {
               _id: respondedByUser._id,
@@ -662,6 +978,57 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
             type: 'resubmitted',
             status: revision.status
           });
+        } else if (isCombined) {
+          // Handle combined entries (unit feedback + user response in same object)
+          // This should be rare - only when both requestedBy AND respondedBy exist with values
+          console.log('⚠️ [API] COMBINED ENTRY DETECTED - This should be rare:', {
+            hasRequestedBy,
+            hasRespondedBy,
+            revisionNotes: revision.revisionNotes?.substring(0, 50),
+            responseNotes: revision.responseNotes?.substring(0, 50)
+          });
+          
+          let requestedByUser = await User.findById(revision.requestedBy).select('fName lName unitTeam');
+          
+          // Push unit action first (only if there are revision notes)
+          if (revision.revisionNotes || revision.notes || revision.description) {
+            revisions.push({
+              requestedBy: requestedByUser ? {
+                _id: requestedByUser._id,
+                fName: requestedByUser.fName,
+                lName: requestedByUser.lName,
+                unitTeam: requestedByUser.unitTeam
+              } : revision.requestedBy,
+              requestedAt: revision.requestedAt,
+              revisionNotes: revision.revisionNotes || revision.notes || revision.description || '',
+              revisionFiles: revision.revisionFiles || [],
+              status: revision.status,
+              type: 'revision'
+            });
+          }
+          
+          // Then push user response (only if there are actual response notes - different from revision notes)
+          const hasResponseNotes = revision.responseNotes && revision.responseNotes.trim() !== '' && 
+                                   revision.responseNotes !== revision.revisionNotes;
+          const hasResponseFiles = revision.responseFiles && revision.responseFiles.length > 0;
+          
+          if (hasResponseNotes || hasResponseFiles) {
+            let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
+            revisions.push({
+              respondedBy: respondedByUser ? {
+                _id: respondedByUser._id,
+                fName: respondedByUser.fName,
+                lName: respondedByUser.lName
+              } : revision.respondedBy,
+              respondedAt: revision.respondedAt,
+              responseNotes: revision.responseNotes || '',
+              responseFiles: revision.responseFiles || [],
+              type: 'resubmitted',
+              status: revision.status
+            });
+          }
+        } else {
+          console.log('⚠️ [API] Revision entry has neither requestedBy nor respondedBy - skipping');
         }
       }
     }
@@ -727,15 +1094,6 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
     // Build revision history
     const revisions = [];
 
-    // Add initial submission
-    revisions.push({
-      type: 'initial',
-      timestamp: serviceRequest.createdAt,
-      by: serviceRequest.userId ? `${serviceRequest.userId.fName} ${serviceRequest.userId.lName}` : 'Unknown',
-      description: serviceRequest.description || '',
-      files: serviceRequest.files || []
-    });
-
     // LEGACY SUPPORT: If deliverables exist but no revisionHistory, create a synthetic entry
     if (serviceRequest.deliverables && serviceRequest.deliverables.length > 0 && 
         (!serviceRequest.revisionHistory || serviceRequest.revisionHistory.length === 0)) {
@@ -757,6 +1115,18 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
     // Add all revisions from revisionHistory array
     if (serviceRequest.revisionHistory && serviceRequest.revisionHistory.length > 0) {
       for (const revision of serviceRequest.revisionHistory) {
+        // Skip conversation messages (type='message')
+        if (revision.revisionType === 'message' || revision.type === 'message') {
+          console.log('[API] Skipping message type revision');
+          continue;
+        }
+        
+        // Skip completed type (final remarks) - these should not appear in revision history
+        if (revision.revisionType === 'completed' || revision.type === 'completed') {
+          console.log('[API] Skipping completed type revision (final remarks)');
+          continue;
+        }
+        
         // Unit actions have requestedBy field (deliverable uploads, completions)
         // User actions have respondedBy field (revision requests)
         const isUnitAction = revision.requestedBy !== undefined && revision.requestedBy !== null;
@@ -810,6 +1180,9 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
         }
       }
     }
+
+    // Sort revisions by timestamp (newest first)
+    revisions.sort((a, b) => new Date(a.requestedAt || a.respondedAt || a.timestamp) - new Date(b.requestedAt || b.respondedAt || b.timestamp));
 
     res.json({
       success: true,
@@ -982,8 +1355,12 @@ router.get('/admin/request-volume', async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
     const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999); // End of today
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0); // Start of the day
+
+    console.log('Request volume query:', { days, startDate, endDate });
 
     // Generate date labels
     const labels = [];
@@ -991,17 +1368,21 @@ router.get('/admin/request-volume', async (req, res) => {
     const serviceCounts = [];
 
     for (let i = 0; i < days; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
+      const currentDate = new Date(startDate);
+      currentDate.setDate(currentDate.getDate() + i);
+      currentDate.setHours(0, 0, 0, 0);
       
-      labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      const nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+      nextDate.setHours(0, 0, 0, 0);
+      
+      labels.push(currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
 
       // Count approvals for this date
-      const approvalCount = await ApprovalRequest.countDocuments({
+      const approvalCount = await RequestApproval.countDocuments({
         createdAt: {
-          $gte: new Date(dateStr),
-          $lt: new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1))
+          $gte: currentDate,
+          $lt: nextDate
         }
       });
       approvalCounts.push(approvalCount);
@@ -1009,12 +1390,18 @@ router.get('/admin/request-volume', async (req, res) => {
       // Count services for this date
       const serviceCount = await ServiceRequest.countDocuments({
         createdAt: {
-          $gte: new Date(dateStr),
-          $lt: new Date(new Date(dateStr).setDate(new Date(dateStr).getDate() + 1))
+          $gte: currentDate,
+          $lt: nextDate
         }
       });
       serviceCounts.push(serviceCount);
     }
+
+    console.log('Request volume results:', { 
+      totalApprovals: approvalCounts.reduce((a, b) => a + b, 0),
+      totalServices: serviceCounts.reduce((a, b) => a + b, 0),
+      labels: labels.length
+    });
 
     res.json({
       success: true,
@@ -1028,8 +1415,11 @@ router.get('/admin/request-volume', async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> main
 // Get active tasks by unit
 router.get('/admin/active-tasks-by-unit', async (req, res) => {
   try {
@@ -1404,6 +1794,7 @@ router.get('/api/request-types/approved', requireLogin, async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 // ===== CHATBOT Q&A ROUTES =====
 
 /**
@@ -1545,4 +1936,6 @@ router.get('/api/admin/chatbot/stats', requireAdmin, async (req, res) => {
 });
 
 >>>>>>> Stashed changes
+=======
+>>>>>>> main
 module.exports = router;

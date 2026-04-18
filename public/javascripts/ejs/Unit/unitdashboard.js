@@ -1,3 +1,373 @@
+// ===== Real-time Dashboard Updates =====
+// Socket.IO connection for real-time dashboard updates
+
+class DashboardSocketHandler {
+  constructor() {
+    this.socket = null;
+    this.userId = '<%= user._id %>';
+    this.userRole = 'unit';
+    this.unitTeam = '<%= user.unitTeam %>';
+  }
+
+  /**
+   * Initialize socket connection
+   */
+  initialize() {
+    this.socket = io();
+
+    this.socket.on('connect', () => {
+      console.log('[Dashboard] Socket connected:', this.socket.id);
+      
+      // Authenticate with server
+      this.socket.emit('authenticate', {
+        userId: this.userId,
+        userRole: this.userRole,
+        unitTeam: this.unitTeam
+      });
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('[Dashboard] Socket disconnected');
+    });
+
+    this.socket.on('authenticated', (data) => {
+      console.log('[Dashboard] Authenticated:', data);
+    });
+
+    // Listen for dashboard data updates
+    this.socket.on('dashboardUpdate', (data) => {
+      console.log('[Dashboard] Dashboard update received:', data);
+      this.handleDashboardUpdate(data);
+    });
+
+    // Listen for task updates
+    this.socket.on('taskUpdate', (data) => {
+      console.log('[Dashboard] Task update received:', data);
+      this.handleTaskUpdate(data);
+    });
+
+    // Listen for announcement updates
+    this.socket.on('announcementUpdate', (data) => {
+      console.log('[Dashboard] Announcement update received:', data);
+      this.handleAnnouncementUpdate(data);
+    });
+  }
+
+  /**
+   * Handle dashboard data update
+   */
+  async handleDashboardUpdate(data) {
+    console.log('[Dashboard] Refreshing dashboard data...');
+    
+    try {
+      // Refresh urgent tasks
+      await this.refreshUrgentTasks();
+      
+      // Refresh task breakdown chart
+      await this.refreshTaskBreakdown();
+      
+      // Refresh announcements
+      await this.refreshAnnouncements();
+      
+      // Refresh workload snapshot
+      await this.refreshWorkloadSnapshot();
+      
+      // Refresh recent activity
+      await this.refreshRecentActivity();
+      
+      // Refresh requester compliance
+      await this.refreshRequesterCompliance();
+      
+      // Refresh task timeline
+      await this.refreshTaskTimeline();
+      
+      console.log('[Dashboard] Dashboard refresh complete');
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing dashboard:', error);
+    }
+  }
+
+  /**
+   * Handle specific task update
+   */
+  handleTaskUpdate(data) {
+    const { taskId, action, taskType } = data;
+    console.log(`[Dashboard] Task ${action}: ${taskId} (${taskType})`);
+    
+    // For now, do a full refresh. Could be optimized to update specific elements
+    this.handleDashboardUpdate(data);
+  }
+
+  /**
+   * Handle announcement update
+   */
+  handleAnnouncementUpdate(data) {
+    console.log('[Dashboard] Announcement update:', data);
+    this.refreshAnnouncements();
+  }
+
+  /**
+   * Refresh urgent tasks section
+   */
+  async refreshUrgentTasks() {
+    try {
+      const response = await fetch('/unit/dashboard/urgent-tasks', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        const container = document.querySelector('.urgent-tasks-panel');
+        if (container) {
+          container.innerHTML = html;
+        }
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing urgent tasks:', error);
+    }
+  }
+
+  /**
+   * Refresh task breakdown chart
+   */
+  async refreshTaskBreakdown() {
+    try {
+      const response = await fetch('/unit/dashboard/task-breakdown', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update the global taskBreakdownData variable
+        if (window.taskBreakdownData) {
+          Object.assign(window.taskBreakdownData, data);
+        }
+        
+        // Re-render the chart if it exists
+        if (window.taskBreakdownChart) {
+          window.taskBreakdownChart.data.labels = data.labels;
+          window.taskBreakdownChart.data.datasets[0].data = data.data;
+          window.taskBreakdownChart.update();
+        }
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing task breakdown:', error);
+    }
+  }
+
+  /**
+   * Refresh announcements
+   */
+  async refreshAnnouncements() {
+    try {
+      const response = await fetch('/unit/dashboard/announcements', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        const container = document.getElementById('announcements-content');
+        if (container) {
+          container.innerHTML = html;
+        }
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing announcements:', error);
+    }
+  }
+
+  /**
+   * Refresh workload snapshot
+   */
+  async refreshWorkloadSnapshot() {
+    try {
+      const response = await fetch('/unit/dashboard/workload-snapshot', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update the table values
+        const table = document.querySelector('.workload-snapshot-table');
+        if (table) {
+          const rows = table.querySelectorAll('tbody tr');
+          if (rows.length >= 3) {
+            // Update pending tasks
+            const pendingCell = rows[0].querySelector('.count-cell');
+            if (pendingCell) pendingCell.textContent = data.pendingRequests;
+            
+            // Update active revisions
+            const revisionCell = rows[1].querySelector('.count-cell');
+            if (revisionCell) revisionCell.textContent = data.inReviewRequests;
+            
+            // Update completed this week
+            const completedCell = rows[2].querySelector('.count-cell');
+            if (completedCell) completedCell.textContent = data.approvedRequests;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing workload snapshot:', error);
+    }
+  }
+
+  /**
+   * Refresh recent activity
+   */
+  async refreshRecentActivity() {
+    try {
+      const response = await fetch('/unit/dashboard/recent-activity', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        const container = document.querySelector('.activity-table tbody');
+        if (container) {
+          container.innerHTML = html;
+        }
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing recent activity:', error);
+    }
+  }
+
+  /**
+   * Refresh requester compliance chart
+   */
+  async refreshRequesterCompliance() {
+    try {
+      const response = await fetch('/unit/dashboard/requester-compliance', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update the global requesterComplianceData variable
+        if (window.requesterComplianceData) {
+          window.requesterComplianceData.length = 0;
+          window.requesterComplianceData.push(...data);
+        }
+        
+        // Re-render the chart if it exists
+        if (window.requesterChart) {
+          const organizations = data.map(item => this.abbreviateOrgName(item.organization));
+          const onTimeData = data.map(item => item.onTime);
+          const pendingData = data.map(item => item.pending);
+          const overdueData = data.map(item => item.overdue);
+          
+          window.requesterChart.data.labels = organizations;
+          window.requesterChart.data.datasets[0].data = onTimeData;
+          window.requesterChart.data.datasets[1].data = pendingData;
+          window.requesterChart.data.datasets[2].data = overdueData;
+          window.requesterChart.update();
+        }
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing requester compliance:', error);
+    }
+  }
+
+  /**
+   * Refresh task timeline chart
+   */
+  async refreshTaskTimeline() {
+    try {
+      const response = await fetch('/unit/dashboard/task-timeline', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update the global taskTimeline variable
+        if (window.taskTimeline) {
+          window.taskTimeline.length = 0;
+          window.taskTimeline.push(...data);
+        }
+        
+        // Re-render the chart if it exists
+        if (window.taskTimelineChart) {
+          const labels = data.map(d => d.date);
+          const newTasksData = data.map(d => d.newTasks);
+          const completedData = data.map(d => d.completed);
+          
+          window.taskTimelineChart.data.labels = labels;
+          window.taskTimelineChart.data.datasets[0].data = newTasksData;
+          window.taskTimelineChart.data.datasets[1].data = completedData;
+          window.taskTimelineChart.update();
+        }
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error refreshing task timeline:', error);
+    }
+  }
+
+  /**
+   * Helper function to abbreviate organization names
+   */
+  abbreviateOrgName(orgName) {
+    if (orgName.length <= 30) return orgName;
+    
+    const acronymMatch = orgName.match(/\(([A-Z]+)\)/);
+    if (acronymMatch) {
+      return acronymMatch[1];
+    }
+    
+    if (orgName.includes(',')) {
+      const parts = orgName.split(',');
+      if (parts.length > 1) {
+        return parts[0].trim().substring(0, 25) + '...';
+      }
+    }
+    
+    return orgName.substring(0, 27) + '...';
+  }
+
+  /**
+   * Disconnect socket
+   */
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+}
+
+// Global dashboard socket instance
+let dashboardSocket = null;
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  dashboardSocket = new DashboardSocketHandler();
+  dashboardSocket.initialize();
+});
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+  if (dashboardSocket) {
+    dashboardSocket.disconnect();
+  }
+});
+
 // Announcements Manager
 const announcementsManager = {
   currentDate: new Date('<%= new Date().toISOString() %>'),

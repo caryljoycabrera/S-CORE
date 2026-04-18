@@ -109,7 +109,7 @@ class NotificationSystem {
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span class="notification-badge" id="notification-badge">0</span>
+          <span class="notification-badge empty" id="notification-badge">0</span>
         </button>
         
         <div class="notification-dropdown" id="notification-dropdown">
@@ -526,9 +526,9 @@ class NotificationSystem {
         <div class="notification-icon ${notification.type}">
           ${icon}
         </div>
-        <div class="notification-content">
+        <div class="notification-item-content">
           <h4 class="notification-item-title">${this.escapeHtml(notification.title)}</h4>
-          <p class="notification-item-message">${this.escapeHtml(notification.message)}</p>
+          <p class="notification-item-message">${this.processNotificationMessage(notification.message, notification.type)}</p>
           <div class="notification-meta">
             <span class="notification-time">${timeAgo}</span>
             ${showSender ? `<span class="notification-sender">from ${this.escapeHtml(notification.sender.name)}</span>` : ''}
@@ -562,10 +562,36 @@ class NotificationSystem {
       'user_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17,11 19,13 23,9"></polyline></svg>',
       'user_denied': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>',
       'new_message': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+      'announcement': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
       'system': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'
     };
     
     return icons[type] || icons['system'];
+  }
+
+  /**
+   * Process notification message - detect attachments and format appropriately
+   */
+  processNotificationMessage(message, type) {
+    // For announcements, detect attachment types
+    if (type === 'announcement') {
+      const hasImages = /<img\s/i.test(message);
+      const hasFileLinks = /<a\s[^>]*href="\/uploads\/[^>]*>📎/i.test(message);
+      
+      if (hasImages && hasFileLinks) {
+        return '📎 File Attachment & 🖼️ Image Attachment';
+      } else if (hasImages) {
+        return '🖼️ Image Attachment';
+      } else if (hasFileLinks) {
+        return '📎 File Attachment';
+      } else {
+        // Strip HTML tags for regular text content
+        return message.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+      }
+    }
+    
+    // For other notification types, escape HTML normally
+    return this.escapeHtml(message);
   }
 
   /**
@@ -596,7 +622,22 @@ class NotificationSystem {
           }
         }
         
-        // Handle navigation based on URL type
+        // Handle announcement notifications specially - open announcement modal
+        if (type === 'announcement') {
+          console.log('📢 Announcement notification clicked - opening modal');
+          this.closeDropdown();
+          // Get the announcement ID from the notification's relatedId
+          const announcement = this.notifications.find(n => (n._id || n.id) === id);
+          if (announcement && announcement.relatedId) {
+            console.log('📂 Opening announcement modal with ID:', announcement.relatedId);
+            this.openAnnouncementModalFromNotification(announcement.relatedId);
+          } else {
+            console.warn('⚠️ Could not find announcement ID for notification:', id);
+          }
+          return;
+        }
+        
+        // Handle navigation based on URL type for other notifications
         if (url && url !== 'undefined' && url !== '') {
           console.log('🔗 Handling notification navigation with URL:', url);
           this.closeDropdown();
@@ -630,10 +671,84 @@ class NotificationSystem {
   }
 
   /**
+   * Open announcement modal from notification click
+   */
+  openAnnouncementModalFromNotification(announcementId) {
+    console.log('🎯 openAnnouncementModalFromNotification called with ID:', announcementId);
+    
+    // Call the openAnnouncementDetail function from the page if it exists
+    if (typeof openAnnouncementDetail === 'function') {
+      console.log('✅ Calling openAnnouncementDetail function');
+      openAnnouncementDetail(announcementId);
+    } else {
+      console.warn('⚠️ openAnnouncementDetail function not found on page');
+      // Fallback: try to call it on window for unit users
+      if (window.openAnnouncementDetail && typeof window.openAnnounce === 'function') {
+        console.log('✅ Using window.openAnnouncementDetail');
+        window.openAnnouncementDetail(announcementId);
+      }
+    }
+  }
+
+  /**
+   * Rewrite notification URL based on user role
+   * Ensures notifications redirect to the correct role-specific pages
+   */
+  rewriteUrlForRole(url) {
+    if (!url || !this.userRole) return url;
+
+    try {
+      const urlObj = new URL(url, window.location.origin);
+      const params = urlObj.searchParams;
+      const path = urlObj.pathname;
+
+      // Define URL mappings for each role
+      const urlMappings = {
+        // Unit role mappings - redirect from user/admin pages to unit equivalents
+        unit: {
+          '/request-approvals': '/unit/task-approvals',
+          '/service-requests': '/unit/task-services',
+          '/admin/approvals': '/unit/task-approvals',
+          '/admin/services': '/unit/task-services'
+        },
+        // Admin role mappings - redirect from user pages to admin equivalents
+        admin: {
+          '/request-approvals': '/admin/approvals',
+          '/service-requests': '/admin/services'
+        },
+        // User role mappings - redirect from admin/unit pages to user equivalents
+        user: {
+          '/admin/approvals': '/request-approvals',
+          '/admin/services': '/service-requests',
+          '/unit/task-approvals': '/request-approvals',
+          '/unit/task-services': '/service-requests'
+        }
+      };
+
+      const roleMappings = urlMappings[this.userRole];
+      if (roleMappings && roleMappings[path]) {
+        const newPath = roleMappings[path];
+        console.log(`🔀 Rewriting URL path for ${this.userRole} role: ${path} → ${newPath}`);
+        urlObj.pathname = newPath;
+        return urlObj.toString();
+      }
+
+      return url;
+    } catch (error) {
+      console.error('Error rewriting URL for role:', error);
+      return url;
+    }
+  }
+
+  /**
    * Handle notification navigation - opens modals or navigates to pages
    */
   handleNotificationNavigation(url, type) {
-    console.log('🚀 Starting notification navigation:', { url, type });
+    console.log('🚀 Starting notification navigation:', { url, type, userRole: this.userRole });
+    
+    // Rewrite URL based on user role to ensure navigation to correct role-specific page
+    url = this.rewriteUrlForRole(url);
+    console.log('🔄 URL after role rewrite:', url);
     
     try {
       const urlObj = new URL(url, window.location.origin);
@@ -729,6 +844,30 @@ class NotificationSystem {
         return;
       }
       
+      // Check if this is an archived request restoration modal
+      if (params.get('modal') === 'archived' && params.has('requestId')) {
+        const requestId = params.get('requestId');
+        const requestType = params.get('type');
+        
+        console.log('📦 Archived/Deleted request restoration modal detected:', { requestId, requestType });
+        
+        // Check if we're on the correct page for this request type
+        const currentPath = window.location.pathname;
+        const targetPath = urlObj.pathname;
+        
+        if (currentPath === targetPath) {
+          // We're on the right page, try to open modal
+          console.log('✅ On correct page, opening archived restoration modal...');
+          this.closeDropdown();
+          this.openArchivedRequestModal(requestId, requestType);
+        } else {
+          // Navigate to the correct page with modal parameters
+          console.log('🔄 Navigating to correct page for archived request:', url);
+          window.location.href = url;
+        }
+        return;
+      }
+      
       // Check if this is a modal-opening URL
       if (params.has('modal') && params.has('requestId')) {
         const requestId = params.get('requestId');
@@ -778,6 +917,90 @@ class NotificationSystem {
       console.error('❌ Error handling notification navigation:', error);
       // Fallback to regular navigation
       window.location.href = url;
+    }
+  }
+
+  /**
+   * Open archived request restoration modal
+   */
+  async openArchivedRequestModal(requestId, requestType) {
+    if (typeof window.openArchivedRequestModal === 'function') {
+      window.openArchivedRequestModal(requestId, requestType);
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/request/${requestId}`);
+      let requestData;
+      if (res.status === 410) {
+        requestData = await res.json();
+      } else {
+        requestData = await res.json();
+        if (!requestData.archived) {
+          alert('This request is not archived.');
+          return;
+        }
+      }
+
+      // Remove existing if any
+      const existing = document.getElementById('dynamicArchivedModal');
+      if (existing) existing.remove();
+
+      const modalHTML = `
+        <div id="dynamicArchivedModal" style="display:flex; justify-content:center; align-items:center; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+          <div style="background:#fff; border-radius:8px; width:450px; max-width:90%; padding:24px; box-shadow:0 4px 6px rgba(0,0,0,0.1); font-family:sans-serif;">
+            <h2 style="margin-top:0; color:#dc2626; font-size: 1.25rem;">Archived Request Details</h2>
+            <p style="margin-bottom: 12px;"><strong>Title:</strong> ${requestData.title || 'Untitled Session'}</p>
+            <div style="background:#f3f4f6; padding:12px; border-radius:6px; margin:16px 0;">
+              <strong style="display:block; margin-bottom:4px; color:#374151; font-size:14px;">Archiving Reason from Admin:</strong>
+              <p style="margin:0; color:#4b5563; font-size:14px;">${requestData.archiveReason || 'No reason provided.'}</p>
+            </div>
+            <div style="margin-top:20px;">
+              <label for="restoreReasonInput" style="display:block; margin-bottom:6px; font-weight:bold; color:#374151; font-size:14px;">Reason for Restoration Request (Required)</label>
+              <textarea id="restoreReasonInput" rows="3" style="width:100%; border:1px solid #d1d5db; border-radius:6px; padding:8px; box-sizing:border-box; font-family:inherit; font-size:14px;" required placeholder="Explain why you are requesting restoration of this item..."></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+              <button id="closeArchivedBtn" style="padding:8px 16px; background:#e5e7eb; color:#374151; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Cancel</button>
+              <button id="requestRestoreBtn" style="padding:8px 16px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Request Restoration</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      const modal = document.getElementById('dynamicArchivedModal');
+
+      document.getElementById('closeArchivedBtn').onclick = () => {
+        modal.remove();
+      };
+
+      document.getElementById('requestRestoreBtn').onclick = async () => {
+        const reason = document.getElementById('restoreReasonInput').value.trim();
+        if (!reason) {
+          alert('Please provide a reason for requesting restoration.');
+          return;
+        }
+        
+        try {
+          const fetchRes = await fetch('/api/request-restoration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId, requestType, reason })
+          });
+          const result = await fetchRes.json();
+          if (result.success || fetchRes.ok) {
+            alert('Restoration request sent successfully.');
+            modal.remove();
+          } else {
+            alert(result.message || 'Failed to send restoration request.');
+          }
+        } catch (e) {
+          alert('An error occurred while sending your request.');
+        }
+      };
+    } catch (err) {
+      console.error('Error fetching archived request details:', err);
+      alert('Error fetching request details. Please try again.');
     }
   }
 
@@ -1214,14 +1437,8 @@ class NotificationSystem {
    * Show a toast notification for new notifications
    */
   showNotificationToast(notification) {
-    // Check if browser supports notifications and user has granted permission
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.message,
-        icon: '/favicon.ico', // Adjust path as needed
-        tag: notification.id
-      });
-    }
+    // Disabled computer system notification as per requested
+    return;
   }
 
   /**

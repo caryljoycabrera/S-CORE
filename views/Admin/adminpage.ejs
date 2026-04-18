@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>S-CORE Admin Dashboard</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
@@ -821,6 +822,13 @@
       background-color: #fee2e2;
     }
 
+    /* Fix view all button widths */
+    .view-all-link {
+      width: max-content !important;
+      padding: 0.5rem 1rem !important;
+      display: inline-flex !important;
+    }
+
 
   </style>
 </head>
@@ -837,7 +845,7 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <!-- Profile Avatar (shows when expanded) -->
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -906,16 +914,15 @@
       </a>
       <a href="/admin/announcement" class="sidebar-item" title="Announcements">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 9.5v5a1 1 0 0 1-1 1h-2.5L14 20v-6H9a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1h5l4.5-4V8.5H21a1 1 0 0 1 1 1z"></path>
-          <path d="M3 11v2a7 7 0 0 0 7 7v-2a5 5 0 0 1-5-5v-2H3z"></path>
+          <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
         </svg>
         <span class="sidebar-label">Announcements</span>
       </a>
 
-      <a href="/admin/configuration" class="sidebar-item" title="Configuration">
+      
+        <a href="/admin/configuration" class="sidebar-item" title="Configuration">
         <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M12 1v6m0 6v6m8.66-12.66l-4.24 4.24m-6.84 6.84l-4.24 4.24M23 12h-6m-6 0H5m17.66 4.66l-4.24-4.24m-6.84-6.84L6.34 1.42"></path>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><circle cx="12" cy="12" r="3"></circle>
         </svg>
         <span class="sidebar-label">Configuration</span>
       </a>
@@ -971,7 +978,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -1306,7 +1313,7 @@
                           <div style="display: flex; flex-direction: column;">
                             <span style="font-size: 0.75rem;"><%= new Date(task.deadline).toLocaleDateString() %></span>
                             <span class="priority-text <%= task.priority %>" style="font-weight: 600; font-size: 0.7rem;">
-                              <%= daysLeft > 0 ? daysLeft + 'd' : 'Today' %>
+                              <%= daysLeft + 'd' %>
                             </span>
                           </div>
                         <% } else { %>
@@ -1440,7 +1447,7 @@
                       <td style="text-align: center; padding: 1rem 0.75rem;">
                         <% if (daysLeft !== null) { %>
                           <span class="priority-text <%= task.priority %>" style="font-weight: 600; font-size: 0.875rem;">
-                            <%= daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : 'Today' %>
+                            <%= daysLeft + ' day' + (Math.abs(daysLeft) !== 1 ? 's' : '') %>
                           </span>
                         <% } else { %>
                           <span style="color: #6b7280;">-</span>
@@ -1565,7 +1572,7 @@
                 <div>
                   <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 0.5rem;">Time Remaining</label>
                   <div style="font-size: 1.1rem; font-weight: 700; color: ${task.priorityColor};">
-                    ${daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : 'Due Today'}
+                    ${daysLeft > 0 ? daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') : daysLeft + ' day' + (Math.abs(daysLeft) !== 1 ? 's' : '') + ' overdue'}
                   </div>
                 </div>
                 ` : ''}
@@ -2434,6 +2441,35 @@
       }
     });
 
+    // Function to load unit data
+    async function loadUnitData() {
+      try {
+        const response = await fetch('/admin/active-tasks-by-unit');
+        const data = await response.json();
+        
+        console.log('Unit data response:', data); // Debug logging
+        
+        if (data.success) {
+          unitChart.data.labels = data.labels;
+          unitChart.data.datasets[0].data = data.data;
+          unitChart.update();
+          console.log('Unit chart updated with data:', { labels: data.labels, data: data.data });
+        } else {
+          console.error('API returned success: false', data);
+        }
+      } catch (error) {
+        console.error('Error loading unit data:', error);
+      }
+    }
+
+    // Load initial data
+    loadUnitData();
+
+    // Auto-refresh unit chart every 30 seconds for real-time updates
+    setInterval(() => {
+      loadUnitData();
+    }, 30000);
+
     const volumeChartCtx = document.getElementById('volumeChart').getContext('2d');
     const volumeChart = new Chart(volumeChartCtx, {
       type: 'line',
@@ -2445,14 +2481,20 @@
           borderColor: '#43a047',
           backgroundColor: 'rgba(67, 160, 71, 0.1)',
           tension: 0.4,
-          fill: true
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2
         }, {
           label: 'Service Requests',
           data: [],
           borderColor: '#f97316',
           backgroundColor: 'rgba(249, 115, 22, 0.1)',
           tension: 0.4,
-          fill: true
+          fill: true,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2
         }]
       },
       options: {
@@ -2472,11 +2514,26 @@
                 family: 'Inter'
               }
             }
+          },
+          tooltip: {
+            callbacks: {
+              footer: function(context) {
+                let sum = 0;
+                context.forEach(item => {
+                  sum += item.parsed.y;
+                });
+                return 'Total: ' + sum;
+              }
+            }
           }
         },
         scales: {
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              precision: 0
+            }
           }
         }
       }
@@ -2487,11 +2544,17 @@
       try {
         const response = await fetch(`/admin/request-volume?days=${days}`);
         const data = await response.json();
+        
+        console.log('Volume data response:', data); // Debug logging
+        
         if (data.success) {
           volumeChart.data.labels = data.labels;
           volumeChart.data.datasets[0].data = data.approvals;
           volumeChart.data.datasets[1].data = data.services;
           volumeChart.update();
+          console.log('Chart updated with data:', { labels: data.labels.length, approvals: data.approvals, services: data.services });
+        } else {
+          console.error('API returned success: false', data);
         }
       } catch (error) {
         console.error('Error loading volume data:', error);
@@ -2502,28 +2565,167 @@
     loadVolumeData(30);
 
     // Time range filter for volume chart
+    let currentTimeRange = 30;
     document.getElementById('timeRangeFilter').addEventListener('change', function(e) {
-      loadVolumeData(parseInt(e.target.value));
+      currentTimeRange = parseInt(e.target.value);
+      loadVolumeData(currentTimeRange);
     });
+
+    // Auto-refresh volume chart every 30 seconds for real-time updates
+    setInterval(() => {
+      loadVolumeData(currentTimeRange);
+    }, 30000);
 
     // Fetch and populate dashboard data
     async function loadDashboardData() {
       try {
+        // Load all KPI data from backend
+        const kpiResponse = await fetch('/api/admin/dashboard-kpis', {
+          credentials: 'same-origin'
+        });
+        const kpiData = await kpiResponse.json();
+        
+        console.log('Real-time KPI data loaded:', kpiData); // Debug logging
+        
+        if (kpiData.success) {
+          // Update all KPI values with real-time data
+          document.getElementById('kpi-pending-assignment').textContent = kpiData.pendingAssignment || '0';
+          document.getElementById('kpi-awaiting-approval').textContent = kpiData.awaitingApproval || '0';
+          document.getElementById('kpi-in-revision').textContent = kpiData.inRevision || '0';
+          
+          // Update unassigned tasks KPI (shows urgent/total format)
+          const urgentUnassigned = kpiData.urgentUnassigned || 0;
+          const totalUnassigned = kpiData.totalUnassigned || 0;
+          const unassignedElement = document.getElementById('kpi-urgent-unassigned');
+          if (unassignedElement) {
+            // Find the span elements within the unassigned KPI
+            const spans = unassignedElement.querySelectorAll('span');
+            if (spans.length >= 2) {
+              spans[0].textContent = urgentUnassigned;
+              spans[1].textContent = ' / ' + totalUnassigned;
+            }
+            // Update the subtext as well
+            const subtext = unassignedElement.parentElement.querySelector('.kpi-subtext');
+            if (subtext) {
+              subtext.innerHTML = `<span style="color: #dc2626; font-weight: 600;">${urgentUnassigned}</span> urgent, ${totalUnassigned} total need assignment`;
+            }
+          }
+          
+          // Update additional KPIs (if elements exist)
+          const completedMonthEl = document.getElementById('kpi-completed-month');
+          if (completedMonthEl) completedMonthEl.textContent = kpiData.completedThisMonth || '0';
+          
+          const upcomingDeadlinesEl = document.getElementById('kpi-upcoming-deadlines');
+          if (upcomingDeadlinesEl) upcomingDeadlinesEl.textContent = kpiData.upcomingDeadlines || '0';
+          
+          const overdueEl = document.getElementById('kpi-overdue');
+          if (overdueEl) overdueEl.textContent = kpiData.overdue || '0';
+        }
+        
         // Load revision hotspot data
         await loadRevisionHotspot();
         
-        // Update additional KPIs
-        document.getElementById('kpi-in-revision').textContent = '3';
+        // Load incoming requests data
+        await loadIncomingRequests();
+        
+        // Load urgent and overdue tasks
+        await loadUrgentAndOverdueTasks();
         
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       }
     }
 
+    // Load incoming requests
+    async function loadIncomingRequests() {
+      try {
+        const response = await fetch('/api/admin/incoming-requests', {
+          credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const tbody = document.getElementById('incoming-requests-tbody');
+          
+          if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No incoming requests</td></tr>';
+            return;
+          }
+          
+          let html = '';
+          result.data.forEach(item => {
+            const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A';
+            const url = item.type === 'Approval Request' 
+              ? `/admin/approvals?openModalId=${item._id}`
+              : `/admin/services?openModalId=${item._id}`;
+            
+            html += `
+              <tr>
+                <td><strong>${item.title || 'Untitled'}</strong></td>
+                <td><span class="type-badge ${item.type === 'Approval Request' ? 'approval' : 'service'}">${item.type}</span></td>
+                <td>${item.requesterName || 'Unknown'}</td>
+                <td>${date}</td>
+                <td><a href="${url}" class="btn-view">View</a></td>
+              </tr>
+            `;
+          });
+          
+          tbody.innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading incoming requests:', error);
+      }
+    }
+
+    // Load urgent and overdue tasks
+    async function loadUrgentAndOverdueTasks() {
+      try {
+        const response = await fetch('/api/admin/urgent-overdue-tasks', {
+          credentials: 'same-origin'
+        });
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const tbody = document.getElementById('urgent-overdue-tbody');
+          
+          if (result.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No urgent or overdue tasks</td></tr>';
+            return;
+          }
+          
+          let html = '';
+          result.data.forEach(item => {
+            const deadline = item.deadline ? new Date(item.deadline).toLocaleDateString() : 'No deadline';
+            const priorityClass = item.priority || 'normal';
+            const statusClass = item.status ? item.status.toLowerCase().replace(/\s+/g, '') : 'unknown';
+            const url = item.type === 'Approval Request' 
+              ? `/admin/approvals?openModalId=${item._id}`
+              : `/admin/services?openModalId=${item._id}`;
+            
+            html += `
+              <tr>
+                <td><strong>${item.title || 'Untitled'}</strong></td>
+                <td><span class="status-badge ${statusClass}">${item.status}</span></td>
+                <td>${deadline}</td>
+                <td><span class="priority-badge ${priorityClass}">${priorityClass.toUpperCase()}</span></td>
+                <td><a href="${url}" class="btn-view">View</a></td>
+              </tr>
+            `;
+          });
+          
+          tbody.innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Error loading urgent/overdue tasks:', error);
+      }
+    }
+
     // Load revision hotspot table
     async function loadRevisionHotspot() {
       try {
-        const response = await fetch('/api/admin/revision-hotspot');
+        const response = await fetch('/api/admin/revision-hotspot', {
+          credentials: 'same-origin'
+        });
         const result = await response.json();
         
         if (result.success && result.data) {
@@ -2569,6 +2771,11 @@
     // Load data on page load
     loadDashboardData();
 
+    // Auto-refresh KPIs every 30 seconds for real-time updates
+    setInterval(() => {
+      loadDashboardData();
+    }, 30000);
+
     // Enhanced Calendar Implementation
     (function() {
       const calendar = document.getElementById('calendar-standalone');
@@ -2603,8 +2810,8 @@
       // Fetch admin deadlines data from server
       async function fetchDeadlines() {
         try {
-          console.log('Fetching admin deadlines from /api/deadlines...');
-          const response = await fetch('/api/deadlines', {
+          console.log('Fetching admin deadlines from /api/admin/calendar-requests...');
+          const response = await fetch('/api/admin/calendar-requests', {
             method: 'GET',
             credentials: 'same-origin',
             headers: {
@@ -2613,14 +2820,41 @@
           });
           
           if (response.ok) {
-            const responseText = await response.text();
-            try {
-              deadlinesData = JSON.parse(responseText);
-              console.log('Admin deadlines data received:', deadlinesData);
-            } catch (parseError) {
-              console.error('Error parsing JSON:', parseError);
-              deadlinesData = {};
+            const calendarData = await response.json();
+            console.log('Admin calendar data received:', calendarData);
+            
+            // Convert calendar data to deadlinesData format
+            deadlinesData = {};
+            
+            // Process approval requests
+            if (calendarData.approvalRequests && Array.isArray(calendarData.approvalRequests)) {
+              calendarData.approvalRequests.forEach(req => {
+                if (req.deadline) {
+                  const date = new Date(req.deadline);
+                  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                  if (!deadlinesData[dateStr]) {
+                    deadlinesData[dateStr] = { approvals: 0, services: 0 };
+                  }
+                  deadlinesData[dateStr].approvals++;
+                }
+              });
             }
+            
+            // Process service requests
+            if (calendarData.serviceRequests && Array.isArray(calendarData.serviceRequests)) {
+              calendarData.serviceRequests.forEach(req => {
+                if (req.deadline) {
+                  const date = new Date(req.deadline);
+                  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                  if (!deadlinesData[dateStr]) {
+                    deadlinesData[dateStr] = { approvals: 0, services: 0 };
+                  }
+                  deadlinesData[dateStr].services++;
+                }
+              });
+            }
+            
+            console.log('Processed deadlines data:', deadlinesData);
           } else {
             console.error('Failed to fetch admin deadlines, status:', response.status);
             deadlinesData = {};
@@ -2702,6 +2936,8 @@
             month === today.getMonth() &&
             year === today.getFullYear();
           
+          // Create date and extract local date format to match Asia/Manila timezone
+          const localDate = new Date(year, month, day);
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const deadlineClasses = getDeadlineClasses(dateStr);
           const deadlineIndicators = createDeadlineIndicators(dateStr);
@@ -2785,7 +3021,7 @@
         
         try {
           console.log(`Fetching admin details for date: ${dateStr}`);
-          const response = await fetch(`/api/deadlines/${dateStr}/details`, {
+          const response = await fetch(`/api/admin/calendar-requests/${dateStr}/details`, {
             method: 'GET',
             credentials: 'same-origin',
             headers: {

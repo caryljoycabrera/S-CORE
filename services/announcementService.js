@@ -20,11 +20,14 @@ class AnnouncementService {
         title,
         content,
         priority = 'medium',
+        type = 'News',
         recipientType = 'all',
         organization = null,
+        office = null,
         recipients = [],
         scheduledTime = null,
-        createdBy = null
+        createdBy = null,
+        sentBy = null
       } = announcementData;
 
       // Determine actual recipients
@@ -45,6 +48,15 @@ class AnnouncementService {
         }).select('_id');
         recipientIds = orgUsers.map(u => u._id);
         recipientCount = orgUsers.length;
+      } else if (recipientType === 'office' && office) {
+        const officeUsers = await User.find({ 
+          $or: [
+            { affiliation: office }, // non-students have affiliation array
+            { studentOrganization: office } // students have studentOrganization array
+          ]
+        }).select('_id');
+        recipientIds = officeUsers.map(u => u._id);
+        recipientCount = officeUsers.length;
       } else if (recipientType === 'specific' && recipients.length > 0) {
         recipientIds = recipients;
         recipientCount = recipients.length;
@@ -54,14 +66,12 @@ class AnnouncementService {
         title,
         content,
         priority,
-        recipientType,
-        organization,
-        recipients: recipientIds,
+        type,
+        isVisibleToAll: recipientType === 'all',
+        recipients: recipientIds.map(id => ({ userId: id })),
+        sentBy: sentBy || createdBy,
         scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
-        createdBy,
-        status: scheduledTime ? 'scheduled' : 'active',
-        recipientCount,
-        viewCount: 0
+        status: scheduledTime ? 'scheduled' : 'active'
       });
 
       await announcement.save();
@@ -91,29 +101,38 @@ class AnnouncementService {
         throw new Error('Announcement not found');
       }
 
-      // Get recipient details for email sending
-      const recipients = await User.find({ _id: { $in: recipientIds } }).select('_id email fName lName settings');
+      // Get recipient details for email sending and role checking
+      const recipients = await User.find({ _id: { $in: recipientIds } }).select('_id email fName lName settings role');
 
-      // Send in-app notifications
-      const notificationPromises = recipientIds.map(recipientId =>
-        notificationService.createNotification({
-          userId: recipientId,
-          message: `📢 ${announcement.title}`,
-          link: '/announcements',
+      // Send in-app notifications (skip sender)
+      const notificationPromises = recipientIds
+        .filter(id => id.toString() !== announcement.sentBy.toString())
+        .map(recipientId => {
+        const recipient = recipients.find(r => r._id.toString() === recipientId.toString());
+        const isAdmin = recipient && recipient.role === 'admin';
+        const actionUrl = isAdmin ? '/admin/announcement' : '/dashboard';
+        
+        return notificationService.createNotification({
+          recipient: recipientId,
+          title: `📢 ${announcement.title}`,
+          message: announcement.content.substring(0, 200) + (announcement.content.length > 200 ? '...' : ''),
           type: 'announcement',
-          priority: announcement.priority
+          priority: announcement.priority,
+          actionUrl: actionUrl,
+          relatedId: announcement._id,
+          relatedModel: 'BroadcastMessage'
         }).catch(err => {
           console.error(`Failed to send announcement to user ${recipientId}:`, err);
           return null;
-        })
-      );
+        });
+      });
 
       await Promise.allSettled(notificationPromises);
 
       // Send emails if enabled
       if (process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true') {
         const emailPromises = recipients
-          .filter(user => user.email && user.settings?.emailNotifications)
+          .filter(user => user.email && user.settings?.emailNotifications && user._id.toString() !== announcement.sentBy.toString())
           .map(user =>
             emailService.sendAnnouncementEmail(user.email, announcement)
               .catch(err => {
@@ -128,8 +147,8 @@ class AnnouncementService {
         }
       }
 
-      // Update announcement status if it was scheduled
-      if (announcement.status === 'scheduled') {
+      // Update announcement status if it was scheduled or lacking active status
+      if (announcement.scheduledTime && announcement.status !== 'active') {
         announcement.status = 'active';
         announcement.sentAt = new Date();
         await announcement.save();
@@ -175,9 +194,18 @@ class AnnouncementService {
    * @param {String} announcementId - Announcement ID
    * @returns {Promise<Object>} - Deleted announcement
    */
-  async deleteAnnouncement(announcementId) {
+  async deleteAnnouncement(announcementId, userId = null) {
     try {
-      const announcement = await BroadcastMessage.findByIdAndDelete(announcementId);
+      // Use soft delete instead of hard delete
+      const announcement = await BroadcastMessage.findByIdAndUpdate(
+        announcementId,
+        {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: userId
+        },
+        { new: true }
+      );
 
       if (!announcement) {
         throw new Error('Announcement not found');
@@ -199,14 +227,14 @@ class AnnouncementService {
   async getAnnouncements(page = 1, limit = 20) {
     try {
       const skip = (page - 1) * limit;
-      const announcements = await BroadcastMessage.find()
+      const announcements = await BroadcastMessage.find({ isDeleted: { $ne: true } })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate('createdBy', 'fName lName email')
+        .populate('sentBy', 'fName lName email')
         .lean();
 
-      const total = await BroadcastMessage.countDocuments();
+      const total = await BroadcastMessage.countDocuments({ isDeleted: { $ne: true } });
 
       return {
         announcements,
@@ -231,7 +259,7 @@ class AnnouncementService {
   async getAnnouncement(announcementId) {
     try {
       const announcement = await BroadcastMessage.findById(announcementId)
-        .populate('createdBy', 'fName lName email');
+        .populate('sentBy', 'fName lName email');
 
       if (!announcement) {
         throw new Error('Announcement not found');
@@ -271,12 +299,16 @@ class AnnouncementService {
     try {
       const now = new Date();
       const scheduledAnnouncements = await BroadcastMessage.find({
-        status: 'scheduled',
-        scheduledTime: { $lte: now }
+        scheduledTime: { $exists: true },
+        scheduledTime: { $ne: null },
+        scheduledTime: { $lte: now },
+        status: { $ne: 'active' }
       });
 
       for (const announcement of scheduledAnnouncements) {
-        await this.sendAnnouncement(announcement._id, announcement.recipients);
+        // Get all recipient IDs from the recipients array
+        const recipientIds = announcement.recipients.map(r => r.userId);
+        await this.sendAnnouncement(announcement._id, recipientIds);
       }
 
       console.log(`[AnnouncementService] Processed ${scheduledAnnouncements.length} scheduled announcements`);
@@ -294,9 +326,16 @@ class AnnouncementService {
    */
   async getUserAnnouncements(userId, limit = 10) {
     try {
+      const now = new Date();
+      
+      // Find announcements where scheduledTime doesn't exist or has passed
       const announcements = await BroadcastMessage.find({
-        recipients: userId,
-        status: { $in: ['active', 'scheduled'] }
+        recipients: { $elemMatch: { userId: userId } },
+        $or: [
+          { scheduledTime: { $exists: false } },
+          { scheduledTime: null },
+          { scheduledTime: { $lte: now } }
+        ]
       })
         .sort({ createdAt: -1 })
         .limit(limit)
@@ -315,37 +354,149 @@ class AnnouncementService {
    */
   async getStatistics() {
     try {
+      const now = new Date();
       const total = await BroadcastMessage.countDocuments();
-      const active = await BroadcastMessage.countDocuments({ status: 'active' });
-      const scheduled = await BroadcastMessage.countDocuments({ status: 'scheduled' });
-      const expired = await BroadcastMessage.countDocuments({ status: 'expired' });
-
-      // Get average engagement
-      const announcements = await BroadcastMessage.find().select('recipientCount viewCount');
-      let avgEngagement = 0;
-      if (announcements.length > 0) {
-        const totalEngagement = announcements.reduce((sum, a) => {
-          return sum + (a.recipientCount > 0 ? (a.viewCount / a.recipientCount) * 100 : 0);
-        }, 0);
-        avgEngagement = Math.round(totalEngagement / announcements.length);
-      }
+      
+      // Sent announcements (isSent: true)
+      const sent = await BroadcastMessage.countDocuments({ isSent: true });
+      
+      // Scheduled announcements (not yet sent and scheduledTime is in the future)
+      const scheduled = await BroadcastMessage.countDocuments({
+        isSent: false,
+        scheduledTime: { $gt: now }
+      });
+      
+      // Past due announcements (not sent but scheduledTime has passed)
+      const pastDue = await BroadcastMessage.countDocuments({
+        isSent: false,
+        scheduledTime: { $lte: now }
+      });
 
       return {
         total,
-        active,
+        sent,
         scheduled,
-        expired,
-        avgEngagement: avgEngagement + '%'
+        pastDue
       };
     } catch (error) {
       console.error('Error fetching announcement statistics:', error);
       return {
         total: 0,
-        active: 0,
+        sent: 0,
         scheduled: 0,
-        expired: 0,
-        avgEngagement: '0%'
+        pastDue: 0
       };
+    }
+  }
+
+  /**
+   * Get deleted announcements (for trash)
+   * @param {String} page - Page number
+   * @param {Number} limit - Items per page
+   * @returns {Promise<Object>} - Deleted announcements
+   */
+  async getDeletedAnnouncements(page = 1, limit = 20) {
+    try {
+      const skip = (page - 1) * limit;
+      const announcements = await BroadcastMessage.find({ isDeleted: true })
+        .sort({ deletedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('sentBy', 'fName lName email')
+        .populate('deletedBy', 'fName lName email')
+        .lean();
+
+      const total = await BroadcastMessage.countDocuments({ isDeleted: true });
+
+      return {
+        announcements,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching deleted announcements:', error);
+      throw new Error('Failed to fetch deleted announcements');
+    }
+  }
+
+  /**
+   * Soft delete an announcement
+   * @param {String} announcementId - Announcement ID
+   * @param {String} userId - User performing the deletion
+   * @returns {Promise<Object>} - Updated announcement
+   */
+  async softDeleteAnnouncement(announcementId, userId) {
+    try {
+      const announcement = await BroadcastMessage.findByIdAndUpdate(
+        announcementId,
+        {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: userId
+        },
+        { new: true }
+      );
+
+      if (!announcement) {
+        throw new Error('Announcement not found');
+      }
+
+      return announcement;
+    } catch (error) {
+      console.error('Error soft deleting announcement:', error);
+      throw new Error('Failed to delete announcement');
+    }
+  }
+
+  /**
+   * Restore a deleted announcement
+   * @param {String} announcementId - Announcement ID
+   * @returns {Promise<Object>} - Restored announcement
+   */
+  async restoreAnnouncement(announcementId) {
+    try {
+      const announcement = await BroadcastMessage.findByIdAndUpdate(
+        announcementId,
+        {
+          isDeleted: false,
+          deletedAt: null,
+          deletedBy: null
+        },
+        { new: true }
+      );
+
+      if (!announcement) {
+        throw new Error('Announcement not found');
+      }
+
+      return announcement;
+    } catch (error) {
+      console.error('Error restoring announcement:', error);
+      throw new Error('Failed to restore announcement');
+    }
+  }
+
+  /**
+   * Permanently delete an announcement
+   * @param {String} announcementId - Announcement ID
+   * @returns {Promise<boolean>} - Success status
+   */
+  async permanentlyDeleteAnnouncement(announcementId) {
+    try {
+      const result = await BroadcastMessage.findByIdAndDelete(announcementId);
+
+      if (!result) {
+        throw new Error('Announcement not found');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error permanently deleting announcement:', error);
+      throw new Error('Failed to permanently delete announcement');
     }
   }
 }

@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=1280, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login Page</title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -63,6 +64,41 @@
         0 25px 50px rgba(0, 0, 0, 0.2),
         0 0 0 1px rgba(255, 255, 255, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .back-button-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #408b4e;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      background: rgba(64, 139, 78, 0.1);
+    }
+
+    .back-button:hover {
+      background: rgba(64, 139, 78, 0.2);
+      color: #275730;
+      transform: translateY(-1px);
+    }
+
+    .logo-link {
+      display: inline-block;
+      transition: transform 0.3s ease;
+    }
+
+    .logo-link:hover {
+      transform: scale(1.05);
     }
 
     .login-container img.logo {
@@ -338,27 +374,30 @@
       display: inline-block;
       margin-top: 16px;
       font-size: 15px;
-      color: #6b7280;
+      color: #408b4e;
       text-decoration: none;
       font-weight: 500;
       transition: all 0.3s ease;
       position: relative;
+      padding: 2px 4px;
+      border-radius: 4px;
     }
 
     .forgot-link::after {
       content: '';
       position: absolute;
-      bottom: -2px;
+      bottom: 0;
       left: 0;
       width: 0;
-      height: 1px;
-      background: #6b7280;
+      height: 2px;
+      background: #408b4e;
       transition: width 0.3s ease;
+      border-radius: 1px;
     }
 
     .forgot-link:hover {
-      color: #374151;
-      transform: translateY(-1px);
+      color: #275730;
+      background: rgba(64, 139, 78, 0.05);
     }
 
     .forgot-link:hover::after {
@@ -383,19 +422,121 @@
       10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
     }
 
-    @media (max-width: 500px) {
+    /* Tablet Large (1024px and down) */
+    @media (max-width: 1024px) {
       .login-container {
-        padding: 30px 24px;
-        margin: 20px;
-        border-radius: 20px;
+        max-width: 420px;
+        padding: 28px;
+      }
+
+      .welcome-text {
+        font-size: 26px;
+      }
+
+      .subtitle {
+        margin-bottom: 35px;
+      }
+    }
+
+    /* Tablet Medium (768px and down) */
+    @media (max-width: 768px) {
+      .login-container {
+        max-width: 400px;
+        padding: 26px;
+        border-radius: 22px;
+      }
+
+      .login-container img.logo {
+        width: 110px;
+        margin-bottom: 25px;
       }
 
       .welcome-text {
         font-size: 24px;
+        margin-bottom: 6px;
+      }
+
+      .subtitle {
+        font-size: 15px;
+        margin-bottom: 32px;
+      }
+
+      .input-group {
+        padding: 15px 18px;
+        margin-bottom: 20px;
+      }
+
+      .input-group img {
+        width: 30px;
+        height: 30px;
+        margin-right: 14px;
+      }
+
+      .input-group input {
+        font-size: 15px;
+      }
+
+      .remember-section {
+        margin-bottom: 28px;
+      }
+
+      .login-button {
+        height: 54px;
+        font-size: 17px;
+      }
+
+      .register-text {
+        margin-top: 28px;
+        font-size: 15px;
+      }
+
+      .register-text,
+      .forgot-link {
+        font-size: 14px;
+      }
+    }
+
+    /* Mobile Large (480px and down) */
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .login-container {
+        max-width: none;
+        width: 100%;
+        padding: 24px 20px;
+        margin: 0;
+        border-radius: 20px;
+      }
+
+      .back-button-container {
+        top: 16px;
+        left: 16px;
+      }
+
+      .back-button {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      .login-container img.logo {
+        width: 100px;
+        margin-bottom: 20px;
+      }
+
+      .welcome-text {
+        font-size: 22px;
+      }
+
+      .subtitle {
+        margin-bottom: 28px;
+        font-size: 14px;
       }
 
       .input-group {
         padding: 14px 16px;
+        margin-bottom: 18px;
       }
 
       .input-group img {
@@ -405,19 +546,129 @@
       }
 
       .input-group input {
-        font-size: 16px;
+        font-size: 14px;
+      }
+
+      .remember-section {
+        margin-bottom: 24px;
+        gap: 10px;
+      }
+
+      .text-wrapper-3 {
+        font-size: 14px;
       }
 
       .login-button {
-        height: 52px;
-        font-size: 17px;
+        height: 50px;
+        font-size: 16px;
       }
+
+      .register-text {
+        margin-top: 24px;
+        font-size: 14px;
+      }
+
+      .forgot-link {
+        margin-top: 12px;
+        font-size: 13px;
+      }
+    }
+
+    /* Mobile Small (360px and down) */
+    @media (max-width: 360px) {
+      body {
+        padding: 8px;
+      }
+
+      .login-container {
+        padding: 20px 16px;
+        border-radius: 16px;
+      }
+
+      .back-button-container {
+        top: 12px;
+        left: 12px;
+      }
+
+      .back-button {
+        font-size: 11px;
+        padding: 4px 8px;
+        gap: 6px;
+      }
+
+      .login-container img.logo {
+        width: 80px;
+        margin-bottom: 16px;
+      }
+
+      .welcome-text {
+        font-size: 20px;
+        margin-bottom: 4px;
+      }
+
+      .subtitle {
+        margin-bottom: 24px;
+        font-size: 13px;
+      }
+
+      .input-group {
+        padding: 12px 14px;
+        margin-bottom: 16px;
+      }
+
+      .input-group img {
+        width: 24px;
+        height: 24px;
+        margin-right: 10px;
+      }
+
+      .input-group input {
+        font-size: 14px;
+      }
+
+      .remember-section {
+        margin-bottom: 20px;
+      }
+
+      .text-wrapper-3 {
+        font-size: 13px;
+      }
+
+      .login-button {
+        height: 48px;
+        font-size: 15px;
+      }
+
+      .register-text {
+        margin-top: 20px;
+        font-size: 13px;
+      }
+
+      .forgot-link {
+        margin-top: 10px;
+        font-size: 12px;
+      }
+    }
+
+    a {
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
   <div class="login-container">
-    <img class="logo" src="/Picture/logo.jpg" alt="Logo" />
+    <div class="back-button-container">
+      <a href="/about-s-core" class="back-button" title="Back to Homepage">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back
+      </a>
+    </div>
+    
+    <a href="/about-s-core" class="logo-link">
+      <img class="logo" src="/Picture/logo.jpg" alt="Logo" />
+    </a>
     
     <h1 class="welcome-text">S-CORE</h1>
     <p class="subtitle">Sign in to your account</p>
@@ -425,7 +676,7 @@
     <form action="/login" method="POST">
       <div class="input-group">
         <img src="/Picture/usericon.png" alt="User Icon" />
-        <input type="text" name="username" placeholder="Username" required />
+        <input type="text" name="username" placeholder="Username or Email" required />
       </div>
       
       <div class="input-group">
@@ -444,19 +695,59 @@
         <label for="remember" class="text-wrapper-3">Remember me</label>
       </div>
 
-      <!-- Error Message if Login Fails -->
-      <% if (typeof error !== 'undefined' && error) { %>
-        <div class="error-message"><%= error %></div>
-      <% } %>
+    <!-- Success Message from Registration -->
+    <% if (typeof registrationSuccess !== 'undefined' && registrationSuccess) { %>
+      <div style="background: #e8f5e9; border: 2px solid #408b4e; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #275730; font-size: 14px; font-weight: 500; line-height: 1.5;">
+        <%= registrationSuccess.message %>
+      </div>
+    <% } %>
 
-      <button type="submit" class="login-button">Sign In</button>
+    <!-- Success Message from Password Reset -->
+    <% if (typeof passwordResetSuccess !== 'undefined' && passwordResetSuccess) { %>
+      <div style="background: #e8f5e9; border: 2px solid #408b4e; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #275730; font-size: 14px; font-weight: 500; line-height: 1.5;">
+        <%= passwordResetSuccess %>
+      </div>
+    <% } %>
+
+    <!-- Error Message if Login Fails -->
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error-message" style="background: #fee; border: 2px solid #c33; border-radius: 10px; padding: 15px; margin-bottom: 15px; color: #c33; font-size: 14px; font-weight: 500;"><%= error %></div>
+    <% } %>      <button type="submit" class="login-button">Sign In</button>
     </form>
 
-    <p class="register-text">
-      Don't have an account?
-      <a href="/register" class="link">Create one</a>
-    </p>
-    <a href="#" class="forgot-link">Forgot your password?</a>
+    <!-- OR Divider -->
+    <div style="display: flex; align-items: center; gap: 15px; margin: 25px 0;">
+      <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent);"></div>
+      <span style="color: #666; font-size: 13px; font-weight: 500; white-space: nowrap;">OR CONTINUE WITH</span>
+      <div style="flex: 1; height: 1px; background: linear-gradient(to right, transparent, #ddd, transparent);"></div>
+    </div>
+
+    <!-- Microsoft OAuth Sign In Button -->
+    <a href="/clerk/sign-in" 
+       class="microsoft-oauth-button"
+       style="display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px; background: white; border: 2px solid #e0e0e0; border-radius: 10px; text-decoration: none; color: #333; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px;"
+       onmouseover="this.style.background='#f8f9fa'; this.style.borderColor='#408b4e'; this.style.boxShadow='0 4px 12px rgba(64,139,78,0.15)';"
+       onmouseout="this.style.background='white'; this.style.borderColor='#e0e0e0'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)';">
+      <svg width="20" height="20" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 0H0v11h11V0z" fill="#F25022"/>
+        <path d="M23 0H12v11h11V0z" fill="#7FBA00"/>
+        <path d="M11 12H0v11h11V12z" fill="#00A4EF"/>
+        <path d="M23 12H12v11h11V12z" fill="#FFB900"/>
+      </svg>
+      <span>Continue with Microsoft Account</span>
+    </a>
+
+    <div style="text-align: center; margin-top: 10px;">
+      <small style="color: #666; font-size: 12px;">
+        Only @dlsud.edu.ph accounts are allowed
+      </small>
+    </div>
+
+    <a href="/forgot-password" class="forgot-link" style="margin-top: 20px; display: block;">Forgot your password?</a>
+
+    <div class="register-text">
+      Don't have an account? <a href="/register" class="link">Sign up here</a>
+    </div>
   </div>
 
   <script>
@@ -478,6 +769,22 @@
         `;
       }
     }
+
+    // Pre-fill username/email after successful registration
+    <% if (typeof registrationSuccess !== 'undefined' && registrationSuccess) { %>
+      document.addEventListener('DOMContentLoaded', function() {
+        const usernameInput = document.querySelector('input[name="username"]');
+        if (usernameInput) {
+          // Pre-fill username
+          usernameInput.value = '<%= registrationSuccess.username %>';
+          // Focus on password field for user convenience
+          const passwordInput = document.querySelector('input[name="password"]');
+          if (passwordInput) {
+            passwordInput.focus();
+          }
+        }
+      });
+    <% } %>
   </script>
 
   <%- include('partials/chatbot-widget') %>

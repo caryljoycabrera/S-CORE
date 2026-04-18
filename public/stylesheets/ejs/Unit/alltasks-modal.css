@@ -59,18 +59,23 @@
 }
 
 .close-modal-btn:active {
-  transform: scale(0.95);
+  
 }
 
 .unit-modal-header .modal-title-section {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .unit-modal-header .modal-title-icon {
   color: white;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
 }
 
 .unit-modal-header h2 {
@@ -78,6 +83,8 @@
   font-size: 1.5rem;
   font-weight: 700;
   color: white;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .unit-modal-header .type-badge {
@@ -92,6 +99,33 @@
   letter-spacing: 1px;
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.modal-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.modal-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.modal-action-btn svg {
+  flex-shrink: 0;
 }
 
 .unit-conversation-subtitle {
@@ -1386,7 +1420,7 @@
 .close-modal-btn:active,
 .close-modal:active,
 .unit-conversation-modal .close-modal:active {
-  transform: scale(0.95);
+  
 }
 
 /* ==========================================
@@ -1785,7 +1819,7 @@
 
 @keyframes checkmark-bounce {
   0%, 100% {
-    transform: scale(1);
+    
   }
   50% {
     transform: scale(1.1);
@@ -2246,7 +2280,7 @@
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
-    transform: scale(1);
+    
   }
   50% {
     opacity: 0.9;
@@ -2436,24 +2470,690 @@
 }
 
 /* ==========================================
-   RESPONSIVE UPDATES
+   TABLET RESPONSIVENESS (1024px and below)
+   ========================================== */
+@media (max-width: 1024px) {
+  .unit-modal-wide {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 1rem;
+  }
+
+  /* Two-column layout stacks */
+  .unit-modal-body {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+
+  .unit-left-column,
+  .unit-right-column {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Modal header */
+  .unit-modal-header {
+    padding: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .unit-modal-header .modal-title-section {
+    flex: 1 1 100%;
+    gap: 0.75rem;
+  }
+
+  .unit-modal-header h2 {
+    font-size: 1.375rem;
+  }
+
+  .unit-modal-header .type-badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.875rem;
+  }
+
+  .modal-action-buttons {
+    flex: 1 1 auto;
+    gap: 0.5rem;
+  }
+
+  .modal-action-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.813rem;
+  }
+
+  .close-modal-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* File grid responsive */
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+    gap: 1rem;
+  }
+
+  /* Detail grid responsive */
+  .unit-detail-grid,
+  .unit-info-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem;
+  }
+
+  /* Action panels */
+  .unit-action-panel {
+    padding: 1.25rem !important;
+  }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVENESS (768px and below)
    ========================================== */
 @media (max-width: 768px) {
+  /* All modals take full screen on mobile */
+  .modal {
+    padding: 0 !important;
+  }
+
+  .unit-modal-wide,
+  .modal-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Modal header - minimized for mobile */
+  .unit-modal-header {
+    padding: 0.625rem 0.875rem;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-shrink: 0;
+    gap: 0.375rem;
+    min-height: auto;
+  }
+
+  .unit-modal-header .modal-title-section {
+    flex: 1 1 100%;
+    order: 1;
+    gap: 0.375rem;
+    min-width: 0;
+    padding-right: 2rem;
+  }
+
+  .unit-modal-header .modal-title-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .unit-modal-header h2 {
+    font-size: 0.938rem;
+    line-height: 1.2;
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+  }
+
+  .unit-modal-header .type-badge {
+    padding: 0.188rem 0.5rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.3px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    line-height: 1.2;
+  }
+
+  .close-modal-btn {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    order: 3;
+    position: absolute;
+    top: 0.625rem;
+    right: 0.875rem;
+  }
+
+  .close-modal-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .modal-action-buttons {
+    flex: 1 1 100%;
+    order: 2;
+    justify-content: flex-start;
+    margin-top: 0.375rem;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .modal-action-btn {
+    font-size: 0.75rem;
+    padding: 0.438rem 0.625rem;
+    flex: 0 0 auto;
+    min-height: 28px;
+  }
+
+  .modal-action-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Modal body - two columns stack vertically on mobile */
+  .unit-modal-body {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    padding: 0.875rem !important;
+    gap: 0.875rem !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    flex: 1 !important;
+    max-height: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .unit-left-column,
+  .unit-right-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    order: initial !important;
+  }
+
+  /* Ensure left column appears first, then right column */
+  .unit-left-column {
+    order: 1;
+  }
+
+  .unit-right-column {
+    order: 2;
+  }
+
+  /* Info cards - optimized spacing for mobile */
+  .unit-info-card {
+    padding: 0.875rem !important;
+    border-radius: 6px;
+    margin-bottom: 0.875rem;
+  }
+
+  .unit-info-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .unit-info-card h3,
+  .unit-card-header h3 {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.625rem;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+
+  .unit-card-header {
+    padding: 0;
+    margin-bottom: 0.625rem;
+  }
+
+  .unit-card-subtitle {
+    font-size: 0.75rem !important;
+    line-height: 1.4;
+  }
+
+  /* Detail grid - single column with visual separation */
+  .unit-detail-grid,
+  .unit-info-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.625rem !important;
+  }
+
+  .unit-detail-item,
+  .unit-info-item {
+    padding: 0.625rem 0.75rem;
+    background: #f8fafc;
+    border-radius: 5px;
+    border-left: 2px solid #e2e8f0;
+  }
+
+  .unit-info-label,
+  .unit-detail-label {
+    font-size: 0.688rem !important;
+    margin-bottom: 0.188rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748b;
+  }
+
+  .unit-info-value,
+  .unit-detail-value {
+    font-size: 0.813rem !important;
+    line-height: 1.4;
+    word-break: break-word;
+    color: #1e293b;
+  }
+
+  /* Description content */
+  .unit-description-content {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  /* File grid - single column for better file preview */
+  .file-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .enhanced-file-item {
+    padding: 1rem !important;
+  }
+
+  .file-name-enhanced {
+    font-size: 0.875rem !important;
+    line-height: 1.4;
+  }
+
+  .file-type-enhanced {
+    font-size: 0.75rem !important;
+  }
+
+  .file-preview-container img {
+    max-height: 200px;
+  }
+
+  /* Admin form section */
+  .admin-form-section {
+    padding: 1rem !important;
+  }
+
+  .admin-form-label,
+  .unit-form-label {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .admin-form-label small,
+  .unit-form-label small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .admin-select,
+  .admin-textarea,
+  .unit-textarea {
+    font-size: 0.875rem !important;
+    padding: 0.75rem !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    border-radius: 6px;
+  }
+
+  /* Action buttons - stack vertically, full width */
+  .admin-action-buttons,
+  .panel-actions,
+  .revision-form-actions,
+  .unit-action-buttons,
+  .unit-form-actions {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    width: 100%;
+  }
+
+  .admin-btn,
+  .panel-btn,
+  .unit-btn {
+    width: 100% !important;
+    padding: 0.875rem 1rem !important;
+    font-size: 0.875rem !important;
+    justify-content: center !important;
+    border-radius: 6px;
+  }
+
+  /* Revision history */
+  .revision-timeline {
+    padding: 1rem !important;
+  }
+
+  .revision-item {
+    padding: 0.75rem !important;
+    margin-bottom: 0.75rem;
+  }
+
+  .revision-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .revision-content h4 {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .revision-meta {
+    font-size: 0.75rem !important;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .revision-text {
+    font-size: 0.875rem;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+  }
+
+  /* Files section */
+  .file-card {
+    padding: 0.75rem !important;
+  }
+
+  .file-name {
+    font-size: 0.875rem !important;
+  }
+
+  .file-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .file-btn,
+  .download-btn-enhanced {
+    width: 100% !important;
+    font-size: 0.813rem !important;
+    padding: 0.625rem !important;
+    justify-content: center;
+  }
+
+  /* Action panels */
+  .unit-action-panel {
+    padding: 1rem !important;
+    margin-bottom: 1rem;
+  }
+
+  .unit-panel-header h3 {
+    font-size: 0.938rem;
+  }
+
+  .unit-panel-header p {
+    font-size: 0.813rem;
+  }
+
+  /* Conversation trigger */
+  .unit-conversation-trigger {
+    padding: 1rem !important;
+  }
+
+  .unit-chat-button {
+    padding: 1rem;
+  }
+
+  .unit-chat-text strong {
+    font-size: 0.938rem;
+  }
+
+  .unit-chat-text small {
+    font-size: 0.813rem;
+  }
+
+  /* PDF Viewer Modal - full screen */
   .pdf-viewer-modal {
     width: 100vw !important;
     height: 100vh !important;
     max-width: 100vw !important;
+    max-height: 100vh !important;
     border-radius: 0 !important;
   }
-  
+
+  .pdf-viewer-header {
+    padding: 1rem !important;
+  }
+
+  .pdf-viewer-header h2 {
+    font-size: 1rem;
+  }
+
+  .pdf-viewer-body {
+    height: calc(100vh - 70px) !important;
+  }
+
+  /* Message attachments */
   .message-attachment {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.5rem;
   }
-  
+
   .message-attachment-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  /* Confirmation panels */
+  .inline-confirmation-panel {
+    padding: 1rem !important;
+  }
+
+  .confirmation-content {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem;
+  }
+
+  .confirmation-actions {
+    flex-direction: column !important;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .confirmation-actions button {
+    width: 100%;
+  }
+
+  /* Complete Task/Approval Modals */
+  #completeTaskModal .modal-content,
+  #completeApprovalModal .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  #completeTaskModal .modal-body,
+  #completeApprovalModal .modal-body {
+    padding: 0.875rem !important;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  #completeTaskModal .modal-header,
+  #completeApprovalModal .modal-header {
+    padding: 0.625rem 0.875rem !important;
+    flex-shrink: 0;
+    min-height: auto;
+  }
+
+  #completeTaskModal .modal-header h2,
+  #completeApprovalModal .modal-header h2 {
+    font-size: 0.938rem !important;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  #completeTaskModal .modal-header .close-modal-btn,
+  #completeApprovalModal .modal-header .close-modal-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  #completeTaskModal .modal-header .close-modal-btn svg,
+  #completeApprovalModal .modal-header .close-modal-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Textarea in complete modals */
+  #finalRemarksInput,
+  #approvalFinalRemarksInput {
+    font-size: 0.875rem !important;
+    padding: 0.75rem !important;
+    min-height: 120px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Button groups in complete modals */
+  #completeTaskModal .modal-body > div:last-child,
+  #completeApprovalModal .modal-body > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: auto;
+  }
+
+  #completeTaskModal .modal-body > div:last-child button,
+  #completeApprovalModal .modal-body > div:last-child button {
+    width: 100% !important;
+    padding: 0.875rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Guide items */
+  .guide-item {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+  }
+
+  .guide-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Format toolbar in revision form */
+  .format-toolbar,
+  .revision-format-toolbar {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .format-btn {
+    padding: 0.5rem;
+    font-size: 0.813rem;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  /* File upload areas */
+  .file-upload-area {
+    padding: 1rem;
+  }
+
+  .upload-text {
+    font-size: 0.875rem;
+  }
+}
+
+/* ==========================================
+   SMALL MOBILE (480px and below)
+   ========================================== */
+@media (max-width: 480px) {
+  .unit-modal-header {
+    padding: 0.75rem;
+  }
+
+  .unit-modal-header h2 {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .unit-modal-header .type-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.688rem;
+  }
+
+  .modal-action-btn {
+    font-size: 0.813rem;
+    padding: 0.5rem 0.625rem;
+  }
+
+  .unit-modal-body {
+    padding: 0.75rem !important;
+    gap: 0.75rem;
+  }
+
+  .unit-info-card {
+    padding: 0.75rem !important;
+  }
+
+  .unit-info-card h3 {
+    font-size: 0.938rem !important;
+  }
+
+  .unit-info-label,
+  .unit-detail-label {
+    font-size: 0.75rem !important;
+  }
+
+  .unit-info-value,
+  .unit-detail-value {
+    font-size: 0.813rem !important;
+  }
+
+  .admin-btn,
+  .panel-btn,
+  .file-btn,
+  .unit-btn {
+    font-size: 0.813rem !important;
+    padding: 0.625rem 0.75rem !important;
+  }
+
+  .unit-description-content {
+    font-size: 0.813rem;
+  }
+
+  table {
+    font-size: 0.75rem;
+  }
+
+  th, td {
+    padding: 0.375rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .revision-content h4 {
+    font-size: 0.813rem !important;
+  }
+
+  .revision-meta {
+    font-size: 0.688rem !important;
+  }
+
+  .file-name,
+  .file-name-enhanced {
+    font-size: 0.813rem !important;
+  }
+
+  #finalRemarksInput,
+  #approvalFinalRemarksInput {
+    font-size: 0.813rem !important;
+    padding: 0.625rem !important;
   }
 }
 

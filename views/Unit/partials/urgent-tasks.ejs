@@ -1,0 +1,134 @@
+<div class="panel-header urgent">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="8" x2="12" y2="12"></line>
+    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+  </svg>
+  <h3>My Urgent Tasks</h3>
+</div>
+
+<% if (urgentTasks && urgentTasks.length > 0) { %>
+  <%
+    const excludedStatuses = ['completed', 'approved', 'archived', 'deleted'];
+    const approvalTasks = urgentTasks.filter(t => !t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
+    const serviceTasks = urgentTasks.filter(t => t.serviceType && !excludedStatuses.includes((t.status || '').toLowerCase()));
+    const hasApprovals = approvalTasks.length > 0;
+    const hasServices = serviceTasks.length > 0;
+  %>
+
+  <!-- Tab Navigation -->
+  <div class="urgent-tasks-tabs">
+    <button class="urgent-tab-btn active" data-tab="approvals" onclick="switchUrgentTab('approvals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 11l3 3L22 4"></path>
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+      </svg>
+      Approvals
+      <% if (hasApprovals) { %>
+        <span class="tab-count"><%= approvalTasks.length %></span>
+      <% } %>
+    </button>
+    <button class="urgent-tab-btn" data-tab="services" onclick="switchUrgentTab('services')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
+      </svg>
+      Services
+      <% if (hasServices) { %>
+        <span class="tab-count"><%= serviceTasks.length %></span>
+      <% } %>
+    </button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="urgent-tasks-tab-content">
+    <!-- Approvals Tab -->
+    <div class="urgent-tab-pane active" id="approvals-pane">
+      <% if (hasApprovals) { %>
+        <div class="urgent-tasks-list">
+          <% approvalTasks.forEach(function(task) { %>
+            <div class="task-item-compact approval-task" data-task-id="<%= task._id %>" data-task-type="approval" onclick="viewTaskDetails('<%= task._id %>', 'approval')" style="cursor: pointer;">
+              <div class="task-compact-header">
+                <h5 class="task-compact-title"><%= task.title || 'Untitled Task' %></h5>
+                <span class="task-badge approval">APPROVAL</span>
+              </div>
+              <div class="task-compact-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span><%= task.userId ? task.userId.fName + ' ' + task.userId.lName : 'Unknown' %></span>
+              </div>
+              <div class="task-compact-deadline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span><%= new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="no-tasks-column">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <p>No urgent approval requests</p>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Services Tab -->
+    <div class="urgent-tab-pane" id="services-pane">
+      <% if (hasServices) { %>
+        <div class="urgent-tasks-list">
+          <% serviceTasks.forEach(function(task) { %>
+            <div class="task-item-compact service-task" data-task-id="<%= task._id %>" data-task-type="service" onclick="viewTaskDetails('<%= task._id %>', 'service')" style="cursor: pointer;">
+              <div class="task-compact-header">
+                <h5 class="task-compact-title"><%= task.title || task.serviceType || 'Untitled Task' %></h5>
+                <span class="task-badge service">SERVICE</span>
+              </div>
+              <div class="task-compact-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span><%= task.userId ? task.userId.fName + ' ' + task.userId.lName : 'Unknown' %></span>
+              </div>
+              <div class="task-compact-deadline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span><%= new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="no-tasks-column">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <p>No urgent service requests</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+<% } else { %>
+  <div class="panel-content">
+    <div class="no-tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+      </svg>
+      <p>No urgent tasks!</p>
+      <span>All caught up 🎉</span>
+    </div>
+  </div>
+<% } %>
+
+<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin: 12px 0 0; padding: 12px;">
+  Click on any task card to view details
+</p>

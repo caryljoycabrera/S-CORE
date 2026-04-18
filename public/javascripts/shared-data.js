@@ -2,207 +2,73 @@
 // SHARED DATA ARRAYS
 // File: public/javascripts/shared-data.js
 // Purpose: Centralized data arrays accessible across all pages
+// Data is now fetched from database via API
 // ========================================
 
-// ========================================
-// AFFILIATIONS ARRAY
-// ========================================
-const affiliationsArray = [
- "Office of the President",
-          "Office of the Chief Administrative Officer",
-          "Office of the Provost",
-          "Office of the Chief Lasallian Mission Officer",
-          "Office of the Principal",
-          "Corporate and Executive Management Office",
-          "Center for Heritage Conservation",
-          "Museo De La Salle",
-          "Risk, Compliance and Audit Office",
-          "University Chaplain",
-          "Office of the Vice President for Administrative Services",
-          "Office of the Vice President for Finance",
-          "Office of the Vice President for Global Engagement and External Relations",
-          "Human Resource Management Office",
-          "Strategic Communications Office",
-          "Ancillary and Asset Management Office",
-          "Legal Counsel",
-          "Data Protection Office",
-          "Campus Development Office",
-          "Buildings and Facilities Maintenance Office",
-          "Campus Sustainability Office",
-          "General Services Office",
-          "Green Architecture and Campus Planning Office",
-          "Information and Communications Technology Center",
-          "Accounting Office",
-          "Treasury Office",
-          "Advancement and Alumni Relations Office",
-          "Lasallian Community Development Center",
-          "Linkages and Scholarship Office",
-          "Office of the Vice Provost for Academics",
-          "Office of the Deputy Provost for Research",
-          "Academic Planning and Quality Management",
-          "College of Law",
-          "College of Professional and Graduate Studies",
-          "School of Innovative and Flexible Learning",
-          "School of Governance, Public Service, and Corporate Leadership",
-          "Aklatang Emilio Aguinaldo-Information Resource Center",
-          "Center for Student Admissions",
-          "University Registrar",
-          "Cavite Studies Center",
-          "University Research Office",
-          "Herminia D. Torres Quality Assurance Office",
-          "Center for Innovative Learning Program",
-          "Center for Curriculum Development and Instruction",
-          "Language Learning Center",
-          "Center for Artificial Intelligence",
-          "Center for Creative Program",
-          "Academy of Continuing Education",
-          "College of Business Administration and Accountancy",
-          "Accountancy Department",
-          "Allied Business Department",
-          "Business Management Department",
-          "Marketing Department",
-          "College of Criminal Justice Education",
-          "College of Education",
-          "Physical Education Department",
-          "Professional Education Department",
-          "Religious Education Department",
-          "College of Engineering, Architecture and Technology",
-          "Architecture Department",
-          "Engineering Department",
-          "Graphics Design and Multimedia Department",
-          "Center of Technology",
-          "College of Information and Computer Studies",
-          "Computer Studies Department",
-          "Information Technology Department",
-          "College of Liberal Arts and Communication",
-          "Communication and Journalism Department",
-          "Languages and Literature Department",
-          "Social Sciences Department",
-          "Philosophy and Psychology Department",
-          "College of Tourism and Hospitality Management",
-          "Hospitality Management Department",
-          "Tourism Management Department",
-          "College of Science",
-          "Biological Sciences Department",
-          "Mathematics & Statistics Department",
-          "Physical Sciences Department",
-          "Office of Student Services",
-          "Student Development and Activities Office",
-          "Student Welfare and Formation Office",
-          "Student Wellness Center",
-          "NSTP-CWTS",
-          "Campus Ministry Office",
-          "DLS Bahay Pag-asa Dasmariñas",
-          "Night College",
-          "Sports Development Office",
-          "University Lasallian Family Office",
-          "Basic Education",
-          "Office of the Associate Principal for Academics and Research",
-          "Office of the Associate Principal for Administrative Services and Student Affairs",
-          "Dormitory",
-          "Materials Reproduction Office / Food Services Office",
-          "Retreat and Conference Center / Sports & Recreation Complex",
-          "Warehouse Office",
-          "Safety & Health Office",
-          "Purchasing Office",
-          "Transportation Office",
-          "Facilities Maintenance Office",
-          "Housekeeping & Grounds",
-          "De La Salle Dasmariñas Alumni Association",
-          "DLSU-D Development Cooperative",
-          "Faculty Organization",
-          "KABALIKAT ng DLSU-D Inc.",
-          "Parents Organization La Salle Cavite",
-          "Human Resource Management Office"
-];
+// Initialize with empty arrays - will be populated from API
+let affiliationsArray = [];
+let studentOrgsArray = [];
+let unitsArray = [];
+let requestStatusesArray = [];
+
+// Fetch system data from API
+(async function loadSystemData() {
+  try {
+    const response = await fetch('/api/system-data');
+    const result = await response.json();
+    
+    if (result.success) {
+      affiliationsArray = result.data.offices || [];
+      studentOrgsArray = result.data.organizations || [];
+      unitsArray = result.data.units || [];
+      requestStatusesArray = result.data.requestStatuses || [];
+      
+      // Make available globally
+      window.affiliationsArray = affiliationsArray;
+      window.studentOrgsArray = studentOrgsArray;
+      window.unitsArray = unitsArray;
+      window.requestStatusesArray = requestStatusesArray;
+      
+      console.log('[Shared Data] ✅ Loaded from configuration:');
+      console.log('   - Organizations:', studentOrgsArray.length);
+      console.log('   - Offices:', affiliationsArray.length);
+      console.log('   - Units:', unitsArray.length);
+      console.log('   - Request Statuses:', requestStatusesArray.length);
+      
+      // Dispatch event to notify that data is loaded
+      window.dispatchEvent(new Event('systemDataLoaded'));
+    } else {
+      console.warn('[Shared Data] ⚠️ API response unsuccessful');
+      window.affiliationsArray = affiliationsArrayFallback;
+      window.studentOrgsArray = studentOrgsArrayFallback;
+      window.unitsArray = unitsArrayFallback;
+      window.requestStatusesArray = requestStatusesArrayFallback;
+    }
+  } catch (error) {
+    console.error('[Shared Data] ❌ Failed to load system data from API:', error);
+    console.warn('[Shared Data] Using empty fallback arrays. Please configure via Admin > Configuration.');
+    // Use empty fallback arrays
+    window.affiliationsArray = affiliationsArrayFallback;
+    window.studentOrgsArray = studentOrgsArrayFallback;
+    window.unitsArray = unitsArrayFallback;
+    window.requestStatusesArray = requestStatusesArrayFallback;
+  }
+})();
 
 // ========================================
-// STUDENT ORGANIZATIONS ARRAY
+// MINIMAL FALLBACK DATA
+// These are only used if the API fails to load
+// All data should be configured via Admin > Configuration page
 // ========================================
-const studentOrgsArray = [
-    "University Student Government (USG)",
-        "Internal Audit Service (IAS)",
-        "University Student Election Commission (USEC)",
-        "Office of the Solicitor General (OSG)",
-        "College of Business Administration and Accountancy Student Government (CBAASG)",
-        "Business Management Program Council (BMPC)",
-        "Junior Philippine Institute of Accountants (JPIA)",
-        "Marketing Management Program Council (MMPC)",
-        "College of Education Student Government (COEdSG)",
-        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-        "Architecture Program Council (ArchPC)",
-        "Civil Engineering Program Council (CEEPC)",
-        "Computer Engineering Program Council (CpEPC)",
-        "Electrical Engineering Program Council (EEEPC)",
-        "Electronics Engineering Program Council (ECEPC)",
-        "Industrial Engineering Program Council (IEEPC)",
-        "Mechanical Engineering Program Council (MEEPC)",
-        "Multimedia Arts Program Council (MMAPC)",
-        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-        "College of Criminal Justice Education Student Government (CCJESG)",
-        "Criminology Program Council (CrimPC)",
-        "Forensic Science Program Council (FScPC)",
-        "College of Liberal Arts and Communication Student Government (CLACSG)",
-        "Communication Program Council (CPC)",
-        "International Development Program Council (IDPC)",
-        "Political Science Program Council (PSPC)",
-        "Psychology Program Council (PPC)",
-        "College of Science Student Government (COSSG)",
-        "Applied Mathematics Program Council (AMPC)",
-        "Biology Program Council (BioPC)",
-        "College of Information and Computer Studies Student Government (CICSSG)",
-        "Computer Science Program Council (CSPC)",
-        "Information Technology Program Council (ITPC)",
-        "DLSU-D Chorale (CHORALE)",
-        "Lasallian Symphony Orchestra (LSO)",
-        "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-        "Lasallian Pop Band (LPB)",
-        "Teatro Lasalliana (TEATRO)",
-        "Visual and Performing Arts Production Unit (VPAPU)",
-        "Heraldo Filipino",
-        "Vicissitude",
-        "Council of Student Organizations (CSO)",
-        "Business Operations Management Society (BOMS)",
-        "Junior Marketing Association (JMA)",
-        "DLSU-D Psychological Society (DPS)",
-        "DLSU-D Pre-Medical Society (DPMS)",
-        "Hotel and Restaurant Management Society (HRMS)",
-        "Turismo Lasalleño Society (TLS)",
-        "Lasallian Educators Society (LES)",
-        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-        "DLSU-D Pre-Law Society (DPLS)",
-        "Astraeus Literary and Arts Guild",
-        "Accounting Enrichment Society (ACES)",
-        "Circle of Student Assistants (COSA)",
-        "DLSU-D Lifters",
-        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-        "DLSU-D United Patriots Football Club",
-        "Junior Financial Executives Institute of the Philippines (JFINEX)",
-        "Marché Société (MS)",
-        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-        "SINAG Society of Leaders (SISOL)",
-        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-        "LS Verde of Campus Sustainability Office",
-        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-        "Green FM of Communications and Journalism Department",
-        "International Students' Association (ISA) of International Students Office",
-        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
-];
+const affiliationsArrayFallback = [];
+const studentOrgsArrayFallback = [];
+const unitsArrayFallback = [];
+const requestStatusesArrayFallback = [];
 
-// ========================================
-// EXPOSE TO WINDOW (GLOBAL SCOPE)
-// ========================================
-console.log('📦 Shared-data.js loading...');
-
-// Make arrays available globally
+// Initialize global variables immediately (will be populated by async function)
 window.affiliationsArray = affiliationsArray;
 window.studentOrgsArray = studentOrgsArray;
+window.unitsArray = unitsArray;
+window.requestStatusesArray = requestStatusesArray;
 
-console.log('✅ Shared-data.js loaded successfully');
-console.log('   - affiliationsArray:', affiliationsArray.length, 'items');
-console.log('   - studentOrgsArray:', studentOrgsArray.length, 'items');
-console.log('   - window.affiliationsArray:', typeof window.affiliationsArray);
-console.log('   - window.studentOrgsArray:', typeof window.studentOrgsArray);
+console.log('[Shared Data] 📦 Module loaded - fetching data from API...');

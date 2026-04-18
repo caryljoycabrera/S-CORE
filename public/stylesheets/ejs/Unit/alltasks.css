@@ -264,6 +264,17 @@
     text-align: center;
   }
 
+  /* Column width suggestions - keep total near 100% */
+  /* Use higher-specificity selectors so these rules override the admin stylesheet loaded after this file. */
+  .student-side .table-section .requests-table th:nth-child(1), .student-side .table-section .requests-table td:nth-child(1) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(2), .student-side .table-section .requests-table td:nth-child(2) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(3), .student-side .table-section .requests-table td:nth-child(3) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(4), .student-side .table-section .requests-table td:nth-child(4) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(5), .student-side .table-section .requests-table td:nth-child(5) { width: 11%; max-width: 160px; }
+  .student-side .table-section .requests-table th:nth-child(6), .student-side .table-section .requests-table td:nth-child(6) { width: 10%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(7), .student-side .table-section .requests-table td:nth-child(7) { width: 8%; max-width: 90px; }
+  .student-side .table-section .requests-table th:nth-child(8), .student-side .table-section .requests-table td:nth-child(8) { width: 8%; max-width: 90px; }
+
   /* Responsive button styling */
   @media (max-width: 992px) {
     .view-btn {
@@ -860,11 +871,11 @@
 @keyframes dropdownSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -1068,7 +1079,7 @@
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   z-index: 999;
-  max-height: 300px;
+  max-height: 340px;
   overflow: hidden;
   animation: dropdownSlideIn 0.2s ease-out;
 }
@@ -1133,4 +1144,861 @@
   color: white;
   font-size: 11px;
   font-weight: bold;
+}
+
+/* Enhanced Multi-Select Styles */
+.enhanced-multi-select-wrapper {
+  position: relative;
+  width: 100%;
+  z-index: 1 !important; /* Base z-index for stacking context */
+}
+
+.enhanced-multi-select {
+  position: relative;
+  width: 100%;
+  overflow: visible; /* Allow dropdown to be visible */
+}
+
+.select-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.select-display:hover {
+  border-color: #9ca3af;
+}
+
+.select-display.active {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  position: relative;
+  z-index: 3; /* Raise above other elements */
+}
+
+.selected-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.select-display.active .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.select-display::after {
+  display: none !important; /* Override any existing ::after */
+}
+
+/* When dropdown is open, raise parent z-index */
+.enhanced-multi-select-wrapper:has(.select-dropdown.show) {
+  z-index: 99999 !important; /* Raise above everything else when open */
+}
+
+/* Filter row styling to match approvals page */
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  position: relative; /* Create positioning context for dropdowns */
+  z-index: 1; /* Base z-index */
+  overflow: visible; /* Allow dropdowns to overflow this container */
+}
+
+/* CRITICAL: Raise entire filter-controls container when any dropdown is active */
+.filter-controls:has(.select-dropdown.show),
+.filter-controls:has(.single-select-dropdown.show),
+.filter-controls:has(.custom-select.active) {
+  z-index: 99999 !important; /* Raise above all other filter rows */
+}
+
+/* Add spacing between filter rows */
+.filter-controls + .filter-controls {
+  margin-top: 0.75rem;
+}
+
+/* Ensure first filter row doesn't have extra top margin */
+.filter-controls:first-of-type {
+  margin-top: 0;
+}
+
+.filter-controls.dropdown-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  overflow: visible; /* Allow dropdowns to overflow this container */
+}
+
+.filter-controls.dropdown-row .filter-item {
+  flex: 1;
+  min-width: 280px; /* More reasonable min-width */
+  max-width: none;
+  position: relative; /* Create positioning context */
+}
+
+.filter-controls.dropdown-row .enhanced-multi-select-wrapper {
+  width: 100%;
+}
+
+.filter-controls.dropdown-row .select-display {
+  min-width: auto; /* Remove fixed min-width */
+  padding: 0.5rem 0.75rem;
+}
+
+.filter-controls.dropdown-row .filter-item:nth-child(n+3) {
+  display: flex; /* Changed from none - show all items */
+}
+
+/* Consistent filter item sizing */
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative; /* Create positioning context for dropdowns */
+  overflow: visible; /* Allow dropdowns to overflow */
+  flex: 1;
+  min-width: 200px;
+  z-index: 1;
+}
+
+/* Raise z-index when dropdown is active */
+.filter-item:has(.enhanced-multi-select-wrapper .select-dropdown.show),
+.filter-item:has(.custom-select.active) {
+  z-index: 99999 !important;
+}
+
+.enhanced-multi-select-wrapper,
+.enhanced-single-select-wrapper {
+  width: 100%;
+  min-width: 200px;
+}
+
+/* Enhanced single select container */
+.enhanced-single-select {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+/* ==========================================
+     ENHANCED MULTI-SELECT STYLES
+     ======================================== */
+
+.enhanced-multi-select-wrapper {
+  width: 100%;
+  min-width: 200px;
+  position: relative;
+  overflow: visible;
+}
+
+.enhanced-multi-select {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.select-display {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  color: #111827;
+  min-height: 20px;
+  overflow: visible;
+  position: relative;
+  z-index: 2;
+}
+
+.select-display:hover {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+
+.select-display.active {
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.selected-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-arrow {
+  font-size: 0.8rem;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+.select-display.active .dropdown-arrow {
+  transform: rotate(180deg);
+  color: #3b82f6;
+}
+
+.select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  padding: 0.5rem 0;
+}
+
+.select-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.options-container {
+  padding: 0;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.option-item:hover {
+  background-color: #f3f4f6;
+}
+
+.option-item input[type="checkbox"],
+.option-item input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  height: 18px;
+  width: 18px;
+  background-color: #fff;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  margin-right: 0.75rem;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.option-item input[type="checkbox"]:checked ~ .checkmark,
+.option-item input[type="radio"]:checked ~ .checkmark {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.option-item input[type="checkbox"]:checked ~ .checkmark:after,
+.option-item input[type="radio"]:checked ~ .checkmark:after {
+  display: block;
+}
+
+.option-text {
+  font-size: 0.95rem;
+  color: #111827;
+  flex: 1;
+}
+
+/* For radio buttons, make checkmark circular */
+.option-item input[type="radio"] ~ .checkmark {
+  border-radius: 50%;
+}
+
+.option-item input[type="radio"]:checked ~ .checkmark:after {
+  content: "";
+  position: absolute;
+  display: block;
+  left: 6px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  transform: none;
+}
+
+/* Scrollbar styling for dropdown */
+.select-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.select-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ==========================================
+   ADMIN ACTION BUTTONS & REVISION FORM
+   ========================================== */
+
+.admin-action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.admin-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.admin-btn:active {
+  transform: translateY(0);
+}
+
+.admin-btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.admin-btn-success:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.admin-btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.admin-btn-warning:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.admin-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.admin-btn-secondary:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.admin-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.admin-btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Revision Form Container */
+.revision-form-container {
+  background: #fefefe;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.revision-form-header {
+  margin-bottom: 1.5rem;
+}
+
+.revision-form-header h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.revision-form-header p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Revision Files Preview */
+.revision-files-preview {
+  background: #f8f9fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.files-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.files-count {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.clear-files-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clear-files-btn:hover {
+  background: #dc2626;
+}
+
+.files-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.file-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.125rem;
+}
+
+.file-size {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.remove-file-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.remove-file-btn:hover {
+  background: #dc2626;
+}
+
+/* Revision Form Actions */
+.revision-form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ==========================================
+   TABLET RESPONSIVENESS (1024px and below)
+   ========================================== */
+@media (max-width: 1024px) {
+  /* Main container adjustments */
+  .student-side {
+    padding: 1rem !important;
+  }
+
+  /* Section padding adjustments */
+  .page-header-container,
+  .nav-tabs,
+  .filter-section,
+  .table-section {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    margin-left: 1rem !important;
+    margin-right: 1rem !important;
+  }
+
+  /* Page header - stack on tablet */
+  .page-header-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .action-button-container {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Navigation tabs */
+  .nav-tabs {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  /* Filter section */
+  .filter-controls {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Table - enable horizontal scroll */
+  .table-section {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 800px;
+  }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVENESS (768px and below)
+   ========================================== */
+@media (max-width: 768px) {
+  /* Main container - prevent horizontal scroll */
+  .student-side {
+    padding: 0.5rem !important;
+    overflow-x: hidden;
+  }
+
+  .activity-section {
+    overflow-x: hidden;
+  }
+
+  /* Section spacing */
+  .page-header-container,
+  .nav-tabs,
+  .filter-section,
+  .table-section {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    margin-left: 0.5rem !important;
+    margin-right: 0.5rem !important;
+  }
+
+  /* Page header */
+  .page-header-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-top: 1rem !important;
+  }
+
+  .user-info-section {
+    width: 100%;
+  }
+
+  .user-info-section h2 {
+    font-size: 1.25rem;
+  }
+
+  .user-info-section p {
+    font-size: 0.875rem;
+  }
+
+  /* Action buttons */
+  .action-button-container {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .action-button-container .view-all-btn,
+  .action-button-container button {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Navigation tabs - stack vertically */
+  .nav-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem !important;
+  }
+
+  .tab-btn {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    text-align: center;
+  }
+
+  /* Filter section */
+  .filter-section {
+    padding: 0.75rem !important;
+  }
+
+  .filter-controls {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .filter-item {
+    width: 100%;
+  }
+
+  /* Table - horizontal scroll with better formatting */
+  .table-section {
+    padding: 0.75rem !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .requests-table {
+    font-size: 0.813rem;
+    min-width: 800px !important;
+    table-layout: auto;
+    width: auto !important;
+  }
+
+  /* Table headers and cells - keep text readable, no vertical stacking */
+  .requests-table th,
+  .requests-table td {
+    padding: 0.5rem 0.5rem;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+
+  /* Specific column width adjustments for readability */
+  th:first-child, td:first-child {
+    min-width: 40px; /* Request ID */
+  }
+
+  th:nth-child(2), td:nth-child(2) {
+    min-width: 120px; /* Title */
+  }
+
+  th:nth-child(3), td:nth-child(3) {
+    min-width: 100px; /* Type/Office */
+  }
+
+  th:nth-child(4), td:nth-child(4) {
+    min-width: 100px; /* Requestor/Status */
+  }
+
+  th:nth-child(5), td:nth-child(5) {
+    min-width: 80px; /* Date/Deadline */
+  }
+
+  /* Text wrapping for title cells */
+  td:nth-child(2) {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Admin buttons responsive */
+  .admin-action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .admin-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .revision-form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .revision-form-actions .admin-btn {
+    width: 100%;
+  }
+
+  /* Pagination */
+  .pagination-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .pagination-controls button {
+    width: 100%;
+  }
+}
+
+/* ==========================================
+   SMALL MOBILE (480px and below)
+   ========================================== */
+@media (max-width: 480px) {
+  /* Further reduce padding */
+  .student-side {
+    padding: 0.25rem !important;
+  }
+
+  .page-header-container,
+  .nav-tabs,
+  .filter-section,
+  .table-section {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    margin-left: 0.25rem !important;
+    margin-right: 0.25rem !important;
+  }
+
+  /* Table - maintain horizontal scroll, no vertical text stacking */
+  .requests-table {
+    font-size: 0.75rem;
+    min-width: 700px !important;
+  }
+
+  .requests-table th,
+  .requests-table td {
+    padding: 0.375rem 0.375rem;
+    white-space: nowrap !important;
+  }
+
+  /* Reduce title width but keep text horizontal */
+  .requests-table td:nth-child(2) {
+    max-width: 120px;
+  }
+
+  /* Smaller buttons */
+  .admin-btn,
+  .view-all-btn,
+  .tab-btn {
+    font-size: 0.813rem;
+    padding: 0.5rem 0.75rem;
+  }
 }

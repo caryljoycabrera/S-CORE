@@ -3,6 +3,8 @@
 // Manages user connections and enables real-time notification delivery
 
 const socketIo = require('socket.io');
+const ServiceRequest = require('../models/ServiceRequest');
+const RequestApproval = require('../models/RequestApproval');
 
 class SocketService {
   constructor() {
@@ -32,13 +34,15 @@ class SocketService {
         console.log('🔐 Socket authentication request received:', { 
           socketId: socket.id, 
           userId: data.userId, 
-          userRole: data.userRole 
+          userRole: data.userRole,
+          unitTeam: data.unitTeam
         });
         
-        const { userId, userRole } = data;
+        const { userId, userRole, unitTeam } = data;
         if (userId) {
           socket.userId = userId;
           socket.userRole = userRole;
+          socket.unitTeam = unitTeam;
           this.users.set(userId.toString(), socket.id);
           
           // Track admin sockets
@@ -48,7 +52,7 @@ class SocketService {
             console.log(`👑 Total admin sockets connected: ${this.adminSockets.size}`);
           }
           
-          console.log(`✅ User ${userId} (${userRole}) authenticated with socket ${socket.id}`);
+          console.log(`✅ User ${userId} (${userRole}${unitTeam ? ` - ${unitTeam}` : ''}) authenticated with socket ${socket.id}`);
           console.log(`📊 Total users connected: ${this.users.size}`);
           console.log(`📊 Total admins connected: ${this.adminSockets.size}`);
           
@@ -375,6 +379,163 @@ class SocketService {
     }
     
     return presence;
+  }
+
+  /**
+   * Calculate and broadcast current active requests count to admins
+   */
+  async updateActiveRequestsCount() {
+    try {
+      // Count in-progress service requests
+      const inProgressServices = await ServiceRequest.countDocuments({
+        status: { $regex: /^in.progress$/i }
+      });
+
+      // Count in-progress approval requests
+      const inProgressApprovals = await RequestApproval.countDocuments({
+        status: { $regex: /^in.progress$/i }
+      });
+
+      // Count requests in revision (for revision, revision required, etc.)
+      const revisionServices = await ServiceRequest.countDocuments({
+        status: { $regex: /revision/i }
+      });
+
+      const revisionApprovals = await RequestApproval.countDocuments({
+        status: { $regex: /revision/i }
+      });
+
+      const activeRequestsCount = inProgressServices + inProgressApprovals + revisionServices + revisionApprovals;
+      
+      // Broadcast to all admin users
+      this.broadcastActiveRequestsUpdate(activeRequestsCount);
+      
+      return activeRequestsCount;
+    } catch (error) {
+      console.error('Error calculating active requests count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Broadcast active requests count update to all admin users
+   * @param {Number} activeRequestsCount - Current active requests count
+   */
+  broadcastActiveRequestsUpdate(activeRequestsCount) {
+    if (!this.io) return false;
+    
+    const updateData = {
+      activeRequests: activeRequestsCount,
+      timestamp: new Date()
+    };
+    
+    let sentCount = 0;
+    this.adminSockets.forEach(socketId => {
+      this.io.to(socketId).emit('activeRequestsUpdate', updateData);
+      sentCount++;
+    });
+    
+    console.log(`📊 Active requests update sent to ${sentCount} admin(s): ${activeRequestsCount}`);
+    return sentCount > 0;
+  }
+
+  /**
+   * Emit dashboard update to unit users
+   * @param {String} unitTeam - Unit team name to notify
+   * @param {Object} data - Update data
+   */
+  emitDashboardUpdate(unitTeam, data = {}) {
+    if (!this.io) return false;
+    
+    const updateData = {
+      unitTeam: unitTeam,
+      timestamp: new Date(),
+      ...data
+    };
+    
+    // Find all unit users connected
+    let sentCount = 0;
+    for (const [userId, socketId] of this.users) {
+      const socket = this.io.sockets.sockets.get(socketId);
+      if (socket && socket.userRole === 'unit' && socket.unitTeam === unitTeam) {
+        this.io.to(socketId).emit('dashboardUpdate', updateData);
+        sentCount++;
+      }
+    }
+    
+    console.log(`📊 Dashboard update sent to ${sentCount} unit users in ${unitTeam}`);
+    return sentCount > 0;
+  }
+
+  /**
+   * Emit task update to unit users
+   * @param {String} unitTeam - Unit team name to notify
+   * @param {String} taskId - Task ID
+   * @param {String} action - Action performed (created, updated, completed, etc.)
+   * @param {String} taskType - Task type (approval, service)
+   */
+  emitTaskUpdate(unitTeam, taskId, action, taskType) {
+    if (!this.io) return false;
+    
+    const updateData = {
+      taskId: taskId,
+      action: action,
+      taskType: taskType,
+      unitTeam: unitTeam,
+      timestamp: new Date()
+    };
+    
+    // Find all unit users connected
+    let sentCount = 0;
+    for (const [userId, socketId] of this.users) {
+      const socket = this.io.sockets.sockets.get(socketId);
+      if (socket && socket.userRole === 'unit' && socket.unitTeam === unitTeam) {
+        this.io.to(socketId).emit('taskUpdate', updateData);
+        sentCount++;
+      }
+    }
+    
+    console.log(`📊 Task update (${action}) sent to ${sentCount} unit users in ${unitTeam}`);
+    return sentCount > 0;
+  }
+
+  /**
+   * Emit announcement update to unit users
+   * @param {String} unitTeam - Unit team name to notify (optional, if null sends to all units)
+   * @param {Object} data - Announcement data
+   */
+  emitAnnouncementUpdate(unitTeam = null, data = {}) {
+    if (!this.io) return false;
+    
+    const updateData = {
+      unitTeam: unitTeam,
+      timestamp: new Date(),
+      ...data
+    };
+    
+    let sentCount = 0;
+    if (unitTeam) {
+      // Send to specific unit
+      for (const [userId, socketId] of this.users) {
+        const socket = this.io.sockets.sockets.get(socketId);
+        if (socket && socket.userRole === 'unit' && socket.unitTeam === unitTeam) {
+          this.io.to(socketId).emit('announcementUpdate', updateData);
+          sentCount++;
+        }
+      }
+    } else {
+      // Send to all unit users
+      for (const [userId, socketId] of this.users) {
+        const socket = this.io.sockets.sockets.get(socketId);
+        if (socket && socket.userRole === 'unit') {
+          this.io.to(socketId).emit('announcementUpdate', updateData);
+          sentCount++;
+        }
+      }
+    }
+    
+    console.log(`📊 Announcement update sent to ${sentCount} unit users${unitTeam ? ` in ${unitTeam}` : ''}`);
+    return sentCount > 0;
   }
 
   /**

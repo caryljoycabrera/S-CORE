@@ -14,6 +14,14 @@
 
 console.log('🚀 Starting Approvals Admin script...');
 
+// Global variable to store available units from database
+let availableUnits = [];
+// Global variable to store available request statuses from database
+let availableStatuses = [];
+// Global variables for organizations and offices
+let availableOrganizations = [];
+let availableOffices = [];
+
 // ==================================
 // HELPER FUNCTIONS FOR CONVERSATION
 // ==================================
@@ -29,8 +37,13 @@ window.escapeHtml = function(text) {
 // Helper function to format text with markdown-style syntax
 window.formatText = function(text) {
   if (!text) return '';
-  
-  // Escape HTML first
+  // If the text already appears to be HTML (contains tags like <p>, <strong>, <em>, <u>, <a>),
+  // assume it's preformatted HTML and return as-is to preserve WYSIWYG formatting.
+  if (typeof text === 'string' && /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text)) {
+    return text;
+  }
+
+  // Escape HTML first for plaintext
   let formatted = window.escapeHtml(text);
   
   // Bold: **text** -> <strong>text</strong>
@@ -147,188 +160,7 @@ const DropdownManager = {
   }
 };
 
-// Organization and Office data arrays (shortened for brevity)
-const studentOrganizations = [
- "University Student Government (USG)",
-        "Internal Audit Service (IAS)",
-        "University Student Election Commission (USEC)",
-        "Office of the Solicitor General (OSG)",
-        "College of Business Administration and Accountancy Student Government (CBAASG)",
-        "Business Management Program Council (BMPC)",
-        "Junior Philippine Institute of Accountants (JPIA)",
-        "Marketing Management Program Council (MMPC)",
-        "College of Education Student Government (COEdSG)",
-        "College of Engineering, Architecture and Technology Student Government (CEATSG)",
-        "Architecture Program Council (ArchPC)",
-        "Civil Engineering Program Council (CEEPC)",
-        "Computer Engineering Program Council (CpEPC)",
-        "Electrical Engineering Program Council (EEEPC)",
-        "Electronics Engineering Program Council (ECEPC)",
-        "Industrial Engineering Program Council (IEEPC)",
-        "Mechanical Engineering Program Council (MEEPC)",
-        "Multimedia Arts Program Council (MMAPC)",
-        "College of Tourism and Hospitality Management Student Government (CTHMSG)",
-        "College of Criminal Justice Education Student Government (CCJESG)",
-        "Criminology Program Council (CrimPC)",
-        "Forensic Science Program Council (FScPC)",
-        "College of Liberal Arts and Communication Student Government (CLACSG)",
-        "Communication Program Council (CPC)",
-        "International Development Program Council (IDPC)",
-        "Political Science Program Council (PSPC)",
-        "Psychology Program Council (PPC)",
-        "College of Science Student Government (COSSG)",
-        "Applied Mathematics Program Council (AMPC)",
-        "Biology Program Council (BioPC)",
-        "College of Information and Computer Studies Student Government (CICSSG)",
-        "Computer Science Program Council (CSPC)",
-        "Information Technology Program Council (ITPC)",
-        "DLSU-D Chorale (CHORALE)",
-        "Lasallian Symphony Orchestra (LSO)",
-        "La Salle Filipiniana Dance Company (LSFDC)",
-        "Lasallian Pointes N' Flexes Dance Company (LPNFDC)",
-        "Lasallian Pop Band (LPB)",
-        "Teatro Lasalliana (TEATRO)",
-        "Visual and Performing Arts Production Unit (VPAPU)",
-        "Heraldo Filipino",
-        "Vicissitude",
-        "Council of Student Organizations (CSO)",
-        "Business Operations Management Society (BOMS)",
-        "Junior Marketing Association (JMA)",
-        "DLSU-D Psychological Society (DPS)",
-        "DLSU-D Pre-Medical Society (DPMS)",
-        "Hotel and Restaurant Management Society (HRMS)",
-        "Turismo Lasalleño Society (TLS)",
-        "Lasallian Educators Society (LES)",
-        "American Society of Heating, Refrigerating, and Air-Conditioning Engineers (ASHRAE DLSU-D)",
-        "DLSU-D Pre-Law Society (DPLS)",
-        "Astraeus Literary and Arts Guild",
-        "Accounting Enrichment Society (ACES)",
-        "Circle of Student Assistants (COSA)",
-        "DLSU-D Lifters",
-        "DLSU-D Patriots of Animal Welfare and Support (PAWS)",
-        "DLSU-D United Patriots Football Club",
-        "Junior Financial Executives Institute of the Philippines (JFINEX)",
-        "Marché Société (MS)",
-        "PROJECT: Ikigai (PROJ:Ik) - former Viridescent A-1",
-        "SINAG Society of Leaders (SISOL)",
-        "Campus Peer Ministers (CPM) and Youth for Christ of (YFC) of Campus Ministry Office",
-        "Lasallian Peer Facilitators (LPF) of Student Wellness Center",
-        "Lasallian Student Ambassadors (LSA) of Linkages and Scholarship Office",
-        "LS Verde of Campus Sustainability Office",
-        "Students' Extension of Resources through Voluntary Effort (SERVE) of LCDC",
-        "Green FM of Communications and Journalism Department",
-        "International Students' Association (ISA) of International Students Office",
-        "Lasallian Youth Accompaniment Group (LaYAG) of University Lasallian Family Office"
-];
-
-const officesDepartments = [
-  "Office of the President",
-          "Office of the Chief Administrative Officer",
-          "Office of the Provost",
-          "Office of the Chief Lasallian Mission Officer",
-          "Office of the Principal",
-          "Corporate and Executive Management Office",
-          "Center for Heritage Conservation",
-          "Museo De La Salle",
-          "Risk, Compliance and Audit Office",
-          "University Chaplain",
-          "Office of the Vice President for Administrative Services",
-          "Office of the Vice President for Finance",
-          "Office of the Vice President for Global Engagement and External Relations",
-          "Human Resource Management Office",
-          "Strategic Communications Office",
-          "Ancillary and Asset Management Office",
-          "Legal Counsel",
-          "Data Protection Office",
-          "Campus Development Office",
-          "Buildings and Facilities Maintenance Office",
-          "Campus Sustainability Office",
-          "General Services Office",
-          "Green Architecture and Campus Planning Office",
-          "Information and Communications Technology Center",
-          "Accounting Office",
-          "Treasury Office",
-          "Advancement and Alumni Relations Office",
-          "Lasallian Community Development Center",
-          "Linkages and Scholarship Office",
-          "Office of the Vice Provost for Academics",
-          "Office of the Deputy Provost for Research",
-          "Academic Planning and Quality Management",
-          "College of Law",
-          "College of Professional and Graduate Studies",
-          "School of Innovative and Flexible Learning",
-          "School of Governance, Public Service, and Corporate Leadership",
-          "Aklatang Emilio Aguinaldo-Information Resource Center",
-          "Center for Student Admissions",
-          "University Registrar",
-          "Cavite Studies Center",
-          "University Research Office",
-          "Herminia D. Torres Quality Assurance Office",
-          "Center for Innovative Learning Program",
-          "Center for Curriculum Development and Instruction",
-          "Language Learning Center",
-          "Center for Artificial Intelligence",
-          "Center for Creative Program",
-          "Academy of Continuing Education",
-          "College of Business Administration and Accountancy",
-          "Accountancy Department",
-          "Allied Business Department",
-          "Business Management Department",
-          "Marketing Department",
-          "College of Criminal Justice Education",
-          "College of Education",
-          "Physical Education Department",
-          "Professional Education Department",
-          "Religious Education Department",
-          "College of Engineering, Architecture and Technology",
-          "Architecture Department",
-          "Engineering Department",
-          "Graphics Design and Multimedia Department",
-          "Center of Technology",
-          "College of Information and Computer Studies",
-          "Computer Studies Department",
-          "Information Technology Department",
-          "College of Liberal Arts and Communication",
-          "Communication and Journalism Department",
-          "Languages and Literature Department",
-          "Social Sciences Department",
-          "Philosophy and Psychology Department",
-          "College of Tourism and Hospitality Management",
-          "Hospitality Management Department",
-          "Tourism Management Department",
-          "College of Science",
-          "Biological Sciences Department",
-          "Mathematics & Statistics Department",
-          "Physical Sciences Department",
-          "Office of Student Services",
-          "Student Development and Activities Office",
-          "Student Welfare and Formation Office",
-          "Student Wellness Center",
-          "NSTP-CWTS",
-          "Campus Ministry Office",
-          "DLS Bahay Pag-asa Dasmariñas",
-          "Night College",
-          "Sports Development Office",
-          "University Lasallian Family Office",
-          "Basic Education",
-          "Office of the Associate Principal for Academics and Research",
-          "Office of the Associate Principal for Administrative Services and Student Affairs",
-          "Dormitory",
-          "Materials Reproduction Office / Food Services Office",
-          "Retreat and Conference Center / Sports & Recreation Complex",
-          "Warehouse Office",
-          "Safety & Health Office",
-          "Purchasing Office",
-          "Transportation Office",
-          "Facilities Maintenance Office",
-          "Housekeeping & Grounds",
-          "De La Salle Dasmariñas Alumni Association",
-          "DLSU-D Development Cooperative",
-          "Faculty Organization",
-          "KABALIKAT ng DLSU-D Inc.",
-          "Parents Organization La Salle Cavite",
-          "Human Resource Management Office"
-];
+// Organization and Office data arrays (now loaded from database)
 
 // Enhanced Multi-Select Class
 class EnhancedMultiSelect {
@@ -556,6 +388,129 @@ class EnhancedMultiSelect {
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📋 DOM Content Loaded - Initializing...');
   
+  // ==========================================
+  // CREATE REQUEST MODAL HANDLER
+  // ==========================================
+  const openModalBtn = document.getElementById('openModalBtn');
+  const requestModal = document.getElementById('requestModal');
+  
+  if (openModalBtn && requestModal) {
+    openModalBtn.onclick = () => {
+      requestModal.style.display = 'flex';
+      // Clear user search when opening modal
+      const userInput = document.getElementById('requestForUser');
+      const userIdInput = document.getElementById('requestForUserId');
+      if (userInput) userInput.value = '';
+      if (userIdInput) userIdInput.value = '';
+    };
+  }
+  
+  // ==========================================
+  // USER SEARCH FUNCTIONALITY
+  // ==========================================
+  const requestForUserInput = document.getElementById('requestForUser');
+  const requestForUserIdInput = document.getElementById('requestForUserId');
+  const userSuggestionsDropdown = document.getElementById('userSuggestionsDropdown');
+  
+  let userSearchTimeout;
+  let usersCache = [];
+  
+  if (requestForUserInput && userSuggestionsDropdown) {
+    // Debounced search function
+    requestForUserInput.addEventListener('input', function() {
+      clearTimeout(userSearchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length < 2) {
+        userSuggestionsDropdown.style.display = 'none';
+        requestForUserIdInput.value = '';
+        return;
+      }
+      
+      // Show loading state
+      userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-loading">Searching users...</div>';
+      userSuggestionsDropdown.style.display = 'block';
+      
+      userSearchTimeout = setTimeout(async () => {
+        try {
+          console.log('[USER SEARCH] Fetching users for query:', query);
+          const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+          console.log('[USER SEARCH] Response status:', response.status, response.statusText);
+          
+          if (!response.ok) {
+            console.error('[USER SEARCH] Request failed with status:', response.status);
+            const contentType = response.headers.get('content-type');
+            console.error('[USER SEARCH] Content-Type:', contentType);
+            
+            if (contentType && contentType.includes('application/json')) {
+              const errorData = await response.json();
+              console.error('[USER SEARCH] Error response:', errorData);
+            } else {
+              const errorText = await response.text();
+              console.error('[USER SEARCH] Error response (text):', errorText.substring(0, 200));
+            }
+            
+            userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">Error: Unable to search users. Please check your permissions.</div>';
+            return;
+          }
+          
+          const users = await response.json();
+          console.log('[USER SEARCH] Found users:', users.length, users);
+          usersCache = users;
+          
+          if (users.length === 0) {
+            userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">No users found</div>';
+          } else {
+            // Populate dropdown with rich suggestions
+            userSuggestionsDropdown.innerHTML = users.map(user => {
+              const initials = `${user.fName.charAt(0)}${user.lName.charAt(0)}`.toUpperCase();
+              return `
+                <div class="user-suggestion-item" data-user-id="${user._id}" data-user-name="${user.fName} ${user.lName}" data-user-email="${user.email}">
+                  <div class="user-suggestion-avatar">${initials}</div>
+                  <div class="user-suggestion-info">
+                    <div class="user-suggestion-name">${user.fName} ${user.lName}</div>
+                    <div class="user-suggestion-email">${user.email}</div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+            
+            // Add click handlers to suggestion items
+            const suggestionItems = userSuggestionsDropdown.querySelectorAll('.user-suggestion-item');
+            suggestionItems.forEach(item => {
+              item.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                const userEmail = this.getAttribute('data-user-email');
+                
+                requestForUserInput.value = `${userName} (${userEmail})`;
+                requestForUserIdInput.value = userId;
+                userSuggestionsDropdown.style.display = 'none';
+                
+                console.log('[USER SEARCH] Selected user:', { userId, userName, userEmail });
+              });
+            });
+          }
+        } catch (error) {
+          console.error('[USER SEARCH] Error searching users:', error);
+          userSuggestionsDropdown.innerHTML = '<div class="user-suggestions-empty">Error loading users</div>';
+        }
+      }, 300);
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!requestForUserInput.contains(e.target) && !userSuggestionsDropdown.contains(e.target)) {
+        userSuggestionsDropdown.style.display = 'none';
+      }
+    });
+    
+    // Clear hidden ID if user manually changes input
+    requestForUserInput.addEventListener('keydown', function() {
+      requestForUserIdInput.value = '';
+    });
+  }
+  
   // Debug: Check all rows for allowAdditionalUpload data
   console.log('🚀 Page loaded - checking all data attributes...');
   const allRows = document.querySelectorAll('.request-row');
@@ -569,18 +524,50 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Initialize enhanced multi-select dropdowns
+  // Get filter data from database (passed from server via EJS)
+  const dbData = window.filterDataFromDatabase || {};
+  const statusOptions = dbData.requestStatuses || ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'];
+  const orgOptions = dbData.organizations || [];
+  const officeOptions = dbData.offices || [];
+  const unitOptions = dbData.units || [];
+  
+  // Initialize enhanced multi-select dropdowns with database values
   const statusFilter = new EnhancedMultiSelect('statusFilter', 
-    ['pending', 'queued', 'in progress', 'for revision', 'approved', 'rejected', 'archived'], 
+    statusOptions, 
     'Select Status', false);
+  
+  const statusFilterContainer = document.getElementById('statusFilter');
+  if (statusFilterContainer) {
+    statusFilterContainer.__instance = statusFilter;
+  }
+  
+  // Initialize assigned unit filter
+  const assignedUnitFilter = new EnhancedMultiSelect('assignedUnitFilter',
+    unitOptions,
+    'Select Assigned Unit', false);
+  
+  const assignedUnitFilterContainer = document.getElementById('assignedUnitFilter');
+  if (assignedUnitFilterContainer) {
+    assignedUnitFilterContainer.__instance = assignedUnitFilter;
+  }
     
   const studentOrgFilter = new EnhancedMultiSelect('studentOrgFilter', 
-    studentOrganizations, 
+    orgOptions, 
     'Select Student Organizations', true);
+  
+  const studentOrgFilterContainer = document.getElementById('studentOrgFilter');
+  if (studentOrgFilterContainer) {
+    studentOrgFilterContainer.__instance = studentOrgFilter;
+  }
     
   const officeDeptFilter = new EnhancedMultiSelect('officeDeptFilter', 
-    officesDepartments, 
+    officeOptions, 
     'Select Offices/Departments', true);
+  
+  const officeDeptFilterContainer = document.getElementById('officeDeptFilter');
+  if (officeDeptFilterContainer) {
+    officeDeptFilterContainer.__instance = officeDeptFilter;
+  }
 
   // Global variables
   let detailModal = document.getElementById("detailsModal");
@@ -607,19 +594,21 @@ document.addEventListener('DOMContentLoaded', function() {
       element: row,
       requestId: row.dataset.requestId,
       type: row.dataset.type,
-      title: row.dataset.title.toLowerCase(),
-      status: row.dataset.status.toLowerCase(),
-      organization: row.dataset.organization.toLowerCase(),
-      units: row.dataset.units.toLowerCase(),
-      student: row.dataset.student.toLowerCase(),
+      title: row.dataset.title?.toLowerCase() || '',
+      status: row.dataset.status?.toLowerCase() || '',
+      organization: row.dataset.organization?.toLowerCase() || '',
+      units: row.dataset.units?.toLowerCase() || '',
+      student: row.dataset.student?.toLowerCase() || '',
       datetime: row.dataset.datetime,
       date: row.dataset.date,
-      description: row.dataset.description.toLowerCase()
+      deadline: row.dataset.deadline,
+      description: row.dataset.description?.toLowerCase() || ''
     }));
 
     // Get filter elements
     const requestIdFilter = document.getElementById('requestIdFilter');
     const studentFilter = document.getElementById('studentFilter');
+    const sortByFilter = document.getElementById('sortByFilter');
     const dateFromFilter = document.getElementById('dateFromFilter');
     const dateToFilter = document.getElementById('dateToFilter');
     const clearFiltersBtn = document.getElementById('clearFilters');
@@ -635,20 +624,222 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Enhanced dropdown change listeners
-    document.getElementById('statusFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('studentOrgFilter').addEventListener('selectionChange', applyFilters);
-    document.getElementById('officeDeptFilter').addEventListener('selectionChange', applyFilters);
+    if (statusFilterContainer) {
+      statusFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (assignedUnitFilterContainer) {
+      assignedUnitFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (studentOrgFilterContainer) {
+      studentOrgFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
+    
+    if (officeDeptFilterContainer) {
+      officeDeptFilterContainer.addEventListener('selectionChange', applyFilters);
+    }
 
     if (dateFromFilter) {
-      dateFromFilter.addEventListener('change', applyFilters);
+      dateFromFilter.addEventListener('change', () => {
+        // Set minimum date for "Date To" based on "Date From" selection
+        if (dateToFilter && dateFromFilter.value) {
+          dateToFilter.min = dateFromFilter.value;
+          if (dateToFilter.value && dateToFilter.value < dateFromFilter.value) {
+            dateToFilter.value = '';
+          }
+        } else if (dateToFilter) {
+          dateToFilter.min = '';
+        }
+        applyFilters();
+      });
     }
 
     if (dateToFilter) {
       dateToFilter.addEventListener('change', applyFilters);
     }
+    
+    if (sortByFilter) {
+      sortByFilter.addEventListener('change', applyFilters);
+    }
 
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+    
+    // Pagination variables
+    const ITEMS_PER_PAGE = 10;
+    let currentPage = 1;
+    let filteredData = [];
+    
+    // Pagination elements
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    
+    if (prevPageBtn) {
+      prevPageBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          displayPage();
+        }
+      });
+    }
+    
+    if (nextPageBtn) {
+      nextPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayPage();
+        }
+      });
+    }
+    
+    function displayPage() {
+      const tableBody = document.getElementById('requestsTableBody');
+      if (!tableBody) return;
+      
+      const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      
+      // Hide all rows first
+      allRequestsData.forEach(request => {
+        request.element.style.display = 'none';
+      });
+      
+      // Show only the rows for current page and reorder them
+      const pageData = filteredData.slice(startIndex, endIndex);
+      pageData.forEach(request => {
+        tableBody.appendChild(request.element);
+        request.element.style.display = '';
+      });
+      
+      // Update pagination controls
+      renderPaginationNumbers(totalPages);
+      if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+      if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+      
+      updateResultsCount(filteredData.length);
+    }
+    
+    function renderPaginationNumbers(totalPages) {
+      if (!paginationNumbers) return;
+      
+      paginationNumbers.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      // First page button
+      if (startPage > 1) {
+        paginationNumbers.appendChild(createPageButton(1));
+        if (startPage > 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+      }
+      
+      // Page number buttons
+      for (let i = startPage; i <= endPage; i++) {
+        paginationNumbers.appendChild(createPageButton(i));
+      }
+      
+      // Last page button
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          paginationNumbers.appendChild(ellipsis);
+        }
+        paginationNumbers.appendChild(createPageButton(totalPages));
+      }
+    }
+    
+    function createPageButton(pageNum) {
+      const btn = document.createElement('button');
+      btn.className = 'pagination-btn' + (pageNum === currentPage ? ' active' : '');
+      btn.textContent = pageNum;
+      btn.addEventListener('click', () => {
+        currentPage = pageNum;
+        displayPage();
+      });
+      return btn;
+    }
+    
+    // Sort data function
+    function sortData(data, sortValue) {
+      // Statuses that should be sorted to the bottom (completed/closed requests)
+      const bottomStatuses = ['completed', 'approved', 'rejected', 'archived'];
+      // Status priority order (lower index = higher priority, appears first)
+      const statusOrder = { 'completed': 0, 'approved': 1, 'rejected': 2, 'archived': 3 };
+      
+      const [field, direction] = sortValue.split('-');
+      const isAsc = direction === 'asc';
+      
+      data.sort((a, b) => {
+        // Check if either request has a "bottom" status
+        const aIsBottom = bottomStatuses.includes(a.status?.toLowerCase());
+        const bIsBottom = bottomStatuses.includes(b.status?.toLowerCase());
+        
+        // Always push bottom statuses to the bottom
+        if (aIsBottom && !bIsBottom) return 1;
+        if (!aIsBottom && bIsBottom) return -1;
+        
+        // If both are bottom statuses, sort by status order first, then by date newest to oldest
+        if (aIsBottom && bIsBottom) {
+          const aStatus = a.status?.toLowerCase();
+          const bStatus = b.status?.toLowerCase();
+          const aOrder = statusOrder[aStatus] ?? 999;
+          const bOrder = statusOrder[bStatus] ?? 999;
+          
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder; // Lower order first
+          }
+          
+          // Same status, sort by date newest to oldest
+          const aDate = new Date(a.date || a.createdAt || 0);
+          const bDate = new Date(b.date || b.createdAt || 0);
+          return bDate - aDate; // Newest first
+        }
+        
+        // Both are active requests, sort normally by the selected field
+        let valA, valB;
+        
+        switch (field) {
+          case 'deadline':
+            // Get deadline from element's dataset
+            valA = a.element?.dataset?.deadline || '';
+            valB = b.element?.dataset?.deadline || '';
+            // Put items without deadline at the end (but before bottom statuses)
+            if (!valA && valB) return isAsc ? 1 : -1;
+            if (valA && !valB) return isAsc ? -1 : 1;
+            if (!valA && !valB) return 0;
+            break;
+          case 'date':
+            valA = a.date || '';
+            valB = b.date || '';
+            break;
+          default:
+            valA = a.date || '';
+            valB = b.date || '';
+        }
+        
+        if (valA < valB) return isAsc ? -1 : 1;
+        if (valA > valB) return isAsc ? 1 : -1;
+        return 0;
+      });
     }
 
     // Apply filters function
@@ -657,89 +848,82 @@ document.addEventListener('DOMContentLoaded', function() {
       
       const filters = {
         requestId: requestIdFilter ? requestIdFilter.value.toLowerCase().trim() : '',
-        status: statusFilter.getSelectedValues(),
+        status: statusFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        assignedUnit: assignedUnitFilterContainer?.__instance?.getSelectedValues() || ['all'],
         student: studentFilter ? studentFilter.value.toLowerCase().trim() : '',
-        studentOrg: studentOrgFilter.getSelectedValues(),
-        officeDept: officeDeptFilter.getSelectedValues(),
+        studentOrg: studentOrgFilterContainer?.__instance?.getSelectedValues() || ['all'],
+        officeDept: officeDeptFilterContainer?.__instance?.getSelectedValues() || ['all'],
         dateFrom: dateFromFilter ? dateFromFilter.value : '',
         dateTo: dateToFilter ? dateToFilter.value : ''
       };
 
       console.log('Applied filters:', filters);
 
-      let visibleCount = 0;
-
-      allRequestsData.forEach(request => {
-        let shouldShow = true;
-
+      // Filter the data
+      filteredData = allRequestsData.filter(request => {
         // Request ID filter
-        if (filters.requestId && !request.requestId.toLowerCase().includes(filters.requestId)) {
-          shouldShow = false;
+        if (filters.requestId && !request.requestId?.toLowerCase().includes(filters.requestId)) {
+          return false;
         }
 
-        // Status filter (multi-select)
+        // Status filter (multi-select, case-insensitive)
         if (filters.status.length > 0 && !filters.status.includes('all')) {
-          if (!filters.status.includes(request.status)) {
-            shouldShow = false;
-          }
+          const statusMatch = filters.status.some(s => s.toLowerCase() === request.status?.toLowerCase());
+          if (!statusMatch) return false;
+        }
+        
+        // Assigned Unit filter (case-insensitive)
+        if (filters.assignedUnit.length > 0 && !filters.assignedUnit.includes('all')) {
+          const unitMatch = filters.assignedUnit.some(u => request.units?.toLowerCase().includes(u.toLowerCase()));
+          if (!unitMatch) return false;
         }
 
         // Student filter
-        if (filters.student && !request.student.includes(filters.student)) {
-          shouldShow = false;
+        if (filters.student && !request.student?.includes(filters.student)) {
+          return false;
         }
 
         // Organization filter (multi-select)
-        let organizationMatch = true;
         const hasStudentOrgSelection = filters.studentOrg.length > 0 && !filters.studentOrg.includes('all');
         const hasOfficeDeptSelection = filters.officeDept.length > 0 && !filters.officeDept.includes('all');
         
         if (hasStudentOrgSelection || hasOfficeDeptSelection) {
-          organizationMatch = false;
+          let organizationMatch = false;
           
           // Check student organizations
           if (hasStudentOrgSelection) {
             organizationMatch = filters.studentOrg.some(org => 
-              request.organization.includes(org.toLowerCase())
+              request.organization?.includes(org.toLowerCase())
             );
           }
           
           // Check office/departments (OR logic with student orgs)
           if (!organizationMatch && hasOfficeDeptSelection) {
             organizationMatch = filters.officeDept.some(dept => 
-              request.organization.includes(dept.toLowerCase())
+              request.organization?.includes(dept.toLowerCase())
             );
           }
-        }
-
-        if (!organizationMatch) {
-          shouldShow = false;
+          
+          if (!organizationMatch) return false;
         }
 
         // Date range filter
-        if (filters.dateFrom || filters.dateTo) {
-          const requestDate = request.date;
-          
-          if (filters.dateFrom && requestDate < filters.dateFrom) {
-            shouldShow = false;
-          }
-          
-          if (filters.dateTo && requestDate > filters.dateTo) {
-            shouldShow = false;
-          }
-        }
+        if (filters.dateFrom && request.date && request.date < filters.dateFrom) return false;
+        if (filters.dateTo && request.date && request.date > filters.dateTo) return false;
 
-        // Show/hide row
-        if (shouldShow) {
-          request.element.style.display = '';
-          visibleCount++;
-        } else {
-          request.element.style.display = 'none';
-        }
+        return true;
       });
+      
+      // Then sort the filtered data
+      const sortValue = sortByFilter?.value || 'deadline-asc';
+      sortData(filteredData, sortValue);
+      
+      // Reset to first page and display
+      currentPage = 1;
+      displayPage();
 
       // Update results count
-      updateResultsCount(visibleCount);
+      updateResultsCount(filteredData.length);
     }
 
     // Clear all filters
@@ -749,23 +933,24 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear text inputs
       if (requestIdFilter) requestIdFilter.value = '';
       if (studentFilter) studentFilter.value = '';
-      if (dateFromFilter) dateFromFilter.value = '';
-      if (dateToFilter) dateToFilter.value = '';
+      if (sortByFilter) sortByFilter.value = 'deadline-asc';
+      if (dateFromFilter) {
+        dateFromFilter.value = '';
+      }
+      if (dateToFilter) {
+        dateToFilter.value = '';
+        dateToFilter.min = '';
+      }
       
       // Reset enhanced dropdowns
-      statusFilter.reset();
-      studentOrgFilter.reset();
-      officeDeptFilter.reset();
+      statusFilterContainer?.__instance?.reset();
+      assignedUnitFilterContainer?.__instance?.reset();
+      studentOrgFilterContainer?.__instance?.reset();
+      officeDeptFilterContainer?.__instance?.reset();
 
-      // Show all rows
-      allRequestsData.forEach(request => {
-        request.element.style.display = '';
-      });
-
-      // Update results count
-      updateResultsCount(allRequestsData.length);
-      
-      showNotification('All filters cleared', 'info');
+      // Reset pagination and apply filters
+      currentPage = 1;
+      applyFilters();
     }
 
     // Update results count
@@ -793,8 +978,8 @@ document.addEventListener('DOMContentLoaded', function() {
       };
     }
 
-    // Initial results count
-    updateResultsCount(allRequestsData.length);
+    // Initial filter application (apply sort and show first page)
+    applyFilters();
     
     console.log('✅ Filters initialized successfully');
   }
@@ -996,56 +1181,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function applyChatFormat(format) {
     console.log('[Approvals] Apply format:', format);
-    const textarea = document.getElementById('messageInput');
-    if (!textarea) {
+    const input = document.getElementById('messageInput');
+    if (!input) {
       console.error('[Approvals] Message input not found');
       return;
     }
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
+    // If contenteditable (WYSIWYG), use execCommand to apply formatting
+    if (input.isContentEditable) {
+      input.focus();
+      // Ensure there's a selection inside the editable element
+      const selection = window.getSelection();
+      if (!selection) return;
 
-    console.log('[Approvals] Selection:', { start, end, selectedText });
+      let selectionInside = false;
+      for (let i = 0; i < selection.rangeCount; i++) {
+        const node = selection.getRangeAt(i).commonAncestorContainer;
+        if (input.contains(node)) { selectionInside = true; break; }
+      }
 
-    let prefix = '';
-    let suffix = '';
-    let cursorOffset = 0;
+      if (!selectionInside) {
+        const range = document.createRange();
+        range.selectNodeContents(input);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
 
-    switch(format) {
-      case 'bold':
-        prefix = '**';
-        suffix = '**';
-        cursorOffset = 2;
-        break;
-      case 'italic':
-        prefix = '*';
-        suffix = '*';
-        cursorOffset = 1;
-        break;
-      case 'underline':
-        prefix = '__';
-        suffix = '__';
-        cursorOffset = 2;
-        break;
+      switch(format) {
+        case 'bold': document.execCommand('bold'); break;
+        case 'italic': document.execCommand('italic'); break;
+        case 'underline': document.execCommand('underline'); break;
+      }
+      input.focus();
+      return;
     }
 
-    const newText = beforeText + prefix + selectedText + suffix + afterText;
-    textarea.value = newText;
-    
-    // Set cursor position
-    if (selectedText) {
-      // If text was selected, place cursor after the formatted text
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
-    } else {
-      // If no text selected, place cursor between the markers
-      textarea.setSelectionRange(start + cursorOffset, start + cursorOffset);
+    // Fallback for legacy textarea inputs: insert markdown-like markers
+    const textarea = input; // treat same variable name
+    if (textarea && typeof textarea.selectionStart !== 'undefined') {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+      const beforeText = textarea.value.substring(0, start);
+      const afterText = textarea.value.substring(end);
+
+      console.log('[Approvals] Selection:', { start, end, selectedText });
+
+      let prefix = '';
+      let suffix = '';
+      let cursorOffset = 0;
+
+      switch(format) {
+        case 'bold':
+          prefix = '**';
+          suffix = '**';
+          cursorOffset = 2;
+          break;
+        case 'italic':
+          prefix = '*';
+          suffix = '*';
+          cursorOffset = 1;
+          break;
+        case 'underline':
+          prefix = '__';
+          suffix = '__';
+          cursorOffset = 2;
+          break;
+      }
+
+      const newText = beforeText + prefix + selectedText + suffix + afterText;
+      textarea.value = newText;
+      
+      // Set cursor position
+      if (selectedText) {
+        // If text was selected, place cursor after the formatted text
+        textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+      } else {
+        // If no text selected, place cursor between the markers
+        textarea.setSelectionRange(start + cursorOffset, start + cursorOffset);
+      }
+      
+      textarea.focus();
+      console.log('[Approvals] Format applied, new text length:', newText.length);
+      return;
     }
-    
-    textarea.focus();
-    console.log('[Approvals] Format applied, new text length:', newText.length);
+
+    console.warn('[Approvals] Input does not support selection-based formatting');
   }
 
   // Add conversation modal functionality
@@ -1216,39 +1438,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       
-      // Add keyboard shortcuts for formatting
+      // Add keyboard shortcuts for formatting (use execCommand for contenteditable)
       messageInput.addEventListener('keydown', function(e) {
-        console.log('[Approvals] Keydown event:', {
-          key: e.key,
-          ctrlKey: e.ctrlKey,
-          metaKey: e.metaKey,
-          shiftKey: e.shiftKey
-        });
-        
-        // Ctrl+B or Cmd+B for bold
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        // Ctrl/Cmd + B/I/U shortcuts
+        if ((e.ctrlKey || e.metaKey) && ['b','i','u'].includes(e.key.toLowerCase())) {
           e.preventDefault();
-          console.log('[Approvals] Keyboard shortcut: Bold (Ctrl+B)');
-          applyChatFormat('bold');
-          return false;
-        }
-        // Ctrl+I or Cmd+I for italic
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
-          e.preventDefault();
-          console.log('[Approvals] Keyboard shortcut: Italic (Ctrl+I)');
-          applyChatFormat('italic');
-          return false;
-        }
-        // Ctrl+U or Cmd+U for underline
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
-          e.preventDefault();
-          console.log('[Approvals] Keyboard shortcut: Underline (Ctrl+U)');
-          applyChatFormat('underline');
+          const k = e.key.toLowerCase();
+          if (messageInput.isContentEditable) {
+            if (k === 'b') document.execCommand('bold');
+            if (k === 'i') document.execCommand('italic');
+            if (k === 'u') document.execCommand('underline');
+          } else {
+            // fallback to existing function which handles textarea
+            if (k === 'b') applyChatFormat('bold');
+            if (k === 'i') applyChatFormat('italic');
+            if (k === 'u') applyChatFormat('underline');
+          }
           return false;
         }
       });
     } else {
       console.error('[Approvals] Message input element not found!');
+    }
+
+    // Delegate toolbar button clicks to apply formatting appropriately
+    const toolbarEl = document.querySelector('.unit-format-toolbar');
+    if (toolbarEl) {
+      toolbarEl.addEventListener('click', function(e) {
+        const btn = e.target.closest('.format-btn');
+        if (!btn) return;
+        const format = btn.dataset.chatFormat;
+        if (!format) return;
+        if (messageInput && messageInput.isContentEditable) {
+          messageInput.focus();
+          switch(format) {
+            case 'bold': document.execCommand('bold'); break;
+            case 'italic': document.execCommand('italic'); break;
+            case 'underline': document.execCommand('underline'); break;
+          }
+        } else {
+          // If textarea fallback exists, use insertFormatting/applyChatFormat
+          if (format === 'bold') applyChatFormat('bold');
+          if (format === 'italic') applyChatFormat('italic');
+          if (format === 'underline') applyChatFormat('underline');
+        }
+      });
     }
     
     // Close modal when clicking outside
@@ -1347,9 +1581,23 @@ document.addEventListener('DOMContentLoaded', function() {
   // Send message function
   async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
-    const content = messageInput.value.trim();
+    if (!messageInput) {
+      showNotification('Message input not found', 'error');
+      return;
+    }
+
+    // Support contenteditable (WYSIWYG) and textarea inputs
+    let content = '';
+    let plainText = '';
+    if (messageInput.isContentEditable) {
+      plainText = (messageInput.textContent || '').trim();
+      content = (messageInput.innerHTML || '').trim();
+    } else {
+      plainText = (messageInput.value || '').trim();
+      content = plainText;
+    }
     
-    if (!content && chatFiles.length === 0) {
+    if ((!content || content === '<br>' || plainText === '') && chatFiles.length === 0) {
       showNotification('Please enter a message or select a file', 'error');
       return;
     }
@@ -1406,7 +1654,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await response.json();
       console.log('[Approvals] Message sent successfully');
       console.log('[Approvals] Current request ID:', currentRequestId);
-      messageInput.value = '';
+      // Clear the input depending on type
+      if (messageInput.isContentEditable) {
+        messageInput.innerHTML = '';
+      } else {
+        messageInput.value = '';
+      }
       clearAllChatFiles();
       // Reload conversation to show new message
       console.log('[Approvals] Reloading conversation...');
@@ -1422,17 +1675,39 @@ document.addEventListener('DOMContentLoaded', function() {
   function resetFormToOriginalValues() {
     const statusSelect = document.getElementById('adminStatusSelect');
     const unitsSelect = document.getElementById('adminUnitsSelect');
+    const deadlineInput = document.getElementById('adminDeadlineInput');
     
-    if (statusSelect) statusSelect.value = originalValues.status || '';
-    if (unitsSelect) unitsSelect.value = originalValues.units || '';
+    if (statusSelect) {
+      statusSelect.value = originalValues.status || '';
+      const currentStatusValue = document.getElementById('currentStatusValue');
+      if (currentStatusValue) currentStatusValue.textContent = originalValues.status || '';
+    }
+    
+    if (unitsSelect) {
+      unitsSelect.value = originalValues.units === 'Not yet assigned' ? '' : (originalValues.units || '');
+      const currentUnitsValue = document.getElementById('currentUnitsValue');
+      if (currentUnitsValue) currentUnitsValue.textContent = originalValues.units || 'Not yet assigned';
+    }
+    
+    if (deadlineInput) deadlineInput.value = originalValues.deadline || '';
     
     showNotification('Changes cancelled - form reset to original values', 'info');
   }
   
   // Show update confirmation modal
   function showUpdateConfirmation() {
+      const statusSelect = document.getElementById('adminStatusSelect');
+      if (statusSelect && statusSelect.value === 'Archived' && originalValues.status !== 'Archived') {
+        if (typeof window.openDeleteConfirm === 'function') {
+          window.openDeleteConfirm({
+            requestId: currentRequestId,
+            requestType: currentRequestType
+          });
+          return;
+        }
+      }
+
     const changes = getFormChanges();
-    
     if (changes.length === 0) {
       showNotification('No changes detected', 'info');
       return;
@@ -1448,6 +1723,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const statusSelect = document.getElementById('adminStatusSelect');
     const unitsSelect = document.getElementById('adminUnitsSelect');
+    const deadlineInput = document.getElementById('adminDeadlineInput');
     
     if (statusSelect && statusSelect.value !== originalValues.status) {
       changes.push({
@@ -1462,6 +1738,14 @@ document.addEventListener('DOMContentLoaded', function() {
         field: 'Assigned Unit',
         oldValue: originalValues.units || 'Not yet assigned',
         newValue: unitsSelect.value || 'Not yet assigned'
+      });
+    }
+    
+    if (deadlineInput && deadlineInput.value !== originalValues.deadline) {
+      changes.push({
+        field: 'Deadline',
+        oldValue: originalValues.deadline ? new Date(originalValues.deadline).toLocaleDateString() : 'No deadline',
+        newValue: deadlineInput.value ? new Date(deadlineInput.value).toLocaleDateString() : 'No deadline'
       });
     }
     
@@ -1486,97 +1770,90 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Perform the actual update
   async function performUpdate() {
-    const confirmBtn = document.getElementById('confirmUpdateBtn');
-    confirmBtn.classList.add('loading');
-    confirmBtn.textContent = 'Updating...';
-    
-    try {
-        const statusSelect = document.getElementById('adminStatusSelect');
-        const unitsSelect = document.getElementById('adminUnitsSelect');
-        const newStatus = statusSelect ? statusSelect.value : '';
-        const newUnits = unitsSelect ? unitsSelect.value : '';
-        
-        // Single update call with both status and units
-        const success = await updateRequestStatus(currentRequestId, newStatus, currentRequestType);
-        
-        if (success) {
-            updateConfirmationModal.classList.remove('show');
-            showNotification('All changes applied successfully!', 'success');
-            
-            // Update original values
-            originalValues = {
-                status: newStatus,
-                units: newUnits
-            };
-            
-            // Reopen modal with updated data
-            setTimeout(() => {
-                reopenModalAfterUpdate(currentRequestId);
-            }, 1000);
-        }
-        
-    } catch (error) {
-      console.error('Error during update:', error);
-      showNotification('Update failed: ' + error.message, 'error');
-    } finally {
-      confirmBtn.classList.remove('loading');
-      confirmBtn.textContent = 'Confirm Update';
-    }
-  }
-  
-  // Perform the actual update
-  async function updateRequestStatus(requestId, newStatus, requestType) {
-    console.log('🔄 Updating status:', { requestId, newStatus, requestType });
-    
-    try {
-        // Get current assigned units
-        const unitsSelect = document.getElementById('adminUnitsSelect');
-        const currentUnits = unitsSelect ? unitsSelect.value : '';
+    console.log('Performing update...');
 
-        const endpoint = '/admin/approval/update-status';
-        
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                requestId: requestId,
-                status: newStatus,
-                assignedUnits: currentUnits // Include units with status update
-            })
+    // Gather form data
+    const statusSelect = document.getElementById('adminStatusSelect');
+    const unitsSelect = document.getElementById('adminUnitsSelect');
+    const deadlineInput = document.getElementById('adminDeadlineInput');
+
+    const updateData = {
+      requestId: currentRequestId,
+      status: statusSelect?.value || '',
+      assignedUnits: unitsSelect?.value || 'Not yet assigned',
+      deadline: deadlineInput?.value || null
+    };
+
+    console.log('Update data:', updateData);
+
+    try {
+      const response = await fetch('/admin/approval/update-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(updateData)
+      });
+
+      const result = await response.json();
+      console.log('Update response:', result);
+
+      if (result.success) {
+        // Update the table row with the updated data
+        const updatedDisplayUnits = updateData.assignedUnits || 'Not yet assigned';
+        const formattedDeadline = updateData.deadline ?
+          new Date(updateData.deadline).toLocaleDateString() : 'N/A';
+
+        updateTableRowData(currentRequestId, {
+          status: updateData.status,
+          units: updatedDisplayUnits,
+          deadline: updateData.deadline,
+          formattedDeadline: formattedDeadline
         });
 
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            // Update both status and units in display
-            const statusElement = document.getElementById('detailStatus');
-            const currentStatusValue = document.getElementById('currentStatusValue');
-            const currentUnitsValue = document.getElementById('currentUnitsValue');
-            
-            if (statusElement) statusElement.innerText = newStatus;
-            if (currentStatusValue) currentStatusValue.innerText = newStatus;
-            if (currentUnitsValue) currentUnitsValue.innerText = currentUnits || 'Not yet assigned';
-            
-            // Update table row with both status and units
-            updateTableRowData(requestId, {
-                status: newStatus,
-                units: currentUnits || 'Not yet assigned'
-            });
-            
-            return true;
-        } else {
-            console.error('Update failed:', result.message);
-            showNotification('Failed to update: ' + result.message, 'error');
-            return false;
-        }
+        // Close modals
+        updateConfirmationModal.classList.remove('show');
+        showNotification('All changes applied successfully!', 'success');
+
+        // Update original values
+        originalValues = {
+          status: updateData.status,
+          units: updateData.assignedUnits,
+          deadline: updateData.deadline
+        };
+
+        // Reopen modal
+        setTimeout(() => {
+          reopenModalAfterUpdate(currentRequestId);
+        }, 1000);
+
+        // Refresh page shortly after so server-side changes (deliverables,
+        // revision history, etc.) are reflected across the UI.
+        setTimeout(() => {
+          try {
+            window.location.reload();
+          } catch (e) {
+            console.error('Auto-reload failed:', e);
+          }
+        }, 1500);
+      } else {
+        showNotification('Update failed: ' + result.message, 'error');
+        updateConfirmationModal.classList.remove('show');
+      }
     } catch (error) {
-        console.error('Error updating:', error);
-        showNotification('Failed to update: ' + error.message, 'error');
-        return false;
+      console.error('Error performing update:', error);
+      showNotification('Update failed: ' + error.message, 'error');
+      updateConfirmationModal.classList.remove('show');
+    } finally {
+      const confirmBtn = document.getElementById('confirmUpdateBtn');
+      if (confirmBtn) {
+        confirmBtn.classList.remove('loading');
+        confirmBtn.textContent = 'Confirm Update';
+      }
     }
   }
+
 
   async function updateRequestUnits(requestId, newUnit, requestType) {
     console.log('🔄 Updating units:', { requestId, newUnit, requestType });
@@ -1605,6 +1882,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const displayValue = newUnit || 'Not yet assigned';
         if (unitsElement) unitsElement.innerText = displayValue;
         if (currentUnitsValue) currentUnitsValue.innerText = displayValue;
+        
+        // Update table row
+        updateTableRowData(requestId, {
+          units: displayValue
+        });
         
         return true;
       } else {
@@ -1731,7 +2013,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Store original values
     originalValues = {
       status: rowData.status,
-      units: rowData.units
+      units: rowData.units,
+      deadline: rowData.deadline || null
     };
     
     // Helper function to safely set element text
@@ -1780,13 +2063,17 @@ if (specificRequestType) {
     // Handle file preview
     populateFilePreview(rowData);
     
-    // Load revision history
-    loadRevisionHistory(currentRequestId);
+    // Load revision history (pass status to determine visibility)
+    loadRevisionHistory(currentRequestId, rowData.status);
     
     // Show/hide additional file upload toggle based on status
+    // Hide for terminal statuses: Approved, Completed, Rejected, Archived
     const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');
     if (additionalFileToggleSection) {
-      if (rowData.status && rowData.status.toLowerCase() === 'for revision') {
+      const terminalStatuses = ['approved', 'completed', 'rejected', 'archived'];
+      const currentStatusLower = (rowData.status || '').toLowerCase();
+      
+      if (!terminalStatuses.includes(currentStatusLower)) {
         additionalFileToggleSection.style.display = 'block';
         // Add event listener for the toggle
         const toggleCheckbox = document.getElementById('toggleAdditionalFileUploadBtn');
@@ -1839,21 +2126,43 @@ if (specificRequestType) {
     const currentStatusValue = document.getElementById('currentStatusValue');
     
     if (statusSelect && currentStatusValue) {
-      const statusOptions = [
-        { value: 'Pending', label: 'Pending' },
-        { value: 'Queued', label: 'Queued' },
-        { value: 'In Progress', label: 'In Progress' },
-        { value: 'For Revision', label: 'For Revision' },
-        { value: 'Approved', label: 'Approved' },
-        { value: 'Rejected', label: 'Rejected' },
-        { value: 'Archived', label: 'Archived' }
-      ];
+      // Ensure statuses are loaded from database
+      if (availableStatuses.length === 0) {
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.requestStatuses && dbData.requestStatuses.length > 0) {
+          availableStatuses = dbData.requestStatuses;
+        } else {
+          // Fallback to default statuses
+          availableStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', 'Approved', 'Completed', 'Rejected', 'Archived'];
+        }
+      }
       
-      statusSelect.innerHTML = statusOptions.map(option => 
-        `<option value="${option.value}" ${option.value === rowData.status ? 'selected' : ''}>${option.label}</option>`
-      ).join('');
+      const statusOptions = availableStatuses.map(status => ({
+        value: status,
+        label: status
+      }));
       
-      currentStatusValue.textContent = rowData.status;
+      // Compare status values case-insensitively so values from dataset
+      // (which may be lowercased) still match option values from DB
+      const rowStatusLower = (rowData.status || '').toString().toLowerCase();
+      let selectedFound = false;
+      statusSelect.innerHTML = statusOptions.map(option => {
+        const optVal = option.value || '';
+        const isSelected = optVal.toString().toLowerCase() === rowStatusLower && rowStatusLower !== '';
+        if (isSelected) selectedFound = true;
+        return `<option value="${optVal}" ${isSelected ? 'selected' : ''}>${option.label}</option>`;
+      }).join('');
+
+      // Display a friendly current value: prefer the matched option label,
+      // otherwise show a capitalized fallback of the stored value
+      if (selectedFound) {
+        const matched = statusOptions.find(o => (o.value || '').toString().toLowerCase() === rowStatusLower);
+        currentStatusValue.textContent = matched ? matched.label : (rowData.status || 'N/A');
+      } else {
+        const fallback = rowData.status ? (rowData.status.toString().charAt(0).toUpperCase() + rowData.status.toString().slice(1)) : 'N/A';
+        currentStatusValue.textContent = fallback;
+      }
     }
     
   // Populate units
@@ -1861,6 +2170,18 @@ if (specificRequestType) {
     const currentUnitsValue = document.getElementById('currentUnitsValue');
 
     if (unitsSelect && currentUnitsValue) {
+      // Ensure units are loaded from database (consistent with services.js)
+      if (availableUnits.length === 0) {
+        // Try to get from filterDataFromDatabase first
+        const dbData = window.filterDataFromDatabase || {};
+        if (dbData.units && dbData.units.length > 0) {
+          availableUnits = dbData.units;
+        } else {
+          // Fallback to default units
+          availableUnits = ['Graphics Unit', 'Multimedia Unit', 'Public Relations Unit', 'Social Media Unit'];
+        }
+      }
+      
       // Define recommendation mapping for approval requests
       const recommendationMapping = {
         'Social Media Post Content/Caption': ['Social Media Unit', 'Public Relations Unit'],
@@ -1878,13 +2199,15 @@ if (specificRequestType) {
 
       if (unitsSelect) {
         // Clear existing options
-        unitsSelect.innerHTML = `
-          <option value="">Not yet assigned</option>
-          <option value="Social Media Unit" ${recommendedUnits.includes('Social Media Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Social Media Unit') ? '★ ' : ''}Social Media Unit</option>
-          <option value="Graphics Unit" ${recommendedUnits.includes('Graphics Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Graphics Unit') ? '★ ' : ''}Graphics Unit</option>
-          <option value="Multimedia Unit" ${recommendedUnits.includes('Multimedia Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Multimedia Unit') ? '★ ' : ''}Multimedia Unit</option>
-          <option value="Public Relations Unit" ${recommendedUnits.includes('Public Relations Unit') ? 'class="recommended-unit"' : ''}>${recommendedUnits.includes('Public Relations Unit') ? '★ ' : ''}Public Relations Unit</option>
-        `;
+        let optionsHtml = '<option value="">Not yet assigned</option>';
+        
+        // Add units from database
+        availableUnits.forEach(unit => {
+          const isRecommended = recommendedUnits.includes(unit);
+          optionsHtml += `<option value="${unit}" ${isRecommended ? 'class="recommended-unit"' : ''}>${isRecommended ? '★ ' : ''}${unit}</option>`;
+        });
+        
+        unitsSelect.innerHTML = optionsHtml;
 
         // Set the current value
         unitsSelect.value = rowData.units === 'Not yet assigned' ? '' : rowData.units;
@@ -1898,6 +2221,21 @@ if (specificRequestType) {
       const detailUnits = document.getElementById('detailUnits');
       if (detailUnits) {
         detailUnits.textContent = rowData.units || 'Not yet assigned';
+      }
+    }
+    
+    // Populate deadline
+    const deadlineInput = document.getElementById('adminDeadlineInput');
+    const currentDeadlineValue = document.getElementById('currentDeadlineValue');
+    
+    if (deadlineInput && currentDeadlineValue) {
+      // Set the deadline value
+      if (rowData.deadline) {
+        deadlineInput.value = rowData.deadline;
+        currentDeadlineValue.textContent = rowData.formattedDeadline || rowData.deadline;
+      } else {
+        deadlineInput.value = '';
+        currentDeadlineValue.textContent = 'No deadline set';
       }
     }
   }
@@ -2215,10 +2553,11 @@ window.openImagePreview = function(imageUrl, fileName) {
         specificRequestType: updatedRow.dataset.specifictype,
         units: updatedRow.dataset.units,
         datetime: updatedRow.dataset.datetime,
+        deadline: updatedRow.dataset.deadline,
+        formattedDeadline: updatedRow.dataset.formattedDeadline,
         description: updatedRow.dataset.description,
         file: updatedRow.dataset.file,
         files: updatedRow.dataset.files,
-        formattedDeadline: updatedRow.dataset.formattedDeadline,
         allowAdditionalUpload: updatedRow.dataset.allowAdditionalUpload,
         student: updatedRow.dataset.student
       };
@@ -2262,6 +2601,19 @@ window.openImagePreview = function(imageUrl, fileName) {
       }
     }
 
+    if (updatedData.formattedDeadline) {
+      row.dataset.deadline = updatedData.deadline;
+      row.dataset.formattedDeadline = updatedData.formattedDeadline;
+      // Update deadline display in table if exists
+      const cells = row.querySelectorAll('td');
+      if (cells[7]) { // Deadline column
+        const deadlineCell = cells[7];
+        deadlineCell.innerHTML = updatedData.formattedDeadline !== 'N/A' ? 
+          `<span class="deadline-badge">${updatedData.formattedDeadline}</span>` : 
+          '<span class="deadline-badge">N/A</span>';
+      }
+    }
+
     // Update the allRequestsData array for filtering
     const requestIndex = allRequestsData.findIndex(req => req.element === row);
     if (requestIndex !== -1) {
@@ -2270,6 +2622,9 @@ window.openImagePreview = function(imageUrl, fileName) {
       }
       if (updatedData.units !== undefined) {
         allRequestsData[requestIndex].units = updatedData.units.toLowerCase();
+      }
+      if (updatedData.deadline !== undefined) {
+        allRequestsData[requestIndex].deadline = updatedData.deadline;
       }
     }
   }
@@ -2381,10 +2736,11 @@ window.openImagePreview = function(imageUrl, fileName) {
           specificRequestType: row.dataset.specifictype,
           units: row.dataset.units,
           datetime: row.dataset.datetime,
+          deadline: row.dataset.deadline,
+          formattedDeadline: row.dataset.formattedDeadline,
           description: row.dataset.description,
           file: row.dataset.file,
           files: row.dataset.files,
-          formattedDeadline: row.dataset.formattedDeadline,
           allowAdditionalUpload: row.dataset.allowAdditionalUpload,
           student: row.dataset.student
         };
@@ -2824,16 +3180,35 @@ document.addEventListener("click", function(event) {
 // REVISION HISTORY FUNCTIONS (Admin Approvals - Observer Only)
 // ==========================================
 
-async function loadRevisionHistory(requestId) {
+async function loadRevisionHistory(requestId, currentStatus = '') {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     
-    console.log('[Admin Approvals - Revision History] Loading for request:', requestId);
+    console.log('[Admin Approvals - Revision History] Loading for request:', requestId, 'Status:', currentStatus);
     
     if (!historyContainer) {
         console.warn('[Admin Approvals - Revision History] Container not found!');
         return;
     }
+    
+    // Helper function to show empty state
+    const showEmptyState = () => {
+        if (historySection) {
+            historySection.style.display = 'block';
+        }
+        historyContainer.innerHTML = `
+            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+            </div>
+        `;
+    };
     
     try {
         if (historySection) historySection.style.display = 'block';
@@ -2845,7 +3220,7 @@ async function loadRevisionHistory(requestId) {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Admin Approvals - Revision History] API returned non-JSON response');
-            if (historySection) historySection.style.display = 'none';
+            showEmptyState();
             return;
         }
         
@@ -2875,46 +3250,24 @@ async function loadRevisionHistory(requestId) {
             // Filter out initial submission and render all revisions
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
             
-            revisionsToShow.forEach((revision, index) => {
-                console.log('[Admin Approvals - Revision History] Rendering revision', index, ':', revision.type);
-                const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length);
-                historyContainer.appendChild(entry);
-            });
-            
-            console.log('[Admin Approvals - Revision History] All revisions rendered');
+            if (revisionsToShow.length > 0) {
+                revisionsToShow.forEach((revision, index) => {
+                    console.log('[Admin Approvals - Revision History] Rendering revision', index, ':', revision.type);
+                    const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length);
+                    historyContainer.appendChild(entry);
+                });
+                
+                console.log('[Admin Approvals - Revision History] All revisions rendered');
+            } else {
+                showEmptyState();
+            }
         } else {
-            console.log('[Admin Approvals - Revision History] No revisions to display');
-            
-            // Reset to single column layout when no revisions - keep original size
-            const modalContent = document.querySelector('#detailsModal .modal-content');
-            const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-            const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-            
-            if (modalContent && modalBody) {
-                modalContent.style.maxWidth = '900px';
-                modalBody.classList.remove('has-revisions');
-            }
-            
-            if (historySection) {
-                historySection.style.display = 'none';
-            }
+            console.log('[Admin Approvals - Revision History] No revisions to display - showing empty state');
+            showEmptyState();
         }
     } catch (error) {
         console.error('[Admin Approvals - Revision History] Error loading revision history:', error);
-        
-        // Reset to single column layout on error - keep original size
-        const modalContent = document.querySelector('#detailsModal .modal-content');
-        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-        const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-        
-        if (modalContent && modalBody) {
-            modalContent.style.maxWidth = '900px';
-            modalBody.classList.remove('has-revisions');
-        }
-        
-        if (historySection) {
-            historySection.style.display = 'none';
-        }
+        showEmptyState();
     }
 }
 
