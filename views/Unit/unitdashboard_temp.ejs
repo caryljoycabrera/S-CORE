@@ -1,6 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico?v=2">
+    <link rel="shortcut icon" href="/Picture/favicon.ico?v=2">
+    <meta name="theme-color" content="#1a5d1a">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>S-CORE Dashboard</title>
@@ -35,7 +38,7 @@
           <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
           <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : (user.userType === 'student' ? 'Student' : (user.userType || 'User')) %></p>
         </div>
-        <span class="sidebar-profile-arrow">â†’</span>
+        <span class="sidebar-profile-arrow">→</span>
       </a>
     </div>
 
@@ -156,7 +159,7 @@
             </div>
             <h3 class="card-title">All Tasks</h3>
             <p class="card-subtitle">View all assigned tasks</p>
-            <div class="card-arrow">â†’</div>
+            <div class="card-arrow">→</div>
           </div>
           <div class="action-card" onclick="location.href='/unit/task-approvals'">
             <div class="card-icon-wrapper">
@@ -165,7 +168,7 @@
             </div>
             <h3 class="card-title">Approval Tasks</h3>
             <p class="card-subtitle">Manage approval requests</p>
-            <div class="card-arrow">â†’</div>
+            <div class="card-arrow">→</div>
           </div>
 
           <div class="action-card" onclick="location.href='/unit/task-services'">
@@ -175,7 +178,7 @@
             </div>
             <h3 class="card-title">Service Tasks</h3>
             <p class="card-subtitle">Manage service requests</p>
-            <div class="card-arrow">â†’</div>
+            <div class="card-arrow">→</div>
           </div>
 
           
@@ -196,15 +199,15 @@
             </div>
             <div class="calendar-controls">
               <button class="calendar-maximize-btn" id="calendar-maximize" aria-label="Maximize Calendar" title="Maximize Calendar">
-                â›¶
+                ⛶
               </button>
               <div class="calendar-month-controls">
                 <button class="calendar-nav-btn" id="calendar-prev-month" aria-label="Previous Month" title="Previous Month">
-                  â®
+                  ❮
                 </button>
                 <span class="calendar-month-year" id="calendar-month-year"></span>
                 <button class="calendar-nav-btn" id="calendar-next-month" aria-label="Next Month" title="Next Month">
-                  â¯
+                  ❯
                 </button>
               </div>
             </div>
@@ -273,7 +276,7 @@
           <p class="guidelines-subtitle"> Important! Read this for effective task handling</p>
         </div>
       </div>
-      <span class="guidelines-toggle" id="guidelinesToggle">â–¼</span>
+      <span class="guidelines-toggle" id="guidelinesToggle">▼</span>
     </div>
   </div>
 
@@ -436,7 +439,7 @@
             <h3>Need Help?</h3>
             <p>Check out the unit team guide to learn how to manage tasks effectively</p>
           </div>
-          <div class="guide-card-arrow">â†’</div>
+          <div class="guide-card-arrow">→</div>
         </a>
       </div>
     </div>
@@ -460,15 +463,15 @@
         </div>
         <div class="calendar-controls">
           <button class="calendar-maximize-btn" id="calendar-minimize" aria-label="Minimize Calendar" title="Minimize Calendar">
-            âœ•
+            ✕
           </button>
           <div class="calendar-month-controls">
             <button class="calendar-nav-btn" id="calendar-modal-prev-month" aria-label="Previous Month" title="Previous Month">
-              â®
+              ❮
             </button>
             <span class="calendar-month-year" id="calendar-modal-month-year"></span>
             <button class="calendar-nav-btn" id="calendar-modal-next-month" aria-label="Next Month" title="Next Month">
-              â¯
+              ❯
             </button>
           </div>
         </div>
@@ -967,7 +970,7 @@ document.querySelectorAll('.action-card').forEach(card => {
     if (!hasApprovals && !hasServices) {
       html = `
         <div class="deadline-empty-state">
-          <div class="deadline-empty-state-icon">ðŸ“…</div>
+          <div class="deadline-empty-state-icon">📅</div>
           <div class="deadline-empty-state-text">No requests for this date</div>
           <div class="deadline-empty-state-subtext">You have no requests on this date.</div>
         </div>

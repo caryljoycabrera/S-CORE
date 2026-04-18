@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico?v=2">
+  <link rel="shortcut icon" href="/Picture/favicon.ico?v=2">
+  <meta name="theme-color" content="#1a5d1a">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Request Services - S-CORE</title>
-  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link rel="stylesheet" href="/stylesheets/ejs/table-fixes.css" />
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
@@ -2698,7 +2700,7 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <!-- Profile Avatar (shows when expanded) -->
-          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
                alt="<%= user.fName %> <%= user.lName %>" 
                class="sidebar-profile-avatar" />
         </div>
@@ -2801,7 +2803,7 @@
           <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
             <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
             <div class="user">
-              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" alt="User Icon" />
             </div>
           </div>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -2817,7 +2819,7 @@
         <!-- Page Header with User Info and Action Button -->
         <div class="page-header-container">
           <div class="user-info-section">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
+            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user.png' %>" 
                  alt="Profile Picture" class="profile-pic-large" style="width:64px;height:64px;border-radius:50%;" />
             <div>
               <h2 style="margin-bottom: 0.25rem;"><%= user.fName %> <%= user.lName %></h2>
@@ -3045,6 +3047,12 @@
             <div id="pageInfo" style="font-weight: 500; color: #64748b;">Page 1</div>
             <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
           </div>
+
+          <% if (!allRequests || allRequests.length === 0) { %>
+          <div class="no-requests-message">
+            <p>No requests found.</p>
+          </div>
+          <% } %>
         </section>
 
         <!-- Back to Dashboard Button -->
@@ -3064,7 +3072,7 @@
   <!-- Create Service Request Modal -->
   <div id="requestModal" class="modal" style="display:none;">
     <div class="modal-content unit-modal-wide">
-      <div class="modal-header unit-modal-header" style="background: #f97316 !important; padding: 20px; color: white;">
+      <div class="modal-header unit-modal-header">
         <div class="modal-title-section">
           <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
@@ -3218,7 +3226,7 @@
   <div style="display: flex; gap: 1rem; align-items: flex-start;">
     <div style="flex: 1;">
       <select id="specificRequestType" name="specificRequestType" class="form-control" style="margin-bottom: 0.5rem;">
-        <option value="" disabled selected>Select type</option>
+        <option value="" disabled selected>Select from predefined types...</option>
         <!-- Predefined types will be populated by JavaScript -->
       </select>
       <small style="color: #6b7280; font-size: 0.875rem;">Choose from approved request types</small>
