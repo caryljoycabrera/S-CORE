@@ -2836,6 +2836,9 @@ async function loadRevisionHistory(requestId) {
     }
     
     try {
+        if (historySection) historySection.style.display = 'block';
+        if (historyContainer) historyContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem; border-width: 0.2em;"><span class="visually-hidden">Loading...</span></div><p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">Loading revision history...</p></div>';
+        
         const response = await fetch(`/api/revision-history/${requestId}`);
         console.log('[Admin Approvals - Revision History] Response status:', response.status);
         

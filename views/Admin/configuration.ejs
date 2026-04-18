@@ -621,6 +621,7 @@
         </div>
       <% } %>
 
+<<<<<<< Updated upstream
       <!-- Header -->
       <div class="config-header">
         <h1>Homepage Configuration</h1>
@@ -635,6 +636,25 @@
             🔄 Reset Form
           </button>
         </div>
+=======
+      <!-- Tab Navigation -->
+      <div class="config-tabs">
+        <button type="button" class="config-tab active" onclick="switchTab('system')">
+          ⚙️ System Configuration
+        </button>
+        <button type="button" class="config-tab" onclick="switchTab('homepage')">
+          🏠 Homepage Configuration
+        </button>
+        <button type="button" class="config-tab" onclick="switchTab('aboutscore')">
+          📝 About S-CORE Page Configuration
+        </button>
+        <button type="button" class="config-tab" onclick="switchTab('archivemanager')" id="archiveManagerTabBtn">
+          📦 Archive Manager
+        </button>
+        <button type="button" class="config-tab" onclick="switchTab('chatbot')">
+          ❓ Q&A Chatbot
+        </button>
+>>>>>>> Stashed changes
       </div>
 
       <!-- Configuration Form -->
@@ -1374,7 +1394,2224 @@
           </div>
 
         </div>
+<<<<<<< Updated upstream
       </form>
+=======
+
+        <!-- Info Banner -->
+        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+          <p style="margin: 0; color: #166534; font-weight: 500;">
+            <strong>📝 About S-CORE Page:</strong> Configure the content displayed on the About S-CORE landing page. This page introduces visitors to the S-CORE platform before they access the login/signup.
+          </p>
+        </div>
+
+        <!-- About S-CORE Configuration Form -->
+        <form id="aboutScoreConfigForm" action="/admin/configuration" method="POST">
+          <input type="hidden" name="tabName" value="aboutscore">
+          <div class="config-sections">
+
+            <!-- S-CORE Header Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🏷️</span>
+                Header Section
+              </h2>
+              <p class="section-description">
+                The main header area with the S-CORE title and platform description that appears at the top of the page.
+              </p>
+              <div class="form-group">
+                <label for="sCoreSectionTitle">S-CORE Section Title</label>
+                <input type="text" id="sCoreSectionTitle" name="sCoreSectionTitle" value="<%= pageContent.sCoreSectionTitle || 'S-CORE' %>" maxlength="50" oninput="updateCharCount(this, 'sCoreSectionTitleCount', 50)">
+                <div class="char-count" id="sCoreSectionTitleCount"></div>
+                <p class="form-hint">Main section title displayed on the S-CORE page (e.g. 'S-CORE')</p>
+              </div>
+              <div class="form-group">
+                <label for="sCorePlatformDescription">S-CORE Acronym Meaning</label>
+                <input type="text" id="sCorePlatformDescription" name="sCorePlatformDescription" value="<%= pageContent.sCorePlatformDescription %>" maxlength="150" oninput="updateCharCount(this, 'sCorePlatformDescriptionCount', 150)">
+                <div class="char-count" id="sCorePlatformDescriptionCount"></div>
+                <p class="form-hint">Short description under the S-CORE header (e.g. 'SCO Creative Optimization for Requests and Engagement System')</p>
+              </div>
+            </div>
+
+            <!-- System Overview Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">📋</span>
+                System Overview Section
+              </h2>
+              <p class="section-description">
+                The left content card that explains what S-CORE is and provides the main call-to-action buttons.
+              </p>
+              <div class="form-group">
+                <label for="sCoreWhatIsTitle">System Overview Title</label>
+                <input type="text" id="sCoreWhatIsTitle" name="sCoreWhatIsTitle" value="<%= pageContent.sCoreWhatIsTitle %>" maxlength="50" oninput="updateCharCount(this, 'sCoreWhatIsTitleCount', 50)">
+                <div class="char-count" id="sCoreWhatIsTitleCount"></div>
+                <p class="form-hint">Section header (default: 'What is S-CORE?')</p>
+              </div>
+              <div class="form-group">
+                <label for="sCoreWhatIsDescription">System Overview Description</label>
+                <textarea id="sCoreWhatIsDescription" name="sCoreWhatIsDescription" class="tall" maxlength="500" oninput="updateCharCount(this, 'sCoreWhatIsDescriptionCount', 500)"><%= pageContent.sCoreWhatIsDescription %></textarea>
+                <div class="char-count" id="sCoreWhatIsDescriptionCount"></div>
+                <p class="form-hint">Description text explaining what S-CORE is and its main purpose</p>
+              </div>
+            </div>
+
+            <!-- Platform Features Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">✨</span>
+                Platform Features Section
+              </h2>
+              <p class="section-description">
+                The right content card with dashboard screenshot and description of why users should use S-CORE.
+              </p>
+              <div class="form-group">
+                <label for="sCoreWhyTitle">Platform Features Title</label>
+                <input type="text" id="sCoreWhyTitle" name="sCoreWhyTitle" value="<%= pageContent.sCoreWhyTitle %>" maxlength="50" oninput="updateCharCount(this, 'sCoreWhyTitleCount', 50)">
+                <div class="char-count" id="sCoreWhyTitleCount"></div>
+                <p class="form-hint">Section header (default: 'Why use S-CORE?')</p>
+              </div>
+              <div class="form-group">
+                <label for="sCoreWhyDescription">Platform Features Description</label>
+                <textarea id="sCoreWhyDescription" name="sCoreWhyDescription" class="tall" maxlength="500" oninput="updateCharCount(this, 'sCoreWhyDescriptionCount', 500)"><%= pageContent.sCoreWhyDescription %></textarea>
+                <div class="char-count" id="sCoreWhyDescriptionCount"></div>
+                <p class="form-hint">Description text for platform features and benefits</p>
+              </div>
+              <div class="form-group">
+                <label for="sCoreDashboardImage">Dashboard Screenshot Image URL</label>
+                <input type="text" id="sCoreDashboardImage" name="sCoreDashboardImage" value="<%= pageContent.sCoreDashboardImage %>" maxlength="200">
+                <p class="form-hint">Image URL for dashboard screenshot (e.g. /Picture/dashboard_ss.png)</p>
+              </div>
+            </div>
+
+            <!-- Call-to-Action Buttons Section -->
+            <div class="config-section">
+              <h2 class="section-title">
+                <span class="section-icon">🔘</span>
+                Call-to-Action Buttons
+              </h2>
+              <p class="section-description">
+                Configure the login and signup buttons that direct users to the authentication pages.
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                  <h3 style="font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #22c55e;">Login Button</h3>
+                  <div class="form-group">
+                    <label for="sCoreLoginButtonText">Login Button Text</label>
+                    <input type="text" id="sCoreLoginButtonText" name="sCoreLoginButtonText" value="<%= pageContent.sCoreLoginButtonText %>" maxlength="30" oninput="updateCharCount(this, 'sCoreLoginButtonTextCount', 30)">
+                    <div class="char-count" id="sCoreLoginButtonTextCount"></div>
+                  </div>
+                  <div class="form-group">
+                    <label for="sCoreLoginButtonLink">Login Button Link</label>
+                    <input type="text" id="sCoreLoginButtonLink" name="sCoreLoginButtonLink" value="<%= pageContent.sCoreLoginButtonLink %>" maxlength="100">
+                    <p class="form-hint">URL for the login page (e.g. /index)</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 style="font-size: 1.1rem; font-weight: 600; color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3b82f6;">Sign Up Button</h3>
+                  <div class="form-group">
+                    <label for="sCoreSignupButtonText">Sign Up Button Text</label>
+                    <input type="text" id="sCoreSignupButtonText" name="sCoreSignupButtonText" value="<%= pageContent.sCoreSignupButtonText %>" maxlength="30" oninput="updateCharCount(this, 'sCoreSignupButtonTextCount', 30)">
+                    <div class="char-count" id="sCoreSignupButtonTextCount"></div>
+                  </div>
+                  <div class="form-group">
+                    <label for="sCoreSignupButtonLink">Sign Up Button Link</label>
+                    <input type="text" id="sCoreSignupButtonLink" name="sCoreSignupButtonLink" value="<%= pageContent.sCoreSignupButtonLink %>" maxlength="100">
+                    <p class="form-hint">URL for the signup page (e.g. /register)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+            <button type="button" id="aboutScorePreviewBtnFooter" class="btn-preview" onclick="document.getElementById('aboutScorePreviewBtn').click()">
+              👁️ Preview Changes
+            </button>
+            <button type="button" id="aboutScoreSaveBtnFooter" class="btn-save" onclick="document.getElementById('aboutScoreSaveBtn').click()">
+              💾 Save Changes
+            </button>
+            <button type="button" id="aboutScoreResetBtnFooter" class="btn-reset" onclick="document.getElementById('aboutScoreResetBtn').click()">
+              🔄 Reset Form
+            </button>
+          </div>
+        </form>
+      </div> <!-- End aboutscore-tab -->
+
+              <!-- System Configuration Tab -->
+              <div id="system-tab" class="tab-content active">
+                <!-- Header -->
+                <div class="config-header">
+                  <h1>System Configuration</h1>
+                  <div class="config-header-actions">
+                    <button type="button" id="systemSaveBtn" class="btn-save">
+                      💾 Save Changes
+                    </button>
+                    <button type="button" id="systemResetBtn" class="btn-reset">
+                      🔄 Reset Form
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Info Banner -->
+                <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+                  <p style="margin: 0; color: #1e40af; font-weight: 500;">
+                    <strong>ℹ️ System Configuration:</strong> All settings configured here are stored in the database and dynamically control the system behavior. Changes take effect immediately after saving.
+                  </p>
+                </div>
+
+                <!-- System Configuration Form -->
+                <form id="systemConfigForm" method="POST" action="/admin/system-configuration">
+                  <div class="config-sections">
+
+                    <h3 class="config-group-title" style="margin-top: 0;">Organizational Structure</h3>
+
+                    <!-- Organizations Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">🏢</span>
+                        Organizations
+                      </h2>
+                      <p class="section-description">
+                        Manage the list of student organizations that users can select from.
+                      </p>
+                      <div class="form-group">
+                        <label for="organizationsList_input">Student Organizations</label>
+                        <% 
+                          const orgs = (settings && settings.organizations && settings.organizations.length > 0) ? 
+                            (Array.isArray(settings.organizations) ? settings.organizations.map(org => typeof org === 'string' ? org : org.name) : []) : [];
+                        %>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                          <select id="organizationsList_select" style="flex: 1; min-width: 0; margin-bottom: 0;">
+                            <% orgs.forEach(function(org) { %>
+                              <option value="<%= org %>"><%= org %></option>
+                            <% }); %>
+                          </select>
+                          <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('organizationsList')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                            <span>×</span> Remove
+                          </button>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                          <input type="text" id="organizationsList_input" placeholder="New organization..." style="flex: 1; min-width: 0; margin-bottom: 0;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); addDropdownEntry('organizationsList'); }">
+                          <button type="button" class="btn-add-item" onclick="addDropdownEntry('organizationsList')" style="height: auto; margin: 0;">
+                            <span>+</span> Add
+                          </button>
+                        </div>
+                        <textarea id="organizationsList" name="organizationsList" style="display:none;"><%= orgs.join('\n') %></textarea>
+                        <p class="form-hint">Type a new organization and click Add. Select existing and click Remove to delete.</p>
+                      </div>
+                    </div>
+
+                    <!-- Offices/Departments Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">🏛️</span>
+                        Offices/Departments
+                      </h2>
+                      <p class="section-description">
+                        Manage the list of offices and departments for non-student users.
+                      </p>
+                      <div class="form-group">
+                        <label for="officesList_input">Offices/Departments</label>
+                        <% 
+                          const offices = (settings && settings.offices && settings.offices.length > 0) ? settings.offices : [];
+                        %>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                          <select id="officesList_select" style="flex: 1; min-width: 0; margin-bottom: 0;">
+                            <% offices.forEach(function(office) { %>
+                              <option value="<%= office %>"><%= office %></option>
+                            <% }); %>
+                          </select>
+                          <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('officesList')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                            <span>×</span> Remove
+                          </button>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                          <input type="text" id="officesList_input" placeholder="New office/department..." style="flex: 1; min-width: 0; margin-bottom: 0;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); addDropdownEntry('officesList'); }">
+                          <button type="button" class="btn-add-item" onclick="addDropdownEntry('officesList')" style="height: auto; margin: 0;">
+                            <span>+</span> Add
+                          </button>
+                        </div>
+                        <textarea id="officesList" name="officesList" style="display:none;"><%= offices.join('\n') %></textarea>
+                        <p class="form-hint">Type a new office and click Add. Select existing and click Remove to delete.</p>
+                      </div>
+                    </div>
+
+                    <h3 class="config-group-title">Requests & Workflows</h3>
+
+                    <!-- Units and Request Types Management Section -->
+                    <div class="config-section span-full">
+                      <h2 class="section-title">
+                        <span class="section-icon">🔗</span>
+                        Units & Request Types Management
+                      </h2>
+                      <p class="section-description">
+                        Manage units and their associated request types. Each unit can handle multiple types of requests.
+                      </p>
+                      <div class="dynamic-items-section">
+                        <div class="dynamic-items-header">
+                          <h3>Units</h3>
+                          <button type="button" class="btn-add-item" onclick="addUnitWithRequestTypes()">
+                            <span>+</span> Add Unit
+                          </button>
+                        </div>
+                        <div id="unitsWithRequestTypesContainer" class="dynamic-items-container">
+                          <% 
+                          // Get existing units and mappings from database
+                          const existingUnits = (settings && settings.units) || [];
+                          const mappings = (settings && settings.requestTypeMappings) || [];
+                          
+                          // Group request types by unit
+                          const unitRequestTypes = {};
+                          existingUnits.forEach(unit => {
+                            const unitName = typeof unit === 'string' ? unit : unit.name || unit;
+                            unitRequestTypes[unitName] = [];
+                          });
+                          
+                          mappings.forEach(mapping => {
+                            const unit = mapping.recommendedUnit;
+                            if (!unitRequestTypes[unit]) {
+                              unitRequestTypes[unit] = [];
+                            }
+                            unitRequestTypes[unit].push(mapping.requestType);
+                          });
+                          
+                          Object.keys(unitRequestTypes).forEach((unitName, index) => { %>
+                          <div class="dynamic-item unit-request-item" data-index="<%= index %>">
+                            <div class="item-header">
+                              <span class="item-number">Unit <%= index + 1 %>: <strong><%= unitName %></strong></span>
+                              <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
+                                <span>×</span>
+                              </button>
+                            </div>
+                            <div class="item-content">
+                              <div class="form-group">
+                                <label>Unit Name</label>
+                                <input
+                                  type="text"
+                                  name="unitName[]"
+                                  value="<%= unitName %>"
+                                  maxlength="100"
+                                  required
+                                  onchange="updateUnitLabel(this)"
+                                >
+                              </div>
+                              <div class="form-group">
+                                <label for="unitReq_<%= index %>_input">Request Types for this Unit</label>
+                                <% 
+                                  const unitReqs = unitRequestTypes[unitName] || [];
+                                %>
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                  <select id="unitReq_<%= index %>_select" style="flex: 1; min-width: 0; margin-bottom: 0;">
+                                    <% unitReqs.forEach(function(req) { %>
+                                      <option value="<%= req %>"><%= req %></option>
+                                    <% }); %>
+                                  </select>
+                                  <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('unitReq_<%= index %>')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                                    <span>×</span> Remove
+                                  </button>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                  <input type="text" id="unitReq_<%= index %>_input" placeholder="New request type..." style="flex: 1; min-width: 0; margin-bottom: 0;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); addDropdownEntry('unitReq_<%= index %>'); }">
+                                  <button type="button" class="btn-add-item" onclick="addDropdownEntry('unitReq_<%= index %>')" style="height: auto; margin: 0;">
+                                    <span>+</span> Add
+                                  </button>
+                                </div>
+                                <textarea id="unitReq_<%= index %>" name="unitRequestTypes[]" style="display:none;"><%= unitReqs.join('\n') %></textarea>
+                                <p class="form-hint">Type a new request type and click Add. Select existing and click Remove to delete.</p>
+                              </div>
+                            </div>
+                          </div>
+                          <% }); %>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Request Statuses Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">📊</span>
+                        Request Statuses
+                      </h2>
+                      <p class="section-description">
+                        Manage the possible statuses for service requests.
+                      </p>
+                      <div class="form-group">
+                        <label for="requestStatuses_input">Request Statuses</label>
+                        <% 
+                          const reqStatuses = (settings && settings.requestStatuses && settings.requestStatuses.length > 0) ? settings.requestStatuses : [];
+                        %>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                          <select id="requestStatuses_select" style="flex: 1; min-width: 0; margin-bottom: 0;">
+                            <% reqStatuses.forEach(function(status) { %>
+                              <option value="<%= status %>"><%= status %></option>
+                            <% }); %>
+                          </select>
+                          <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('requestStatuses')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                            <span>×</span> Remove
+                          </button>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                          <input type="text" id="requestStatuses_input" placeholder="New request status..." style="flex: 1; min-width: 0; margin-bottom: 0;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); addDropdownEntry('requestStatuses'); }">
+                          <button type="button" class="btn-add-item" onclick="addDropdownEntry('requestStatuses')" style="height: auto; margin: 0;">
+                            <span>+</span> Add
+                          </button>
+                        </div>
+                        <textarea id="requestStatuses" name="requestStatuses" style="display:none;"><%= reqStatuses.join('\n') %></textarea>
+                        <p class="form-hint">Type a new status and click Add. Select existing and click Remove to delete.</p>
+                      </div>
+                    </div>
+
+                    <h3 class="config-group-title">Roles & Communications</h3>
+
+                    <!-- User Roles Section -->
+                    <div class="config-section span-full">
+                      <h2 class="section-title">
+                        <span class="section-icon">👤</span>
+                        User Roles & Permissions
+                      </h2>
+                      <p class="section-description">
+                        Manage user roles and configure their access permissions.
+                      </p>
+                      <div class="dynamic-items-section">
+                        <div class="dynamic-items-header">
+                          <h3>User Roles</h3>
+                          <button type="button" class="btn-add-item" onclick="addUserRole()">
+                            <span>+</span> Add Role
+                          </button>
+                        </div>
+                        <div id="userRolesContainer" class="dynamic-items-container">
+                          <% 
+                          // Get user roles from database only
+                          const userRoles = (settings && settings.userRoles) || [];
+                          
+                          userRoles.forEach((role, index) => { 
+                            const roleName = typeof role === 'string' ? role : role.name;
+                            const rolePerms = typeof role === 'string' ? [] : (role.permissions || []);
+                          %>
+                          <div class="dynamic-item" data-index="<%= index %>">
+                            <div class="item-header">
+                              <span class="item-number">Role <%= index + 1 %>: <strong><%= roleName %></strong></span>
+                              <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
+                                <span>×</span>
+                              </button>
+                            </div>
+                            <div class="item-content">
+                              <div class="form-group">
+                                <label>Role Name</label>
+                                <input
+                                  type="text"
+                                  name="roleName[]"
+                                  value="<%= roleName %>"
+                                  maxlength="50"
+                                  required
+                                  onchange="updateRoleLabel(this)"
+                                >
+                              </div>
+                              <div class="form-group">
+                                <label>Access Level</label>
+                                <div class="dropdown-wrapper" style="margin-top: 0.5rem; position: relative;">
+  <button type="button" class="tab-btn" style="width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: #fff; cursor: pointer;" onclick="this.nextElementSibling.classList.toggle('show')">
+    <span style="font-weight: 500; color: #374151;">Select CRUD Permissions...</span>
+    <span style="color: #9ca3af;">▼</span>
+  </button>
+  <div class="dropdown-menu" style="width: 100%; padding: 0.5rem; max-height: 250px; overflow-y: auto; border: 1px solid #e5e7eb; margin-top: 0.25rem;">
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_<%= index %>" value="create" <%= rolePerms.includes('create') ? 'checked' : '' %>>
+      <span style="font-weight: 500; color: #1f2937;">Create Requests</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_<%= index %>" value="read" <%= rolePerms.includes('read') ? 'checked' : '' %>>
+      <span style="font-weight: 500; color: #1f2937;">Read All Requests</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_<%= index %>" value="update" <%= rolePerms.includes('update') ? 'checked' : '' %>>
+      <span style="font-weight: 500; color: #1f2937;">Update Tasks / Work</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_<%= index %>" value="delete" <%= rolePerms.includes('delete') ? 'checked' : '' %>>
+      <span style="font-weight: 500; color: #1f2937;">Delete / Admin Settings</span>
+    </label>
+    <div style="height: 1px; background: #e5e7eb; margin: 0.5rem 0;"></div>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_<%= index %>" value="user" <%= rolePerms.includes('user') ? 'checked' : '' %>>
+      <span style="font-weight: 500; color: #6b7280;">Legacy User (Submits)</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_<%= index %>" value="unit" <%= rolePerms.includes('unit') ? 'checked' : '' %>>
+      <span style="font-weight: 500; color: #6b7280;">Legacy Unit (Works)</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_<%= index %>" value="admin" <%= rolePerms.includes('admin') ? 'checked' : '' %>>
+      <span style="font-weight: 500; color: #6b7280;">Legacy Admin</span>
+    </label>
+  </div>
+</div>
+                              </div>
+                            </div>
+                          </div>
+                          <% }); %>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Announcement Priority Levels Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">🎯</span>
+                        Announcement Priority Levels
+                      </h2>
+                      <p class="section-description">
+                        Manage the priority levels for announcements (e.g., low, medium, high, urgent).
+                      </p>
+                      <div class="form-group">
+                        <label for="announcementPriorities_input">Priority Levels</label>
+                        <% 
+                          const priorities = (settings && settings.announcementPriorities && settings.announcementPriorities.length > 0) ? settings.announcementPriorities : [];
+                        %>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                          <select id="announcementPriorities_select" style="flex: 1; min-width: 0; margin-bottom: 0;">
+                            <% priorities.forEach(function(priority) { %>
+                              <option value="<%= priority %>"><%= priority %></option>
+                            <% }); %>
+                          </select>
+                          <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('announcementPriorities')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                            <span>×</span> Remove
+                          </button>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                          <input type="text" id="announcementPriorities_input" placeholder="New priority level..." style="flex: 1; min-width: 0; margin-bottom: 0;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); addDropdownEntry('announcementPriorities'); }">
+                          <button type="button" class="btn-add-item" onclick="addDropdownEntry('announcementPriorities')" style="height: auto; margin: 0;">
+                            <span>+</span> Add
+                          </button>
+                        </div>
+                        <textarea id="announcementPriorities" name="announcementPriorities" style="display:none;"><%= priorities.join('\n') %></textarea>
+                        <p class="form-hint">Type a new priority and click Add. Select existing and click Remove to delete.</p>
+                      </div>
+                    </div>
+
+                    <!-- Announcement Types Section -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <span class="section-icon">📢</span>
+                        Announcement Types
+                      </h2>
+                      <p class="section-description">
+                        Manage the types/categories of announcements (e.g., Event, News, Reminder, Update).
+                      </p>
+                      <div class="form-group">
+                        <label for="announcementTypes_input">Announcement Types</label>
+                        <% 
+                          const annTypes = (settings && settings.announcementTypes && settings.announcementTypes.length > 0) ? settings.announcementTypes : [];
+                        %>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                          <select id="announcementTypes_select" style="flex: 1; min-width: 0; margin-bottom: 0;">
+                            <% annTypes.forEach(function(atype) { %>
+                              <option value="<%= atype %>"><%= atype %></option>
+                            <% }); %>
+                          </select>
+                          <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('announcementTypes')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                            <span>×</span> Remove
+                          </button>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                          <input type="text" id="announcementTypes_input" placeholder="New announcement type..." style="flex: 1; min-width: 0; margin-bottom: 0;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); addDropdownEntry('announcementTypes'); }">
+                          <button type="button" class="btn-add-item" onclick="addDropdownEntry('announcementTypes')" style="height: auto; margin: 0;">
+                            <span>+</span> Add
+                          </button>
+                        </div>
+                        <textarea id="announcementTypes" name="announcementTypes" style="display:none;"><%= annTypes.join('\n') %></textarea>
+                        <p class="form-hint">Type a new announcement type and click Add. Select existing and click Remove to delete.</p>
+                      </div>
+                    </div>
+
+                    <h3 class="config-group-title">Automated Settings</h3>
+
+                    <!-- Automated Workflow & Archiving Section -->
+                    <div class="config-section span-full">
+                      <h2 class="section-title">
+                        <span class="section-icon">🗃️</span>
+                        Automated Workflow &amp; Archiving
+                      </h2>
+                      <p class="section-description">
+                        Configure how long requests stay active before being automatically archived. The system runs a nightly job at midnight to apply these rules.
+                      </p>
+
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                          <div class="form-group">
+                            <label for="archiveCompletedAfterDays">Archive 'Completed' After (days)</label>
+                            <input
+                              type="number"
+                              id="archiveCompletedAfterDays"
+                              name="archiveCompletedAfterDays"
+                              min="1"
+                              max="365"
+                              value="<%= (settings && settings.archiveCompletedAfterDays != null) ? settings.archiveCompletedAfterDays : 30 %>"
+                              oninput="syncArchiveFields('archiveCompletedAfterDays', this.value)"
+                            >
+                            <p class="form-hint">Requests with status 'Completed' will be archived after this many days of inactivity.</p>
+                          </div>
+                          
+                          <div class="form-group">
+                            <label for="archiveApprovedAfterDays">Archive 'Approved' After (days)</label>
+                            <input
+                              type="number"
+                              id="archiveApprovedAfterDays"
+                              name="archiveApprovedAfterDays"
+                              min="1"
+                              max="365"
+                              value="<%= (settings && settings.archiveApprovedAfterDays != null) ? settings.archiveApprovedAfterDays : 30 %>"
+                              oninput="syncArchiveFields('archiveApprovedAfterDays', this.value)"
+                            >
+                            <p class="form-hint">Requests with status 'Approved' will be archived after this many days of inactivity.</p>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="archiveRevisionAfterDays">Archive 'For Revision' After (days of inactivity)</label>
+                          <input
+                            type="number"
+                            id="archiveRevisionAfterDays"
+                            name="archiveRevisionAfterDays"
+                            min="1"
+                            max="365"
+                            value="<%= (settings && settings.archiveRevisionAfterDays != null) ? settings.archiveRevisionAfterDays : 14 %>"
+                            oninput="syncArchiveFields('archiveRevisionAfterDays', this.value)"
+                          >
+                          <p class="form-hint">Requests stuck in 'For Revision' with no updates will be archived after this many days. Default: 14 days.</p>
+                        </div>
+                      </div>
+
+                      <div class="form-group" style="margin-top: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                          <input
+                            type="checkbox"
+                            id="allowUserReactivation"
+                            name="allowUserReactivation"
+                            <%= (settings && settings.allowUserReactivation) ? 'checked' : '' %>
+                            onchange="syncArchiveFields('allowUserReactivation', this.checked)"
+                            style="width: 18px; height: 18px; cursor: pointer;"
+                          >
+                          <span style="font-weight: 600; color: #374151;">Allow Users to Restore Their Own Archived Requests</span>
+                        </label>
+                        <p class="form-hint" style="margin-top: 0.5rem; margin-left: 2rem;">If enabled, regular users can see a "Restore" button on their own archived requests. If disabled, only Admins can restore archived items.</p>
+                      </div>
+
+                      <!-- Link to Archive Manager tab -->
+                      <div style="margin-top: 1.25rem; padding: 1rem 1.25rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <div style="flex: 1;">
+                          <p style="margin: 0; font-weight: 600; color: #0c4a6e; font-size: 0.9rem;">📦 View & manage archived requests in the Archive Manager tab.</p>
+                          <p style="margin: 0.25rem 0 0 0; font-size: 0.82rem; color: #075985;">Run the archiving job or browse and restore archived records.</p>
+                        </div>
+                        <button type="button"
+                          onclick="switchTab('archivemanager')"
+                          style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #0891b2; color: white; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                          Go to Archive Manager →
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <!-- Footer Actions -->
+                  <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
+                    <button type="button" id="systemSaveBtnFooter" class="btn-save" onclick="document.getElementById('systemSaveBtn').click()">
+                      💾 Save Changes
+                    </button>
+                    <button type="button" id="systemResetBtnFooter" class="btn-reset" onclick="document.getElementById('systemResetBtn').click()">
+                      🔄 Reset Form
+                    </button>
+                  </div>
+                </form>
+              </div> <!-- End system-tab -->
+
+            <!-- ══════════════════════════════════════════════════════ -->
+            <!-- ARCHIVE MANAGER TAB                                   -->
+            <!-- ══════════════════════════════════════════════════════ -->
+            <div id="archivemanager-tab" class="tab-content">
+
+              <!-- ── Section 1: Archiving Settings ────────────────────── -->
+              <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 28px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px;">
+                  <span style="font-size: 1.5rem;">💾</span>
+                  <div>
+                    <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937;">Automated Workflow & Archiving</h2>
+                    <p style="margin: 4px 0 0 0; font-size: 0.875rem; color: #6b7280;">Configure how long requests stay active before being automatically archived. The system runs a <strong style="color:#3b82f6;">nightly job at midnight</strong> to apply these rules.</p>
+                  </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 16px 0;">
+
+                <!-- Day-limit inputs -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                  <div class="form-group">
+                    <label for="archiveCompletedAfterDays2" style="font-weight:600;color:#374151;font-size:0.85rem;">Archive 'Completed' (days)</label>
+                    <input type="number" id="archiveCompletedAfterDays2" name="archiveCompletedAfterDays"
+                      value="<%= (settings && settings.archiveCompletedAfterDays != null) ? settings.archiveCompletedAfterDays : 30 %>"
+                      oninput="syncArchiveFields('archiveCompletedAfterDays', this.value)"
+                      min="0" style="margin-top:6px;width:100%;">
+                    <p class="form-hint" style="color:#6b7280;font-size:0.75rem;margin-top:4px;">Archived after this many days of inactivity.</p>
+                  </div>
+                  <div class="form-group">
+                    <label for="archiveApprovedAfterDays2" style="font-weight:600;color:#374151;font-size:0.85rem;">Archive 'Approved' (days)</label>
+                    <input type="number" id="archiveApprovedAfterDays2" name="archiveApprovedAfterDays"
+                      value="<%= (settings && settings.archiveApprovedAfterDays != null) ? settings.archiveApprovedAfterDays : 30 %>"
+                      oninput="syncArchiveFields('archiveApprovedAfterDays', this.value)"
+                      min="0" style="margin-top:6px;width:100%;">
+                    <p class="form-hint" style="color:#6b7280;font-size:0.75rem;margin-top:4px;">Archived after this many days of inactivity.</p>
+                  </div>
+                  <div class="form-group">
+                    <label for="archiveRevisionAfterDays2" style="font-weight:600;color:#374151;font-size:0.85rem;">Archive 'For Revision' (days)</label>
+                    <input type="number" id="archiveRevisionAfterDays2" name="archiveRevisionAfterDays"
+                      value="<%= (settings && settings.archiveRevisionAfterDays != null) ? settings.archiveRevisionAfterDays : 14 %>"
+                      oninput="syncArchiveFields('archiveRevisionAfterDays', this.value)"
+                      min="0" style="margin-top:6px;width:100%;">
+                    <p class="form-hint" style="color:#6b7280;font-size:0.75rem;margin-top:4px;">Archived with no updates after this many days.</p>
+                  </div>
+                </div>
+
+                <!-- Checkbox -->
+                <div class="form-group" style="margin-bottom:20px;">
+                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                    <input type="checkbox" id="allowUserReactivation2" name="allowUserReactivation"
+                      <%= (settings && settings.allowUserReactivation) ? 'checked' : '' %>
+                      onchange="syncArchiveFields('allowUserReactivation', this.checked)"
+                      style="width:18px;height:18px;cursor:pointer;">
+                    <span style="font-weight:600;color:#374151;">Allow Users to Restore Their Own Archived Requests</span>
+                  </label>
+                  <p class="form-hint" style="margin-top:6px;margin-left:28px;color:#6b7280;font-size:0.82rem;">Regular users can see a "Restore" button on their own archived items.</p>
+                </div>
+
+                <!-- Save + Run Archiving -->
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding-top:16px;border-top:1px solid #f3f4f6;">
+                  <button type="button" id="archiveSettingsSaveBtn" onclick="saveArchiveSettings()"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;">
+                    💾 Save Settings
+                  </button>
+                  <button type="button" id="configRunArchivingBtn" onclick="configTriggerArchiving()"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:#0891b2;color:white;border:none;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;">
+                    <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/></svg>
+                    Run Archiving Now
+                  </button>
+                  <div id="archivingResultMsg" style="display:none;padding:6px 14px;border-radius:6px;font-size:0.85rem;font-weight:600;"></div>
+                </div>
+              </div>
+
+              <!-- ── Section 2: Archive Table Header ───────────────────── -->
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+                <div>
+                  <h2 style="margin:0;font-size:1.15rem;font-weight:700;color:#1f2937;">📦 Archived Records</h2>
+                  <p style="margin:4px 0 0 0;font-size:0.85rem;color:#6b7280;">Auto-archived and manually deleted requests.
+                    <span id="archiveTotalCount" style="font-weight:600;color:#374151;"></span>
+                  </p>
+                </div>
+                <!-- Search & Filter Bar -->
+                <div class="archive-filter-row">
+                  <div class="archive-search-wrapper">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="archiveSearch" placeholder="Search title, requester..." class="archive-filter-item archive-search-input" oninput="applyArchiveFilters()">
+                  </div>
+                  
+                  <div class="enhanced-multi-select-wrapper archive-multi-select-container">
+                    <div class="enhanced-multi-select" id="archiveOrgFilterMulti">
+                      <div class="select-display" data-placeholder="Select Organizations">
+                        <span class="selected-text">All Organizations</span>
+                        <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 8px; color: #6b7280;"><path d="M6 9l6 6 6-6"></path></svg>
+                      </div>
+                      <div class="select-dropdown">
+                        <div class="search-container">
+                          <input type="text" class="search-input" placeholder="Search organizations...">
+                        </div>
+                        <div class="options-container"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <select id="archiveTypeFilter" onchange="applyArchiveFilters()" class="archive-filter-item archive-select-native">
+                    <option value="all">All Types</option>
+                    <option value="Request Approval">Approval</option>
+                    <option value="Service Request">Service</option>
+                  </select>
+
+                  <select id="archiveSourceFilter" onchange="applyArchiveFilters()" class="archive-filter-item archive-select-native">
+                    <option value="all">All Sources</option>
+                    <option value="auto">🤖 Auto-Archived</option>
+                    <option value="deleted">🗑️ Manually Deleted</option>
+                  </select>
+
+                  <select id="archiveStatusFilter" onchange="applyArchiveFilters()" class="archive-filter-item archive-select-native">
+                    <option value="all">All Statuses</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Completed">Completed</option>
+                    <option value="For Revision">For Revision</option>
+                    <option value="Deleted">Manually Deleted</option>
+                  </select>
+
+                  <button type="button" onclick="resetArchiveFilters()"
+                    style="height:38px; padding:0 18px; background:#6b7280; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition: background 0.2s;">
+                    Reset
+                  </button>
+                </div>
+              </div>
+
+              <!-- ── Archive Table ─────────────────────────────────────── -->
+               <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:10px;">
+                <table id="archiveManagerTable" style="width:100%;border-collapse:collapse;min-width:1400px;">
+                  <colgroup>
+                    <col style="min-width:110px; width:8%;">
+                    <col style="min-width:200px; width:16%;">
+                    <col style="min-width:170px; width:13%;">
+                    <col style="min-width:130px; width:10%;">
+                    <col style="min-width:100px; width:8%;">
+                    <col style="min-width:160px; width:13%;">
+                    <col style="min-width:160px; width:13%;">
+                    <col style="min-width:130px; width:10%;">
+                    <col style="min-width:100px; width:8%;">
+                    <col style="min-width:90px; width:7%;">
+                    <col style="min-width:130px; width:11%;">
+                  </colgroup>
+                  <thead style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+                    <tr>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Type</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Title</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Organization</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Requester</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Status</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Archive Reason</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Restore Reason</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">By</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Date</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Src</th>
+                      <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="archiveManagerBody">
+                    <% if (archivedRequests && archivedRequests.length > 0) { %>
+                      <% archivedRequests.forEach(request => { %>
+                        <tr class="archive-row"
+                            data-request-id="<%= request._id %>"
+                            data-request-type="<%= request.type %>"
+                            data-title="<%= (request.title || '').toLowerCase() %>"
+                            data-org="<%= (request.displayOrganization || '').toLowerCase() %>"
+                            data-requester="<%= (request.userName || '').toLowerCase() %>"
+                            data-archive-source="<%= request.archiveSource %>"
+                            data-prev-status="<%= request.previousStatus || 'Pending' %>"
+                            style="border-bottom:1px solid #f3f4f6;">
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <span class="<%= request.type === 'Request Approval' ? 'am-badge-approval' : 'am-badge-service' %>"
+                              style="display:inline-block;padding:4px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">
+                              <%= request.type === 'Request Approval' ? 'Approval' : 'Service' %>
+                            </span>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= request.title %>">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:500;color:#1f2937;"><%= request.title %></div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= request.displayOrganization %>">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;color:#4b5563;"><%= request.displayOrganization %></div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= request.userName %>">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;color:#4b5563;"><%= request.userName %></div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <% 
+                               let statusLabel = request.previousStatus || 'Draft';
+                               let statusClass = 'am-status-default';
+                               if (request.previousStatus === 'Approved') statusClass = 'am-status-approved';
+                               else if (request.previousStatus === 'Completed') statusClass = 'am-status-completed';
+                               else if (request.previousStatus === 'For Revision') statusClass = 'am-status-revision';
+                               else if (request.archiveSource === 'deleted') { statusLabel = 'Deleted'; statusClass = 'am-status-deleted'; }
+                            %>
+                            <span class="am-status-badge <%= statusClass %>" style="font-size:10px; font-weight:700; padding:3px 6px; border-radius:6px; text-transform:uppercase;">
+                              <%= statusLabel %>
+                            </span>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= request.archiveReason || 'N/A' %>">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#374151;"><%= request.archiveReason ? request.archiveReason.substring(0, 45) : 'N/A' %></div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= (request.restorationRequests && request.restorationRequests.length > 0 ? request.restorationRequests[request.restorationRequests.length - 1].reason : '') || 'N/A' %>">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#374151;"><%= (request.restorationRequests && request.restorationRequests.length > 0 ? request.restorationRequests[request.restorationRequests.length - 1].reason.substring(0, 45) : 'N/A') %></div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= request.deletedByName %>">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#4b5563;"><%= request.deletedByName || 'System' %></div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#4b5563;"><%= request.deletedAt ? new Date(request.deletedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'N/A' %></div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <% if (request.archiveSource === 'auto') { %>
+                              <span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:20px;font-size:11px;font-weight:700;background:#fef3c7;color:#92400e;white-space:nowrap;">Auto</span>
+                            <% } else { %>
+                              <span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:20px;font-size:11px;font-weight:700;background:#f3f4f6;color:#374151;white-space:nowrap;">Del</span>
+                            <% } %>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <div style="display:flex;gap:5px;">
+                              <button onclick="amRestoreRequest('<%= request._id %>','<%= request.type %>')" title="Restore"
+                                style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#10b981;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                ↩ Restore
+                              </button>
+                              <button onclick="amDeleteRequest('<%= request._id %>','<%= request.type %>')" title="Delete"
+                                style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#ef4444;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    <% } else { %>
+                      <tr>
+                        <td colspan="8" style="padding:60px 20px;text-align:center;">
+                          <div style="font-size:2.5rem;margin-bottom:12px;">📭</div>
+                          <p style="font-size:16px;font-weight:600;color:#374151;margin:0 0 6px;">No archived requests</p>
+                          <p style="font-size:13px;color:#9ca3af;margin:0;">Automatically archived or manually deleted requests will appear here.</p>
+                        </td>
+                      </tr>
+                    <% } %>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- ── Pagination ─────────────────────────────────────────── -->
+              <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:20px;flex-wrap:wrap;" id="archivePaginationControls">
+                <button id="archivePrevBtn" onclick="archiveChangePage(archiveCurrentPage - 1)"
+                  style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer;font-size:14px;color:#374151;" disabled>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div id="archivePageNumbers" style="display:flex;gap:4px;"></div>
+                <button id="archiveNextBtn" onclick="archiveChangePage(archiveCurrentPage + 1)"
+                  style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer;font-size:14px;color:#374151;" disabled>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+
+
+            </div>
+          </div>
+
+          <!-- ══════════════════════════════════════════════════════ -->
+          <!-- Q&A CHATBOT TAB -->
+          <!-- ══════════════════════════════════════════════════════ -->
+          <div id="chatbot-tab" class="tab-content">
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 28px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+                <span style="font-size: 1.5rem;">❓</span>
+                <div style="flex: 1;">
+                  <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937;">Q&A Chatbot Manager</h2>
+                  <p style="margin: 4px 0 0 0; font-size: 0.875rem; color: #6b7280;">Create and manage frequently asked questions for different user roles. Questions will be displayed in the chatbot widget across all pages.</p>
+                </div>
+              </div>
+
+              <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 16px 0;">
+
+              <!-- Role Selector -->
+              <div style="margin-bottom: 20px;">
+                <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 8px;">Select Role</label>
+                <div style="display: flex; gap: 12px;">
+                  <button type="button" class="chatbot-role-btn active" onclick="switchChatbotRole('user')" 
+                    style="padding: 8px 16px; border: 2px solid #10b981; background: white; color: #10b981; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    👤 User
+                  </button>
+                  <button type="button" class="chatbot-role-btn" onclick="switchChatbotRole('unit')"
+                    style="padding: 8px 16px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    👥 Unit
+                  </button>
+                  <button type="button" class="chatbot-role-btn" onclick="switchChatbotRole('admin')"
+                    style="padding: 8px 16px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    🔐 Admin
+                  </button>
+                  <button type="button" class="chatbot-role-btn" onclick="switchChatbotRole('public')"
+                    style="padding: 8px 16px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    🌐 Public
+                  </button>
+                </div>
+              </div>
+
+              <!-- Add Q&A Form -->
+              <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Add New Question</h3>
+                
+                <div style="display: grid; gap: 12px;">
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Category</label>
+                    <select id="chatbotCategory" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem;">
+                      <option value="General">General</option>
+                      <option value="Technical">Technical</option>
+                      <option value="Request Process">Request Process</option>
+                      <option value="Account">Account</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Question <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="chatbotQuestion" placeholder="Enter the question..." maxlength="255"
+                      style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" />
+                    <p id="chatbotQuestionCount" style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.75rem;">0/255</p>
+                  </div>
+                  
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Answer <span style="color: #ef4444;">*</span></label>
+                    <textarea id="chatbotAnswer" placeholder="Enter the answer in formal tone..." maxlength="2000" rows="5"
+                      style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; resize: vertical;"></textarea>
+                    <p id="chatbotAnswerCount" style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.75rem;">0/2000</p>
+                  </div>
+                  
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="chatbotIsActive" checked style="width: 18px; height: 18px; cursor: pointer;" />
+                    <span style="font-weight: 600; color: #374151; font-size: 0.9rem;">Active (Visible in widget)</span>
+                  </label>
+                  
+                  <button type="button" onclick="addChatbotQA()" 
+                    style="padding: 10px 20px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;">
+                    ➕ Add Question
+                  </button>
+                  <div id="chatbotAddMsg" style="padding: 8px 12px; border-radius: 6px; display: none; font-size: 0.9rem; font-weight: 600;"></div>
+                </div>
+              </div>
+
+              <!-- Q&A List -->
+              <div>
+                <h3 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Questions for <span id="currentRoleDisplay">User</span></h3>
+                <div id="chatbotQAList" style="display: grid; gap: 12px;">
+                  <p style="color: #6b7280; text-align: center; padding: 20px;">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add global tab switching function at end of body -->
+          <script>
+            // ── Archiving trigger from Configuration page ─────────────────────
+            async function configTriggerArchiving() {
+              const btn = document.getElementById('configRunArchivingBtn');
+              const msgDiv = document.getElementById('archivingResultMsg');
+
+              if (btn) { btn.disabled = true; btn.textContent = '⏳ Running...'; }
+              if (msgDiv) { msgDiv.style.display = 'none'; }
+
+              try {
+                const response = await fetch('/admin/run-archiving-now', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (msgDiv) {
+                  msgDiv.style.display = 'block';
+                  if (data.success) {
+                    msgDiv.style.background = '#dcfce7';
+                    msgDiv.style.color = '#166534';
+                    msgDiv.style.border = '1px solid #86efac';
+                    msgDiv.textContent = '✅ ' + data.message + ' Refreshing list...';
+                    
+                    setTimeout(() => {
+                      window.location.reload();
+                    }, 1000);
+                  } else {
+                    msgDiv.style.background = '#fee2e2';
+                    msgDiv.style.color = '#991b1b';
+                    msgDiv.style.border = '1px solid #fca5a5';
+                    msgDiv.textContent = '❌ ' + (data.message || 'Archiving failed.');
+                  }
+                }
+              } catch (err) {
+                if (msgDiv) {
+                  msgDiv.style.display = 'block';
+                  msgDiv.style.background = '#fee2e2';
+                  msgDiv.style.color = '#991b1b';
+                  msgDiv.style.border = '1px solid #fca5a5';
+                  msgDiv.textContent = '❌ Could not reach server. Is it running?';
+                }
+              } finally {
+                if (btn) {
+                  btn.disabled = false;
+                  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/></svg> Run Archiving Now`;
+                }
+              }
+            }
+            window.configTriggerArchiving = configTriggerArchiving;
+
+            // Tab switching function
+            function switchTab(tabName) {
+                    // Hide all tabs
+                    const tabs = document.querySelectorAll('.tab-content');
+                    tabs.forEach(tab => tab.classList.remove('active'));
+
+                    // Remove active class from all tab buttons
+                    const tabButtons = document.querySelectorAll('.config-tab');
+                    tabButtons.forEach(button => button.classList.remove('active'));
+
+                    // Show selected tab
+                    const selectedTab = document.getElementById(tabName + '-tab');
+                    if (selectedTab) {
+                      selectedTab.classList.add('active');
+                    }
+
+                    // Add active class to clicked button
+                    const activeButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+                    if (activeButton) {
+                      activeButton.classList.add('active');
+                    }
+                    // Store active tab in localStorage
+                    localStorage.setItem('activeConfigTab', tabName);
+
+                    // Refresh archive data when switching to archive manager tab
+                    if (tabName === 'archivemanager') {
+                      loadArchiveRecordsFromAPI();
+                    }
+                  }
+                  // Expose to global scope
+                  window.switchTab = switchTab;
+
+                  // On page load, restore active tab — URL param takes priority over localStorage
+                  document.addEventListener('DOMContentLoaded', function () {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlTab = urlParams.get('tab');
+                    const savedTab = urlTab || localStorage.getItem('activeConfigTab') || 'system';
+                    switchTab(savedTab);
+                  });
+
+                  // ── Archive Manager: Pagination + Filter (unified) ──────────
+                  const ARCHIVE_PAGE_SIZE = 10;
+                  let archiveCurrentPage = 1;
+                  let archiveAllRows = [];      // ALL rows, never changes
+                  let archiveFilteredRows = []; // rows matching current filter
+                  let archiveOrgMultiSelect = null;
+
+                  // Shared dropdown manager
+                  const ArchiveDropdownManager = {
+                    activeDropdown: null,
+                    registerOpen(dropdown) {
+                      if (this.activeDropdown && this.activeDropdown !== dropdown) { this.activeDropdown.close(); }
+                      this.activeDropdown = dropdown;
+                    },
+                    clearActive(dropdown) { if (this.activeDropdown === dropdown) { this.activeDropdown = null; } }
+                  };
+
+                  class EnhancedMultiSelect {
+                    constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
+                      this.container = document.getElementById(containerId);
+                      if (!this.container) return;
+                      this.options = options;
+                      this.placeholder = placeholder;
+                      this.selectedValues = new Set(['all']);
+                      this.isOpen = false;
+                      this.hasSearch = hasSearch;
+                      this.init();
+                    }
+                    init() {
+                      this.setupElements();
+                      this.populateOptions();
+                      this.attachEventListeners();
+                      this.updateDisplay();
+                    }
+                    setupElements() {
+                      this.display = this.container.querySelector('.select-display');
+                      this.dropdown = this.container.querySelector('.select-dropdown');
+                      this.searchInput = this.dropdown.querySelector('.search-input');
+                      this.optionsContainer = this.dropdown.querySelector('.options-container');
+                      this.selectedText = this.display.querySelector('.selected-text');
+                    }
+                    populateOptions() {
+                      this.optionsContainer.innerHTML = '';
+                      const allOption = this.createOption('all', `All ${this.placeholder.replace('Select ', '')}`);
+                      this.optionsContainer.appendChild(allOption);
+                      this.options.forEach(opt => {
+                        const el = this.createOption(opt, opt);
+                        this.optionsContainer.appendChild(el);
+                      });
+                    }
+                    createOption(value, text) {
+                      const label = document.createElement('label');
+                      label.className = 'dropdown-option';
+                      label.innerHTML = `<input type="checkbox" value="${value}" ${this.selectedValues.has(value) ? 'checked' : ''}><span class="checkbox-custom"></span>${text}`;
+                      return label;
+                    }
+                    attachEventListeners() {
+                      this.display.addEventListener('click', (e) => { e.stopPropagation(); this.toggle(); });
+                      if (this.hasSearch && this.searchInput) {
+                        this.searchInput.addEventListener('input', (e) => { this.filterOptions(e.target.value); });
+                      }
+                      this.optionsContainer.addEventListener('change', (e) => {
+                        if (e.target.type === 'checkbox') { this.handleOptionChange(e.target); }
+                      });
+                      document.addEventListener('click', (e) => { if (!this.container.contains(e.target)) { this.close(); } });
+                      this.dropdown.addEventListener('click', (e) => { e.stopPropagation(); });
+                    }
+                    filterOptions(searchTerm) {
+                      const options = this.optionsContainer.querySelectorAll('.dropdown-option');
+                      options.forEach(opt => {
+                        const text = opt.textContent.toLowerCase();
+                        opt.style.display = text.includes(searchTerm.toLowerCase()) ? 'flex' : 'none';
+                      });
+                    }
+                    handleOptionChange(checkbox) {
+                      const val = checkbox.value;
+                      if (val === 'all') {
+                        if (checkbox.checked) { this.selectedValues.clear(); this.selectedValues.add('all'); }
+                        else { checkbox.checked = true; return; }
+                      } else {
+                        if (checkbox.checked) { this.selectedValues.delete('all'); this.selectedValues.add(val); }
+                        else { this.selectedValues.delete(val); if (this.selectedValues.size === 0) this.selectedValues.add('all'); }
+                      }
+                      this.updateCheckboxes();
+                      this.updateDisplay();
+                      this.triggerChange();
+                    }
+                    updateCheckboxes() {
+                      const cbs = this.optionsContainer.querySelectorAll('input[type="checkbox"]');
+                      cbs.forEach(cb => { cb.checked = this.selectedValues.has(cb.value); });
+                    }
+                    updateDisplay() {
+                      const arr = Array.from(this.selectedValues);
+                      if (arr.includes('all')) { this.selectedText.textContent = `All ${this.placeholder.replace('Select ', '')}`; }
+                      else if (arr.length === 1) { this.selectedText.textContent = arr[0]; }
+                      else { this.selectedText.textContent = `${arr.length} selected`; }
+                    }
+                    getSelectedValues() { return Array.from(this.selectedValues); }
+                    toggle() { this.isOpen ? this.close() : this.open(); }
+                    open() { ArchiveDropdownManager.registerOpen(this); this.isOpen = true; this.display.classList.add('active'); this.dropdown.classList.add('show'); if (this.hasSearch && this.searchInput) this.searchInput.focus(); }
+                    close() { this.isOpen = false; this.display.classList.remove('active'); this.dropdown.classList.remove('show'); ArchiveDropdownManager.clearActive(this); }
+                    triggerChange() {
+                      const event = new CustomEvent('selectionChange', { detail: { values: this.getSelectedValues() } });
+                      this.container.dispatchEvent(event);
+                    }
+                    reset() {
+                      this.selectedValues.clear(); this.selectedValues.add('all');
+                      this.updateCheckboxes(); this.updateDisplay();
+                    }
+                  }
+
+                  function archiveInit() {
+                    const orgOpts = <%- JSON.stringify(settings?.organizations || []) %>;
+                    archiveOrgMultiSelect = new EnhancedMultiSelect('archiveOrgFilterMulti', orgOpts, 'Select Organizations', true);
+                    document.getElementById('archiveOrgFilterMulti').addEventListener('selectionChange', () => archiveApplyFilter());
+                    
+                    archiveAllRows = Array.from(document.querySelectorAll('#archiveManagerBody .archive-row'));
+                    archiveApplyFilter(); // sets filteredRows and renders page 1
+                  }
+
+                  // Fetch fresh archive data from API and rebuild table
+                  async function loadArchiveRecordsFromAPI() {
+                    try {
+                      const res = await fetch('/api/admin/archived-records');
+                      const result = await res.json();
+                      
+                      if (!result.success || !result.data) return;
+
+                      const tbody = document.getElementById('archiveManagerBody');
+                      if (!tbody) return;
+
+                      // Rebuild table rows from fresh API data
+                      tbody.innerHTML = result.data.map(r => {
+                        // Status badge logic (pure JS, no EJS)
+                        let label = r.previousStatus || 'Draft';
+                        let cls = 'am-status-default';
+                        if (r.previousStatus === 'Approved') cls = 'am-status-approved';
+                        else if (r.previousStatus === 'Completed') cls = 'am-status-completed';
+                        else if (r.previousStatus === 'For Revision') cls = 'am-status-revision';
+                        else if (r.archiveSource === 'deleted') { label = 'Deleted'; cls = 'am-status-deleted'; }
+                        const statusBadge = `<span class="am-status-badge ${cls}" style="font-size:10px; font-weight:700; padding:3px 6px; border-radius:6px; text-transform:uppercase;">${label}</span>`;
+
+                        // Source badge
+                        const sourceBadge = r.archiveSource === 'auto' 
+                          ? '<span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:20px;font-size:11px;font-weight:700;background:#fef3c7;color:#92400e;white-space:nowrap;">Auto</span>'
+                          : '<span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:20px;font-size:11px;font-weight:700;background:#f3f4f6;color:#374151;white-space:nowrap;">Del</span>';
+
+                        // Dates
+                        const deletedDate = r.deletedAt ? new Date(r.deletedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'N/A';
+
+                        return `
+                        <tr class="archive-row"
+                            data-request-id="${r._id}"
+                            data-request-type="${r.type}"
+                            data-title="${(r.title || '').toLowerCase()}"
+                            data-org="${(r.displayOrganization || '').toLowerCase()}"
+                            data-requester="${(r.userName || '').toLowerCase()}"
+                            data-archive-source="${r.archiveSource}"
+                            data-prev-status="${r.previousStatus || 'Pending'}"
+                            style="border-bottom:1px solid #f3f4f6;">
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <span class="${r.type === 'Request Approval' ? 'am-badge-approval' : 'am-badge-service'}"
+                              style="display:inline-block;padding:4px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">
+                              ${r.type === 'Request Approval' ? 'Approval' : 'Service'}
+                            </span>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${r.title}">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:500;color:#1f2937;">${r.title}</div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${r.displayOrganization}">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;color:#4b5563;">${r.displayOrganization}</div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${r.userName}">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;color:#4b5563;">${r.userName}</div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            ${statusBadge}
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${r.archiveReason || 'N/A'}">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#374151;">${r.archiveReason ? r.archiveReason.substring(0, 45) : 'N/A'}</div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${(r.restorationRequests && r.restorationRequests.length > 0 ? r.restorationRequests[r.restorationRequests.length - 1].reason : '') || 'N/A'}">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#374151;">${(r.restorationRequests && r.restorationRequests.length > 0 ? r.restorationRequests[r.restorationRequests.length - 1].reason.substring(0, 45) : 'N/A')}</div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${r.deletedByName}">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#4b5563;">${r.deletedByName || 'System'}</div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#4b5563;">${deletedDate}</div>
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            ${sourceBadge}
+                          </td>
+                          <td style="padding:11px 10px;overflow:hidden;">
+                            <div style="display:flex;gap:5px;">
+                              <button onclick="amRestoreRequest('${r._id}','${r.type}')" title="Restore"
+                                style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#10b981;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                ↩ Restore
+                              </button>
+                              <button onclick="amDeleteRequest('${r._id}','${r.type}')" title="Delete"
+                                style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#ef4444;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        `;
+                      }).join('');
+
+                      // Reinitialize the archive table for filtering/pagination
+                      archiveInit();
+                    } catch (err) {
+                      console.error('[Archive] Failed to load records:', err);
+                    }
+                  }
+
+                  function archiveInit() {
+                    const orgOpts = <%- JSON.stringify(settings?.organizations || []) %>;
+                    archiveOrgMultiSelect = new EnhancedMultiSelect('archiveOrgFilterMulti', orgOpts, 'Select Organizations', true);
+                    document.getElementById('archiveOrgFilterMulti').addEventListener('selectionChange', () => archiveApplyFilter());
+                    
+                    archiveAllRows = Array.from(document.querySelectorAll('#archiveManagerBody .archive-row'));
+                    archiveApplyFilter(); // sets filteredRows and renders page 1
+                  }
+
+                  function archiveApplyFilter() {
+                    const search = (document.getElementById('archiveSearch')?.value || '').toLowerCase();
+                    const typeFilter = document.getElementById('archiveTypeFilter')?.value || 'all';
+                    const sourceFilter = document.getElementById('archiveSourceFilter')?.value || 'all';
+                    const statusFilter = document.getElementById('archiveStatusFilter')?.value || 'all';
+                    const selectedOrgs = archiveOrgMultiSelect ? archiveOrgMultiSelect.getSelectedValues() : ['all'];
+
+                    archiveFilteredRows = archiveAllRows.filter(row => {
+                      const title     = (row.dataset.title || '').toLowerCase();
+                      const org       = (row.dataset.org || '').toLowerCase();
+                      const requester = (row.dataset.requester || '').toLowerCase();
+                      const type      = row.dataset.requestType || '';
+                      const source    = row.dataset.archiveSource || '';
+                      const prevStatus = (row.dataset.prevStatus || 'Pending').toLowerCase();
+
+                      const okSearch  = !search || title.includes(search) || org.includes(search) || requester.includes(search);
+                      const okType    = typeFilter === 'all' || type === typeFilter;
+                      const okSource  = sourceFilter === 'all' || source === sourceFilter;
+                      const okStatus  = statusFilter === 'all' || prevStatus === statusFilter.toLowerCase();
+                      
+                      const okOrg = selectedOrgs.includes('all') || selectedOrgs.some(v => v.toLowerCase() === org);
+
+                      return okSearch && okType && okSource && okStatus && okOrg;
+                    });
+
+                    // Hide ALL rows; renderPage will show the right slice
+                    archiveAllRows.forEach(r => { r.style.display = 'none'; });
+                    archiveRenderPage(1);
+                  }
+
+                  function archiveRenderPage(page) {
+                    const total = archiveFilteredRows.length;
+                    const totalPages = Math.max(1, Math.ceil(total / ARCHIVE_PAGE_SIZE));
+                    if (page < 1) page = 1;
+                    if (page > totalPages) page = totalPages;
+                    archiveCurrentPage = page;
+
+                    const start = (page - 1) * ARCHIVE_PAGE_SIZE;
+                    const end   = Math.min(start + ARCHIVE_PAGE_SIZE, total);
+
+                    // Show only current-page rows; all others stay hidden
+                    archiveFilteredRows.forEach((r, i) => {
+                      r.style.display = (i >= start && i < end) ? '' : 'none';
+                    });
+
+                    // Count label — shows range + total
+                    const countEl = document.getElementById('archiveTotalCount');
+                    if (countEl) {
+                      if (total === 0) {
+                        countEl.textContent = '(0 records)';
+                      } else {
+                        countEl.textContent = `(${start + 1}–${end} of ${total} record${total !== 1 ? 's' : ''})`;
+                      }
+                    }
+
+                    // Prev / Next buttons
+                    const prevBtn = document.getElementById('archivePrevBtn');
+                    const nextBtn = document.getElementById('archiveNextBtn');
+                    if (prevBtn) prevBtn.disabled = page <= 1;
+                    if (nextBtn) nextBtn.disabled = page >= totalPages;
+
+                    // Numbered page buttons
+                    const numbersEl = document.getElementById('archivePageNumbers');
+                    if (!numbersEl) return;
+                    numbersEl.innerHTML = '';
+                    if (totalPages <= 1) return;
+
+                    const pgStyle = (active) =>
+                      `display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;`+
+                      `padding:0 6px;border:1px solid ${active?'#10b981':'#d1d5db'};border-radius:7px;`+
+                      `background:${active?'#10b981':'white'};color:${active?'white':'#374151'};`+
+                      `font-size:13px;font-weight:${active?700:400};cursor:pointer;transition:all .15s;`;
+
+                    const mkPageBtn = (p) => {
+                      const b = document.createElement('button');
+                      b.textContent = p;
+                      b.setAttribute('style', pgStyle(p === page));
+                      b.onclick = () => archiveGoToPage(p);
+                      numbersEl.appendChild(b);
+                    };
+                    const mkEllipsis = () => {
+                      const s = document.createElement('span');
+                      s.textContent = '…';
+                      s.style.cssText = 'padding:0 4px;color:#9ca3af;line-height:34px;font-size:14px;';
+                      numbersEl.appendChild(s);
+                    };
+
+                    if (totalPages <= 7) {
+                      for (let p = 1; p <= totalPages; p++) mkPageBtn(p);
+                    } else {
+                      mkPageBtn(1);
+                      if (page > 3) mkEllipsis();
+                      const lo = Math.max(2, page - 1);
+                      const hi = Math.min(totalPages - 1, page + 1);
+                      for (let p = lo; p <= hi; p++) mkPageBtn(p);
+                      if (page < totalPages - 2) mkEllipsis();
+                      mkPageBtn(totalPages);
+                    }
+                  }
+
+                  window.archiveChangePage = function(page) { archiveGoToPage(page); };
+                  function archiveGoToPage(page) { archiveRenderPage(page); }
+
+                  // Public filter hooks (called from HTML oninput/onchange)
+                  window.applyArchiveFilters = function() { archiveApplyFilter(); };
+                   window.resetArchiveFilters = function() {
+                    const s   = document.getElementById('archiveSearch');
+                    const t   = document.getElementById('archiveTypeFilter');
+                    const src = document.getElementById('archiveSourceFilter');
+                    const stat = document.getElementById('archiveStatusFilter');
+                    if (s)   s.value   = '';
+                    if (t)   t.value   = 'all';
+                    if (src) src.value = 'all';
+                    if (stat) stat.value = 'all';
+                    if (archiveOrgMultiSelect) archiveOrgMultiSelect.reset();
+                    archiveApplyFilter();
+                  };
+
+                   window.amRestoreRequest = function(id, type) {
+                    const row = document.querySelector(`tr[data-request-id="${id}"]`);
+                    if (!row) return;
+                    
+                    const title = row.querySelector('td:nth-child(2)')?.textContent || 'Unknown Title';
+                    const prevStatus = row.dataset.prevStatus || 'Pending';
+                    
+                    document.getElementById('amRestoreTitle').textContent = title;
+                    document.getElementById('amRestoreType').textContent = type;
+                    document.getElementById('amRestorePrevStatus').textContent = prevStatus;
+                    
+                    // Populate status options based on type
+                    const statusSelect = document.getElementById('amTargetStatus');
+                    statusSelect.innerHTML = '';
+                    
+                    const approvalStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Completed'];
+                    const serviceStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected'];
+                    
+                    const targetList = (type === 'Request Approval') ? approvalStatuses : serviceStatuses;
+                    
+                    targetList.forEach(s => {
+                      const opt = document.createElement('option');
+                      opt.value = s;
+                      opt.textContent = s;
+                      if (s.toLowerCase() === prevStatus.toLowerCase()) opt.selected = true;
+                      statusSelect.appendChild(opt);
+                    });
+                    
+                    const confirmBtn = document.getElementById('amRestoreConfirmBtn');
+                    confirmBtn.onclick = async () => {
+                      confirmBtn.disabled = true;
+                      confirmBtn.textContent = 'Restoring...';
+                      try {
+                        const res = await fetch('/admin/request/restore', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                          body: JSON.stringify({ requestId: id, requestType: type, targetStatus: statusSelect.value })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          row.remove();
+                          window.showToast && window.showToast(`✅ Request restored to ${statusSelect.value}.`);
+                          closeAmRestoreModal();
+                        } else {
+                          alert('Restore failed: ' + (data.message || 'Unknown error'));
+                        }
+                      } catch (e) {
+                        alert('Network error.');
+                      } finally {
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = 'Restore Request';
+                      }
+                    };
+                    
+                    document.getElementById('amRestoreBackdrop').classList.add('show');
+                    document.body.classList.add('modal-open');
+                  };
+
+                  window.closeAmRestoreModal = function() {
+                    document.getElementById('amRestoreBackdrop').classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                  };
+
+                  window.amDeleteRequest = function(id, type) {
+                    const row = document.querySelector(`tr[data-request-id="${id}"]`);
+                    if (!row) return;
+                    
+                    const title = row.querySelector('td:nth-child(2)')?.textContent || 'this request';
+                    document.getElementById('amDeleteTitle').textContent = `"${title}"`;
+                    
+                    const confirmBtn = document.getElementById('amDeleteConfirmBtn');
+                    confirmBtn.onclick = async () => {
+                      confirmBtn.disabled = true;
+                      confirmBtn.textContent = 'Deleting...';
+                      try {
+                        const res = await fetch('/admin/request/permanent-delete', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                          body: JSON.stringify({ requestId: id, requestType: type })
+                        });
+                        const data = await res.json();
+                        if (data.success || res.ok) {
+                          row.remove();
+                          window.showToast && window.showToast('🗑️ Request permanently deleted.');
+                          closeAmDeleteModal();
+                        } else {
+                          alert('Delete failed: ' + (data.message || 'Check server logs'));
+                        }
+                      } catch (e) {
+                        alert('Network error.');
+                      } finally {
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = 'Permanently Delete';
+                      }
+                    };
+                    
+                    document.getElementById('amDeleteBackdrop').classList.add('show');
+                    document.body.classList.add('modal-open');
+                  };
+
+                  window.closeAmDeleteModal = function() {
+                    document.getElementById('amDeleteBackdrop').classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                  };
+                  window.syncArchiveFields = function(fieldName, value) {
+                    // Sync between System tab and Archive Manager tab
+                    const field1 = document.getElementById(fieldName);
+                    const field2 = document.getElementById(fieldName + '2');
+                    
+                    if (field1 && field2) {
+                      if (field1.type === 'checkbox') {
+                        field1.checked = value;
+                        field2.checked = value;
+                      } else {
+                        field1.value = value;
+                        field2.value = value;
+                      }
+                    }
+                  };
+
+                  window.saveArchiveSettings = async function() {
+                    const btn = document.getElementById('archiveSettingsSaveBtn');
+                    const completedDays = parseInt(document.getElementById('archiveCompletedAfterDays2')?.value, 10);
+                    const approvedDays  = parseInt(document.getElementById('archiveApprovedAfterDays2')?.value,  10);
+                    const revisionDays  = parseInt(document.getElementById('archiveRevisionAfterDays2')?.value,  10);
+                    const allowReactivation = document.getElementById('allowUserReactivation2')?.checked;
+
+                    if (isNaN(completedDays) || isNaN(approvedDays) || isNaN(revisionDays)) {
+                      alert('Please enter valid numbers for all day fields.');
+                      return;
+                    }
+
+                    if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+                    try {
+                      const res = await fetch('/admin/archive-settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                          archiveCompletedAfterDays: completedDays,
+                          archiveApprovedAfterDays:  approvedDays,
+                          archiveRevisionAfterDays:  revisionDays,
+                          allowUserReactivation:     allowReactivation
+                        })
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        if (btn) { btn.textContent = '✅ Saved!'; btn.style.background = 'linear-gradient(135deg,#059669,#047857)'; }
+                        setTimeout(() => {
+                          if (btn) { btn.textContent = '💾 Save Settings'; btn.style.background = ''; btn.disabled = false; }
+                        }, 2500);
+                      } else {
+                        throw new Error(data.message || 'Save failed');
+                      }
+                    } catch(e) {
+                      if (btn) { btn.textContent = '❌ Error — try again'; btn.disabled = false; }
+                      console.error('Archive settings save error:', e);
+                      setTimeout(() => { if (btn) btn.textContent = '💾 Save Settings'; }, 3000);
+                    }
+                  };
+
+                  // Initialize archive on DOMContentLoaded
+                  document.addEventListener('DOMContentLoaded', function() {
+                    archiveInit();
+                  });
+
+
+                  function updateCharCount(element, counterId, maxLength) {
+                    const counter = document.getElementById(counterId);
+                    if (counter) {
+                      const currentLength = element.value.length;
+                      counter.textContent = `${currentLength}/${maxLength}`;
+                      counter.style.color = currentLength > maxLength ? '#ef4444' : '#6b7280';
+                    }
+                  }
+
+                  // Preview function
+                  function showPreview() {
+                    // Open homepage in new tab for preview
+                    window.open('/', '_blank');
+                  }
+
+                  // Dropdown toggle function
+                  function toggleDropdown() {
+                    const dropdown = document.querySelector('.dropdown-menu');
+                    if (dropdown) {
+                      dropdown.classList.toggle('show');
+                    }
+                  }
+
+                  // Reset form functions
+                  function resetForm() {
+                    if (confirm('Are you sure you want to reset the homepage configuration form? All unsaved changes will be lost.')) {
+                      document.getElementById('configForm').reset();
+                      // Reset character counters
+                      const counters = document.querySelectorAll('.char-count');
+                      counters.forEach(counter => {
+                        const maxLength = counter.textContent.split('/')[1];
+                        if (maxLength) {
+                          counter.textContent = `0/${maxLength}`;
+                          counter.style.color = '#6b7280';
+                        }
+                      });
+                    }
+                  }
+
+                  function resetSystemForm() {
+                    if (confirm('Are you sure you want to reset the system configuration form? All unsaved changes will be lost.')) {
+                      document.getElementById('systemConfigForm').reset();
+                    }
+                  }
+
+                  // Dynamic item management functions
+                  function addPledgeItem() {
+                    const container = document.getElementById('pledgeItemsContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Pledge ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removePledgeItem(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="pledgeName[]" maxlength="50" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="pledgeDescription[]" maxlength="250" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removePledgeItem(button) {
+                    if (confirm('Are you sure you want to remove this pledge item?')) {
+                      button.closest('.dynamic-item').remove();
+                      updatePledgeItemNumbers();
+                    }
+                  }
+
+                  function updatePledgeItemNumbers() {
+                    const items = document.querySelectorAll('#pledgeItemsContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Pledge ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addAboutFeature() {
+                    const container = document.getElementById('aboutFeaturesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Feature ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeAboutFeature(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Icon</label>
+                            <input type="text" name="featureIcon[]" value="📱" maxlength="10" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="featureTitle[]" maxlength="50" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="featureDescription[]" maxlength="200" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeAboutFeature(button) {
+                    if (confirm('Are you sure you want to remove this feature?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateAboutFeatureNumbers();
+                    }
+                  }
+
+                  function updateAboutFeatureNumbers() {
+                    const items = document.querySelectorAll('#aboutFeaturesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Feature ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addServiceItem() {
+                    const container = document.getElementById('servicesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Service ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeServiceItem(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="serviceTitle[]" maxlength="100" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="serviceDescription[]" class="tall" maxlength="500" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeServiceItem(button) {
+                    if (confirm('Are you sure you want to remove this service?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateServiceItemNumbers();
+                    }
+                  }
+
+                  function updateServiceItemNumbers() {
+                    const items = document.querySelectorAll('#servicesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Service ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addTeamMember() {
+                    const container = document.getElementById('teamMembersContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Team Member ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeTeamMember(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" name="teamName[]" maxlength="100" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Role</label>
+                            <input type="text" name="teamRole[]" maxlength="100" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="teamEmail[]" required>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeTeamMember(button) {
+                    if (confirm('Are you sure you want to remove this team member?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateTeamMemberNumbers();
+                    }
+                  }
+
+                  function updateTeamMemberNumbers() {
+                    const items = document.querySelectorAll('#teamMembersContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Team Member ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addContactCard() {
+                    const container = document.getElementById('contactCardsContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Contact Card ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeContactCard(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Icon (Emoji)</label>
+                            <input type="text" name="contactIcon[]" maxlength="10" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="contactTitle[]" maxlength="50" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="contactDescription[]" maxlength="150" required></textarea>
+                          </div>
+                          <div class="form-group">
+                            <label>Contact Information</label>
+                            <textarea name="contactInfo[]" maxlength="500" required></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeContactCard(button) {
+                    if (confirm('Are you sure you want to remove this contact card?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateContactCardNumbers();
+                    }
+                  }
+
+                  function updateContactCardNumbers() {
+                    const items = document.querySelectorAll('#contactCardsContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Contact Card ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addSocialMedia() {
+                    const container = document.getElementById('socialMediaContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Social Media ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeSocialMedia(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Icon (Emoji/Symbol)</label>
+                            <input type="text" name="socialIcon[]" maxlength="10" placeholder="e.g., f, ▶, 📷, 🐦" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="socialTitle[]" maxlength="50" placeholder="e.g., Facebook, YouTube" required>
+                          </div>
+                          <div class="form-group">
+                            <label>URL</label>
+                            <input type="url" name="socialUrl[]" placeholder="https://" required>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeSocialMedia(button) {
+                    if (confirm('Are you sure you want to remove this social media link?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateSocialMediaNumbers();
+                    }
+                  }
+
+                  function updateSocialMediaNumbers() {
+                    const items = document.querySelectorAll('#socialMediaContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Social Media ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addFooterLink() {
+                    const container = document.getElementById('footerLinksContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Footer Link ${index + 1}</span>
+                          <button type="button" class="btn-remove-item" onclick="removeFooterLink(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Link Text</label>
+                            <input type="text" name="footerLinkText[]" maxlength="50" placeholder="e.g., Privacy Policy, Contact Us" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Link URL</label>
+                            <input type="text" name="footerLinkUrl[]" placeholder="https://example.com or #section" required>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeFooterLink(button) {
+                    if (confirm('Are you sure you want to remove this footer link?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateFooterLinkNumbers();
+                    }
+                  }
+
+                  function updateFooterLinkNumbers() {
+                    const items = document.querySelectorAll('#footerLinksContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      item.querySelector('.item-number').textContent = `Footer Link ${index + 1}`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function addUnitWithRequestTypes() {
+                    const container = document.getElementById('unitsWithRequestTypesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item unit-request-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Unit ${index + 1}: <strong>New Unit</strong></span>
+                          <button type="button" class="btn-remove-item" onclick="removeUnitWithRequestTypes(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Unit Name</label>
+                            <input type="text" name="unitName[]" maxlength="100" required onchange="updateUnitLabel(this)">
+                          </div>
+                          <div class="form-group">
+                            <label for="unitReq_new_${index}_input">Request Types for this Unit</label>
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                              <select id="unitReq_new_${index}_select" style="flex: 1; min-width: 0; margin-bottom: 0;"></select>
+                              <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('unitReq_new_${index}')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                                <span>×</span> Remove
+                              </button>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                              <input type="text" id="unitReq_new_${index}_input" placeholder="New request type..." style="flex: 1; min-width: 0; margin-bottom: 0;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); addDropdownEntry('unitReq_new_${index}'); }">
+                              <button type="button" class="btn-add-item" onclick="addDropdownEntry('unitReq_new_${index}')" style="height: auto; margin: 0;">
+                                <span>+</span> Add
+                              </button>
+                            </div>
+                            <textarea id="unitReq_new_${index}" name="unitRequestTypes[]" style="display:none;"></textarea>
+                            <p class="form-hint">Type a new request type and click Add. Select existing and click Remove to delete.</p>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeUnitWithRequestTypes(button) {
+                    if (confirm('Are you sure you want to remove this unit?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateUnitNumbers();
+                    }
+                  }
+
+                  function updateUnitNumbers() {
+                    const items = document.querySelectorAll('#unitsWithRequestTypesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      const unitName = item.querySelector('input[name="unitName[]"]').value || 'New Unit';
+                      item.querySelector('.item-number').innerHTML = `Unit ${index + 1}: <strong>${unitName}</strong>`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function updateUnitLabel(input) {
+                    const item = input.closest('.dynamic-item');
+                    const unitName = input.value || 'New Unit';
+                    item.querySelector('.item-number').innerHTML = `Unit ${item.getAttribute('data-index') + 1}: <strong>${unitName}</strong>`;
+                  }
+
+                  function addUserRole() {
+                    const container = document.getElementById('userRolesContainer');
+                    const index = container.children.length;
+                    const itemHtml = `
+                      <div class="dynamic-item" data-index="${index}">
+                        <div class="item-header">
+                          <span class="item-number">Role ${index + 1}: <strong>New Role</strong></span>
+                          <button type="button" class="btn-remove-item" onclick="removeUserRole(this)">
+                            <span>×</span>
+                          </button>
+                        </div>
+                        <div class="item-content">
+                          <div class="form-group">
+                            <label>Role Name</label>
+                            <input type="text" name="roleName[]" maxlength="50" required onchange="updateRoleLabel(this)">
+                          </div>
+                          <div class="form-group">
+                            <label>Access Level</label>
+                            <div class="dropdown-wrapper" style="margin-top: 0.5rem; position: relative;">
+  <button type="button" class="tab-btn" style="width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: #fff; cursor: pointer;" onclick="this.nextElementSibling.classList.toggle('show')">
+    <span style="font-weight: 500; color: #374151;">Select CRUD Permissions...</span>
+    <span style="color: #9ca3af;">▼</span>
+  </button>
+  <div class="dropdown-menu" style="width: 100%; padding: 0.5rem; max-height: 250px; overflow-y: auto; border: 1px solid #e5e7eb; margin-top: 0.25rem;">
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_${index}" value="create">
+      <span style="font-weight: 500; color: #1f2937;">Create Requests</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_${index}" value="read">
+      <span style="font-weight: 500; color: #1f2937;">Read All Requests</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_${index}" value="update">
+      <span style="font-weight: 500; color: #1f2937;">Update Tasks / Work</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_${index}" value="delete">
+      <span style="font-weight: 500; color: #1f2937;">Delete / Admin Settings</span>
+    </label>
+    <div style="height: 1px; background: #e5e7eb; margin: 0.5rem 0;"></div>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_${index}" value="user" checked>
+      <span style="font-weight: 500; color: #6b7280;">Legacy User (Submits)</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_${index}" value="unit">
+      <span style="font-weight: 500; color: #6b7280;">Legacy Unit (Works)</span>
+    </label>
+    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; cursor: pointer; border-radius: 0.25rem;">
+      <input type="checkbox" name="roleAccessLevel_${index}" value="admin">
+      <span style="font-weight: 500; color: #6b7280;">Legacy Admin</span>
+    </label>
+  </div>
+</div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                  }
+
+                  function removeUserRole(button) {
+                    if (confirm('Are you sure you want to remove this user role?')) {
+                      button.closest('.dynamic-item').remove();
+                      updateRoleNumbers();
+                    }
+                  }
+
+                  function updateRoleNumbers() {
+                    const items = document.querySelectorAll('#userRolesContainer .dynamic-item');
+                    items.forEach((item, index) => {
+                      const roleName = item.querySelector('input[name="roleName[]"]').value || 'New Role';
+                      item.querySelector('.item-number').innerHTML = `Role ${index + 1}: <strong>${roleName}</strong>`;
+                      item.setAttribute('data-index', index);
+                    });
+                  }
+
+                  function updateRoleLabel(input) {
+                    const item = input.closest('.dynamic-item');
+                    const roleName = input.value || 'New Role';
+                    item.querySelector('.item-number').innerHTML = `Role ${item.getAttribute('data-index') + 1}: <strong>${roleName}</strong>`;
+                  }
+
+                  // Initialize character counters on page load
+                  document.addEventListener('DOMContentLoaded', function() {
+                    // Initialize all character counters
+                    const inputs = document.querySelectorAll('input[maxlength], textarea[maxlength]');
+                    inputs.forEach(input => {
+                      const counterId = input.id + 'Count';
+                      const counter = document.getElementById(counterId);
+                      if (counter) {
+                        const maxLength = input.getAttribute('maxlength');
+                        const currentLength = input.value.length;
+                        counter.textContent = `${currentLength}/${maxLength}`;
+                        counter.style.color = currentLength > maxLength ? '#ef4444' : '#6b7280';
+                      }
+                    });
+                  });
+                </script>
+
+<script>
+  // Tab switching logic exposed globally
+  function switchTab(tabName) {
+    // Hide all tabs
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    // Remove active class from all tab buttons
+    const tabButtons = document.querySelectorAll('.config-tab');
+    tabButtons.forEach(button => button.classList.remove('active'));
+
+    // Show selected tab
+    const selectedTab = document.getElementById(tabName + '-tab');
+    if (selectedTab) {
+      selectedTab.classList.add('active');
+    }
+
+    // Add active class to clicked button
+    const activeButton = document.querySelector(`[onclick="switchTab('${tabName}')"]`);
+    if (activeButton) {
+      activeButton.classList.add('active');
+    }
+    // Store active tab in localStorage
+    localStorage.setItem('activeConfigTab', tabName);
+
+    // Show tabs and tab buttons after switching
+    document.querySelector('.config-tabs').style.visibility = 'visible';
+    tabs.forEach(tab => tab.style.visibility = 'visible');
+  }
+  window.switchTab = switchTab;
+  // On page load, restore active tab
+  document.addEventListener('DOMContentLoaded', function () {
+    const savedTab = localStorage.getItem('activeConfigTab') || 'system';
+    switchTab(savedTab);
+  });
+</script>
+</body>
+    <!-- System Save Confirmation Modal -->
+    <div id="systemSaveConfirmModal" class="preview-modal">
+      <div class="preview-content">
+        <div class="preview-header">
+          <h2>Confirm Save</h2>
+        </div>
+        <div class="preview-body">
+          <p>Are you sure you want to save these changes to the system configuration? This will update the system settings immediately.</p>
+          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+            <button type="button" class="btn-close-preview" onclick="closeSystemSaveConfirm()">Cancel</button>
+            <button type="button" class="btn-save" onclick="confirmSystemSave()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Reset Confirmation Modal -->
+    <div id="systemResetConfirmModal" class="preview-modal">
+      <div class="preview-content">
+        <div class="preview-header">
+          <h2>Confirm Reset</h2>
+          <button type="button" class="btn-close-preview" onclick="closeSystemResetConfirm()">Cancel</button>
+        </div>
+        <div class="preview-body">
+          <p>Are you sure you want to reset the system configuration form? All unsaved changes will be lost.</p>
+          <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+            <button type="button" class="btn-close-preview" onclick="closeSystemResetConfirm()">Cancel</button>
+            <button type="button" class="btn-danger" onclick="confirmSystemReset()" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Reset Form</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- About S-CORE Preview Modal -->
+  <div id="aboutScorePreviewModal" class="preview-modal">
+    <div class="preview-content">
+      <div class="preview-header">
+        <h2>Preview About S-CORE Page</h2>
+        <button type="button" class="btn-close-preview" onclick="closeAboutScorePreview()">Close</button>
+      </div>
+      <div class="preview-body" id="aboutScorePreviewContent">
+        <!-- Preview content will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- About S-CORE Save Confirmation Modal -->
+  <div id="aboutScoreSaveConfirmModal" class="preview-modal">
+    <div class="preview-content">
+      <div class="preview-header">
+        <h2>Confirm Save</h2>
+        <button type="button" class="btn-close-preview" onclick="closeAboutScoreSaveConfirm()">Cancel</button>
+      </div>
+      <div class="preview-body">
+        <p>Are you sure you want to save these changes to the About S-CORE page? This will update the live page content.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+          <button type="button" class="btn-close-preview" onclick="closeAboutScoreSaveConfirm()">Cancel</button>
+          <button type="button" class="btn-save" onclick="confirmAboutScoreSave()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About S-CORE Reset Confirmation Modal -->
+  <div id="aboutScoreResetConfirmModal" class="preview-modal">
+    <div class="preview-content">
+      <div class="preview-header">
+        <h2>Confirm Reset</h2>
+        <button type="button" class="btn-close-preview" onclick="closeAboutScoreResetConfirm()">Cancel</button>
+      </div>
+      <div class="preview-body">
+        <p>Are you sure you want to reset the About S-CORE form? All unsaved changes will be lost.</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+          <button type="button" class="btn-close-preview" onclick="closeAboutScoreResetConfirm()">Cancel</button>
+          <button type="button" class="btn-danger" onclick="confirmAboutScoreReset()" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600;">Reset Form</button>
+        </div>
+      </div>
+>>>>>>> Stashed changes
     </div>
   </div>
 
@@ -2243,5 +4480,9 @@
       });
     }
   </script>
+
+  <script src="/javascripts/admin/chatbot-config.js"></script>
+
+  <%- include('../partials/chatbot-widget') %>
 </body>
 </html>

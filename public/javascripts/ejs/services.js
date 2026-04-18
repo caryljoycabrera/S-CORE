@@ -2427,6 +2427,190 @@ window.openImagePreview = function(imageUrl, fileName) {
     }
   }
 
+<<<<<<< Updated upstream
+=======
+  // ==========================================
+  // REVISION HISTORY FUNCTIONS (Admin Services)
+  // ==========================================
+  
+  async function loadRevisionHistory(requestId, currentStatus = '') {
+    const historySection = document.getElementById('revisionHistorySection');
+    const historyContainer = document.getElementById('revisionHistoryContainer');
+    
+    console.log('[Admin Services - Revision History] Loading for request:', requestId, 'Status:', currentStatus);
+    
+    if (!historyContainer) {
+      console.warn('[Admin Services - Revision History] Container not found!');
+      return;
+    }
+    
+    // Helper function to show empty state
+    const showEmptyState = () => {
+      if (historySection) {
+        historySection.style.display = 'block';
+      }
+      historyContainer.innerHTML = `
+        <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M3 21v-5h5"/>
+          </svg>
+          <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
+          <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
+        </div>
+      `;
+    };
+    
+    try {
+      if (historySection) historySection.style.display = 'block';
+      if (historyContainer) historyContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem; border-width: 0.2em;"><span class="visually-hidden">Loading...</span></div><p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">Loading revision history...</p></div>';
+      
+      const response = await fetch(`/api/service-revision-history/${requestId}`);
+      console.log('[Admin Services - Revision History] Response status:', response.status);
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('[Admin Services - Revision History] API returned non-JSON response');
+        showEmptyState();
+        return;
+      }
+      
+      const result = await response.json();
+      console.log('[Admin Services - Revision History] API Response:', result);
+      console.log('[Admin Services - Revision History] Revisions count:', result.revisions?.length || 0);
+      
+      if (result.success && result.revisions && result.revisions.length > 0) {
+        console.log('[Admin Services - Revision History] Showing section with', result.revisions.length, 'revisions');
+        
+        // Enable two-column layout when revisions exist
+        const modalContent = document.querySelector('#detailsModal .modal-content');
+        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+        
+        if (modalContent && modalBody) {
+          modalContent.style.maxWidth = '1600px';
+          modalBody.classList.add('has-revisions');
+        }
+        
+        if (historySection) {
+          historySection.style.display = 'block';
+        }
+        
+        historyContainer.innerHTML = '';
+        
+        // Filter out initial submission and render all revisions
+        const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
+        
+        if (revisionsToShow.length > 0) {
+          revisionsToShow.forEach((revision, index) => {
+            console.log('[Admin Services - Revision History] Rendering revision', index, ':', revision.type);
+            const entry = createServiceAdminRevisionEntry(revision, index, revisionsToShow.length);
+            historyContainer.appendChild(entry);
+          });
+          
+          console.log('[Admin Services - Revision History] All revisions rendered');
+        } else {
+          showEmptyState();
+        }
+      } else {
+        console.log('[Admin Services - Revision History] No revisions to display - showing empty state');
+        
+        // Reset to single column layout when no revisions
+        const modalContent = document.querySelector('#detailsModal .modal-content');
+        const modalBody = document.querySelector('#detailsModal .admin-modal-body');
+        
+        if (modalContent && modalBody) {
+          modalContent.style.maxWidth = '900px';
+          modalBody.classList.remove('has-revisions');
+        }
+        
+        showEmptyState();
+      }
+    } catch (error) {
+      console.error('[Admin Services - Revision History] Error loading revision history:', error);
+      showEmptyState();
+    }
+  }
+  
+  function createServiceAdminRevisionEntry(revision, index, total) {
+    const entry = document.createElement('div');
+    const isUnitAction = revision.requestedBy || revision.type === 'revision' || revision.type === 'revoked' || revision.type === 'approved';
+    const isRequestorAction = revision.respondedBy || revision.type === 'initial' || revision.type === 'resubmitted';
+    entry.className = `revision-conversation-item ${isUnitAction ? 'unit-action' : 'requestor-action'}`;
+    
+    const timestamp = new Date(revision.requestedAt || revision.respondedAt || revision.timestamp);
+    const fullTimestamp = timestamp.toLocaleString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true});
+    const shortTimestamp = timestamp.toLocaleString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+    
+    const now = new Date(), diffMs = now - timestamp, diffMins = Math.floor(diffMs / 60000), diffHours = Math.floor(diffMs / 3600000), diffDays = Math.floor(diffMs / 86400000);
+    let relativeTime = diffMins < 1 ? 'Just now' : diffMins < 60 ? `${diffMins} minute${diffMins > 1 ? 's' : ''} ago` : diffHours < 24 ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago` : diffDays < 7 ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago` : shortTimestamp;
+    
+    let typeLabel, badgeClass;
+    if (revision.type === 'initial') {typeLabel = 'Initial Submission'; badgeClass = 'badge-initial';} 
+    else if (revision.type === 'approved') {typeLabel = '✓ Approved'; badgeClass = 'badge-approved';} 
+    else if (isUnitAction) {typeLabel = 'Revision Requested'; badgeClass = 'badge-revision';} 
+    else if (isRequestorAction) {typeLabel = 'Resubmitted For Review'; badgeClass = 'badge-resubmitted';} 
+    else {typeLabel = 'Update'; badgeClass = 'badge-revision';}
+    
+    let statusIndicator = '';
+    if (revision.type === 'approved') statusIndicator = `<div class="status-indicator approved"><svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg><span style="color: #10b981; font-weight: 600;">Request Approved - Process Complete</span></div>`;
+    else if (index === total - 1) statusIndicator = isUnitAction ? `<div class="status-indicator waiting"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Waiting for Requestor Response</div>` : `<div class="status-indicator under-review"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Under Unit Review</div>`;
+    
+    let authorName = 'Unknown', authorUnit = '';
+    if (revision.by) authorName = revision.by;
+    else if (revision.requestedBy) {if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`; if (revision.requestedBy.unitTeam) authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;} else {authorName = 'Unit Team';}}
+    else if (revision.respondedBy) {if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`; else authorName = 'Requestor';}
+    else if (isUnitAction) authorName = 'Unit Team';
+    else authorName = 'Requestor';
+    
+    const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) ? `REV #${revision.revisionNumber}` : `#${index + 1}`;
+    
+    const files = revision.deliverableFiles || revision.responseFiles || revision.revisionFiles || revision.files || [];
+    entry.innerHTML = `<div class="revision-number-badge">${badgeNumber}</div><div class="revision-message-bubble"><div class="revision-bubble-header"><div><span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span><span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span></div><div class="revision-timestamp"><span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span><span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span></div></div><div class="message-content-section"><div class="content-label">${revision.type === 'approved' ? 'APPROVAL DETAILS:' : revision.type === 'initial' ? 'REQUEST DESCRIPTION:' : isUnitAction ? 'UNIT FEEDBACK:' : 'USER RESPONSE:'}</div><div class="content-text">${displayFormattedText(revision.type === 'approved' ? 'The request has been reviewed and approved by the unit team. All requirements have been met.' : revision.type === 'initial' ? revision.description || 'No description provided' : isUnitAction ? revision.revisionNotes || revision.description || 'No feedback provided' : revision.responseNotes || revision.description || 'No response provided')}</div></div>${files.length > 0 ? `<div class="message-attachments-section"><div class="attachments-header"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span></div><div class="attachments-grid">${files.map(f => createServiceRevisionFileCard(f, revision.requestedAt || revision.respondedAt || revision.timestamp)).join('')}</div></div>` : ''}${statusIndicator}</div>`;
+    return entry;
+  }
+  
+  function createServiceRevisionFileCard(file, revisionTimestamp) {
+    const filename = file.filename || file.path || file.name || file;
+    if (typeof file === 'string') {
+        const ext = file.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+        const isPDF = ext === 'pdf';
+        const fileUrl = `/uploads/${file}`;
+        let iconColor = '#64748b';
+        if (isImage) iconColor = '#059669';
+        else if (isPDF) iconColor = '#dc2626';
+        else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
+        else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
+        const timestamp = revisionTimestamp ? new Date(revisionTimestamp).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'Unknown date';
+        return `
+            <div class="revision-file-card">
+                <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                </div>
+                <div class="revision-file-info">
+                    <div class="revision-file-name" title="${escapeHtml(file)}">${escapeHtml(file)}</div>
+                    <div class="revision-file-size">${ext.toUpperCase()}</div>
+                    <div class="revision-file-date">${timestamp}</div>
+                </div>
+                <div class="revision-file-actions">
+                    ${isPDF ? `<button class="file-action-icon" onclick="window.open('${fileUrl}', '_blank')" title="View PDF"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>` : ''}
+                    <button class="file-action-icon" onclick="window.open('${fileUrl}', '_blank')" title="Download"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                </div>
+            </div>
+        `;
+    }
+    return '';
+  }
+
+>>>>>>> Stashed changes
   // Initialize everything
   try {
     initializeModalHandlers();

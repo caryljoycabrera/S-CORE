@@ -624,6 +624,10 @@ function openModal(rowData) {
 
 function closeModal() {
   detailModal.style.display = 'none';
+  const hc = document.getElementById('revisionHistoryContainer');
+  if(hc) hc.innerHTML = '';
+  const hs = document.getElementById('revisionHistorySection');
+  if(hs) hs.style.display = 'none';
 }
 
 // Initialize enhanced dropdowns when DOM loads
@@ -962,6 +966,10 @@ function initializeConversationModal() {
 // Core modal functions
 function closeModal() {
   detailModal.style.display = 'none';
+  const hc = document.getElementById('revisionHistoryContainer');
+  if(hc) hc.innerHTML = '';
+  const hs = document.getElementById('revisionHistorySection');
+  if(hs) hs.style.display = 'none';
 }
 
 function openModal(rowData) {
@@ -1027,7 +1035,7 @@ function populateModalData(rowData) {
   if (currentRequestType === 'Service Request') {
     loadServiceRevisionHistory(currentRequestId);
   } else {
-    loadRevisionHistory(currentRequestId);
+    loadApprovalRevisionHistory(currentRequestId);
   }
   
   // Setup chat button click handler
@@ -2391,7 +2399,7 @@ function formatText(text) {
 // APPROVAL REQUEST REVISION HISTORY FUNCTIONS (Admin View)
 // ==========================================
 
-async function loadRevisionHistory(requestId) {
+async function loadApprovalRevisionHistory(requestId) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
     
@@ -2403,8 +2411,10 @@ async function loadRevisionHistory(requestId) {
     }
     
     try {
-        // Try to fetch approval revision history from API
-        const response = await fetch(`/api/approval-revision-history/${requestId}`);
+          if (historySection) historySection.style.display = 'block';
+          if (historyContainer) historyContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem; border-width: 0.2em;"><span class="visually-hidden">Loading...</span></div><p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">Loading revision history...</p></div>';
+          
+        const response = await fetch(`/api/revision-history/${requestId}`);
         const contentType = response.headers.get('content-type');
         
         if (!contentType || !contentType.includes('application/json')) {
@@ -2782,6 +2792,9 @@ async function loadRevisionHistory(requestId) {
     }
     
     try {
+        if (historySection) historySection.style.display = 'block';
+        if (historyContainer) historyContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem; border-width: 0.2em;"><span class="visually-hidden">Loading...</span></div><p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">Loading revision history...</p></div>';
+        
         const response = await fetch(`/api/revision-history/${requestId}`);
         console.log('[Admin Revision History] Response status:', response.status);
         
@@ -3160,6 +3173,9 @@ async function loadServiceRevisionHistory(requestId) {
     }
     
     try {
+        if (historySection) historySection.style.display = 'block';
+        if (historyContainer) historyContainer.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem; border-width: 0.2em;"><span class="visually-hidden">Loading...</span></div><p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">Loading revision history...</p></div>';
+        
         console.log('[Service Revision History] Fetching from API...');
         const response = await fetch(`/api/service-revision-history/${requestId}`);
         console.log('[Service Revision History] Response status:', response.status);

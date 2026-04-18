@@ -5365,5 +5365,167 @@ async function handleMarkServiceComplete() {
 </div>
 </div>
 <script src="/javascripts/status-handler.js"></script>
+<<<<<<< Updated upstream
+=======
+
+<script>
+/**
+ * Open archived request restoration modal
+ */
+window.openArchivedRequestModal = function(requestId, requestType) {
+  console.log('Opening archived request restoration modal for:', requestId, requestType);
+  
+  const modal = document.getElementById('archivedRequestModal');
+  const contentDiv = document.getElementById('archivedRequestContent');
+  const form = document.getElementById('archivedRestorationForm');
+  
+  if (!modal || !contentDiv) {
+    console.error('Archived request modal elements not found');
+    return;
+  }
+
+  // Fetch archived request details
+  fetch(`/api/conversation/${requestId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.archived) {
+        // Display archived request information
+        contentDiv.innerHTML = `
+          <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <p style="color: #92400e; margin: 0; font-weight: 500;">
+              <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; display: inline; vertical-align: middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              This request has been archived by an administrator.
+            </p>
+          </div>
+
+          <div style="background: #f1f5f9; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Title</label>
+              <p style="margin: 0; color: #1e293b; font-weight: 500;">${data.title || 'Untitled Request'}</p>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Status</label>
+              <p style="margin: 0; color: #1e293b;"><span class="status-badge archived">${data.status || 'Archived'}</span></p>
+            </div>
+            <div>
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Archived On</label>
+              <p style="margin: 0; color: #1e293b;">${new Date(data.deletedAt).toLocaleString()}</p>
+            </div>
+          </div>
+        `;
+        modal.style.display = 'flex';
+        
+        // Reset form
+        if (form) {
+          form.reset();
+          document.getElementById('submissionStatus').style.display = 'none';
+        }
+      } else {
+        contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
+        modal.style.display = 'flex';
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching archived request:', error);
+      contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
+      modal.style.display = 'flex';
+    });
+};
+
+// Auto-open modal if URL contains modal parameters
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Handle archived request restoration modal
+  if (urlParams.get('modal') === 'archived' && urlParams.has('requestId')) {
+    const requestId = urlParams.get('requestId');
+    const requestType = urlParams.get('type') || 'approval';
+    console.log('Auto-opening archived request modal for:', requestId);
+    
+    // Wait for page to fully load
+    setTimeout(() => {
+      window.openArchivedRequestModal(requestId, requestType);
+    }, 500);
+  }
+  
+  // Handle restoration form submission
+  const restorationForm = document.getElementById('archivedRestorationForm');
+  if (restorationForm) {
+    restorationForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestId = urlParams.get('requestId');
+      const requestType = urlParams.get('type') || 'approval';
+      const reason = document.getElementById('restorationReason').value.trim();
+      const statusDiv = document.getElementById('submissionStatus');
+      
+      if (!reason || reason.length < 10) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#7f1d1d';
+        statusDiv.style.borderLeft = '4px solid #ef4444';
+        statusDiv.innerHTML = '❌ Please provide at least 10 characters explaining the reason.';
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/request-restoration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requestId: requestId,
+            requestType: requestType,
+            reason: reason
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#dcfce7';
+          statusDiv.style.color = '#166534';
+          statusDiv.style.borderLeft = '4px solid #22c55e';
+          statusDiv.innerHTML = '✅ ' + result.message;
+          
+          // Reset form after 2 seconds
+          setTimeout(() => {
+            restorationForm.reset();
+            statusDiv.style.display = 'none';
+            document.getElementById('archivedRequestModal').style.display = 'none';
+          }, 2000);
+        } else {
+          statusDiv.style.display = 'block';
+          statusDiv.style.background = '#fee2e2';
+          statusDiv.style.color = '#7f1d1d';
+          statusDiv.style.borderLeft = '4px solid #ef4444';
+          statusDiv.innerHTML = '❌ ' + (result.message || 'Failed to submit restoration request');
+        }
+      } catch (error) {
+        console.error('Error submitting restoration request:', error);
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#7f1d1d';
+        statusDiv.style.borderLeft = '4px solid #ef4444';
+        statusDiv.innerHTML = '❌ Error submitting request. Please try again.';
+      }
+    });
+  }
+  
+  // Close modal button handler
+  const closeModalBtn = document.getElementById('closeArchivedModal');
+  if (closeModalBtn) {
+    closeModalBtn.onclick = function() {
+      document.getElementById('archivedRequestModal').style.display = 'none';
+    };
+  }
+});
+</script>
+
+<%- include('../partials/chatbot-widget') %>
+>>>>>>> Stashed changes
 </body>
 </html>

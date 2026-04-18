@@ -12,6 +12,65 @@ const { requireLogin, requireAdmin } = require('../middleware/auth');
 const { upload } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const { apiLimiter } = require('../middleware/rateLimiter');
+<<<<<<< Updated upstream
+=======
+const { getOrganizations, getOffices, getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
+const settingsService = require('../services/settingsService');
+const { sanitizeText, sanitizeMongoId, sanitizeString } = require('../utils/sanitize');
+const chatbotService = require('../services/chatbotService');
+
+/**
+ * POST /api/add-organization
+ * Adds a new organization to SystemSettings
+ */
+router.post('/api/add-organization', async (req, res) => {
+  // Sanitize the organization name input
+  const name = sanitizeText(req.body.name, 200);
+  if (!name || name.length < 3) {
+    return res.status(400).json({ success: false, message: 'Invalid organization name.' });
+  }
+  try {
+    let settings = await settingsService.getSettings();
+    if (!settings.organizations.includes(name)) {
+      settings.organizations.push(name);
+      await settings.save();
+      await settingsService.loadSettings(); // Refresh cache
+      return res.json({ success: true, message: 'Organization added.', name });
+    } else {
+      return res.status(409).json({ success: false, message: 'Organization already exists.' });
+    }
+  } catch (err) {
+    console.error('Error adding organization:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+/**
+ * POST /api/add-office
+ * Adds a new office/department to SystemSettings
+ */
+router.post('/api/add-office', async (req, res) => {
+  // Sanitize the office name input
+  const name = sanitizeText(req.body.name, 200);
+  if (!name || name.length < 3) {
+    return res.status(400).json({ success: false, message: 'Invalid office/department name.' });
+  }
+  try {
+    let settings = await settingsService.getSettings();
+    if (!settings.offices.includes(name)) {
+      settings.offices.push(name);
+      await settings.save();
+      await settingsService.loadSettings(); // Refresh cache
+      return res.json({ success: true, message: 'Office/Department added.', name });
+    } else {
+      return res.status(409).json({ success: false, message: 'Office/Department already exists.' });
+    }
+  } catch (err) {
+    console.error('Error adding office/department:', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+>>>>>>> Stashed changes
 
 /**
  * POST /api/users/verify
@@ -969,4 +1028,521 @@ router.get('/admin/request-volume', async (req, res) => {
   }
 });
 
+<<<<<<< Updated upstream
+=======
+// Get active tasks by unit
+router.get('/admin/active-tasks-by-unit', async (req, res) => {
+  try {
+    // Get active tasks by unit from service requests
+    const requestsByUnit = await ServiceRequest.aggregate([
+      {
+        $match: {
+          assignedUnit: { $exists: true, $ne: null, $ne: 'Not yet assigned' },
+          status: { $nin: ['completed', 'cancelled'] }
+        }
+      },
+      { $group: { _id: '$assignedUnit', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Also include approval requests
+    const approvalByUnit = await RequestApproval.aggregate([
+      {
+        $match: {
+          assignedUnits: { $exists: true, $ne: null, $ne: 'Not yet assigned' },
+          status: { $nin: ['completed', 'cancelled'] }
+        }
+      },
+      { $group: { _id: '$assignedUnits', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Combine and merge counts
+    const unitMap = new Map();
+
+    // Add service request counts
+    requestsByUnit.forEach(item => {
+      unitMap.set(item._id, (unitMap.get(item._id) || 0) + item.count);
+    });
+
+    // Add approval request counts
+    approvalByUnit.forEach(item => {
+      unitMap.set(item._id, (unitMap.get(item._id) || 0) + item.count);
+    });
+
+    // Convert to sorted array
+    const sortedUnits = Array.from(unitMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    const labels = sortedUnits.map(([unit]) => unit);
+    const data = sortedUnits.map(([, count]) => count);
+
+    console.log('Active tasks by unit:', { labels, data, totalUnits: labels.length });
+
+    res.json({
+      success: true,
+      labels: labels.length > 0 ? labels : ['No Active Tasks'],
+      data: labels.length > 0 ? data : [0]
+    });
+  } catch (error) {
+    console.error('Error fetching active tasks by unit:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ===== Announcement Routes =====
+
+const BroadcastMessage = require('../models/BroadcastMessage');
+
+/**
+ * POST /api/announcements/:id/read
+ * Mark an announcement as read for the current user
+ */
+router.post('/api/announcements/:id/read', requireLogin, async (req, res) => {
+  try {
+    const announcementId = req.params.id;
+    const userId = req.session.userId;
+
+    // Find the announcement
+    const announcement = await BroadcastMessage.findById(announcementId);
+    
+    if (!announcement) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Announcement not found' 
+      });
+    }
+
+    // Check if user is in recipients array
+    const recipientIndex = announcement.recipients.findIndex(
+      r => r.userId && r.userId.toString() === userId.toString()
+    );
+
+    if (recipientIndex !== -1) {
+      // User is already in recipients array, update isRead status
+      announcement.recipients[recipientIndex].isRead = true;
+      announcement.recipients[recipientIndex].readAt = new Date();
+    } else {
+      // User is not in recipients array (probably visible to all), add them
+      announcement.recipients.push({
+        userId: userId,
+        isRead: true,
+        readAt: new Date()
+      });
+    }
+
+    await announcement.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Announcement marked as read' 
+    });
+
+  } catch (error) {
+    console.error('Error marking announcement as read:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to mark announcement as read' 
+    });
+  }
+});
+
+/**
+ * GET /api/announcements
+ * Get all announcements for the current user
+ */
+router.get('/api/announcements', requireLogin, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    // Find announcements that are either visible to all or user is in recipients
+    // Show only if scheduledTime doesn't exist or has passed
+    const now = new Date();
+    console.log('[GET /api/announcements] Current time (server):', now.toISOString());
+    
+    // Debug: Check all announcements first
+    const allAnnouncements = await BroadcastMessage.find({}).lean();
+    console.log('[GET /api/announcements] Total announcements in DB:', allAnnouncements.length);
+    allAnnouncements.forEach(a => {
+      console.log('[GET /api/announcements] Announcement:', a.title, '| scheduledTime:', a.scheduledTime, '| isVisibleToAll:', a.isVisibleToAll);
+      if (a.scheduledTime) {
+        const scheduledDate = new Date(a.scheduledTime);
+        console.log('[GET /api/announcements]   - scheduledTime as Date:', scheduledDate.toISOString());
+        console.log('[GET /api/announcements]   - scheduledTime <= now:', scheduledDate <= now);
+      }
+    });
+    
+    const announcements = await BroadcastMessage
+      .find({
+        $and: [
+          {
+            $or: [
+              { expiresAt: { $gte: now } },
+              { expiresAt: { $exists: false } },
+              { expiresAt: null }
+            ]
+          },
+          {
+            // Only show announcements with no schedule or past scheduled time
+            $or: [
+              { scheduledTime: { $exists: false } },
+              { scheduledTime: null },
+              { scheduledTime: { $lte: now } }
+            ]
+          },
+          {
+            $or: [
+              { isVisibleToAll: true },
+              { 'recipients.userId': userId }
+            ]
+          }
+        ]
+      })
+      .populate('sentBy', 'fName lName role')
+      .sort({ priority: -1, createdAt: -1 })
+      .lean();
+
+    console.log('[GET /api/announcements] Filtered announcements count:', announcements.length);
+
+    // Add isRead status for the current user
+    const processedAnnouncements = announcements.map(announcement => {
+      const recipientEntry = announcement.recipients?.find(
+        r => r.userId && r.userId.toString() === userId.toString()
+      );
+      return {
+        ...announcement,
+        isRead: recipientEntry ? recipientEntry.isRead : false,
+        readAt: recipientEntry ? recipientEntry.readAt : null
+      };
+    });
+
+    res.json({ 
+      success: true, 
+      announcements: processedAnnouncements 
+    });
+
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch announcements' 
+    });
+  }
+});
+
+/**
+ * POST /api/request-restoration
+ * Submit a request to restore a deleted/archived request with reason
+ */
+router.post('/api/request-restoration', requireLogin, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const requestId = sanitizeMongoId(req.body.requestId);
+    const requestType = sanitizeString(req.body.requestType).toLowerCase();
+    const reason = sanitizeText(req.body.reason, 500);
+
+    if (!requestId || !['approval', 'service'].includes(requestType) || !reason) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Request ID, request type, and reason are required' 
+      });
+    }
+
+    const user = await User.findById(userId).select('role unitTeam fName lName').lean();
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Fetch the archived request
+    const Model = requestType === 'approval' ? RequestApproval : ServiceRequest;
+    const request = await Model.findById(requestId)
+      .select('title userId isDeleted status previousStatus assignedUnits originalAssignedUnits restorationRequests');
+
+    if (!request) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Request not found' 
+      });
+    }
+
+    const statusStr = (request.status || '').toString().trim().toLowerCase();
+    const isArchived = Boolean(request.isDeleted) || statusStr === 'archived';
+
+    if (!isArchived) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This request is not archived' 
+      });
+    }
+
+    // Access control: allow request author, assigned unit members, or admin
+    if (user.role === 'admin') {
+      // Admin allowed (though typically restore directly)
+    } else if (user.role === 'unit') {
+      const userUnit = (user.unitTeam || '').toString().trim().toLowerCase();
+      const assignedUnit = (request.assignedUnits || '').toString().trim().toLowerCase();
+      const originalUnit = (request.originalAssignedUnits || '').toString().trim().toLowerCase();
+
+      if (!userUnit || (assignedUnit !== userUnit && originalUnit !== userUnit)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied'
+        });
+      }
+    } else {
+      // Regular user can only request restoration for own request
+      if (!request.userId || request.userId.toString() !== String(userId)) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'You can only request restoration for your own requests' 
+        });
+      }
+    }
+
+    // Store restoration request (in request document for now)
+    const restorationRecord = {
+      requestedAt: new Date(),
+      requestedBy: userId,
+      reason: reason,
+      status: 'pending'
+    };
+
+    // Add restoration request to the request document
+    if (!request.restorationRequests) {
+      request.restorationRequests = [];
+    }
+    request.restorationRequests.push(restorationRecord);
+    await request.save();
+
+    // Notify admins about the restoration request
+    const admins = await User.find({ role: 'admin' }, '_id');
+    const adminIds = admins.map(a => a._id);
+    
+    if (adminIds.length > 0) {
+      const requestTitle = request.title || 'Untitled Request';
+      const userName = `${user.fName || ''} ${user.lName || ''}`.trim() || 'Unknown User';
+      
+      const message = `${userName} has requested restoration of the ${requestType} "${requestTitle}" with reason: "${reason}"`;
+      const actionUrl = `/admin/restoration-requests?reviewModalId=${requestId}`;
+      
+      await notificationService.notifySystem(
+        adminIds,
+        'Request Restoration Requested',
+        message,
+        'high',
+        actionUrl
+      );
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Restoration request submitted successfully. Admins have been notified.' 
+    });
+  } catch (error) {
+    console.error('Error submitting restoration request:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to submit restoration request',
+      details: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/request-types
+ * Returns request types optionally filtered by category
+ */
+router.get('/api/request-types', requireLogin, async (req, res) => {
+  try {
+    const { requestCategory } = req.query;
+    let query = { status: 'approved' };
+    
+    if (requestCategory) {
+      if (requestCategory.toLowerCase() === 'service request') {
+        query.category = 'service';
+      } else if (requestCategory.toLowerCase() === 'request approval') {
+        query.category = 'approval';
+      } else {
+        query.category = requestCategory.toLowerCase();
+      }
+    }
+    
+    const types = await RequestType.find(query).select('name assignedUnit category').sort('name').lean();
+    res.json({ success: true, types, requestTypes: types });
+  } catch (error) {
+    console.error('Error fetching request types:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+/**
+ * GET /api/request-types/approved
+ * Returns all approved request types
+ */
+router.get('/api/request-types/approved', requireLogin, async (req, res) => {
+  try {
+    const types = await RequestType.find({ status: 'approved' }).select('name category assignedUnit').sort('name').lean();
+    res.json({ success: true, requestTypes: types, types });
+  } catch (error) {
+    console.error('Error fetching approved request types:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ===== CHATBOT Q&A ROUTES =====
+
+/**
+ * GET /api/chatbot/qa/:role
+ * Fetch active Q&A for given role (public endpoint)
+ */
+router.get('/api/chatbot/qa/:role', apiLimiter, async (req, res) => {
+  try {
+    const { role } = req.params;
+    const validRoles = ['user', 'unit', 'admin', 'public'];
+
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role' });
+    }
+
+    const qa = await chatbotService.getQAByRole(role);
+    res.json({ success: true, data: qa, count: qa.length });
+  } catch (error) {
+    console.error('[GET /api/chatbot/qa/:role] Error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch Q&A' });
+  }
+});
+
+/**
+ * POST /api/admin/chatbot/qa
+ * Create new Q&A entry (admin only)
+ */
+router.post('/api/admin/chatbot/qa', requireAdmin, async (req, res) => {
+  try {
+    const { role, category, question, answer } = req.body;
+
+    if (!role || !question || !answer) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const qa = await chatbotService.createQA({ role, category, question, answer });
+    res.status(201).json({ success: true, message: 'Q&A created successfully', data: qa });
+  } catch (error) {
+    console.error('[POST /api/admin/chatbot/qa] Error:', error.message);
+
+    if (error.message.includes('already exists')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
+    if (error.message.includes('Invalid')) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+
+    res.status(500).json({ success: false, message: 'Failed to create Q&A' });
+  }
+});
+
+/**
+ * GET /api/admin/chatbot/qa/all/:role
+ * Fetch all Q&A (active + inactive) for role (admin only)
+ */
+router.get('/api/admin/chatbot/qa/all/:role', requireAdmin, async (req, res) => {
+  try {
+    const { role } = req.params;
+    const validRoles = ['user', 'unit', 'admin', 'public'];
+
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ success: false, message: 'Invalid role' });
+    }
+
+    const qa = await chatbotService.getAllQAByRole(role);
+    res.json({ success: true, data: qa, count: qa.length });
+  } catch (error) {
+    console.error('[GET /api/admin/chatbot/qa/all/:role] Error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch Q&A' });
+  }
+});
+
+/**
+ * PUT /api/admin/chatbot/qa/:id
+ * Update Q&A entry (admin only)
+ */
+router.put('/api/admin/chatbot/qa/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'Q&A ID required' });
+    }
+
+    const qa = await chatbotService.updateQA(id, updates);
+    res.json({ success: true, message: 'Q&A updated successfully', data: qa });
+  } catch (error) {
+    console.error('[PUT /api/admin/chatbot/qa/:id] Error:', error.message);
+
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ success: false, message: error.message });
+    }
+    if (error.message.includes('already exists')) {
+      return res.status(409).json({ success: false, message: error.message });
+    }
+
+    res.status(500).json({ success: false, message: 'Failed to update Q&A' });
+  }
+});
+
+/**
+ * DELETE /api/admin/chatbot/qa/:id
+ * Delete Q&A entry (admin only)
+ */
+router.delete('/api/admin/chatbot/qa/:id', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'Q&A ID required' });
+    }
+
+    await chatbotService.deleteQA(id);
+    res.json({ success: true, message: 'Q&A deleted successfully' });
+  } catch (error) {
+    console.error('[DELETE /api/admin/chatbot/qa/:id] Error:', error.message);
+
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ success: false, message: error.message });
+    }
+
+    res.status(500).json({ success: false, message: 'Failed to delete Q&A' });
+  }
+});
+
+/**
+ * GET /api/admin/chatbot/stats
+ * Get Q&A statistics by role (admin only)
+ */
+router.get('/api/admin/chatbot/stats', requireAdmin, async (req, res) => {
+  try {
+    const stats = await chatbotService.getStats();
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error('[GET /api/admin/chatbot/stats] Error:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch stats' });
+  }
+});
+
+>>>>>>> Stashed changes
 module.exports = router;

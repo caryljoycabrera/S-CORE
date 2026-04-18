@@ -1,0 +1,9 @@
+<!-- Chatbot Q&A Widget Partial -->
+<!-- Include this partial on all pages where the chatbot should appear -->
+
+<link rel="stylesheet" href="/stylesheets/chatbot-widget.css" />
+<script src="/javascripts/chatbot-widget.js"></script>
+
+<!-- Widget Container -->
+<!-- data-user-role is set based on the current user's role (public, user, unit, admin) -->
+<div id="chatbot-widget-container" data-user-role="<%= typeof role !== 'undefined' ? role : (typeof user !== 'undefined' && user ? user.role : 'public') %>"></div>
