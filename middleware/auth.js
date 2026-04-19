@@ -178,8 +178,23 @@ async function requireUnit(req, res, next) {
  */
 async function requireAdminAPI(req, res, next) {
   try {
-    // First check if user is logged in
-    if (!req.session?.userId) {
+    // Get Clerk auth - note: req.auth is now async
+    const auth = await req.auth?.();
+    
+    // Debug: log session and Clerk auth info
+    console.log('[requireAdminAPI] Session ID:', req.session?.id);
+    console.log('[requireAdminAPI] Session userId:', req.session?.userId);
+    console.log('[requireAdminAPI] Clerk auth:', {
+      userId: auth?.userId,
+      sessionId: auth?.sessionId
+    });
+    console.log('[requireAdminAPI] Session keys:', Object.keys(req.session || {}));
+    
+    // Check session first, fall back to Clerk
+    let userId = req.session?.userId || auth?.userId;
+    
+    if (!userId) {
+      console.log('[requireAdminAPI] BLOCKED: No userId in session or Clerk auth');
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -188,10 +203,21 @@ async function requireAdminAPI(req, res, next) {
 
     // Fetch user from database to verify admin status
     const User = require('../models/User');
-    const user = await User.findById(req.session.userId);
+    let user;
+    
+    // If userId from session (MongoDB _id format), find by _id
+    // If userId from Clerk, find by clerkId
+    if (req.session?.userId) {
+      user = await User.findById(userId);
+      console.log('[requireAdminAPI] Found user by session ID');
+    } else if (auth?.userId) {
+      user = await User.findOne({ clerkId: auth.userId });
+      console.log('[requireAdminAPI] Found user by Clerk ID:', auth.userId);
+    }
 
     // Check if user exists and has admin role
     if (!user || user.role !== 'admin') {
+      console.log('[requireAdminAPI] Access denied: user not found or not admin');
       return res.status(403).json({
         success: false,
         message: 'Admin access required'

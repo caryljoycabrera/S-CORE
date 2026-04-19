@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DLSU-D Strategic Communications Office</title>
-  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico?v=2">
-  <link rel="shortcut icon" href="/Picture/favicon.ico?v=2">
-  <meta name="theme-color" content="#1a5d1a">
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!--
@@ -234,5 +232,7 @@
     Contains all interactive functionality for the homepage
     ============================================================ -->
   <script src="javascripts/ejs/homepage.js"></script>
+
+  <%- include('partials/chatbot-widget', { page: 'homepage' }) %>
 </body>
 </html>

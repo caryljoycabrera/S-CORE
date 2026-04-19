@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configuration - S-CORE</title>
-  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico?v=2">
-  <link rel="shortcut icon" href="/Picture/favicon.ico?v=2">
-  <meta name="theme-color" content="#1a5d1a">
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
   <link rel="stylesheet" href="/style.css" />
   <link rel="stylesheet" href="/stylesheets/notifications.css" />
   <link rel="stylesheet" href="/stylesheets/admin-navbar.css" />
@@ -1102,6 +1100,9 @@
         </button>
         <button type="button" class="config-tab" onclick="switchTab('archivemanager')" id="archiveManagerTabBtn">
           📦 Archive Manager
+        </button>
+        <button type="button" class="config-tab" onclick="switchTab('chatbot')">
+          ❓ Q&A Chatbot
         </button>
       </div>
 
@@ -2836,6 +2837,205 @@
 
             </div>
           </div>
+
+          <!-- ══════════════════════════════════════════════════════ -->
+          <!-- Q&A CHATBOT TAB -->
+          <!-- ══════════════════════════════════════════════════════ -->
+          <div id="chatbot-tab" class="tab-content">
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 28px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+                <span style="font-size: 1.5rem;">❓</span>
+                <div style="flex: 1;">
+                  <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937;">Q&A Chatbot Manager</h2>
+                  <p style="margin: 4px 0 0 0; font-size: 0.875rem; color: #6b7280;">Configure chatbot visibility per page, formal response behavior, and role-based decision flows using Q&A and JSON editor modes.</p>
+                </div>
+              </div>
+
+              <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 16px 0;">
+
+              <!-- Global Chatbot Settings -->
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Global Settings</h3>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                  <div style="display: grid; gap: 8px;">
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem;">Enable Chatbot On</label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="chatbotEnableHomepage" checked> <span>Homepage (Public)</span></label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="chatbotEnableUser" checked> <span>User Pages</span></label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="chatbotEnableUnit" checked> <span>Unit Pages</span></label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="chatbotEnableAdmin"> <span>Admin Pages</span></label>
+                  </div>
+
+                  <div style="display: grid; gap: 10px;">
+                    <div>
+                      <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Widget Header Title</label>
+                      <input type="text" id="chatbotHeaderTitle" maxlength="80" value="S-CORE Assistant" style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;" />
+                    </div>
+                    <div>
+                      <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Primary Color</label>
+                      <input type="color" id="chatbotPrimaryColor" value="#10b981" style="width: 100%; height: 38px; border: 1px solid #d1d5db; border-radius: 6px;" />
+                    </div>
+                    <div>
+                      <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Widget Width <span id="chatbotWidgetWidthValue">360px</span></label>
+                      <input type="range" id="chatbotWidgetWidth" min="280" max="480" value="360" style="width: 100%;" />
+                    </div>
+                  </div>
+
+                  <div style="display: grid; gap: 8px;">
+                    <div>
+                      <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Fallback Message</label>
+                      <textarea id="chatbotFallbackMessage" rows="4" style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;">Thank you for your inquiry. I am unable to find an exact answer at this time.</textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 12px;">
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Greeting: Public</label>
+                    <textarea id="chatbotGreetingPublic" rows="3" style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;"></textarea>
+                  </div>
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Greeting: User</label>
+                    <textarea id="chatbotGreetingUser" rows="3" style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;"></textarea>
+                  </div>
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Greeting: Unit</label>
+                    <textarea id="chatbotGreetingUnit" rows="3" style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;"></textarea>
+                  </div>
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Greeting: Admin</label>
+                    <textarea id="chatbotGreetingAdmin" rows="3" style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;"></textarea>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <button type="button" id="chatbotSaveSettingsBtn" style="padding: 9px 16px; border: none; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #0f766e, #115e59); font-weight: 700; cursor: pointer;">Save Settings</button>
+                  <div id="chatbotSettingsMsg" style="display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;"></div>
+                </div>
+              </div>
+
+              <!-- Role Selector & Targets -->
+              <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <label style="font-weight: 600; color: #374151; font-size: 0.9rem; margin: 0;">Select Role Environment & Add/Edit Targets</label>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" id="chatbotSelectCurrentRoleBtn" style="padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Target Current Only</button>
+                    <button type="button" id="chatbotSelectAllUserRolesBtn" style="padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Target All Roles</button>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                  <button type="button" class="chatbot-role-btn active" onclick="switchChatbotRole('user')" style="padding: 8px 16px; border: 2px solid #10b981; background: #ecfdf5; color: #047857; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">👤 User</button>
+                  <button type="button" class="chatbot-role-btn" onclick="switchChatbotRole('unit')" style="padding: 8px 16px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">👥 Unit</button>
+                  <button type="button" class="chatbot-role-btn" onclick="switchChatbotRole('admin')" style="padding: 8px 16px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">🔐 Admin</button>
+                  <button type="button" class="chatbot-role-btn" onclick="switchChatbotRole('public')" style="padding: 8px 16px; border: 2px solid #d1d5db; background: white; color: #6b7280; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">🌐 Public</button>
+                </div>
+              </div>
+
+              <!-- Add Q&A Form -->
+              <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+                <h3 id="chatbotFormTitle" style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Add New Question</h3>
+                
+                <div style="display: grid; gap: 12px;">
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Category</label>
+                    <select id="chatbotCategory" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem;">
+                      <option value="general">General</option>
+                      <option value="technical">Technical</option>
+                      <option value="request_process">Request Process</option>
+                      <option value="account">Account</option>
+                      <option value="workflow">Workflow</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Question <span style="color: #ef4444;">*</span></label>
+                    <input type="text" id="chatbotQuestion" placeholder="Enter the question..." maxlength="255"
+                      style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;" />
+                    <p id="chatbotQuestionCount" style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.75rem;">0/255</p>
+                  </div>
+                  
+                  <div>
+                    <label style="font-weight: 600; color: #374151; font-size: 0.85rem; display: block; margin-bottom: 6px;">Answer <span style="color: #ef4444;">*</span></label>
+                    <textarea id="chatbotAnswer" placeholder="Enter the answer in formal tone..." maxlength="2000" rows="5"
+                      style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; font-family: inherit; box-sizing: border-box; resize: vertical;"></textarea>
+                    <p id="chatbotAnswerCount" style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.75rem;">0/2000</p>
+                  </div>
+                  
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="chatbotIsActive" checked style="width: 18px; height: 18px; cursor: pointer;" />
+                    <span style="font-weight: 600; color: #374151; font-size: 0.9rem;">Active (Visible in widget)</span>
+                  </label>
+                  
+                  <button type="button" id="chatbotSubmitBtn" onclick="addChatbotQA()" 
+                    style="padding: 10px 20px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;">
+                    ➕ Add Question
+                  </button>
+                  <button type="button" id="chatbotCancelEditBtn" style="display: none; padding: 10px 16px; background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;">
+                    Cancel Edit
+                  </button>
+                  <div id="chatbotAddMsg" style="padding: 8px 12px; border-radius: 6px; display: none; font-size: 0.9rem; font-weight: 600;"></div>
+                </div>
+              </div>
+
+              <!-- Q&A Columns (4 Roles) -->
+              <div>
+                <h3 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Questions By Role Environment</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                  
+                  <!-- User Column -->
+                  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="background: #10b981; color: white; padding: 10px 16px; font-weight: 700; font-size: 0.9rem;">👤 User</div>
+                    <div id="qaList_user" style="padding: 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto;">
+                      <p style="color: #6b7280; text-align: center; font-size: 0.85rem; margin: 0;">Loading...</p>
+                    </div>
+                    <div id="qaPage_user" style="padding: 10px 12px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;"></div>
+                  </div>
+
+                  <!-- Unit Column -->
+                  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="background: #6b7280; color: white; padding: 10px 16px; font-weight: 700; font-size: 0.9rem;">👥 Unit</div>
+                    <div id="qaList_unit" style="padding: 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto;">
+                      <p style="color: #6b7280; text-align: center; font-size: 0.85rem; margin: 0;">Loading...</p>
+                    </div>
+                    <div id="qaPage_unit" style="padding: 10px 12px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;"></div>
+                  </div>
+
+                  <!-- Admin Column -->
+                  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="background: #6b7280; color: white; padding: 10px 16px; font-weight: 700; font-size: 0.9rem;">🔐 Admin</div>
+                    <div id="qaList_admin" style="padding: 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto;">
+                      <p style="color: #6b7280; text-align: center; font-size: 0.85rem; margin: 0;">Loading...</p>
+                    </div>
+                    <div id="qaPage_admin" style="padding: 10px 12px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;"></div>
+                  </div>
+
+                  <!-- Public Column -->
+                  <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="background: #6b7280; color: white; padding: 10px 16px; font-weight: 700; font-size: 0.9rem;">🌐 Public</div>
+                    <div id="qaList_public" style="padding: 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto;">
+                      <p style="color: #6b7280; text-align: center; font-size: 0.85rem; margin: 0;">Loading...</p>
+                    </div>
+                    <div id="qaPage_public" style="padding: 10px 12px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;"></div>
+                  </div>
+                  
+                </div>
+              </div>
+
+              <!-- JSON Flow Editor -->
+              <div style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">JSON Flow Editor (Per Role)</h3>
+                <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 0.85rem;">Start with JSON editor for proven flow patterns. Save role-specific arrays of question/answer entries.</p>
+                <textarea id="chatbotFlowJson" rows="12" style="width: 100%; box-sizing: border-box; font-family: Consolas, 'Courier New', monospace; font-size: 0.84rem; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px; resize: vertical; background: #0f172a; color: #e2e8f0;">[]</textarea>
+                <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; align-items: center;">
+                  <button type="button" id="chatbotLoadJsonBtn" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; cursor: pointer;">Load Current Role JSON</button>
+                  <button type="button" id="chatbotSaveJsonBtn" style="padding: 8px 12px; border-radius: 8px; border: none; color: #fff; background: linear-gradient(135deg, #1d4ed8, #1e40af); cursor: pointer; font-weight: 600;">Save JSON</button>
+                  <div id="chatbotJsonMsg" style="display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Add global tab switching function at end of body -->
           <script>
             // ── Archiving trigger from Configuration page ─────────────────────
@@ -4370,5 +4570,9 @@
       initDynamicTabs('footerLinksContainer');
     });
   </script>
+
+  <script src="/javascripts/admin/chatbot-config.js"></script>
+
+  <%- include('../partials/chatbot-widget', { page: 'admin' }) %>
 </body>
 </html>

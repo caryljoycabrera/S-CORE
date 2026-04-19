@@ -1,0 +1,25 @@
+<%
+  const hasUser = typeof user !== 'undefined' && user;
+  const resolvedRole = hasUser && user.role ? user.role : 'public';
+
+  let resolvedPage = typeof page === 'string' && page ? page : '';
+  if (!resolvedPage) {
+    if (resolvedRole === 'unit') resolvedPage = 'unit';
+    else if (resolvedRole === 'admin') resolvedPage = 'admin';
+    else if (resolvedRole === 'user') resolvedPage = 'user';
+    else resolvedPage = 'public';
+  }
+%>
+
+<link rel="stylesheet" href="/stylesheets/chatbot-widget.css">
+
+<div
+  id="chatbot-widget-root"
+  data-page="<%= resolvedPage %>"
+  data-role="<%= resolvedRole %>"
+  data-user-id="<%= hasUser && user._id ? user._id : '' %>"
+  data-unit-team="<%= hasUser && user.unitTeam ? user.unitTeam : '' %>">
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/javascripts/chatbot-widget.js"></script>

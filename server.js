@@ -139,6 +139,7 @@ const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
 const unitRoutes = require('./routes/unit');
 const apiRoutes = require('./routes/api');
+const chatbotRoutes = require('./routes/chatbot');
 const notificationRoutes = require('./routes/notifications');
 const messagesRoutes = require('./routes/messages');
 const clerkRoutes = require('./routes/clerk');
@@ -152,6 +153,7 @@ app.use('/', userRoutes);
 app.use('/', adminRoutes);
 app.use('/', unitRoutes);
 app.use('/', apiRoutes);
+app.use('/', chatbotRoutes);
 app.use('/', notificationRoutes);
 app.use('/', messagesRoutes);
 // app.use('/', adminCalendarRoutes);
@@ -180,6 +182,17 @@ const announcementSchedule = cron.schedule('*/5 * * * *', async () => {
 console.log('[SCHEDULER] Announcement scheduler initialized - runs every 5 minutes');
 
 // ======= Server Startup ========
+
+server.on('error', (error) => {
+  if (error && error.code === 'EADDRINUSE') {
+    console.error(`[SERVER] Port ${port} already in use.`);
+    console.error('[SERVER] Existing instance likely running. Stop it first or set different PORT.');
+    process.exit(1);
+  }
+
+  console.error('[SERVER] Unhandled startup error:', error);
+  process.exit(1);
+});
 
 // Start the server
 server.listen(port, () => {

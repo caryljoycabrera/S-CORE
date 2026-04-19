@@ -5,6 +5,7 @@
 const socketIo = require('socket.io');
 const ServiceRequest = require('../models/ServiceRequest');
 const RequestApproval = require('../models/RequestApproval');
+const chatbotService = require('./chatbotService');
 
 class SocketService {
   constructor() {
@@ -162,6 +163,36 @@ class SocketService {
           isTyping: isTyping,
           timestamp: new Date()
         });
+      });
+
+      // ===== Chatbot Handlers =====
+      socket.on('chatbot:message', async (payload = {}) => {
+        try {
+          const role = payload.role || socket.userRole || 'public';
+          const page = payload.page || (role === 'unit' ? 'unit' : role === 'admin' ? 'admin' : role === 'user' ? 'user' : 'homepage');
+          const currentFlowId = payload.currentFlowId || '';
+          const requestId = payload.requestId || `${Date.now()}`;
+
+          const response = await chatbotService.processMessage({
+            role,
+            page,
+            currentFlowId,
+            message: payload.message || ''
+          });
+
+          socket.emit('chatbot:response', {
+            success: true,
+            requestId,
+            data: response
+          });
+        } catch (error) {
+          console.error('[Socket Chatbot] Failed processing chatbot message:', error);
+          socket.emit('chatbot:response', {
+            success: false,
+            requestId: payload.requestId || `${Date.now()}`,
+            message: 'Unable to process chatbot request at this time.'
+          });
+        }
       });
     });
 
