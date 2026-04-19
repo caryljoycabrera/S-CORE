@@ -527,11 +527,13 @@
         // Show modal
         document.getElementById('announcementDetailModal').style.display = 'flex';
         
-        // Mark as read
-        await fetch(`/api/announcements/${announcementId}/read`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
+        // Mark as read if not already
+        if (!announcement.isRead) {
+          await fetch(`/api/announcements/${announcementId}/read`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
       } catch (error) {
         console.error('Error opening announcement:', error);
       }

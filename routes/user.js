@@ -238,15 +238,37 @@ router.get('/dashboard', requireLogin, async (req, res) => {
       
 
       
-      // Add isRead status for the current user
+      // Auto-mark announcements as read to prevent repeat showing on restart
+      const announcementIds = announcements.map(a => a._id);
+      if (announcementIds.length > 0) {
+        try {
+          await BroadcastMessage.updateMany(
+            {
+              _id: { $in: announcementIds },
+              'recipients.userId': user._id
+            },
+            {
+              $set: {
+                'recipients.$[elem].isRead': true,
+                'recipients.$[elem].readAt': new Date()
+              }
+            },
+            {
+              arrayFilters: [{ 'elem.userId': user._id }]
+            }
+          );
+          console.log('[/dashboard] Marked', announcementIds.length, 'announcements as read');
+        } catch (updateError) {
+          console.log('[/dashboard] Error marking announcements as read:', updateError.message);
+        }
+      }
+
+      // Add isRead status for the current user (set to true since we just marked them as read)
       announcements = announcements.map(announcement => {
-        const recipientEntry = announcement.recipients?.find(
-          r => r.userId && r.userId.toString() === user._id.toString()
-        );
         return {
           ...announcement,
-          isRead: recipientEntry ? recipientEntry.isRead : false,
-          readAt: recipientEntry ? recipientEntry.readAt : null
+          isRead: true,
+          readAt: new Date()
         };
       });
       

@@ -1525,11 +1525,13 @@ router.post('/api/announcements/:id/read', requireLogin, async (req, res) => {
 /**
  * GET /api/announcements
  * Get all announcements for the current user
+ * Query params: ?markAsRead=true to auto-mark as read on fetch
  */
 router.get('/api/announcements', requireLogin, async (req, res) => {
   try {
     const userId = req.session.userId;
     const user = await User.findById(userId);
+    const markAsRead = req.query.markAsRead === 'true';
 
     if (!user) {
       return res.status(404).json({ 
@@ -1582,19 +1584,40 @@ router.get('/api/announcements', requireLogin, async (req, res) => {
         ]
       })
       .populate('sentBy', 'fName lName role')
-      .sort({ priority: -1, createdAt: -1 })
-      .lean();
+      .sort({ priority: -1, createdAt: -1 });
 
     console.log('[GET /api/announcements] Filtered announcements count:', announcements.length);
 
+    // Auto-mark as read if requested (prevents repeat showing on restart)
+    if (markAsRead) {
+      const announcementIds = announcements.map(a => a._id);
+      await BroadcastMessage.updateMany(
+        {
+          _id: { $in: announcementIds },
+          'recipients.userId': userId
+        },
+        {
+          $set: {
+            'recipients.$[elem].isRead': true,
+            'recipients.$[elem].readAt': new Date()
+          }
+        },
+        {
+          arrayFilters: [{ 'elem.userId': userId }]
+        }
+      );
+      console.log('[GET /api/announcements] Marked', announcementIds.length, 'announcements as read');
+    }
+
     // Add isRead status for the current user
-    const processedAnnouncements = announcements.map(announcement => {
+    const lean = announcements.map(a => a.toObject ? a.toObject() : a);
+    const processedAnnouncements = lean.map(announcement => {
       const recipientEntry = announcement.recipients?.find(
         r => r.userId && r.userId.toString() === userId.toString()
       );
       return {
         ...announcement,
-        isRead: recipientEntry ? recipientEntry.isRead : false,
+        isRead: markAsRead ? true : (recipientEntry ? recipientEntry.isRead : false),
         readAt: recipientEntry ? recipientEntry.readAt : null
       };
     });
@@ -1609,6 +1632,67 @@ router.get('/api/announcements', requireLogin, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch announcements' 
+    });
+  }
+});
+
+/**
+ * GET /api/announcements/:id
+ * Get a single announcement by ID
+ */
+router.get('/api/announcements/:id', requireLogin, async (req, res) => {
+  try {
+    const announcementId = req.params.id;
+    const userId = req.session.userId;
+
+    // Validate ID format
+    if (!announcementId.match(/^[0-9a-f]{24}$/i)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid announcement ID format'
+      });
+    }
+
+    const announcement = await BroadcastMessage.findById(announcementId)
+      .populate('sentBy', 'fName lName role');
+
+    if (!announcement) {
+      return res.status(404).json({
+        success: false,
+        message: 'Announcement not found'
+      });
+    }
+
+    // Check if user has access to this announcement
+    const hasAccess = announcement.isVisibleToAll || 
+                     announcement.recipients?.some(r => r.userId?.toString() === userId.toString());
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied to this announcement'
+      });
+    }
+
+    // Get user's read status
+    const recipientEntry = announcement.recipients?.find(
+      r => r.userId && r.userId.toString() === userId.toString()
+    );
+
+    res.json({
+      success: true,
+      announcement: {
+        ...announcement.toObject(),
+        isRead: recipientEntry ? recipientEntry.isRead : false,
+        readAt: recipientEntry ? recipientEntry.readAt : null
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching announcement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch announcement'
     });
   }
 });
