@@ -4,6 +4,7 @@
  */
 
 const BroadcastMessage = require('../models/BroadcastMessage');
+const Notification = require('../models/Notification');
 const User = require('../models/User');
 const notificationService = require('./notificationService');
 const emailService = require('./emailService');
@@ -93,21 +94,48 @@ class AnnouncementService {
    * @param {String} announcementId - Announcement ID
    * @param {Array<String>} recipientIds - Array of recipient user IDs
    */
-  async sendAnnouncement(announcementId, recipientIds) {
+  async sendAnnouncement(announcementId, recipientIds, options = {}) {
     try {
+      const { force = false } = options;
       const announcement = await BroadcastMessage.findById(announcementId);
       
       if (!announcement) {
         throw new Error('Announcement not found');
       }
 
+      const normalizedRecipientIds = (recipientIds || [])
+        .map(recipient => (recipient && recipient.userId) ? recipient.userId : recipient)
+        .filter(Boolean)
+        .map(id => id.toString());
+
+      const senderId = announcement.sentBy ? announcement.sentBy.toString() : null;
+      const uniqueRecipientIds = Array.from(new Set(normalizedRecipientIds));
+      const filteredRecipientIds = senderId
+        ? uniqueRecipientIds.filter(id => id !== senderId)
+        : uniqueRecipientIds;
+
+      let recipientIdsToNotify = filteredRecipientIds;
+      if (!force && recipientIdsToNotify.length > 0) {
+        const existingNotifications = await Notification.find({
+          type: 'announcement',
+          relatedId: announcement._id,
+          recipient: { $in: recipientIdsToNotify }
+        }).select('recipient').lean();
+
+        const existingRecipientIds = new Set(
+          existingNotifications.map(notification => notification.recipient.toString())
+        );
+        recipientIdsToNotify = recipientIdsToNotify.filter(
+          recipientId => !existingRecipientIds.has(recipientId)
+        );
+      }
+
       // Get recipient details for email sending and role checking
-      const recipients = await User.find({ _id: { $in: recipientIds } }).select('_id email fName lName settings role');
+      const recipients = await User.find({ _id: { $in: recipientIdsToNotify } })
+        .select('_id email fName lName settings role');
 
       // Send in-app notifications (skip sender)
-      const notificationPromises = recipientIds
-        .filter(id => id.toString() !== announcement.sentBy.toString())
-        .map(recipientId => {
+      const notificationPromises = recipientIdsToNotify.map(recipientId => {
         const recipient = recipients.find(r => r._id.toString() === recipientId.toString());
         const isAdmin = recipient && recipient.role === 'admin';
         const actionUrl = isAdmin ? '/admin/announcement' : '/dashboard';

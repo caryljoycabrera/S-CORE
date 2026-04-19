@@ -5511,7 +5511,7 @@ router.post('/admin/announcement/:id/resend', requireAdmin, async (req, res) => 
       return res.status(404).json({ success: false, message: 'Announcement not found' });
     }
 
-    await announcementService.sendAnnouncement(announcement._id, announcement.recipients);
+    await announcementService.sendAnnouncement(announcement._id, announcement.recipients, { force: true });
 
     res.json({
       success: true,
