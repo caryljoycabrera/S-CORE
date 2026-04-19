@@ -318,6 +318,9 @@ router.get('/admin', requireAdmin, async (req, res) => {
       .sort((a, b) => b.revisionCount - a.revisionCount)
       .slice(0, 5);
 
+    // Count pending user registrations
+    const pendingUsersCount = users.filter(u => u.status === 'pending' && !u.isDeleted).length;
+
     const stats = {
       totalUsers: users.length,
       totalApprovals: approvals.length,
@@ -329,7 +332,8 @@ router.get('/admin', requireAdmin, async (req, res) => {
       totalPending: totalPending,
       requestsByUnit: requestsByUnit,
       urgentUnassigned: urgentCount,
-      totalUnassigned: unassignedTasks.length
+      totalUnassigned: unassignedTasks.length,
+      pendingUsersCount: pendingUsersCount
     };
 
     const { getUnits, getRequestStatuses } = require('../utils/settingsHelpers');
@@ -1416,6 +1420,41 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
 });
 
 /**
+ * GET /api/admin/pending-registrations
+ * GET /admin/api/registrations/pending (alternate path)
+ * API endpoint to get users with pending registration status
+ */
+async function handlePendingRegistrations(req, res) {
+  try {
+    const pendingUsers = await User.find({ status: 'pending', isDeleted: false })
+      .select('fName lName email emailDomain userType phoneNumber studentOrganization affiliation registrationContext createdAt status')
+      .sort({ createdAt: 1 }) // Oldest first
+      .lean();
+
+    const result = pendingUsers.map(u => ({
+      _id: u._id,
+      name: `${u.fName || ''} ${u.lName || ''}`.trim(),
+      email: u.email,
+      emailDomain: u.emailDomain || 'internal',
+      userType: u.userType,
+      phoneNumber: u.phoneNumber || '',
+      organization: u.userType === 'student'
+        ? (Array.isArray(u.studentOrganization) ? u.studentOrganization.join(', ') : (u.studentOrganization || ''))
+        : (Array.isArray(u.affiliation) ? u.affiliation.join(', ') : (u.affiliation || '')),
+      registrationContext: u.registrationContext || null,
+      createdAt: u.createdAt
+    }));
+
+    res.json({ success: true, pendingUsers: result, count: result.length });
+  } catch (err) {
+    console.error('Error fetching pending registrations:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch pending registrations' });
+  }
+}
+router.get('/api/admin/pending-registrations', requireAdmin, handlePendingRegistrations);
+router.get('/admin/api/registrations/pending', requireAdmin, handlePendingRegistrations);
+
+/**
  * GET /api/admin/deleted-users
  * API endpoint to get deleted users as JSON
  */
@@ -2164,6 +2203,14 @@ router.post('/admin/user/update', requireAdmin, async (req, res) => {
       });
     }
 
+    // Role restriction: students cannot be assigned admin role
+    if (user.userType === 'student' && role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: "User type 'student' cannot have role 'admin'. Students can be 'user' or 'unit' member."
+      });
+    }
+
     // Prepare update object
     const updateData = { role: role };
     if (role === 'unit') {
@@ -2281,12 +2328,25 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
       updateData.emailVerified = true;
       updateData.role = 'user';
       updateData.unitTeam = 'N/A';
+      updateData.approvedBy = req.user._id;
+      if (req.body.approvalNotes) {
+        updateData.approvalNotes = req.body.approvalNotes;
+      }
+    }
+    
+    // When denying, store rejection reason
+    if (action === 'deny') {
+      if (req.body.approvalNotes) {
+        updateData.approvalNotes = req.body.approvalNotes;
+      }
     }
     
     // When resetting to pending, reset role to 'user' (requestor)
     if (action === 'reset') {
       updateData.role = 'user';
       updateData.unitTeam = 'N/A';
+      updateData.approvedBy = null;
+      updateData.approvalNotes = null;
     }
     
     const user = await User.findByIdAndUpdate(
@@ -2323,9 +2383,10 @@ router.post('/admin/user/update-status', requireAdmin, async (req, res) => {
           await notificationService.notifyUserApproved(userId, req.user._id);
         }
       } else if (action === 'deny') {
-        // Send email notification about account denial
+        // Send email notification about account denial (include reason if provided)
+        const denialReason = req.body.approvalNotes || '';
         try {
-          await emailService.sendAccountDenied(user.email, fullName);
+          await emailService.sendAccountDenied(user.email, fullName, denialReason);
           console.log(`✅ Account denied email sent to ${user.email}`);
         } catch (emailError) {
           console.error('❌ Error sending account denied email:', emailError);

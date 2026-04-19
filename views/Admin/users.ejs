@@ -365,6 +365,12 @@
                 data-cys="<%= u.cys || '' %>"
                 data-profilepicture="<%= u.profilePicture || '' %>"
                 data-status="<%= u.status %>"
+                data-emaildomain="<%= u.emailDomain || 'internal' %>"
+                data-rc-org="<%= u.registrationContext && u.registrationContext.organization ? u.registrationContext.organization : '' %>"
+                data-rc-purpose="<%= u.registrationContext && u.registrationContext.purpose ? u.registrationContext.purpose : '' %>"
+                data-rc-supervisor="<%= u.registrationContext && u.registrationContext.supervisorName ? u.registrationContext.supervisorName : '' %>"
+                data-rc-supervisoremail="<%= u.registrationContext && u.registrationContext.supervisorEmail ? u.registrationContext.supervisorEmail : '' %>"
+                data-rc-notes="<%= u.registrationContext && u.registrationContext.additionalNotes ? u.registrationContext.additionalNotes : '' %>"
                 data-registration-date="<%= u.createdAt %>">
                 
                 <!-- User Info Section (Clickable) -->
@@ -385,6 +391,9 @@
                     <span class="status-badge status-<%= u.status %>">
                       <%= u.status.toUpperCase() %>
                     </span>
+                    <% if (u.emailDomain === 'external') { %>
+                      <span style="display:inline-block;margin-left:4px;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:600;background:#fff7ed;color:#c2410c;border:1px solid #fb923c;">EXT</span>
+                    <% } %>
                   </div>
                 </div>
 
@@ -799,6 +808,41 @@
                     <span id="viewOrganization"></span>
                   </div>
                 </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 1.5 External Registration Context (shown only for external users) -->
+        <div class="user-admin-form-section" id="externalRegContextSection" style="display: none;">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+            External Registration Details
+            <span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:600;background:#fff7ed;color:#c2410c;border:1px solid #fb923c;">EXTERNAL</span>
+          </h3>
+          <table class="details-table" style="width:100%">
+            <tbody>
+              <tr>
+                <td class="detail-label" style="width:38%">Organization / School:</td>
+                <td class="detail-value" id="viewRcOrg">—</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Purpose of Access:</td>
+                <td class="detail-value" id="viewRcPurpose">—</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Supervisor / Sponsor:</td>
+                <td class="detail-value" id="viewRcSupervisor">—</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Supervisor Email:</td>
+                <td class="detail-value" id="viewRcSupervisorEmail">—</td>
+              </tr>
+              <tr id="viewRcNotesRow" style="display:none">
+                <td class="detail-label">Additional Notes:</td>
+                <td class="detail-value" id="viewRcNotes" style="white-space:pre-wrap;">—</td>
               </tr>
             </tbody>
           </table>

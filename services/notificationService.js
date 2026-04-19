@@ -382,14 +382,24 @@ class NotificationService {
       }
 
       const userType = user.userType === 'student' ? 'Student' : 'Staff/Faculty';
+      const domainType = user.emailDomain === 'external' ? 'External' : 'Internal';
+      const isExternal = user.emailDomain === 'external';
+      
+      // Build message with registration context for external users
+      let message = `New ${domainType} ${userType} Registration: ${user.fName} ${user.lName} (${user.email})`;
+      if (isExternal && user.registrationContext && user.registrationContext.organization) {
+        message += ` — Organization: ${user.registrationContext.organization}`;
+      }
+      message += ' — awaiting approval';
+
       const notificationData = {
-        title: 'New User Registration',
-        message: `${user.fName} ${user.lName} (${userType}) has registered and is awaiting approval`,
+        title: isExternal ? '🔔 New External User Registration' : 'New User Registration',
+        message: message,
         type: 'system',
         relatedId: userId,
         relatedModel: 'User',
         sender: userId,
-        priority: 'high',
+        priority: isExternal ? 'high' : 'medium',
         actionUrl: `/admin/users?tab=pending&userId=${userId}&scrollTo=actions`
       };
       
@@ -629,35 +639,40 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
 
       // Filter out announcements that haven't reached their scheduled time yet
       const BroadcastMessage = require('../models/BroadcastMessage');
-      let filteredNotifications = [];
+      
+      // Batch-fetch all related announcements in ONE query (avoid N+1)
+      const announcementNotifs = allNotifications.filter(n => n.type === 'announcement' && n.relatedId);
+      const announcementIds = announcementNotifs.map(n => n.relatedId);
+      
+      let announcementMap = {};
+      if (announcementIds.length > 0) {
+        const announcements = await BroadcastMessage.find({ _id: { $in: announcementIds } })
+          .select('scheduledTime sentBy')
+          .lean();
+        announcements.forEach(a => { announcementMap[a._id.toString()] = a; });
+      }
 
+      let filteredNotifications = [];
       for (const notification of allNotifications) {
-        // If it's not an announcement or doesn't have a related BroadcastMessage, include it
+        // Non-announcements pass through
         if (notification.type !== 'announcement' || !notification.relatedId) {
           filteredNotifications.push(notification);
           continue;
         }
 
-        // For announcements, check if the scheduled time has passed
-        try {
-          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime sentBy').lean();
-          if (announcement) {
-            // Skip announcement if this user created it
-            if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
-              continue;
-            }
-
-            // Include announcement if it has no scheduled time or if the scheduled time has passed
-            if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
-              filteredNotifications.push(notification);
-            }
-          } else {
-            // If announcement doesn't exist, include the notification (deleted announcement case)
+        // Check announcement schedule using pre-fetched map
+        const announcement = announcementMap[notification.relatedId.toString()];
+        if (announcement) {
+          // Skip if this user created it
+          if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
+            continue;
+          }
+          // Include if no scheduled time or scheduled time has passed
+          if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
             filteredNotifications.push(notification);
           }
-        } catch (err) {
-          console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
-          // Include notification if there's an error checking schedule
+        } else {
+          // Deleted announcement — include notification
           filteredNotifications.push(notification);
         }
       }
@@ -1363,30 +1378,36 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
 
       // Filter out announcements that haven't reached their scheduled time yet
       const BroadcastMessage = require('../models/BroadcastMessage');
-      let validCount = 0;
+      
+      // Batch-fetch all related announcements in ONE query
+      const announcementNotifs = unreadNotifications.filter(n => n.type === 'announcement' && n.relatedId);
+      const announcementIds = announcementNotifs.map(n => n.relatedId);
+      
+      let announcementMap = {};
+      if (announcementIds.length > 0) {
+        const announcements = await BroadcastMessage.find({ _id: { $in: announcementIds } })
+          .select('scheduledTime sentBy')
+          .lean();
+        announcements.forEach(a => { announcementMap[a._id.toString()] = a; });
+      }
 
+      let validCount = 0;
       for (const notification of unreadNotifications) {
         if (notification.type !== 'announcement' || !notification.relatedId) {
           validCount++;
           continue;
         }
 
-        try {
-          const announcement = await BroadcastMessage.findById(notification.relatedId).select('scheduledTime sentBy').lean();
-          if (!announcement) {
-            validCount++;
-          } else {
-            // Skip if this user created the announcement
-            if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
-              continue;
-            }
-            if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
-              validCount++;
-            }
-          }
-        } catch (err) {
-          console.error(`Error checking scheduled time for announcement ${notification.relatedId}:`, err);
+        const announcement = announcementMap[notification.relatedId.toString()];
+        if (!announcement) {
           validCount++;
+        } else {
+          if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
+            continue;
+          }
+          if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
+            validCount++;
+          }
         }
       }
 

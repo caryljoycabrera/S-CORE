@@ -1116,6 +1116,15 @@ function updateCurrentRoleDisplay(role) {
 }
 
 function selectCustomRole(value, text) {
+  // Block admin role assignment for students
+  const currentUserType = window._currentModalUserType || '';
+  if (value === 'admin' && currentUserType === 'student') {
+    showToast('Role Restricted', "Students cannot be assigned the Administrator role. Students can be 'user' or 'unit' member.", 'error');
+    document.getElementById('customDropdownOptions').style.display = 'none';
+    document.querySelector('.dropdown-selected').classList.remove('active');
+    return;
+  }
+
   RoleManager.updateRoleDropdownDisplay(value);
   document.getElementById('customDropdownOptions').style.display = 'none';
   document.querySelector('.dropdown-selected').classList.remove('active');
@@ -1592,7 +1601,10 @@ function handleModalAction(action, userId, buttonElement) {
   } else if (action === 'deny') {
     actionText = 'Deny User';
     actionColor = '#ef4444';
-    confirmMessage.innerHTML = `<strong>Deny this user?</strong><br>The user will not be able to access the system.`;
+    confirmMessage.innerHTML = `<strong>Deny this user?</strong><br>The user will not be able to access the system.<br><br>
+      <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.85rem;color:#374151;">Reason for Denial <span style="font-weight:400;color:#9ca3af;">(optional, sent to user via email)</span></label>
+      <textarea id="denyReasonInput" rows="3" placeholder="e.g. Missing information, unverifiable identity, etc." 
+        style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;resize:vertical;font-family:inherit;box-sizing:border-box;"></textarea>`;
   } else if (action === 'reset') {
     actionText = 'Reset to Pending';
     actionColor = '#f59e0b';
@@ -1622,8 +1634,11 @@ function handleModalAction(action, userId, buttonElement) {
     e.preventDefault();
     e.stopPropagation();
     console.log('✅ Modal confirm clicked - executing status change');
+    // Capture denial reason if present
+    const denyReasonEl = document.getElementById('denyReasonInput');
+    const denialReason = denyReasonEl ? denyReasonEl.value.trim() : '';
     closeModal();
-    executeModalStatusChange(action, userId, buttonElement);
+    executeModalStatusChange(action, userId, buttonElement, denialReason);
   };
   
   // Cancel and close buttons
@@ -1722,16 +1737,19 @@ function updateModalActionButtons(action) {
 // ========================================
 // EXECUTE MODAL STATUS CHANGE
 // ========================================
-async function executeModalStatusChange(action, userId, buttonElement) {
-  console.log('🚀 executeModalStatusChange called:', { action, userId });
+async function executeModalStatusChange(action, userId, buttonElement, approvalNotes = '') {
+  console.log('🚀 executeModalStatusChange called:', { action, userId, approvalNotes });
   
   try {
+    const bodyData = { userId, action };
+    if (approvalNotes) bodyData.approvalNotes = approvalNotes;
+    
     const response = await fetch('/admin/user/update-status', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId, action })
+      body: JSON.stringify(bodyData)
     });
     
     const result = await response.json();
@@ -1852,6 +1870,30 @@ function openUserModal(row, scrollTo = null) {
     }
   }
 
+  // Populate External Registration Context section
+  const extContextSection = document.getElementById('externalRegContextSection');
+  if (extContextSection) {
+    const emailDomain = row.dataset.emaildomain || 'internal';
+    if (emailDomain === 'external') {
+      extContextSection.style.display = 'block';
+      document.getElementById('viewRcOrg').textContent = row.dataset.rcOrg || '—';
+      document.getElementById('viewRcPurpose').textContent = row.dataset.rcPurpose || '—';
+      document.getElementById('viewRcSupervisor').textContent = row.dataset.rcSupervisor || '—';
+      document.getElementById('viewRcSupervisorEmail').textContent = row.dataset.rcSupervisoremail || '—';
+      
+      const notesRow = document.getElementById('viewRcNotesRow');
+      const notesVal = row.dataset.rcNotes || '';
+      if (notesVal) {
+        notesRow.style.display = '';
+        document.getElementById('viewRcNotes').textContent = notesVal;
+      } else {
+        notesRow.style.display = 'none';
+      }
+    } else {
+      extContextSection.style.display = 'none';
+    }
+  }
+
 
   // Populate status section
   const status = row.dataset.status || 'pending';
@@ -1943,6 +1985,41 @@ function openUserModal(row, scrollTo = null) {
   }
   document.getElementById('selectedRoleText').textContent = roleTextMap[userRole] || roleTextMap['user'];
   updateCurrentRoleDisplay(userRole);
+
+  // Store current userType globally so selectCustomRole can check it
+  window._currentModalUserType = row.dataset.usertype || '';
+
+  // Apply visual restriction for student users: disable admin option in dropdown
+  const isStudent = row.dataset.usertype === 'student';
+  document.querySelectorAll('#customDropdownOptions .dropdown-option').forEach(opt => {
+    if (opt.dataset.value === 'admin') {
+      if (isStudent) {
+        opt.style.opacity = '0.4';
+        opt.style.cursor = 'not-allowed';
+        opt.title = "Students cannot be assigned the Administrator role";
+      } else {
+        opt.style.opacity = '';
+        opt.style.cursor = '';
+        opt.title = '';
+      }
+    }
+  });
+
+  // Show/hide student role restriction note
+  let studentRoleNote = document.getElementById('studentRoleNote');
+  if (isStudent) {
+    if (!studentRoleNote) {
+      studentRoleNote = document.createElement('div');
+      studentRoleNote.id = 'studentRoleNote';
+      studentRoleNote.style.cssText = 'margin-top:.75rem;padding:.6rem .9rem;background:rgba(59,130,246,.08);border-left:3px solid #3b82f6;border-radius:6px;font-size:.8rem;color:#1e40af;';
+      studentRoleNote.innerHTML = '<strong>ℹ️ Student Account:</strong> Students can be assigned as <em>User</em> or <em>Unit Member</em>, but not as Administrator.';
+      const warning = document.querySelector('.role-update-warning');
+      if (warning && warning.parentNode) warning.parentNode.insertBefore(studentRoleNote, warning.nextSibling);
+    }
+    studentRoleNote.style.display = 'block';
+  } else {
+    if (studentRoleNote) studentRoleNote.style.display = 'none';
+  }
 
   // Handle unit team dropdown visibility and value
   const unitContainer = document.getElementById('unitAssignmentContainer');

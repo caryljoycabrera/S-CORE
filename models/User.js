@@ -102,6 +102,40 @@ const userSchema = new mongoose.Schema({
     default: 'pending'
   },
 
+  // Email domain classification: internal = @dlsud.edu.ph, external = other domain
+  emailDomain: {
+    type: String,
+    enum: ['internal', 'external'],
+    default: 'internal'
+  },
+
+  // Admin notes for approval or rejection reason
+  approvalNotes: {
+    type: String,
+    default: null
+  },
+
+  // Admin who approved/denied this user's registration
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+
+  // External user registration context (only populated for external domain users)
+  registrationContext: {
+    organization: { type: String, default: null },
+    purpose: {
+      type: String,
+      enum: ['ojt', 'internship', 'research', 'collaboration', 'temporary', 'other', null],
+      default: null
+    },
+    supervisorName: { type: String, default: null },
+    supervisorEmail: { type: String, default: null },
+    additionalNotes: { type: String, default: null },
+    submittedAt: { type: Date, default: null }
+  },
+
   // Invitation data for admin-created users (stores pre-filled registration data as JSON)
   invitationData: {
     type: String,

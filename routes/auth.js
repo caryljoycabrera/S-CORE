@@ -13,7 +13,7 @@ const emailService = require('../services/emailService');
 const { authLimiter, apiLimiter } = require('../middleware/rateLimiter');
 const { getOrganizations, getOffices } = require('../utils/settingsHelpers');
 const { escapeRegex, sanitizeEmail, sanitizeName, sanitizePhone, sanitizeText, sanitizeString } = require('../utils/sanitize');
-const { isAllowedDomain } = require('../config/clerk');
+const { isAllowedDomain, isInternalDomain } = require('../config/clerk');
 
 /**
  * GET /register
@@ -253,10 +253,13 @@ router.post('/register', apiLimiter, async (req, res) => {
       return sendError('Please provide a valid email address.');
     }
 
-    // Domain restriction validation
+    // Domain validation - all domains now accepted
     if (!isAllowedDomain(email)) {
-      return sendError('Only @dlsud.edu.ph email addresses are allowed to register.');
+      return sendError('Please provide a valid email address.');
     }
+
+    // Determine email domain classification
+    const isInternal = isInternalDomain(email);
 
     // Normalize email and username for consistency
     const normalizedEmail = email.toLowerCase().trim();
@@ -307,13 +310,24 @@ router.post('/register', apiLimiter, async (req, res) => {
 
     // Student-specific validation
     if (userType === 'student') {
-      if (!studentId || !studentOrganization?.length || !cys) {
-        return sendError('All student fields (Student ID, Organization, Course/Year/Section) are required.');
+      if (!studentId || !cys) {
+        return sendError('Student ID and Course/Year/Section are required.');
+      }
+      // Organization required only for internal DLSU students
+      if (isInternal && !studentOrganization?.length) {
+        return sendError('Please select at least one student organization.');
       }
 
-      // Student ID format validation
-      if (!/^\d{9}$/.test(studentId)) {
-        return sendError('Student ID must be exactly 9 digits.');
+      // Student ID format validation — strict for DLSU, flexible for external
+      if (isInternal) {
+        if (!/^\d{9}$/.test(studentId)) {
+          return sendError('Student ID must be exactly 9 digits.');
+        }
+      } else {
+        // External students: alphanumeric, 3-20 chars
+        if (!/^[a-zA-Z0-9\-]{3,20}$/.test(studentId)) {
+          return sendError('Student ID must be 3-20 alphanumeric characters.');
+        }
       }
 
       // Check for duplicate Student ID
@@ -323,8 +337,8 @@ router.post('/register', apiLimiter, async (req, res) => {
       }
     }
 
-    // Non-student specific validation
-    if (userType === 'nonstudent' && (!affiliation?.length)) {
+    // Non-student specific validation (affiliation required only for internal)
+    if (userType === 'nonstudent' && isInternal && (!affiliation?.length)) {
       return sendError('Please select at least one office/department.');
     }
 
@@ -362,6 +376,7 @@ router.post('/register', apiLimiter, async (req, res) => {
       phoneNumber,
       agreedToTerms: terms === 'on',
       userType,
+      emailDomain: isInternal ? 'internal' : 'external',
       emailVerified: microsoftProfile ? true : false, // Microsoft OAuth users have verified email
       verificationToken,
       verificationTokenExpiry,
@@ -383,6 +398,23 @@ router.post('/register', apiLimiter, async (req, res) => {
       userData.affiliation = affiliation;
     }
 
+    // Add external registration context (for non-DLSU email users)
+    if (!isInternal) {
+      const extPurpose = sanitizeString(req.body.extPurpose || '');
+      const extSupervisorName = sanitizeName(req.body.extSupervisorName || '');
+      const extSupervisorEmail = sanitizeEmail(req.body.extSupervisorEmail || '');
+      const extNotes = sanitizeText(req.body.extNotes || '').substring(0, 500);
+
+      userData.registrationContext = {
+        organization: sanitizeText(req.body.extOrganization || '') || null,
+        purpose: extPurpose || null,           // enum field — empty string breaks validation
+        supervisorName: extSupervisorName || null,
+        supervisorEmail: extSupervisorEmail || null,
+        additionalNotes: extNotes || null,
+        submittedAt: new Date()
+      };
+    }
+
     // Create and save user
     console.log('Attempting to create user with data:', {
       ...userData,
@@ -399,23 +431,34 @@ router.post('/register', apiLimiter, async (req, res) => {
       const savedUser = await User.findOne({ username: userData.username });
       console.log('🔍 Verification - Found user in database:', savedUser ? 'Yes' : 'No');
       
-      // Send email verification
+      // Send appropriate email based on user type
       if (savedUser) {
         try {
-          console.log('📧 Sending email verification...');
-          const emailResult = await emailService.sendEmailVerification(
-            savedUser.email,
-            `${savedUser.fName} ${savedUser.lName}`,
-            savedUser.verificationToken
-          );
-          
-          if (emailResult.devMode) {
-            console.log('📧 [DEV MODE] Verification link:', emailResult.verificationLink);
+          if (isInternal) {
+            // Internal users: send email verification
+            console.log('📧 Sending email verification...');
+            const emailResult = await emailService.sendEmailVerification(
+              savedUser.email,
+              `${savedUser.fName} ${savedUser.lName}`,
+              savedUser.verificationToken
+            );
+            
+            if (emailResult.devMode) {
+              console.log('📧 [DEV MODE] Verification link:', emailResult.verificationLink);
+            }
+            
+            console.log('✅ Verification email sent successfully');
+          } else {
+            // External users: send registration pending confirmation (no verify email)
+            console.log('📧 Sending registration pending email...');
+            await emailService.sendRegistrationPending(
+              savedUser.email,
+              `${savedUser.fName} ${savedUser.lName}`
+            );
+            console.log('✅ Registration pending email sent');
           }
-          
-          console.log('✅ Verification email sent successfully');
         } catch (emailError) {
-          console.error('❌ Error sending verification email:', emailError);
+          console.error('❌ Error sending email:', emailError);
           // Don't fail registration if email fails
         }
         
@@ -482,7 +525,9 @@ router.post('/register', apiLimiter, async (req, res) => {
       req.session.registrationSuccess = {
         username: userData.username,
         email: userData.email,
-        message: 'Registration successful! Please wait for an email notification to know if your account has been approved by the admin. You will be able to enter the system once approved.'
+        message: isInternal
+          ? 'Registration successful! Please verify your email, then wait for admin approval before logging in.'
+          : 'Registration received! Your account is pending admin approval. You will receive an email notification when your account has been reviewed.'
       };
       
       // Redirect to login page
@@ -642,8 +687,11 @@ router.post('/register-invitation', apiLimiter, async (req, res) => {
     
     // Student-specific validation
     if (userType === 'student') {
-      if (!studentId || !/^\d{9}$/.test(studentId)) {
+      const isInternalStudent = email.endsWith('@dlsud.edu.ph');
+      if (isInternalStudent && (!studentId || !/^\d{9}$/.test(studentId))) {
         return sendError('Student ID must be exactly 9 digits.');
+      } else if (!isInternalStudent && (!studentId || !/^[a-zA-Z0-9\-]{3,20}$/.test(studentId))) {
+        return sendError('Student ID must be 3-20 alphanumeric characters.');
       }
       if (!cys || !/^[A-Z]{3}\d{2}$/.test(cys)) {
         return sendError('CYS must be in the format: 3 letters + 2 numbers (e.g., BSN21).');

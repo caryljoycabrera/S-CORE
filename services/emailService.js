@@ -475,6 +475,113 @@ class EmailService {
   }
 
   /**
+   * Send registration pending confirmation email (for external/pending users)
+   * @param {string} userEmail - User's email address
+   * @param {string} userName - User's full name
+   * @returns {Promise} Send result
+   */
+  async sendRegistrationPending(userEmail, userName) {
+    try {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                    <tr>
+                      <td style="background-color: #ffffff; padding: 30px 30px 20px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                        <h1 style="margin: 0; font-size: 48px; font-weight: 700; color: #2d5016; font-family: 'Playfair Display', Georgia, serif;">S-CORE</h1>
+                        <p style="margin: 8px 0 0 0; color: #2d5016; font-size: 14px; font-family: 'Playfair Display', Georgia, serif;">SCO Creative Optimization for Requests and Engagement System</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #fff3cd; padding: 30px; text-align: center; border: 2px solid #856404;">
+                        <h2 style="margin: 0; color: #856404; font-size: 26px; font-weight: 600;">Registration Received</h2>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; margin: 0 0 25px 0;">
+                          <tr>
+                            <td style="padding: 25px; text-align: center;">
+                              <strong style="display: block; margin: 0 0 10px 0; color: #856404; font-size: 22px;">&#9203; Awaiting Admin Approval</strong>
+                              <p style="margin: 0; color: #856404;">Your registration has been successfully submitted</p>
+                            </td>
+                          </tr>
+                        </table>
+                        <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
+                        <p style="font-size: 16px; margin: 20px 0; color: #1a2e1a;">Thank you for registering with S-CORE! Your account has been created and is now <strong>pending administrator approval</strong>.</p>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #1a5d1a; display: block; margin-bottom: 10px; font-size: 15px;">What happens next?</strong>
+                              <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li style="margin: 10px 0; color: #2d7a2d;">An administrator will review your registration details</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">You will receive an email notification once your account is approved</li>
+                                <li style="margin: 10px 0; color: #2d7a2d;">After approval, you can log in and start using S-CORE</li>
+                              </ul>
+                            </td>
+                          </tr>
+                        </table>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #e8f4fd; border-left: 4px solid #0d6efd; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #084298; display: block; margin-bottom: 8px;">&#128231; Keep this email</strong>
+                              <span style="color: #084298; font-size: 14px;">We will notify you at this email address (<strong>${userEmail}</strong>) as soon as your account has been reviewed.</span>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="height: 1px; background-color: #e0e0e0; margin: 25px 0;"></div>
+                        <p style="color: #6c757d; font-size: 13px;">
+                          If you have questions, please contact the Strategic Communications Office at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a;">sco@dlsud.edu.ph</a>.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #f8f9fa; padding: 30px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #e9ecef;">
+                        <strong style="color: #1a5d1a;">Please do not reply to this email.</strong><br><br>
+                        This is an automated message from <strong style="color: #1a5d1a;">S-CORE</strong><br>
+                        (SCO Creative Optimization for Requests and Engagement System)<br><br>
+                        <strong>Strategic Communications Office</strong><br>
+                        De La Salle University - Dasmarinas<br><br>
+                        For assistance, contact us at <a href="mailto:sco@dlsud.edu.ph" style="color: #1a5d1a; text-decoration: none;">sco@dlsud.edu.ph</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `;
+
+      if (this.resend) {
+        const result = await this.resend.emails.send({
+          from: `S-CORE - No Reply <${process.env.SMTP_FROM_EMAIL}>`,
+          reply_to: 'sco@dlsud.edu.ph',
+          to: userEmail,
+          subject: 'Registration Received - Awaiting Approval | S-CORE',
+          html
+        });
+        console.log(`[EMAIL] Registration pending email sent to ${userEmail}`);
+        return { success: true, id: result.id };
+      } else {
+        console.log(`[EMAIL] Would send registration pending email to ${userEmail} (dev mode)`);
+        return { success: true, devMode: true };
+      }
+    } catch (error) {
+      console.error('[EMAIL] Error sending registration pending email:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Send password reset email
    * @param {string} userEmail - User's email address
    * @param {string} userName - User's full name
@@ -681,7 +788,7 @@ class EmailService {
    * @param {string} userName - User's full name
    * @returns {Promise} Send result
    */
-  async sendAccountDenied(userEmail, userName) {
+  async sendAccountDenied(userEmail, userName, denialReason = '') {
     try {
       const html = `
         <!DOCTYPE html>
@@ -718,6 +825,16 @@ class EmailService {
                         </table>
                         <p style="margin: 0 0 15px 0; color: #1a2e1a;">Hi <strong>${userName}</strong>,</p>
                         <p style="color: #1a2e1a;">We regret to inform you that your account registration for the SCO Creative Optimization for Requests and Engagement System (S-CORE) was not approved by an administrator.</p>
+                        ${denialReason ? `
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; margin: 25px 0;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <strong style="color: #856404; display: block; margin-bottom: 10px;">Reason for Denial:</strong>
+                              <span style="color: #856404;">${denialReason}</span>
+                            </td>
+                          </tr>
+                        </table>
+                        ` : ''}
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fdf8; border-left: 4px solid #1a5d1a; margin: 25px 0;">
                           <tr>
                             <td style="padding: 20px;">

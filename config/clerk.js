@@ -36,15 +36,27 @@ function extractClerkProfile(clerkUser) {
 
 /**
  * Validate email domain against allowed domain
+ * All email domains are now accepted for registration.
+ * Non-DLSU (@dlsud.edu.ph) users will need admin approval before accessing the system.
  * @param {string} email - Email address to validate
- * @returns {boolean} True if domain is allowed
+ * @returns {boolean} Always returns true (all domains accepted)
  */
 function isAllowedDomain(email) {
-  const allowedDomain = process.env.ALLOWED_DOMAIN || 'dlsud.edu.ph';
+  // All email domains now accepted. Non-DLSU users will need admin approval.
   if (!email) return false;
-  
+  return true;
+}
+
+/**
+ * Check if email belongs to the internal (DLSU) domain
+ * @param {string} email - Email address to check
+ * @returns {boolean} True if @dlsud.edu.ph
+ */
+function isInternalDomain(email) {
+  const internalDomain = process.env.ALLOWED_DOMAIN || 'dlsud.edu.ph';
+  if (!email) return false;
   const emailDomain = email.split('@')[1]?.toLowerCase();
-  return emailDomain === allowedDomain.toLowerCase();
+  return emailDomain === internalDomain.toLowerCase();
 }
 
 /**
@@ -68,5 +80,6 @@ module.exports = {
   getAuth,
   extractClerkProfile,
   isAllowedDomain,
+  isInternalDomain,
   isMicrosoftAuth
 };

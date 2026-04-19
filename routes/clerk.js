@@ -6,7 +6,7 @@ const router = express.Router();
 const passport = require('passport');
 const MicrosoftStrategy = require('passport-microsoft').Strategy;
 const User = require('../models/User');
-const { isAllowedDomain } = require('../config/clerk');
+const { isAllowedDomain, isInternalDomain } = require('../config/clerk');
 const notificationService = require('../services/notificationService');
 
 // Configure Passport Microsoft Strategy
@@ -70,11 +70,9 @@ router.get('/clerk/callback',
 
       console.log('[MICROSOFT] Email:', email);
 
-      // Validate domain
-      if (!isAllowedDomain(email)) {
-        console.log('[MICROSOFT] Email domain not allowed:', email);
-        return res.redirect('/register?error=invalid_domain');
-      }
+      // Classify email domain (no longer blocking non-DLSU domains)
+      const emailClassification = isInternalDomain(email) ? 'internal' : 'external';
+      console.log('[MICROSOFT] Email domain classification:', emailClassification);
 
       // Extract profile information
       const microsoftProfile = {
@@ -147,6 +145,7 @@ router.get('/clerk/callback',
         // New user - store profile in session and redirect to registration
         req.session.microsoftProfile = microsoftProfile;
         req.session.microsoftNewUser = true; // Flag to show welcome message
+        req.session.microsoftEmailDomain = isInternalDomain(email) ? 'internal' : 'external';
         req.session.save((err) => {
           if (err) {
             console.error('[MICROSOFT] Session save error:', err);
