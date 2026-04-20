@@ -15,6 +15,11 @@ const uploadConfig = require('../config/upload');
 const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
 const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
 
+function isForRevisionStatus(status) {
+  const normalized = String(status || '').toLowerCase().trim();
+  return normalized === 'for revision' || normalized === 'revision';
+}
+
 /**
  * GET /unit/dashboard
  * Unit member dashboard with task statistics and workload overview
@@ -1332,6 +1337,13 @@ router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Task not found' });
     }
 
+    if (isForRevisionStatus(task.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot approve request while it is under revision. Wait for requester to submit revision first.'
+      });
+    }
+
     // Verify the unit member's team is assigned to this task
     if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
@@ -1509,6 +1521,13 @@ router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('rev
       return res.status(404).json({ success: false, message: 'Task not found' });
     }
 
+    if (isForRevisionStatus(task.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Request already under revision. Wait for requester resubmission before editing again.'
+      });
+    }
+
     // Verify the unit member's team is assigned to this task
     if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
@@ -1670,6 +1689,13 @@ router.post('/unit/task/complete-approval/:id', requireUnit, async (req, res) =>
     
     if (!task) {
       return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    if (isForRevisionStatus(task.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot approve request while it is under revision. Wait for requester to submit revision first.'
+      });
     }
 
     // Verify the unit member's team is assigned to this task

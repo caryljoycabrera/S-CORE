@@ -285,6 +285,7 @@
                         data-description="<%= description.replace(/"/g, '&quot;') %>"
                         data-date-submitted="<%= dateSubmitted %>"
                         data-status="<%= status %>"
+                        data-awaiting-resubmission="<%= request.awaitingResubmission ? 'true' : 'false' %>"
                         data-files='<%= JSON.stringify(files) %>'
                         data-deadline="<%= deadline %>">
                       <td>

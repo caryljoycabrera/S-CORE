@@ -4,6 +4,11 @@ let currentRequestType = null;
 let selectedFiles = [];
 let revisionFiles = [];
 
+function isRevisionStatus(status) {
+    const normalized = (status || '').toLowerCase().trim();
+    return normalized === 'for revision' || normalized === 'revision';
+}
+
 // Global dropdown manager to ensure only one dropdown is open at a time
 const DropdownManager = {
   activeDropdown: null,
@@ -982,6 +987,7 @@ function openRequestDetails(requestId, requestType) {
     const organization = row.getAttribute('data-organization') || 'N/A';
     const dateSubmitted = row.getAttribute('data-date-submitted') || '';
     const status = row.getAttribute('data-status') || 'Pending';
+    const awaitingResubmission = row.getAttribute('data-awaiting-resubmission') === 'true';
     const description = row.getAttribute('data-description') || 'No description provided';
     const deadline = row.getAttribute('data-deadline') || '';
     const serviceType = row.getAttribute('data-service-type') || '';
@@ -1002,6 +1008,7 @@ function openRequestDetails(requestId, requestType) {
         const statusLower = status.toLowerCase().replace(/\s+/g, '-');
         modalStatus.textContent = status;
         modalStatus.className = 'status-badge ' + statusLower;
+        modalStatus.dataset.awaitingResubmission = awaitingResubmission ? 'true' : 'false';
     }
     
     document.getElementById('modalDescription').innerHTML = description;
@@ -1127,6 +1134,11 @@ function openRequestDetails(requestId, requestType) {
         // Show approve button for approval requests
         const adminApproveBtn = document.getElementById('adminApproveBtn');
         if (adminApproveBtn) adminApproveBtn.style.display = 'inline-block';
+
+        if (isRevisionStatus(status) && awaitingResubmission) {
+            const adminFormSection = document.querySelector('.admin-form-section');
+            if (adminFormSection) adminFormSection.style.display = 'none';
+        }
     }
 
     // Populate admin form with current status and units
@@ -2203,6 +2215,14 @@ function approveRequest() {
         return;
     }
 
+    const modalStatus = document.getElementById('modalStatus');
+    const currentStatus = modalStatus ? modalStatus.textContent : '';
+    const awaitingResubmission = modalStatus?.dataset.awaitingResubmission === 'true';
+    if (isRevisionStatus(currentStatus) && awaitingResubmission) {
+        showErrorMessage('Request under revision. Wait for requester resubmission before approving.');
+        return;
+    }
+
     // Directly open the final remarks modal for approval
     openCompleteApprovalModal();
 }
@@ -2316,6 +2336,14 @@ async function completeApproval() {
         return;
     }
 
+    const modalStatus = document.getElementById('modalStatus');
+    const currentStatus = modalStatus ? modalStatus.textContent : '';
+    const awaitingResubmission = modalStatus?.dataset.awaitingResubmission === 'true';
+    if (isRevisionStatus(currentStatus) && awaitingResubmission) {
+        showErrorMessage('Request under revision. Wait for requester resubmission before approving.');
+        return;
+    }
+
     // Get final remarks from modal
     const remarksTextarea = document.getElementById('approvalFinalRemarksInput');
     const remarks = remarksTextarea ? remarksTextarea.value.trim() : '';
@@ -2373,6 +2401,11 @@ async function completeApproval() {
                     statusCell.textContent = 'Approved';
                     statusCell.className = 'status-badge approved';
                 }
+                tableRow.setAttribute('data-awaiting-resubmission', 'false');
+            }
+
+            if (modalStatus) {
+                modalStatus.dataset.awaitingResubmission = 'false';
             }
         } else {
             showErrorMessage(result.message || 'Failed to approve request');
@@ -2562,6 +2595,14 @@ async function submitRevision() {
         return;
     }
 
+    const modalStatus = document.getElementById('modalStatus');
+    const currentStatus = modalStatus ? modalStatus.textContent : '';
+    const awaitingResubmission = modalStatus?.dataset.awaitingResubmission === 'true';
+    if (isRevisionStatus(currentStatus) && awaitingResubmission) {
+        showErrorMessage('Request already under revision. Wait for requester resubmission before editing.');
+        return;
+    }
+
     // Get content from Quill editor if available, otherwise from textarea
     let revisionComments;
     if (window.revisionCommentsQuill) {
@@ -2618,6 +2659,7 @@ async function submitRevision() {
             if (modalStatus) {
                 modalStatus.textContent = 'FOR REVISION';
                 modalStatus.className = 'status-badge for-revision';
+                modalStatus.dataset.awaitingResubmission = 'true';
             }
             
             // Update table row status in background without reload
@@ -2628,6 +2670,7 @@ async function submitRevision() {
                     statusCell.textContent = 'FOR REVISION';
                     statusCell.className = 'status for-revision';
                 }
+                tableRow.setAttribute('data-awaiting-resubmission', 'true');
             }
         } else {
             showErrorMessage(result.message || 'Failed to submit revision request');
@@ -4416,6 +4459,14 @@ async function submitAdminRevision() {
         return;
     }
 
+    const modalStatus = document.getElementById('modalStatus');
+    const currentStatus = modalStatus ? modalStatus.textContent : '';
+    const awaitingResubmission = modalStatus?.dataset.awaitingResubmission === 'true';
+    if (isRevisionStatus(currentStatus) && awaitingResubmission) {
+        showErrorMessage('Request already under revision. Wait for requester resubmission before editing.');
+        return;
+    }
+
     const revisionComments = document.getElementById('revisionComments')?.value.trim();
     if (!revisionComments) {
         showErrorMessage('Please enter revision feedback');
@@ -4455,6 +4506,7 @@ async function submitAdminRevision() {
             if (modalStatus) {
                 modalStatus.textContent = 'FOR REVISION';
                 modalStatus.className = 'status-badge for-revision';
+                modalStatus.dataset.awaitingResubmission = 'true';
             }
 
             // Update table row status in background without reload
@@ -4466,6 +4518,7 @@ async function submitAdminRevision() {
                     statusCell.className = 'status-badge for-revision';
                 }
                 tableRow.setAttribute('data-status', 'For Revision');
+                tableRow.setAttribute('data-awaiting-resubmission', 'true');
             }
         } else {
             showErrorMessage(result.message || 'Failed to submit revision request');

@@ -102,6 +102,34 @@ function scoreFlowMatch(flow, tokens, normalizedMessage) {
   return score;
 }
 
+function getConfigExportPayload(config) {
+  return {
+    enabledPages: {
+      homepage: Boolean(config?.enabledPages?.homepage),
+      user: Boolean(config?.enabledPages?.user),
+      unit: Boolean(config?.enabledPages?.unit),
+      admin: Boolean(config?.enabledPages?.admin)
+    },
+    widget: {
+      primaryColor: sanitizeText(config?.widget?.primaryColor || '#10b981', 20),
+      headerTitle: sanitizeText(config?.widget?.headerTitle || 'S-CORE Assistant', 80),
+      width: Number(config?.widget?.width || 360)
+    },
+    greetings: {
+      public: sanitizeText(config?.greetings?.public || '', 300),
+      user: sanitizeText(config?.greetings?.user || '', 300),
+      unit: sanitizeText(config?.greetings?.unit || '', 300),
+      admin: sanitizeText(config?.greetings?.admin || '', 300)
+    },
+    fallbackMessage: sanitizeText(
+      config?.fallbackMessage || 'Thank you for your inquiry. I am unable to find an exact answer at this time.',
+      500
+    ),
+    formalToneEnforced: Boolean(config?.formalToneEnforced),
+    useSocketRealtime: Boolean(config?.useSocketRealtime)
+  };
+}
+
 class ChatbotService {
   async getAdminConfig() {
     return ensureConfig();
@@ -386,6 +414,162 @@ class ChatbotService {
 
     const created = await ChatbotFlow.insertMany(docs, { ordered: true });
     return created.map((item) => item.toObject());
+  }
+
+  async exportImportBundle() {
+    const config = await ensureConfig();
+    const allFlows = await ChatbotFlow.find({}).sort({ role: 1, sortOrder: 1, updatedAt: -1 }).lean();
+
+    const flowsByRole = {
+      public: [],
+      user: [],
+      unit: [],
+      admin: []
+    };
+
+    allFlows.forEach((flow) => {
+      const role = normalizeRole(flow.role);
+      if (!flowsByRole[role]) return;
+
+      flowsByRole[role].push({
+        flowId: sanitizeText(flow.flowId || '', 120),
+        category: normalizeCategory(flow.category),
+        question: sanitizeText(flow.question || '', 255),
+        answer: sanitizeText(flow.answer || '', 2000),
+        keywords: Array.isArray(flow.keywords)
+          ? flow.keywords.map((item) => sanitizeString(item).toLowerCase()).filter(Boolean)
+          : [],
+        nextFlowId: sanitizeText(flow.nextFlowId || '', 120),
+        isActive: flow.isActive !== false,
+        sortOrder: Number.isFinite(Number(flow.sortOrder)) ? Number(flow.sortOrder) : 0
+      });
+    });
+
+    return {
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      config: getConfigExportPayload(config),
+      flowsByRole
+    };
+  }
+
+  getImportTemplate() {
+    return {
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      config: {
+        enabledPages: {
+          homepage: true,
+          user: true,
+          unit: true,
+          admin: false
+        },
+        widget: {
+          primaryColor: '#10b981',
+          headerTitle: 'S-CORE Assistant',
+          width: 360
+        },
+        greetings: {
+          public: 'Good day. How may I assist you regarding S-CORE services?',
+          user: 'Good day. How may I assist you with your S-CORE requests today?',
+          unit: 'Good day. How may I assist your unit with assigned tasks today?',
+          admin: 'Good day. How may I assist you with administrative tasks today?'
+        },
+        fallbackMessage: 'Thank you for your inquiry. I am unable to find an exact answer at this time.',
+        formalToneEnforced: true,
+        useSocketRealtime: true
+      },
+      flowsByRole: {
+        public: [
+          {
+            flowId: 'public-sample-001',
+            category: 'general',
+            question: 'How do I submit a request?',
+            answer: 'You may submit a request by opening the Create Request page and completing required fields.',
+            keywords: ['submit', 'request', 'create'],
+            nextFlowId: '',
+            isActive: true,
+            sortOrder: 0
+          }
+        ],
+        user: [],
+        unit: [],
+        admin: []
+      }
+    };
+  }
+
+  async importBundle(bundle, userId = null) {
+    if (!bundle || typeof bundle !== 'object') {
+      throw new Error('Import payload must be JSON object');
+    }
+
+    const currentConfig = await ensureConfig();
+    const nextConfig = getConfigExportPayload(currentConfig);
+    const incomingConfig = bundle.config && typeof bundle.config === 'object' ? bundle.config : {};
+
+    if (incomingConfig.enabledPages && typeof incomingConfig.enabledPages === 'object') {
+      nextConfig.enabledPages = {
+        homepage: Boolean(incomingConfig.enabledPages.homepage),
+        user: Boolean(incomingConfig.enabledPages.user),
+        unit: Boolean(incomingConfig.enabledPages.unit),
+        admin: Boolean(incomingConfig.enabledPages.admin)
+      };
+    }
+
+    if (incomingConfig.widget && typeof incomingConfig.widget === 'object') {
+      nextConfig.widget = {
+        primaryColor: sanitizeText(incomingConfig.widget.primaryColor || nextConfig.widget.primaryColor, 20),
+        headerTitle: sanitizeText(incomingConfig.widget.headerTitle || nextConfig.widget.headerTitle, 80),
+        width: Number(incomingConfig.widget.width || nextConfig.widget.width || 360)
+      };
+    }
+
+    if (incomingConfig.greetings && typeof incomingConfig.greetings === 'object') {
+      nextConfig.greetings = {
+        public: sanitizeText(incomingConfig.greetings.public || nextConfig.greetings.public || '', 300),
+        user: sanitizeText(incomingConfig.greetings.user || nextConfig.greetings.user || '', 300),
+        unit: sanitizeText(incomingConfig.greetings.unit || nextConfig.greetings.unit || '', 300),
+        admin: sanitizeText(incomingConfig.greetings.admin || nextConfig.greetings.admin || '', 300)
+      };
+    }
+
+    if (typeof incomingConfig.fallbackMessage === 'string') {
+      nextConfig.fallbackMessage = sanitizeText(incomingConfig.fallbackMessage, 500);
+    }
+
+    if (typeof incomingConfig.formalToneEnforced === 'boolean') {
+      nextConfig.formalToneEnforced = incomingConfig.formalToneEnforced;
+    }
+
+    if (typeof incomingConfig.useSocketRealtime === 'boolean') {
+      nextConfig.useSocketRealtime = incomingConfig.useSocketRealtime;
+    }
+
+    await this.updateConfig(nextConfig, userId);
+
+    const incomingFlows = bundle.flowsByRole && typeof bundle.flowsByRole === 'object'
+      ? bundle.flowsByRole
+      : null;
+
+    if (!incomingFlows) {
+      return this.exportImportBundle();
+    }
+
+    for (const role of VALID_ROLES) {
+      if (!Object.prototype.hasOwnProperty.call(incomingFlows, role)) {
+        continue;
+      }
+
+      const flows = incomingFlows[role];
+      if (!Array.isArray(flows)) {
+        throw new Error(`flowsByRole.${role} must be an array`);
+      }
+
+      await this.replaceRoleFlows(role, flows, userId);
+    }
+
+    return this.exportImportBundle();
   }
 
   async processMessage(payload) {

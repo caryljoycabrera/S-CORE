@@ -403,6 +403,93 @@
     }
   }
 
+  function downloadJsonFile(filename, data) {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }
+
+  function readTextFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read selected file'));
+      reader.readAsText(file);
+    });
+  }
+
+  async function downloadImportTemplate() {
+    try {
+      const result = await fetchJson('/api/admin/chatbot/template');
+      const template = result.data || {};
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      downloadJsonFile(`chatbot-import-template-${stamp}.json`, template);
+      showMessage('chatbotImportExportMsg', 'Template downloaded. Edit file and import to apply settings.', true);
+    } catch (error) {
+      console.error('[Chatbot Config] Failed downloading template:', error);
+      showMessage('chatbotImportExportMsg', `Failed to download template: ${error.message}`, false);
+    }
+  }
+
+  async function exportChatbotSettings() {
+    try {
+      const result = await fetchJson('/api/admin/chatbot/export');
+      const data = result.data || {};
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      downloadJsonFile(`chatbot-settings-export-${stamp}.json`, data);
+      showMessage('chatbotImportExportMsg', 'Chatbot settings exported successfully.', true);
+    } catch (error) {
+      console.error('[Chatbot Config] Failed exporting settings:', error);
+      showMessage('chatbotImportExportMsg', `Failed to export settings: ${error.message}`, false);
+    }
+  }
+
+  async function importChatbotSettings() {
+    const fileInput = document.getElementById('chatbotImportFile');
+    const file = fileInput?.files?.[0];
+
+    if (!file) {
+      showMessage('chatbotImportExportMsg', 'Select JSON file before importing.', false);
+      return;
+    }
+
+    let parsed;
+    try {
+      const raw = await readTextFile(file);
+      parsed = JSON.parse(raw);
+    } catch (error) {
+      showMessage('chatbotImportExportMsg', `Invalid JSON file: ${error.message}`, false);
+      return;
+    }
+
+    try {
+      await fetchJson('/api/admin/chatbot/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed)
+      });
+
+      showMessage('chatbotImportExportMsg', 'Chatbot settings imported and applied successfully.', true);
+      if (fileInput) fileInput.value = '';
+
+      await Promise.all([
+        loadSettings(),
+        loadQAList(),
+        loadRoleJsonEditor()
+      ]);
+    } catch (error) {
+      console.error('[Chatbot Config] Failed importing settings:', error);
+      showMessage('chatbotImportExportMsg', `Failed to import settings: ${error.message}`, false);
+    }
+  }
+
   function escapeHtml(value) {
     return String(value || '')
       .replace(/&/g, '&amp;')
@@ -605,6 +692,21 @@
     const saveJsonBtn = document.getElementById('chatbotSaveJsonBtn');
     if (saveJsonBtn) {
       saveJsonBtn.addEventListener('click', saveRoleJsonEditor);
+    }
+
+    const templateBtn = document.getElementById('chatbotDownloadTemplateBtn');
+    if (templateBtn) {
+      templateBtn.addEventListener('click', downloadImportTemplate);
+    }
+
+    const exportBtn = document.getElementById('chatbotExportSettingsBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportChatbotSettings);
+    }
+
+    const importBtn = document.getElementById('chatbotImportSettingsBtn');
+    if (importBtn) {
+      importBtn.addEventListener('click', importChatbotSettings);
     }
 
     const selectCurrentRoleBtn = document.getElementById('chatbotSelectCurrentRoleBtn');

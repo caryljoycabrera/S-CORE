@@ -2857,6 +2857,18 @@
               <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 12px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Global Settings</h3>
 
+                <div style="margin-bottom: 14px; padding: 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #eff6ff;">
+                  <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; font-weight: 700; color: #1e3a8a;">Import/Export Settings Template</h4>
+                  <p style="margin: 0 0 10px 0; font-size: 0.82rem; color: #334155;">Download template, edit JSON, import file to apply config and flows. Export current settings anytime for backup.</p>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <button type="button" id="chatbotDownloadTemplateBtn" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #bfdbfe; background: #ffffff; color: #1d4ed8; font-weight: 600; cursor: pointer;">Download Template</button>
+                    <button type="button" id="chatbotExportSettingsBtn" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; font-weight: 600; cursor: pointer;">Export Current</button>
+                    <input type="file" id="chatbotImportFile" accept=".json,application/json" style="max-width: 250px; font-size: 0.8rem;" />
+                    <button type="button" id="chatbotImportSettingsBtn" style="padding: 8px 12px; border-radius: 8px; border: none; background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff; font-weight: 700; cursor: pointer;">Import & Apply</button>
+                    <div id="chatbotImportExportMsg" style="display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600;"></div>
+                  </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px;">
                   <div style="display: grid; gap: 8px;">
                     <label style="font-weight: 600; color: #374151; font-size: 0.85rem;">Enable Chatbot On</label>

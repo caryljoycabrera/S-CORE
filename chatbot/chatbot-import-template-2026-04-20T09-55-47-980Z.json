@@ -1,0 +1,496 @@
+{
+  "schemaVersion": 1,
+  "exportedAt": "2026-04-20T10:40:00.000Z",
+  "config": {
+    "enabledPages": {
+      "homepage": true,
+      "user": true,
+      "unit": true,
+      "admin": true
+    },
+    "widget": {
+      "primaryColor": "#10b981",
+      "headerTitle": "S-CORE Assistant",
+      "width": 380
+    },
+    "greetings": {
+      "public": "Good day. I can assist you with S-CORE system information, access guidance, and request process details.",
+      "user": "Good day. I can assist you with creating requests, tracking progress, and resolving account concerns.",
+      "unit": "Good day. I can assist you with assigned queue handling, request actions, and coordination workflow.",
+      "admin": "Good day. I can assist you with administration, configuration, reporting, and policy operations."
+    },
+    "fallbackMessage": "Thank you for your inquiry. I do not have exact match yet. Please use concise keywords related to request, status, account, or system settings.",
+    "formalToneEnforced": true,
+    "useSocketRealtime": true
+  },
+  "flowsByRole": {
+    "public": [
+      {
+        "flowId": "public-general-001",
+        "category": "general",
+        "question": "What is S-CORE?",
+        "answer": "S-CORE is centralized request and service management system used to submit, route, process, and monitor organizational requests.",
+        "keywords": ["s-core", "system", "platform", "purpose"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 0
+      },
+      {
+        "flowId": "public-general-002",
+        "category": "request_process",
+        "question": "How do I submit a request?",
+        "answer": "You may submit request after signing in by opening Create Request, selecting request type, completing required fields, and clicking Submit.",
+        "keywords": ["submit", "create", "request", "how"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 1
+      },
+      {
+        "flowId": "public-general-003",
+        "category": "account",
+        "question": "Do I need an account to use S-CORE?",
+        "answer": "Yes. You need valid account to submit and track requests. Public users may only view limited information without sign-in.",
+        "keywords": ["account", "login", "access", "register"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 2
+      },
+      {
+        "flowId": "public-general-004",
+        "category": "request_process",
+        "question": "What information is required in request form?",
+        "answer": "Provide clear title, complete description, request type, unit or office target when required, due date if applicable, and supporting files.",
+        "keywords": ["required", "fields", "form", "information"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 3
+      },
+      {
+        "flowId": "public-general-005",
+        "category": "technical",
+        "question": "What file types can be uploaded?",
+        "answer": "Allowed formats depend on server policy. Common supported files include PDF, DOCX, XLSX, PNG, and JPG within configured size limits.",
+        "keywords": ["file", "upload", "format", "attachment"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 4
+      },
+      {
+        "flowId": "public-general-006",
+        "category": "request_process",
+        "question": "How can I track request status?",
+        "answer": "After sign-in, open My Requests and review status badge, timeline updates, and latest action note for each request.",
+        "keywords": ["track", "status", "progress", "requests"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 5
+      },
+      {
+        "flowId": "public-general-007",
+        "category": "account",
+        "question": "I cannot sign in. What should I do?",
+        "answer": "Verify credentials first. If issue continues, use password recovery or contact administrator to confirm account status and access role.",
+        "keywords": ["login", "signin", "password", "access"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 6
+      },
+      {
+        "flowId": "public-general-008",
+        "category": "general",
+        "question": "How are notifications delivered?",
+        "answer": "System sends in-app notifications for request updates, assignments, comments, and status changes. Delivery timing depends on event trigger.",
+        "keywords": ["notification", "alert", "update", "message"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 7
+      },
+      {
+        "flowId": "public-general-009",
+        "category": "general",
+        "question": "Where can I get support?",
+        "answer": "Please contact your unit focal person or system administrator. Include request ID, issue summary, and screenshot for faster resolution.",
+        "keywords": ["support", "help", "contact", "issue"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 8
+      },
+      {
+        "flowId": "public-general-010",
+        "category": "account",
+        "question": "What are account role types in S-CORE?",
+        "answer": "Main role types are User, Unit, and Admin. User submits requests, Unit processes assigned work, and Admin manages system-wide operations.",
+        "keywords": ["roles", "user", "unit", "admin"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 9
+      }
+    ],
+    "user": [
+      {
+        "flowId": "user-general-001",
+        "category": "request_process",
+        "question": "How do I create a new request?",
+        "answer": "Open Create Request page, choose request type, enter complete details, attach required files, then submit for routing.",
+        "keywords": ["create", "submit", "new", "request"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 0
+      },
+      {
+        "flowId": "user-general-002",
+        "category": "request_process",
+        "question": "How do I check status of my request?",
+        "answer": "Go to My Requests and open request record. You can review current status, action timeline, assigned unit, and latest remarks.",
+        "keywords": ["status", "track", "my", "request"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 1
+      },
+      {
+        "flowId": "user-general-003",
+        "category": "request_process",
+        "question": "Can I edit request after submission?",
+        "answer": "Editing depends on current status. If request is still open for revision, use Edit action. Otherwise submit clarification through comment or message.",
+        "keywords": ["edit", "update", "submitted", "request"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 2
+      },
+      {
+        "flowId": "user-general-004",
+        "category": "request_process",
+        "question": "Can I cancel my request?",
+        "answer": "Yes, if request has not reached locked processing stage. Open request details and use Cancel action when available.",
+        "keywords": ["cancel", "withdraw", "request", "stop"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 3
+      },
+      {
+        "flowId": "user-general-005",
+        "category": "technical",
+        "question": "How do I upload supporting files?",
+        "answer": "In request form, use attachment section, select files, and wait for upload completion before final submission.",
+        "keywords": ["upload", "attachment", "supporting", "files"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 4
+      },
+      {
+        "flowId": "user-general-006",
+        "category": "technical",
+        "question": "What should I do if upload fails?",
+        "answer": "Check file size and type first, then retry with stable connection. If failure continues, report exact error to support.",
+        "keywords": ["upload", "failed", "error", "attachment"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 5
+      },
+      {
+        "flowId": "user-general-007",
+        "category": "account",
+        "question": "I forgot my password. How can I recover account?",
+        "answer": "Use password recovery option on sign-in page. If recovery is restricted, contact administrator for secure reset.",
+        "keywords": ["forgot", "password", "recover", "reset"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 6
+      },
+      {
+        "flowId": "user-general-008",
+        "category": "general",
+        "question": "How do I receive updates on my request?",
+        "answer": "Enable notifications and monitor in-app alert panel. System posts updates whenever request status or assignment changes.",
+        "keywords": ["updates", "notifications", "request", "alerts"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 7
+      },
+      {
+        "flowId": "user-general-009",
+        "category": "workflow",
+        "question": "How do I reply to unit comments?",
+        "answer": "Open request thread and add concise response with required clarification or evidence, then submit comment.",
+        "keywords": ["reply", "comment", "unit", "clarification"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 8
+      },
+      {
+        "flowId": "user-general-010",
+        "category": "general",
+        "question": "What does each request status mean?",
+        "answer": "Pending means waiting action, In Progress means processing started, Completed means fulfillment done, Rejected means not approved, Cancelled means withdrawn.",
+        "keywords": ["status", "meaning", "pending", "completed"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 9
+      },
+      {
+        "flowId": "user-general-011",
+        "category": "account",
+        "question": "Can I change my profile information?",
+        "answer": "Yes. Open profile settings and update allowed fields. Role and restricted identity fields may require administrator action.",
+        "keywords": ["profile", "update", "account", "information"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 10
+      },
+      {
+        "flowId": "user-general-012",
+        "category": "general",
+        "question": "How do I contact support from user account?",
+        "answer": "Use support channel defined by your organization and provide request ID, issue description, and screenshot.",
+        "keywords": ["support", "contact", "user", "help"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 11
+      }
+    ],
+    "unit": [
+      {
+        "flowId": "unit-general-001",
+        "category": "workflow",
+        "question": "How do I view assigned requests?",
+        "answer": "Open unit dashboard and review assigned queue. You may filter by status, priority, requester, and date.",
+        "keywords": ["assigned", "queue", "unit", "requests"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 0
+      },
+      {
+        "flowId": "unit-general-002",
+        "category": "workflow",
+        "question": "How do I update request status as unit?",
+        "answer": "Open request detail, select appropriate status transition, add action note, and save update for audit trace.",
+        "keywords": ["update", "status", "unit", "transition"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 1
+      },
+      {
+        "flowId": "unit-general-003",
+        "category": "workflow",
+        "question": "How do I request clarification from requester?",
+        "answer": "Use comment or message channel in request record, specify missing details, and set status requiring user response.",
+        "keywords": ["clarification", "requester", "comment", "missing"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 2
+      },
+      {
+        "flowId": "unit-general-004",
+        "category": "workflow",
+        "question": "How do I mark request as completed?",
+        "answer": "Confirm all deliverables first, upload final evidence if required, set status to Completed, and include completion summary.",
+        "keywords": ["completed", "close", "deliverables", "evidence"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 3
+      },
+      {
+        "flowId": "unit-general-005",
+        "category": "workflow",
+        "question": "When should unit reject request?",
+        "answer": "Reject only when request violates policy, lacks mandatory criteria after clarification, or falls outside authorized scope.",
+        "keywords": ["reject", "criteria", "policy", "scope"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 4
+      },
+      {
+        "flowId": "unit-general-006",
+        "category": "request_process",
+        "question": "How do I prioritize unit workload?",
+        "answer": "Prioritize by policy urgency, due date, impact level, and dependencies. Keep queue updated with accurate status.",
+        "keywords": ["prioritize", "workload", "queue", "urgent"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 5
+      },
+      {
+        "flowId": "unit-general-007",
+        "category": "technical",
+        "question": "Can unit attach files during processing?",
+        "answer": "Yes. Unit may upload supporting evidence, output documents, or references as part of processing record.",
+        "keywords": ["attach", "files", "unit", "processing"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 6
+      },
+      {
+        "flowId": "unit-general-008",
+        "category": "general",
+        "question": "How are unit actions audited?",
+        "answer": "System records status changes, timestamps, actor identity, and notes. Maintain clear entries for accountability.",
+        "keywords": ["audit", "logs", "actions", "trace"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 7
+      },
+      {
+        "flowId": "unit-general-009",
+        "category": "workflow",
+        "question": "How do I reassign request inside unit?",
+        "answer": "Use assignment control if enabled, select responsible unit member, and add note explaining reassignment reason.",
+        "keywords": ["reassign", "assignment", "unit", "member"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 8
+      },
+      {
+        "flowId": "unit-general-010",
+        "category": "account",
+        "question": "Who can manage unit account access?",
+        "answer": "Administrator manages role privileges and activation. Unit leads may request access updates through proper channel.",
+        "keywords": ["access", "unit", "role", "permissions"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 9
+      },
+      {
+        "flowId": "unit-general-011",
+        "category": "general",
+        "question": "How do I handle overdue requests?",
+        "answer": "Review overdue queue, update status immediately, communicate blockers, and escalate high-impact cases to administrator when required.",
+        "keywords": ["overdue", "delay", "escalate", "queue"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 10
+      },
+      {
+        "flowId": "unit-general-012",
+        "category": "general",
+        "question": "How does unit communicate with requester?",
+        "answer": "Use built-in comment or message tools in request record to keep communication documented and traceable.",
+        "keywords": ["communicate", "requester", "message", "comment"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 11
+      }
+    ],
+    "admin": [
+      {
+        "flowId": "admin-general-001",
+        "category": "workflow",
+        "question": "How do I manage user accounts?",
+        "answer": "Open admin user management, create or update profiles, assign roles, and activate or deactivate accounts based on policy.",
+        "keywords": ["manage", "users", "accounts", "roles"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 0
+      },
+      {
+        "flowId": "admin-general-002",
+        "category": "workflow",
+        "question": "How do I configure request statuses and types?",
+        "answer": "Use admin configuration page to update request types, statuses, and related metadata, then save and validate in workflow.",
+        "keywords": ["configure", "statuses", "types", "metadata"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 1
+      },
+      {
+        "flowId": "admin-general-003",
+        "category": "general",
+        "question": "How do I export reports?",
+        "answer": "Go to reports module, set filters, choose export format such as Excel or PDF, then generate file.",
+        "keywords": ["export", "reports", "excel", "pdf"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 2
+      },
+      {
+        "flowId": "admin-general-004",
+        "category": "workflow",
+        "question": "How do I reset or update system settings?",
+        "answer": "Use admin settings panel. Apply changes carefully, review impact by module, then save and verify expected behavior.",
+        "keywords": ["settings", "reset", "update", "system"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 3
+      },
+      {
+        "flowId": "admin-general-005",
+        "category": "workflow",
+        "question": "How do I import or export chatbot settings?",
+        "answer": "In chatbot configuration, download template or export current file, then import edited JSON to apply config and flows.",
+        "keywords": ["chatbot", "import", "export", "template"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 4
+      },
+      {
+        "flowId": "admin-general-006",
+        "category": "general",
+        "question": "How do I monitor request performance?",
+        "answer": "Use analytics and reports to review volume, turnaround, completion rate, and backlog indicators by unit and period.",
+        "keywords": ["monitor", "analytics", "performance", "backlog"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 5
+      },
+      {
+        "flowId": "admin-general-007",
+        "category": "account",
+        "question": "How do I grant admin or unit roles?",
+        "answer": "Assign roles from user management with proper authorization. Confirm least-privilege principle before applying elevated access.",
+        "keywords": ["grant", "roles", "admin", "unit"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 6
+      },
+      {
+        "flowId": "admin-general-008",
+        "category": "technical",
+        "question": "How do I troubleshoot system access issues?",
+        "answer": "Check account state, role mapping, session validity, and recent configuration changes. Review logs for exact failure path.",
+        "keywords": ["troubleshoot", "access", "logs", "session"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 7
+      },
+      {
+        "flowId": "admin-general-009",
+        "category": "workflow",
+        "question": "How do I handle overdue requests across units?",
+        "answer": "Use overdue view, identify bottlenecks, coordinate with unit leads, and enforce escalation timeline for critical items.",
+        "keywords": ["overdue", "units", "escalation", "critical"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 8
+      },
+      {
+        "flowId": "admin-general-010",
+        "category": "workflow",
+        "question": "How do I archive old data?",
+        "answer": "Use configured archiving controls to move eligible historical records according to retention policy and compliance requirements.",
+        "keywords": ["archive", "retention", "historical", "data"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 9
+      },
+      {
+        "flowId": "admin-general-011",
+        "category": "general",
+        "question": "How do I maintain consistent service standards?",
+        "answer": "Define measurable SLAs, monitor dashboard metrics, review exceptions, and enforce corrective actions through governance process.",
+        "keywords": ["service", "standards", "sla", "governance"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 10
+      },
+      {
+        "flowId": "admin-general-012",
+        "category": "general",
+        "question": "How do I support users and units effectively?",
+        "answer": "Provide clear policy guidance, maintain updated configuration, respond to escalations quickly, and keep communication channels documented.",
+        "keywords": ["support", "users", "units", "guidance"],
+        "nextFlowId": "",
+        "isActive": true,
+        "sortOrder": 11
+      }
+    ]
+  }
+}

@@ -191,4 +191,43 @@ router.put('/api/admin/chatbot/flows/:role', requireAdminAPI, async (req, res) =
   }
 });
 
+router.get('/api/admin/chatbot/template', requireAdminAPI, async (req, res) => {
+  try {
+    const template = chatbotService.getImportTemplate();
+    return res.json({ success: true, data: template });
+  } catch (error) {
+    console.error('[Chatbot API] Failed to generate import template:', error);
+    return res.status(500).json({ success: false, message: 'Failed to generate chatbot import template' });
+  }
+});
+
+router.get('/api/admin/chatbot/export', requireAdminAPI, async (req, res) => {
+  try {
+    const bundle = await chatbotService.exportImportBundle();
+    return res.json({ success: true, data: bundle });
+  } catch (error) {
+    console.error('[Chatbot API] Failed to export chatbot settings:', error);
+    return res.status(500).json({ success: false, message: 'Failed to export chatbot settings' });
+  }
+});
+
+router.post('/api/admin/chatbot/import', requireAdminAPI, async (req, res) => {
+  try {
+    const imported = await chatbotService.importBundle(req.body, req.user?._id || null);
+    return res.json({ success: true, message: 'Chatbot settings imported successfully', data: imported });
+  } catch (error) {
+    console.error('[Chatbot API] Failed to import chatbot settings:', error);
+
+    if (
+      String(error.message || '').includes('must be an array') ||
+      String(error.message || '').includes('must have question and answer') ||
+      String(error.message || '').includes('Import payload must be JSON object')
+    ) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+
+    return res.status(500).json({ success: false, message: 'Failed to import chatbot settings' });
+  }
+});
+
 module.exports = router;
