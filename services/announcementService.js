@@ -148,7 +148,8 @@ class AnnouncementService {
           priority: announcement.priority,
           actionUrl: actionUrl,
           relatedId: announcement._id,
-          relatedModel: 'BroadcastMessage'
+          relatedModel: 'BroadcastMessage',
+          __source: 'announcementService.sendAnnouncement'
         }).catch(err => {
           console.error(`Failed to send announcement to user ${recipientId}:`, err);
           return null;
@@ -175,12 +176,13 @@ class AnnouncementService {
         }
       }
 
-      // Update announcement status if it was scheduled or lacking active status
-      if (announcement.scheduledTime && announcement.status !== 'active') {
-        announcement.status = 'active';
-        announcement.sentAt = new Date();
-        await announcement.save();
-      }
+      // Mark as sent without running full document validation (prevents re-send loop)
+      const sentTimestamp = announcement.sentAt || new Date();
+      const statusResult = await BroadcastMessage.updateOne(
+        { _id: announcement._id },
+        { $set: { status: 'active', sentAt: sentTimestamp } }
+      );
+      console.log('[DEBUG] sendAnnouncement: status update _id:', announcement._id, '| modified:', statusResult.modifiedCount, '| sentAt:', sentTimestamp.toISOString());
 
       return true;
     } catch (error) {
@@ -326,16 +328,47 @@ class AnnouncementService {
   async processScheduledAnnouncements() {
     try {
       const now = new Date();
+      console.log('[DEBUG] processScheduledAnnouncements: checking at', now.toISOString());
+      
       const scheduledAnnouncements = await BroadcastMessage.find({
-        scheduledTime: { $exists: true },
-        scheduledTime: { $ne: null },
-        scheduledTime: { $lte: now },
-        status: { $ne: 'active' }
-      });
+        scheduledTime: { $exists: true, $ne: null, $lte: now },
+        status: { $ne: 'active' },
+        isDeleted: { $ne: true },
+        $or: [
+          { sentAt: { $exists: false } },
+          { sentAt: null }
+        ]
+      }).select('_id status sentAt scheduledTime recipients').lean();
+      
+      console.log('[DEBUG] Found:', scheduledAnnouncements.length, 'announcements to process');
+      for (const a of scheduledAnnouncements) {
+        console.log('[DEBUG]   - _id:', a._id, '| status:', a.status, '| sentAt:', a.sentAt, '| scheduledTime:', a.scheduledTime);
+      }
 
       for (const announcement of scheduledAnnouncements) {
-        // Get all recipient IDs from the recipients array
-        const recipientIds = announcement.recipients.map(r => r.userId);
+        const claimTime = new Date();
+        const claimed = await BroadcastMessage.findOneAndUpdate(
+          {
+            _id: announcement._id,
+            status: { $ne: 'active' },
+            isDeleted: { $ne: true },
+            $or: [
+              { sentAt: { $exists: false } },
+              { sentAt: null }
+            ]
+          },
+          { $set: { status: 'active', sentAt: claimTime } },
+          { new: false }
+        ).select('_id');
+
+        if (!claimed) {
+          console.log('[DEBUG] skip _id:', announcement._id, '| already claimed/processed by another runner');
+          continue;
+        }
+
+        // Get all recipient IDs from recipients array
+        const recipientIds = (announcement.recipients || []).map(r => r.userId);
+        console.log('[DEBUG] processing claimed _id:', announcement._id, '| recipients:', recipientIds.length);
         await this.sendAnnouncement(announcement._id, recipientIds);
       }
 

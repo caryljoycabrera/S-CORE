@@ -299,6 +299,16 @@ class NotificationSystem {
         if (result.success) {
           this.notifications = result.data.notifications;
           this.unreadCount = result.data.unreadCount;
+          const debugSample = (this.notifications || []).slice(0, 10).map(n => ({
+            id: n._id || n.id,
+            type: n.type,
+            isRead: n.isRead,
+            relatedId: n.relatedId || null,
+            title: n.title,
+            createdAt: n.createdAt
+          }));
+          console.log('[DEBUG][notifications.load] unreadCount:', this.unreadCount, '| total:', this.notifications.length, '| sample:', debugSample);
+          console.log('[DEBUG][notifications.load.flat]', debugSample.map(n => `${n.type}|${n.relatedId || 'none'}|${n.isRead ? 'read' : 'unread'}|${n.title || ''}`).join(' || '));
           this.updateUI();
           this.lastFetchTime = Date.now();
         }
@@ -328,8 +338,10 @@ class NotificationSystem {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('[DEBUG][notifications.refresh] serverUnreadCount:', result.unreadCount, '| localUnreadCount:', this.unreadCount);
         if (result.success && result.unreadCount !== this.unreadCount) {
           // Only refresh full list if unread count changed
+          console.log('[DEBUG][notifications.refresh] unread changed, loading full list');
           this.loadNotifications();
         }
       }
@@ -342,6 +354,12 @@ class NotificationSystem {
    * Handle new notification from socket
    */
   handleNewNotification(notification) {
+    console.log('[DEBUG][notifications.socket] newNotification:', {
+      id: notification._id || notification.id,
+      type: notification.type,
+      relatedId: notification.relatedId || null,
+      createdAt: notification.createdAt
+    });
     // Add to the beginning of the list
     this.notifications.unshift(notification);
     this.unreadCount++;

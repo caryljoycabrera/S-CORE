@@ -22,19 +22,16 @@ window.escapeHtml = function(text) {
 window.formatText = function(text) {
   if (!text) return '';
   
-  // Escape HTML first
-  let formatted = window.escapeHtml(text);
+  let formatted = text;
+  const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
   
-  // Bold: **text** -> <strong>text</strong>
+  if (!hasHtml) {
+    formatted = window.escapeHtml(text);
+  }
+  
   formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  
-  // Italic: *text* -> <em>text</em> (but not ** which is bold)
   formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-  
-  // Underline: __text__ -> <u>text</u>
   formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-  
-  // Preserve line breaks
   formatted = formatted.replace(/\n/g, '<br>');
   
   return formatted;

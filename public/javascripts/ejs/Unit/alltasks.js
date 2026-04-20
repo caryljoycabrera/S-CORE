@@ -2935,7 +2935,10 @@ async function loadConversation(requestId) {
                     content.includes('Approval Revoked') || 
                     content.includes('APPROVAL REVOKED') ||
                     content.includes('RESUBMITTED') ||
-                    content.includes('Revision Required')) {
+                    content.includes('Revision Required') ||
+                    content.includes('Revision Requested') ||
+                    content.includes('Request Approved') ||
+                    content.includes('Revision Response')) {
                     return; // Skip this message
                 }
                 
@@ -2950,7 +2953,7 @@ async function loadConversation(requestId) {
                         <span class="message-sender">${senderName}</span>
                         <span class="message-time">${timestamp}</span>
                     </div>
-                    <div class="message-content">${formatText(message.content)}</div>
+                    <div class="message-content">${window.formatText(message.content || '')}</div>
                 `;
                 
                 messagesContainer.appendChild(messageDiv);
@@ -3067,51 +3070,28 @@ function escapeHtml(text) {
 function displayFormattedText(text) {
     if (!text) return '';
     
-    // Check if the text is already HTML (from Quill editor)
-    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
-    if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
-        // It's HTML content from Quill, return as-is
-        return text;
+    let formatted = text;
+    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
+    
+    // If it's plain text, escape HTML first
+    if (!hasHtml) {
+        formatted = escapeHtml(text);
     }
     
-    // It's plain text, escape HTML first
-    let formatted = escapeHtml(text);
-    
-    // Bold: **text** -> <strong>text</strong>
+    // Always parse simple markdown (even if it contains HTML, because backend mixes them)
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Italic: *text* -> <em>text</em> (but not ** which is bold)
     formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-    
-    // Underline: __text__ -> <u>text</u>
     formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
     
     // Preserve line breaks
+    // (Quill HTML usually doesn't have raw \n, so replacing them with <br> is safe for mixed content)
     formatted = formatted.replace(/\n/g, '<br>');
     
     return formatted;
 }
 
-// Helper function to format text (for text editor formatting - different from display)
 function formatText(text) {
-    if (!text) return '';
-    
-    // Escape HTML first
-    let formatted = escapeHtml(text);
-    
-    // Bold: **text** -> <strong>text</strong>
-    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Italic: *text* -> <em>text</em> (but not ** which is bold)
-    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-    
-    // Underline: __text__ -> <u>text</u>
-    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-    
-    // Preserve line breaks
-    formatted = formatted.replace(/\n/g, '<br>');
-    
-    return formatted;
+    return displayFormattedText(text);
 }
 
 // Expose helper functions globally for createMessageElement
@@ -3165,12 +3145,42 @@ function loadTeamConversation(requestId) {
         .then(response => response.json())
         .then(data => {
             if (data.conversation && data.conversation.length > 0) {
-                container.innerHTML = '';
-                data.conversation.forEach(msg => {
-                    const messageDiv = createMessageElement(msg);
-                    container.appendChild(messageDiv);
+                // Filter out revision-related messages
+                const filteredMessages = data.conversation.filter(msg => {
+                    const content = msg.content || '';
+                    return !(
+                        content.includes('Revision Request') || 
+                        content.includes('REVISION REQUEST') ||
+                        content.includes('Approval Revoked') || 
+                        content.includes('APPROVAL REVOKED') ||
+                        content.includes('RESUBMITTED') ||
+                        content.includes('Revision Required') ||
+                        content.includes('Revision Requested') ||
+                        content.includes('Request Approved') ||
+                        content.includes('Revision Response')
+                    );
                 });
-                container.scrollTop = container.scrollHeight;
+
+                if (filteredMessages.length > 0) {
+                    container.innerHTML = '';
+                    filteredMessages.forEach(msg => {
+                        const messageDiv = createMessageElement(msg);
+                        container.appendChild(messageDiv);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                } else {
+                    container.innerHTML = `
+                        <div class="unit-messages-empty">
+                            <div class="empty-icon">
+                                <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </div>
+                            <p>No discussion yet</p>
+                            <small>Start the conversation below</small>
+                        </div>
+                    `;
+                }
             } else {
                 container.innerHTML = `
                     <div class="unit-messages-empty">

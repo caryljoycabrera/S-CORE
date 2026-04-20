@@ -2733,26 +2733,16 @@ function createMessageElement(msg) {
 function displayFormattedText(text) {
     if (!text) return '';
     
-    // Check if the text is already HTML (from Quill editor)
-    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
-    if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
-        // It's HTML content from Quill, return as-is
-        return text;
+    let formatted = text;
+    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
+    
+    if (!hasHtml) {
+        formatted = escapeHtml(text);
     }
     
-    // It's plain text, escape HTML first
-    let formatted = escapeHtml(text);
-    
-    // Bold: **text** -> <strong>text</strong>
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Italic: *text* -> <em>text</em> (but not ** which is bold)
     formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-    
-    // Underline: __text__ -> <u>text</u>
     formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-    
-    // Preserve line breaks
     formatted = formatted.replace(/\n/g, '<br>');
     
     return formatted;
@@ -2764,26 +2754,8 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Helper function to format text with markdown-style syntax
 function formatText(text) {
-    if (!text) return '';
-    
-    // Escape HTML first
-    let formatted = escapeHtml(text);
-    
-    // Bold: **text** -> <strong>text</strong>
-    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
-    // Italic: *text* -> <em>text</em> (but not ** which is bold)
-    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-    
-    // Underline: __text__ -> <u>text</u>
-    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-    
-    // Preserve line breaks
-    formatted = formatted.replace(/\n/g, '<br>');
-    
-    return formatted;
+    return displayFormattedText(text);
 }
 
 // ==========================================
@@ -3929,10 +3901,7 @@ function createServiceRevisionEntry(revision, index, total) {
 function displayFormattedText(text) {
     if (!text) return '';
     
-    // Check if the text is already HTML (from Quill editor)
-    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
-    if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
-        // It's HTML content from Quill, return as-is
+    if (typeof text === 'string' && /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text)) {
         return text;
     }
     

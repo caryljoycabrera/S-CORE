@@ -3072,7 +3072,7 @@
   <!-- Create Service Request Modal -->
   <div id="requestModal" class="modal" style="display:none;">
     <div class="modal-content unit-modal-wide">
-      <div class="modal-header unit-modal-header">
+      <div class="modal-header unit-modal-header service-header-color">
         <div class="modal-title-section">
           <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
@@ -4905,7 +4905,7 @@ function getLinkValues() {
             <strong>${escapeHtml(senderName)} <span style="font-size: 0.75rem; opacity: 0.7;">(${message.senderRole})</span></strong>
             <span class="message-time">${time}</span>
           </div>
-          <div class="message-content">${formatText(message.content || '')}</div>
+          <div class="message-content">${window.formatText(message.content || '')}</div>
           ${attachmentsHTML}
           ${readReceiptsHTML}
         </div>
@@ -6298,7 +6298,7 @@ function showDeadlineErrorModal(workingDays) {
     });
     
     // Format text function
-    function formatText(startTag, endTag) {
+    function insertFormattingTags(startTag, endTag) {
       if (!messageInput) return;
       
       const start = messageInput.selectionStart;
@@ -6335,21 +6335,21 @@ function showDeadlineErrorModal(workingDays) {
     if (boldBtn) {
       boldBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        formatText('**', '**');
+        insertFormattingTags('**', '**');
       });
     }
     
     if (italicBtn) {
       italicBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        formatText('*', '*');
+        insertFormattingTags('*', '*');
       });
     }
     
     if (underlineBtn) {
       underlineBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        formatText('<u>', '</u>');
+        insertFormattingTags('<u>', '</u>');
       });
     }
     

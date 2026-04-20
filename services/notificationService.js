@@ -35,10 +35,30 @@ class NotificationService {
       recipient: data.recipient,
       type: data.type,
       title: data.title,
-      priority: data.priority
+      priority: data.priority,
+      relatedId: data.relatedId,
+      source: data.__source || 'unknown'
     });
     
     try {
+      // Idempotency guard for announcement notifications
+      if (data.type === 'announcement' && data.relatedId && data.recipient) {
+        const existingAnnouncementNotification = await Notification.findOne({
+          type: 'announcement',
+          relatedId: data.relatedId,
+          recipient: data.recipient
+        }).select('_id').lean();
+
+        if (existingAnnouncementNotification) {
+          console.log('⏭️ Skipping duplicate announcement notification:', {
+            existingId: existingAnnouncementNotification._id,
+            recipient: data.recipient,
+            relatedId: data.relatedId
+          });
+          return existingAnnouncementNotification;
+        }
+      }
+
       console.log('💾 Creating notification document...');
       const notification = new Notification(data);
       await notification.save();
@@ -637,6 +657,14 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
         .sort({ createdAt: -1 })
         .lean();
 
+      // Build announcement read map (if any copy was read, treat announcement as read)
+      const announcementHasRead = new Set(
+        allNotifications
+          .filter(n => n.type === 'announcement' && n.relatedId && n.isRead)
+          .map(n => n.relatedId.toString())
+      );
+      const seenAnnouncementIds = new Set();
+
       // Filter out announcements that haven't reached their scheduled time yet
       const BroadcastMessage = require('../models/BroadcastMessage');
       
@@ -660,8 +688,22 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
           continue;
         }
 
+        const relatedIdStr = notification.relatedId.toString();
+
+        // De-duplicate by announcement ID (keep newest notification only)
+        if (seenAnnouncementIds.has(relatedIdStr)) {
+          continue;
+        }
+        seenAnnouncementIds.add(relatedIdStr);
+
+        // If user already read any duplicate row for same announcement, treat newest row as read
+        const normalizedNotification = {
+          ...notification,
+          isRead: announcementHasRead.has(relatedIdStr) ? true : notification.isRead
+        };
+
         // Check announcement schedule using pre-fetched map
-        const announcement = announcementMap[notification.relatedId.toString()];
+        const announcement = announcementMap[relatedIdStr];
         if (announcement) {
           // Skip if this user created it
           if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
@@ -669,11 +711,11 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
           }
           // Include if no scheduled time or scheduled time has passed
           if (!announcement.scheduledTime || new Date(announcement.scheduledTime) <= now) {
-            filteredNotifications.push(notification);
+            filteredNotifications.push(normalizedNotification);
           }
         } else {
           // Deleted announcement — include notification
-          filteredNotifications.push(notification);
+          filteredNotifications.push(normalizedNotification);
         }
       }
 
@@ -1369,6 +1411,15 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
   async getUnreadCount(userId) {
     try {
       const now = new Date();
+
+      // If any notification copy for same announcement already read, suppress unread duplicates
+      const readAnnouncementIds = await Notification.distinct('relatedId', {
+        recipient: userId,
+        type: 'announcement',
+        isRead: true,
+        relatedId: { $exists: true, $ne: null }
+      });
+      const readAnnouncementIdSet = new Set(readAnnouncementIds.map(id => id.toString()));
       
       // Get all unread notifications
       const unreadNotifications = await Notification.find({
@@ -1400,8 +1451,13 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
 
         const announcement = announcementMap[notification.relatedId.toString()];
         if (!announcement) {
-          validCount++;
+          if (!readAnnouncementIdSet.has(notification.relatedId.toString())) {
+            validCount++;
+          }
         } else {
+          if (readAnnouncementIdSet.has(notification.relatedId.toString())) {
+            continue;
+          }
           if (announcement.sentBy && announcement.sentBy.toString() === userId.toString()) {
             continue;
           }
@@ -1409,6 +1465,15 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
             validCount++;
           }
         }
+      }
+
+      if (validCount > 0) {
+        const sample = unreadNotifications.slice(0, 10).map(n => ({
+          id: n._id ? n._id.toString() : null,
+          type: n.type,
+          relatedId: n.relatedId ? n.relatedId.toString() : null
+        }));
+        console.log('[DEBUG][UnreadCount] user:', userId.toString(), '| rawUnread:', unreadNotifications.length, '| validUnread:', validCount, '| sample:', sample);
       }
 
       return validCount;

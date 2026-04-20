@@ -1354,7 +1354,7 @@
   // Text formatting functions for Unit side
   document.addEventListener('DOMContentLoaded', function() {
     // Format text helper function
-    function formatText(textarea, startTag, endTag) {
+    function insertFormattingTags(textarea, startTag, endTag) {
       if (!textarea) return;
       
       const start = textarea.selectionStart;
@@ -1388,11 +1388,11 @@
         
         const format = target.getAttribute('data-chat-format');
         if (format === 'bold') {
-          formatText(teamMessageInput, '**', '**');
+          insertFormattingTags(teamMessageInput, '**', '**');
         } else if (format === 'italic') {
-          formatText(teamMessageInput, '*', '*');
+          insertFormattingTags(teamMessageInput, '*', '*');
         } else if (format === 'underline') {
-          formatText(teamMessageInput, '<u>', '</u>');
+          insertFormattingTags(teamMessageInput, '<u>', '</u>');
         }
       }
     });
@@ -1414,11 +1414,11 @@
         console.log('[AllTasks] Textarea found, applying format');
         const format = target.getAttribute('data-revision-format');
         if (format === 'bold') {
-          formatText(revisionCommentsInput, '**', '**');
+          insertFormattingTags(revisionCommentsInput, '**', '**');
         } else if (format === 'italic') {
-          formatText(revisionCommentsInput, '*', '*');
+          insertFormattingTags(revisionCommentsInput, '*', '*');
         } else if (format === 'underline') {
-          formatText(revisionCommentsInput, '<u>', '</u>');
+          insertFormattingTags(revisionCommentsInput, '<u>', '</u>');
         }
       }
     });
@@ -1449,13 +1449,13 @@
         if (e.ctrlKey && !e.shiftKey && !e.altKey) {
           if (e.key === 'b' || e.key === 'B') {
             e.preventDefault();
-            formatText(teamMessageInput, '**', '**');
+            insertFormattingTags(teamMessageInput, '**', '**');
           } else if (e.key === 'i' || e.key === 'I') {
             e.preventDefault();
-            formatText(teamMessageInput, '*', '*');
+            insertFormattingTags(teamMessageInput, '*', '*');
           } else if (e.key === 'u' || e.key === 'U') {
             e.preventDefault();
-            formatText(teamMessageInput, '<u>', '</u>');
+            insertFormattingTags(teamMessageInput, '<u>', '</u>');
           }
         }
       }
@@ -1468,13 +1468,13 @@
         if (e.ctrlKey && !e.shiftKey && !e.altKey) {
           if (e.key === 'b' || e.key === 'B') {
             e.preventDefault();
-            formatText(revisionCommentsInput, '**', '**');
+            insertFormattingTags(revisionCommentsInput, '**', '**');
           } else if (e.key === 'i' || e.key === 'I') {
             e.preventDefault();
-            formatText(revisionCommentsInput, '*', '*');
+            insertFormattingTags(revisionCommentsInput, '*', '*');
           } else if (e.key === 'u' || e.key === 'U') {
             e.preventDefault();
-            formatText(revisionCommentsInput, '<u>', '</u>');
+            insertFormattingTags(revisionCommentsInput, '<u>', '</u>');
           }
         }
       }

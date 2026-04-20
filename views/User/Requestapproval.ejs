@@ -2905,7 +2905,7 @@ option:hover {
   <!-- Create Request Modal -->
   <div id="requestModal" class="modal" style="display:none;">
     <div class="modal-content unit-modal-wide">
-      <div class="modal-header unit-modal-header">
+      <div class="modal-header unit-modal-header approval-header-color">
         <div class="modal-title-section">
           <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -4657,7 +4657,7 @@ async function submitFormData() {
           <strong>${escapeHtml(senderName)} <span style="font-size: 0.75rem; opacity: 0.7;">(${message.senderRole})</span></strong>
           <span class="message-time">${time}</span>
         </div>
-        <div class="message-content">${formatText(message.content || '')}</div>
+        <div class="message-content">${window.formatText(message.content || '')}</div>
         ${attachmentsHTML}
         ${readReceiptsHTML}
       </div>
@@ -6272,7 +6272,7 @@ if (approvalForm) {
   });
   
   // Format text function
-  function formatText(startTag, endTag) {
+  function insertFormattingTags(startTag, endTag) {
     if (!messageInput) return;
     
     const start = messageInput.selectionStart;
@@ -6309,21 +6309,21 @@ if (approvalForm) {
   if (boldBtn) {
     boldBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      formatText('**', '**');
+      insertFormattingTags('**', '**');
     });
   }
   
   if (italicBtn) {
     italicBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      formatText('*', '*');
+      insertFormattingTags('*', '*');
     });
   }
   
   if (underlineBtn) {
     underlineBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      formatText('<u>', '</u>');
+      insertFormattingTags('<u>', '</u>');
     });
   }
   

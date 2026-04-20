@@ -439,16 +439,21 @@ function escapeHtml(text) {
 }
 
 function displayFormattedText(text) {
-  if (!text) return '';
-  if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>') || text.includes('<b>') || text.includes('<i>')) {
-    return text;
-  }
-  let formatted = escapeHtml(text);
-  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-  formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-  formatted = formatted.replace(/\n/g, '<br>');
-  return formatted;
+    if (!text) return '';
+    
+    let formatted = text;
+    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
+    
+    if (!hasHtml) {
+        formatted = escapeHtml(text);
+    }
+    
+    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -3190,6 +3195,12 @@ console.log('✅ Services Admin script loaded successfully');
   window.formatText = function(text) {
     if (!text) return '';
     
+    // If the text already appears to be HTML (contains tags like <p>, <strong>, <em>, <u>, <a>),
+    // assume it's preformatted HTML and return as-is to preserve WYSIWYG formatting.
+    if (typeof text === 'string' && /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text)) {
+      return text;
+    }
+
     // Escape HTML first
     let formatted = window.escapeHtml(text);
     
