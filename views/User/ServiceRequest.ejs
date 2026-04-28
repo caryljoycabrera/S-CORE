@@ -3862,6 +3862,18 @@ function getLinkValues() {
 
           <!-- Service Revision Request Form -->
           <div id="serviceRevisionFormSection" class="requestor-resubmission-section" style="display: none;">
+            <!-- Alert for Status Validation -->
+            <div id="serviceRevisionAlert" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; background: #fee2e2; color: #991b1b; font-size: 0.9375rem; line-height: 1.5;">
+              <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 2px;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div id="serviceRevisionAlertMessage"></div>
+              </div>
+            </div>
+
             <div class="requestor-section-header">
               <h3>
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
@@ -6950,7 +6962,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('[Service] Normalized status:', normalizedStatus, 'Actual revision count:', actualRevisionCount);
                     
                     // IMPORTANT: Keep form hidden by default - shown when user clicks "Request Revision" button
-                    if (normalizedStatus === 'for-checking' && serviceRevisionSection) {
+                    if ((normalizedStatus === 'for-checking' || normalizedStatus === 'completed') && serviceRevisionSection) {
                         console.log('[Service] Status is For Checking - checking revision limit');
                         serviceRevisionSection.style.display = 'none';
                         
@@ -7457,10 +7469,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     location.reload();
                 }, 1500);
             } else {
-                if (typeof window.showAlert === 'function') {
-                    window.showAlert('error', result.message || 'Failed to submit revision request. Please try again.');
+                let errorMessage = result.message || 'Failed to submit revision request. Please try again.';
+                
+                // Enhance specific status error message
+                if (result.message && result.message.includes('Only completed or for-checking requests')) {
+                    errorMessage = `<strong>Revision request unavailable:</strong> Revisions can only be requested once the service is 'Completed' or 'For Checking'. Since your request is currently <strong>"${result.message.split('"')[1] || 'Queued'}"</strong>, please wait for the unit to process it first.`;
+                }
+
+                // Show in-modal alert if container exists
+                const alertContainer = document.getElementById('serviceRevisionAlert');
+                const alertMessage = document.getElementById('serviceRevisionAlertMessage');
+                
+                if (alertContainer && alertMessage) {
+                    alertMessage.innerHTML = errorMessage;
+                    alertContainer.style.display = 'block';
+                    alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else if (typeof window.showAlert === 'function') {
+                    window.showAlert('error', errorMessage);
                 } else {
-                    alert(result.message || 'Failed to submit revision request. Please try again.');
+                    alert(errorMessage.replace(/<\/?[^>]+(>|$)/g, "")); // Strip HTML for standard alert
                 }
             }
         } catch (error) {
