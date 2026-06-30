@@ -4048,7 +4048,7 @@ function getLinkValues() {
           <h2>Request Archived</h2>
           <span class="unit-conversation-subtitle">Request Restoration</span>
         </div>
-        <button class="close-modal-btn" id="closeArchivedModal" aria-label="Close">
+        <button class="close-modal-btn" id="closeArchivedModal" onclick="document.getElementById('archivedRequestModal').style.display='none'" aria-label="Close">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -6619,7 +6619,7 @@ window.openArchivedRequestModal = function(requestId, requestType) {
   }
 
   // Fetch archived request details
-  fetch(`/api/conversation/${requestId}`)
+  fetch(`/api/request/${requestId}`)
     .then(response => response.json())
     .then(data => {
       if (data.archived) {
