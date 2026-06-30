@@ -2920,6 +2920,9 @@ async function loadConversation(requestId) {
         if (!messagesContainer) return;
 
         if (response.ok && result.success && result.conversation) {
+            // Mark messages as read
+            fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' }).catch(console.error);
+
             messagesContainer.innerHTML = '';
             
             if (result.conversation.length === 0) {
@@ -3180,6 +3183,9 @@ function loadTeamConversation(requestId) {
     fetch(`/api/conversation/${requestId}`)
         .then(response => response.json())
         .then(data => {
+            // Mark messages as read
+            fetch(`/api/conversation/${requestId}/mark-read`, { method: 'POST' }).catch(console.error);
+
             if (data.conversation && data.conversation.length > 0) {
                 // Filter out revision-related messages
                 const filteredMessages = data.conversation.filter(msg => {
