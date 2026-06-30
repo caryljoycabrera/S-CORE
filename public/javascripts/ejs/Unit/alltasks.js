@@ -3066,16 +3066,51 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Helper: convert contenteditable HTML to clean markdown before storing
+function htmlToMarkdown(html) {
+    if (!html) return '';
+    let text = html;
+    text = text.replace(/<\/?(strong|b)>/gi, '**');
+    text = text.replace(/<\/?(em|i)>/gi, '*');
+    text = text.replace(/<\/?u>/gi, '__');
+    text = text.replace(/<br\s*\/?>/gi, '\n');
+    text = text.replace(/<div[^>]*>/gi, '\n');
+    text = text.replace(/<\/div>/gi, '');
+    text = text.replace(/<p[^>]*>/gi, '\n');
+    text = text.replace(/<\/p>/gi, '');
+    text = text.replace(/<[^>]+>/g, '');
+    text = text.replace(/&nbsp;/g, ' ');
+    text = text.replace(/&amp;/g, '&');
+    text = text.replace(/&lt;/g, '<');
+    text = text.replace(/&gt;/g, '>');
+    text = text.replace(/&quot;/g, '"');
+    text = text.replace(/&#039;/g, "'");
+    text = text.replace(/\*{4,}/g, '**');
+    text = text.replace(/_{4,}/g, '__');
+    text = text.replace(/\*\*\s*\*\*/g, '');
+    text = text.replace(/__\s*__/g, '');
+    text = text.replace(/\n{3,}/g, '\n\n');
+    return text.trim();
+}
+
 // Helper function to display formatted text (for revision history display)
 function displayFormattedText(text) {
     if (!text) return '';
     
-    let formatted = text;
-    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
+    // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
+    let formatted = text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+    
+    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(formatted);
     
     // If it's plain text, escape HTML first
     if (!hasHtml) {
-        formatted = escapeHtml(text);
+        formatted = escapeHtml(formatted);
     }
     
     // Always parse simple markdown (even if it contains HTML, because backend mixes them)
@@ -3098,6 +3133,7 @@ function formatText(text) {
 window.escapeHtml = escapeHtml;
 window.formatText = formatText;
 window.displayFormattedText = displayFormattedText;
+window.htmlToMarkdown = htmlToMarkdown;
 
 function showSuccessMessage(message) {
     // Check if alert handler exists
@@ -3290,29 +3326,38 @@ function createMessageElement(msg) {
             `;
         }).join('');
         
-        attachmentsHTML = `
-            <div class="message-attachments-section">
-                ${attachmentItems}
-            </div>
-        `;
+        attachmentsHTML = attachmentItems;
     }
     
     // Build read receipts display
     let readReceiptsHTML = '';
-    if (msg.readBy && msg.readBy.length > 0 && isOwnMessage) {
-        const readers = msg.readBy
-            .filter(r => r.userId && r.userId.fName)
-            .map(r => `${r.userId.fName} ${r.userId.lName}`)
-            .join(', ');
-        if (readers) {
-            readReceiptsHTML = `
-                <div class="message-read-receipt">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span>Seen by ${readers}</span>
-                </div>
-            `;
+    const isAdmin = window.currentUserRole === 'admin';
+    const showReadReceipts = isAdmin ? (msg.readBy && msg.readBy.length > 0) : (msg.readBy && msg.readBy.length > 0 && isOwnMessage);
+    if (showReadReceipts) {
+        const filteredReadBy = msg.readBy.filter(r => {
+            if (!r.userName) return false;
+            if (!isAdmin && r.userRole === 'admin') return false;
+            return true;
+        });
+        if (filteredReadBy.length > 0) {
+            const readByList = filteredReadBy.map(reader => {
+                const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return `
+                    <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M1 12l5 5L23 3"></path>
+                            <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+                        </svg>
+                        <span>Read by ${reader.userName} at ${readTime}</span>
+                    </div>
+                `;
+            }).join('');
+            readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
         }
     }
     
@@ -3322,7 +3367,7 @@ function createMessageElement(msg) {
                 <strong>${window.escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
                 <span class="message-time">${time}</span>
             </div>
-            <div class="message-text">${window.formatText(msg.content || '')}</div>
+            <div class="message-content">${window.formatText(msg.content || '')}</div>
             ${attachmentsHTML}
             ${readReceiptsHTML}
         </div>
@@ -3332,17 +3377,23 @@ function createMessageElement(msg) {
 }
 
 async function sendTeamMessage() {
-    // Get content from Quill editor if available, otherwise from textarea
+    // Get content from Quill editor if available, contenteditable, or textarea
     let content = '';
     let plainText = '';
     
+    const input = document.getElementById('teamMessageInput');
     if (window.teamMessageQuill) {
         content = window.teamMessageQuill.root.innerHTML;
         plainText = window.teamMessageQuill.getText().trim();
-    } else {
-        const input = document.getElementById('teamMessageInput');
-        content = input ? input.value.trim() : '';
-        plainText = content;
+    } else if (input) {
+        // Detect contenteditable by tagName (div) or contenteditable attribute
+        if (input.tagName === 'DIV' || input.isContentEditable || input.getAttribute('contenteditable') !== null) {
+            content = htmlToMarkdown(input.innerHTML);
+            plainText = content;
+        } else {
+            content = (input.value || '').trim();
+            plainText = content;
+        }
     }
     
     if (!plainText && chatFiles.length === 0) {
@@ -3402,12 +3453,18 @@ async function sendTeamMessage() {
         const data = await response.json();
         console.log('[AllTasks] Message sent successfully');
         
-        // Clear message input (Quill or textarea)
+        // Clear message input (Quill, contenteditable, or textarea)
         if (window.teamMessageQuill) {
             window.teamMessageQuill.setText('');
         } else {
             const input = document.getElementById('teamMessageInput');
-            if (input) input.value = '';
+            if (input) {
+                if (input.tagName === 'DIV' || input.isContentEditable || input.getAttribute('contenteditable') !== null) {
+                    input.innerHTML = '';
+                } else {
+                    input.value = '';
+                }
+            }
         }
         
         clearAllChatFiles();
@@ -3421,12 +3478,18 @@ async function sendTeamMessage() {
 }
 
 function clearConversationInput() {
-    // Clear message input (Quill or textarea)
+    // Clear message input (Quill, contenteditable, or textarea)
     if (window.teamMessageQuill) {
         window.teamMessageQuill.setText('');
     } else {
         const input = document.getElementById('teamMessageInput');
-        if (input) input.value = '';
+        if (input) {
+            if (input.tagName === 'DIV' || input.isContentEditable || input.getAttribute('contenteditable') !== null) {
+                input.innerHTML = '';
+            } else {
+                input.value = '';
+            }
+        }
     }
     
     const preview = document.getElementById('attachmentPreview');
@@ -3438,38 +3501,8 @@ function clearConversationInput() {
 // ==========================================
 
 function applyTextFormat(format) {
-    const input = document.getElementById('teamMessageInput');
-    if (!input) return;
-
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const text = input.value;
-    const selectedText = text.substring(start, end);
-
-    let formattedText = selectedText;
-    let wrapper = '';
-
-    switch(format) {
-        case 'bold':
-            wrapper = '**';
-            formattedText = `**${selectedText}**`;
-            break;
-        case 'italic':
-            wrapper = '*';
-            formattedText = `*${selectedText}*`;
-            break;
-        case 'underline':
-            wrapper = '__';
-            formattedText = `__${selectedText}__`;
-            break;
-    }
-
-    if (selectedText) {
-        input.value = text.substring(0, start) + formattedText + text.substring(end);
-        input.focus();
-        input.selectionStart = start;
-        input.selectionEnd = start + formattedText.length;
-    }
+    // Use the shared applyChatFormat which handles both contenteditable and textarea
+    applyChatFormat(format);
 }
 
 // Create global alias for notification system
@@ -4248,8 +4281,46 @@ function clearAllChatFiles() {
 }
 
 function applyChatFormat(format) {
-    const textarea = document.getElementById('teamMessageInput');
-    if (!textarea) return;
+    const input = document.getElementById('teamMessageInput');
+    if (!input) return;
+
+    // Detect contenteditable by tagName or attribute (more robust than isContentEditable)
+    const isContentEditableDiv = input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null;
+
+    // If contenteditable, use execCommand for WYSIWYG
+    if (isContentEditableDiv) {
+        input.focus();
+        const selection = window.getSelection();
+        if (!selection) return;
+
+        let selectionInside = false;
+        if (selection.rangeCount > 0) {
+            for (let i = 0; i < selection.rangeCount; i++) {
+                const node = selection.getRangeAt(i).commonAncestorContainer;
+                if (input.contains(node)) { selectionInside = true; break; }
+            }
+        }
+
+        if (!selectionInside) {
+            const range = document.createRange();
+            range.selectNodeContents(input);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        switch (format) {
+            case 'bold': document.execCommand('bold'); break;
+            case 'italic': document.execCommand('italic'); break;
+            case 'underline': document.execCommand('underline'); break;
+        }
+        input.focus();
+        return;
+    }
+
+    // Fallback for legacy textarea inputs
+    const textarea = input;
+    if (!textarea || typeof textarea.selectionStart === 'undefined') return;
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;

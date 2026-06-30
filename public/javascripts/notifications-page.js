@@ -239,9 +239,10 @@ class NotificationsPageManager {
                data-id="${notifId}" 
                data-type="${notification.type}" 
                data-url="${this.escapeHtml(actionUrl)}"
+               ${notification.relatedId ? `data-related-id="${notification.relatedId}"` : ''}
                style="cursor: ${actionUrl ? 'pointer' : 'default'};">
             <h4 class="notification-page-item-title">${this.escapeHtml(notification.title)}</h4>
-            <p class="notification-page-message">${this.escapeHtml(notification.message)}</p>
+            <p class="notification-page-message">${this.processNotificationMessage(notification.message, notification.type)}</p>
             <div class="notification-page-meta">
               <span class="notification-page-time">${timeAgo}</span>
               ${showSender ? `<span class="notification-page-sender">from ${this.escapeHtml(senderName)}</span>` : ''}
@@ -283,7 +284,17 @@ class NotificationsPageManager {
       content.addEventListener('click', () => {
         const notifId = content.dataset.id;
         const type = content.dataset.type;
+        const relatedId = content.dataset.relatedId;
         let url = content.dataset.url;
+
+        // Handle announcement notifications - open announcement detail modal
+        if (type === 'announcement' && relatedId) {
+          this.markAsRead(notifId);
+          if (typeof window.openAnnouncementDetail === 'function') {
+            window.openAnnouncementDetail(relatedId);
+            return;
+          }
+        }
 
         if (!url) {
           console.log('No action URL for this notification');
@@ -562,6 +573,27 @@ class NotificationsPageManager {
       return `${days} day${days !== 1 ? 's' : ''} ago`;
     }
     return date.toLocaleDateString();
+  }
+
+  /**
+   * Process notification message - detect attachments and format appropriately
+   */
+  processNotificationMessage(message, type) {
+    if (type === 'announcement') {
+      const hasImages = /<img\s/i.test(message);
+      const hasFileLinks = /<a\s[^>]*href="\/uploads\/[^>]*>📎/i.test(message);
+
+      if (hasImages && hasFileLinks) {
+        return '📎 File Attachment & 🖼️ Image Attachment';
+      } else if (hasImages) {
+        return '🖼️ Image Attachment';
+      } else if (hasFileLinks) {
+        return '📎 File Attachment';
+      } else {
+        return message.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+      }
+    }
+    return this.escapeHtml(message);
   }
 
   /**

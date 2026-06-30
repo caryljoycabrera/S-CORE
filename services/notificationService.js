@@ -533,9 +533,22 @@ class NotificationService {
       const recipient = await User.findById(recipientId);
       if (!sender || !recipient) return;
 
-      const truncatedMessage = messagePreview.length > 50 
-        ? messagePreview.substring(0, 50) + '...'
-        : messagePreview;
+      // Strip HTML tags and markdown markers for clean notification text
+      const cleanText = messagePreview
+        .replace(/<[^>]+>/g, ' ')               // Strip HTML tags
+        .replace(/\*\*([^*]+)\*\*/g, '$1')       // Strip **bold**
+        .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1') // Strip *italic*
+        .replace(/__([^_]+)__/g, '$1')           // Strip __underline__
+        .replace(/&nbsp;/g, ' ')                 // Replace &nbsp;
+        .replace(/&amp;/g, '&')                  // Replace &amp;
+        .replace(/&lt;/g, '<')                   // Replace &lt;
+        .replace(/&gt;/g, '>')                   // Replace &gt;
+        .replace(/\s+/g, ' ')                    // Collapse whitespace
+        .trim();
+
+      const truncatedMessage = cleanText.length > 50 
+        ? cleanText.substring(0, 50) + '...'
+        : cleanText;
 
       // Create action URL based on recipient role and request type
       let actionUrl;

@@ -2397,16 +2397,21 @@ function applyChatFormat(format) {
   const input = document.getElementById('teamMessageInput');
   if (!input) return;
 
-  // If the input is a contenteditable element, use execCommand for WYSIWYG
-  if (input.isContentEditable) {
+  // Detect contenteditable by tagName or attribute (more robust than isContentEditable)
+  const isContentEditableDiv = input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null;
+
+  // If contenteditable, use execCommand for WYSIWYG
+  if (isContentEditableDiv) {
     input.focus();
     const selection = window.getSelection();
     if (!selection) return;
 
     let selectionInside = false;
-    for (let i = 0; i < selection.rangeCount; i++) {
-      const node = selection.getRangeAt(i).commonAncestorContainer;
-      if (input.contains(node)) { selectionInside = true; break; }
+    if (selection.rangeCount > 0) {
+      for (let i = 0; i < selection.rangeCount; i++) {
+        const node = selection.getRangeAt(i).commonAncestorContainer;
+        if (input.contains(node)) { selectionInside = true; break; }
+      }
     }
 
     if (!selectionInside) {
@@ -2693,29 +2698,38 @@ function createMessageElement(msg) {
     
     // Build read receipts HTML
     let readReceiptsHTML = '';
-    if (msg.readBy && msg.readBy.length > 0) {
-        const readByList = msg.readBy.map(reader => {
-            const readTime = new Date(reader.readAt).toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            return `
-                <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M1 12l5 5L23 3"></path>
-                        <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
-                    </svg>
-                    <span>Read by ${escapeHtml(reader.userName)} at ${readTime}</span>
-                </div>
-            `;
-        }).join('');
-        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
+    const isAdmin = window.currentUserRole === 'admin';
+    const showReadReceipts = isAdmin ? (msg.readBy && msg.readBy.length > 0) : (msg.readBy && msg.readBy.length > 0 && isOwnMessage);
+    if (showReadReceipts) {
+        const filteredReadBy = msg.readBy.filter(r => {
+            if (!r.userName) return false;
+            if (!isAdmin && r.userRole === 'admin') return false;
+            return true;
+        });
+        if (filteredReadBy.length > 0) {
+            const readByList = filteredReadBy.map(reader => {
+                const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return `
+                    <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M1 12l5 5L23 3"></path>
+                            <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+                        </svg>
+                        <span>Read by ${escapeHtml(reader.userName)} at ${readTime}</span>
+                    </div>
+                `;
+            }).join('');
+            readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
+        }
     }
     
     div.innerHTML = `
-        <div class="unit-message-bubble ${roleClass}" style="background: ${roleColor};">
+        <div class="unit-message-bubble ${roleClass}">
             <div class="message-header">
                 <strong>${escapeHtml(msg.senderName || 'Unknown')} <span style="font-size: 0.75rem; opacity: 0.7;">(${msg.senderRole})</span></strong>
                 <span class="message-time">${time}</span>
@@ -2998,7 +3012,8 @@ window.sendTeamMessage = function() {
 
     // Support both contenteditable (WYSIWYG) and legacy textarea inputs
     let content = '';
-    if (input.isContentEditable) {
+    const isContentEditableDiv = input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null;
+    if (isContentEditableDiv) {
       // Use innerHTML so formatting (bold/italic/underline) is preserved as HTML
       content = input.innerHTML.trim();
     } else {
@@ -3045,7 +3060,8 @@ window.sendTeamMessage = function() {
         if (data.success) {
         console.log('[AllRequestsAdmin] Message sent successfully');
         // Clear the input appropriately depending on type
-        if (input.isContentEditable) {
+        const isContentEditableDiv = input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null;
+        if (isContentEditableDiv) {
           input.innerHTML = '';
         } else {
           input.value = '';
@@ -3151,37 +3167,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Add keyboard shortcuts for formatting
-        messageInput.addEventListener('keydown', function(e) {
-            console.log('[AllRequestsAdmin] Keydown event:', {
-                key: e.key,
-                ctrlKey: e.ctrlKey,
-                metaKey: e.metaKey,
-                shiftKey: e.shiftKey
+        // Browser handles Ctrl+B/I/U natively on contenteditable - skip JS handler for those
+        const isContentEditableDiv = messageInput.tagName === 'DIV' || messageInput.getAttribute('contenteditable') !== null;
+        if (isContentEditableDiv) {
+            console.log('[AllRequestsAdmin] Contenteditable detected, native formatting shortcuts active');
+        } else {
+            messageInput.addEventListener('keydown', function(e) {
+                // Ctrl+B or Cmd+B for bold
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                    e.preventDefault();
+                    applyChatFormat('bold');
+                    return false;
+                }
+                // Ctrl+I or Cmd+I for italic
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+                    e.preventDefault();
+                    applyChatFormat('italic');
+                    return false;
+                }
+                // Ctrl+U or Cmd+U for underline
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                    e.preventDefault();
+                    applyChatFormat('underline');
+                    return false;
+                }
             });
-            
-            // Ctrl+B or Cmd+B for bold
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
-                e.preventDefault();
-                console.log('[AllRequestsAdmin] Keyboard shortcut: Bold (Ctrl+B)');
-                applyChatFormat('bold');
-                return false;
-            }
-            // Ctrl+I or Cmd+I for italic
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
-                e.preventDefault();
-                console.log('[AllRequestsAdmin] Keyboard shortcut: Italic (Ctrl+I)');
-                applyChatFormat('italic');
-                return false;
-            }
-            // Ctrl+U or Cmd+U for underline
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
-                e.preventDefault();
-                console.log('[AllRequestsAdmin] Keyboard shortcut: Underline (Ctrl+U)');
-                applyChatFormat('underline');
-                return false;
-            }
-        });
+        }
     } else {
         console.log('[AllRequestsAdmin] Message input element not found (may load later via conversation modal)');
     }

@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=3" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=3" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=10" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-conversation-modal.css?v=3" />
   <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -719,13 +719,13 @@
   <!-- Team Conversation Modal (same as AllTasks) -->
   <div id="teamConversationModal" class="modal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important;">
     <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;">
-      <div class="modal-header unit-modal-header">
+      <div class="modal-header unit-modal-header requestor-modal-header">
         <div class="modal-title-section">
           <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
           <h2>Request Discussion</h2>
-          <span class="unit-conversation-subtitle">Communicate with users and admins</span>
+          <span class="unit-conversation-subtitle">Discuss requests with admin and unit teams</span>
         </div>
         <button class="close-modal-btn" onclick="closeTeamConversationModal()" aria-label="Close">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -748,21 +748,6 @@
           </div>
         </div>
         <div class="unit-message-input-area">
-          <!-- Attached Files Preview (Above Toolbar) -->
-          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
-            <div class="files-preview-header">
-              <span class="files-count">0 file(s) attached</span>
-              <button type="button" id="clearChatFiles" class="clear-files-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Clear all
-              </button>
-            </div>
-            <div id="chatFilesContainer" class="files-container"></div>
-          </div>
-
           <!-- Text Formatting Toolbar -->
           <div class="unit-format-toolbar">
             <button type="button" class="format-btn" data-chat-format="bold" title="Bold (Ctrl+B)">
@@ -794,9 +779,24 @@
             <span class="toolbar-hint">Format your message</span>
           </div>
 
+          <!-- Attached Files Preview (Below Toolbar) -->
+          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
+            <div class="files-preview-header">
+              <span class="files-count">0 file(s) attached</span>
+              <button type="button" id="clearChatFiles" class="clear-files-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Clear all
+              </button>
+            </div>
+            <div id="chatFilesContainer" class="files-container"></div>
+          </div>
+
           <!-- Message Input -->
           <div class="unit-message-input-wrapper">
-            <textarea id="teamMessageInput" class="unit-message-input" placeholder="Type your message..." rows="3"></textarea>
+            <div id="teamMessageInput" contenteditable="true" role="textbox" aria-multiline="true" class="unit-message-input" placeholder="Type your message..."></div>
             <button id="sendTeamMessageBtn" class="unit-send-btn">
               <span>Send</span>
               <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

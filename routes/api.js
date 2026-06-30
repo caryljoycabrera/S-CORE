@@ -659,7 +659,9 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
       conversation = await Conversation.findOne({
         serviceRequestId: requestId,
         requestType: 'service'
-      }).populate('messages.senderId', 'fName lName role');
+      })
+      .populate('messages.senderId', 'fName lName role')
+      .populate('messages.readBy.userId', 'fName lName role');
 
       if (!conversation) {
         conversation = new Conversation({
@@ -1610,6 +1612,45 @@ router.get('/api/announcements', requireLogin, async (req, res) => {
       success: false, 
       message: 'Failed to fetch announcements' 
     });
+  }
+});
+
+/**
+ * GET /api/announcements/:id
+ * Get single announcement by ID
+ */
+router.get('/api/announcements/:id', requireLogin, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const announcementId = req.params.id;
+
+    const announcement = await BroadcastMessage.findById(announcementId)
+      .populate('sentBy', 'fName lName role')
+      .lean();
+
+    if (!announcement) {
+      return res.status(404).json({ success: false, message: 'Announcement not found' });
+    }
+
+    const isAdmin = req.user && req.user.role === 'admin';
+    const isVisible = isAdmin || announcement.isVisibleToAll ||
+      (announcement.recipients && announcement.recipients.some(
+        r => r.userId && r.userId.toString() === userId.toString()
+      ));
+
+    if (!isVisible) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const recipientEntry = announcement.recipients?.find(
+      r => r.userId && r.userId.toString() === userId.toString()
+    );
+    announcement.isRead = recipientEntry ? recipientEntry.isRead : false;
+
+    res.json({ success: true, announcement });
+  } catch (error) {
+    console.error('Error fetching announcement:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch announcement' });
   }
 });
 

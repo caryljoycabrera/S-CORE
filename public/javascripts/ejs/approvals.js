@@ -34,28 +34,56 @@ window.escapeHtml = function(text) {
   return div.innerHTML;
 }
 
+// Helper: convert contenteditable HTML to clean markdown before storing
+window.htmlToMarkdown = function(html) {
+  if (!html) return '';
+  let text = html;
+  text = text.replace(/<\/?(strong|b)>/gi, '**');
+  text = text.replace(/<\/?(em|i)>/gi, '*');
+  text = text.replace(/<\/?u>/gi, '__');
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<div[^>]*>/gi, '\n');
+  text = text.replace(/<\/div>/gi, '');
+  text = text.replace(/<p[^>]*>/gi, '\n');
+  text = text.replace(/<\/p>/gi, '');
+  text = text.replace(/<[^>]+>/g, '');
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&amp;/g, '&');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&#039;/g, "'");
+  text = text.replace(/\*{4,}/g, '**');
+  text = text.replace(/_{4,}/g, '__');
+  text = text.replace(/\*\*\s*\*\*/g, '');
+  text = text.replace(/__\s*__/g, '');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  return text.trim();
+}
+
 // Helper function to format text with markdown-style syntax
 window.formatText = function(text) {
   if (!text) return '';
-  // If the text already appears to be HTML (contains tags like <p>, <strong>, <em>, <u>, <a>),
-  // assume it's preformatted HTML and return as-is to preserve WYSIWYG formatting.
-  if (typeof text === 'string' && /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text)) {
-    return text;
+  
+  // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
+  let formatted = text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+  
+  const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(formatted);
+  
+  if (!hasHtml) {
+    formatted = window.escapeHtml(formatted);
   }
-
-  // Escape HTML first for plaintext
-  let formatted = window.escapeHtml(text);
   
-  // Bold: **text** -> <strong>text</strong>
+  // Always run markdown conversion
   formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  
-  // Italic: *text* -> <em>text</em> (but not ** which is bold)
   formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-  
-  // Underline: __text__ -> <u>text</u>
   formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-  
-  // Preserve line breaks
   formatted = formatted.replace(/\n/g, '<br>');
   
   return formatted;
@@ -2996,25 +3024,34 @@ console.log('✅ Approvals Admin script loaded successfully');
     
     // Build read receipts HTML
     let readReceiptsHTML = '';
-    if (msg.readBy && msg.readBy.length > 0) {
-      const readByList = msg.readBy.map(reader => {
-        const readTime = new Date(reader.readAt).toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        return `
-          <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M1 12l5 5L23 3"></path>
-              <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
-            </svg>
-            <span>Read by ${reader.userName} at ${readTime}</span>
-          </div>
-        `;
-      }).join('');
-      readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
+    const isAdmin = window.currentUserRole === 'admin';
+    const showReadReceipts = isAdmin ? (msg.readBy && msg.readBy.length > 0) : (msg.readBy && msg.readBy.length > 0 && isOwnMessage);
+    if (showReadReceipts) {
+      const filteredReadBy = msg.readBy.filter(r => {
+        if (!r.userName) return false;
+        if (!isAdmin && r.userRole === 'admin') return false;
+        return true;
+      });
+      if (filteredReadBy.length > 0) {
+        const readByList = filteredReadBy.map(reader => {
+          const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          return `
+            <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M1 12l5 5L23 3"></path>
+                <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+              </svg>
+              <span>Read by ${reader.userName} at ${readTime}</span>
+            </div>
+          `;
+        }).join('');
+        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
+      }
     }
     
     div.innerHTML = `
@@ -3472,11 +3509,18 @@ function getFileColor(ext) {
 function displayFormattedText(text) {
     if (!text) return '';
     
-    let formatted = text;
-    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
+    let formatted = text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+    
+    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(formatted);
     
     if (!hasHtml) {
-        formatted = escapeHtml(text);
+        formatted = escapeHtml(formatted);
     }
     
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');

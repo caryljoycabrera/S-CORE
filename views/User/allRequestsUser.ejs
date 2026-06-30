@@ -2654,20 +2654,20 @@
         <div class="unit-message-input-area">
           <!-- Formatting Toolbar -->
           <div class="unit-format-toolbar">
-            <button type="button" class="format-btn" data-chat-format="bold" title="Bold" onclick="console.log('[✅ Click] Bold button clicked'); applyFormatting('bold'); return false;">
+            <button type="button" class="format-btn" data-chat-format="bold" title="Bold" onclick="console.log('[✅ Click] Bold button clicked'); applyChatFormat('bold'); return false;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
                 <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
               </svg>
             </button>
-            <button type="button" class="format-btn" data-chat-format="italic" title="Italic" onclick="console.log('[✅ Click] Italic button clicked'); applyFormatting('italic'); return false;">
+            <button type="button" class="format-btn" data-chat-format="italic" title="Italic" onclick="console.log('[✅ Click] Italic button clicked'); applyChatFormat('italic'); return false;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="19" y1="4" x2="10" y2="4"/>
                 <line x1="14" y1="20" x2="5" y2="20"/>
                 <line x1="15" y1="4" x2="9" y2="20"/>
               </svg>
             </button>
-            <button type="button" class="format-btn" data-chat-format="underline" title="Underline" onclick="console.log('[✅ Click] Underline button clicked'); applyFormatting('underline'); return false;">
+            <button type="button" class="format-btn" data-chat-format="underline" title="Underline" onclick="console.log('[✅ Click] Underline button clicked'); applyChatFormat('underline'); return false;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
                 <line x1="4" y1="21" x2="20" y2="21"/>
@@ -2700,7 +2700,7 @@
 
           <!-- Message Input -->
           <div class="unit-message-input-wrapper">
-            <textarea id="teamMessageInput" placeholder="Type your message..." rows="3" class="unit-message-input"></textarea>
+            <div id="teamMessageInput" contenteditable="true" role="textbox" aria-multiline="true" class="unit-message-input" placeholder="Type your message..."></div>
             <button id="sendTeamMessageBtn" class="unit-send-btn">
               <span>Send</span>
               <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4113,105 +4113,52 @@ window.openImagePreview = function(imageUrl, fileName) {
   document.body.style.overflow = 'hidden';
 };
 
-// Simple global formatting function - works immediately
-window.applyFormatting = function(format) {
-  console.log('[Formatting] ✅ applyFormatting called with format:', format);
+// Simple global formatting function - works immediately (WYSIWYG via execCommand)
+window.applyChatFormat = function(formatType) {
+  console.log('[Formatting] ✅ applyChatFormat called with format:', formatType);
   
   const input = document.getElementById('teamMessageInput');
   if (!input) {
     console.error('[Formatting] ❌ teamMessageInput not found!');
-    console.log('[Formatting] Available inputs:', {
-      byId: document.getElementById('teamMessageInput'),
-      byQuery: document.querySelector('#teamMessageInput'),
-      allTextareas: document.querySelectorAll('textarea').length
-    });
     return;
   }
   
-  console.log('[Formatting] ✅ Input found, applying format');
-  const start = input.selectionStart;
-  const end = input.selectionEnd;
-  const selectedText = input.value.substring(start, end);
-  console.log('[Formatting] Selection:', { start, end, selectedText });
-  
-  // Prevent default if this was triggered by a keyboard shortcut
-  if (window.event) {
-    window.event.preventDefault();
-  }
-  
-  let startTag = '';
-  let endTag = '';
-  
-  switch(format) {
-    case 'bold':
-      startTag = '**';
-      endTag = '**';
-      break;
-    case 'italic':
-      startTag = '*';
-      endTag = '*';
-      break;
-    case 'underline':
-      startTag = '<u>';
-      endTag = '</u>';
-      break;
-  }
-  
-  if (selectedText) {
-    const formattedText = `${startTag}${selectedText}${endTag}`;
-    const beforeText = input.value.substring(0, start);
-    const afterText = input.value.substring(end);
-    
-    input.value = beforeText + formattedText + afterText;
-    
-    // Set cursor position after formatted text
-    const newPosition = start + formattedText.length;
-    input.setSelectionRange(newPosition, newPosition);
+  // Check if contenteditable (DIV) or textarea (fallback)
+  if (input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null) {
+    // WYSIWYG: use execCommand for immediate visual formatting
+    const cmdMap = { bold: 'bold', italic: 'italic', underline: 'underline' };
+    const cmd = cmdMap[formatType];
+    if (cmd && document.queryCommandSupported(cmd)) {
+      document.execCommand(cmd, false, null);
+    }
+    input.focus();
   } else {
-    // If no text selected, insert tags where cursor is
-    const cursorPos = input.selectionStart;
-    const beforeText = input.value.substring(0, cursorPos);
-    const afterText = input.value.substring(cursorPos);
+    // Textarea fallback: markdown markers
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const selectedText = input.value.substring(start, end);
     
-    input.value = beforeText + startTag + endTag + afterText;
+    let startTag = '';
+    let endTag = '';
+    switch(formatType) {
+      case 'bold': startTag = '**'; endTag = '**'; break;
+      case 'italic': startTag = '*'; endTag = '*'; break;
+      case 'underline': startTag = '__'; endTag = '__'; break;
+    }
     
-    // Position cursor between tags
-    const newPosition = cursorPos + startTag.length;
-    input.setSelectionRange(newPosition, newPosition);
+    if (selectedText) {
+      const formattedText = `${startTag}${selectedText}${endTag}`;
+      input.value = input.value.substring(0, start) + formattedText + input.value.substring(end);
+      input.setSelectionRange(start + formattedText.length, start + formattedText.length);
+    } else {
+      const cursorPos = input.selectionStart;
+      input.value = input.value.substring(0, cursorPos) + startTag + endTag + input.value.substring(cursorPos);
+      input.setSelectionRange(cursorPos + startTag.length, cursorPos + startTag.length);
+    }
+    input.focus();
   }
-  
-  input.focus();
-  console.log('[Formatting] ✓ Applied:', format);
+  console.log('[Formatting] ✓ Applied:', formatType);
 };
-
-// Add keyboard shortcut support
-document.addEventListener('DOMContentLoaded', function() {
-  document.addEventListener('keydown', function(e) {
-    // Check if user is typing in the message input
-    const input = document.getElementById('teamMessageInput');
-    if (!input || document.activeElement !== input) return;
-    
-    // Ctrl+B for bold
-    if (e.ctrlKey && e.key === 'b') {
-      e.preventDefault();
-      console.log('[Keyboard] Ctrl+B pressed');
-      applyFormatting('bold');
-    }
-    // Ctrl+I for italic
-    else if (e.ctrlKey && e.key === 'i') {
-      e.preventDefault();
-      console.log('[Keyboard] Ctrl+I pressed');
-      applyFormatting('italic');
-    }
-    // Ctrl+U for underline
-    else if (e.ctrlKey && e.key === 'u') {
-      e.preventDefault();
-      console.log('[Keyboard] Ctrl+U pressed');
-      applyFormatting('underline');
-    }
-  });
-  console.log('[Keyboard] Shortcuts registered: Ctrl+B, Ctrl+I, Ctrl+U');
-});
 
 // Image modal function for message previews
 function openImageModal(imageSrc) {
@@ -4658,29 +4605,39 @@ function createMessageElement(msg) {
         }).join('');
     }
     
-    // Format message content (convert markdown-style formatting to HTML)
-    let formattedContent = escapeHtml(msg.content || '');
-    formattedContent = formattedContent
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold** -> <strong>bold</strong>
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic* -> <em>italic</em>
-        .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>'); // escaped <u>underline</u> -> <u>underline</u>
+    // Format message content
+    const formattedContent = displayFormattedText(msg.content || '');
     
     // Build read receipts display
     let readReceiptsHTML = '';
-    if (msg.readBy && msg.readBy.length > 0 && isOwnMessage) {
-        const readers = msg.readBy
-            .filter(r => r.userId && r.userId.fName) // Only valid readers with names
-            .map(r => `${r.userId.fName} ${r.userId.lName}`)
-            .join(', ');
-        if (readers) {
-            readReceiptsHTML = `
-                <div class="message-read-receipt">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span>Seen by ${readers}</span>
-                </div>
-            `;
+    const isAdmin = window.currentUserRole === 'admin';
+    const showReadReceipts = isAdmin ? (msg.readBy && msg.readBy.length > 0) : (msg.readBy && msg.readBy.length > 0 && isOwnMessage);
+    if (showReadReceipts) {
+        const filteredReadBy = msg.readBy.filter(r => {
+            if (!r.userName) return false;
+            // Non-admin users: hide admin readers
+            if (!isAdmin && r.userRole === 'admin') return false;
+            return true;
+        });
+        if (filteredReadBy.length > 0) {
+            const readByList = filteredReadBy.map(reader => {
+                const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                return `
+                    <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M1 12l5 5L23 3"></path>
+                            <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+                        </svg>
+                        <span>Read by ${reader.userName} at ${readTime}</span>
+                    </div>
+                `;
+            }).join('');
+            readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
         }
     }
     
@@ -4712,18 +4669,28 @@ window.sendTeamMessage = function() {
         return;
     }
 
-    const content = input.value.trim();
-    console.log('[AllRequestsUser] Message content:', content || '(empty)');
+    // Get content - convert contenteditable HTML to clean markdown, or use textarea value directly
+    let content;
+    let plainText;
+    if (input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null) {
+        content = htmlToMarkdown(input.innerHTML);
+        plainText = content;
+    } else {
+        content = input.value.trim();
+        plainText = content;
+    }
+    
+    console.log('[AllRequestsUser] Message content:', plainText || '(empty)');
     console.log('[AllRequestsUser] Files selected:', fileInput ? fileInput.files.length : 0);
     
-    if (!content && (!fileInput || fileInput.files.length === 0)) {
+    if (!plainText && (!fileInput || fileInput.files.length === 0)) {
         console.warn('[AllRequestsUser] No content or files');
         alert('Please enter a message or attach files');
         return;
     }
 
     const formData = new FormData();
-    if (content) {
+    if (plainText) {
         formData.append('content', content);
     }
 
@@ -4748,7 +4715,11 @@ window.sendTeamMessage = function() {
         console.log('[AllRequestsUser] Response data:', data);
         if (data.success) {
             console.log('[AllRequestsUser] Message sent successfully');
-            input.value = '';
+            if (input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null) {
+                input.innerHTML = '';
+            } else {
+                input.value = '';
+            }
             if (fileInput) {
                 fileInput.value = '';
                 const preview = document.getElementById('chatFilesPreview');
@@ -4779,17 +4750,58 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
+// Helper: convert contenteditable HTML to clean markdown before storing
+function htmlToMarkdown(html) {
+    if (!html) return '';
+    let text = html;
+    // Convert formatting tags to markdown markers
+    text = text.replace(/<\/?(strong|b)>/gi, '**');
+    text = text.replace(/<\/?(em|i)>/gi, '*');
+    text = text.replace(/<\/?u>/gi, '__');
+    text = text.replace(/<br\s*\/?>/gi, '\n');
+    text = text.replace(/<div[^>]*>/gi, '\n');
+    text = text.replace(/<\/div>/gi, '');
+    text = text.replace(/<p[^>]*>/gi, '\n');
+    text = text.replace(/<\/p>/gi, '');
+    // Strip remaining HTML tags
+    text = text.replace(/<[^>]+>/g, '');
+    // Decode common entities
+    text = text.replace(/&nbsp;/g, ' ');
+    text = text.replace(/&amp;/g, '&');
+    text = text.replace(/&lt;/g, '<');
+    text = text.replace(/&gt;/g, '>');
+    text = text.replace(/&quot;/g, '"');
+    text = text.replace(/&#039;/g, "'");
+    // Clean doubled/surplus markers
+    text = text.replace(/\*{4,}/g, '**');
+    text = text.replace(/_{4,}/g, '__');
+    text = text.replace(/\*\*\s*\*\*/g, '');
+    text = text.replace(/__\s*__/g, '');
+    // Collapse multiple newlines
+    text = text.replace(/\n{3,}/g, '\n\n');
+    return text.trim();
+}
+
 // Helper function to format text with markdown-like syntax
 function displayFormattedText(text) {
     if (!text) return '';
     
-    let formatted = text;
-    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
+    // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
+    let formatted = text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+    
+    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(formatted);
     
     if (!hasHtml) {
-        formatted = escapeHtml(text);
+        formatted = escapeHtml(formatted);
     }
     
+    // Always run markdown conversion (if HTML present, just no-op for markers)
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
     formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
@@ -4962,26 +4974,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 sendTeamMessage();
             }
             
-            // Keyboard shortcuts for formatting
-            // Ctrl+B or Cmd+B for bold
+            // Contenteditable: let browser handle Ctrl+B/I/U natively
+            const isContentEditable = teamInput.tagName === 'DIV' || teamInput.getAttribute('contenteditable') !== null;
+            if (isContentEditable) return;
+            
+            // Textarea keyboard shortcuts for formatting (fallback)
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
                 e.preventDefault();
-                console.log('[Keyboard] Bold shortcut triggered (Ctrl+B)');
-                applyFormatting('bold');
+                applyChatFormat('bold');
                 return false;
             }
-            // Ctrl+I or Cmd+I for italic
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
                 e.preventDefault();
-                console.log('[Keyboard] Italic shortcut triggered (Ctrl+I)');
-                applyFormatting('italic');
+                applyChatFormat('italic');
                 return false;
             }
-            // Ctrl+U or Cmd+U for underline
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
                 e.preventDefault();
-                console.log('[Keyboard] Underline shortcut triggered (Ctrl+U)');
-                applyFormatting('underline');
+                applyChatFormat('underline');
                 return false;
             }
         });

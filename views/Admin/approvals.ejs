@@ -935,20 +935,20 @@
 
         <!-- Text Formatting Toolbar -->
         <div class="unit-format-toolbar">
-          <button type="button" class="format-btn" data-chat-format="bold" title="Bold">
+          <button type="button" class="format-btn" data-chat-format="bold" title="Bold" onclick="window.applyChatFormat('bold'); return false;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
               <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
             </svg>
           </button>
-          <button type="button" class="format-btn" data-chat-format="italic" title="Italic">
+          <button type="button" class="format-btn" data-chat-format="italic" title="Italic" onclick="window.applyChatFormat('italic'); return false;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="19" y1="4" x2="10" y2="4"/>
               <line x1="14" y1="20" x2="5" y2="20"/>
               <line x1="15" y1="4" x2="9" y2="20"/>
             </svg>
           </button>
-          <button type="button" class="format-btn" data-chat-format="underline" title="Underline">
+          <button type="button" class="format-btn" data-chat-format="underline" title="Underline" onclick="window.applyChatFormat('underline'); return false;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
               <line x1="4" y1="21" x2="20" y2="21"/>
@@ -1443,44 +1443,38 @@ document.getElementById('cancelModalBtn')?.addEventListener('click', () => {
 
 <!-- Conversation formatting + send handler (enables WYSIWYG formatting) -->
 <script>
+  // Global formatting function for toolbar onclick handlers
+  window.applyChatFormat = function(formatType) {
+    const input = document.getElementById('messageInput');
+    if (!input) return;
+    if (input.tagName === 'DIV' || input.isContentEditable) {
+      const cmdMap = { bold: 'bold', italic: 'italic', underline: 'underline' };
+      const cmd = cmdMap[formatType];
+      if (cmd && document.queryCommandSupported(cmd)) {
+        input.focus();
+        document.execCommand(cmd, false, null);
+      }
+    }
+  };
+
   document.addEventListener('DOMContentLoaded', () => {
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendMessageBtn');
-    const toolbar = document.querySelector('.unit-format-toolbar');
-
-    // Apply formatting using execCommand when toolbar buttons clicked
-    if (toolbar && messageInput && messageInput.isContentEditable !== false) {
-      toolbar.addEventListener('click', (e) => {
-        const btn = e.target.closest('.format-btn');
-        if (!btn) return;
-        const format = btn.dataset.chatFormat;
-        if (!format) return;
-        messageInput.focus();
-        switch(format) {
-          case 'bold': document.execCommand('bold'); break;
-          case 'italic': document.execCommand('italic'); break;
-          case 'underline': document.execCommand('underline'); break;
-        }
-      });
 
       // Keyboard shortcuts
-      messageInput.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
-          e.preventDefault(); document.execCommand('bold'); return;
-        }
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
-          e.preventDefault(); document.execCommand('italic'); return;
-        }
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
-          e.preventDefault(); document.execCommand('underline'); return;
-        }
-        // Enter = send (without shift)
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendBtn.click();
-        }
-      });
-    }
+      if (messageInput) {
+        messageInput.addEventListener('keydown', (e) => {
+          // For contenteditable, let browser handle Ctrl+B/I/U natively (WYSIWYG via execCommand)
+          if (messageInput.isContentEditable && (e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(e.key.toLowerCase())) {
+            return;
+          }
+          // Enter = send (without shift)
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (sendBtn) sendBtn.click();
+          }
+        });
+      }
 
     // Send handler - sends innerHTML when contenteditable
     if (sendBtn && messageInput) {
@@ -1492,14 +1486,16 @@ document.getElementById('cancelModalBtn')?.addEventListener('click', () => {
           return;
         }
 
-        const content = messageInput.isContentEditable ? messageInput.innerHTML.trim() : (messageInput.value || '').trim();
-        if (!content) {
+        const content = messageInput.isContentEditable
+          ? (window.htmlToMarkdown ? window.htmlToMarkdown(messageInput.innerHTML) : messageInput.innerHTML.trim())
+          : (messageInput.value || '').trim();
+        if (!content && !currentAttachment) {
           alert('Please enter a message');
           return;
         }
 
         const formData = new FormData();
-        formData.append('content', content);
+        formData.append('content', content || '');
 
         fetch(`/api/conversation/${requestId}/message`, { method: 'POST', body: formData })
           .then(resp => {

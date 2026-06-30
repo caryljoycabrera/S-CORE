@@ -4219,6 +4219,7 @@ function getLinkValues() {
 
   // Set current user name for message alignment
   window.currentUserFullName = '<%= user.fName %> <%= user.lName %>';
+  window.currentUserRole = '<%= user.role || "user" %>';
   window.currentUserRole = 'user';
 
   // Helper function to escape HTML
@@ -4646,20 +4647,33 @@ async function submitFormData() {
     
     // Build read receipts display
     let readReceiptsHTML = '';
-    if (message.readBy && message.readBy.length > 0 && isOwnMessage) {
-      const readers = message.readBy
-        .filter(r => r.userId && r.userId.fName)
-        .map(r => `${r.userId.fName} ${r.userId.lName}`)
-        .join(', ');
-      if (readers) {
-        readReceiptsHTML = `
-          <div class="message-read-receipt">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Seen by ${readers}</span>
-          </div>
-        `;
+    const isAdmin = window.currentUserRole === 'admin';
+    const showReadReceipts = isAdmin ? (message.readBy && message.readBy.length > 0) : (message.readBy && message.readBy.length > 0 && isOwnMessage);
+    if (showReadReceipts) {
+      const filteredReadBy = message.readBy.filter(r => {
+        if (!r.userName) return false;
+        if (!isAdmin && r.userRole === 'admin') return false;
+        return true;
+      });
+      if (filteredReadBy.length > 0) {
+        const readByList = filteredReadBy.map(reader => {
+          const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          return `
+            <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M1 12l5 5L23 3"></path>
+                <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+              </svg>
+              <span>Read by ${reader.userName} at ${readTime}</span>
+            </div>
+          `;
+        }).join('');
+        readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
       }
     }
     

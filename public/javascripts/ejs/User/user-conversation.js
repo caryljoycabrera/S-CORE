@@ -22,13 +22,22 @@ window.escapeHtml = function(text) {
 window.formatText = function(text) {
   if (!text) return '';
   
-  let formatted = text;
-  const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(text);
+  // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
+  let formatted = text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+  
+  const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(formatted);
   
   if (!hasHtml) {
-    formatted = window.escapeHtml(text);
+    formatted = window.escapeHtml(formatted);
   }
   
+  // Always run markdown conversion
   formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
   formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
@@ -218,6 +227,36 @@ function createMessageElement(msg) {
     }).join('');
   }
   
+  // Build read receipts display
+  let readReceiptsHTML = '';
+  const showReadReceipts = msg.readBy && msg.readBy.length > 0 && isOwnMessage;
+  if (showReadReceipts) {
+    const filteredReadBy = msg.readBy.filter(r => {
+      if (!r.userName) return false;
+      return true;
+    });
+    if (filteredReadBy.length > 0) {
+      const readByList = filteredReadBy.map(reader => {
+        const readTime = new Date(reader.readAt).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        return `
+          <div style="display: flex; align-items: center; gap: 0.25rem; color: #059669;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M1 12l5 5L23 3"></path>
+              <path d="M1 12l5 5L23 3" transform="translate(3, 0)"></path>
+            </svg>
+            <span>Read by ${reader.userName} at ${readTime}</span>
+          </div>
+        `;
+      }).join('');
+      readReceiptsHTML = `<div class="read-receipts" style="margin-top: 0.5rem; font-size: 0.7rem; color: #6b7280;">${readByList}</div>`;
+    }
+  }
+
   div.innerHTML = `
     <div class="unit-message-bubble" style="background: ${roleColor};">
       <div class="unit-message-header">
@@ -226,6 +265,7 @@ function createMessageElement(msg) {
       </div>
       <div class="unit-message-content">${window.formatText(msg.content || '')}</div>
       ${attachmentsHTML ? `<div class="unit-message-attachments">${attachmentsHTML}</div>` : ''}
+      ${readReceiptsHTML}
     </div>
   `;
   

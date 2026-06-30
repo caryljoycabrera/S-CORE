@@ -692,19 +692,8 @@ class NotificationSystem {
    * Open announcement modal from notification click
    */
   openAnnouncementModalFromNotification(announcementId) {
-    console.log('🎯 openAnnouncementModalFromNotification called with ID:', announcementId);
-    
-    // Call the openAnnouncementDetail function from the page if it exists
-    if (typeof openAnnouncementDetail === 'function') {
-      console.log('✅ Calling openAnnouncementDetail function');
-      openAnnouncementDetail(announcementId);
-    } else {
-      console.warn('⚠️ openAnnouncementDetail function not found on page');
-      // Fallback: try to call it on window for unit users
-      if (window.openAnnouncementDetail && typeof window.openAnnounce === 'function') {
-        console.log('✅ Using window.openAnnouncementDetail');
-        window.openAnnouncementDetail(announcementId);
-      }
+    if (typeof window.openAnnouncementDetail === 'function') {
+      window.openAnnouncementDetail(announcementId);
     }
   }
 

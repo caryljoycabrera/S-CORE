@@ -709,18 +709,9 @@ class UnitNotificationSystem {
    * Open announcement modal from notification click
    */
   openAnnouncementModalFromNotification(announcementId) {
-    console.log('🎯 Unit openAnnouncementModalFromNotification called with ID:', announcementId);
-    
-    // Try multiple ways to open the announcement modal
-    if (typeof openAnnouncementDetail === 'function') {
-      console.log('✅ Calling unit openAnnouncementDetail function');
-      openAnnouncementDetail(announcementId);
-    } else if (window.openAnnouncementDetail && typeof window.openAnnouncementDetail === 'function') {
-      console.log('✅ Using window.openAnnouncementDetail');
+    if (typeof window.openAnnouncementDetail === 'function') {
       window.openAnnouncementDetail(announcementId);
     } else {
-      console.warn('⚠️ Unit openAnnouncementDetail function not found on page - navigating to dashboard');
-      // Fallback: navigate to dashboard (which has the announcement modal)
       window.location.href = `/unit/dashboard?announcement=${announcementId}`;
     }
   }
