@@ -1751,7 +1751,7 @@ router.post('/api/request-restoration', requireLogin, async (req, res) => {
       const userName = `${user.fName || ''} ${user.lName || ''}`.trim() || 'Unknown User';
       
       const message = `${userName} has requested restoration of the ${requestType} "${requestTitle}" with reason: "${reason}"`;
-      const actionUrl = `/admin/restoration-requests?reviewModalId=${requestId}`;
+      const actionUrl = `/admin/configuration?tab=archivemanager&reviewModalId=${requestId}`;
       
       await notificationService.notifySystem(
         adminIds,

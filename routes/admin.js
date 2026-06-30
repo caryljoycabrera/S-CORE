@@ -60,6 +60,16 @@ async function getAdminNameString(req) {
 console.log('[routes/admin] admin routes module loaded');
 
 /**
+ * GET /admin/restoration-requests
+ * Redirect for legacy notifications pointing to the old restoration requests path
+ */
+router.get('/admin/restoration-requests', requireAdmin, (req, res) => {
+  const queryParams = new URLSearchParams(req.query).toString();
+  const redirectUrl = `/admin/configuration?tab=archivemanager${queryParams ? '&' + queryParams : ''}`;
+  res.redirect(redirectUrl);
+});
+
+/**
  * GET /admin
  * Admin dashboard with statistics and overview
  */
