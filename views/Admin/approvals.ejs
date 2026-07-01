@@ -935,20 +935,20 @@
 
         <!-- Text Formatting Toolbar -->
         <div class="unit-format-toolbar">
-          <button type="button" class="format-btn" data-chat-format="bold" title="Bold" onclick="window.applyChatFormat('bold'); return false;">
+          <button type="button" class="format-btn" data-chat-format="bold" title="Bold">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
               <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
             </svg>
           </button>
-          <button type="button" class="format-btn" data-chat-format="italic" title="Italic" onclick="window.applyChatFormat('italic'); return false;">
+          <button type="button" class="format-btn" data-chat-format="italic" title="Italic">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="19" y1="4" x2="10" y2="4"/>
               <line x1="14" y1="20" x2="5" y2="20"/>
               <line x1="15" y1="4" x2="9" y2="20"/>
             </svg>
           </button>
-          <button type="button" class="format-btn" data-chat-format="underline" title="Underline" onclick="window.applyChatFormat('underline'); return false;">
+          <button type="button" class="format-btn" data-chat-format="underline" title="Underline">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
               <line x1="4" y1="21" x2="20" y2="21"/>
@@ -1189,6 +1189,42 @@
         </div>
 
         <div class="form-group full-width">
+          <label for="specificRequestType">Select Request Type:</label>
+          <div style="display: flex; gap: 1rem; align-items: flex-start;">
+            <div style="flex: 1;">
+              <select id="specificRequestType" name="specificRequestType" class="form-control" required
+                onchange="
+                  const custom = document.getElementById('customRequestType');
+                  if(this.value) {
+                    custom.value = '';
+                    custom.name = '';
+                    this.name = 'specificRequestType';
+                  }
+                ">
+                <option value="" disabled selected>Select request type...</option>
+              </select>
+            </div>
+            <div style="flex: 0 0 auto; padding-top: 0.5rem;"><span style="color: #6b7280; font-size: 0.875rem;">or</span></div>
+            <div style="flex: 1;">
+              <input type="text" id="customRequestType" class="form-control" placeholder="Enter custom type..." maxlength="100" 
+                oninput="
+                  const select = document.getElementById('specificRequestType');
+                  if(this.value.trim() !== '') {
+                    select.removeAttribute('required');
+                    select.value = '';
+                    select.name = '';
+                    this.name = 'specificRequestType';
+                  } else {
+                    select.setAttribute('required', 'required');
+                    this.name = '';
+                    select.name = 'specificRequestType';
+                  }
+                ">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
           <label>Relevant Links (Optional):</label>
           <small style="color: #6b7280; display: block; margin-bottom: 0.5rem;">💡 Reminder: Please ensure links have public access</small>
           <div id="linksContainer"></div>
@@ -1202,13 +1238,6 @@
           <label for="description">Description:</label>
           <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
           <input type="hidden" id="description" name="description" required>
-        </div>
-
-        <div class="form-group full-width">
-          <label for="specificRequestType">Select Request Type:</label>
-          <select id="specificRequestType" name="specificRequestType" class="form-control" required>
-            <option value="" disabled selected>Select request type...</option>
-          </select>
         </div>
 
         <div class="form-actions">

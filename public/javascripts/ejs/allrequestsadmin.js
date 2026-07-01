@@ -2284,7 +2284,12 @@ function initializeChatFileFeatures() {
     // Text formatting for chat
     const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
     chatFormatBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
+        // Prevent losing focus when clicking formatting buttons
+        btn.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+        });
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             const format = this.getAttribute('data-chat-format');
             applyChatFormat(format);
         });

@@ -1087,7 +1087,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
     chatFormatBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
+      btn.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+      });
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
         const format = this.getAttribute('data-chat-format');
         applyChatFormat(format);
       });

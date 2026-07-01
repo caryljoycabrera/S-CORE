@@ -525,7 +525,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize formatting toolbar buttons
   const formatBtns = document.querySelectorAll('[data-chat-format]');
   formatBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+    });
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       const formatType = btn.getAttribute('data-chat-format');
       applyChatFormat(formatType);
     });

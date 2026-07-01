@@ -3026,7 +3026,45 @@ option:hover {
             <small style="color: #dc2626; margin-top: 0.5rem;">* Required: Please attach relevant documents (Max 10MB per file)</small>
           </div>
 
-          <!-- Row 3: Relevant Links -->
+          <!-- Row 3: Request Type -->
+          <div class="form-group full-width">
+            <label for="specificRequestType">Select Request Type:</label>
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <div style="flex: 1;">
+                <select id="specificRequestType" name="specificRequestType" class="form-control" required
+                  onchange="
+                    const custom = document.getElementById('customRequestType');
+                    if(this.value) {
+                      custom.value = '';
+                      custom.name = '';
+                      this.name = 'specificRequestType';
+                    }
+                  ">
+                  <option value="" disabled selected>Select request type...</option>
+                  <!-- Predefined types will be populated by JavaScript -->
+                </select>
+              </div>
+              <div style="flex: 0 0 auto; padding-top: 0.5rem;"><span style="color: #6b7280; font-size: 0.875rem;">or</span></div>
+              <div style="flex: 1;">
+                <input type="text" id="customRequestType" class="form-control" placeholder="Enter custom type..." maxlength="100" 
+                  oninput="
+                    const select = document.getElementById('specificRequestType');
+                    if(this.value.trim() !== '') {
+                      select.removeAttribute('required');
+                      select.value = '';
+                      select.name = '';
+                      this.name = 'specificRequestType';
+                    } else {
+                      select.setAttribute('required', 'required');
+                      this.name = '';
+                      select.name = 'specificRequestType';
+                    }
+                  ">
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 4: Relevant Links -->
           <div class="form-group full-width">
             <label>Relevant Links (Optional):</label>
             <small style="color: #6b7280; display: block; margin-bottom: 0.5rem;">💡 Reminder: Please ensure links have public access or proper sharing permissions</small>
@@ -3041,22 +3079,12 @@ option:hover {
             </button>
           </div>
 
-          <!-- Row 4: Description (Full Width) -->
+          <!-- Row 5: Description (Full Width) -->
           <div class="form-group full-width">
             <label for="description">Description:</label>
             <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
             <input type="hidden" id="description" name="description" required>
           </div>
-
-          <!-- Row 5: Request Type -->
-          <div class="form-group full-width">
-  <label for="specificRequestType">Select Request Type:</label>
-  <select id="specificRequestType" name="specificRequestType" class="form-control" required>
-    <option value="" disabled selected>Select request type...</option>
-    <!-- Predefined types will be populated by JavaScript -->
-  </select>
-</div>
-
           <!-- Form Actions -->
           <div class="form-actions">
             <button type="button" id="cancelModalBtn">Cancel</button>
