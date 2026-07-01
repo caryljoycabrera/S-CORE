@@ -185,38 +185,29 @@
 
     /* Configuration Page Specific Styles */
     .config-container {
-      max-width: 100%;
-      padding: 2rem;
+      max-width: calc(100% - 2rem);
+      margin: 0 auto;
+      padding: 2rem 2.5rem 6rem;
     }
 
     .config-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 1.5rem;
     }
 
     .config-header h1 {
-      font-size: 2rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: #1f2937;
       margin: 0;
     }
 
-    .config-header-actions {
-      display: flex;
-      gap: 1rem;
-    }
-
     .btn-preview,
     .btn-save,
     .btn-reset {
-      padding: 0.75rem 1.5rem;
+      padding: 0.625rem 1.25rem;
       border-radius: 0.5rem;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       font-family: 'Inter', sans-serif;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -260,10 +251,10 @@
     }
 
     .config-group-title {
-      font-size: 1.5rem;
+      font-size: 1.1rem;
       font-weight: 700;
       color: #1f2937;
-      margin: 2rem 0 1.5rem;
+      margin: 1.5rem 0 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 2px solid #e5e7eb;
       column-span: all;
@@ -277,29 +268,35 @@
     .config-section {
       background: white;
       border-radius: 0.75rem;
-      padding: 1.25rem;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       border: 1px solid #e5e7eb;
       break-inside: avoid;
       page-break-inside: avoid;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       display: inline-block;
       width: 100%;
       box-sizing: border-box;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .config-section:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-color: #d1d5db;
     }
 
     .section-title {
-      font-size: 1.25rem;
-      font-weight: 700;
+      font-size: 1rem;
+      font-weight: 600;
       color: #1f2937;
-      margin-bottom: 0.25rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
     .section-icon {
-      font-size: 1.5rem;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
     }
 
     .section-description {
@@ -320,7 +317,7 @@
       font-weight: 600;
       color: #374151;
       margin-bottom: 0.5rem;
-      font-size: 0.95rem;
+      font-size: 0.875rem;
     }
 
     .form-group input[type="text"],
@@ -366,7 +363,7 @@
     .form-group textarea:focus {
       outline: none;
       border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
 
     .form-group input[type="checkbox"] {
@@ -565,20 +562,26 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
-      .config-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+      .config-container {
+        max-width: 100%;
+        padding: 1rem 1rem 6rem;
       }
 
-      .config-header-actions {
-        width: 100%;
-        flex-wrap: wrap;
+      .config-tabs {
+        flex-wrap: nowrap;
       }
 
-      .btn-preview,
-      .btn-save,
-      .btn-reset {
+      .config-sticky-bar {
+        left: 0;
+        padding: 0.75rem 1rem;
+        gap: 0.5rem;
+      }
+
+      .config-sticky-bar .btn-save,
+      .config-sticky-bar .btn-preview,
+      .config-sticky-bar .btn-reset {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
         flex: 1;
         justify-content: center;
       }
@@ -697,35 +700,45 @@
       padding: 0.5rem 0.75rem;
     }
 
-    /* Tab Navigation Styles */
+    /* Tab Navigation Styles - Pill Style */
     .config-tabs {
       display: flex;
-      border-bottom: 2px solid #e5e7eb;
+      gap: 0.25rem;
       margin-bottom: 2rem;
       font-family: 'Inter', sans-serif;
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .config-tab {
-      padding: 1rem 2rem;
-      background: none;
+      padding: 0.5rem 1.25rem;
+      background: transparent;
       border: none;
-      border-bottom: 3px solid transparent;
-      font-size: 1rem;
-      font-weight: 600;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 500;
       color: #6b7280;
       cursor: pointer;
       transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .config-tab.active {
-      color: #3b82f6;
-      border-bottom-color: #3b82f6;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
     }
 
     .config-tab:hover {
-      color: #3b82f6;
-      background: rgba(59, 130, 246, 0.05);
+      color: #374151;
+      background: rgba(0,0,0,0.04);
+    }
+
+    .config-tab.active {
+      color: #2563eb;
+      background: white;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .tab-content {
@@ -735,6 +748,34 @@
     .tab-content.active {
       display: block;
     }
+
+    /* Sticky Bottom Action Bar */
+    .config-sticky-bar {
+      position: fixed;
+      bottom: 0;
+      left: 64px;
+      right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid #e5e7eb;
+      padding: 0.75rem 2rem;
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    }
+
+    .config-sticky-bar .btn-save,
+    .config-sticky-bar .btn-preview,
+    .config-sticky-bar .btn-reset {
+      padding: 0.625rem 1.5rem;
+      font-size: 0.875rem;
+    }
+
+
 
     /* Modal Styles */
     .modal {
@@ -1131,42 +1172,30 @@
       <!-- Tab Navigation -->
       <div class="config-tabs">
         <button type="button" class="config-tab active" onclick="switchTab('system')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><use href="#icon-settings"/></svg>System Configuration
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-settings"/></svg>System Configuration
         </button>
         <button type="button" class="config-tab" onclick="switchTab('homepage')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><use href="#icon-home"/></svg>Homepage Configuration
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-home"/></svg>Homepage Configuration
         </button>
         <button type="button" class="config-tab" onclick="switchTab('aboutscore')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><use href="#icon-edit"/></svg>About S-CORE Page Configuration
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-edit"/></svg>About S-CORE Page Configuration
         </button>
         <button type="button" class="config-tab" onclick="switchTab('archivemanager')" id="archiveManagerTabBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><use href="#icon-archive"/></svg>Archive Manager
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-archive"/></svg>Archive Manager
         </button>
         <button type="button" class="config-tab" onclick="switchTab('chatbot')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><use href="#icon-help-circle"/></svg>Q&A Chatbot
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-help-circle"/></svg>Q&A Chatbot
         </button>
       </div>
 
       <!-- Homepage Configuration Tab -->
       <div id="homepage-tab" class="tab-content">
-        <!-- Header -->
         <div class="config-header">
           <h1>Homepage Configuration</h1>
-          <div class="config-header-actions">
-            <button type="button" id="previewBtn" class="btn-preview">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-eye"/></svg> Preview Changes
-            </button>
-            <button type="button" id="saveBtn" class="btn-save">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
-            </button>
-            <button type="button" id="cancelBtn" class="btn-reset">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-refresh"/></svg> Reset Form
-            </button>
-          </div>
         </div>
 
         <!-- Info Banner -->
-        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
           <p style="margin: 0; color: #92400e; font-weight: 500;">
             <strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><use href="#icon-home"/></svg> Homepage Configuration:</strong> Customize the public-facing homepage content including hero section, about information, services, team members, and contact details. Changes will be visible to all visitors.
           </p>
@@ -1953,41 +1982,17 @@
 
           </div>
 
-          <!-- Footer Actions -->
-          <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
-            <button type="button" id="previewBtnFooter" class="btn-preview" onclick="document.getElementById('previewBtn').click()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-eye"/></svg> Preview Changes
-            </button>
-            <button type="button" id="saveBtnFooter" class="btn-save" onclick="document.getElementById('saveBtn').click()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
-            </button>
-            <button type="button" id="cancelBtnFooter" class="btn-reset" onclick="document.getElementById('cancelBtn').click()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-refresh"/></svg> Reset Form
-            </button>
-          </div>
         </form>
       </div> <!-- End homepage-tab -->
 
       <!-- About S-CORE Page Configuration Tab -->
       <div id="aboutscore-tab" class="tab-content">
-        <!-- Header -->
         <div class="config-header">
           <h1>About S-CORE Page Configuration</h1>
-          <div class="config-header-actions">
-            <button type="button" id="aboutScorePreviewBtn" class="btn-preview">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-eye"/></svg> Preview Changes
-            </button>
-            <button type="button" id="aboutScoreSaveBtn" class="btn-save">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
-            </button>
-            <button type="button" id="aboutScoreResetBtn" class="btn-reset">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-refresh"/></svg> Reset Form
-            </button>
-          </div>
         </div>
 
         <!-- Info Banner -->
-        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+        <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
           <p style="margin: 0; color: #166534; font-weight: 500;">
             <strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><use href="#icon-edit"/></svg> About S-CORE Page:</strong> Configure the content displayed on the About S-CORE landing page. This page introduces visitors to the S-CORE platform before they access the login/signup.
           </p>
@@ -2113,38 +2118,17 @@
 
           </div>
 
-          <!-- Footer Actions -->
-          <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
-            <button type="button" id="aboutScorePreviewBtnFooter" class="btn-preview" onclick="document.getElementById('aboutScorePreviewBtn').click()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-eye"/></svg> Preview Changes
-            </button>
-            <button type="button" id="aboutScoreSaveBtnFooter" class="btn-save" onclick="document.getElementById('aboutScoreSaveBtn').click()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
-            </button>
-            <button type="button" id="aboutScoreResetBtnFooter" class="btn-reset" onclick="document.getElementById('aboutScoreResetBtn').click()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-refresh"/></svg> Reset Form
-            </button>
-          </div>
         </form>
       </div> <!-- End aboutscore-tab -->
 
               <!-- System Configuration Tab -->
               <div id="system-tab" class="tab-content active">
-                <!-- Header -->
                 <div class="config-header">
                   <h1>System Configuration</h1>
-                  <div class="config-header-actions">
-                    <button type="button" id="systemSaveBtn" class="btn-save">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
-                    </button>
-                    <button type="button" id="systemResetBtn" class="btn-reset">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-refresh"/></svg> Reset Form
-                    </button>
-                  </div>
                 </div>
 
                 <!-- Info Banner -->
-                <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+                <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
                   <p style="margin: 0; color: #1e40af; font-weight: 500;">
                     <strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><use href="#icon-info"/></svg> System Configuration:</strong> All settings configured here are stored in the database and dynamically control the system behavior. Changes take effect immediately after saving.
                   </p>
@@ -2604,15 +2588,7 @@
 
                   </div>
 
-                  <!-- Footer Actions -->
-                  <div class="config-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding: 2rem 0; margin-top: 2rem; border-top: 1px solid #e5e7eb;">
-                    <button type="button" id="systemSaveBtnFooter" class="btn-save" onclick="document.getElementById('systemSaveBtn').click()">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
-                    </button>
-                    <button type="button" id="systemResetBtnFooter" class="btn-reset" onclick="document.getElementById('systemResetBtn').click()">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-refresh"/></svg> Reset Form
-                    </button>
-                  </div>
+
                 </form>
               </div> <!-- End system-tab -->
 
@@ -2877,22 +2853,18 @@
 
 
             </div>
-          </div>
 
           <!-- ══════════════════════════════════════════════════════ -->
           <!-- Q&A CHATBOT TAB -->
           <!-- ══════════════════════════════════════════════════════ -->
           <div id="chatbot-tab" class="tab-content">
-            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 28px;">
-              <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-help-circle"/></svg>
-                <div style="flex: 1;">
-                  <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937;">Q&A Chatbot Manager</h2>
-                  <p style="margin: 4px 0 0 0; font-size: 0.875rem; color: #6b7280;">Configure chatbot visibility per page, formal response behavior, and role-based decision flows using Q&A and JSON editor modes.</p>
-                </div>
-              </div>
+            <div class="config-header">
+              <h1>Q&A Chatbot Manager</h1>
+            </div>
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 28px 24px;">
+              <p style="margin: 0 0 16px 0; font-size: 0.875rem; color: #6b7280;">Configure chatbot visibility per page, formal response behavior, and role-based decision flows using Q&A and JSON editor modes.</p>
 
-              <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 16px 0;">
+              <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 0 0 16px;">
 
               <!-- Global Chatbot Settings -->
               <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
@@ -4257,17 +4229,25 @@
     gap: 0.5rem !important;
   }
   .config-section {
-    padding: 1rem 1.5rem !important;
-    border-radius: 0.25rem !important;
-    border: 2px solid #e5e7eb !important;
-    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 12px !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
     background: white;
+    margin: 0 !important;
+    transition: box-shadow 0.2s, border-color 0.2s !important;
+  }
+  .config-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+    border-color: #d1d5db !important;
+  }
+  .section-title {
+    padding: 1rem 1.25rem !important;
     margin: 0 !important;
   }
   .config-section-content {
     border-top: 1px solid #e5e7eb;
-    padding-top: 1rem;
-    margin-top: 1rem;
+    padding: 1.25rem;
   }
 </style>
 
@@ -4277,24 +4257,22 @@
       const title = section.querySelector('.section-title');
       if (!title) return;
       
-      // Make title clickable
       title.style.cursor = 'pointer';
       title.style.userSelect = 'none';
       title.style.display = 'flex';
       title.style.alignItems = 'center';
-      title.style.margin = '0';
       title.style.width = '100%';
       
-      // Add arrow
-      let arrow = title.querySelector('.accordion-arrow');
+      // Add SVG chevron arrow
+      let arrow = section.querySelector('.accordion-arrow');
       if (!arrow) {
         arrow = document.createElement('span');
         arrow.className = 'accordion-arrow';
-        arrow.innerHTML = '▼';
         arrow.style.marginLeft = 'auto';
-        arrow.style.fontSize = '1.25rem';
-        arrow.style.color = '#9ca3af';
+        arrow.style.display = 'inline-flex';
+        arrow.style.alignItems = 'center';
         arrow.style.transition = 'transform 0.3s ease';
+        arrow.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#9ca3af;"><polyline points="6 9 12 15 18 9"></polyline></svg>';
         title.appendChild(arrow);
       }
       
@@ -4310,18 +4288,10 @@
         }
         section.appendChild(contentDiv);
       }
-      
-      // Hover effect
-      section.addEventListener('mouseenter', () => {
-        if (contentDiv.style.display === 'none') {
-           section.style.backgroundColor = '#f9fafb';
-        }
-      });
-      section.addEventListener('mouseleave', () => {
-        section.style.backgroundColor = 'white';
-      });
 
+      // Start collapsed (all closed)
       let isOpen = false;
+      
       const toggle = (e) => {
         if(e && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) return;
         
@@ -4329,7 +4299,6 @@
         if (isOpen) {
           contentDiv.style.display = 'block';
           arrow.style.transform = 'rotate(180deg)';
-          section.style.backgroundColor = 'white';
           section.style.borderColor = '#d1d5db';
         } else {
           contentDiv.style.display = 'none';
@@ -4339,16 +4308,10 @@
       };
 
       title.addEventListener('click', toggle);
-
-      // Open first section by default
-      if (index === 0 || section.classList.contains('default-open')) {
-        toggle();
-      }
     });
   });
 </script>
 
-</body>
     <!-- System Save Confirmation Modal -->
     <div id="systemSaveConfirmModal" class="preview-modal">
       <div class="preview-content">
@@ -4507,6 +4470,111 @@
           }
         });
       }
+    });
+  </script>
+
+  <!-- Hidden buttons for external JS event binding -->
+  <div style="display:none">
+    <button type="button" id="previewBtn"></button>
+    <button type="button" id="saveBtn"></button>
+    <button type="button" id="cancelBtn"></button>
+    <button type="button" id="aboutScorePreviewBtn"></button>
+    <button type="button" id="aboutScoreSaveBtn"></button>
+    <button type="button" id="aboutScoreResetBtn"></button>
+    <button type="button" id="systemSaveBtn"></button>
+    <button type="button" id="systemResetBtn"></button>
+  </div>
+
+  <!-- Sticky Bottom Action Bar -->
+  <div class="config-sticky-bar">
+    <button type="button" id="stickyPreviewBtn" class="btn-preview">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-eye"/></svg> Preview Changes
+    </button>
+    <button type="button" id="stickySaveBtn" class="btn-save">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
+    </button>
+    <button type="button" id="stickyResetBtn" class="btn-reset">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-refresh"/></svg> Reset Form
+    </button>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const stickyPreview = document.getElementById('stickyPreviewBtn');
+      const stickySave = document.getElementById('stickySaveBtn');
+      const stickyReset = document.getElementById('stickyResetBtn');
+
+      const stickyBar = document.querySelector('.config-sticky-bar');
+
+      function getActiveTab() {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (!activeTab) return null;
+        if (activeTab.id === 'homepage-tab') return 'homepage';
+        if (activeTab.id === 'aboutscore-tab') return 'aboutscore';
+        if (activeTab.id === 'system-tab') return 'system';
+        if (activeTab.id === 'archivemanager-tab') return 'archivemanager';
+        if (activeTab.id === 'chatbot-tab') return 'chatbot';
+        return null;
+      }
+
+      function updateStickyBar() {
+        const tab = getActiveTab();
+        const show = (tab === 'homepage' || tab === 'aboutscore' || tab === 'system');
+        if (stickyBar) stickyBar.style.display = show ? 'flex' : 'none';
+        if (stickyPreview) stickyPreview.style.display = (tab === 'homepage' || tab === 'aboutscore') ? 'inline-flex' : 'none';
+      }
+
+      if (stickyPreview) {
+        stickyPreview.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tab = getActiveTab();
+          const btn = document.getElementById(tab === 'aboutscore' ? 'aboutScorePreviewBtn' : 'previewBtn');
+          if (btn) btn.click();
+        });
+      }
+
+      if (stickySave) {
+        stickySave.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tab = getActiveTab();
+          if (tab === 'homepage') {
+            const btn = document.getElementById('saveBtn');
+            if (btn) btn.click();
+          } else if (tab === 'aboutscore') {
+            const btn = document.getElementById('aboutScoreSaveBtn');
+            if (btn) btn.click();
+          } else if (tab === 'system') {
+            const btn = document.getElementById('systemSaveBtn');
+            if (btn) btn.click();
+          }
+        });
+      }
+
+      if (stickyReset) {
+        stickyReset.addEventListener('click', function(e) {
+          e.preventDefault();
+          const tab = getActiveTab();
+          if (tab === 'homepage') {
+            const btn = document.getElementById('cancelBtn');
+            if (btn) btn.click();
+          } else if (tab === 'aboutscore') {
+            const btn = document.getElementById('aboutScoreResetBtn');
+            if (btn) btn.click();
+          } else if (tab === 'system') {
+            const btn = document.getElementById('systemResetBtn');
+            if (btn) btn.click();
+          }
+        });
+      }
+
+      const origSwitch = window.switchTab;
+      if (origSwitch) {
+        window.switchTab = function(tabName) {
+          origSwitch(tabName);
+          setTimeout(updateStickyBar, 50);
+        };
+      }
+
+      updateStickyBar();
     });
   </script>
 
