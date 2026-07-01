@@ -3830,22 +3830,22 @@ document.addEventListener('DOMContentLoaded', function() {
           specificRequestTypeSelect.remove(1);
         }
 
-        // Group request types by category
+        // Group request types by unit
         const groupedTypes = {};
         data.requestTypes.forEach(type => {
-          const category = type.category || 'Other Services';
-          if (!groupedTypes[category]) {
-            groupedTypes[category] = [];
+          const unit = type.assignedUnit || 'Other Units';
+          if (!groupedTypes[unit]) {
+            groupedTypes[unit] = [];
           }
-          groupedTypes[category].push(type);
+          groupedTypes[unit].push(type);
         });
 
         // Add optgroups and options
-        Object.keys(groupedTypes).sort().forEach(category => {
+        Object.keys(groupedTypes).sort().forEach(unit => {
           const optgroup = document.createElement('optgroup');
-          optgroup.label = category;
+          optgroup.label = unit;
 
-          groupedTypes[category].forEach(type => {
+          groupedTypes[unit].forEach(type => {
             const option = document.createElement('option');
             option.value = type.name;
             option.textContent = type.name;
