@@ -3760,5 +3760,112 @@
       </div>
     </div>
   </div>
+
+
+
+
+
+
+
+
+
+<style id="accordion-style">
+  .config-sections {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  .config-section {
+    padding: 1rem 1.5rem !important;
+    border-radius: 0.25rem !important;
+    border: 2px solid #e5e7eb !important;
+    box-shadow: none !important;
+    background: white;
+    margin: 0 !important;
+  }
+  .config-section-content {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+</style>
+
+<script id="accordion-script">
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.config-section').forEach((section, index) => {
+      const title = section.querySelector('.section-title');
+      if (!title) return;
+      
+      // Make title clickable
+      title.style.cursor = 'pointer';
+      title.style.userSelect = 'none';
+      title.style.display = 'flex';
+      title.style.alignItems = 'center';
+      title.style.margin = '0';
+      title.style.width = '100%';
+      
+      // Add arrow
+      let arrow = title.querySelector('.accordion-arrow');
+      if (!arrow) {
+        arrow = document.createElement('span');
+        arrow.className = 'accordion-arrow';
+        arrow.innerHTML = '▼';
+        arrow.style.marginLeft = 'auto';
+        arrow.style.fontSize = '1.25rem';
+        arrow.style.color = '#9ca3af';
+        arrow.style.transition = 'transform 0.3s ease';
+        title.appendChild(arrow);
+      }
+      
+      // Wrap content
+      let contentDiv = section.querySelector('.config-section-content');
+      if (!contentDiv) {
+        contentDiv = document.createElement('div');
+        contentDiv.className = 'config-section-content';
+        contentDiv.style.display = 'none';
+        
+        while(title.nextSibling) {
+          contentDiv.appendChild(title.nextSibling);
+        }
+        section.appendChild(contentDiv);
+      }
+      
+      // Hover effect
+      section.addEventListener('mouseenter', () => {
+        if (contentDiv.style.display === 'none') {
+           section.style.backgroundColor = '#f9fafb';
+        }
+      });
+      section.addEventListener('mouseleave', () => {
+        section.style.backgroundColor = 'white';
+      });
+
+      let isOpen = false;
+      const toggle = (e) => {
+        if(e && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) return;
+        
+        isOpen = !isOpen;
+        if (isOpen) {
+          contentDiv.style.display = 'block';
+          arrow.style.transform = 'rotate(180deg)';
+          section.style.backgroundColor = 'white';
+          section.style.borderColor = '#d1d5db';
+        } else {
+          contentDiv.style.display = 'none';
+          arrow.style.transform = 'rotate(0deg)';
+          section.style.borderColor = '#e5e7eb';
+        }
+      };
+
+      title.addEventListener('click', toggle);
+
+      // Open first section by default
+      if (index === 0 || section.classList.contains('default-open')) {
+        toggle();
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
