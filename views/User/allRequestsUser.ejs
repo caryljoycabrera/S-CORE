@@ -2193,6 +2193,7 @@
 <!-- Replace the existing tbody section with this corrected version -->
 <tbody id="requestsTableBody">
   <% allRequests.forEach(request => { %>
+  <% if (request.status !== 'Archived') { %>
 <tr class="request-row"
     data-id="<%= request._id %>"
     data-type="<%= request.type %>"
@@ -2229,6 +2230,7 @@
     <td><%= request.assignedUnits || 'Not yet assigned' %></td>
     <td><%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %></td>
   </tr>
+  <% } %>
   <% }); %>
 </tbody>
           </table>
@@ -6632,6 +6634,8 @@ window.openArchivedRequestModal = function(requestId, requestType) {
         // Reset form
         if (form) {
           form.reset();
+          form.dataset.requestId = requestId;
+          form.dataset.requestType = requestType || 'approval';
           document.getElementById('submissionStatus').style.display = 'none';
         }
       } else {
@@ -6669,8 +6673,8 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       
       const urlParams = new URLSearchParams(window.location.search);
-      const requestId = urlParams.get('requestId');
-      const requestType = urlParams.get('type') || 'approval';
+      const requestId = restorationForm.dataset.requestId || urlParams.get('requestId');
+      const requestType = restorationForm.dataset.requestType || urlParams.get('type') || 'approval';
       const reason = document.getElementById('restorationReason').value.trim();
       const statusDiv = document.getElementById('submissionStatus');
       

@@ -2991,6 +2991,7 @@
             </thead>
             <tbody id="requestsTableBody">
               <% allRequests.forEach(request => { %>
+              <% if (request.status !== 'Archived') { %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
                   data-type="Service Request"
@@ -3037,6 +3038,7 @@
                     <% } %>
                   </td>
                 </tr>
+              <% } %>
               <% }); %>
             </tbody>
           </table>
@@ -6654,6 +6656,8 @@ window.openArchivedRequestModal = function(requestId, requestType) {
         // Reset form
         if (form) {
           form.reset();
+          form.dataset.requestId = requestId;
+          form.dataset.requestType = requestType || 'service';
           document.getElementById('submissionStatus').style.display = 'none';
         }
       } else {
@@ -6711,7 +6715,8 @@ document.addEventListener('DOMContentLoaded', function() {
     restorationForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const requestId = new URLSearchParams(window.location.search).get('requestId');
+      const requestId = restorationForm.dataset.requestId || new URLSearchParams(window.location.search).get('requestId');
+      const requestType = restorationForm.dataset.requestType || 'service';
       const reason = document.getElementById('restorationReason').value.trim();
       const statusDiv = document.getElementById('submissionStatus');
       
@@ -6730,7 +6735,7 @@ document.addEventListener('DOMContentLoaded', function() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             requestId: requestId,
-            requestType: 'service',
+            requestType: requestType,
             reason: reason
           })
         });
