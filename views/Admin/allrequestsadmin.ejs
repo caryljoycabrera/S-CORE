@@ -393,14 +393,9 @@
                 data-description="<%= request.description %>"
                 data-file="<%= request.file || '' %>"
                 data-files="<%= request.files ? request.files.join(',') : '' %>"
+                data-links="<%= request.links ? request.links.join(',') : '' %>"
                 data-deadline="<%= localDeadline %>"
                 data-formatted-deadline="<%= formattedDeadline %>"
-                data-allow-additional-upload="<%= request.allowAdditionalFileUpload ? 'true' : 'false' %>"
-                data-debug-allow="<%= JSON.stringify({
-                  raw: request.allowAdditionalFileUpload,
-                  type: typeof request.allowAdditionalFileUpload,
-                  final: request.allowAdditionalFileUpload ? 'true' : 'false'
-                }) %>"
                 data-student="<%= displayUserName %>">
                 <td data-label="ID"><%= request._id.toString().slice(-6) %></td>
                 <td data-label="Type">
@@ -719,8 +714,16 @@
             <div class="description-content" id="detailDescription"></div>
           </div>
 
-          <!-- Files Section -->
-          <div id="file-preview"></div>
+          <!-- Files Section removed -> now using Links Section -->
+
+          <!-- Links Section -->
+          <div id="detailsLinksSection" class="admin-info-card" style="display:none;">
+            <div class="admin-card-header">
+              <h3>Reference Links</h3>
+              <p class="admin-card-subtitle">Links submitted with this request</p>
+            </div>
+            <div id="detailLinks" class="links-list"></div>
+          </div>
         </div>
 
         <!-- RIGHT COLUMN: Processing Actions -->
@@ -763,21 +766,6 @@
             </div>
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
-            </div>
-          </div>
-
-          <!-- Additional File Upload Toggle -->
-          <div id="additionalFileToggleSection" class="admin-action-panel" style="display: none;">
-            <div style="background: #f0fdf4; border-radius: 8px; padding: 1rem; margin: 1rem 0; border: 1px solid #bbf7d0;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <label class="toggle-switch" style="margin: 0;">
-                  <input type="checkbox" id="toggleAdditionalFileUploadBtn" checked>
-                  <span class="toggle-slider"></span>
-                </label>
-                <span style="font-size: 0.9rem; color: #166534; font-weight: 500;">Allow users to upload additional files</span>
-              </div>
-              <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
-              This will permit users to add more files when revising their requests
             </div>
           </div>
 
@@ -841,28 +829,7 @@
               </svg>
             </button>
             <div class="toolbar-divider"></div>
-            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
-            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
             <span class="toolbar-hint">Format your message</span>
-          </div>
-
-          <!-- Attached Files Preview -->
-          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
-            <div class="files-preview-header">
-              <span class="files-count">0 file(s) attached</span>
-              <button type="button" id="clearChatFiles" class="clear-files-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Clear all
-              </button>
-            </div>
-            <div id="chatFilesContainer" class="files-container"></div>
           </div>
 
           <!-- Message Input -->

@@ -346,94 +346,7 @@ window.openUserConversation = function(requestId) {
     });
 };
 
-// ==================================
-// CHAT FILE MANAGEMENT
-// ==================================
 
-window.initializeChatFileFeatures = function() {
-  console.log('[User Conversation] Initializing chat file features...');
-  
-  const chatAttachBtn = document.getElementById('chatAttachBtn');
-  const chatFileInput = document.getElementById('chatFileInput');
-  const chatFilesPreview = document.getElementById('chatFilesPreview');
-  const chatFilesContainer = document.getElementById('chatFilesContainer');
-  const clearChatFiles = document.getElementById('clearChatFiles');
-  
-  let chatFiles = [];
-  
-  if (chatAttachBtn && chatFileInput) {
-    console.log('[User Conversation] Attach button and file input found');
-    
-    chatAttachBtn.addEventListener('click', () => {
-      chatFileInput.click();
-    });
-    
-    chatFileInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      chatFiles = chatFiles.concat(files);
-      updateChatFilesPreview();
-    });
-  }
-  
-  if (clearChatFiles) {
-    clearChatFiles.addEventListener('click', () => {
-      chatFiles = [];
-      chatFileInput.value = '';
-      updateChatFilesPreview();
-    });
-  }
-  
-  function updateChatFilesPreview() {
-    if (!chatFilesPreview || !chatFilesContainer) return;
-    
-    if (chatFiles.length === 0) {
-      chatFilesPreview.style.display = 'none';
-      return;
-    }
-    
-    chatFilesPreview.style.display = 'block';
-    
-    const filesCount = chatFilesPreview.querySelector('.files-count');
-    if (filesCount) {
-      filesCount.textContent = `${chatFiles.length} file(s) attached`;
-    }
-    
-    chatFilesContainer.innerHTML = chatFiles.map((file, index) => {
-      const ext = file.name.split('.').pop().toLowerCase();
-      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-      
-      return `
-        <div class="file-item">
-          <div class="file-icon">
-            ${isImage ? '🖼️' : '📎'}
-          </div>
-          <div class="file-name" title="${file.name}">${file.name}</div>
-          <button type="button" class="remove-file-btn" onclick="window.removeChatFile(${index})">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-      `;
-    }).join('');
-  }
-  
-  window.removeChatFile = function(index) {
-    chatFiles.splice(index, 1);
-    updateChatFilesPreview();
-  };
-  
-  window.getChatFiles = function() {
-    return chatFiles;
-  };
-  
-  window.clearChatFiles = function() {
-    chatFiles = [];
-    if (chatFileInput) chatFileInput.value = '';
-    updateChatFilesPreview();
-  };
-};
 
 // ==================================
 // TEXT FORMATTING
@@ -535,8 +448,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  // Initialize chat file features
-  initializeChatFileFeatures();
 });
 
 console.log('[User Conversation] Script initialization complete');

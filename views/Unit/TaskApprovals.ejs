@@ -287,6 +287,7 @@
                         data-status="<%= status %>"
                         data-awaiting-resubmission="<%= request.awaitingResubmission ? 'true' : 'false' %>"
                         data-files='<%= JSON.stringify(files) %>'
+                        data-links='<%= JSON.stringify(request.links || []) %>'
                         data-deadline="<%= deadline %>">
                       <td>
                         <span class="type-badge <%= type %>">
@@ -453,20 +454,6 @@
                 <p>Provide detailed feedback on what needs to be changed or improved</p>
               </div>
 
-              <div class="revision-files-preview" id="revisionFilesPreview" style="display: none;">
-                <div class="files-preview-header">
-                  <span class="files-count">0 files attached</span>
-                  <button type="button" class="clear-files-btn" onclick="clearRevisionFiles()">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <line x1="18" y1="6" x2="6" y2="18"/>
-                      <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                    Clear All
-                  </button>
-                </div>
-                <div id="revisionFilesContainer" class="files-container"></div>
-              </div>
-
               <div class="unit-format-toolbar">
                 <button type="button" class="format-btn" data-revision-format="bold" title="Bold (Ctrl+B)">
                   <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -488,13 +475,15 @@
                   </svg>
                 </button>
                 <div class="toolbar-divider"></div>
-                <button type="button" id="revisionAttachBtn" class="format-btn" title="Attach Files">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                    <polyline points="14,2 14,8 20,8"/>
-                  </svg>
-                </button>
-                <input type="file" id="revisionFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+                <div class="revision-links-section" id="revisionLinksSection" style="display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <div id="revisionLinksContainer" class="links-container" style="display: inline-flex; gap: 0.25rem; align-items: center;">
+                    <div class="link-input-row" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                      <input type="url" class="unit-input link-input" placeholder="Paste revision link..." style="width: 180px; padding: 2px 6px; font-size: 12px;">
+                      <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none; font-size: 14px; padding: 0 4px;">×</button>
+                    </div>
+                  </div>
+                  <button type="button" class="unit-secondary-btn" onclick="addRevisionLinkInput()" style="font-size: 12px; padding: 2px 8px;">+ Add Link</button>
+                </div>
                 <span class="toolbar-hint">Format your revision request</span>
               </div>
 
@@ -527,12 +516,18 @@
             <div class="unit-description-content" id="modalDescription">Loading description...</div>
           </div>
 
-          <div id="filesSection" class="unit-info-card" style="display: none;">
+          <div id="linksSection" class="unit-info-card" style="display: none;">
             <div class="unit-card-header">
-              <h3>Attached Files</h3>
-              <p class="unit-card-subtitle">Files submitted with this request</p>
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                Reference Links
+              </h3>
+              <p class="unit-card-subtitle">Links submitted by the requestor</p>
             </div>
-            <div id="modalFiles"></div>
+            <div id="modalLinks"></div>
           </div>
         </div>
 
@@ -580,21 +575,20 @@
               <small>Clearly explain what needs to be revised</small>
             </label>
 
-            <div id="revisionFilesPreview" class="revision-files-preview" style="display: none;">
-              <div class="files-preview-header">
-                <span class="files-count">0 file(s) attached</span>
-                <button type="button" id="clearRevisionFiles" class="clear-files-btn">Clear all</button>
-              </div>
-              <div id="revisionFilesContainer" class="files-container"></div>
-            </div>
-
             <div class="unit-format-toolbar" style="margin-top: 0.5rem;">
               <button type="button" class="format-btn" data-revision-format="bold" title="Bold (Ctrl+B)">B</button>
               <button type="button" class="format-btn" data-revision-format="italic" title="Italic (Ctrl+I)">I</button>
               <button type="button" class="format-btn" data-revision-format="underline" title="Underline (Ctrl+U)">U</button>
               <div class="toolbar-divider"></div>
-              <button type="button" id="revisionAttachBtn" class="format-btn" title="Attach Files">📎</button>
-              <input type="file" id="revisionFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
+              <div class="revision-links-section" id="revisionLinksSection" style="display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <div id="revisionLinksContainer" class="links-container" style="display: inline-flex; gap: 0.25rem; align-items: center;">
+                  <div class="link-input-row" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <input type="url" class="unit-input link-input" placeholder="Paste revision link..." style="width: 180px; padding: 2px 6px; font-size: 12px;">
+                    <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none; font-size: 14px; padding: 0 4px;">×</button>
+                  </div>
+                </div>
+                <button type="button" class="unit-secondary-btn" onclick="addRevisionLinkInput()" style="font-size: 12px; padding: 2px 8px;">+ Add Link</button>
+              </div>
               <span class="toolbar-hint">Format your feedback</span>
             </div>
 
@@ -770,28 +764,7 @@
               </svg>
             </button>
             <div class="toolbar-divider"></div>
-            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
-            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
             <span class="toolbar-hint">Format your message</span>
-          </div>
-
-          <!-- Attached Files Preview (Below Toolbar) -->
-          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
-            <div class="files-preview-header">
-              <span class="files-count">0 file(s) attached</span>
-              <button type="button" id="clearChatFiles" class="clear-files-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Clear all
-              </button>
-            </div>
-            <div id="chatFilesContainer" class="files-container"></div>
           </div>
 
           <!-- Message Input -->
@@ -997,6 +970,16 @@
   </div>
 
   <!-- Provide filter data to the client script, then load the shared alltasks logic -->
+  <script>
+    function addRevisionLinkInput() {
+      const container = document.getElementById('revisionLinksContainer');
+      if (!container) return;
+      const row = document.createElement('div');
+      row.className = 'link-input-row';
+      row.innerHTML = '<input type=\"url\" class=\"unit-input link-input\" placeholder=\"Paste revision link...\" style=\"width:180px;padding:2px 6px;font-size:12px;\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\" style=\"display:none;font-size:14px;padding:0 4px;\">×</button>';
+      container.appendChild(row);
+    }
+  </script>
   <script>
     window.filterDataFromDatabase = {
       requestStatuses: <%- JSON.stringify(typeof requestStatuses !== 'undefined' ? requestStatuses : []) %>,

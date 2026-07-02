@@ -975,14 +975,13 @@ router.post('/profile/delete-picture', async (req, res) => {
  * Handles submission of approval requests with file uploads
  * Rate limited to prevent request spam
  */
-router.post('/submit-request-approval', requestLimiter, upload.array('upload', 20), async (req, res) => {
+router.post('/submit-request-approval', requestLimiter, async (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
   const { projectTitle, organization, description, specificRequestType, links } = req.body;
 
-  console.log('Files received:', req.files);
   console.log('Organization received:', organization);
   console.log('Specific Request Type received:', specificRequestType);
 
@@ -991,18 +990,6 @@ router.post('/submit-request-approval', requestLimiter, upload.array('upload', 2
     return res.status(400).json({
       success: false,
       message: 'Please fill in all required fields'
-    });
-  }
-
-  // Handle multiple files
-  let filePaths = [];
-  if (req.files && req.files.length > 0) {
-    filePaths = req.files.map(file => file.filename);
-    console.log('File paths:', filePaths);
-  } else {
-    return res.status(400).json({
-      success: false,
-      message: 'Please upload at least one file'
     });
   }
 
@@ -1068,8 +1055,6 @@ router.post('/submit-request-approval', requestLimiter, upload.array('upload', 2
       specificRequestType: specificRequestType,
       deadline: deadline,
       userId: req.session.userId,
-      files: filePaths,
-      file: filePaths[0] || null,
       links: links ? (Array.isArray(links) ? links : [links]) : [],
       status: initialStatus,
       assignedUnits: assignedUnits,
@@ -1079,7 +1064,7 @@ router.post('/submit-request-approval', requestLimiter, upload.array('upload', 2
     await newRequest.save();
     console.log('Request approval saved with organization:', actualOrganization);
     console.log('Request approval saved with specific type:', specificRequestType);
-    console.log('Request approval saved with files:', filePaths);
+    console.log('Request approval saved with files:', links);
 
     // Send notifications to admins
     try {
@@ -1125,110 +1110,20 @@ router.post('/submit-request-approval', requestLimiter, upload.array('upload', 2
  * POST /add-files/:requestId
  * Adds additional files to existing approval requests (for revision requests)
  */
-router.post('/add-files/:requestId', upload.array('additionalFiles', 20), async (req, res) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' });
-  }
-
-  const { requestId } = req.params;
-  console.log('Adding files to request ID:', requestId);
-
-  try {
-    // Find the request and ensure it belongs to the user
-    const request = await RequestApproval.findOne({
-      _id: requestId,
-      userId: req.session.userId
-    });
-
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        message: 'Request not found or you do not have permission to modify it'
-      });
-    }
-
-    // Ensure the request is in "for revision" status
-    if (request.status?.toLowerCase() !== 'for revision') {
-      return res.status(400).json({
-        success: false,
-        message: 'Files can only be added to requests that are marked for revision'
-      });
-    }
-
-    // Check if files were uploaded
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload at least one additional file'
-      });
-    }
-
-    const newFilePaths = req.files.map(file => file.filename);
-    console.log('Additional file paths:', newFilePaths);
-
-    // Append new files to existing files array
-    const updatedFiles = [...(request.files || []), ...newFilePaths];
-    request.files = updatedFiles;
-
-    // Also update the primary 'file' field to the first file if it's null
-    if (!request.file && newFilePaths.length > 0) {
-      request.file = newFilePaths[0];
-    }
-
-    // Update the request's updatedAt timestamp and mark additional file upload as allowed
-    request.updatedAt = new Date();
-    request.allowAdditionalFileUpload = false; // No more additional files allowed after upload
-
-    await request.save();
-
-    // Send notification to admins about the file update
-    try {
-      const admins = await User.find({ role: 'admin' });
-      const adminIds = admins.map(admin => admin._id);
-      await notificationService.notifyApprovalUpdated(requestId, req.session.userId, adminIds);
-    } catch (notifError) {
-      console.error('Error sending approval update notifications:', notifError);
-    }
-
-    console.log('Successfully added files to request:', requestId);
-    console.log('Updated files array:', updatedFiles);
-
-    res.json({
-      success: true,
-      message: `Successfully added ${newFilePaths.length} additional file(s) to your request`,
-      newFiles: newFilePaths,
-      totalFiles: updatedFiles.length
-    });
-
-  } catch (error) {
-    console.error('Error adding files to request:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to add files: ' + error.message
-    });
-  }
-});
+// Route removed: file uploads replaced with links
 
 /**
  * POST /submit-service-request
  * Handles submission of service requests with file uploads
  * Rate limited to prevent request spam
  */
-router.post('/submit-service-request', requestLimiter, upload.array('uploadServiceFile', 20), async (req, res) => {
+router.post('/submit-service-request', requestLimiter, async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
 
   const { projectTitle, organization, description, deadline, specificRequestType, isCustomType, links } = req.body;
 
-  console.log('Files received:', req.files);
   console.log('Organization received:', organization);
   console.log('Specific Request Type received:', specificRequestType);
-
-  // Handle multiple files
-  let filePaths = [];
-  if (req.files && req.files.length > 0) {
-    filePaths = req.files.map(file => file.filename);
-    console.log('File paths:', filePaths);
-  }
 
   try {
     const user = await User.findById(req.session.userId);
@@ -1277,8 +1172,6 @@ router.post('/submit-service-request', requestLimiter, upload.array('uploadServi
       deadline,
       specificRequestType: specificRequestType,
       userId: req.session.userId,
-      files: filePaths,
-      file: filePaths[0] || null,
       links: links ? (Array.isArray(links) ? links : [links]) : [],
       status: initialStatus,
       assignedUnits: assignedUnits,
@@ -1289,7 +1182,7 @@ router.post('/submit-service-request', requestLimiter, upload.array('uploadServi
     console.log('Service request saved with organization:', actualOrganization);
     console.log('Service request saved with specific type:', specificRequestType);
     console.log('Service request auto-assigned to unit:', assignedUnits);
-    console.log('Service request saved with files:', filePaths);
+    console.log('Service request saved with files:', links);
 
     // Handle custom request type submission for admin review
     if (isCustomType === 'true') {
@@ -1368,13 +1261,13 @@ router.post('/submit-service-request', requestLimiter, upload.array('uploadServi
  * POST /resubmit-approval-request/:id
  * Resubmit an approval request after addressing revision feedback
  */
-router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20), async (req, res) => {
+router.post('/resubmit-approval-request/:id', async (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
   const requestId = req.params.id;
-  const { resubmissionNotes } = req.body;
+  const { resubmissionNotes, links } = req.body;
 
   try {
     const request = await RequestApproval.findById(requestId);
@@ -1393,20 +1286,15 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
       return res.status(400).json({ success: false, message: 'This request is not awaiting resubmission' });
     }
 
-    // Handle additional files
-    let additionalFilePaths = [];
-    if (req.files && req.files.length > 0) {
-      additionalFilePaths = req.files.map(file => file.filename);
-      // Add new files to existing files array
-      request.files = [...(request.files || []), ...additionalFilePaths];
-    }
+    const linkArray = links ? (Array.isArray(links) ? links : [links]) : [];
 
     // CREATE NEW REVISION HISTORY ENTRY for the resubmission (separate from unit feedback)
     const newResubmission = {
       respondedBy: req.session.userId,
       respondedAt: new Date(),
       responseNotes: resubmissionNotes || 'Resubmitted with updates',
-      responseFiles: additionalFilePaths,
+      responseFiles: [],
+      links: linkArray,
       status: 'responded'  // Valid enum values: 'pending', 'responded', 'resolved'
     };
     
@@ -1430,7 +1318,7 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
     res.json({ 
       success: true, 
       message: 'Request resubmitted successfully. The unit team has been notified.',
-      filesUploaded: additionalFilePaths.length
+      linksUploaded: linkArray.length
     });
   } catch (error) {
     console.error('Error resubmitting approval request:', error);
@@ -1443,16 +1331,13 @@ router.post('/resubmit-approval-request/:id', upload.array('additionalFiles', 20
  * User-initiated revision request for completed service requests
  * Allows users to request changes with specific feedback and file uploads (2 revision limit)
  */
-router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 10), requireLogin, async (req, res) => {
+router.post('/user/service/request-revision/:id', requireLogin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { revisionNotes } = req.body;
+    const { revisionNotes, links } = req.body;
     const userId = req.session.userId;
 
     console.log('[REVISION] Request ID:', id);
-    console.log('[REVISION] User ID:', userId);
-    console.log('[REVISION] Revision Notes length:', revisionNotes ? revisionNotes.length : 0);
-    console.log('[REVISION] Revision Notes (first 100 chars):', revisionNotes ? revisionNotes.substring(0, 100) : 'EMPTY');
 
     // Find the service request
     const request = await ServiceRequest.findById(id);
@@ -1462,23 +1347,18 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
       return res.status(404).json({ success: false, message: 'Service request not found' });
     }
 
-    console.log('[REVISION] Found request - Status:', request.status, '| RevisionCount:', request.revisionCount, '| UserId:', request.userId);
-
     // Verify user owns this request
     if (request.userId.toString() !== userId) {
-      console.log('[REVISION] Unauthorized - Request owner:', request.userId, '| Session user:', userId);
       return res.status(403).json({ success: false, message: 'Unauthorized to request revision for this request' });
     }
 
     // Verify request is in Completed or For Checking status
     if (request.status !== 'Completed' && request.status !== 'For Checking') {
-      console.log('[REVISION] Invalid status - Current status:', request.status);
       return res.status(400).json({ success: false, message: `Only completed or for-checking requests can be sent for revision. Current status: "${request.status}"` });
     }
 
     // Check revision limit (2 revisions maximum)
     if (request.revisionCount >= 2) {
-      console.log('[REVISION] Revision limit reached -', request.revisionCount);
       return res.status(400).json({ 
         success: false, 
         message: 'This task has reached its 2-revision limit. For further changes, please submit a new Service Request and reference this one.' 
@@ -1487,12 +1367,10 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
 
     // Validate revision notes
     if (!revisionNotes || revisionNotes.trim() === '') {
-      console.log('[REVISION] Empty revision notes');
       return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
     }
 
-    // Get uploaded file names
-    const revisionFiles = req.files ? req.files.map(file => file.filename) : [];
+    const linkArray = links ? (Array.isArray(links) ? links : [links]) : [];
 
     // Ensure revisionHistory is initialized as an array
     if (!Array.isArray(request.revisionHistory)) {
@@ -1509,10 +1387,11 @@ router.post('/user/service/request-revision/:id', upload.array('revisionFiles', 
       respondedBy: new mongoose.Types.ObjectId(userId),
       respondedAt: new Date(),
       responseNotes: String(revisionNotes),
-      responseFiles: revisionFiles,
+      responseFiles: [],
+      links: linkArray,
       status: 'for_revision',
       revisionType: 'revision_requested',
-      revisionNumber: request.revisionCount // Track which revision cycle this belongs to
+      revisionNumber: request.revisionCount
     };
     
     // Add to revision history
@@ -1616,10 +1495,10 @@ router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) =>
  * User-initiated revision request for completed approval requests
  * Allows users to request changes with specific feedback and file uploads (2 revision limit)
  */
-router.post('/user/approval/request-revision/:id', upload.array('revisionFiles', 10), requireLogin, async (req, res) => {
+router.post('/user/approval/request-revision/:id', requireLogin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { revisionNotes } = req.body;
+    const { revisionNotes, links } = req.body;
     const userId = req.session.userId;
 
     // Find the approval request
@@ -1652,8 +1531,7 @@ router.post('/user/approval/request-revision/:id', upload.array('revisionFiles',
       return res.status(400).json({ success: false, message: 'Please provide revision notes explaining what needs to be changed' });
     }
 
-    // Get uploaded file names
-    const revisionFiles = req.files ? req.files.map(file => file.filename) : [];
+    const linkArray = links ? (Array.isArray(links) ? links : [links]) : [];
 
     // Ensure revisionHistory is initialized as an array
     if (!Array.isArray(request.revisionHistory)) {
@@ -1670,10 +1548,11 @@ router.post('/user/approval/request-revision/:id', upload.array('revisionFiles',
       respondedBy: new mongoose.Types.ObjectId(userId),
       respondedAt: new Date(),
       responseNotes: String(revisionNotes),
-      responseFiles: revisionFiles,
+      responseFiles: [],
+      links: linkArray,
       status: 'for_revision',
       revisionType: 'revision_requested',
-      revisionNumber: request.revisionCount // Track which revision cycle this belongs to
+      revisionNumber: request.revisionCount
     };
     
     // Add to revision history

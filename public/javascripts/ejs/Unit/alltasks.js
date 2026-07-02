@@ -2,7 +2,6 @@
 let currentRequestId = null;
 let currentRequestType = null;
 let selectedFiles = [];
-let revisionFiles = [];
 
 function isRevisionStatus(status) {
     const normalized = (status || '').toLowerCase().trim();
@@ -402,11 +401,6 @@ function initializeEventListeners() {
     }
 
     // Service actions
-    const deliverablesFileInput = document.getElementById('deliverablesFileInput');
-    if (deliverablesFileInput) {
-        deliverablesFileInput.addEventListener('change', handleFileInputChange);
-    }
-
     const uploadDeliverablesBtn = document.getElementById('uploadDeliverablesBtn');
     if (uploadDeliverablesBtn) {
         uploadDeliverablesBtn.addEventListener('click', uploadDeliverables);
@@ -993,6 +987,7 @@ function openRequestDetails(requestId, requestType) {
     const serviceType = row.getAttribute('data-service-type') || '';
     const specificRequestType = row.getAttribute('data-specific-request-type') || '';
     const filesJson = row.getAttribute('data-files') || '[]';
+    const linksJson = row.getAttribute('data-links') || '[]';
     const deliverablesJson = row.getAttribute('data-deliverables') || '[]';
 
     // Populate modal with data
@@ -1058,6 +1053,33 @@ function openRequestDetails(requestId, requestType) {
         console.error('Error parsing files:', e);
         const filesSection = document.getElementById('filesSection');
         if (filesSection) filesSection.style.display = 'none';
+    }
+
+    // Show links if they exist
+    try {
+        const links = JSON.parse(linksJson);
+        const linksSection = document.getElementById('linksSection');
+        const linksContainer = document.getElementById('modalLinks');
+        if (links && links.length > 0 && linksContainer) {
+            linksContainer.innerHTML = links.map(link => `
+                <div class="link-item" style="margin-bottom:0.5rem;">
+                  <a href="${link}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;word-break:break-all;text-decoration:underline;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:4px;vertical-align:middle;">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                    ${link}
+                  </a>
+                </div>
+            `).join('');
+            if (linksSection) linksSection.style.display = 'block';
+        } else {
+            if (linksSection) linksSection.style.display = 'none';
+        }
+    } catch (e) {
+        console.error('Error parsing links:', e);
+        const linksSection = document.getElementById('linksSection');
+        if (linksSection) linksSection.style.display = 'none';
     }
 
     // Show deliverables if they exist
@@ -2170,22 +2192,6 @@ function closeRequestModal() {
         revisionComments.value = '';
     }
     
-    // Clear revision files
-    revisionFiles = [];
-    const revisionFilesPreview = document.getElementById('revisionFilesPreview');
-    if (revisionFilesPreview) {
-        revisionFilesPreview.style.display = 'none';
-    }
-    const revisionFileInput = document.getElementById('revisionFileInput');
-    if (revisionFileInput) {
-        revisionFileInput.value = '';
-    }
-
-    const deliverablesFileInput = document.getElementById('deliverablesFileInput');
-    if (deliverablesFileInput) {
-        deliverablesFileInput.value = '';
-    }
-
     const selectedFilesPreview = document.getElementById('selectedFilesPreview');
     if (selectedFilesPreview) {
         selectedFilesPreview.innerHTML = '';
@@ -2623,18 +2629,14 @@ async function submitRevision() {
     }
 
     try {
-        // Create FormData to handle both text and files
-        const formData = new FormData();
-        formData.append('revisionNotes', revisionComments);
-        
-        // Add files if any
-        revisionFiles.forEach((file, index) => {
-            formData.append('revisionFiles', file);
-        });
+        const links = getLinkValues('revisionLinks');
 
         const response = await fetch(`/unit/task/revise/${currentRequestId}`, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ revisionNotes: revisionComments, links })
         });
 
         const result = await response.json();
@@ -2648,7 +2650,7 @@ async function submitRevision() {
             } else {
                 document.getElementById('revisionComments').value = '';
             }
-            clearAllRevisionFiles();
+            clearRevisionLinks();
             hideRevisionForm();
             
             // Reload revision history to show the new revision
@@ -2681,94 +2683,6 @@ async function submitRevision() {
     }
 }
 
-// Function: Handle file input change for deliverables
-let unitSelectedFiles = [];
-
-function handleFileInputChange(event) {
-    const files = event.target.files;
-    unitSelectedFiles = Array.from(files);
-    updateUnitFileUI();
-}
-
-function updateUnitFileUI() {
-    const fileManagement = document.getElementById('unitFileManagement');
-    const filesCount = document.getElementById('unitFilesCount');
-    const selectedFilesContainer = document.getElementById('unitSelectedFiles');
-    const filesSummary = document.getElementById('unitFilesSummary');
-    const uploadBtn = document.getElementById('uploadDeliverablesBtn');
-    
-    if (unitSelectedFiles.length > 0) {
-        fileManagement.style.display = 'block';
-        filesCount.textContent = `${unitSelectedFiles.length} file${unitSelectedFiles.length > 1 ? 's' : ''} selected`;
-        
-        // Clear and populate selected files
-        selectedFilesContainer.innerHTML = '';
-        let totalSize = 0;
-        
-        unitSelectedFiles.forEach((file, index) => {
-            totalSize += file.size;
-            const fileItem = document.createElement('div');
-            fileItem.className = 'unit-file-item-card';
-            
-            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-            const ext = file.name.split('.').pop().toLowerCase();
-            let iconColor = '#64748b';
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
-            else if (ext === 'pdf') iconColor = '#dc2626';
-            else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
-            else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
-            
-            fileItem.innerHTML = `
-                <div class="unit-file-info-wrapper">
-                    <div class="unit-file-icon-wrapper" style="color: ${iconColor};">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <rect x="4" y="4" width="16" height="16" rx="2"/>
-                            <line x1="8" y1="8" x2="16" y2="8"/>
-                            <line x1="8" y1="12" x2="16" y2="12"/>
-                        </svg>
-                    </div>
-                    <div class="unit-file-details">
-                        <div class="unit-file-name-text" title="${file.name}">${file.name}</div>
-                        <div class="unit-file-size-text">${fileSizeMB} MB · ${ext.toUpperCase()}</div>
-                    </div>
-                </div>
-                <button type="button" class="unit-remove-file-btn" onclick="removeUnitFile(${index})" aria-label="Remove file">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            `;
-            selectedFilesContainer.appendChild(fileItem);
-        });
-        
-        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-        filesSummary.textContent = `Total size: ${totalSizeMB} MB`;
-        
-        if (uploadBtn) uploadBtn.disabled = false;
-    } else {
-        fileManagement.style.display = 'none';
-        if (uploadBtn) uploadBtn.disabled = true;
-    }
-}
-
-function removeUnitFile(index) {
-    unitSelectedFiles.splice(index, 1);
-    
-    // Update file input
-    const dt = new DataTransfer();
-    unitSelectedFiles.forEach(file => dt.items.add(file));
-    document.getElementById('deliverablesFileInput').files = dt.files;
-    
-    updateUnitFileUI();
-}
-
-function clearAllUnitFiles() {
-    unitSelectedFiles = [];
-    document.getElementById('deliverablesFileInput').value = '';
-    updateUnitFileUI();
-}
-
 // Function: uploadDeliverables
 async function uploadDeliverables() {
     if (!currentRequestId) {
@@ -2776,54 +2690,29 @@ async function uploadDeliverables() {
         return;
     }
 
-    if (unitSelectedFiles.length === 0) {
-        showErrorMessage('Please select files to upload');
+    const links = getLinkValues('deliverableLinks');
+    if (links.length === 0) {
+        showErrorMessage('Please provide at least one link');
         return;
     }
 
     try {
-        // Show upload progress
-        const progressBar = document.getElementById('unitUploadProgress');
-        const progressFill = document.getElementById('unitProgressFill');
-        if (progressBar) {
-            progressBar.classList.add('active');
-            progressFill.style.width = '0%';
-        }
-
-        const formData = new FormData();
-        unitSelectedFiles.forEach(file => {
-            formData.append('deliverables', file);
-        });
-
-        // Simulate progress
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            progress += 10;
-            if (progress <= 90 && progressFill) {
-                progressFill.style.width = progress + '%';
-            }
-        }, 100);
-
         const response = await fetch(`/unit/task/upload/${currentRequestId}`, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ links })
         });
 
-        clearInterval(progressInterval);
-        if (progressFill) progressFill.style.width = '100%';
-
         const result = await response.json();
-
-        setTimeout(() => {
-            if (progressBar) progressBar.classList.remove('active');
-            if (progressFill) progressFill.style.width = '0%';
-        }, 500);
 
         if (response.ok && result.success) {
             showSuccessMessage(result.message || 'Deliverables uploaded successfully. Status changed to "For Checking".');
             
-            // Clear file input and preview
-            clearAllUnitFiles();
+            // Clear link inputs
+            const linkInputs = document.querySelectorAll('input[name="deliverableLinks"]');
+            linkInputs.forEach(input => input.value = '');
             document.getElementById('uploadDeliverablesBtn').disabled = true;
 
             // Update modal status
@@ -3402,8 +3291,8 @@ async function sendTeamMessage() {
         }
     }
     
-    if (!plainText && chatFiles.length === 0) {
-        showErrorMessage('Please enter a message or select a file');
+    if (!plainText) {
+        showErrorMessage('Please enter a message');
         return;
     }
     
@@ -3413,35 +3302,13 @@ async function sendTeamMessage() {
     }
     
     try {
-        console.log('[AllTasks] Sending message with', chatFiles.length, 'files');
-        let response;
-        
-        if (chatFiles.length > 0) {
-            // Send with file attachments using FormData
-            const formData = new FormData();
-            formData.append('content', content || '');
-            
-            // Append all files with 'chatFiles' field name
-            chatFiles.forEach(file => {
-                formData.append('chatFiles', file);
-            });
-            
-            console.log('[AllTasks] FormData prepared with chatFiles field');
-            
-            response = await fetch(`/api/conversation/${currentRequestId}/message`, {
-                method: 'POST',
-                body: formData
-            });
-        } else {
-            // Send text only using JSON
-            response = await fetch(`/api/conversation/${currentRequestId}/message`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ content })
-            });
-        }
+        const response = await fetch(`/api/conversation/${currentRequestId}/message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content })
+        });
         
         if (!response.ok) {
             let errorMessage = 'Failed to send message';
@@ -3473,7 +3340,6 @@ async function sendTeamMessage() {
             }
         }
         
-        clearAllChatFiles();
         // Reload conversation to show new message
         await loadTeamConversation(currentRequestId);
         console.log('[AllTasks] Conversation reloaded');
@@ -3520,9 +3386,6 @@ window.openConversationModal = openTeamConversationModal;
 
 // Add conversation modal event listeners after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Enhanced file upload setup
-    setupEnhancedFileUpload();
-    
     // Open team chat button
     const openChatBtn = document.getElementById('openTeamChatBtn');
     if (openChatBtn) {
@@ -3906,85 +3769,12 @@ window.openImagePreview = function(imageUrl, fileName) {
   document.body.style.overflow = 'hidden';
 };
 
-// Setup Enhanced File Upload with Drag and Drop
-function setupEnhancedFileUpload() {
-    const fileUploadGroup = document.getElementById('unitFileUploadGroup');
-    const fileInput = document.getElementById('deliverablesFileInput');
-    const clearAllBtn = document.getElementById('unitClearAllBtn');
-    
-    if (!fileUploadGroup || !fileInput) return;
-    
-    // Click to select files
-    fileUploadGroup.addEventListener('click', (e) => {
-        if (e.target.closest('.unit-browse-file-btn')) return;
-        fileInput.click();
-    });
-    
-    // File input change
-    fileInput.addEventListener('change', handleFileInputChange);
-    
-    // Clear all button
-    if (clearAllBtn) {
-        clearAllBtn.addEventListener('click', clearAllUnitFiles);
-    }
-    
-    // Drag and drop
-    fileUploadGroup.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        fileUploadGroup.classList.add('dragging');
-    });
-    
-    fileUploadGroup.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.target === fileUploadGroup) {
-            fileUploadGroup.classList.remove('dragging');
-        }
-    });
-    
-    fileUploadGroup.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        fileUploadGroup.classList.remove('dragging');
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            // Update file input
-            const dt = new DataTransfer();
-            Array.from(files).forEach(file => dt.items.add(file));
-            fileInput.files = dt.files;
-            
-            // Trigger change event
-            handleFileInputChange({ target: { files: dt.files } });
-        }
-    });
-}
-
 // ==========================================
 // REVISION FORM FEATURES
 // ==========================================
 
 function initializeRevisionFeatures() {
     // Text formatting buttons are now handled in AllTasks.ejs to avoid duplication
-
-    // Attach files button
-    const attachBtn = document.getElementById('revisionAttachBtn');
-    const fileInput = document.getElementById('revisionFileInput');
-    
-    if (attachBtn && fileInput) {
-        attachBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-        
-        fileInput.addEventListener('change', handleRevisionFileSelect);
-    }
-
-    // Clear all files button
-    const clearFilesBtn = document.getElementById('clearRevisionFiles');
-    if (clearFilesBtn) {
-        clearFilesBtn.addEventListener('click', clearAllRevisionFiles);
-    }
 }
 
 // Revision formatting is now handled in AllTasks.ejs - keeping stub for backward compatibility
@@ -4042,253 +3832,11 @@ window.applyRevokeFormat = function(format) {
     textarea.setSelectionRange(newCursorPos, newCursorPos);
 };
 
-function handleRevisionFileSelect(event) {
-    const files = Array.from(event.target.files);
-    
-    files.forEach(file => {
-        // Check if file already exists
-        const exists = revisionFiles.some(f => f.name === file.name && f.size === file.size);
-        if (!exists) {
-            revisionFiles.push(file);
-        }
-    });
-    
-    updateRevisionFilesPreview();
-}
 
-function updateRevisionFilesPreview() {
-    const preview = document.getElementById('revisionFilesPreview');
-    const container = document.getElementById('revisionFilesContainer');
-    const filesCount = preview.querySelector('.files-count');
-    
-    if (!preview || !container) return;
-    
-    if (revisionFiles.length > 0) {
-        preview.style.display = 'block';
-        filesCount.textContent = `${revisionFiles.length} file(s) attached`;
-        
-        container.innerHTML = '';
-        revisionFiles.forEach((file, index) => {
-            const fileItem = createRevisionFileItem(file, index);
-            container.appendChild(fileItem);
-        });
-    } else {
-        preview.style.display = 'none';
-    }
-}
-
-function createRevisionFileItem(file, index) {
-    const item = document.createElement('div');
-    item.className = 'revision-file-item';
-    
-    const fileSizeKB = (file.size / 1024).toFixed(1);
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    const displaySize = file.size > 1024 * 1024 ? `${fileSizeMB} MB` : `${fileSizeKB} KB`;
-    
-    const ext = file.name.split('.').pop().toLowerCase();
-    let iconColor = '#64748b';
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
-    else if (ext === 'pdf') iconColor = '#dc2626';
-    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
-    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
-    
-    item.innerHTML = `
-        <div class="file-item-info">
-            <div class="file-item-icon" style="color: ${iconColor};">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="4" y="4" width="16" height="16" rx="2"/>
-                    <line x1="8" y1="8" x2="16" y2="8"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                    <line x1="8" y1="16" x2="12" y2="16"/>
-                </svg>
-            </div>
-            <div class="file-item-details">
-                <div class="file-item-name" title="${file.name}">${file.name}</div>
-                <div class="file-item-size">${displaySize}</div>
-            </div>
-        </div>
-        <button type="button" class="remove-file-btn" onclick="removeRevisionFile(${index})" title="Remove file">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-        </button>
-    `;
-    
-    return item;
-}
-
-window.removeRevisionFile = function(index) {
-    revisionFiles.splice(index, 1);
-    updateRevisionFilesPreview();
-    
-    // Update file input
-    const fileInput = document.getElementById('revisionFileInput');
-    if (fileInput) {
-        const dt = new DataTransfer();
-        revisionFiles.forEach(file => dt.items.add(file));
-        fileInput.files = dt.files;
-    }
-};
-
-function clearAllRevisionFiles() {
-    revisionFiles = [];
-    updateRevisionFilesPreview();
-    
-    const fileInput = document.getElementById('revisionFileInput');
-    if (fileInput) {
-        fileInput.value = '';
-    }
-}
 
 // ==========================================
-// CHAT FILE ATTACHMENTS
+// TEXT FORMATTING FOR CHAT
 // ==========================================
-
-let chatFiles = [];
-
-function initializeChatFileFeatures() {
-    console.log('[AllTasks] Initializing chat file features...');
-    // Attach files button
-    const attachBtn = document.getElementById('chatAttachBtn');
-    const fileInput = document.getElementById('chatFileInput');
-    
-    if (attachBtn && fileInput) {
-        console.log('[AllTasks] Chat file elements found');
-        attachBtn.addEventListener('click', () => {
-            console.log('[AllTasks] Attach button clicked');
-            fileInput.click();
-        });
-        
-        fileInput.addEventListener('change', handleChatFileSelect);
-    } else {
-        console.warn('[AllTasks] Chat file elements not found:', { attachBtn: !!attachBtn, fileInput: !!fileInput });
-    }
-
-    // Clear all files button
-    const clearFilesBtn = document.getElementById('clearChatFiles');
-    if (clearFilesBtn) {
-        clearFilesBtn.addEventListener('click', clearAllChatFiles);
-    }
-    
-    // Text formatting for chat
-    const chatFormatBtns = document.querySelectorAll('[data-chat-format]');
-    chatFormatBtns.forEach(btn => {
-        btn.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-        });
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const format = this.getAttribute('data-chat-format');
-            applyChatFormat(format);
-        });
-    });
-}
-
-function handleChatFileSelect(event) {
-    console.log('[AllTasks] File selection triggered');
-    const files = Array.from(event.target.files);
-    console.log('[AllTasks] Selected files:', files.length);
-    
-    files.forEach(file => {
-        // Check if file already exists
-        const exists = chatFiles.some(f => f.name === file.name && f.size === file.size);
-        if (!exists) {
-            chatFiles.push(file);
-            console.log('[AllTasks] Added file:', file.name);
-        } else {
-            console.log('[AllTasks] Duplicate file skipped:', file.name);
-        }
-    });
-    
-    console.log('[AllTasks] Total files:', chatFiles.length);
-    updateChatFilesPreview();
-}
-
-function updateChatFilesPreview() {
-    const preview = document.getElementById('chatFilesPreview');
-    const container = document.getElementById('chatFilesContainer');
-    const filesCount = preview.querySelector('.files-count');
-    
-    if (!preview || !container) return;
-    
-    if (chatFiles.length > 0) {
-        preview.style.display = 'block';
-        filesCount.textContent = `${chatFiles.length} file(s) attached`;
-        
-        container.innerHTML = '';
-        chatFiles.forEach((file, index) => {
-            const fileItem = createChatFileItem(file, index);
-            container.appendChild(fileItem);
-        });
-    } else {
-        preview.style.display = 'none';
-    }
-}
-
-function createChatFileItem(file, index) {
-    const item = document.createElement('div');
-    item.className = 'revision-file-item';
-    
-    const fileSizeKB = (file.size / 1024).toFixed(1);
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    const displaySize = file.size > 1024 * 1024 ? `${fileSizeMB} MB` : `${fileSizeKB} KB`;
-    
-    const ext = file.name.split('.').pop().toLowerCase();
-    let iconColor = '#64748b';
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
-    else if (ext === 'pdf') iconColor = '#dc2626';
-    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
-    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
-    
-    item.innerHTML = `
-        <div class="file-item-info">
-            <div class="file-item-icon" style="color: ${iconColor};">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="4" y="4" width="16" height="16" rx="2"/>
-                    <line x1="8" y1="8" x2="16" y2="8"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                    <line x1="8" y1="16" x2="12" y2="16"/>
-                </svg>
-            </div>
-            <div class="file-item-details">
-                <div class="file-item-name" title="${file.name}">${file.name}</div>
-                <div class="file-item-size">${displaySize}</div>
-            </div>
-        </div>
-        <button type="button" class="remove-file-btn" onclick="removeChatFile(${index})" title="Remove file">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-        </button>
-    `;
-    
-    return item;
-}
-
-window.removeChatFile = function(index) {
-    chatFiles.splice(index, 1);
-    updateChatFilesPreview();
-    
-    // Update file input
-    const fileInput = document.getElementById('chatFileInput');
-    if (fileInput) {
-        const dt = new DataTransfer();
-        chatFiles.forEach(file => dt.items.add(file));
-        fileInput.files = dt.files;
-    }
-};
-
-function clearAllChatFiles() {
-    chatFiles = [];
-    updateChatFilesPreview();
-    
-    const fileInput = document.getElementById('chatFileInput');
-    if (fileInput) {
-        fileInput.value = '';
-    }
-}
 
 function applyChatFormat(format) {
     const input = document.getElementById('teamMessageInput');
@@ -4455,10 +4003,8 @@ function handleQueuedStatus(status, requestId, requestType) {
 
 
 
-// Initialize chat file features when DOM loads
+// Initialize action buttons when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
-    initializeChatFileFeatures();
-    
     // Initialize admin action buttons
     initializeAdminActionButtons();
     
@@ -4502,19 +4048,6 @@ function initializeAdminActionButtons() {
         });
     }
 
-    // Revision File Attachment Button
-    const revisionAttachBtn = document.getElementById('revisionAttachBtn');
-    const revisionFileInput = document.getElementById('revisionFileInput');
-    if (revisionAttachBtn && revisionFileInput) {
-        revisionAttachBtn.addEventListener('click', function() {
-            revisionFileInput.click();
-        });
-
-        revisionFileInput.addEventListener('change', function(e) {
-            handleRevisionFileSelection(e.target.files);
-        });
-    }
-
     // Revision Text Formatting Buttons
     initializeRevisionFormatting();
 }
@@ -4539,8 +4072,19 @@ function hideAdminRevisionForm() {
         if (revisionComments) {
             revisionComments.value = '';
         }
-        clearRevisionFiles();
     }
+}
+
+// Function: clearRevisionLinks - Clear revision link inputs
+function clearRevisionLinks() {
+    const linkInputs = document.querySelectorAll('input[name="revisionLinks"]');
+    linkInputs.forEach(input => input.value = '');
+}
+
+// Function: getLinkValues - Collect link values from input elements
+function getLinkValues(inputName) {
+    const inputs = document.querySelectorAll(`input[name="${inputName}"]`);
+    return Array.from(inputs).map(input => input.value.trim()).filter(v => v !== '');
 }
 
 // Function: submitAdminRevision - Submit admin revision request
@@ -4565,18 +4109,14 @@ async function submitAdminRevision() {
     }
 
     try {
-        // Create FormData to handle both text and files
-        const formData = new FormData();
-        formData.append('revisionNotes', revisionComments);
-
-        // Add files if any
-        revisionFiles.forEach((file, index) => {
-            formData.append('revisionFiles', file);
-        });
+        const links = getLinkValues('revisionLinks');
 
         const response = await fetch(`/unit/task/revise/${currentRequestId}`, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ revisionNotes: revisionComments, links })
         });
 
         const result = await response.json();
@@ -4586,7 +4126,7 @@ async function submitAdminRevision() {
 
             // Clear and hide revision form
             document.getElementById('revisionComments').value = '';
-            clearRevisionFiles();
+            clearRevisionLinks();
             hideAdminRevisionForm();
 
             // Reload revision history to show the new revision immediately
@@ -4617,87 +4157,6 @@ async function submitAdminRevision() {
     } catch (error) {
         console.error('Error submitting revision:', error);
         showErrorMessage('An error occurred while submitting the revision request');
-    }
-}
-
-// Function: handleRevisionFileSelection - Handle file selection for revisions
-function handleRevisionFileSelection(files) {
-    Array.from(files).forEach(file => {
-        // Check file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-            showErrorMessage(`File "${file.name}" is too large. Maximum size is 10MB.`);
-            return;
-        }
-
-        // Check if file already exists
-        const exists = revisionFiles.some(existingFile => existingFile.name === file.name && existingFile.size === file.size);
-        if (exists) {
-            showErrorMessage(`File "${file.name}" is already attached.`);
-            return;
-        }
-
-        revisionFiles.push(file);
-    });
-
-    updateRevisionFilesPreview();
-}
-
-// Function: clearRevisionFiles - Clear all revision files
-function clearRevisionFiles() {
-    revisionFiles = [];
-    const revisionFileInput = document.getElementById('revisionFileInput');
-    if (revisionFileInput) {
-        revisionFileInput.value = '';
-    }
-    updateRevisionFilesPreview();
-}
-
-// Function: updateRevisionFilesPreview - Update the revision files preview
-function updateRevisionFilesPreview() {
-    const revisionFilesPreview = document.getElementById('revisionFilesPreview');
-    const revisionFilesContainer = document.getElementById('revisionFilesContainer');
-    const filesCount = document.querySelector('.files-count');
-
-    if (!revisionFilesPreview || !revisionFilesContainer) return;
-
-    if (revisionFiles.length > 0) {
-        revisionFilesPreview.style.display = 'block';
-        if (filesCount) {
-            filesCount.textContent = `${revisionFiles.length} file${revisionFiles.length > 1 ? 's' : ''} attached`;
-        }
-
-        revisionFilesContainer.innerHTML = revisionFiles.map((file, index) => `
-            <div class="file-item" data-index="${index}">
-                <div class="file-info">
-                    <div class="file-icon">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14,2 14,8 20,8"/>
-                        </svg>
-                    </div>
-                    <div class="file-details">
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${formatFileSize(file.size)}</div>
-                    </div>
-                </div>
-                <button type="button" class="remove-file-btn" onclick="removeRevisionFile(${index})">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-        `).join('');
-    } else {
-        revisionFilesPreview.style.display = 'none';
-    }
-}
-
-// Function: removeRevisionFile - Remove a specific revision file
-function removeRevisionFile(index) {
-    if (index >= 0 && index < revisionFiles.length) {
-        revisionFiles.splice(index, 1);
-        updateRevisionFilesPreview();
     }
 }
 

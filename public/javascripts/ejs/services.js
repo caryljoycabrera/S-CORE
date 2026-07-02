@@ -681,8 +681,6 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentRequestType = 'Service Request';
   let originalValues = {};
   let allRequestsData = [];
-  let chatFiles = [];
-  
   console.log('🔍 DOM Elements Check:', {
     detailModal: !!detailModal,
     updateConfirmationModal: !!updateConfirmationModal,
@@ -1278,9 +1276,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
     
-    // Initialize chat file features
-    initializeChatFileFeatures();
-    
     if (sendMessageBtn) {
       sendMessageBtn.addEventListener('click', sendMessage);
     }
@@ -1409,146 +1404,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Chat file management functions
-  function initializeChatFileFeatures() {
-    console.log('[Services] Initializing chat file features...');
-    const attachBtn = document.getElementById('chatAttachBtn');
-    const fileInput = document.getElementById('chatFileInput');
-    
-    if (attachBtn && fileInput) {
-      console.log('[Services] Attach button and file input found');
-      attachBtn.addEventListener('click', () => {
-        console.log('[Services] Attach button clicked');
-        fileInput.click();
-      });
-      
-      fileInput.addEventListener('change', handleChatFileSelect);
-    } else {
-      console.warn('[Services] Chat file elements not found:', { attachBtn: !!attachBtn, fileInput: !!fileInput });
-    }
-
-    const clearFilesBtn = document.getElementById('clearChatFiles');
-    if (clearFilesBtn) {
-      clearFilesBtn.addEventListener('click', clearAllChatFiles);
-    }
-    
-    // Toolbar formatting is now handled by inline script in services.ejs for contenteditable
-    // Legacy textarea support kept in applyChatFormat function
-  }
-
-  function handleChatFileSelect(event) {
-    console.log('[Services] File selection event triggered');
-    const files = Array.from(event.target.files);
-    console.log('[Services] Files selected:', files.length);
-    
-    files.forEach(file => {
-      const exists = chatFiles.some(f => f.name === file.name && f.size === file.size);
-      if (!exists) {
-        chatFiles.push(file);
-        console.log('[Services] Added file:', file.name, `(${(file.size / 1024).toFixed(2)} KB)`);
-      } else {
-        console.log('[Services] File already exists, skipping:', file.name);
-      }
-    });
-    
-    console.log('[Services] Total files in chatFiles array:', chatFiles.length);
-    updateChatFilesPreview();
-  }
-
-  function updateChatFilesPreview() {
-    console.log('[Services] Updating chat files preview...');
-    const preview = document.getElementById('chatFilesPreview');
-    const container = document.getElementById('chatFilesContainer');
-    const filesCount = preview ? preview.querySelector('.files-count') : null;
-    
-    if (!preview || !container) {
-      console.error('[Services] Preview elements not found:', { preview: !!preview, container: !!container });
-      return;
-    }
-    
-    if (chatFiles.length > 0) {
-      preview.style.display = 'block';
-      if (filesCount) {
-        filesCount.textContent = `${chatFiles.length} file(s) attached`;
-      }
-      
-      container.innerHTML = '';
-      chatFiles.forEach((file, index) => {
-        const fileItem = createChatFileItem(file, index);
-        container.appendChild(fileItem);
-      });
-    } else {
-      preview.style.display = 'none';
-    }
-  }
-
-  function createChatFileItem(file, index) {
-    const item = document.createElement('div');
-    item.className = 'revision-file-item';
-    
-    const fileSizeKB = (file.size / 1024).toFixed(1);
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    const displaySize = file.size > 1024 * 1024 ? `${fileSizeMB} MB` : `${fileSizeKB} KB`;
-    
-    const ext = file.name.split('.').pop().toLowerCase();
-    let iconColor = '#64748b';
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) iconColor = '#059669';
-    else if (ext === 'pdf') iconColor = '#dc2626';
-    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
-    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
-    
-    item.innerHTML = `
-      <div class="file-item-info">
-        <div class="file-item-icon" style="color: ${iconColor};">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="4" y="4" width="16" height="16" rx="2"/>
-            <line x1="8" y1="8" x2="16" y2="8"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-            <line x1="8" y1="16" x2="12" y2="16"/>
-          </svg>
-        </div>
-        <div class="file-item-details">
-          <div class="file-item-name" title="${file.name}">${file.name}</div>
-          <div class="file-item-size">${displaySize}</div>
-        </div>
-      </div>
-      <button type="button" class="remove-file-btn" onclick="removeChatFile(${index})" title="Remove file">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    `;
-    
-    return item;
-  }
-
-  window.removeChatFile = function(index) {
-    chatFiles.splice(index, 1);
-    updateChatFilesPreview();
-    
-    const fileInput = document.getElementById('chatFileInput');
-    if (fileInput) {
-      const dt = new DataTransfer();
-      chatFiles.forEach(file => dt.items.add(file));
-      fileInput.files = dt.files;
-    }
-  };
-
-  function clearAllChatFiles() {
-    console.log('[Services] Clearing all chat files');
-    chatFiles = [];
-    updateChatFilesPreview();
-    
-    const fileInput = document.getElementById('chatFileInput');
-    if (fileInput) {
-      fileInput.value = '';
-      console.log('[Services] File input cleared');
-    } else {
-      console.warn('[Services] File input element not found');
-    }
-  }
-
   function applyChatFormat(format) {
     console.log('[Services] Apply format:', format);
     const input = document.getElementById('messageInput');
@@ -1624,11 +1479,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('[Services] Format applied, new text length:', newText.length);
   }
 
-  // Clear attachment function (deprecated but kept for compatibility)
-  function clearAttachment() {
-    clearAllChatFiles();
-  }
-
   // Send message function
   async function sendMessage() {
     console.log('[Services] Send message triggered');
@@ -1656,11 +1506,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     console.log('[Services] Message content:', content || '(empty)');
-    console.log('[Services] Files to send:', chatFiles.length);
-    
-    if (!plainText && chatFiles.length === 0) {
-      console.warn('[Services] No content or files to send');
-      showNotification('Please enter a message or attach files', 'error');
+    if (!plainText) {
+      console.warn('[Services] No content to send');
+      showNotification('Please enter a message', 'error');
       return;
     }
     
@@ -1672,20 +1520,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('[Services] Sending message to request:', currentRequestId);
     try {
-      const formData = new FormData();
-      formData.append('content', content || '');
-      formData.append('senderRole', 'admin');
-      
-      // Add files if any
-      chatFiles.forEach((file, index) => {
-        console.log(`[Services] Appending file ${index + 1}:`, file.name, 'as chatFiles field');
-        formData.append('chatFiles', file);
-      });
-
       console.log('[Services] Sending POST request to:', `/api/conversation/${currentRequestId}/message`);
       const response = await fetch(`/api/conversation/${currentRequestId}/message`, {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content })
       });
       
       console.log('[Services] Response status:', response.status, response.statusText);
@@ -1732,7 +1573,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
       
-      clearAllChatFiles();
       // Reload conversation to show new message
       openConversation(currentRequestId);
     } catch (error) {
@@ -2207,9 +2047,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate admin form
     populateAdminForm(rowData);
     
-    // Handle file preview
-    populateFilePreview(rowData);
-
+    // Clear file-preview (legacy); links shown in detailsLinksSection below
+    const filePreviewEl = document.getElementById('file-preview');
+    if (filePreviewEl) filePreviewEl.innerHTML = '';
+    
+    // Populate links section
+    const linksSection = document.getElementById('detailsLinksSection');
+    const linksContainer = document.getElementById('detailLinks');
+    if (linksSection && linksContainer) {
+      let linksArray = [];
+      try {
+        linksArray = JSON.parse(rowData.links || '[]');
+      } catch (e) {
+        if (rowData.links && typeof rowData.links === 'string') {
+          linksArray = rowData.links.split(',').filter(Boolean);
+        }
+      }
+      if (linksArray.length > 0) {
+        linksSection.style.display = 'block';
+        linksContainer.innerHTML = linksArray.map(link => `
+          <div class="link-item" style="margin-bottom:0.5rem;">
+            <a href="${link}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;word-break:break-all;text-decoration:underline;">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:4px;vertical-align:middle;">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              ${link}
+            </a>
+          </div>
+        `).join('');
+      } else {
+        linksSection.style.display = 'none';
+      }
+    }
     // Show/hide additional file upload toggle based on status
     // Hide for terminal statuses: Approved, Completed, Rejected, Archived
     const additionalFileToggleSection = document.getElementById('additionalFileToggleSection');

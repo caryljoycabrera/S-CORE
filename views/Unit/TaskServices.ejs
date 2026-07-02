@@ -235,6 +235,7 @@
                         data-status="<%= status %>"
                         data-awaiting-resubmission="false"
                         data-files='<%= JSON.stringify(files) %>'
+                        data-links='<%= JSON.stringify(request.links || []) %>'
                         data-deliverables='<%= JSON.stringify(deliverables) %>'
                         data-deadline="<%= deadline %>"
                         data-service-type="<%= serviceType.replace(/"/g, '&quot;') %>">
@@ -356,12 +357,18 @@
             <div class="unit-description-content" id="modalDescription">Loading description...</div>
           </div>
 
-          <div id="filesSection" class="unit-info-card" style="display: none;">
+          <div id="linksSection" class="unit-info-card" style="display: none;">
             <div class="unit-card-header">
-              <h3>Attached Files</h3>
-              <p class="unit-card-subtitle">Files submitted with this request</p>
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                Reference Links
+              </h3>
+              <p class="unit-card-subtitle">Links submitted by the requestor</p>
             </div>
-            <div id="modalFiles"></div>
+            <div id="modalLinks"></div>
           </div>
 
           <div id="deliverablesSection" class="unit-info-card" style="display: none;">
@@ -431,19 +438,17 @@
             </div>
 
             <div class="unit-upload-section">
-              <label class="unit-form-label"><strong>Upload Deliverables</strong><small>Select one or more files to upload</small></label>
-              <div class="unit-file-upload-group" id="unitFileUploadGroup">
-                <input type="file" id="deliverablesFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" class="unit-file-input-hidden">
-                <button type="button" class="unit-browse-file-btn" onclick="event.stopPropagation(); document.getElementById('deliverablesFileInput').click()">Choose Files</button>
-                <div class="unit-upload-progress" id="unitUploadProgress"><div class="unit-progress-bar"><div class="unit-progress-fill" id="unitProgressFill"></div></div></div>
-              </div>
-              <div class="unit-file-management" id="unitFileManagement" style="display: none;">
-                <div class="unit-file-actions">
-                  <span id="unitFilesCount">0 files selected</span>
-                  <button type="button" class="unit-clear-all-btn" id="unitClearAllBtn">Clear All Files</button>
+              <div class="links-input-section" id="deliverablesLinksSection">
+                <label class="unit-form-label">Deliverable Links:</label>
+                <div id="deliverablesLinksContainer" class="links-container">
+                  <div class="link-input-row">
+                    <input type="url" class="unit-input link-input" placeholder="Enter deliverable URL (e.g., Google Drive, Dropbox)">
+                    <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none;">×</button>
+                  </div>
                 </div>
-                <div class="unit-selected-files-container" id="unitSelectedFiles"></div>
-                <div class="unit-files-summary" id="unitFilesSummary">Total size: 0 MB</div>
+                <button type="button" class="unit-secondary-btn" onclick="addDeliverableLinkInput()">
+                  + Add Another Link
+                </button>
               </div>
               <button id="uploadDeliverablesBtn" disabled class="unit-btn unit-btn-upload" style="margin-top: 1rem;">Submit Deliverables for Review</button>
             </div>
@@ -656,28 +661,7 @@
               </svg>
             </button>
             <div class="toolbar-divider"></div>
-            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
-            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
             <span class="toolbar-hint">Format your message</span>
-          </div>
-
-          <!-- Attached Files Preview (Below Toolbar) -->
-          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
-            <div class="files-preview-header">
-              <span class="files-count">0 file(s) attached</span>
-              <button type="button" id="clearChatFiles" class="clear-files-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Clear all
-              </button>
-            </div>
-            <div id="chatFilesContainer" class="files-container"></div>
           </div>
 
           <!-- Message Input -->
@@ -871,6 +855,16 @@
 
   <div id="pdfViewerModal" class="modal" style="display:none;"></div>
 
+  <script>
+    function addDeliverableLinkInput() {
+      const container = document.getElementById('deliverablesLinksContainer');
+      if (!container) return;
+      const row = document.createElement('div');
+      row.className = 'link-input-row';
+      row.innerHTML = '<input type=\"url\" class=\"unit-input link-input\" placeholder=\"Enter deliverable URL (e.g., Google Drive, Dropbox)\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\">×</button>';
+      container.appendChild(row);
+    }
+  </script>
   <script src="/javascripts/ejs/Unit/alltasks.js"></script>
   <script>document.addEventListener('DOMContentLoaded', function(){ /* alltasks.js will wire the service UI */ });</script>
   <script src="/javascripts/status-handler.js"></script>

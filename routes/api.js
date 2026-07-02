@@ -725,16 +725,15 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
  * POST /api/conversation/:requestId/message
  * API endpoint to send a new message to a conversation
  */
-router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, upload.array('chatFiles', 10), async (req, res) => {
+router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
     const { content } = req.body;
     const user = await User.findById(req.session.userId);
-    const uploadedFiles = req.files || [];
 
-    // Allow empty content if there's a file attachment
-    if ((!content || content.trim() === '') && uploadedFiles.length === 0) {
-      return res.status(400).json({ error: 'Message content or file attachment is required' });
+    // Message content is required
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ error: 'Message content is required' });
     }
 
     // Check if it's a service request or approval request
@@ -791,21 +790,10 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, up
     const newMessage = {
       senderId: req.session.userId,
       senderRole: user.role,
-      content: content ? content.trim() : '',
+      content: content.trim(),
       timestamp: new Date(),
       isRead: false
     };
-
-    // Add file attachments information if files were uploaded
-    if (uploadedFiles.length > 0) {
-      newMessage.attachments = uploadedFiles.map(file => ({
-        filename: file.filename,
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        path: `/uploads/${file.filename}`
-      }));
-    }
 
     conversation.messages.push(newMessage);
     await conversation.save();
@@ -828,7 +816,7 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, up
               conversation._id,
               user._id,
               unitMember._id,
-              content || 'Sent a file',
+              content,
               requestId,
               serviceRequest ? 'service' : 'approval'
             ).catch(err => console.error('Unit notification error:', err))
@@ -843,7 +831,7 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, up
             conversation._id,
             user._id,
             targetRequest.userId,
-            content || 'Sent a file',
+            content,
             requestId,
             serviceRequest ? 'service' : 'approval'
           ).catch(err => console.error('User notification error:', err))

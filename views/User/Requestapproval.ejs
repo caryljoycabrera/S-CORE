@@ -337,6 +337,35 @@
   box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1);
 }
 
+/* Links Display Section (details modal) */
+.links-section {
+  margin-top: 1.5rem;
+}
+.links-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+.links-list .link-item {
+  padding: 0.5rem 0.75rem;
+}
+.links-list .link-item a {
+  color: #0891b2;
+  text-decoration: none;
+  word-break: break-all;
+}
+.links-list .link-item a:hover {
+  text-decoration: underline;
+  color: #065f46;
+}
+.links-list .link-item::before {
+  content: '🔗';
+  font-size: 0.875rem;
+}
+
 .remove-link-btn {
   background: transparent;
   color: #6b7280;
@@ -800,245 +829,7 @@
   font-weight: bold;
 }
 
-/* Checkbox Container */
 
-/* Enhanced File Upload */
-.file-upload-group {
-  position: relative;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  background: linear-gradient(135deg, #fefefe, #f8fafc);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.file-upload-group:hover {
-  border-color: var(--primary-green);
-  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(64, 139, 78, 0.1);
-}
-
-.file-upload-group.has-file {
-  border-color: var(--primary-green);
-  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
-  border-style: solid;
-}
-
-.file-upload-group.dragover {
-  border-color: var(--primary-green);
-  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
-  box-shadow: 0 0 0 4px rgba(64, 139, 78, 0.1);
-  transform: scale(1.02);
-}
-
-.upload-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 1rem;
-  color: #64748b;
-  transition: color 0.3s ease;
-}
-
-.file-upload-group:hover .upload-icon,
-.file-upload-group.dragover .upload-icon {
-  color: var(--primary-green);
-}
-
-.upload-text {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #334155;
-  margin-bottom: 0.5rem;
-}
-
-.upload-subtext {
-  font-size: 0.9rem;
-  color: #64748b;
-  margin-bottom: 1rem;
-}
-
-.file-input-hidden {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-  z-index: 1;
-}
-
-.browse-file-btn {
-  background: linear-gradient(135deg, var(--primary-green), #20c997);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  position: relative;
-  z-index: 2;
-}
-
-.browse-file-btn:hover {
-  background: linear-gradient(135deg, #157347, var(--primary-green));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
-}
-
-/* File Management */
-.file-management {
-  margin-top: 1rem;
-  width: 100%;
-}
-
-.file-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  background: #f8fafc;
-  border-radius: 8px;
-}
-
-.clear-all-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-}
-
-.clear-all-btn:hover {
-  background: #dc2626;
-  transform: translateY(-1px);
-}
-
-.clear-all-btn:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.selected-files-container {
-  margin-top: 1rem;
-  max-height: 300px;
-  overflow-y: auto;
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-  transition: all 0.3s ease;
-}
-
-.file-item:last-child {
-  border-bottom: none;
-}
-
-.file-item:hover {
-  background: #f8fafc;
-}
-
-.file-item-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.file-item-details {
-  flex: 1;
-}
-
-.file-item-name {
-  margin: 0 0 0.25rem 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #334155;
-  word-break: break-all;
-}
-
-.file-item-size {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.file-delete-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 0.375rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: bold;
-  min-width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.file-delete-btn:hover {
-  background: #dc2626;
-  transform: scale(1.1);
-}
-
-.files-summary {
-  padding: 0.75rem;
-  background: #f0f9ff;
-  border-top: 1px solid #e2e8f0;
-  font-size: 0.875rem;
-  color: #0369a1;
-  text-align: center;
-  font-weight: 600;
-}
-
-.upload-progress {
-  margin-top: 0.5rem;
-  display: none;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--primary-green);
-  transition: width 0.3s ease;
-  width: 0%;
-}
 
 /* Enhanced Request Details Modal Styles */
 .details-modal-body {
@@ -1261,127 +1052,7 @@
   background: linear-gradient(135deg, #157347, var(--primary-green));
 }
 
-/* Enhanced file preview styles */
-.enhanced-file-preview {
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  border-radius: 16px;
-  padding: 2rem;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1.5rem;
-}
 
-.enhanced-file-preview h3 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--primary-green);
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #e2e8f0;
-  position: relative;
-}
-
-.enhanced-file-preview h3::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 60px;
-  height: 2px;
-  background: var(--primary-green);
-  border-radius: 1px;
-}
-
-.file-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-.enhanced-file-item {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  border: 2px solid #f1f5f9;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.enhanced-file-item:hover {
-  border-color: var(--primary-green);
-  box-shadow: 0 8px 30px rgba(64, 139, 78, 0.1);
-  transform: translateY(-2px);
-}
-
-.file-header-enhanced {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.file-info-enhanced {
-  flex: 1;
-}
-
-.file-name-enhanced {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 1rem;
-  margin: 0;
-  word-break: break-word;
-  line-height: 1.4;
-}
-
-.file-type-enhanced {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-top: 0.25rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.file-preview-container {
-  margin: 1rem 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #f8fafc;
-}
-
-.download-btn-enhanced {
-  background: linear-gradient(135deg, var(--primary-green), #20c997);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
-  cursor: pointer;
-  min-width: 0;
-  flex: 1;
-  text-align: center;
-  height: 44px;
-  box-sizing: border-box;
-}
-
-.download-btn-enhanced:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
-  color: white;
-  text-decoration: none;
-  background: linear-gradient(135deg, #157347, var(--primary-green));
-}
 
 /* Modal Actions */
 .modal-actions {
@@ -1646,14 +1317,7 @@
     width: 100%;
   }
   
-  .file-actions {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
 
-  .file-actions button {
-    width: 100%;
-  }
 
   /* Details section */
   .details-content {
@@ -1686,48 +1350,7 @@
     font-size: 0.875rem;
   }
 
-  /* File preview */
-  .file-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .enhanced-file-preview {
-    padding: 1rem;
-  }
 
-  .enhanced-file-item {
-    padding: 0.75rem;
-  }
-
-  .file-name-enhanced {
-    font-size: 0.875rem;
-  }
-
-  /* File upload */
-  .file-upload-group {
-    padding: 1.5rem 1rem;
-  }
-
-  .upload-text {
-    font-size: 0.875rem;
-  }
-
-  .upload-subtext {
-    font-size: 0.75rem;
-  }
-
-  .selected-files-container {
-    max-height: 200px;
-  }
-
-  .file-item {
-    padding: 0.5rem;
-  }
-
-  .file-item-name {
-    font-size: 0.875rem;
-  }
 
   /* Links section */
   .link-item {
@@ -1841,8 +1464,7 @@
   }
 
   /* Buttons */
-  .chat-btn-enhanced,
-  .download-btn-enhanced {
+  .chat-btn-enhanced {
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
   }
@@ -1904,7 +1526,6 @@
 
   .details-section,
   .description-section,
-  .enhanced-file-preview,
   .requestor-revision-section,
   .requestor-resubmission-section {
     padding: 0.75rem;
@@ -1969,23 +1590,7 @@
   background: #94a3b8;
 }
 
-.selected-files-container::-webkit-scrollbar {
-  width: 6px;
-}
 
-.selected-files-container::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-.selected-files-container::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.selected-files-container::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
 
 .form-control {
   width: 100%;
@@ -2328,60 +1933,7 @@ option:hover {
   border-radius: 8px;
 }
 
-.form-group input[type="file"] {
-  width: 100%;
-  padding: 20px;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  color: #475569;
-  font-weight: 500;
-  text-align: center;
-}
 
-.form-group input[type="file"]:hover {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border-style: solid;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-
-.form-group input[type="file"]:focus {
-  outline: none;
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.form-group input[type="file"]::file-selector-button {
-  padding: 10px 20px;
-  margin-right: 12px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.form-group input[type="file"]::file-selector-button:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
-}
-
-.file-list {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
 
 .resubmission-actions {
   display: flex;
@@ -2858,6 +2410,7 @@ option:hover {
     data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
     data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
     data-description="<%= request.description %>"
+    data-links='<%= JSON.stringify(request.links || []) %>'
     data-file="<%= request.file ? request.file : '' %>"
     data-files="<%= request.files ? request.files.join(',') : '' %>"
     data-allowadditionalfileupload="<%= request.allowAdditionalFileUpload ? 'true' : 'false' %>">
@@ -2924,7 +2477,7 @@ option:hover {
         </button>
       </div>
       <div class="modal-body">
-        <form class="modal-form" action="/submit-request-approval" method="POST" enctype="multipart/form-data" id="requestForm" onsubmit="return handleFormSubmit(event)">
+        <form class="modal-form" action="/submit-request-approval" method="POST" id="requestForm" onsubmit="return handleFormSubmit(event)">
           <!-- Row 1: Title and Organization -->
           <div class="form-group">
             <label for="projectTitle">Project/Event Title:</label>
@@ -2971,64 +2524,7 @@ option:hover {
             <% } %>
           </div>
 
-          <!-- Row 2: File Upload (Required for approval requests) -->
-          <div class="form-group full-width">
-            <label for="upload">Upload Files:</label>
-            <div class="file-upload-group" id="approvalFileUploadGroup">
-              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7,10 12,15 17,10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <p class="upload-text">Drop your files here</p>
-              <p class="upload-subtext">or click to browse from your device</p>
-              <input type="file" id="upload" name="upload" class="file-input-hidden" multiple required accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" />
-              <button type="button" class="browse-file-btn" onclick="event.stopPropagation(); document.getElementById('upload').click()">
-                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                </svg>
-                Choose Files
-              </button>
-              
-              <!-- Upload Progress -->
-              <div class="upload-progress" id="approvalUploadProgress">
-                <div class="progress-bar">
-                  <div class="progress-fill" id="approvalProgressFill"></div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- File Management Section -->
-            <div class="file-management" id="approvalFileManagement" style="display: none;">
-              <div class="file-actions">
-                <span id="approvalFilesCount">0 files selected</span>
-                <button type="button" class="clear-all-btn" id="approvalClearAllBtn" onclick="clearAllApprovalFiles()">
-                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="3" y="6" width="18" height="14" rx="2"/>
-                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                    <line x1="1" y1="6" x2="23" y2="6"/>
-                    <line x1="10" y1="11" x2="10" y2="17"/>
-                    <line x1="14" y1="11" x2="14" y2="17"/>
-                  </svg>
-                  Clear All Files
-                </button>
-              </div>
-              
-              <!-- Selected Files Container -->
-              <div class="selected-files-container" id="approvalSelectedFiles">
-                <!-- Files will be added here dynamically -->
-              </div>
-              
-              <div class="files-summary" id="approvalFilesSummary">
-                Total size: 0 MB
-              </div>
-            </div>
-            
-            <small style="color: #dc2626; margin-top: 0.5rem;">* Required: Please attach relevant documents (Max 10MB per file)</small>
-          </div>
-
-          <!-- Row 3: Request Type -->
+          <!-- Row 2: Request Type -->
           <div class="form-group full-width">
             <label for="specificRequestType">Select Request Type:</label>
             <div style="display: flex; gap: 1rem; align-items: flex-start;">
@@ -3262,8 +2758,11 @@ option:hover {
             <div class="description-content" id="detailDescription"></div>
           </div>
 
-          <!-- Files Section -->
-          <div id="file-preview"></div>
+          <!-- Links Section -->
+          <div class="links-section" id="detailsLinksSection" style="display: none;">
+            <h3>Links</h3>
+            <div id="detailLinks" class="links-list"></div>
+          </div>
 
           <!-- Chat Section -->
           <div class="chat-section" id="chatButtonSectionLeft" style="display: none;">
@@ -3402,29 +2901,6 @@ option:hover {
                 </small>
               </div>
 
-              <!-- File Upload -->
-              <div class="form-group">
-                <label for="resubmissionFiles">
-                  <strong>Updated Files</strong>
-                  <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional - Upload revised documents)</span>
-                </label>
-                <div class="file-upload-area" style="border: 2px dashed #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" 
-                     onclick="document.getElementById('resubmissionFiles').click()"
-                     ondragover="event.preventDefault(); this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';"
-                     ondragleave="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';"
-                     ondrop="handleResubmissionFileDrop(event)">
-                  <svg width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 0.5rem;">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                  <p style="color: #64748b; margin: 0 0 0.25rem 0; font-size: 0.875rem;">Drop files here or click to browse</p>
-                  <small style="color: #94a3b8; font-size: 0.75rem;">PDF, DOC, DOCX, XLS, XLSX, images (Max 10MB each)</small>
-                </div>
-                <input type="file" id="resubmissionFiles" name="resubmissionFiles" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" style="display: none;">
-                <div id="resubmissionFileList" class="file-list" style="margin-top: 1rem;"></div>
-              </div>
-
               <!-- Links Section -->
               <div class="form-group">
                 <label>
@@ -3497,24 +2973,22 @@ option:hover {
                 <input type="hidden" id="serviceRevisionNotes" name="serviceRevisionNotes">
               </div>
 
-              <!-- File Upload -->
+              <!-- Links Section -->
               <div class="form-group">
-                <label for="serviceRevisionFiles">
-                  <strong>Attach Reference Files</strong>
-                  <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional)</span>
+                <label>
+                  <strong>Reference Links</strong>
+                  <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional - Add reference links)</span>
                 </label>
-                <div class="file-upload-area" style="border: 2px dashed #e2e8f0; border-radius: 8px; padding: 2rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" 
-                     onclick="document.getElementById('serviceRevisionFiles').click()">
-                  <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem;">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                <div id="revisionLinksContainer" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+                <button type="button" onclick="addRevisionLink()" class="add-link-btn" style="margin-top: 0.75rem; background: #f1f5f9; border: 1px dashed #94a3b8; padding: 0.625rem 1rem; border-radius: 6px; color: #475569; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;"
+                        onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#64748b';" 
+                        onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8';">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
-                  <p style="color: #64748b; margin: 0 0 0.5rem 0;">Drop files here or click to browse</p>
-                  <small style="color: #94a3b8;">PDF, DOC, DOCX, XLS, XLSX, images (Max 10MB each)</small>
-                </div>
-                <input type="file" id="serviceRevisionFiles" name="serviceRevisionFiles" multiple 
-                       accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" 
-                       style="display: none;">
-                <div id="serviceRevisionFileList" class="file-list" style="margin-top: 1rem;"></div>
+                  Add Link
+                </button>
               </div>
 
               <!-- Submit Button -->
@@ -3574,20 +3048,6 @@ option:hover {
         <!-- Message Input Area -->
         <div class="unit-message-input-area">
           <!-- Attached Files Preview (Above Toolbar) -->
-          <div id="chatFilesPreview" class="chat-files-preview" style="display: none;">
-            <div class="files-preview-header">
-              <span class="files-count">0 file(s) attached</span>
-              <button type="button" id="clearChatFiles" class="clear-files-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                Clear all
-              </button>
-            </div>
-            <div id="chatFilesContainer" class="files-container"></div>
-          </div>
-
           <!-- Text Formatting Toolbar -->
           <div class="unit-format-toolbar">
             <button type="button" class="format-btn" data-chat-format="bold" title="Bold">
@@ -3610,12 +3070,6 @@ option:hover {
               </svg>
             </button>
             <div class="toolbar-divider"></div>
-            <button type="button" id="chatAttachBtn" class="format-btn" title="Attach Files">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
-            <input type="file" id="chatFileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.xls,.xlsx,.txt" style="display: none;">
             <span class="toolbar-hint">Format your message</span>
           </div>
 
@@ -4237,10 +3691,6 @@ function getLinkValues() {
   const statusCheckboxes = statusDropdown ? statusDropdown.querySelectorAll('input[type="checkbox"]') : [];
   const allStatusCheckbox = statusDropdown ? statusDropdown.querySelector('input[value="all"]') : null;
 
-  // Multiple file upload variables
-  let selectedApprovalFiles = [];
-  let selectedAdditionalFiles = []; // Additional files for revision requests
-  const maxFileSize = 10 * 1024 * 1024; // 10MB per file
   let currentConversationId = null;
   let currentRequestType = null;
 
@@ -4378,31 +3828,11 @@ async function submitFormData() {
   }
 
   try {
-    const formData = new FormData();
-
-    // Add all form fields
-    const fields = approvalForm.elements;
-    for (let field of fields) {
-      if (field.name && field.name !== 'upload') { // Skip file input, we'll handle it separately
-        formData.append(field.name, field.value);
-      }
-    }
-
-    // Explicitly add selected files (don't rely on the input field being updated)
-    if (selectedApprovalFiles && selectedApprovalFiles.length > 0) {
-      console.log('selectedApprovalFiles before FormData:', selectedApprovalFiles);
-      selectedApprovalFiles.forEach((file, index) => {
-        console.log('File details:', file, typeof file, file instanceof File, file.name, file.size, file.type);
-      });
-      console.log('Adding', selectedApprovalFiles.length, 'files to FormData:');
-      selectedApprovalFiles.forEach((file, index) => {
-        console.log(`File ${index}: ${file.name} (${file.size} bytes, ${file.type})`);
-        formData.append('upload', file);
-      });
-      console.log('FormData after adding files:', formData);
-    } else {
-      console.log('No files in selectedApprovalFiles array');
-    }
+    const formData = new FormData(approvalForm);
+    const links = getLinkValues();
+    links.forEach(link => {
+      formData.append('links', link);
+    });
 
     const response = await fetch('/submit-request-approval', {
       method: 'POST',
@@ -4997,14 +4427,6 @@ async function submitFormData() {
     event.preventDefault(); // Always prevent default
     console.log('Form submit intercepted for validation and confirmation.');
 
-    // Validate files
-    if (selectedApprovalFiles.length === 0) {
-      alert('Please upload at least one file. Files are required for approval requests.');
-      return false;
-    }
-
-    console.log('Validation passed. Showing confirmation modal.');
-
     // Show confirmation modal
     const modal = document.getElementById('submissionConfirmationModal');
     if (modal) {
@@ -5035,42 +4457,17 @@ async function submitFormData() {
     }
 
     try {
-      const formData = new FormData();
-
-      // Add all form fields
-      const fields = form.elements;
-      for (let field of fields) {
-        if (field.name && field.type !== 'file') { // Skip file inputs, we'll handle them separately
-          formData.append(field.name, field.value);
-        }
+      const formObj = {};
+      const formElements = form.elements;
+      for (let el of formElements) {
+        if (el.name) formObj[el.name] = el.value;
       }
-
-      // Add links
-      const links = getLinkValues();
-      links.forEach(link => {
-        formData.append('links', link);
-      });
-
-      console.log('selectedApprovalFiles before FormData:', selectedApprovalFiles);
-      selectedApprovalFiles.forEach((file, index) => {
-        console.log('File details:', file, typeof file, file instanceof File, file.name, file.size, file.type);
-      });
-
-      // Explicitly add selected files (don't rely on file input being updated)
-      if (selectedApprovalFiles && selectedApprovalFiles.length > 0) {
-        console.log('Adding', selectedApprovalFiles.length, 'files to FormData:');
-        selectedApprovalFiles.forEach((file, index) => {
-          console.log(`File ${index}: ${file.name} (${file.size} bytes, ${file.type})`);
-          formData.append('upload', file);
-        });
-        console.log('FormData after adding files:', formData);
-      }
-
-      console.log('Submitting to server...');
+      formObj.links = getLinkValues();
 
       fetch('/submit-request-approval', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formObj)
       })
       .then(response => {
         console.log('Response status:', response.status);
@@ -5154,10 +4551,6 @@ document.querySelectorAll('.request-row').forEach(row => {
       window.markNotificationReadForRequest(requestId, requestType);
     }
     
-    // Reset additional files when opening a new request
-    selectedAdditionalFiles = [];
-    updateAdditionalFileDisplay();
-
     // Get all detail elements
     const detailTitle = document.getElementById("detailTitle");
     const detailOrganization = document.getElementById("detailOrganization");
@@ -5184,35 +4577,23 @@ document.querySelectorAll('.request-row').forEach(row => {
         detailStatus.innerText = status;
         detailStatusBadge.className = `status-badge-large ${status.toLowerCase().replace(/\s+/g, '-')}`;
 
-        // Show additional files section only for "for revision" status where additional file upload is allowed
-        const additionalFilesSection = document.getElementById('additional-files-section');
-        const allowAdditionalFileUpload = row.dataset.allowadditionalfileupload === 'true';
-
-        if (additionalFilesSection) {
-          if (status.toLowerCase() === 'for revision' && allowAdditionalFileUpload) {
-            additionalFilesSection.style.display = 'block';
-          } else {
-            additionalFilesSection.style.display = 'none';
-          }
-        }
       }
 
-      // Enhanced file preview
-      const file = row.dataset.file;
-      const filesData = row.dataset.files;
-      const previewContainer = document.getElementById('file-preview');
-
-      if (previewContainer) {
-        previewContainer.innerHTML = '';
-
-        let allFiles = [];
-        if (filesData && filesData.trim() !== '') {
-          allFiles = filesData.split(',').map(f => f.trim()).filter(Boolean);
-        } else if (file && file.trim() !== '') {
-          allFiles = [file.trim()];
+      // Populate links
+      const detailLinksSection = document.getElementById('detailsLinksSection');
+      const detailLinks = document.getElementById('detailLinks');
+      if (detailLinksSection && detailLinks) {
+        let links;
+        try { links = row.dataset.links ? JSON.parse(row.dataset.links) : []; }
+        catch(e) { links = []; }
+        if (links && links.length > 0) {
+          detailLinksSection.style.display = 'block';
+          detailLinks.innerHTML = links.map(l =>
+            `<div class="link-item"><a href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></div>`
+          ).join('');
+        } else {
+          detailLinksSection.style.display = 'none';
         }
-
-        createEnhancedFilePreview(allFiles, previewContainer);
       }
 
       // Right column chat + revision layout
@@ -5342,7 +4723,6 @@ if (approvalForm) {
     }
 
     // Validation
-    const fileInput = document.getElementById('upload');
     const specificRequestType = document.getElementById('specificRequestType');
     const projectTitle = document.getElementById('projectTitle');
     const description = document.getElementById('description');
@@ -5357,13 +4737,6 @@ if (approvalForm) {
     if (!description || !description.value.trim()) {
       alert('Please enter a description.');
       if (descriptionQuill) descriptionQuill.focus();
-      return;
-    }
-
-    // Validate required files
-    if (selectedApprovalFiles.length === 0) {
-      alert('Please upload at least one file. Files are required for approval requests.');
-      console.log('Validation failed: No files selected');
       return;
     }
 
@@ -5387,395 +4760,7 @@ if (approvalForm) {
 } else {
   console.error('Request form (#requestForm) not found!');
 }
-  // ===== APPROVAL FILE UPLOAD FUNCTIONS =====
-  
-  // Handle file selection
-  function handleApprovalFileSelection(files) {
-    console.log('handleApprovalFileSelection called with:', files.length, 'files');
-    let validFiles = [];
-    let errors = [];
-
-    Array.from(files).forEach(file => {
-      // Check file size
-      if (file.size > maxFileSize) {
-        errors.push(`${file.name}: File too large (max 10MB)`);
-        return;
-      }
-
-      // Check for duplicates
-      if (selectedApprovalFiles.some(f => f.name === file.name && f.size === file.size)) {
-        errors.push(`${file.name}: File already selected`);
-        return;
-      }
-
-      validFiles.push(file);
-    });
-
-    // Show errors if any
-    if (errors.length > 0) {
-      alert('Some files could not be added:\n' + errors.join('\n'));
-    }
-
-    // Add valid files with progress simulation
-    if (validFiles.length > 0) {
-      simulateApprovalUploadProgress(validFiles);
-    }
-  }
-
-  // Simulate upload progress
-  function simulateApprovalUploadProgress(files) {
-    const progressContainer = document.getElementById('approvalUploadProgress');
-    const progressFill = document.getElementById('approvalProgressFill');
-    
-    if (progressContainer && progressFill) {
-      progressContainer.style.display = 'block';
-      let progress = 0;
-      
-      const interval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          
-          // Add files after progress complete
-          selectedApprovalFiles = selectedApprovalFiles.concat(files);
-          updateApprovalFileDisplay();
-          updateApprovalFormData();
-          
-          // Hide progress after delay
-          setTimeout(() => {
-            progressContainer.style.display = 'none';
-            progressFill.style.width = '0%';
-          }, 500);
-        }
-        progressFill.style.width = progress + '%';
-      }, 100);
-    } else {
-      // Fallback if no progress bar
-      selectedApprovalFiles = selectedApprovalFiles.concat(files);
-      updateApprovalFileDisplay();
-      updateApprovalFormData();
-    }
-  }
-
-  // Update file display
-  function updateApprovalFileDisplay() {
-    const fileManagement = document.getElementById('approvalFileManagement');
-    const filesContainer = document.getElementById('approvalSelectedFiles');
-    const filesCount = document.getElementById('approvalFilesCount');
-    const filesSummary = document.getElementById('approvalFilesSummary');
-    const uploadGroup = document.getElementById('approvalFileUploadGroup');
-    const clearAllBtn = document.getElementById('approvalClearAllBtn');
-
-    if (selectedApprovalFiles.length === 0) {
-      fileManagement.style.display = 'none';
-      uploadGroup.classList.remove('has-file');
-      return;
-    }
-
-    fileManagement.style.display = 'block';
-    uploadGroup.classList.add('has-file');
-
-    // Update files count
-    filesCount.textContent = `${selectedApprovalFiles.length} file(s) selected`;
-
-    // Clear container
-    filesContainer.innerHTML = '';
-
-    // Add each file
-    selectedApprovalFiles.forEach((file, index) => {
-      const fileItem = createApprovalFileItem(file, index);
-      filesContainer.appendChild(fileItem);
-    });
-
-    // Update summary
-    const totalSize = selectedApprovalFiles.reduce((sum, file) => sum + file.size, 0);
-    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-    filesSummary.textContent = `Total size: ${totalSizeMB} MB`;
-
-    // Enable/disable clear all button
-    if (clearAllBtn) clearAllBtn.disabled = selectedApprovalFiles.length === 0;
-  }
-
-  // Create file item element
-  function createApprovalFileItem(file, index) {
-    const fileItem = document.createElement('div');
-    fileItem.className = 'file-item';
-    fileItem.setAttribute('data-index', index);
-    
-    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-    
-    fileItem.innerHTML = `
-      <div class="file-item-info">
-        <svg class="file-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14,2 14,8 20,8"></polyline>
-        </svg>
-        <div class="file-item-details">
-          <div class="file-item-name">${file.name}</div>
-          <div class="file-item-size">${sizeInMB} MB • ${file.type || 'Unknown type'}</div>
-        </div>
-      </div>
-      <button type="button" class="file-delete-btn" onclick="removeApprovalFile(${index})" title="Remove file">
-        ✕
-      </button>
-    `;
-    
-    return fileItem;
-  }
-
-  // Remove individual file
-  function removeApprovalFile(index) {
-    if (index >= 0 && index < selectedApprovalFiles.length) {
-      const fileName = selectedApprovalFiles[index].name;
-      if (confirm(`Remove "${fileName}" from upload list?`)) {
-        selectedApprovalFiles.splice(index, 1);
-        updateApprovalFileDisplay();
-        updateApprovalFormData();
-      }
-    }
-  }
-
-  // Clear all files
-  function clearAllApprovalFiles() {
-    if (selectedApprovalFiles.length === 0) return;
-    
-    if (confirm(`Are you sure you want to remove all ${selectedApprovalFiles.length} selected files?`)) {
-      selectedApprovalFiles = [];
-      updateApprovalFileDisplay();
-      updateApprovalFormData();
-    }
-  }
-
-  // Update form data with proper validation
-  function updateApprovalFormData() {
-    const fileInput = document.getElementById('upload');
-    if (fileInput) {
-      const dt = new DataTransfer();
-      selectedApprovalFiles.forEach(file => dt.items.add(file));
-      fileInput.files = dt.files;
-      
-      console.log('Form updated with files:', selectedApprovalFiles.map(f => f.name)); // Debug log
-      console.log('FileList length:', fileInput.files.length); // Debug log
-    }
-  }
-
-  // Enhanced file preview function
-  function createEnhancedFilePreview(allFiles, previewContainer) {
-    if (!previewContainer) return;
-    
-    if (allFiles.length > 0) {
-      const enhancedPreview = document.createElement('div');
-      enhancedPreview.className = 'enhanced-file-preview';
-      
-      let fileGridHTML = `
-        <h3>
-          <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
-          </svg>
-          Attached Files (${allFiles.length})
-        </h3>
-        <div class="file-grid">
-      `;
-      
-      allFiles.forEach((file, index) => {
-        if (file && file.trim()) {
-          const fileUrl = `/uploads/${file.trim()}`;
-          const ext = file.split('.').pop().toLowerCase();
-          const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
-          const isPDF = ext === 'pdf';
-          const isDoc = ['doc', 'docx'].includes(ext);
-          const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
-          const isText = ['txt', 'rtf'].includes(ext);
-          
-          // Determine file icon and preview
-          let fileIcon = `
-            <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="4" y="4" width="16" height="16" rx="2"/>
-              <line x1="8" y1="8" x2="16" y2="8"/>
-              <line x1="8" y1="12" x2="16" y2="12"/>
-              <line x1="8" y1="16" x2="12" y2="16"/>
-            </svg>
-          `;
-
-          if (isImage) {
-            fileIcon = `
-              <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <circle cx="8" cy="8" r="2"/>
-                <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-              </svg>
-            `;
-          } else if (isPDF) {
-            fileIcon = `
-              <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="4" y="2" width="16" height="20" rx="2"/>
-                <path d="M8 6h8M8 10h8M8 14h4"/>
-              </svg>
-            `;
-          } else if (isDoc) {
-            fileIcon = `
-              <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="4" y="2" width="16" height="20" rx="2"/>
-                <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
-              </svg>
-            `;
-          } else if (isSpreadsheet) {
-            fileIcon = `
-              <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <rect x="7" y="10" width="2" height="7"/>
-                <rect x="11" y="7" width="2" height="10"/>
-                <rect x="15" y="13" width="2" height="4"/>
-              </svg>
-            `;
-          } else if (isText) {
-            fileIcon = `
-              <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="4" y="2" width="16" height="20" rx="2"/>
-                <line x1="8" y1="8" x2="16" y2="8"/>
-                <line x1="8" y1="12" x2="16" y2="12"/>
-              </svg>
-            `;
-          }
-          
-          fileGridHTML += `
-            <div class="enhanced-file-item">
-              <div class="file-header-enhanced">
-                <div style="color: #059669;">${fileIcon}</div>
-                <div class="file-info-enhanced">
-                  <div class="file-name-enhanced" title="${file}">${file}</div>
-                  <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
-                </div>
-              </div>
-              
-              <div class="file-preview-container">
-          `;
-          
-          if (isImage) {
-            fileGridHTML += `
-              <img src="${fileUrl}" 
-                   alt="Preview of ${file}" 
-                   style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; cursor: pointer;"
-                   onclick="openImagePreview('${fileUrl}', '${file}')"
-                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-              <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
-                <div style="font-size: 2rem; margin-bottom: 0.5rem;">
-                  <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    <circle cx="8" cy="8" r="2"/>
-                    <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-                  </svg>
-                </div>
-                <p>Image Preview Not Available</p>
-                <small>Click download to view</small>
-              </div>
-            `;
-          } else if (isPDF) {
-            fileGridHTML += `
-              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                  <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="4" y="2" width="16" height="20" rx="2"/>
-                    <path d="M8 6h8M8 10h8M8 14h4"/>
-                  </svg>
-                </div>
-                <p><strong>PDF Document</strong></p>
-                <small>Click download to view</small>
-              </div>
-            `;
-          } else if (isDoc) {
-            fileGridHTML += `
-              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                  <svg width="48" height="48" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="4" y="2" width="16" height="20" rx="2"/>
-                    <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
-                  </svg>
-                </div>
-                <p><strong>Word Document</strong></p>
-                <small>Click download to view</small>
-              </div>
-            `;
-          } else if (isSpreadsheet) {
-            fileGridHTML += `
-              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                  <svg width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    <rect x="7" y="10" width="2" height="7"/>
-                    <rect x="11" y="7" width="2" height="10"/>
-                    <rect x="15" y="13" width="2" height="4"/>
-                  </svg>
-                </div>
-                <p><strong>Spreadsheet</strong></p>
-                <small>Click download to view</small>
-              </div>
-            `;
-          } else {
-            fileGridHTML += `
-              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">${fileIcon}</div>
-                <p><strong>Document File</strong></p>
-                <small>Click download to view</small>
-              </div>
-            `;
-          }
-          
-          fileGridHTML += `
-            </div>
-            
-            <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
-              <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced">
-                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                </svg>
-                Download
-              </a>
-              ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6;">
-                <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                  <ellipse cx="12" cy="12" rx="9" ry="6"/>
-                  <circle cx="12" cy="12" r="2"/>
-                </svg>
-                View
-              </button>` : ''}
-            </div>
-          </div>
-          `;
-        }
-      });
-      
-      fileGridHTML += `</div>`;
-      enhancedPreview.innerHTML = fileGridHTML;
-      previewContainer.appendChild(enhancedPreview);
-    } else {
-      previewContainer.innerHTML = `
-        <div class="enhanced-file-preview">
-          <h3>
-            <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
-            </svg>
-            Attached Files
-          </h3>
-          <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
-            <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">
-              <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="3" y="7" width="18" height="11" rx="2"/>
-                <path d="M3 7l9 6 9-6"/>
-              </svg>
-            </div>
-            <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
-              No Files Attached
-            </div>
-            <div class="no-files-subtitle" style="font-size: 0.95rem; color: #64748b; line-height: 1.5;">
-              This request was submitted without any file attachments.<br>
-              <small>Files may have been uploaded but are not accessible.</small>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-  }
+  // File preview removed - links only
 
   // Enhanced Auto-open modal if openModalId is in URL
   document.addEventListener('DOMContentLoaded', function() {
@@ -5843,464 +4828,18 @@ if (approvalForm) {
       }, 1000);
     }
 
-    // File upload setup
-    const fileInput = document.getElementById('upload');
-    const uploadGroup = document.getElementById('approvalFileUploadGroup');
-
-    if (fileInput && uploadGroup) {
-      uploadGroup.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadGroup.classList.add('dragover');
-      });
-
-      uploadGroup.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        uploadGroup.classList.remove('dragover');
-      });
-
-      uploadGroup.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadGroup.classList.remove('dragover');
-        
-        const files = Array.from(e.dataTransfer.files);
-        handleApprovalFileSelection(files);
-      });
-
-      fileInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        handleApprovalFileSelection(files);
-      });
-    }
-
-    // Additional file upload setup (for revision requests)
-    const additionalFileInput = document.getElementById('additional-files-upload');
-    const additionalUploadGroup = document.getElementById('additional-file-upload-group');
-
-    if (additionalFileInput && additionalUploadGroup) {
-      additionalUploadGroup.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        additionalUploadGroup.classList.add('dragover');
-      });
-
-      additionalUploadGroup.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        additionalUploadGroup.classList.remove('dragover');
-      });
-
-      additionalUploadGroup.addEventListener('drop', (e) => {
-        e.preventDefault();
-        additionalUploadGroup.classList.remove('dragover');
-
-        const files = Array.from(e.dataTransfer.files);
-        handleAdditionalFileSelection(files);
-      });
-
-      additionalFileInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        handleAdditionalFileSelection(files);
-      });
-    }
   });
 
-  // Add image preview modal function
-  window.openImagePreview = function(imageUrl, fileName) {
-    // Create modal overlay
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 99999;
-      cursor: pointer;
-    `;
-    
-    // Create image container
-    const container = document.createElement('div');
-    container.style.cssText = `
-      max-width: 90vw;
-      max-height: 90vh;
-      position: relative;
-    `;
-    
-    // Create image
-    const img = document.createElement('img');
-    img.src = imageUrl;
-    img.alt = fileName;
-    img.style.cssText = `
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 8px;
-    `;
-    
-    // Create close button
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '✕';
-    closeBtn.style.cssText = `
-      position: absolute;
-      top: -40px;
-      right: 0;
-      background: rgba(255, 255, 255, 0.9);
-      border: none;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-    `;
-    
-    // Assemble modal
-    container.appendChild(img);
-    container.appendChild(closeBtn);
-    overlay.appendChild(container);
-    document.body.appendChild(overlay);
-    
-    // Close handlers
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        document.body.removeChild(overlay);
-        document.body.style.overflow = '';
-      }
-    });
-    
-    closeBtn.addEventListener('click', () => {
-      document.body.removeChild(overlay);
-      document.body.style.overflow = '';
-    });
-    
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
-  };
+  // Image preview removed - links only
 
-  // ===== ADDITIONAL FILES FOR REVISION FUNCTIONS =====
-
-  // Handle additional file selection for revisions
-  function handleAdditionalFileSelection(files) {
-    console.log('handleAdditionalFileSelection called with:', files.length, 'files');
-    let validFiles = [];
-    let errors = [];
-
-    Array.from(files).forEach(file => {
-      // Check file size
-      if (file.size > maxFileSize) {
-        errors.push(`${file.name}: File too large (max 10MB)`);
-        return;
-      }
-
-      // Check for duplicates
-      if (selectedAdditionalFiles.some(f => f.name === file.name && f.size === file.size)) {
-        errors.push(`${file.name}: File already selected`);
-        return;
-      }
-
-      validFiles.push(file);
-    });
-
-    // Show errors if any
-    if (errors.length > 0) {
-      alert('Some files could not be added:\n' + errors.join('\n'));
-    }
-
-    // Add valid files with progress simulation
-    if (validFiles.length > 0) {
-      simulateAdditionalUploadProgress(validFiles);
-    }
-  }
-
-  // Simulate upload progress for additional files
-  function simulateAdditionalUploadProgress(files) {
-    const progressContainer = document.getElementById('additional-uploadProgress');
-    const progressFill = document.getElementById('additional-progressFill');
-
-    // Create progress elements if they don't exist
-    if (!progressContainer) {
-      const uploadGroup = document.getElementById('additional-file-upload-group');
-      if (uploadGroup) {
-        const progressDiv = document.createElement('div');
-        progressDiv.id = 'additional-uploadProgress';
-        progressDiv.style.cssText = 'margin-top: 0.5rem; display: block;';
-        progressDiv.innerHTML = `
-          <div id='additional-progressFill' style='width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;'>
-            <div style='height: 100%; background: var(--primary-green); transition: width 0.3s ease; width: 0%;'></div>
-          </div>
-        `;
-        uploadGroup.appendChild(progressDiv);
-      }
-    }
-
-    const fillEl = document.getElementById('additional-progressFill');
-    if (fillEl) {
-      document.getElementById('additional-uploadProgress').style.display = 'block';
-
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 30;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-
-          // Add files after progress complete
-          selectedAdditionalFiles = selectedAdditionalFiles.concat(files);
-          updateAdditionalFileDisplay();
-
-          // Hide progress after delay
-          setTimeout(() => {
-            const container = document.getElementById('additional-uploadProgress');
-            if (container) container.style.display = 'none';
-            const fill = document.getElementById('additional-progressFill');
-            if (fill) fill.style.width = '0%';
-          }, 500);
-        }
-        const fill = document.getElementById('additional-progressFill');
-        if (fill) fill.style.width = progress + '%';
-      }, 100);
-    } else {
-      // Fallback if no progress bar
-      selectedAdditionalFiles = selectedAdditionalFiles.concat(files);
-      updateAdditionalFileDisplay();
-    }
-  }
-
-  // Update additional file display
-  function updateAdditionalFileDisplay() {
-    const fileManagement = document.getElementById('additional-file-management');
-    const filesContainer = document.getElementById('additional-selected-files');
-    const filesCount = document.getElementById('additional-files-count');
-    const filesSummary = document.getElementById('additional-files-summary');
-    const uploadGroup = document.getElementById('additional-file-upload-group');
-    const clearAllBtn = document.getElementById('additional-clear-all-btn');
-
-    if (selectedAdditionalFiles.length === 0) {
-      if (fileManagement) fileManagement.style.display = 'none';
-      if (uploadGroup) uploadGroup.classList.remove('has-file');
-      return;
-    }
-
-    if (fileManagement) fileManagement.style.display = 'block';
-    if (uploadGroup) uploadGroup.classList.add('has-file');
-
-    // Update files count
-    if (filesCount) filesCount.textContent = `${selectedAdditionalFiles.length} additional file(s) selected`;
-
-    // Clear container
-    if (filesContainer) filesContainer.innerHTML = '';
-
-    // Add each file
-    selectedAdditionalFiles.forEach((file, index) => {
-      const fileItem = createAdditionalFileItem(file, index);
-      if (filesContainer) filesContainer.appendChild(fileItem);
-    });
-
-    // Update summary
-    if (filesSummary) {
-      const totalSize = selectedAdditionalFiles.reduce((sum, file) => sum + file.size, 0);
-      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-      filesSummary.textContent = `Total additional size: ${totalSizeMB} MB`;
-    }
-
-    // Enable/disable clear all button
-    if (clearAllBtn) clearAllBtn.disabled = selectedAdditionalFiles.length === 0;
-  }
-
-  // Create additional file item element
-  function createAdditionalFileItem(file, index) {
-    const fileItem = document.createElement('div');
-    fileItem.className = 'file-item';
-    fileItem.setAttribute('data-index', index);
-
-    const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-
-    fileItem.innerHTML = `
-      <div class="file-item-info">
-        <svg class="file-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14,2 14,8 20,8"></polyline>
-        </svg>
-        <div class="file-item-details">
-          <div class="file-item-name">${file.name}</div>
-          <div class="file-item-size">${sizeInMB} MB • ${file.type || 'Unknown type'}</div>
-        </div>
-      </div>
-      <button type="button" class="file-delete-btn" onclick="removeAdditionalFile(${index})" title="Remove additional file">
-        ✕
-      </button>
-    `;
-
-    return fileItem;
-  }
-
-  // Remove individual additional file
-  function removeAdditionalFile(index) {
-    if (index >= 0 && index < selectedAdditionalFiles.length) {
-      const fileName = selectedAdditionalFiles[index].name;
-      if (confirm(`Remove "${fileName}" from additional files?`)) {
-        selectedAdditionalFiles.splice(index, 1);
-        updateAdditionalFileDisplay();
-      }
-    }
-  }
-
-  // Clear all additional files
-  function clearAllAdditionalFiles() {
-    if (selectedAdditionalFiles.length === 0) return;
-
-    if (confirm(`Are you sure you want to remove all ${selectedAdditionalFiles.length} additional files?`)) {
-      selectedAdditionalFiles = [];
-      updateAdditionalFileDisplay();
-    }
-  }
-
-  // Submit additional files function
-  function submitAdditionalFiles() {
-    if (!currentConversationId) {
-      alert('Unable to determine which request to update. Please try again.');
-      return;
-    }
-
-    if (selectedAdditionalFiles.length === 0) {
-      alert('Please select at least one additional file to upload.');
-      return;
-    }
-
-    // Add loading indicator to button
-    const submitBtn = document.querySelector('#additional-files-section button[onclick="submitAdditionalFiles()"]');
-    const originalText = submitBtn ? submitBtn.innerHTML : 'Upload Additional Files';
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '⏳ Uploading...';
-    }
-
-    try {
-      const formData = new FormData();
-
-      // Add selected additional files
-      selectedAdditionalFiles.forEach((file, index) => {
-        console.log('Adding additional file:', file.name, '(' + (file.size / 1024).toFixed(1) + ' KB)');
-        formData.append('additionalFiles', file);
-      });
-
-      console.log('Submitting additional files to:', `/add-files/${currentConversationId}`);
-
-      fetch(`/add-files/${currentConversationId}`, {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(result => {
-        console.log('Additional files submission result:', result);
-
-        if (result.success) {
-          console.log('Additional files uploaded successfully:', result.message);
-
-          // Show success feedback overlay
-          const successOverlay = document.createElement('div');
-          successOverlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            @keyframes successFadeIn {
-              from { opacity: 0; transform: scale(0.9) translateY(20px); }
-              to { opacity: 1; transform: scale(1) translateY(0); }
-            }
-          `;
-
-          successOverlay.innerHTML = `
-            <div style="
-              background: white;
-              padding: 2rem 3rem;
-              border-radius: 16px;
-              box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-              text-align: center;
-              animation: successFadeIn 0.5s ease-out;
-            ">
-              <div style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;">
-                ✓
-              </div>
-              <h3 style="color: #059669; margin: 0 0 0.5rem 0; font-size: 1.5rem;">Upload Successful!</h3>
-              <p style="color: #64748b; margin: 0; font-size: 1rem;">
-                ${result.newFiles ? result.newFiles.length : 'Additional'} file(s) uploaded successfully.
-              </p>
-              <div style="margin-top: 1.5rem; color: #9ca3af; font-size: 0.9rem;">
-                Refreshing page...
-              </div>
-            </div>
-          `;
-
-          document.body.appendChild(successOverlay);
-
-          // Redirect after 3 seconds
-          setTimeout(() => {
-            window.location.href = `/request-approvals?openModalId=${currentConversationId}`;
-          }, 3000);
-
-        } else {
-          console.error('Additional files submission failed:', result.message);
-          alert(result.message || 'Failed to upload additional files. Please try again.');
-        }
-
-        // Re-enable submit button
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalText;
-        }
-      })
-      .catch(error => {
-        console.error('Additional files submission error:', error);
-        alert('Network error while uploading files. Please try again.');
-
-        // Re-enable submit button
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalText;
-        }
-      });
-    } catch (error) {
-      console.error('Error preparing additional files FormData:', error);
-      alert('Error preparing files for upload. Please try again.');
-
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-      }
-    }
-  }
-
-  // Make additional functions global for onclick handlers
+  // Make functions global for onclick handlers
   window.toggleDropdown = toggleDropdown;
-  window.removeApprovalFile = removeApprovalFile;
-  window.clearAllApprovalFiles = clearAllApprovalFiles;
-  window.removeAdditionalFile = removeAdditionalFile;
-  window.clearAllAdditionalFiles = clearAllAdditionalFiles;
 
   // Initialize status display on page load
   updateStatusDisplay();
   
   // Set initial filter state
   filterRequests();
-  
-  // Reset file upload state on page load
-  selectedApprovalFiles = [];
-  
-  // Clear any existing file displays
-  const fileManagement = document.getElementById('approvalFileManagement');
-  const uploadGroup = document.getElementById('approvalFileUploadGroup');
-  
-  if (fileManagement) fileManagement.style.display = 'none';
-  if (uploadGroup) uploadGroup.classList.remove('has-file');
   
   console.log('Requestapproval.ejs initialization complete');
   console.log('Current user: carebear1919');
@@ -7393,31 +5932,6 @@ function createRevisionFileCard(file) {
                 <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
                 <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
             </div>
-            <div class="revision-file-actions">
-                ${isImage ? `
-                <button onclick="viewImage('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                </button>
-                ` : ''}
-                ${isPDF ? `
-                <button onclick="viewPdf('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                </button>
-                ` : ''}
-                <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                </a>
-            </div>
         </div>
     `;
 }
@@ -7427,7 +5941,6 @@ async function handleResubmission() {
     if (!resubmissionQuill || !currentConversationId) return;
     
     const responseText = resubmissionQuill.root.innerHTML;
-    const filesInput = document.getElementById('resubmissionFiles');
     
     // Validate response text
     if (!responseText || responseText.trim() === '<p><br></p>' || responseText.trim() === '') {
@@ -7439,20 +5952,43 @@ async function handleResubmission() {
         return;
     }
     
-    const formData = new FormData();
-    formData.append('resubmissionNotes', responseText);
+    // Collect links from link inputs
+    const linkInputs = document.querySelectorAll('#resubmissionLinksContainer input[type="url"]');
+    const links = [];
+    let hasInvalidLink = false;
     
-    // Add files if any
-    if (filesInput && filesInput.files.length > 0) {
-        for (let i = 0; i < filesInput.files.length; i++) {
-            formData.append('additionalFiles', filesInput.files[i]);
+    linkInputs.forEach(input => {
+        const value = input.value.trim();
+        if (value !== '') {
+            if (!validateLinkInput(input)) {
+                hasInvalidLink = true;
+            } else {
+                links.push(value);
+            }
         }
+    });
+    
+    if (hasInvalidLink) {
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'Please fix invalid links before submitting.');
+        } else {
+            alert('Please fix invalid links before submitting.');
+        }
+        return;
     }
+    
+    const bodyData = {
+        resubmissionNotes: responseText,
+        additionalLinks: links
+    };
     
     try {
         const response = await fetch(`/resubmit-approval-request/${currentConversationId}`, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyData)
         });
         
         if (!response.ok) {
@@ -7470,7 +6006,8 @@ async function handleResubmission() {
             
             // Clear form
             resubmissionQuill.setContents([]);
-            if (filesInput) filesInput.value = '';
+            const linksContainer = document.getElementById('resubmissionLinksContainer');
+            if (linksContainer) linksContainer.innerHTML = '';
             
             // Hide the resubmission form immediately
             const resubmissionSection = document.getElementById('resubmissionFormSection');
@@ -7847,18 +6384,44 @@ async function handleServiceRevision() {
     }
     return;
   }
-  const filesInput = document.getElementById('serviceRevisionFiles');
-  const formData = new FormData();
-  formData.append('revisionNotes', revisionText);
-  if (filesInput && filesInput.files.length > 0) {
-    for (let i = 0; i < filesInput.files.length; i++) {
-      formData.append('revisionFiles', filesInput.files[i]);
+  
+  // Collect links from link inputs
+  const linkInputs = document.querySelectorAll('#revisionLinksContainer input[type="url"]');
+  const links = [];
+  let hasInvalidLink = false;
+  
+  linkInputs.forEach(input => {
+    const value = input.value.trim();
+    if (value !== '') {
+      if (!validateRevisionLink(input)) {
+        hasInvalidLink = true;
+      } else {
+        links.push(value);
+      }
     }
+  });
+  
+  if (hasInvalidLink) {
+    if (typeof window.showAlert === 'function') {
+      window.showAlert('error', 'Please fix invalid links before submitting.');
+    } else {
+      alert('Please fix invalid links before submitting.');
+    }
+    return;
   }
+  
+  const bodyData = {
+    revisionNotes: revisionText,
+    revisionLinks: links
+  };
+  
   try {
     const response = await fetch(`/user/service/request-revision/${currentConversationId}`, {
       method: 'POST',
-      body: formData
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(bodyData)
     });
     const result = await response.json();
     if (result.success) {
@@ -7870,7 +6433,8 @@ async function handleServiceRevision() {
       
       // Clear form
       serviceRevisionQuill.setContents([]);
-      if (filesInput) filesInput.value = '';
+      const linksContainer = document.getElementById('revisionLinksContainer');
+      if (linksContainer) linksContainer.innerHTML = '';
       
       // Reload revision history
       await loadServiceRevisionHistory(currentConversationId);
@@ -8087,8 +6651,145 @@ function getErrorRevisionMessage() {
   `;
 }
 
+// ===== LINK MANAGEMENT FUNCTIONS =====
+let resubmissionLinkCounter = 0;
 
+function addResubmissionLink() {
+    const container = document.getElementById('resubmissionLinksContainer');
+    if (!container) return;
+    
+    const linkId = `resubmissionLink_${resubmissionLinkCounter++}`;
+    const linkItem = document.createElement('div');
+    linkItem.className = 'link-item';
+    linkItem.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+    linkItem.innerHTML = `
+        <input type="url" 
+               id="${linkId}" 
+               placeholder="https://example.com" 
+               class="resubmission-link-input"
+               style="flex: 1; padding: 0.625rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem;"
+               pattern="https?://.*" 
+               title="Please enter a valid URL starting with http:// or https://">
+        <button type="button" 
+                onclick="removeResubmissionLink(this)" 
+                style="padding: 0.625rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.background='#fecaca'" 
+                onmouseout="this.style.background='#fee2e2'">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    container.appendChild(linkItem);
+    
+    const input = linkItem.querySelector('input');
+    if (input) {
+        input.addEventListener('blur', function() {
+            validateLinkInput(this);
+        });
+    }
+}
 
+function validateLinkInput(input) {
+    const value = input.value.trim();
+    if (value === '') {
+        input.style.borderColor = '#e2e8f0';
+        input.style.background = 'white';
+        return true;
+    }
+    
+    const urlPattern = /^https?:\/\/.+/i;
+    if (!urlPattern.test(value)) {
+        input.style.borderColor = '#ef4444';
+        input.style.background = '#fef2f2';
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'Please enter a valid URL starting with http:// or https://');
+        } else {
+            alert('Please enter a valid URL starting with http:// or https://');
+        }
+        return false;
+    }
+    
+    input.style.borderColor = '#10b981';
+    input.style.background = '#f0fdf4';
+    return true;
+}
+
+function removeResubmissionLink(button) {
+    const linkItem = button.closest('.link-item');
+    if (linkItem) linkItem.remove();
+}
+
+// ===== REVISION LINK MANAGEMENT FUNCTIONS =====
+let revisionLinkCounter = 0;
+
+function addRevisionLink() {
+    const container = document.getElementById('revisionLinksContainer');
+    if (!container) return;
+    
+    const linkId = `revisionLink_${revisionLinkCounter++}`;
+    const linkItem = document.createElement('div');
+    linkItem.className = 'link-item';
+    linkItem.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+    linkItem.innerHTML = `
+        <input type="url" 
+               id="${linkId}" 
+               placeholder="https://example.com" 
+               class="revision-link-input"
+               style="flex: 1; padding: 0.625rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem;"
+               pattern="https?://.*" 
+               title="Please enter a valid URL starting with http:// or https://">
+        <button type="button" 
+                onclick="removeRevisionLink(this)" 
+                style="padding: 0.625rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.background='#fecaca'" 
+                onmouseout="this.style.background='#fee2e2'">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </button>
+    `;
+    container.appendChild(linkItem);
+    
+    const input = linkItem.querySelector('input');
+    if (input) {
+        input.addEventListener('blur', function() {
+            validateRevisionLink(this);
+        });
+    }
+}
+
+function validateRevisionLink(input) {
+    const value = input.value.trim();
+    if (value === '') {
+        input.style.borderColor = '#e2e8f0';
+        input.style.background = 'white';
+        return true;
+    }
+    
+    const urlPattern = /^https?:\/\/.+/i;
+    if (!urlPattern.test(value)) {
+        input.style.borderColor = '#ef4444';
+        input.style.background = '#fef2f2';
+        if (typeof window.showAlert === 'function') {
+            window.showAlert('error', 'Please enter a valid URL starting with http:// or https://');
+        } else {
+            alert('Please enter a valid URL starting with http:// or https://');
+        }
+        return false;
+    }
+    
+    input.style.borderColor = '#10b981';
+    input.style.background = '#f0fdf4';
+    return true;
+}
+
+function removeRevisionLink(button) {
+    const linkItem = button.closest('.link-item');
+    if (linkItem) linkItem.remove();
+}
         
 </script>
 </div>

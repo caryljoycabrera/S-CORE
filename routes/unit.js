@@ -1504,7 +1504,7 @@ router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
  * POST /unit/task/revise/:id
  * Request revision for an approval request task (with file upload support)
  */
-router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('revisionFiles', 10), async (req, res) => {
+router.post('/unit/task/revise/:id', requireUnit, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     const taskId = req.params.id;
@@ -1533,8 +1533,8 @@ router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('rev
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
-    // Get uploaded file names
-    const revisionFiles = req.files ? req.files.map(file => file.filename) : [];
+    // Get links from body
+    const links = req.body.links;
 
     // Add revision to history
     if (!task.revisionHistory) {
@@ -1545,7 +1545,8 @@ router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('rev
       requestedBy: user._id,
       requestedAt: new Date(),
       revisionNotes: revisionNotes,
-      revisionFiles: revisionFiles,
+      revisionFiles: [],
+      links: links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : [],
       status: 'pending'
     });
 
@@ -1577,8 +1578,7 @@ router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('rev
 
     res.json({ 
       success: true, 
-      message: 'Revision request sent successfully. A thread has been created for the requestor to respond.',
-      filesUploaded: revisionFiles.length
+      message: 'Revision request sent successfully. A thread has been created for the requestor to respond.'
     });
   } catch (error) {
     console.error('Error requesting revision:', error);
@@ -1590,7 +1590,7 @@ router.post('/unit/task/revise/:id', requireUnit, uploadConfig.upload.array('rev
  * POST /unit/task/upload/:id
  * Upload deliverable files for a service request
  */
-router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('deliverables', 20), async (req, res) => {
+router.post('/unit/task/upload/:id', requireUnit, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     const taskId = req.params.id;
@@ -1607,18 +1607,15 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
-    // Get uploaded file names
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: 'No files uploaded' });
-    }
-
-    const filenames = req.files.map(file => file.filename);
+    // Get links from body
+    const links = req.body.links;
+    const linkCount = links ? (Array.isArray(links) ? links.length : (typeof links === 'string' ? 1 : 0)) : 0;
 
     // Add deliverables to the task
     if (!task.deliverables) {
       task.deliverables = [];
     }
-    task.deliverables.push(...filenames);
+    task.deliverables.push(...(links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : []));
     
     // Update status to "For Checking" instead of completed
     task.status = 'For Checking';
@@ -1631,7 +1628,8 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
       requestedBy: user._id,
       requestedAt: new Date(),
       revisionNotes: `Deliverables uploaded by ${user.fName} ${user.lName} (${user.unitTeam} Unit)${task.revisionCount > 0 ? ` - Revision ${task.revisionCount}` : ''}`,
-      deliverableFiles: filenames,
+      deliverableFiles: [],
+      links: links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : [],
       status: 'for_checking',
       revisionType: 'deliverable_submitted',
       revisionNumber: task.revisionCount // Track which revision cycle these deliverables belong to
@@ -1657,7 +1655,7 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
 
     // Notify admins that unit uploaded deliverables
     try {
-      await notificationService.notifyAdminUnitDeliverable(task._id, user._id, task, filenames.length);
+      await notificationService.notifyAdminUnitDeliverable(task._id, user._id, task, linkCount);
     } catch (notifError) {
       console.error('Error sending admin notification:', notifError);
     }
@@ -1665,7 +1663,7 @@ router.post('/unit/task/upload/:id', requireUnit, uploadConfig.upload.array('del
     res.json({ 
       success: true, 
       message: 'Deliverables uploaded successfully. Status changed to "For Checking".',
-      filesUploaded: filenames.length 
+      linksUploaded: linkCount
     });
   } catch (error) {
     console.error('Error uploading deliverables:', error);
