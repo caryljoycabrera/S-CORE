@@ -101,6 +101,45 @@ function escapeHtml(str) {
 }
 
 /**
+ * Sanitizes rich-text HTML (e.g. Quill editor output) for safe storage/rendering.
+ * Strips every tag except a small allowlist, strips all attributes except
+ * `href` on `<a>`, and only keeps http(s) links (blocks javascript:/data: etc).
+ *
+ * @param {string} html - Raw HTML to sanitize
+ * @returns {string} Sanitized HTML safe to store and render via innerHTML
+ */
+function sanitizeRichText(html) {
+  if (typeof html !== 'string') {
+    return '';
+  }
+
+  const allowedTags = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ol', 'ul', 'li', 'a']);
+
+  return html.replace(/<\/?([a-zA-Z0-9]+)([^>]*)>/g, (match, rawTag, attrs) => {
+    const tag = rawTag.toLowerCase();
+    if (!allowedTags.has(tag)) {
+      return '';
+    }
+
+    const isClosing = match.startsWith('</');
+    if (isClosing) {
+      return `</${tag}>`;
+    }
+
+    if (tag === 'a') {
+      const hrefMatch = attrs.match(/href\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i);
+      const href = hrefMatch ? (hrefMatch[2] || hrefMatch[3] || hrefMatch[4] || '') : '';
+      if (/^https?:\/\//i.test(href)) {
+        return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">`;
+      }
+      return '<a>';
+    }
+
+    return `<${tag}>`;
+  });
+}
+
+/**
  * Validates and sanitizes email format
  *
  * @param {string} email - The email to validate
@@ -345,6 +384,7 @@ module.exports = {
   sanitizeObject,
   sanitizeString,
   escapeHtml,
+  sanitizeRichText,
   sanitizeEmail,
   sanitizeUsername,
   sanitizeName,

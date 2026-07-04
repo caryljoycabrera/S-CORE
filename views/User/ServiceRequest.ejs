@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/stylesheets/quill-custom.css">
   <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <script src="/javascripts/alert-handler.js"></script>
-  <script src="/javascripts/ejs/User/user-conversation.js"></script>
+  <script src="/javascripts/ejs/User/user-conversation.js?v=20260703"></script>
 
 <style>
 /* ========================================
@@ -77,12 +77,13 @@
 
 /* Filter section - proper spacing from edges */
 .filter-section {
-  background: white;
-  border: none;
-  border-radius: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--primary-green);
+  border-radius: 12px;
   padding: 1.25rem;
   margin: 0 3rem 1.5rem 3rem; /* Match admin margins */
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: visible !important;
   position: relative;
   z-index: 1;
@@ -355,20 +356,6 @@
 }
 
 /* Links Display Section (details modal) */
-.links-section {
-  margin-top: 1.5rem;
-}
-.links-section h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e2e8f0;
-}
-.links-list .link-item {
-  padding: 0.5rem 0.75rem;
-}
 .links-list .link-item a {
   color: #0891b2;
   text-decoration: none;
@@ -377,10 +364,6 @@
 .links-list .link-item a:hover {
   text-decoration: underline;
   color: #065f46;
-}
-.links-list .link-item::before {
-  content: '🔗';
-  font-size: 0.875rem;
 }
 
 .remove-link-btn {
@@ -424,6 +407,127 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
   background: linear-gradient(135deg, #157347, var(--primary-green));
+}
+
+/* Revision/resubmission "add a link" composer */
+.revision-links-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.revision-links-card:focus-within {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.revision-links-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #0f172a;
+  font-size: 0.9375rem;
+}
+
+.revision-links-card-header svg {
+  color: #0891b2;
+  flex-shrink: 0;
+}
+
+.revision-links-card-sub {
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.revision-links-card .links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Each link entry reads as a distinct tinted "chip" card, not a bare input */
+.link-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #ecfeff, #f0fdfa);
+  border: 1.5px solid #a5f3fc;
+  border-radius: 10px;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(8, 145, 178, 0.06);
+}
+
+.link-entry-row:focus-within {
+  background: white;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+.link-entry-row.valid {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.link-entry-row.invalid {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.link-entry-row::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230891b2' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.link-entry-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.9375rem;
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  outline: none;
+}
+
+.link-entry-input::placeholder {
+  color: #64748b;
+}
+
+.link-entry-remove-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.link-entry-remove-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.08);
 }
 
 .form-actions {
@@ -930,7 +1034,243 @@
   font-style: italic;
 }
 
+/* Enhanced File Upload */
+.file-upload-group {
+  position: relative;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #fefefe, #f8fafc);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
+.file-upload-group:hover {
+  border-color: var(--primary-green);
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(64, 139, 78, 0.1);
+}
+
+.file-upload-group.has-file {
+  border-color: var(--primary-green);
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  border-style: solid;
+}
+
+.file-upload-group.dragover {
+  border-color: var(--primary-green);
+  background: linear-gradient(135deg, #f0fdf4, #f7fee7);
+  box-shadow: 0 0 0 4px rgba(64, 139, 78, 0.1);
+  transform: scale(1.02);
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.file-upload-group:hover .upload-icon,
+.file-upload-group.dragover .upload-icon {
+  color: var(--primary-green);
+}
+
+.upload-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.upload-subtext {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.file-input-hidden {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.browse-file-btn {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.browse-file-btn:hover {
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+}
+
+/* File Management */
+.file-management {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.file-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.clear-all-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.clear-all-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.clear-all-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.selected-files-container {
+  margin-top: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  transition: all 0.3s ease;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-item:hover {
+  background: #f8fafc;
+}
+
+.file-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.file-item-details {
+  flex: 1;
+}
+
+.file-item-name {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  word-break: break-all;
+}
+
+.file-item-size {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.file-delete-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-delete-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.files-summary {
+  padding: 0.75rem;
+  background: #f0f9ff;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #0369a1;
+  text-align: center;
+  font-weight: 600;
+}
+
+.upload-progress {
+  margin-top: 0.5rem;
+  display: none;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary-green);
+  transition: width 0.3s ease;
+  width: 0%;
+}
 
 /* Enhanced Request Details Modal Styles */
 .details-modal-body {
@@ -1143,7 +1483,6 @@
   background: linear-gradient(135deg, #f0fdf4, #f7fee7);
   border-radius: 16px;
   border: 1px solid #bbf7d0;
-  width: 45rem;
 }
 
 .chat-btn-enhanced {
@@ -1167,6 +1506,135 @@
 .chat-btn-enhanced:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 30px rgba(64, 139, 78, 0.3);
+  background: linear-gradient(135deg, #157347, var(--primary-green));
+}
+
+/* Enhanced file preview styles */
+.enhanced-file-preview {
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.enhanced-file-preview h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.enhanced-file-preview h3::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: var(--primary-green);
+  border-radius: 1px;
+}
+
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.enhanced-file-item {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid #f1f5f9;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.enhanced-file-item:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 8px 30px rgba(64, 139, 78, 0.1);
+  transform: translateY(-2px);
+}
+
+.file-header-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.file-icon-enhanced {
+  width: 28px;
+  height: 28px;
+  color: var(--primary-green);
+  flex-shrink: 0;
+}
+
+.file-info-enhanced {
+  flex: 1;
+}
+
+.file-name-enhanced {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1rem;
+  margin: 0;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.file-type-enhanced {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-preview-container {
+  margin: 1rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.download-btn-enhanced {
+  background: linear-gradient(135deg, var(--primary-green), #20c997);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
+  cursor: pointer;
+  min-width: 0;
+  flex: 1;
+  text-align: center;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.download-btn-enhanced:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
+  color: white;
+  text-decoration: none;
   background: linear-gradient(135deg, #157347, var(--primary-green));
 }
 
@@ -1417,6 +1885,15 @@
     width: 100%;
   }
   
+  .file-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .file-actions button {
+    width: 100%;
+  }
+
   /* Details section */
   .details-content {
     padding: 0.75rem;
@@ -1446,6 +1923,61 @@
 
   .details-value {
     font-size: 0.875rem;
+  }
+
+  /* File preview */
+  .file-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .enhanced-file-preview {
+    padding: 1rem;
+  }
+
+  .enhanced-file-item {
+    padding: 0.75rem;
+  }
+
+  .file-name-enhanced {
+    font-size: 0.875rem;
+  }
+
+  .file-icon-enhanced {
+    font-size: 1.5rem;
+  }
+
+  /* File upload */
+  .file-upload-group {
+    padding: 1.5rem 1rem;
+  }
+
+  .upload-icon {
+    font-size: 2rem;
+  }
+
+  .upload-text {
+    font-size: 0.875rem;
+  }
+
+  .upload-subtext {
+    font-size: 0.75rem;
+  }
+
+  .selected-files-container {
+    max-height: 200px;
+  }
+
+  .file-item {
+    padding: 0.5rem;
+  }
+
+  .file-item-name {
+    font-size: 0.875rem;
+  }
+
+  .file-item-size {
+    font-size: 0.75rem;
   }
 
   /* Links section */
@@ -1577,7 +2109,13 @@
   }
 
   /* Buttons */
-  .chat-btn-enhanced {
+  .chat-btn-enhanced,
+  .download-btn-enhanced {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .browse-file-btn {
     font-size: 0.875rem;
     padding: 0.5rem 1rem;
   }
@@ -1670,6 +2208,7 @@
 
   .details-section,
   .description-section,
+  .enhanced-file-preview,
   .requestor-revision-section,
   .requestor-resubmission-section {
     padding: 0.75rem;
@@ -1707,6 +2246,13 @@
     font-size: 0.813rem;
   }
 
+  .file-upload-group {
+    padding: 1rem 0.75rem;
+  }
+
+  .upload-icon {
+    font-size: 1.75rem;
+  }
 }
 
 /* Filter styles */
@@ -1739,7 +2285,23 @@
   background: #94a3b8;
 }
 
+.selected-files-container::-webkit-scrollbar {
+  width: 6px;
+}
 
+.selected-files-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.selected-files-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.selected-files-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 
 /* ========================================
    UNIT TWO-COLUMN MODAL LAYOUT (shared)
@@ -1791,7 +2353,6 @@
   padding: 1.5rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  width: 45rem;
 }
 
 .requestor-section-header h3 {
@@ -1958,6 +2519,62 @@
 #serviceRevisionEditor {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+}
+
+.form-group input[type="file"] {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+  text-align: center;
+}
+
+.form-group input[type="file"]:hover {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-style: solid;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.form-group input[type="file"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.form-group input[type="file"]::file-selector-button {
+  padding: 10px 20px;
+  margin-right: 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+.file-list {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .resubmission-actions {
@@ -2198,6 +2815,60 @@
   flex-shrink: 0;
   right: 30rem;
 }
+
+/* ==========================================
+   COLLAPSIBLE FILTER TOGGLE
+   ========================================== */
+.filter-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.25rem 0 0.75rem 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid #f1f5f9;
+  transition: margin-bottom 0.3s ease, border-color 0.3s ease;
+}
+
+.filter-toggle-header:hover {
+  opacity: 0.8;
+}
+
+.filter-toggle-header-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-toggle-icon {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.filter-toggle-icon.rotated {
+  transform: rotate(-180deg);
+}
+
+.filter-toggle-body {
+  overflow: hidden;
+  max-height: 1000px;
+  opacity: 1;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+}
+
+.filter-toggle-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
 </style>
 </head>
 
@@ -2353,10 +3024,18 @@
         </nav>
 
         <div class="filter-section">
+          <div class="filter-toggle-header" onclick="toggleFilterSection(this)">
+            <span class="filter-toggle-header-text">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;">
+                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+              </svg>
+              Filters &amp; Options
+            </span>
+            <span class="filter-toggle-icon">▼</span>
+          </div>
+          <div class="filter-toggle-body collapsed">
           <div class="filter-container">
             <div class="filter-group">
-              <label class="filter-label">Filter by:</label>
-              
               <!-- First Row -->
               <div class="filter-controls">
                 <div class="filter-item">
@@ -2488,6 +3167,7 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
 
         <section class="table-section" style="overflow-x: auto;">
@@ -2506,28 +3186,34 @@
             <tbody id="requestsTableBody">
               <% allRequests.forEach(request => { %>
               <% if (request.status !== 'Archived') { %>
+              <%
+                // Presentational-only: a finished Service Request shows as "Approved"
+                // to the requestor even though the unit-facing status is "Completed".
+                const displayStatus = (request.status === 'Completed') ? 'Approved' : request.status;
+              %>
               <tr class="request-row"
                   data-id="<%= request._id %>"
                   data-type="Service Request"
                   data-specifictype="<%= request.specificRequestType || 'Not specified' %>"
                   data-title="<%= request.title %>"
                   data-status="<%= request.status %>"
+                  data-rejection-reason="<%= (request.rejectionReason || '').replace(/"/g, '&quot;') %>"
                   data-organization="<%= request.organization %>"
                   data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
                   data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
                   data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
                   data-deadline="<%= request.deadline ? new Date(request.deadline).toISOString().slice(0, 10) : '' %>"
-                  data-description="<%= request.description %>" 
-                  data-links='<%= JSON.stringify(request.links || []) %>'
+                  data-description="<%= request.description %>"
                   data-file="<%= request.file ? request.file : '' %>"
                   data-files="<%= request.files ? request.files.join(',') : '' %>"
+                  data-links='<%= JSON.stringify(request.links || []) %>'
                   data-revision-count="<%= request.revisionCount || 0 %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
                   <td><%= request.organization %></td>
                   <td>
-                    <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
-                      <%= request.status %>
+                    <span class="status-badge <%= displayStatus.toLowerCase().replace(/\s+/g, '-') %>">
+                      <%= displayStatus %>
                     </span>
                   </td>
                   <td><%= request.assignedUnits || 'Not yet assigned' %></td>
@@ -2764,7 +3450,7 @@
 
   <script>
 // ===== QUILL RICH TEXT EDITORS =====
-let descriptionQuill;
+let descriptionQuill, messageQuill;
 
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize Description Editor
@@ -2786,6 +3472,72 @@ document.addEventListener('DOMContentLoaded', function() {
             underline: { key: 'U', ctrlKey: true, handler: function() { this.quill.format('underline', !this.quill.getFormat().underline); }}
           }
         }
+      }
+    });
+  }
+
+  // Initialize Message Editor (for chat)
+  if (document.getElementById('messageEditor')) {
+    messageQuill = new Quill('#messageEditor', {
+      theme: 'snow',
+      placeholder: 'Type your message...',
+      modules: {
+        toolbar: false,
+        keyboard: {
+          bindings: {
+            // Override default Quill keyboard shortcuts to prevent double formatting
+            bold: {
+              key: 'B',
+              shortKey: true,
+              handler: function(range, context) {
+                const format = this.quill.getFormat(range);
+                this.quill.format('bold', !format.bold);
+                return false; // Prevent default
+              }
+            },
+            italic: {
+              key: 'I',
+              shortKey: true,
+              handler: function(range, context) {
+                const format = this.quill.getFormat(range);
+                this.quill.format('italic', !format.italic);
+                return false; // Prevent default
+              }
+            },
+            underline: {
+              key: 'U',
+              shortKey: true,
+              handler: function(range, context) {
+                const format = this.quill.getFormat(range);
+                this.quill.format('underline', !format.underline);
+                return false; // Prevent default
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Wire up format buttons for conversation modal
+    const conversationFormatBtns = document.querySelectorAll('.unit-format-toolbar .format-btn[data-chat-format]');
+    conversationFormatBtns.forEach(btn => {
+      const format = btn.getAttribute('data-chat-format');
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (messageQuill) {
+          const currentFormat = messageQuill.getFormat();
+          messageQuill.format(format, !currentFormat[format]);
+          messageQuill.focus();
+        }
+      });
+    });
+
+    // Enter key sends the message (matches Requestapproval.ejs UX)
+    messageQuill.root.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const sendBtn = document.getElementById('sendMessageBtn');
+        if (sendBtn) sendBtn.click();
       }
     });
   }
@@ -3223,14 +3975,23 @@ function getLinkValues() {
           </div>
 
           <!-- Links Section -->
-          <div class="links-section" id="detailsLinksSection" style="display: none;">
-            <h3>Links</h3>
+          <div class="admin-info-card" id="detailsLinksSection" style="display: none;">
+            <div class="admin-card-header">
+              <h3>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                Reference Links
+              </h3>
+              <p class="admin-card-subtitle">Links submitted by the requestor</p>
+            </div>
             <div id="detailLinks" class="links-list"></div>
           </div>
 
           <!-- Chat Section -->
           <div class="chat-section" id="chatButtonSectionLeft" style="display: none;">
-            <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15);">
+            <button id="openChatFromDetailsModal" class="chat-card-btn" style="width: 100%; padding: 0; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #6ee7b7; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.25)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.15);'">
               <div style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
                 <div style="display: flex; align-items: center; gap: 1rem;">
                   <div style="width: 40px; height: 40px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -3251,7 +4012,7 @@ function getLinkValues() {
           </div>
         </div>
         </div>
-        
+
         <!-- RIGHT COLUMN: Revision History & Resubmission Form -->
         <div class="unit-right-column" id="requestorRightColumn">
           <!-- Chat Section -->
@@ -3319,9 +4080,23 @@ function getLinkValues() {
               Approve
             </button>
           </div>
+
+          <!-- Rejected notice (service requests) -->
+          <div id="serviceRejectedBanner" style="display: none; margin-top: 1rem; padding: 1rem; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; align-items: flex-start; gap: 0.75rem;">
+            <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 0.125rem;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <div>
+              <p style="margin: 0; font-weight: 600; color: #991b1b;">This request was rejected</p>
+              <p id="serviceRejectedReasonText" style="margin: 0.25rem 0 0; color: #991b1b; font-size: 0.875rem;"></p>
+              <p style="margin: 0.5rem 0 0; color: #991b1b; font-size: 0.8125rem;">You can't edit this request, but you're welcome to submit a new one.</p>
+            </div>
+          </div>
           </div>
 
-          
+
 
           <!-- Service Revision Request Form -->
           <div id="serviceRevisionFormSection" class="requestor-resubmission-section" style="display: none;">
@@ -3362,21 +4137,17 @@ function getLinkValues() {
               </div>
 
               <!-- Links Section -->
-              <div class="form-group">
-                <label>
-                  <strong>Reference Links</strong>
-                  <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional - Add reference links)</span>
-                </label>
-                <div id="revisionLinksContainer" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
-                <button type="button" onclick="addRevisionLink()" class="add-link-btn" style="margin-top: 0.75rem; background: #f1f5f9; border: 1px dashed #94a3b8; padding: 0.625rem 1rem; border-radius: 6px; color: #475569; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;"
-                        onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#64748b';" 
-                        onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8';">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
+              <div class="revision-links-card">
+                <div class="revision-links-card-header">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                   </svg>
-                  Add Link
-                </button>
+                  <strong>Reference Links</strong>
+                  <span class="revision-links-card-sub">(Optional — add supporting URLs)</span>
+                </div>
+                <div id="revisionLinksContainer" class="links-container"></div>
+                <button type="button" onclick="addRevisionLink()" class="add-link-btn">+ Add Link</button>
               </div>
 
               <!-- Submit Button -->
@@ -3463,7 +4234,7 @@ function getLinkValues() {
 
           <!-- Message Input -->
           <div class="unit-message-input-wrapper">
-            <textarea id="messageInput" placeholder="Type your message..." rows="3" class="unit-message-input"></textarea>
+            <div id="messageEditor" style="background: white; min-height: 80px; border: 1px solid #e2e8f0; border-radius: 8px; flex: 1;"></div>
             <button id="sendMessageBtn" class="unit-send-btn">
               <span>Send</span>
               <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3507,29 +4278,39 @@ function getLinkValues() {
 
         <!-- Restoration Request Form -->
         <div id="restorationFormSection" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
-          <h3 style="margin-bottom: 1rem; color: #1e293b; font-size: 1.125rem;">Request Restoration</h3>
-          <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.9375rem;">If you believe this request should be restored, please provide a reason below. Administrators will review your request.</p>
-          
-          <form id="archivedRestorationForm" style="display: flex; flex-direction: column; gap: 1rem;">
-            <div>
-              <label for="restorationReason" style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 500;">Reason for Restoration:</label>
-              <textarea 
-                id="restorationReason" 
-                name="reason" 
-                rows="5" 
-                placeholder="Explain why this request should be restored..."
-                style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.9375rem;"
-                required></textarea>
-              <small style="display: block; margin-top: 0.25rem; color: #94a3b8;">Minimum 10 characters</small>
-            </div>
+          <div id="alreadyPendingBanner" style="display:none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem;">
+            <p style="color: #92400e; margin: 0; font-weight: 500;">
+              <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; display: inline; vertical-align: middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span id="alreadyPendingText">You already have a pending restoration request for this item.</span>
+            </p>
+          </div>
+          <div id="restorationFormInner">
+            <h3 style="margin-bottom: 1rem; color: #1e293b; font-size: 1.125rem;">Request Restoration</h3>
+            <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.9375rem;">If you believe this request should be restored, please provide a reason below. Administrators will review your request.</p>
 
-            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-              <button type="button" class="close-modal-btn" onclick="document.getElementById('archivedRequestModal').style.display='none'" style="background: #f1f5f9; color: #1e293b; padding: 0.625rem 1.25rem; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
-              <button type="submit" style="background: #059669; color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Submit Restoration Request</button>
-            </div>
+            <form id="archivedRestorationForm" style="display: flex; flex-direction: column; gap: 1rem;">
+              <div>
+                <label for="restorationReason" style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 500;">Reason for Restoration:</label>
+                <textarea
+                  id="restorationReason"
+                  name="reason"
+                  rows="5"
+                  placeholder="Explain why this request should be restored..."
+                  style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.9375rem;"
+                  required></textarea>
+                <small style="display: block; margin-top: 0.25rem; color: #94a3b8;">Minimum 10 characters</small>
+              </div>
 
-            <div id="submissionStatus" style="display: none; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9375rem;"></div>
-          </form>
+              <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" class="close-modal-btn" onclick="document.getElementById('archivedRequestModal').style.display='none'" style="background: #f1f5f9; color: #1e293b; padding: 0.625rem 1.25rem; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
+                <button type="submit" style="background: #059669; color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Submit Restoration Request</button>
+              </div>
+
+              <div id="submissionStatus" style="display: none; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9375rem;"></div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -3586,27 +4367,9 @@ function getLinkValues() {
       return div.innerHTML;
     }
 
-    // Helper function to format text with markdown-style syntax
-    window.formatText = function(text) {
-      if (!text) return '';
-      
-      // Escape HTML first
-      let formatted = window.escapeHtml(text);
-      
-      // Bold: **text** -> <strong>text</strong>
-      formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      
-      // Italic: *text* -> <em>text</em> (but not ** which is bold)
-      formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-      
-      // Underline: __text__ -> <u>text</u>
-      formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-      
-      // Preserve line breaks
-      formatted = formatted.replace(/\n/g, '<br>');
-      
-      return formatted;
-    }
+    // formatText is provided by the shared /javascripts/ejs/User/user-conversation.js
+    // script (window.formatText) — no local override here so it stays in sync with
+    // the same rendering behavior used by allRequestsUser.ejs and Requestapproval.ejs.
 
     // PDF viewer modal functions
     window.viewPdf = function(pdfUrl, fileName) {
@@ -4005,7 +4768,6 @@ function getLinkValues() {
     const conversationModal = document.getElementById("conversationModal");
     const closeConversationModal = document.getElementById("closeConversationModal");
     const messagesContainer = document.getElementById("messagesContainer");
-    const messageInput = document.getElementById("messageInput");
     const sendMessageBtn = document.getElementById("sendMessageBtn");
     const openChatFromDetailsModal = document.getElementById("openChatFromDetailsModal");
     const deadlineWarningModal = document.getElementById('deadlineWarningModal');
@@ -4041,61 +4803,10 @@ function getLinkValues() {
       return div.innerHTML;
     }
 
-    // Helper function to format text with markdown-style syntax
-    function formatText(text) {
-      if (!text) return '';
-      
-      // Escape HTML first
-      let formatted = escapeHtml(text);
-      
-      // Bold: **text** -> <strong>text</strong>
-      formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      
-      // Italic: *text* -> <em>text</em> (but not ** which is bold)
-      formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-      
-      // Underline: __text__ -> <u>text</u>
-      formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-      
-      // Preserve line breaks
-      formatted = formatted.replace(/\n/g, '<br>');
-      
-      return formatted;
-    }
-
-    // Function to apply text formatting to message input
-    function applyUserFormatting(format) {
-      const textarea = document.getElementById('messageInput');
-      if (!textarea) return;
-
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = textarea.value.substring(start, end);
-      const beforeText = textarea.value.substring(0, start);
-      const afterText = textarea.value.substring(end);
-
-      let formattedText = selectedText;
-      let newCursorPos = end;
-
-      switch(format) {
-        case 'bold':
-          formattedText = `**${selectedText}**`;
-          newCursorPos = start + formattedText.length;
-          break;
-        case 'italic':
-          formattedText = `*${selectedText}*`;
-          newCursorPos = start + formattedText.length;
-          break;
-        case 'underline':
-          formattedText = `__${selectedText}__`;
-          newCursorPos = start + formattedText.length;
-          break;
-      }
-
-      textarea.value = beforeText + formattedText + afterText;
-      textarea.focus();
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }
+    // formatText is provided by the shared /javascripts/ejs/User/user-conversation.js
+    // script (window.formatText) — no local override here.
+    // Message formatting (bold/italic/underline) and Enter-to-send are handled by
+    // messageQuill, initialized alongside descriptionQuill above.
 
     // Initialize when DOM loads
     document.addEventListener('DOMContentLoaded', function() {
@@ -4380,8 +5091,13 @@ function getLinkValues() {
 
     if (sendMessageBtn) {
       sendMessageBtn.onclick = async function() {
-        const content = messageInput ? messageInput.value.trim() : '';
-        if (!content && !currentAttachment) return;
+        let content = '';
+        let plainText = '';
+        if (messageQuill) {
+          content = messageQuill.root.innerHTML;
+          plainText = messageQuill.getText().trim();
+        }
+        if (!plainText && !currentAttachment) return;
         if (!currentConversationId) return;
 
         try {
@@ -4412,7 +5128,7 @@ function getLinkValues() {
           
           if (result.success) {
             addMessageToUI(result.message);
-            if (messageInput) messageInput.value = '';
+            if (messageQuill) messageQuill.setText('');
             
             // Clear attachment
             if (currentAttachment) {
@@ -4432,14 +5148,6 @@ function getLinkValues() {
           alert('Failed to send message: ' + error.message);
         }
       };
-    }
-
-    if (messageInput) {
-      messageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          if (sendMessageBtn) sendMessageBtn.click();
-        }
-      });
     }
 
     // Custom Status Filter Logic with DropdownManager integration
@@ -4757,7 +5465,10 @@ document.querySelectorAll('.request-row').forEach(row => {
 
         // Enhanced status badge
         if (detailStatus && detailStatusBadge) {
-          const status = row.dataset.status || '';
+          const rawStatus = row.dataset.status || '';
+          // Presentational-only: a finished Service Request shows as "Approved" to
+          // the requestor even though the unit-facing status is "Completed".
+          const status = (rawStatus === 'Completed') ? 'Approved' : rawStatus;
           detailStatus.innerText = status;
           detailStatusBadge.className = `status-badge-large ${status.toLowerCase().replace(/\s+/g, '-')}`;
           
@@ -4797,6 +5508,31 @@ document.querySelectorAll('.request-row').forEach(row => {
           deadlineSection.style.display = 'none';
         }
 
+        // Populate links
+        const detailLinksSection = document.getElementById('detailsLinksSection');
+        const detailLinks = document.getElementById('detailLinks');
+        if (detailLinksSection && detailLinks) {
+          let links;
+          try { links = row.dataset.links ? JSON.parse(row.dataset.links) : []; }
+          catch(e) { links = []; }
+          detailLinksSection.style.display = 'block';
+          if (links && links.length > 0) {
+            detailLinks.innerHTML = links.map(l => `
+              <div class="link-item">
+                <a href="${l}" target="_blank" rel="noopener noreferrer">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:4px;vertical-align:middle;">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  ${l}
+                </a>
+              </div>
+            `).join('');
+          } else {
+            detailLinks.innerHTML = '<p style="color:#6b7280;margin:0;">No links submitted</p>';
+          }
+        }
+        
         // Right column layout + chat state
         currentConversationId = row.dataset.id;
         const chatButtonSectionLeft = document.getElementById('chatButtonSectionLeft');
@@ -5121,25 +5857,301 @@ function showDeadlineErrorModal(workingDays) {
       this.style.boxShadow = '0 0 0 3px rgba(64, 139, 78, 0.1)';
     });
   }
-  
+  });
 
+    // Enhanced file preview function
+    function createEnhancedFilePreview(allFiles, previewContainer) {
+      if (!previewContainer) return;
+      
+      if (allFiles.length > 0) {
+        const enhancedPreview = document.createElement('div');
+        enhancedPreview.className = 'enhanced-file-preview';
+        
+        let fileGridHTML = `
+          <h3>
+            <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+            </svg>
+            Attached Files (${allFiles.length})
+          </h3>
+          <div class="file-grid">
+        `;
+        
+        allFiles.forEach((file, index) => {
+          if (file && file.trim()) {
+            const fileUrl = `/uploads/${file.trim()}`;
+            const ext = file.split('.').pop().toLowerCase();
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
+            const isPDF = ext === 'pdf';
+            const isDoc = ['doc', 'docx'].includes(ext);
+            const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+            const isText = ['txt', 'rtf'].includes(ext);
+            
+            // Determine file icon and preview
+            let fileIcon = `
+              <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="4" y="4" width="16" height="16" rx="2"/>
+                <line x1="8" y1="8" x2="16" y2="8"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+                <line x1="8" y1="16" x2="12" y2="16"/>
+              </svg>
+            `;
 
-    // Populate links
-    const detailLinksSection = document.getElementById('detailsLinksSection');
-    const detailLinks = document.getElementById('detailLinks');
-    if (detailLinksSection && detailLinks) {
-      let links;
-      try { links = row.dataset.links ? JSON.parse(row.dataset.links) : []; }
-      catch(e) { links = []; }
-      if (links && links.length > 0) {
-        detailLinksSection.style.display = 'block';
-        detailLinks.innerHTML = links.map(l =>
-          `<div class="link-item"><a href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></div>`
-        ).join('');
+            if (isImage) {
+              fileIcon = `
+                <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8" cy="8" r="2"/>
+                  <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+                </svg>
+              `;
+            } else if (isPDF) {
+              fileIcon = `
+                <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <path d="M8 6h8M8 10h8M8 14h4"/>
+                </svg>
+              `;
+            } else if (isDoc) {
+              fileIcon = `
+                <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+                </svg>
+              `;
+            } else if (isSpreadsheet) {
+              fileIcon = `
+                <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <rect x="7" y="10" width="2" height="7"/>
+                  <rect x="11" y="7" width="2" height="10"/>
+                  <rect x="15" y="13" width="2" height="4"/>
+                </svg>
+              `;
+            } else if (isText) {
+              fileIcon = `
+                <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="4" y="2" width="16" height="20" rx="2"/>
+                  <line x1="8" y1="8" x2="16" y2="8"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+              `;
+            }
+            
+            fileGridHTML += `
+              <div class="enhanced-file-item">
+                <div class="file-header-enhanced">
+                  <div style="color: #059669;">${fileIcon}</div>
+                  <div class="file-info-enhanced">
+                    <div class="file-name-enhanced" title="${file}">${file}</div>
+                    <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
+                  </div>
+                </div>
+                
+                <div class="file-preview-container">
+            `;
+            
+            if (isImage) {
+              fileGridHTML += `
+                <img src="${fileUrl}" 
+                     alt="Preview of ${file}" 
+                     style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; cursor: pointer;"
+                     onclick="openImagePreview('${fileUrl}', '${file}')"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">
+                    <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <circle cx="8" cy="8" r="2"/>
+                      <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
+                    </svg>
+                  </div>
+                  <p>Image Preview Not Available</p>
+                  <small>Click download to view</small>
+                </div>
+              `;
+            } else if (isPDF) {
+              fileGridHTML += `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
+                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                    <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                      <rect x="4" y="2" width="16" height="20" rx="2"/>
+                      <path d="M8 6h8M8 10h8M8 14h4"/>
+                    </svg>
+                  </div>
+                  <p><strong>PDF Document</strong></p>
+                  <small>Click download to view</small>
+                </div>
+              `;
+            } else if (isDoc) {
+              fileGridHTML += `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
+                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                    <svg width="48" height="48" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+                      <rect x="4" y="2" width="16" height="20" rx="2"/>
+                      <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
+                    </svg>
+                  </div>
+                  <p><strong>Word Document</strong></p>
+                  <small>Click download to view</small>
+                </div>
+              `;
+            } else if (isSpreadsheet) {
+              fileGridHTML += `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
+                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">
+                    <svg width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <rect x="7" y="10" width="2" height="7"/>
+                      <rect x="11" y="7" width="2" height="10"/>
+                      <rect x="15" y="13" width="2" height="4"/>
+                    </svg>
+                  </div>
+                  <p><strong>Spreadsheet</strong></p>
+                  <small>Click download to view</small>
+                </div>
+              `;
+            } else {
+              fileGridHTML += `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
+                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">${fileIcon}</div>
+                  <p><strong>Document File</strong></p>
+                  <small>Click download to view</small>
+                </div>
+              `;
+            }
+            
+            fileGridHTML += `
+              </div>
+              
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
+                <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced">
+                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                  </svg>
+                  Download
+                </a>
+                ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6;">
+                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                    <ellipse cx="12" cy="12" rx="9" ry="6"/>
+                    <circle cx="12" cy="12" r="2"/>
+                  </svg>
+                  View
+                </button>` : ''}
+              </div>
+            </div>
+            `;
+          }
+        });
+        
+        fileGridHTML += `</div>`;
+        enhancedPreview.innerHTML = fileGridHTML;
+        previewContainer.appendChild(enhancedPreview);
       } else {
-        detailLinksSection.style.display = 'none';
+        previewContainer.innerHTML = `
+          <div class="enhanced-file-preview">
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
+              </svg>
+              Attached Files
+            </h3>
+            <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
+              <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">
+                <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="7" width="18" height="11" rx="2"/>
+                  <path d="M3 7l9 6 9-6"/>
+                </svg>
+              </div>
+              <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
+                No Files Attached
+              </div>
+              <div class="no-files-subtitle" style="font-size: 0.95rem; color: #64748b; line-height: 1.5;">
+                This request was submitted without any file attachments.<br>
+                <small>Files may have been uploaded but are not accessible.</small>
+              </div>
+            </div>
+          </div>
+        `;
       }
     }
+
+    // Add image preview modal function
+    window.openImagePreview = function(imageUrl, fileName) {
+      // Create modal overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        cursor: pointer;
+      `;
+      
+      // Create image container
+      const container = document.createElement('div');
+      container.style.cssText = `
+               max-width: 90vw;
+        max-height: 90vh;
+        position: relative;
+      `;
+      
+      // Create image
+      const img = document.createElement('img');
+      img.src = imageUrl;
+      img.alt = fileName;
+      img.style.cssText = `
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+      `;
+      
+      // Create close button
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '✕';
+      closeBtn.style.cssText = `
+        position: absolute;
+        top: -40px;
+        right: 0;
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+      `;
+      
+      // Assemble modal
+      container.appendChild(img);
+      container.appendChild(closeBtn);
+      overlay.appendChild(container);
+      document.body.appendChild(overlay);
+      
+      // Close handlers
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          document.body.removeChild(overlay);
+          document.body.style.overflow = '';
+        }
+      });
+      
+      closeBtn.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        document.body.style.overflow = '';
+      });
+      
+      // Prevent body scroll
+      document.body.style.overflow = 'hidden';
+    };
 
     // Enhanced Auto-open modal if openModalId is in URL
     document.addEventListener('DOMContentLoaded', function() {
@@ -5227,11 +6239,6 @@ function showDeadlineErrorModal(workingDays) {
     console.log('[ServiceRequest] Unique statuses in table:', uniqueStatuses);
     console.log('[ServiceRequest] Normalized statuses:', uniqueStatuses.map(s => normalizeStatus(s)));
 
-    // Formatting toolbar functionality
-    const boldBtn = document.getElementById('boldBtn');
-    const italicBtn = document.getElementById('italicBtn');
-    const underlineBtn = document.getElementById('underlineBtn');
-    
     // Style format buttons on hover
     const formatBtns = document.querySelectorAll('.format-btn');
     formatBtns.forEach(btn => {
@@ -5239,69 +6246,13 @@ function showDeadlineErrorModal(workingDays) {
         this.style.background = '#f3f4f6';
         this.style.borderColor = 'var(--primary-green)';
       });
-      
+
       btn.addEventListener('mouseleave', function() {
         this.style.background = 'white';
         this.style.borderColor = '#d1d5db';
       });
     });
-    
-    // Format text function
-    function insertFormattingTags(startTag, endTag) {
-      if (!messageInput) return;
-      
-      const start = messageInput.selectionStart;
-      const end = messageInput.selectionEnd;
-      const selectedText = messageInput.value.substring(start, end);
-      
-      if (selectedText) {
-        const formattedText = `${startTag}${selectedText}${endTag}`;
-        const beforeText = messageInput.value.substring(0, start);
-        const afterText = messageInput.value.substring(end);
-        
-        messageInput.value = beforeText + formattedText + afterText;
-        
-        // Set cursor position after formatted text
-        const newPosition = start + formattedText.length;
-        messageInput.setSelectionRange(newPosition, newPosition);
-      } else {
-        // If no text selected, insert tags where cursor is
-        const cursorPos = messageInput.selectionStart;
-        const beforeText = messageInput.value.substring(0, cursorPos);
-        const afterText = messageInput.value.substring(cursorPos);
-        
-        messageInput.value = beforeText + startTag + endTag + afterText;
-        
-        // Position cursor between tags
-        const newPosition = cursorPos + startTag.length;
-        messageInput.setSelectionRange(newPosition, newPosition);
-      }
-      
-      messageInput.focus();
-    }
-    
-    // Format button event listeners
-    if (boldBtn) {
-      boldBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        insertFormattingTags('**', '**');
-      });
-    }
-    
-    if (italicBtn) {
-      italicBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        insertFormattingTags('*', '*');
-      });
-    }
-    
-    if (underlineBtn) {
-      underlineBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        insertFormattingTags('<u>', '</u>');
-      });
-    }
-    
+
     // Upload functionality
     const imageBtn = document.getElementById('imageBtn');
     const fileBtn = document.getElementById('fileBtn');
@@ -5566,20 +6517,39 @@ window.openArchivedRequestModal = function(requestId, requestType) {
               <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Status</label>
               <p style="margin: 0; color: #1e293b;"><span class="status-badge archived">${data.status || 'Archived'}</span></p>
             </div>
-            <div>
+            <div style="margin-bottom: 1rem;">
               <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Archived On</label>
               <p style="margin: 0; color: #1e293b;">${new Date(data.deletedAt).toLocaleString()}</p>
+            </div>
+            <div>
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Archive Reason</label>
+              <p style="margin: 0; color: #1e293b;">${data.archiveReason || 'No reason provided.'}</p>
             </div>
           </div>
         `;
         modal.style.display = 'flex';
-        
+
         // Reset form
         if (form) {
           form.reset();
           form.dataset.requestId = requestId;
           form.dataset.requestType = requestType || 'service';
           document.getElementById('submissionStatus').style.display = 'none';
+        }
+
+        // Show "already pending" banner instead of the form if this user already has a pending plea
+        const banner = document.getElementById('alreadyPendingBanner');
+        const formInner = document.getElementById('restorationFormInner');
+        if (data.hasPendingRestoration) {
+          if (banner) {
+            document.getElementById('alreadyPendingText').textContent =
+              `You already submitted a restoration request on ${data.myRestorationRequestedAt ? new Date(data.myRestorationRequestedAt).toLocaleDateString() : 'an earlier date'}: "${data.myRestorationReason || ''}" — awaiting admin review.`;
+            banner.style.display = 'block';
+          }
+          if (formInner) formInner.style.display = 'none';
+        } else {
+          if (banner) banner.style.display = 'none';
+          if (formInner) formInner.style.display = '';
         }
       } else {
         contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
@@ -5601,15 +6571,12 @@ document.addEventListener('DOMContentLoaded', function() {
   if (urlParams.get('modal') === 'archived' && urlParams.has('requestId') && urlParams.get('type') === 'service') {
     const requestId = urlParams.get('requestId');
     console.log('Auto-opening archived request modal for:', requestId);
-    
-    // Wait for page to fully load
-    setTimeout(() => {
-      window.openArchivedRequestModal(requestId, 'service');
-    }, 500);
+    window.openArchivedRequestModal(requestId, 'service');
+    window.history.replaceState({}, document.title, window.location.pathname);
   }
   
-  // Handle regular modal opening
-  if (urlParams.has('modal') && urlParams.has('requestId') && urlParams.get('type') === 'service') {
+  // Handle regular modal opening (skip if this was actually an archived-modal URL, handled above)
+  if (urlParams.has('modal') && urlParams.get('modal') !== 'archived' && urlParams.has('requestId') && urlParams.get('type') === 'service') {
     const requestId = urlParams.get('requestId');
     console.log('Auto-opening modal for request:', requestId);
     
@@ -5769,54 +6736,6 @@ document.addEventListener('DOMContentLoaded', function() {
       initMobileNavigation();
     });
 
-    // Add keyboard shortcuts for message formatting (Ctrl+B, Ctrl+I, Ctrl+U)
-    document.addEventListener('DOMContentLoaded', function() {
-      const messageInput = document.getElementById('messageInput');
-      if (messageInput) {
-        console.log('[ServiceRequest] Message input found, attaching keyboard shortcuts');
-        
-        messageInput.addEventListener('keydown', function(e) {
-          // Ctrl+B or Cmd+B for bold
-          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
-            e.preventDefault();
-            console.log('[ServiceRequest] Keyboard shortcut: Bold (Ctrl+B)');
-            applyUserFormatting('bold');
-            return false;
-          }
-          // Ctrl+I or Cmd+I for italic
-          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
-            e.preventDefault();
-            console.log('[ServiceRequest] Keyboard shortcut: Italic (Ctrl+I)');
-            applyUserFormatting('italic');
-            return false;
-          }
-          // Ctrl+U or Cmd+U for underline
-          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
-            e.preventDefault();
-            console.log('[ServiceRequest] Keyboard shortcut: Underline (Ctrl+U)');
-            applyUserFormatting('underline');
-            return false;
-          }
-        });
-      } else {
-        console.error('[ServiceRequest] Message input element not found!');
-      }
-      
-      // Wire up formatting toolbar buttons using data-chat-format attribute
-      const formatButtons = document.querySelectorAll('.format-btn[data-chat-format]');
-      console.log('[ServiceRequest] Found format buttons:', formatButtons.length);
-      
-      formatButtons.forEach(btn => {
-        const format = btn.getAttribute('data-chat-format');
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          console.log('[ServiceRequest] Format button clicked:', format);
-          applyUserFormatting(format);
-          return false;
-        });
-      });
-    });
-
     // ===== SERVICE REVISION HISTORY FUNCTIONS =====
     let serviceRevisionQuill = null;
 
@@ -5872,81 +6791,59 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const result = await response.json();
             console.log('[Service] API response:', result);
-            
-            if (result.success && result.revisions && result.revisions.length > 0) {
-                const revisionsToShow = result.revisions.filter(rev => rev.type !== 'initial');
-                
-                console.log('[Service] Filtered:', revisionsToShow.length, 'revisions');
-                
-                if (revisionsToShow.length > 0) {
-                    console.log('[Service] ✅ Displaying revision history');
-                    
-                    if (modalContent) modalContent.classList.add('has-revisions');
-                    
-                    historyContainer.innerHTML = '';
-                    
-                    revisionsToShow.forEach((revision, index) => {
-                        console.log(`[Service] Creating entry ${index + 1}: ${revision.type}`);
-                        const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
-                        historyContainer.appendChild(entry);
-                    });
-                    
-                    // Count how many revision_requested entries exist (this is the actual revision count)
-                    const actualRevisionCount = revisionsToShow.filter(r => r.type === 'revision_requested').length;
-                    
-                    // Check if request has status that allows revision
-                    const row = document.querySelector(`tr[data-id="${requestId}"]`);
-                    const status = row ? row.dataset.status : '';
-                    
-                    const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
-                    console.log('[Service] Normalized status:', normalizedStatus, 'Actual revision count:', actualRevisionCount);
-                    
-                    // IMPORTANT: Keep form hidden by default - shown when user clicks "Request Revision" button
-                    if ((normalizedStatus === 'for-checking' || normalizedStatus === 'completed') && serviceRevisionSection) {
-                        console.log('[Service] Status is For Checking - checking revision limit');
-                        serviceRevisionSection.style.display = 'none';
-                        
-                        // Show the action buttons container
-                        const actionButtons = document.getElementById('serviceActionButtons');
-                        const revisionButton = document.getElementById('showServiceRevisionFormBtn');
-                        const warningMessage = document.getElementById('revisionLimitWarning');
-                        
-                        if (actionButtons) {
-                            actionButtons.style.display = 'flex';
-                            console.log('[Service] ✅ Action buttons container displayed');
+
+            if (result.success) {
+                // Action-button / warning / rejected-banner visibility - driven purely by
+                // status and the real revision limit, independent of whether there are
+                // any revision entries yet to render.
+                const row = document.querySelector(`tr[data-id="${requestId}"]`);
+                const normalizedStatus = row ? row.dataset.status.toLowerCase().replace(/\s+/g, '-') : '';
+                const actionButtons = document.getElementById('serviceActionButtons');
+                const revisionButton = document.getElementById('showServiceRevisionFormBtn');
+                const warningMessage = document.getElementById('revisionLimitWarning');
+                const rejectedBanner = document.getElementById('serviceRejectedBanner');
+                const rejectedReasonText = document.getElementById('serviceRejectedReasonText');
+
+                if (normalizedStatus === 'rejected') {
+                    if (actionButtons) actionButtons.style.display = 'none';
+                    if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
+                    if (rejectedBanner) {
+                        rejectedBanner.style.display = 'flex';
+                        if (rejectedReasonText) {
+                            rejectedReasonText.textContent = (row && row.dataset.rejectionReason) ? row.dataset.rejectionReason : '';
                         }
-                        
-                        // Check if revision limit has been reached (max 2 revisions)
-                        if (actualRevisionCount >= 2) {
-                            // Hide the revision button completely
-                            if (revisionButton) {
-                                revisionButton.style.display = 'none';
-                            }
-                            
-                            // Show warning message
+                    }
+                } else {
+                    if (rejectedBanner) rejectedBanner.style.display = 'none';
+
+                    // Approve/Request-Revision only appear once the unit has actually sent deliverables
+                    if (normalizedStatus === 'for-checking') {
+                        if (actionButtons) actionButtons.style.display = 'flex';
+
+                        const revisionCount = result.revisionCount || 0;
+                        const revisionLimit = result.revisionLimit || 2;
+                        const limitReached = revisionCount >= revisionLimit;
+
+                        if (limitReached) {
+                            if (revisionButton) revisionButton.style.display = 'none';
                             if (warningMessage) {
                                 warningMessage.style.display = 'flex';
+                                const warningSpan = warningMessage.querySelector('span');
+                                if (warningSpan) {
+                                    warningSpan.textContent = `You have used all ${revisionLimit} revision requests for this service request. If you need further changes, please submit a new service request and reference this one, or ask the assigned unit to allow one more revision.`;
+                                }
                             }
-                            
-                            console.log('[Service] ⚠️ Revision limit reached:', actualRevisionCount, '/ 2');
                         } else {
-                            // Show revision button
                             if (revisionButton) {
                                 revisionButton.style.display = 'inline-flex';
                                 revisionButton.disabled = false;
                                 revisionButton.style.opacity = '1';
                                 revisionButton.style.cursor = 'pointer';
-                                revisionButton.title = `Request Revision (${actualRevisionCount}/2 used)`;
+                                revisionButton.title = `Request Revision (${revisionCount}/${revisionLimit} used)`;
                             }
-                            
-                            // Hide warning message
-                            if (warningMessage) {
-                                warningMessage.style.display = 'none';
-                            }
-                            
-                            console.log('[Service] ✅ Revision button shown:', actualRevisionCount, '/ 2 used');
+                            if (warningMessage) warningMessage.style.display = 'none';
                         }
-                        
+
                         // Initialize Quill editor if not already initialized
                         if (!serviceRevisionQuill) {
                             serviceRevisionQuill = new Quill('#serviceRevisionEditor', {
@@ -5963,16 +6860,29 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
                     } else {
-                        // Hide action buttons for Approved, Completed, or other statuses
-                        const actionButtons = document.getElementById('serviceActionButtons');
-                        if (actionButtons) {
-                            actionButtons.style.display = 'none';
-                            console.log('[Service] Action buttons hidden for status:', normalizedStatus);
-                        }
-                        if (serviceRevisionSection) {
-                            serviceRevisionSection.style.display = 'none';
-                        }
+                        if (actionButtons) actionButtons.style.display = 'none';
+                        if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
                     }
+                }
+            }
+
+            if (result.success && result.revisions && result.revisions.length > 0) {
+                const revisionsToShow = result.revisions.filter(rev => rev.type !== 'initial');
+
+                console.log('[Service] Filtered:', revisionsToShow.length, 'revisions');
+
+                if (revisionsToShow.length > 0) {
+                    console.log('[Service] ✅ Displaying revision history');
+
+                    if (modalContent) modalContent.classList.add('has-revisions');
+
+                    historyContainer.innerHTML = '';
+
+                    revisionsToShow.forEach((revision, index) => {
+                        console.log(`[Service] Creating entry ${index + 1}: ${revision.type}`);
+                        const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                        historyContainer.appendChild(entry);
+                    });
                 } else {
                     // No revisions to show, but still show the section with empty message
                     if (modalContent) modalContent.classList.remove('has-revisions');
@@ -6078,31 +6988,27 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (revision.type === 'initial') {
             typeLabel = 'Initial Request';
             badgeClass = 'badge-revision';
+        } else if (revision.type === 'rejected') {
+            typeLabel = '✕ Rejected';
+            badgeClass = 'badge-revoked';
+        } else if (revision.type === 'limit_override') {
+            typeLabel = 'Revision Limit Extended';
+            badgeClass = 'badge-approved';
         } else {
             typeLabel = 'Update';
             badgeClass = 'badge-revision';
         }
-        
-        let authorName = 'Unknown';
-        let authorUnit = '';
-        
-        if (revision.requestedBy) {
-            if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
-                authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
-                if (revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A') {
-                    authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
-                } else {
-                    authorUnit = ' (User)';
-                }
-            }
-        } else if (revision.respondedBy) {
-            if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
-                authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
-                authorUnit = ' (User)';
-            }
-        } else if (revision.type === 'initial' && revision.by) {
-            authorName = revision.by;
-            authorUnit = ' (User)';
+
+        // Author label: on the requestor's own view, show the unit's TYPE only
+        // (never the individual member's name), and "You" for the requestor's own
+        // entries (this page is always the requestor's own view).
+        let authorName;
+        if (isUnitAction) {
+            authorName = (revision.requestedBy && typeof revision.requestedBy === 'object' && revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A')
+                ? `${revision.requestedBy.unitTeam} Unit`
+                : 'Unit Team';
+        } else {
+            authorName = 'You';
         }
         
         const isLast = index === total - 1;
@@ -6161,18 +7067,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 (revision.responseNotes || 'Revision requested'));
         
         const files = revision.deliverableFiles || revision.responseFiles || [];
-        
+        const links = revision.revisionLinks || revision.responseLinks || [];
+
         // Show revision number for completed entries, otherwise just sequential number
-        const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) 
-            ? `REV #${revision.revisionNumber}` 
+        const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0)
+            ? `REV #${revision.revisionNumber}`
             : `#${index + 1}`;
-        
+
         entry.innerHTML = `
             <div class="revision-number-badge">${badgeNumber}</div>
             <div class="revision-message-bubble">
                 <div class="revision-bubble-header">
                     <div>
-                        <span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span>
+                        <span class="revision-author">${escapeHtml(authorName)}</span>
                         <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
                     </div>
                     <div class="revision-timestamp">
@@ -6180,12 +7087,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
                     </div>
                 </div>
-                
+
                 <div class="message-content-section">
                     <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : revision.type === 'initial' ? 'REQUEST:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
-                    <div class="content-text">${displayFormattedText(content)}</div>
+                    <div class="content-text">${displayFormattedText(content, { skipMarkdown: !isUnitAction })}</div>
                 </div>
-                
+
                 ${files && files.length > 0 ? `
                     <div class="message-attachments-section">
                         <div class="attachments-header">
@@ -6199,24 +7106,53 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 ` : ''}
-                
+
+                ${links && links.length > 0 ? `
+                    <div class="message-attachments-section" style="margin-top: 1rem;">
+                        <div class="attachments-header">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                            </svg>
+                            <span class="attachments-count">${links.length} link${links.length > 1 ? 's' : ''} attached</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                            ${links.map(link => `
+                                <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer"
+                                   style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; color: #0891b2; text-decoration: none; transition: all 0.2s;"
+                                   onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0ea5e9';"
+                                   onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                        <polyline points="15 3 21 3 21 9"/>
+                                        <line x1="10" y1="14" x2="21" y2="3"/>
+                                    </svg>
+                                    <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(link)}</span>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
                 ${statusIndicator}
             </div>
         `;
-        
+
         return entry;
     }
 
-    function displayFormattedText(text) {
+    // opts.skipMarkdown: set true for already-sanitized real HTML (e.g. a Quill
+    // resubmission/revision) so literal */_ characters inside it aren't re-interpreted.
+    function displayFormattedText(text, opts = {}) {
         if (!text) return '';
-        
+
         // Check if the text is already HTML (from Quill editor)
         // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
-        if (text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
+        if (opts.skipMarkdown || text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
             // It's HTML content from Quill, return as-is
             return text;
         }
-        
+
         // It's plain text, escape HTML first
         let formatted = escapeHtml(text);
         
@@ -6308,6 +7244,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(truncatedName)}</div>
                     <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
                 </div>
+                <div class="revision-file-actions">
+                    ${isImage ? `
+                    <button onclick="viewImage('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    ` : isPDF ? `
+                    <button onclick="viewPdf('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    ` : `
+                    <button onclick="viewFile('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View File" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    `}
+                    <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </a>
+                </div>
             </div>
         `;
     }
@@ -6358,9 +7325,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const bodyData = {
             revisionNotes: revisionText,
-            revisionLinks: links
+            links: links
         };
-        
+
         console.log('[Service] Submitting revision for request:', currentConversationId);
         console.log('[Service] Revision text (HTML):', revisionText);
         console.log('[Service] Revision text (plain):', revisionTextPlain);
@@ -6484,24 +7451,20 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addRevisionLink = function() {
         const container = document.getElementById('revisionLinksContainer');
         if (!container) return;
-        
+
         const linkId = `revisionLink_${revisionLinkCounter++}`;
         const linkItem = document.createElement('div');
-        linkItem.className = 'link-item';
-        linkItem.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+        linkItem.className = 'link-entry-row';
         linkItem.innerHTML = `
-            <input type="url" 
-                   id="${linkId}" 
-                   placeholder="https://example.com" 
-                   class="revision-link-input"
-                   style="flex: 1; padding: 0.625rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem;"
-                   pattern="https?://.*" 
+            <input type="url"
+                   id="${linkId}"
+                   placeholder="https://example.com"
+                   class="revision-link-input link-entry-input"
+                   pattern="https?://.*"
                    title="Please enter a valid URL starting with http:// or https://">
-            <button type="button" 
-                    onclick="removeRevisionLink(this)" 
-                    style="padding: 0.625rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; cursor: pointer; transition: all 0.2s;"
-                    onmouseover="this.style.background='#fecaca'" 
-                    onmouseout="this.style.background='#fee2e2'">
+            <button type="button"
+                    class="link-entry-remove-btn"
+                    onclick="removeRevisionLink(this)">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <line x1="18" y1="6" x2="6" y2="18"/>
                     <line x1="6" y1="6" x2="18" y2="18"/>
@@ -6509,7 +7472,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </button>
         `;
         container.appendChild(linkItem);
-        
+
         const input = linkItem.querySelector('input');
         if (input) {
             input.addEventListener('blur', function() {
@@ -6519,17 +7482,16 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.validateRevisionLink = function(input) {
+        const row = input.closest('.link-entry-row');
         const value = input.value.trim();
         if (value === '') {
-            input.style.borderColor = '#e2e8f0';
-            input.style.background = 'white';
+            if (row) row.classList.remove('invalid', 'valid');
             return true;
         }
-        
+
         const urlPattern = /^https?:\/\/.+/i;
         if (!urlPattern.test(value)) {
-            input.style.borderColor = '#ef4444';
-            input.style.background = '#fef2f2';
+            if (row) { row.classList.add('invalid'); row.classList.remove('valid'); }
             if (typeof window.showAlert === 'function') {
                 window.showAlert('error', 'Please enter a valid URL starting with http:// or https://');
             } else {
@@ -6537,14 +7499,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return false;
         }
-        
-        input.style.borderColor = '#10b981';
-        input.style.background = '#f0fdf4';
+
+        if (row) { row.classList.add('valid'); row.classList.remove('invalid'); }
         return true;
     };
 
     window.removeRevisionLink = function(button) {
-        const linkItem = button.closest('.link-item');
+        const linkItem = button.closest('.link-entry-row');
         if (linkItem) linkItem.remove();
     };
 
@@ -6590,6 +7551,18 @@ document.addEventListener('DOMContentLoaded', function() {
             showAlert('error', 'An error occurred while marking the service as complete.');
         }
     }
+
   </script>
+
+<script>
+// Filter toggle for collapsible filter section
+window.toggleFilterSection = function(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.filter-toggle-icon');
+    if (body) body.classList.toggle('collapsed');
+    if (icon) icon.classList.toggle('rotated');
+};
+</script>
 </body>
 </html>
+ 

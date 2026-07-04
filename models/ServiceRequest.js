@@ -122,11 +122,25 @@ const serviceRequestSchema = new mongoose.Schema({
     revisionFiles: [String],
     responseFiles: [String],
     deliverableFiles: [String],
+    revisionLinks: [String],
+    responseLinks: [String],
     status: String,
     revisionType: { type: String }, // Wrapped in object to avoid Mongoose keyword conflict
     revisionNumber: Number // Which revision cycle this entry belongs to (0 = initial, 1 = first revision, etc.)
     // Values: 'deliverable_submitted', 'revision_requested', 'resubmitted', 'completed'
   }],
+
+  // Reason the unit gave when rejecting the request
+  rejectionReason: {
+    type: String,
+    trim: true
+  },
+
+  // Number of times the unit has granted an additional revision beyond the standard 2-revision cap
+  revisionLimitOverrides: {
+    type: Number,
+    default: 0
+  },
 
   // Track if additional file upload is allowed for revision requests
   allowAdditionalFileUpload: {

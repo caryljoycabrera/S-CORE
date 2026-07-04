@@ -15,8 +15,8 @@
   <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=3" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=10" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=6" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=11" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-conversation-modal.css?v=3" />
   <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -84,15 +84,29 @@
 
           <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
 
-          <!-- Filters (same layout as others) -->
+          <!-- Filter Options (aligned with AllTasks filters for full functionality) -->
           <div class="filter-section">
+            <div class="filter-toggle-header" onclick="toggleFilterSection(this)">
+              <span class="filter-toggle-header-text">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;">
+                  <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+                </svg>
+                Filters &amp; Options
+              </span>
+              <span class="filter-toggle-icon">▼</span>
+            </div>
+            <div class="filter-toggle-body collapsed">
             <div class="filter-container">
               <div class="filter-group">
-                <label class="filter-label">Filter by:</label>
+                <!-- First Row: Request ID, User, Status -->
                 <div class="filter-controls">
                   <div class="filter-item">
-                    <label for="titleFilter" class="filter-sublabel">Title</label>
-                    <input type="text" id="titleFilter" class="filter-input" placeholder="Search title...">
+                    <label for="requestIdFilter" class="filter-sublabel">Request ID</label>
+                    <input type="text" id="requestIdFilter" class="filter-input" placeholder="Search request ID...">
+                  </div>
+                  <div class="filter-item">
+                    <label for="studentFilter" class="filter-sublabel">User</label>
+                    <input type="text" id="studentFilter" class="filter-input" placeholder="Search user name...">
                   </div>
                   <div class="filter-item">
                     <label class="filter-sublabel">Status</label>
@@ -103,30 +117,71 @@
                           <span class="dropdown-arrow">▼</span>
                         </div>
                         <div class="select-dropdown" id="statusDropdown">
-                          <div class="options-container">
-                            <!-- JavaScript will populate this -->
+                          <div class="options-container"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Second Row: Student Organization and Office/Department -->
+                <div class="filter-controls dropdown-row">
+                  <div class="filter-item">
+                    <label for="studentOrgFilter" class="filter-sublabel">Student Organization</label>
+                    <div class="enhanced-multi-select-wrapper">
+                      <div class="enhanced-multi-select" id="studentOrgFilter">
+                        <div class="select-display" data-placeholder="Select Student Organizations">
+                          <span class="selected-text">All Student Organizations</span>
+                          <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="select-dropdown" id="studentOrgDropdown">
+                          <div class="search-container">
+                            <input type="text" class="search-input" placeholder="Search organizations...">
                           </div>
+                          <div class="options-container"></div>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div class="filter-item">
-                    <label for="requestorFilter" class="filter-sublabel">Requestor</label>
-                    <input type="text" id="requestorFilter" class="filter-input" placeholder="Search requestor...">
+                    <label for="officeDeptFilter" class="filter-sublabel">Office/Department</label>
+                    <div class="enhanced-multi-select-wrapper">
+                      <div class="enhanced-multi-select" id="officeDeptFilter">
+                        <div class="select-display" data-placeholder="Select Offices/Departments">
+                          <span class="selected-text">All Offices/Departments</span>
+                          <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="select-dropdown" id="officeDeptDropdown">
+                          <div class="search-container">
+                            <input type="text" class="search-input" placeholder="Search offices/departments...">
+                          </div>
+                          <div class="options-container"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                </div>
 
+                <!-- Third Row: Sort By, Date From and Date To -->
+                <div class="filter-controls">
                   <div class="filter-item">
-                    <label for="sortSelect" class="filter-sublabel">Sort By</label>
-                    <select id="sortSelect" class="filter-select">
-                      <option value="priority">Priority (Urgent First)</option>
-                      <option value="deadline-asc">Deadline (Nearest First)</option>
-                      <option value="deadline-desc">Deadline (Farthest First)</option>
-                      <option value="status-priority">Status (Active First)</option>
+                    <label for="sortByFilter" class="filter-sublabel">Sort By</label>
+                    <select id="sortByFilter" class="filter-input">
+                      <option value="deadline-asc">Deadline (Soonest First)</option>
+                      <option value="deadline-desc">Deadline (Latest First)</option>
                       <option value="date-desc">Date Submitted (Newest)</option>
                       <option value="date-asc">Date Submitted (Oldest)</option>
-                      <option value="title-asc">Title (A-Z)</option>
                     </select>
                   </div>
+                  <div class="filter-item">
+                    <label for="dateFromFilter" class="filter-sublabel">Date From</label>
+                    <input type="date" id="dateFromFilter" class="filter-input">
+                  </div>
+                  <div class="filter-item">
+                    <label for="dateToFilter" class="filter-sublabel">Date To</label>
+                    <input type="date" id="dateToFilter" class="filter-input">
+                  </div>
+                  <div class="filter-item" style="visibility: hidden;"></div>
                 </div>
               </div>
 
@@ -145,6 +200,7 @@
                   <span id="resultsCount">Showing all requests</span>
                 </div>
               </div>
+            </div>
             </div>
           </div>
 
@@ -202,19 +258,26 @@
                       const type = 'service';
                       const title = request.title || request.serviceType || request.specificRequestType || 'Untitled';
                       const requestor = request.userId ? `${request.userId.fName} ${request.userId.lName}` : 'Unknown';
+                      let studentOrg = '';
+                      let officeDept = '';
                       let organization = 'N/A';
                       if (request.userId) {
                         if (request.userId.studentOrganization && Array.isArray(request.userId.studentOrganization) && request.userId.studentOrganization.length > 0) {
-                          organization = request.userId.studentOrganization[0];
+                          studentOrg = request.userId.studentOrganization[0];
+                          organization = studentOrg;
                         } else if (request.userId.office && request.userId.office.trim()) {
-                          organization = request.userId.office;
+                          officeDept = request.userId.office;
+                          organization = officeDept;
                         } else if (request.userId.department && request.userId.department.trim()) {
-                          organization = request.userId.department;
+                          officeDept = request.userId.department;
+                          organization = officeDept;
                         } else if (request.userId.affiliation && Array.isArray(request.userId.affiliation) && request.userId.affiliation.length > 0) {
-                          organization = request.userId.affiliation[0];
+                          officeDept = request.userId.affiliation[0];
+                          organization = officeDept;
                         }
                       }
-                      const dateSubmitted = new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                      const dateSubmitted = new Date(request.createdAt).toISOString().split('T')[0]; // YYYY-MM-DD format for filtering
+                      const displayDate = new Date(request.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); // Display format
                       const status = request.status || 'Pending';
                       const files = request.files || [];
                       const deliverables = request.deliverables || [];
@@ -230,6 +293,8 @@
                         data-requestor="<%= requestor.replace(/"/g, '&quot;') %>"
                         data-requestor-email="<%= requestorEmail.replace(/"/g, '&quot;') %>"
                         data-organization="<%= organization.replace(/"/g, '&quot;') %>"
+                        data-student="<%= studentOrg.replace(/"/g, '&quot;') %>"
+                        data-office="<%= officeDept.replace(/"/g, '&quot;') %>"
                         data-description="<%= description.replace(/"/g, '&quot;') %>"
                         data-date-submitted="<%= dateSubmitted %>"
                         data-status="<%= status %>"
@@ -245,7 +310,7 @@
                       <td class="title-cell"><%= title %></td>
                       <td><%= requestor %></td>
                       <td><%= organization %></td>
-                      <td><%= dateSubmitted %></td>
+                      <td><%= displayDate %></td>
                       <td>
                         <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>
                       </td>
@@ -307,21 +372,6 @@
           <h2 id="modalTitle">Request Details</h2>
           <span class="type-badge" id="modalTypeBadge">SERVICE</span>
         </div>
-        <div class="modal-action-buttons">
-          <button class="modal-action-btn edit-btn" id="editRequestBtn" title="Edit Request">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            <span>Edit</span>
-          </button>
-          <button class="modal-action-btn delete-btn" id="deleteRequestBtn" title="Archive Request">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"></path>
-            </svg>
-            <span>Archive</span>
-          </button>
-        </div>
         <button class="close-modal-btn" onclick="closeRequestModal()" aria-label="Close">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -346,6 +396,31 @@
               <div class="unit-info-item" id="approvedOnField" style="display: none;"><span class="unit-info-label">Approved On</span><span class="unit-info-value" id="modalApprovedOn" style="color: #16a34a; font-weight: 600;">N/A</span></div>
               <div class="unit-info-item" id="deadlineField" style="display: none;"><span class="unit-info-label">Deadline</span><span class="unit-info-value" id="modalDeadline">N/A</span></div>
               <div class="unit-info-item" id="serviceTypeField" style="display: none;"><span class="unit-info-label">Service Type</span><span class="unit-info-value" id="modalServiceType">N/A</span></div>
+            </div>
+          </div>
+
+          <div class="service-actions-card" id="serviceTopActions">
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+              </svg>
+              Unit Actions
+              <span class="admin-badge">START OR REJECT</span>
+            </h3>
+            <div class="service-actions-buttons">
+              <button type="button" class="admin-btn admin-btn-success" id="startServiceBtn" style="display:none;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Start Service
+              </button>
+              <button type="button" class="admin-btn admin-btn-danger" id="rejectServiceBtn" style="display:none;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Reject
+              </button>
             </div>
           </div>
 
@@ -417,46 +492,84 @@
             <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
           </div>
 
+          <div id="revisionLimitOverridePanel" class="unit-action-panel" style="display: none; background: #fffbeb; border: 2px solid #f59e0b;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+              <div>
+                <p style="margin: 0; font-weight: 600; color: #92400e;">Revision limit reached</p>
+                <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: #92400e;">The requestor has used all their standard revision requests. You can allow one more if needed.</p>
+              </div>
+              <button type="button" id="allowOneMoreRevisionBtn" class="admin-btn admin-btn-warning" style="white-space: nowrap;">Allow One More Revision</button>
+            </div>
+          </div>
+
           <div id="serviceActionsPanel" class="unit-action-panel service-panel" style="display: none;">
             <div class="unit-panel-header service-header">
               <h3>Process Service Request</h3>
-              <p>Upload deliverables and complete the service</p>
+              <p>Provide deliverable notes and links, then submit for requestor review</p>
             </div>
             <div class="unit-action-guide">
               <div class="guide-item">
                 <span class="guide-icon">⇪</span>
-                <span>Upload all required deliverables</span>
-              </div>
-              <div class="guide-item">
-                <span class="guide-icon">📁</span>
-                <span>Verify files before uploading</span>
+                <span>Describe and link your completed work</span>
               </div>
               <div class="guide-item">
                 <span class="guide-icon">✔</span>
-                <span>Mark as complete when work is done</span>
+                <span>Submit for requestor review when ready</span>
               </div>
             </div>
 
             <div class="unit-upload-section">
-              <div class="links-input-section" id="deliverablesLinksSection">
-                <label class="unit-form-label">Deliverable Links:</label>
+              <div class="unit-format-toolbar">
+                <button type="button" class="format-btn" data-deliverable-format="bold" title="Bold (Ctrl+B)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                  </svg>
+                </button>
+                <button type="button" class="format-btn" data-deliverable-format="italic" title="Italic (Ctrl+I)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="19" y1="4" x2="10" y2="4"/>
+                    <line x1="14" y1="20" x2="5" y2="20"/>
+                    <line x1="15" y1="4" x2="9" y2="20"/>
+                  </svg>
+                </button>
+                <button type="button" class="format-btn" data-deliverable-format="underline" title="Underline (Ctrl+U)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                    <line x1="4" y1="21" x2="20" y2="21"/>
+                  </svg>
+                </button>
+                <span class="toolbar-hint">Format your deliverable notes</span>
+              </div>
+
+              <div id="deliverableNotes" contenteditable="true" role="textbox" aria-multiline="true"
+                   class="unit-textarea" placeholder="Describe the deliverables you're submitting..."></div>
+
+              <div class="revision-links-card">
+                <div class="revision-links-card-header">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  <strong>Deliverable Links</strong>
+                  <span class="revision-links-card-sub">(Optional — add supporting URLs)</span>
+                </div>
                 <div id="deliverablesLinksContainer" class="links-container">
                   <div class="link-input-row">
-                    <input type="url" class="unit-input link-input" placeholder="Enter deliverable URL (e.g., Google Drive, Dropbox)">
+                    <input type="url" name="deliverableLinks" class="unit-input link-input" placeholder="Enter deliverable URL (e.g., Google Drive, Dropbox)">
                     <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none;">×</button>
                   </div>
                 </div>
-                <button type="button" class="unit-secondary-btn" onclick="addDeliverableLinkInput()">
-                  + Add Another Link
-                </button>
+                <button type="button" class="add-link-btn" onclick="addDeliverableLinkInput()">+ Add Another Link</button>
               </div>
-              <button id="uploadDeliverablesBtn" disabled class="unit-btn unit-btn-upload" style="margin-top: 1rem;">Submit Deliverables for Review</button>
+
+              <button id="uploadDeliverablesBtn" class="unit-btn unit-btn-upload" style="margin-top: 1rem;">Submit Deliverables for Review</button>
             </div>
 
             <div class="unit-info-notice">
               <div>
                 <p style="margin:0; font-weight:600; color:#1e293b;">Service Request Workflow</p>
-                <p style="margin:0; font-size:0.875rem; color:#64748b;">Upload files and submit for requestor review. Only requestor can mark complete.</p>
+                <p style="margin:0; font-size:0.875rem; color:#64748b;">Submit notes and links for requestor review. Only requestor can approve deliverables.</p>
               </div>
             </div>
           </div>
@@ -607,6 +720,53 @@
     </div>
   </div>
 
+  <!-- Reject Service Modal -->
+  <div id="rejectServiceModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header unit-modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          <h2 style="color: white;">Reject Service Request</h2>
+        </div>
+        <button class="close-modal-btn" onclick="closeRejectServiceModal()" aria-label="Close" style="color: white;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 2rem;">
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+          <p style="color: #991b1b; margin: 0; font-size: 0.9rem;">
+            <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Please explain why this service request is being rejected. The requestor will be notified and cannot edit this request, but may submit a new one.
+          </p>
+        </div>
+        <label class="unit-form-label">
+          <strong>Reason for Rejection</strong> <span style="color: #dc2626;">*</span>
+        </label>
+        <textarea id="rejectReasonInput" class="unit-textarea" placeholder="Explain why this service request is being rejected..." rows="5" style="margin-bottom: 1.5rem;"></textarea>
+        <div style="display: flex; gap: 1rem;">
+          <button id="cancelRejectServiceBtn" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
+          <button id="submitRejectServiceBtn" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none;">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Reject Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Minimal placeholders for modals reused by alltasks.js -->
   <div id="teamConversationModal" class="modal" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 100000 !important;">
     <div class="modal-content unit-conversation-modal" style="z-index: 100001 !important;">
@@ -729,22 +889,36 @@
             <label style="display: block; font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 0.25rem;">Archived Date</label>
             <p id="archivedRequestDate" style="margin: 0; color: #1f2937; font-weight: 500;">Loading...</p>
           </div>
+          <div style="margin-top: 1rem;">
+            <label style="display: block; font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 0.25rem;">Archive Reason</label>
+            <p id="archivedRequestReason" style="margin: 0; color: #1f2937; font-weight: 500;">Loading...</p>
+          </div>
         </div>
 
-        <label class="unit-form-label">
-          <strong>Reason for Restoration</strong> <span style="color: #dc2626;">*</span>
-          <small>Explain why this request should be restored and what changes have been made</small>
-        </label>
-        <textarea id="restorationReasonInput" class="unit-textarea" placeholder="E.g., We have completed the required changes and would like to resubmit this request for approval..." rows="5" style="margin-bottom: 1.5rem;"></textarea>
-        
-        <div style="display: flex; gap: 1rem;">
-          <button onclick="closeArchivedRequestModal()" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
-          <button id="submitRestorationBtn" onclick="submitRestorationRequest()" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none;">
-            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
-              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        <div id="alreadyPendingBanner" style="display:none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem;">
+          <p style="color: #92400e; margin: 0; font-size: 0.9rem;">
+            <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
-            Request Restoration
-          </button>
+            <span id="alreadyPendingText">You already have a pending restoration request for this item.</span>
+          </p>
+        </div>
+        <div id="restorationInputSection">
+          <label class="unit-form-label">
+            <strong>Reason for Restoration</strong> <span style="color: #dc2626;">*</span>
+            <small>Explain why this request should be restored and what changes have been made</small>
+          </label>
+          <textarea id="restorationReasonInput" class="unit-textarea" placeholder="E.g., We have completed the required changes and would like to resubmit this request for approval..." rows="5" style="margin-bottom: 1.5rem;"></textarea>
+
+          <div style="display: flex; gap: 1rem;">
+            <button onclick="closeArchivedRequestModal()" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
+            <button id="submitRestorationBtn" onclick="submitRestorationRequest()" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none;">
+              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Request Restoration
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -777,13 +951,27 @@
             // Display the archived request information
             document.getElementById('archivedRequestTitle').textContent = data.title || 'Untitled';
             document.getElementById('archivedRequestStatus').textContent = data.previousStatus || 'Unknown';
-            document.getElementById('archivedRequestDate').textContent = data.deletedAt 
+            document.getElementById('archivedRequestDate').textContent = data.deletedAt
               ? new Date(data.deletedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
               : 'Unknown';
-            
+            document.getElementById('archivedRequestReason').textContent = data.archiveReason || 'No reason provided.';
+
             // Clear previous input
             document.getElementById('restorationReasonInput').value = '';
-            
+
+            // Show "already pending" banner instead of the input form if this user already has a pending plea
+            const banner = document.getElementById('alreadyPendingBanner');
+            const inputSection = document.getElementById('restorationInputSection');
+            if (data.hasPendingRestoration) {
+              document.getElementById('alreadyPendingText').textContent =
+                `You already submitted a restoration request on ${data.myRestorationRequestedAt ? new Date(data.myRestorationRequestedAt).toLocaleDateString() : 'an earlier date'}: "${data.myRestorationReason || ''}" — awaiting admin review.`;
+              banner.style.display = 'block';
+              inputSection.style.display = 'none';
+            } else {
+              banner.style.display = 'none';
+              inputSection.style.display = '';
+            }
+
             // Show the modal
             const modal = document.getElementById('archivedRequestModal');
             modal.style.display = 'flex';
@@ -861,11 +1049,19 @@
       if (!container) return;
       const row = document.createElement('div');
       row.className = 'link-input-row';
-      row.innerHTML = '<input type=\"url\" class=\"unit-input link-input\" placeholder=\"Enter deliverable URL (e.g., Google Drive, Dropbox)\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\">×</button>';
+      row.innerHTML = '<input type=\"url\" name=\"deliverableLinks\" class=\"unit-input link-input\" placeholder=\"Enter deliverable URL (e.g., Google Drive, Dropbox)\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\">×</button>';
       container.appendChild(row);
     }
   </script>
-  <script src="/javascripts/ejs/Unit/alltasks.js"></script>
+  <script>
+    window.filterDataFromDatabase = {
+      requestStatuses: <%- JSON.stringify(typeof requestStatuses !== 'undefined' ? requestStatuses : []) %>,
+      organizations: <%- JSON.stringify(typeof organizations !== 'undefined' ? organizations : []) %>,
+      offices: <%- JSON.stringify(typeof offices !== 'undefined' ? offices : []) %>,
+      units: <%- JSON.stringify(typeof units !== 'undefined' ? units : []) %>
+    };
+  </script>
+  <script src="/javascripts/ejs/Unit/alltasks.js?v=20260707"></script>
   <script>document.addEventListener('DOMContentLoaded', function(){ /* alltasks.js will wire the service UI */ });</script>
   <script src="/javascripts/status-handler.js"></script>
 </body>

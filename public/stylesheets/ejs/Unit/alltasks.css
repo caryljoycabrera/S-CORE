@@ -56,12 +56,13 @@
 
   /* Filter section - proper spacing from edges */
   .filter-section {
-    background: white;
-    border: none;
-    border-radius: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--primary-green);
+    border-radius: 12px;
     padding: 1.25rem;
     margin: 0 3rem 1.5rem 3rem; /* Match admin margins */
-    box-shadow: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: visible !important;
     position: relative;
     z-index: 1;
@@ -1509,6 +1510,37 @@
   flex-wrap: wrap;
 }
 
+/* Service Unit Actions card - kept as distinct classes from .admin-form-section /
+   .admin-action-buttons since both the approval and service sections can exist
+   in the same shared modal (AllTasks.ejs), and those classes are targeted with
+   singular document.querySelector() calls elsewhere that must keep resolving
+   to the approval section only. */
+.service-actions-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid var(--primary-green);
+}
+
+.service-actions-card h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.service-actions-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .admin-btn {
   display: inline-flex;
   align-items: center;
@@ -1551,6 +1583,16 @@
 .admin-btn-warning:hover {
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.admin-btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.admin-btn-danger:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .admin-btn-secondary {
@@ -2001,4 +2043,58 @@
     font-size: 0.813rem;
     padding: 0.5rem 0.75rem;
   }
+}
+
+/* ==========================================
+   COLLAPSIBLE FILTER TOGGLE
+   ========================================== */
+.filter-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.25rem 0 0.75rem 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid #f1f5f9;
+  transition: margin-bottom 0.3s ease, border-color 0.3s ease;
+}
+
+.filter-toggle-header:hover {
+  opacity: 0.8;
+}
+
+.filter-toggle-header-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-toggle-icon {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.filter-toggle-icon.rotated {
+  transform: rotate(-180deg);
+}
+
+.filter-toggle-body {
+  overflow: hidden;
+  max-height: 1000px;
+  opacity: 1;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+}
+
+.filter-toggle-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
 }

@@ -16,8 +16,8 @@
   <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=5" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=10" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=6" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=11" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-conversation-modal.css?v=3" />
   <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -89,10 +89,18 @@
 
           <!-- Filter Options -->
           <div class="filter-section">
+            <div class="filter-toggle-header" onclick="toggleFilterSection(this)">
+              <span class="filter-toggle-header-text">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;">
+                  <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+                </svg>
+                Filters &amp; Options
+              </span>
+              <span class="filter-toggle-icon">▼</span>
+            </div>
+            <div class="filter-toggle-body collapsed">
             <div class="filter-container">
               <div class="filter-group">
-                <label class="filter-label">Filter by:</label>
-
                 <!-- First Row: Request ID, User, Status -->
                 <div class="filter-controls">
                   <div class="filter-item">
@@ -196,10 +204,11 @@
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
      
-    
+     
           <!-- Requests Table -->
           <div class="table-section" style="background: white; padding: 1.5rem; margin: 0 3rem 2rem 3rem;">
             <table class="requests-table" style="width: 100%;">
@@ -264,23 +273,23 @@
                       const title = isApproval ? (request.title || request.projectTitle || 'Untitled') : (request.title || request.serviceType || 'Untitled');
                       const requestor = request.userId ? `${request.userId.fName} ${request.userId.lName}` : 'Unknown';
                       
-                      // Get organization/office/department - prioritize in this order
-                      let organization = 'N/A';
+                      // Prefer the organization actually saved on the request itself;
+                      // only derive from the requestor's profile if that's empty.
+                      let organization = (request.organization || '').trim();
                       let studentOrg = '';
                       let officeDept = '';
-                      if (request.userId) {
+                      if (organization) {
+                        studentOrg = organization;
+                      } else if (request.userId) {
+                        organization = 'N/A';
                         if (request.userId.studentOrganization && Array.isArray(request.userId.studentOrganization) && request.userId.studentOrganization.length > 0) {
                           studentOrg = request.userId.studentOrganization[0];
                           organization = studentOrg;
-                        } else if (request.userId.office && request.userId.office.trim()) {
-                          officeDept = request.userId.office;
-                          organization = officeDept;
-                        } else if (request.userId.department && request.userId.department.trim()) {
-                          officeDept = request.userId.department;
-                          organization = officeDept;
                         } else if (request.userId.affiliation && Array.isArray(request.userId.affiliation) && request.userId.affiliation.length > 0) {
                           organization = request.userId.affiliation[0];
                         }
+                      } else {
+                        organization = 'N/A';
                       }
                       
                       const dateSubmitted = new Date(request.createdAt).toISOString().split('T')[0]; // YYYY-MM-DD format for filtering
@@ -384,21 +393,6 @@
           </svg>
           <h2 id="modalTitle">Request Details</h2>
           <span class="type-badge" id="modalTypeBadge">APPROVAL</span>
-        </div>
-        <div class="modal-action-buttons">
-          <button class="modal-action-btn edit-btn" id="editRequestBtn" title="Edit Request">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-            <span>Edit</span>
-          </button>
-          <button class="modal-action-btn delete-btn" id="deleteRequestBtn" title="Archive Request">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"></path>
-            </svg>
-            <span>Archive</span>
-          </button>
         </div>
         <button class="close-modal-btn" onclick="closeRequestModal()" aria-label="Close">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -515,20 +509,30 @@
                     <line x1="4" y1="21" x2="20" y2="21"/>
                   </svg>
                 </button>
-                <div class="toolbar-divider"></div>
-                <div class="revision-links-section" id="revisionLinksSection" style="display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                  <div id="revisionLinksContainer" class="links-container" style="display: inline-flex; gap: 0.25rem; align-items: center;">
-                    <div class="link-input-row" style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                      <input type="url" class="unit-input link-input" placeholder="Paste revision link..." style="width: 180px; padding: 2px 6px; font-size: 12px;">
-                      <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none; font-size: 14px; padding: 0 4px;">×</button>
-                    </div>
-                  </div>
-                  <button type="button" class="unit-secondary-btn" onclick="addRevisionLinkInput()" style="font-size: 12px; padding: 2px 8px;">+ Add Link</button>
-                </div>
                 <span class="toolbar-hint">Format your revision request</span>
               </div>
 
-              <textarea id="revisionComments" class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..." rows="6"></textarea>
+              <div id="revisionComments" contenteditable="true" role="textbox" aria-multiline="true"
+                   class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..."></div>
+
+              <!-- Links Section -->
+              <div class="revision-links-card">
+                <div class="revision-links-card-header">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  <strong>Reference Links</strong>
+                  <span class="revision-links-card-sub">(Optional — add supporting URLs)</span>
+                </div>
+                <div id="revisionLinksContainer" class="links-container">
+                  <div class="link-input-row">
+                    <input type="url" name="revisionLinks" class="unit-input link-input" placeholder="Paste revision link...">
+                    <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none;">×</button>
+                  </div>
+                </div>
+                <button type="button" class="add-link-btn" onclick="addRevisionLinkInput()">+ Add Link</button>
+              </div>
 
               <div class="revision-form-actions">
                 <button type="button" class="admin-btn admin-btn-secondary" id="cancelRevisionBtn">
@@ -546,6 +550,32 @@
                   Submit Revision Request
                 </button>
               </div>
+            </div>
+          </div>
+
+          <!-- Service Unit Actions (Start / Reject) -->
+          <div class="service-actions-card" id="serviceTopActions">
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+              </svg>
+              Unit Actions
+              <span class="admin-badge">START OR REJECT</span>
+            </h3>
+            <div class="service-actions-buttons">
+              <button type="button" class="admin-btn admin-btn-success" id="startServiceBtn" style="display:none;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Start Service
+              </button>
+              <button type="button" class="admin-btn admin-btn-danger" id="rejectServiceBtn" style="display:none;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Reject
+              </button>
             </div>
           </div>
 
@@ -638,52 +668,13 @@
             <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
           </div>
 
-          <!-- Revision Form (shared across all panels) -->
-          <div id="revisionForm" class="unit-revision-form" style="display: none;">
-            <label for="revisionComments" class="unit-form-label">
-              <strong>Revision Feedback</strong>
-              <small>Clearly explain what needs to be revised</small>
-            </label>
-
-            <!-- Text Formatting Toolbar -->
-            <div class="unit-format-toolbar" style="margin-top: 0.5rem;">
-              <button type="button" class="format-btn" data-revision-format="bold" title="Bold (Ctrl+B)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
-                  <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
-                </svg>
-              </button>
-              <button type="button" class="format-btn" data-revision-format="italic" title="Italic (Ctrl+I)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="19" y1="4" x2="10" y2="4"/>
-                  <line x1="14" y1="20" x2="5" y2="20"/>
-                  <line x1="15" y1="4" x2="9" y2="20"/>
-                </svg>
-              </button>
-              <button type="button" class="format-btn" data-revision-format="underline" title="Underline (Ctrl+U)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
-                  <line x1="4" y1="21" x2="20" y2="21"/>
-                </svg>
-              </button>
-              <div class="toolbar-divider"></div>
-              <div class="revision-links-section" id="revisionLinksSection" style="display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                <div id="revisionLinksContainer" class="links-container" style="display: inline-flex; gap: 0.25rem; align-items: center;">
-                  <div class="link-input-row" style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                    <input type="url" class="unit-input link-input" placeholder="Paste revision link..." style="width: 180px; padding: 2px 6px; font-size: 12px;">
-                    <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none; font-size: 14px; padding: 0 4px;">×</button>
-                  </div>
-                </div>
-                <button type="button" class="unit-secondary-btn" onclick="addRevisionLinkInput()" style="font-size: 12px; padding: 2px 8px;">+ Add Link</button>
+          <div id="revisionLimitOverridePanel" class="unit-action-panel" style="display: none; background: #fffbeb; border: 2px solid #f59e0b;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+              <div>
+                <p style="margin: 0; font-weight: 600; color: #92400e;">Revision limit reached</p>
+                <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: #92400e;">The requestor has used all their standard revision requests. You can allow one more if needed.</p>
               </div>
-              <span class="toolbar-hint">Format your feedback</span>
-            </div>
-
-            <textarea id="revisionComments" class="unit-textarea" placeholder="Provide detailed feedback on what needs to be changed or improved..." rows="6" style="margin-top: 0;"></textarea>
-            
-            <div class="unit-form-actions">
-              <button id="submitRevisionBtn" class="unit-btn unit-btn-submit">Submit Revision Request</button>
-              <button id="cancelRevisionBtn" class="unit-btn unit-btn-cancel">Cancel</button>
+              <button type="button" id="allowOneMoreRevisionBtn" class="admin-btn admin-btn-warning" style="white-space: nowrap;">Allow One More Revision</button>
             </div>
           </div>
 
@@ -691,7 +682,7 @@
           <div id="serviceActionsPanel" class="unit-action-panel service-panel" style="display: none;">
             <div class="unit-panel-header service-header">
               <h3>Process Service Request</h3>
-              <p>Upload deliverables and complete the service</p>
+              <p>Provide deliverable notes and links, then submit for requestor review</p>
             </div>
 
             <div class="unit-action-guide">
@@ -703,18 +694,7 @@
                     <line x1="12" y1="3" x2="12" y2="15"/>
                   </svg>
                 </span>
-                <span>Upload all required deliverables</span>
-              </div>
-              <div class="guide-item">
-                <span class="guide-icon">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" rx="2"/>
-                    <line x1="8" y1="8" x2="16" y2="8"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                    <line x1="8" y1="16" x2="12" y2="16"/>
-                  </svg>
-                </span>
-                <span>Verify all files are correct before uploading</span>
+                <span>Describe and link your completed work</span>
               </div>
               <div class="guide-item">
                 <span class="guide-icon">
@@ -722,25 +702,56 @@
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </span>
-                <span>Mark as complete when all work is done</span>
+                <span>Submit for requestor review when ready</span>
               </div>
             </div>
 
             <div class="unit-upload-section">
-              <div class="links-input-section" id="deliverablesLinksSection">
-                <label class="unit-form-label">Deliverable Links:</label>
+              <div class="unit-format-toolbar">
+                <button type="button" class="format-btn" data-deliverable-format="bold" title="Bold (Ctrl+B)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                  </svg>
+                </button>
+                <button type="button" class="format-btn" data-deliverable-format="italic" title="Italic (Ctrl+I)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="19" y1="4" x2="10" y2="4"/>
+                    <line x1="14" y1="20" x2="5" y2="20"/>
+                    <line x1="15" y1="4" x2="9" y2="20"/>
+                  </svg>
+                </button>
+                <button type="button" class="format-btn" data-deliverable-format="underline" title="Underline (Ctrl+U)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                    <line x1="4" y1="21" x2="20" y2="21"/>
+                  </svg>
+                </button>
+                <span class="toolbar-hint">Format your deliverable notes</span>
+              </div>
+
+              <div id="deliverableNotes" contenteditable="true" role="textbox" aria-multiline="true"
+                   class="unit-textarea" placeholder="Describe the deliverables you're submitting..."></div>
+
+              <div class="revision-links-card">
+                <div class="revision-links-card-header">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                  <strong>Deliverable Links</strong>
+                  <span class="revision-links-card-sub">(Optional — add supporting URLs)</span>
+                </div>
                 <div id="deliverablesLinksContainer" class="links-container">
                   <div class="link-input-row">
-                    <input type="url" class="unit-input link-input" placeholder="Enter deliverable URL (e.g., Google Drive, Dropbox)">
+                    <input type="url" name="deliverableLinks" class="unit-input link-input" placeholder="Enter deliverable URL (e.g., Google Drive, Dropbox)">
                     <button type="button" class="remove-link-btn" onclick="this.parentElement.remove()" style="display:none;">×</button>
                   </div>
                 </div>
-                <button type="button" class="unit-secondary-btn" onclick="addDeliverableLinkInput()">
-                  + Add Another Link
-                </button>
+                <button type="button" class="add-link-btn" onclick="addDeliverableLinkInput()">+ Add Another Link</button>
               </div>
-              
-              <button id="uploadDeliverablesBtn" disabled class="unit-btn unit-btn-upload" style="margin-top: 1rem;">
+
+              <button id="uploadDeliverablesBtn" class="unit-btn unit-btn-upload" style="margin-top: 1rem;">
                 <span class="btn-icon">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -761,7 +772,7 @@
               <div>
                 <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #1e293b;">Service Request Workflow</p>
                 <p style="margin: 0; font-size: 0.875rem; color: #64748b; line-height: 1.5;">
-                  <strong style="color: #2563eb;">Step 1:</strong> Upload your completed deliverables using the button above.<br>
+                  <strong style="color: #2563eb;">Step 1:</strong> Submit your deliverable notes and links using the button above.<br>
                   <strong style="color: #2563eb;">Step 2:</strong> Status automatically changes to "For Checking" for requestor review.<br>
                   <strong style="color: #2563eb;">Step 3:</strong> Requestor reviews and may approve or request revisions.<br>
                   <strong style="color: #2563eb;">Step 4:</strong> Once approved, complete the task with final remarks.<br>
@@ -854,6 +865,53 @@
     </div>
   </div>
 
+  <!-- Reject Service Modal -->
+  <div id="rejectServiceModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header unit-modal-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+        <div class="modal-title-section">
+          <svg class="modal-title-icon" width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          <h2 style="color: white;">Reject Service Request</h2>
+        </div>
+        <button class="close-modal-btn" onclick="closeRejectServiceModal()" aria-label="Close" style="color: white;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 2rem;">
+        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+          <p style="color: #991b1b; margin: 0; font-size: 0.9rem;">
+            <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Please explain why this service request is being rejected. The requestor will be notified and cannot edit this request, but may submit a new one.
+          </p>
+        </div>
+        <label class="unit-form-label">
+          <strong>Reason for Rejection</strong> <span style="color: #dc2626;">*</span>
+        </label>
+        <textarea id="rejectReasonInput" class="unit-textarea" placeholder="Explain why this service request is being rejected..." rows="5" style="margin-bottom: 1.5rem;"></textarea>
+        <div style="display: flex; gap: 1rem;">
+          <button id="cancelRejectServiceBtn" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
+          <button id="submitRejectServiceBtn" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none;">
+            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            Reject Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Complete Approval Modal -->
   <div id="completeApprovalModal" class="modal" style="display: none;">
     <div class="modal-content" style="max-width: 600px;">
@@ -888,7 +946,7 @@
         <textarea id="approvalFinalRemarksInput" class="unit-textarea" placeholder="E.g., All requirements have been met and the request has been thoroughly reviewed and approved..." rows="6" style="margin-bottom: 1.5rem;"></textarea>
         <div style="display: flex; gap: 1rem;">
           <button onclick="closeCompleteApprovalModal()" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
-          <button id="submitCompleteApprovalBtn" onclick="completeApproval()" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;">
+          <button id="submitCompleteApprovalBtn" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;">
             <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
@@ -1024,22 +1082,36 @@
             <label style="display: block; font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 0.25rem;">Archived Date</label>
             <p id="archivedRequestDate" style="margin: 0; color: #1f2937; font-weight: 500;">Loading...</p>
           </div>
+          <div style="margin-top: 1rem;">
+            <label style="display: block; font-size: 0.85rem; color: #6b7280; font-weight: 500; margin-bottom: 0.25rem;">Archive Reason</label>
+            <p id="archivedRequestReason" style="margin: 0; color: #1f2937; font-weight: 500;">Loading...</p>
+          </div>
         </div>
 
-        <label class="unit-form-label">
-          <strong>Reason for Restoration</strong> <span style="color: #dc2626;">*</span>
-          <small>Explain why this request should be restored and what changes have been made</small>
-        </label>
-        <textarea id="restorationReasonInput" class="unit-textarea" placeholder="E.g., We have completed the required changes and would like to resubmit this request for approval..." rows="5" style="margin-bottom: 1.5rem;"></textarea>
-        
-        <div style="display: flex; gap: 1rem;">
-          <button onclick="closeArchivedRequestModal()" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
-          <button id="submitRestorationBtn" onclick="submitRestorationRequest()" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none;">
-            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
-              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        <div id="alreadyPendingBanner" style="display:none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem;">
+          <p style="color: #92400e; margin: 0; font-size: 0.9rem;">
+            <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
-            Request Restoration
-          </button>
+            <span id="alreadyPendingText">You already have a pending restoration request for this item.</span>
+          </p>
+        </div>
+        <div id="restorationInputSection">
+          <label class="unit-form-label">
+            <strong>Reason for Restoration</strong> <span style="color: #dc2626;">*</span>
+            <small>Explain why this request should be restored and what changes have been made</small>
+          </label>
+          <textarea id="restorationReasonInput" class="unit-textarea" placeholder="E.g., We have completed the required changes and would like to resubmit this request for approval..." rows="5" style="margin-bottom: 1.5rem;"></textarea>
+
+          <div style="display: flex; gap: 1rem;">
+            <button onclick="closeArchivedRequestModal()" class="unit-btn unit-btn-cancel" style="flex: 1;">Cancel</button>
+            <button id="submitRestorationBtn" onclick="submitRestorationRequest()" class="unit-btn unit-btn-submit" style="flex: 2; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: none;">
+              <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Request Restoration
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1072,13 +1144,27 @@
             // Display the archived request information
             document.getElementById('archivedRequestTitle').textContent = data.title || 'Untitled';
             document.getElementById('archivedRequestStatus').textContent = data.previousStatus || 'Unknown';
-            document.getElementById('archivedRequestDate').textContent = data.deletedAt 
+            document.getElementById('archivedRequestDate').textContent = data.deletedAt
               ? new Date(data.deletedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
               : 'Unknown';
-            
+            document.getElementById('archivedRequestReason').textContent = data.archiveReason || 'No reason provided.';
+
             // Clear previous input
             document.getElementById('restorationReasonInput').value = '';
-            
+
+            // Show "already pending" banner instead of the input form if this user already has a pending plea
+            const banner = document.getElementById('alreadyPendingBanner');
+            const inputSection = document.getElementById('restorationInputSection');
+            if (data.hasPendingRestoration) {
+              document.getElementById('alreadyPendingText').textContent =
+                `You already submitted a restoration request on ${data.myRestorationRequestedAt ? new Date(data.myRestorationRequestedAt).toLocaleDateString() : 'an earlier date'}: "${data.myRestorationReason || ''}" — awaiting admin review.`;
+              banner.style.display = 'block';
+              inputSection.style.display = 'none';
+            } else {
+              banner.style.display = 'none';
+              inputSection.style.display = '';
+            }
+
             // Show the modal
             const modal = document.getElementById('archivedRequestModal');
             modal.style.display = 'flex';
@@ -1173,144 +1259,12 @@
   </div>
 
   <!-- JavaScript -->
-  <script src="/javascripts/ejs/Unit/alltasks.js"></script>
+  <script src="/javascripts/ejs/Unit/alltasks.js?v=20260707"></script>
   
   <script>
-  // ==========================================
-  // FORMATTING FUNCTIONS - Consistent across all modals
-  // ==========================================
-  window.applyUnitFormatting = function(format) {
-    const input = document.getElementById('teamMessageInput');
-    if (!input) return;
-    
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const selectedText = input.value.substring(start, end);
-    
-    if (!selectedText) {
-      alert('Please select text to format');
-      return;
-    }
-    
-    let formattedText = '';
-    if (format === 'bold') formattedText = `**${selectedText}**`;
-    else if (format === 'italic') formattedText = `*${selectedText}*`;
-    else if (format === 'underline') formattedText = `<u>${selectedText}*</u>`;
-    
-    const newValue = input.value.substring(0, start) + formattedText + input.value.substring(end);
-    input.value = newValue;
-    
-    const newCursorPos = start + formattedText.length;
-    input.setSelectionRange(newCursorPos, newCursorPos);
-    input.focus();
-  };
-  
-  // ===== QUILL RICH TEXT EDITORS =====
-  // Text formatting functions for Unit side
-  document.addEventListener('DOMContentLoaded', function() {
-    // Format text helper function
-    function insertFormattingTags(textarea, startTag, endTag) {
-      if (!textarea) return;
-      
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = textarea.value.substring(start, end);
-      const beforeText = textarea.value.substring(0, start);
-      const afterText = textarea.value.substring(end);
-      
-      // Insert formatted text
-      textarea.value = beforeText + startTag + selectedText + endTag + afterText;
-      
-      // Position cursor - if no text selected, place between tags; if text selected, place after
-      let newPosition;
-      if (selectedText.length === 0) {
-        newPosition = start + startTag.length;
-      } else {
-        newPosition = start + startTag.length + selectedText.length + endTag.length;
-      }
-      textarea.setSelectionRange(newPosition, newPosition);
-      textarea.focus();
-    }
-    
-    // Team message formatting is handled in alltasks.js via [data-chat-format] listeners
-    
-    // Revision comments formatting - use event delegation
-    document.addEventListener('click', function(e) {
-      const target = e.target.closest('[data-revision-format]');
-      if (target) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[AllTasks] Revision format button clicked:', target.getAttribute('data-revision-format'));
-        
-        const revisionCommentsInput = document.getElementById('revisionComments');
-        if (!revisionCommentsInput) {
-          console.error('[AllTasks] Revision comments textarea not found');
-          return;
-        }
-        
-        console.log('[AllTasks] Textarea found, applying format');
-        const format = target.getAttribute('data-revision-format');
-        if (format === 'bold') {
-          insertFormattingTags(revisionCommentsInput, '**', '**');
-        } else if (format === 'italic') {
-          insertFormattingTags(revisionCommentsInput, '*', '*');
-        } else if (format === 'underline') {
-          insertFormattingTags(revisionCommentsInput, '<u>', '</u>');
-        }
-      }
-    });
-    
-    // Keyboard shortcuts for team message - browser handles Ctrl+B/I/U natively on contenteditable
-    // Only handle Enter to send (handled in alltasks.js keypress listener)
-    // For non-contenteditable inputs, keep the markdown shortcuts
-    document.addEventListener('keydown', function(e) {
-      const teamMessageInput = document.getElementById('teamMessageInput');
-      if (!teamMessageInput || document.activeElement !== teamMessageInput) return;
-      
-      // Skip formatting shortcuts for contenteditable - browser handles them natively
-      if (teamMessageInput.getAttribute('contenteditable') !== null) return;
-      
-      // For textarea fallback: apply markdown formatting
-      if (e.ctrlKey && !e.shiftKey && !e.altKey) {
-        if (e.key === 'b' || e.key === 'B') {
-          e.preventDefault();
-          if (typeof window.applyChatFormat === 'function') {
-            window.applyChatFormat('bold');
-          }
-        } else if (e.key === 'i' || e.key === 'I') {
-          e.preventDefault();
-          if (typeof window.applyChatFormat === 'function') {
-            window.applyChatFormat('italic');
-          }
-        } else if (e.key === 'u' || e.key === 'U') {
-          e.preventDefault();
-          if (typeof window.applyChatFormat === 'function') {
-            window.applyChatFormat('underline');
-          }
-        }
-      }
-    });
-    
-    // Keyboard shortcuts for revision comments - use event delegation
-    document.addEventListener('keydown', function(e) {
-      const revisionCommentsInput = document.getElementById('revisionComments');
-      if (revisionCommentsInput && document.activeElement === revisionCommentsInput) {
-        if (e.ctrlKey && !e.shiftKey && !e.altKey) {
-          if (e.key === 'b' || e.key === 'B') {
-            e.preventDefault();
-            insertFormattingTags(revisionCommentsInput, '**', '**');
-          } else if (e.key === 'i' || e.key === 'I') {
-            e.preventDefault();
-            insertFormattingTags(revisionCommentsInput, '*', '*');
-          } else if (e.key === 'u' || e.key === 'U') {
-            e.preventDefault();
-            insertFormattingTags(revisionCommentsInput, '<u>', '</u>');
-          }
-        }
-      }
-    });
-  });
-  
+  // Text formatting (team chat + revision composer) is handled in alltasks.js
+  // via [data-chat-format]/[data-revision-format] listeners and applyChatFormat().
+
   // ==========================================
   // DYNAMIC CALENDAR FUNCTIONALITY
   // ==========================================
@@ -1535,7 +1489,7 @@
       if (!container) return;
       const row = document.createElement('div');
       row.className = 'link-input-row';
-      row.innerHTML = '<input type=\"url\" class=\"unit-input link-input\" placeholder=\"Enter deliverable URL (e.g., Google Drive, Dropbox)\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\">×</button>';
+      row.innerHTML = '<input type=\"url\" name=\"deliverableLinks\" class=\"unit-input link-input\" placeholder=\"Enter deliverable URL (e.g., Google Drive, Dropbox)\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\">×</button>';
       container.appendChild(row);
     }
     function addRevisionLinkInput() {
@@ -1543,7 +1497,7 @@
       if (!container) return;
       const row = document.createElement('div');
       row.className = 'link-input-row';
-      row.innerHTML = '<input type=\"url\" class=\"unit-input link-input\" placeholder=\"Paste revision link...\" style=\"width:180px;padding:2px 6px;font-size:12px;\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\" style=\"display:none;font-size:14px;padding:0 4px;\">×</button>';
+      row.innerHTML = '<input type=\"url\" name=\"revisionLinks\" class=\"unit-input link-input\" placeholder=\"Paste revision link...\"><button type=\"button\" class=\"remove-link-btn\" onclick=\"this.parentElement.remove()\">×</button>';
       container.appendChild(row);
     }
   </script>

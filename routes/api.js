@@ -537,7 +537,7 @@ router.get('/api/request/:requestId', apiLimiter, requireLogin, async (req, res)
       });
     }
 
-    const projection = 'title status previousStatus deletedAt archivedAt archiveReason isDeleted assignedUnits originalAssignedUnits userId updatedAt';
+    const projection = 'title status previousStatus deletedAt archivedAt archiveReason isDeleted assignedUnits originalAssignedUnits userId updatedAt restorationRequests';
 
     const serviceRequest = await ServiceRequest.findById(requestId).select(projection).lean();
     const approvalRequest = serviceRequest
@@ -584,6 +584,10 @@ router.get('/api/request/:requestId', apiLimiter, requireLogin, async (req, res)
     const statusStr = (requestDoc.status || '').toString();
     const isArchived = Boolean(requestDoc.isDeleted) || statusStr.toLowerCase() === 'archived';
 
+    const myPending = (requestDoc.restorationRequests || []).find(
+      rr => String(rr.requestedBy) === sessionUserId && rr.status === 'pending'
+    );
+
     return res.json({
       success: true,
       requestId,
@@ -592,8 +596,12 @@ router.get('/api/request/:requestId', apiLimiter, requireLogin, async (req, res)
       title: requestDoc.title || 'Untitled Request',
       status: requestDoc.status,
       previousStatus: requestDoc.previousStatus,
+      archiveReason: requestDoc.archiveReason || null,
       // Unit UI expects `deletedAt`; fall back to `archivedAt`/`updatedAt` when not present
-      deletedAt: requestDoc.deletedAt || requestDoc.archivedAt || requestDoc.updatedAt || null
+      deletedAt: requestDoc.deletedAt || requestDoc.archivedAt || requestDoc.updatedAt || null,
+      hasPendingRestoration: Boolean(myPending),
+      myRestorationReason: myPending ? myPending.reason : null,
+      myRestorationRequestedAt: myPending ? myPending.requestedAt : null
     });
   } catch (error) {
     console.error('Error fetching request details:', error);
@@ -725,6 +733,17 @@ router.get('/api/conversation/:requestId', apiLimiter, requireLogin, async (req,
  * POST /api/conversation/:requestId/message
  * API endpoint to send a new message to a conversation
  */
+// Strips the href from any <a> tag whose URL scheme isn't http(s), so a
+// user-supplied chat link can't smuggle in a javascript:/data: URI that
+// would execute when other participants view the rendered message.
+function sanitizeChatLinks(content) {
+  if (!content) return content;
+  return content.replace(/<a\s+([^>]*?)href\s*=\s*(["'])(.*?)\2([^>]*)>/gi, (match, before, quote, href, after) => {
+    if (/^https?:\/\//i.test(href.trim())) return match;
+    return '<a ' + before + after + '>';
+  });
+}
+
 router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -790,7 +809,7 @@ router.post('/api/conversation/:requestId/message', apiLimiter, requireLogin, as
     const newMessage = {
       senderId: req.session.userId,
       senderRole: user.role,
-      content: content.trim(),
+      content: sanitizeChatLinks(content.trim()),
       timestamp: new Date(),
       isRead: false
     };
@@ -936,13 +955,14 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
             requestedAt: revision.requestedAt,
             revisionNotes: revision.revisionNotes || revision.notes || revision.description || '',
             revisionFiles: revision.revisionFiles || revision.files || [],
+            revisionLinks: revision.revisionLinks || [],
             status: revision.status,
             type: revision.revisionNotes && revision.revisionNotes.includes('approved') ? 'approved' : 'revision'
           });
         } else if (isUserResubmission) {
           // This is a user resubmitting after revision
           let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
-          
+
           revisions.push({
             respondedBy: respondedByUser ? {
               _id: respondedByUser._id,
@@ -952,6 +972,7 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
             respondedAt: revision.respondedAt,
             responseNotes: revision.responseNotes || revision.notes || revision.description || '',
             responseFiles: revision.responseFiles || revision.files || [],
+            responseLinks: revision.responseLinks || [],
             type: 'resubmitted',
             status: revision.status
           });
@@ -979,16 +1000,17 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
               requestedAt: revision.requestedAt,
               revisionNotes: revision.revisionNotes || revision.notes || revision.description || '',
               revisionFiles: revision.revisionFiles || [],
+              revisionLinks: revision.revisionLinks || [],
               status: revision.status,
               type: 'revision'
             });
           }
-          
+
           // Then push user response (only if there are actual response notes - different from revision notes)
-          const hasResponseNotes = revision.responseNotes && revision.responseNotes.trim() !== '' && 
+          const hasResponseNotes = revision.responseNotes && revision.responseNotes.trim() !== '' &&
                                    revision.responseNotes !== revision.revisionNotes;
           const hasResponseFiles = revision.responseFiles && revision.responseFiles.length > 0;
-          
+
           if (hasResponseNotes || hasResponseFiles) {
             let respondedByUser = await User.findById(revision.respondedBy).select('fName lName');
             revisions.push({
@@ -1000,6 +1022,7 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
               respondedAt: revision.respondedAt,
               responseNotes: revision.responseNotes || '',
               responseFiles: revision.responseFiles || [],
+              responseLinks: revision.responseLinks || [],
               type: 'resubmitted',
               status: revision.status
             });
@@ -1010,12 +1033,25 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
       }
     }
 
-    // Sort by timestamp
-    revisions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    // Sort chronologically (unit actions use requestedAt, resubmissions use respondedAt)
+    revisions.sort((a, b) => {
+      const ta = new Date(a.requestedAt || a.respondedAt || 0);
+      const tb = new Date(b.requestedAt || b.respondedAt || 0);
+      return ta - tb;
+    });
+
+    // Paginate
+    const total = revisions.length;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+    const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), totalPages);
+    const start = (page - 1) * limit;
+    const pageSlice = revisions.slice(start, start + limit);
 
     res.json({
       success: true,
-      revisions: revisions
+      revisions: pageSlice,
+      pagination: { page, limit, total, totalPages }
     });
   } catch (err) {
     console.error('Error fetching revision history:', err);
@@ -1128,6 +1164,7 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
             requestedAt: revision.requestedAt,
             revisionNotes: revision.revisionNotes || '',
             deliverableFiles: revision.deliverableFiles || [],
+            revisionLinks: revision.revisionLinks || [],
             status: revision.status,
             type: revision.revisionType || revision.type || 'deliverable_submitted',
             revisionNumber: revision.revisionNumber || 0
@@ -1140,7 +1177,7 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
           } catch (err) {
             console.log('Error populating user for revision:', err);
           }
-          
+
           revisions.push({
             respondedBy: respondedByUser ? {
               _id: respondedByUser._id,
@@ -1150,6 +1187,7 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
             respondedAt: revision.respondedAt,
             responseNotes: revision.responseNotes || revision.revisionNotes || '',
             responseFiles: revision.responseFiles || revision.revisionFiles || [],
+            responseLinks: revision.responseLinks || [],
             type: revision.revisionType || revision.type || 'revision_requested',
             status: revision.status,
             revisionNumber: revision.revisionNumber || 0
@@ -1158,12 +1196,23 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
       }
     }
 
-    // Sort revisions by timestamp (newest first)
-    revisions.sort((a, b) => new Date(a.requestedAt || a.respondedAt || a.timestamp) - new Date(b.requestedAt || b.respondedAt || b.timestamp));
+    // Sort chronologically (oldest first - unit actions use requestedAt, user actions use respondedAt)
+    revisions.sort((a, b) => new Date(a.requestedAt || a.respondedAt || 0) - new Date(b.requestedAt || b.respondedAt || 0));
+
+    // Paginate
+    const total = revisions.length;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+    const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), totalPages);
+    const start = (page - 1) * limit;
+    const pageSlice = revisions.slice(start, start + limit);
 
     res.json({
       success: true,
-      revisions: revisions
+      revisions: pageSlice,
+      pagination: { page, limit, total, totalPages },
+      revisionCount: serviceRequest.revisionCount || 0,
+      revisionLimit: 2 + (serviceRequest.revisionLimitOverrides || 0)
     });
   } catch (err) {
     console.error('Error fetching service revision history:', err);
@@ -1713,6 +1762,18 @@ router.post('/api/request-restoration', requireLogin, async (req, res) => {
           message: 'You can only request restoration for your own requests' 
         });
       }
+    }
+
+    // Block a duplicate plea while one from this user is still pending on this request
+    const alreadyPending = (request.restorationRequests || []).some(
+      rr => String(rr.requestedBy) === String(userId) && rr.status === 'pending'
+    );
+    if (alreadyPending) {
+      return res.status(409).json({
+        success: false,
+        alreadyPending: true,
+        message: 'You already have a pending restoration request for this item. Please wait for an admin to review it.'
+      });
     }
 
     // Store restoration request (in request document for now)

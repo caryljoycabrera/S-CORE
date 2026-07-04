@@ -135,6 +135,9 @@ const requestApprovalSchema = new mongoose.Schema({
     revisionFiles: [{
       type: String
     }],
+    revisionLinks: [{
+      type: String
+    }],
     respondedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
@@ -146,6 +149,9 @@ const requestApprovalSchema = new mongoose.Schema({
       type: String
     },
     responseFiles: [{
+      type: String
+    }],
+    responseLinks: [{
       type: String
     }],
     status: {

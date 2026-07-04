@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="/stylesheets/quill-custom.css">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script src="/javascripts/alert-handler.js"></script>
-<script src="/javascripts/ejs/User/user-conversation.js"></script>
+<script src="/javascripts/ejs/User/user-conversation.js?v=20260703"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <style>
@@ -77,12 +77,13 @@
 
   /* Filter section - proper spacing from edges */
   .filter-section {
-    background: white;
-    border: none;
-    border-radius: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--primary-green);
+    border-radius: 12px;
     padding: 1.25rem;
     margin: 0 3rem 1.5rem 3rem; /* Match admin margins */
-    box-shadow: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     overflow: visible !important;
     position: relative;
     z-index: 1;
@@ -447,6 +448,47 @@
   margin-top: 1rem;
 }
 
+.revision-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.revision-pager:empty {
+  margin-top: 0;
+}
+
+.pager-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pager-btn:hover:not(:disabled) {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+  background: #f0fdf4;
+}
+
+.pager-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pager-status {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
 .revision-conversation-item {
   display: flex;
   flex-direction: column;
@@ -669,6 +711,127 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
   background: linear-gradient(135deg, #157347, var(--primary-green));
+}
+
+/* Revision/resubmission "add a link" composer */
+.revision-links-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.revision-links-card:focus-within {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.revision-links-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #0f172a;
+  font-size: 0.9375rem;
+}
+
+.revision-links-card-header svg {
+  color: #0891b2;
+  flex-shrink: 0;
+}
+
+.revision-links-card-sub {
+  color: #64748b;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.revision-links-card .links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Each link entry reads as a distinct tinted "chip" card, not a bare input */
+.link-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #ecfeff, #f0fdfa);
+  border: 1.5px solid #a5f3fc;
+  border-radius: 10px;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(8, 145, 178, 0.06);
+}
+
+.link-entry-row:focus-within {
+  background: white;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+}
+
+.link-entry-row.valid {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.link-entry-row.invalid {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.link-entry-row::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230891b2' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.link-entry-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.9375rem;
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  outline: none;
+}
+
+.link-entry-input::placeholder {
+  color: #64748b;
+}
+
+.link-entry-remove-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.link-entry-remove-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: scale(1.08);
 }
 
 .status-indicator {
@@ -1179,17 +1342,6 @@
 
 
 /* Links Display Section (details modal) */
-.links-section {
-  margin-top: 1.5rem;
-}
-.links-section h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e2e8f0;
-}
 .links-list .link-item a {
   color: #0891b2;
   text-decoration: none;
@@ -1654,6 +1806,60 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ==========================================
+   COLLAPSIBLE FILTER TOGGLE
+   ========================================== */
+.filter-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.25rem 0 0.75rem 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid #f1f5f9;
+  transition: margin-bottom 0.3s ease, border-color 0.3s ease;
+}
+
+.filter-toggle-header:hover {
+  opacity: 0.8;
+}
+
+.filter-toggle-header-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-toggle-icon {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.filter-toggle-icon.rotated {
+  transform: rotate(-180deg);
+}
+
+.filter-toggle-body {
+  overflow: hidden;
+  max-height: 1000px;
+  opacity: 1;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+}
+
+.filter-toggle-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
 </style>
 </head>
 <body>
@@ -1812,10 +2018,18 @@
         </nav>
 
 <div class="filter-section">
+  <div class="filter-toggle-header" onclick="toggleFilterSection(this)">
+    <span class="filter-toggle-header-text">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;">
+        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+      </svg>
+      Filters &amp; Options
+    </span>
+    <span class="filter-toggle-icon">▼</span>
+  </div>
+  <div class="filter-toggle-body collapsed">
   <div class="filter-container">
     <div class="filter-group">
-      <label class="filter-label">Filter by:</label>
-      
       <!-- First Row -->
             <div class="filter-controls">
           <div class="filter-item">
@@ -1976,6 +2190,7 @@
       </div>
     </div>
   </div>
+  </div>
 </div>
 
         <section class="table-section" style="overflow-x: auto;">
@@ -1995,18 +2210,25 @@
 <tbody id="requestsTableBody">
   <% allRequests.forEach(request => { %>
   <% if (request.status !== 'Archived') { %>
+  <%
+    const isServiceType = request.type !== 'Request Approval';
+    // Presentational-only: the requestor sees "Approved" instead of "Completed" for
+    // a finished Service Request; the unit side still shows the real "Completed" status.
+    const displayStatus = (isServiceType && request.status === 'Completed') ? 'Approved' : request.status;
+  %>
 <tr class="request-row"
     data-id="<%= request._id %>"
     data-type="<%= request.type %>"
     data-specifictype="<%= request.type === 'Request Approval' ? (request.requestType || 'Not specified') : (request.serviceType || 'Not specified') %>"
     data-title="<%= request.title %>"
     data-status="<%= request.status %>"
+    data-rejection-reason="<%= (request.rejectionReason || '').replace(/"/g, '&quot;') %>"
     data-organization="<%= request.organization %>"
     data-units="<%= request.assignedUnits || 'Not yet assigned' %>"
     data-datetime="<%= request.datetime ? request.datetime.toLocaleString() : new Date(request.createdAt).toLocaleString() %>"
     data-date="<%= request.datetime ? request.datetime.toISOString().split('T')[0] : new Date(request.createdAt).toISOString().split('T')[0] %>"
     data-deadline="<%= request.deadline ? request.deadline.toLocaleString() : 'N/A' %>"
-    data-description="<%= request.description %>" 
+    data-description="<%= request.description %>"
     data-links='<%= JSON.stringify(request.links || []) %>'
     data-file="<%= request.file ? request.file : '' %>"
     data-files="<%= request.files ? request.files.join(',') : '' %>">
@@ -2025,8 +2247,8 @@
     <td><%= request.title %></td>
     <td><%= request.organization %></td>
     <td>
-      <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
-        <%= request.status %>
+      <span class="status-badge <%= displayStatus.toLowerCase().replace(/\s+/g, '-') %>">
+        <%= displayStatus %>
       </span>
     </td>
     <td><%= request.assignedUnits || 'Not yet assigned' %></td>
@@ -2153,8 +2375,17 @@
         </div>
 
         <!-- Links Section -->
-        <div class="links-section" id="detailsLinksSection" style="display: none;">
-          <h3>Links</h3>
+        <div class="admin-info-card" id="detailsLinksSection" style="display: none;">
+          <div class="admin-card-header">
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              Reference Links
+            </h3>
+            <p class="admin-card-subtitle">Links submitted by the requestor</p>
+          </div>
           <div id="detailLinks" class="links-list"></div>
         </div>
 
@@ -2222,7 +2453,8 @@
           <div id="revisionHistoryContainer" class="revision-history-timeline">
             <!-- Dynamically populated by JavaScript -->
           </div>
-          
+          <div id="revisionHistoryPager" class="revision-pager"></div>
+
           <!-- Action Button for Approval Requests with "For Revision" status -->
           <div id="approvalActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
             <button type="button" id="showResubmissionFormBtn" onclick="toggleResubmissionForm()" 
@@ -2251,8 +2483,32 @@
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
-              Mark as Complete
+              Approve
             </button>
+          </div>
+
+          <!-- Revision limit reached notice (service requests) -->
+          <div id="serviceRevisionLimitWarning" style="display: none; margin-top: 1rem; padding: 1rem; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; align-items: center; gap: 0.75rem;">
+            <svg width="20" height="20" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="serviceRevisionLimitWarningText" style="color: #92400e; font-size: 0.875rem;">You have used all your revision requests for this service request. If you need further changes, please submit a new service request and reference this one.</span>
+          </div>
+
+          <!-- Rejected notice (service requests) -->
+          <div id="serviceRejectedBanner" style="display: none; margin-top: 1rem; padding: 1rem; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; align-items: flex-start; gap: 0.75rem;">
+            <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 0.125rem;">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <div>
+              <p style="margin: 0; font-weight: 600; color: #991b1b;">This request was rejected</p>
+              <p id="serviceRejectedReasonText" style="margin: 0.25rem 0 0; color: #991b1b; font-size: 0.875rem;"></p>
+              <p style="margin: 0.5rem 0 0; color: #991b1b; font-size: 0.8125rem;">You can't edit this request, but you're welcome to submit a new one.</p>
+            </div>
           </div>
         </div>
 
@@ -2287,21 +2543,17 @@
             </div>
 
             <!-- Links Section -->
-            <div class="form-group">
-              <label>
-                <strong>Additional Links</strong>
-                <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional - Add reference links)</span>
-              </label>
-              <div id="resubmissionLinksContainer" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
-              <button type="button" onclick="addResubmissionLink()" class="add-link-btn" style="margin-top: 0.75rem; background: #f1f5f9; border: 1px dashed #94a3b8; padding: 0.625rem 1rem; border-radius: 6px; color: #475569; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;"
-                      onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#64748b';" 
-                      onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8';">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
+            <div class="revision-links-card">
+              <div class="revision-links-card-header">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                 </svg>
-                Add Link
-              </button>
+                <strong>Additional Links</strong>
+                <span class="revision-links-card-sub">(Optional — add supporting URLs)</span>
+              </div>
+              <div id="resubmissionLinksContainer" class="links-container"></div>
+              <button type="button" onclick="addResubmissionLink()" class="add-link-btn">+ Add Link</button>
             </div>
 
             <!-- Action Buttons -->
@@ -2359,21 +2611,17 @@
             </div>
 
             <!-- Links Section -->
-            <div class="form-group">
-              <label>
-                <strong>Reference Links</strong>
-                <span style="color: #64748b; font-size: 0.875rem; margin-left: 0.5rem;">(Optional - Add reference links)</span>
-              </label>
-              <div id="revisionLinksContainer" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
-              <button type="button" onclick="addRevisionLink()" class="add-link-btn" style="margin-top: 0.75rem; background: #f1f5f9; border: 1px dashed #94a3b8; padding: 0.625rem 1rem; border-radius: 6px; color: #475569; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;"
-                      onmouseover="this.style.background='#e2e8f0'; this.style.borderColor='#64748b';" 
-                      onmouseout="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8';">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
+            <div class="revision-links-card">
+              <div class="revision-links-card-header">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                 </svg>
-                Add Link
-              </button>
+                <strong>Reference Links</strong>
+                <span class="revision-links-card-sub">(Optional — add supporting URLs)</span>
+              </div>
+              <div id="revisionLinksContainer" class="links-container"></div>
+              <button type="button" onclick="addRevisionLink()" class="add-link-btn">+ Add Link</button>
             </div>
 
             <!-- Submit Button -->
@@ -3097,7 +3345,11 @@ document.querySelectorAll('.request-row').forEach(row => {
 
     // Enhanced status badge
     if (detailStatus && detailStatusBadge) {
-      const status = row.dataset.status || '';
+      const rawStatus = row.dataset.status || '';
+      // Presentational-only: a finished Service Request shows as "Approved" to the
+      // requestor even though the underlying/unit-facing status is "Completed".
+      const isServiceType = row.dataset.type === 'Service Request';
+      const status = (isServiceType && rawStatus === 'Completed') ? 'Approved' : rawStatus;
       detailStatus.innerText = status;
       detailStatusBadge.className = `status-badge-large ${status.toLowerCase().replace(/\s+/g, '-')}`;
     }
@@ -3134,13 +3386,21 @@ document.querySelectorAll('.request-row').forEach(row => {
       let links;
       try { links = row.dataset.links ? JSON.parse(row.dataset.links) : []; }
       catch(e) { links = []; }
+      detailLinksSection.style.display = 'block';
       if (links && links.length > 0) {
-        detailLinksSection.style.display = 'block';
-        detailLinks.innerHTML = links.map(l =>
-          `<div class="link-item"><a href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></div>`
-        ).join('');
+        detailLinks.innerHTML = links.map(l => `
+          <div class="link-item">
+            <a href="${l}" target="_blank" rel="noopener noreferrer">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:4px;vertical-align:middle;">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              ${l}
+            </a>
+          </div>
+        `).join('');
       } else {
-        detailLinksSection.style.display = 'none';
+        detailLinks.innerHTML = '<p style="color:#6b7280;margin:0;">No links submitted</p>';
       }
     }
     
@@ -3539,13 +3799,13 @@ function getSelectedStatuses() {
 // Simple global formatting function - works immediately (WYSIWYG via execCommand)
 window.applyChatFormat = function(formatType) {
   console.log('[Formatting] ✅ applyChatFormat called with format:', formatType);
-  
+
   const input = document.getElementById('teamMessageInput');
   if (!input) {
     console.error('[Formatting] ❌ teamMessageInput not found!');
     return;
   }
-  
+
   // Check if contenteditable (DIV) or textarea (fallback)
   if (input.tagName === 'DIV' || input.getAttribute('contenteditable') !== null) {
     // WYSIWYG: use execCommand for immediate visual formatting
@@ -3560,7 +3820,7 @@ window.applyChatFormat = function(formatType) {
     const start = input.selectionStart;
     const end = input.selectionEnd;
     const selectedText = input.value.substring(start, end);
-    
+
     let startTag = '';
     let endTag = '';
     switch(formatType) {
@@ -3568,7 +3828,7 @@ window.applyChatFormat = function(formatType) {
       case 'italic': startTag = '*'; endTag = '*'; break;
       case 'underline': startTag = '__'; endTag = '__'; break;
     }
-    
+
     if (selectedText) {
       const formattedText = `${startTag}${selectedText}${endTag}`;
       input.value = input.value.substring(0, start) + formattedText + input.value.substring(end);
@@ -3721,8 +3981,8 @@ window.openConversationModal = function(requestId, requestType) {
 document.addEventListener('DOMContentLoaded', function() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Handle regular modal opening
-  if (urlParams.has('modal') && urlParams.has('requestId')) {
+  // Handle regular modal opening (skip if this was actually an archived-modal URL, handled elsewhere)
+  if (urlParams.has('modal') && urlParams.get('modal') !== 'archived' && urlParams.has('requestId')) {
     const requestId = urlParams.get('requestId');
     const requestType = urlParams.get('type');
     console.log('Auto-opening modal for request:', requestId, requestType);
@@ -4190,7 +4450,9 @@ function htmlToMarkdown(html) {
 }
 
 // Helper function to format text with markdown-like syntax
-function displayFormattedText(text) {
+// opts.skipMarkdown: set true for already-sanitized real HTML (e.g. a Quill
+// resubmission) so literal */_ characters inside it aren't re-interpreted.
+function displayFormattedText(text, opts = {}) {
     if (!text) return '';
     
     // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
@@ -4206,14 +4468,26 @@ function displayFormattedText(text) {
     
     if (!hasHtml) {
         formatted = escapeHtml(formatted);
+        // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+        // can't be used to smuggle in a javascript:/data: URI)
+        formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+            let trail = '';
+            const trailMatch = url.match(/[).,!?;:]+$/);
+            if (trailMatch) {
+                trail = trailMatch[0];
+                url = url.slice(0, -trail.length);
+            }
+            return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+        });
     }
-    
-    // Always run markdown conversion (if HTML present, just no-op for markers)
-    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+
+    if (!opts.skipMarkdown) {
+        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+        formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    }
     formatted = formatted.replace(/\n/g, '<br>');
-    
+
     return formatted;
 }
 
@@ -4319,15 +4593,16 @@ window.viewFile = function(url, name) {
 
 // ========== REVISION HISTORY FUNCTIONS ==========
 
-async function loadRevisionHistory(requestId) {
+async function loadRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     console.log('[allRequestsUser] loadRevisionHistory called for:', requestId);
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
+    const pagerContainer = document.getElementById('revisionHistoryPager');
     const rightColumn = document.getElementById('requestorRightColumn');
     const modalBody = document.querySelector('.unit-modal-body');
     const modalContent = document.querySelector('.unit-modal-wide');
     const resubmissionSection = document.getElementById('resubmissionFormSection');
-    
+
     console.log('[allRequestsUser] Elements found:', {
       historySection: !!historySection,
       historyContainer: !!historyContainer,
@@ -4335,15 +4610,17 @@ async function loadRevisionHistory(requestId) {
       modalBody: !!modalBody,
       modalContent: !!modalContent
     });
-    
+
     if (!historyContainer) {
       console.log('[allRequestsUser] History container not found!');
       return;
     }
-    
+
     try {
-        const response = await fetch(`/api/revision-history/${requestId}`);
-        
+        // page defaults to a huge number so the API clamps it to the true last page,
+        // surfacing the most recent/actionable entry without an extra click.
+        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=10`);
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             if (historySection) historySection.style.display = 'none';
@@ -4393,12 +4670,17 @@ async function loadRevisionHistory(requestId) {
             }
             
             historyContainer.innerHTML = '';
-            
-            // Render all revisions (duplicates are now filtered on the API side)
+
+            const pagination = result.pagination || { page: 1, totalPages: 1 };
+            const isLastPage = pagination.page >= pagination.totalPages;
+
+            // Render this page's revisions (duplicates are now filtered on the API side)
             revisionsToShow.forEach((revision, index) => {
-              const entry = createRevisionEntry(revision, index, revisionsToShow.length);
+              const entry = createRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
               historyContainer.appendChild(entry);
             });
+
+            renderRevisionPager(pagerContainer, requestId, pagination);
             
             // Check if request is "For Revision" - show resubmission form
             const row = document.querySelector(`tr[data-id="${requestId}"]`);
@@ -4483,11 +4765,13 @@ async function loadRevisionHistory(requestId) {
             // Keep right column visible for chat button, even with no revisions
             if (rightColumn) rightColumn.style.display = 'flex';
             if (modalBody) modalBody.classList.add('two-column');
-            
+
             // Keep modal at wider size
             const modalContent = document.querySelector('.unit-modal-wide');
             if (modalContent) modalContent.classList.add('has-revisions');
-            
+
+            if (pagerContainer) pagerContainer.innerHTML = '';
+
             // Show empty revision history message
             historyContainer.innerHTML = `
                 <div style="text-align: center; padding: 2rem; color: #64748b;">
@@ -4515,7 +4799,9 @@ async function loadRevisionHistory(requestId) {
         
         const modalContent = document.querySelector('.unit-modal-wide');
         if (modalContent) modalContent.classList.add('has-revisions');
-        
+
+        if (pagerContainer) pagerContainer.innerHTML = '';
+
         // Show error message in revision history
         historyContainer.innerHTML = `
             <div style="text-align: center; padding: 2rem; color: #dc2626;">
@@ -4531,7 +4817,22 @@ async function loadRevisionHistory(requestId) {
     }
 }
 
-function createRevisionEntry(revision, index, total) {
+// Renders Prev/Page X of Y/Next controls for the revision history timeline
+function renderRevisionPager(pagerContainer, requestId, pagination) {
+    if (!pagerContainer) return;
+    const { page, totalPages } = pagination;
+    if (!totalPages || totalPages <= 1) {
+        pagerContainer.innerHTML = '';
+        return;
+    }
+    pagerContainer.innerHTML = `
+        <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', ${page - 1})">‹ Prev</button>
+        <span class="pager-status">Page ${page} of ${totalPages}</span>
+        <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', ${page + 1})">Next ›</button>
+    `;
+}
+
+function createRevisionEntry(revision, index, total, isLastPage = true) {
     console.log('🔍 [AllRequests] Creating revision entry:', {
         index,
         total,
@@ -4606,7 +4907,7 @@ function createRevisionEntry(revision, index, total) {
     
     // Show status indicator on last message
     let statusIndicator = '';
-    if (index === total - 1) {
+    if (isLastPage && index === total - 1) {
         if (revision.type === 'approved') {
             statusIndicator = `
                 <div class="status-indicator approved">
@@ -4640,34 +4941,24 @@ function createRevisionEntry(revision, index, total) {
         }
     }
     
-    // Determine author name properly
+    // Determine author name properly.
+    // Requestor's own view: show the unit's TYPE only (never the individual member's
+    // name - there can be multiple members per unit team), and "You" for the
+    // requestor's own resubmission entries (this page is always the requestor's own view).
     let authorName = 'Unknown';
     let authorUnit = '';
-    
+
     if (isUnitAction && revision.requestedBy) {
-        if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
-            authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName || ''}`.trim();
-            if (revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A') {
-                authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
-            } else {
-                authorUnit = ' (User)';
-            }
-        } else if (typeof revision.requestedBy === 'string') {
-            authorName = revision.requestedBy;
-            authorUnit = ' (User)';
+        if (typeof revision.requestedBy === 'object' && revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A') {
+            authorName = `${revision.requestedBy.unitTeam} Unit`;
+        } else {
+            authorName = 'Unit Team';
         }
-    } else if (isRequestorAction && revision.respondedBy) {
-        if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
-            authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName || ''}`.trim();
-            authorUnit = ' (User)';
-        } else if (typeof revision.respondedBy === 'string') {
-            authorName = revision.respondedBy;
-            authorUnit = ' (User)';
-        }
+    } else if (isRequestorAction) {
+        authorName = 'You';
     } else {
         // Fallback to revision.by or other fields
         authorName = revision.by || revision.createdBy || revision.author || 'System';
-        authorUnit = '';
     }
     
     entry.innerHTML = `
@@ -4693,7 +4984,9 @@ function createRevisionEntry(revision, index, total) {
                         content = revision.revisionNotes || revision.responseNotes;
                     }
                     console.log('🎯 Rendering content:', { isUnitAction, content, type: typeof content });
-                    return displayFormattedText(content || 'No content provided');
+                    // Requestor's own resubmission content is already-sanitized real HTML
+                    // from Quill - skip the markdown pass so literal */_ aren't mangled.
+                    return displayFormattedText(content || 'No content provided', { skipMarkdown: isRequestorAction });
                 })()}</div>
             </div>
             
@@ -4868,9 +5161,9 @@ async function handleResubmission() {
     
     const bodyData = {
         resubmissionNotes: responseText,
-        additionalLinks: links
+        links: links
     };
-    
+
     try {
         const response = await fetch(`/resubmit-approval-request/${currentConversationId}`, {
             method: 'POST',
@@ -4985,24 +5278,20 @@ let resubmissionLinkCounter = 0;
 function addResubmissionLink() {
     const container = document.getElementById('resubmissionLinksContainer');
     if (!container) return;
-    
+
     const linkId = `resubmissionLink_${resubmissionLinkCounter++}`;
     const linkItem = document.createElement('div');
-    linkItem.className = 'link-item';
-    linkItem.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+    linkItem.className = 'link-entry-row';
     linkItem.innerHTML = `
-        <input type="url" 
-               id="${linkId}" 
-               placeholder="https://example.com" 
-               class="resubmission-link-input"
-               style="flex: 1; padding: 0.625rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem;"
-               pattern="https?://.*" 
+        <input type="url"
+               id="${linkId}"
+               placeholder="https://example.com"
+               class="resubmission-link-input link-entry-input"
+               pattern="https?://.*"
                title="Please enter a valid URL starting with http:// or https://">
-        <button type="button" 
-                onclick="removeResubmissionLink(this)" 
-                style="padding: 0.625rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; cursor: pointer; transition: all 0.2s;"
-                onmouseover="this.style.background='#fecaca'" 
-                onmouseout="this.style.background='#fee2e2'">
+        <button type="button"
+                class="link-entry-remove-btn"
+                onclick="removeResubmissionLink(this)">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
@@ -5010,7 +5299,7 @@ function addResubmissionLink() {
         </button>
     `;
     container.appendChild(linkItem);
-    
+
     // Add validation listener to the newly added input
     const input = linkItem.querySelector('input');
     if (input) {
@@ -5021,19 +5310,18 @@ function addResubmissionLink() {
 }
 
 function validateLinkInput(input) {
+    const row = input.closest('.link-entry-row');
     const value = input.value.trim();
     if (value === '') {
         // Empty is allowed (optional field)
-        input.style.borderColor = '#e2e8f0';
-        input.style.background = 'white';
+        if (row) row.classList.remove('invalid', 'valid');
         return true;
     }
-    
+
     // Check if URL starts with http:// or https://
     const urlPattern = /^https?:\/\/.+/i;
     if (!urlPattern.test(value)) {
-        input.style.borderColor = '#ef4444';
-        input.style.background = '#fef2f2';
+        if (row) { row.classList.add('invalid'); row.classList.remove('valid'); }
         if (typeof window.showAlert === 'function') {
             window.showAlert('error', 'Please enter a valid URL starting with http:// or https://');
         } else {
@@ -5041,15 +5329,14 @@ function validateLinkInput(input) {
         }
         return false;
     }
-    
+
     // Valid URL
-    input.style.borderColor = '#10b981';
-    input.style.background = '#f0fdf4';
+    if (row) { row.classList.add('valid'); row.classList.remove('invalid'); }
     return true;
 }
 
 function removeResubmissionLink(button) {
-    const linkItem = button.closest('.link-item');
+    const linkItem = button.closest('.link-entry-row');
     if (linkItem) linkItem.remove();
 }
 
@@ -5059,24 +5346,20 @@ let revisionLinkCounter = 0;
 function addRevisionLink() {
     const container = document.getElementById('revisionLinksContainer');
     if (!container) return;
-    
+
     const linkId = `revisionLink_${revisionLinkCounter++}`;
     const linkItem = document.createElement('div');
-    linkItem.className = 'link-item';
-    linkItem.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+    linkItem.className = 'link-entry-row';
     linkItem.innerHTML = `
-        <input type="url" 
-               id="${linkId}" 
-               placeholder="https://example.com" 
-               class="revision-link-input"
-               style="flex: 1; padding: 0.625rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.875rem;"
-               pattern="https?://.*" 
+        <input type="url"
+               id="${linkId}"
+               placeholder="https://example.com"
+               class="revision-link-input link-entry-input"
+               pattern="https?://.*"
                title="Please enter a valid URL starting with http:// or https://">
-        <button type="button" 
-                onclick="removeRevisionLink(this)" 
-                style="padding: 0.625rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; cursor: pointer; transition: all 0.2s;"
-                onmouseover="this.style.background='#fecaca'" 
-                onmouseout="this.style.background='#fee2e2'">
+        <button type="button"
+                class="link-entry-remove-btn"
+                onclick="removeRevisionLink(this)">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
@@ -5084,7 +5367,7 @@ function addRevisionLink() {
         </button>
     `;
     container.appendChild(linkItem);
-    
+
     const input = linkItem.querySelector('input');
     if (input) {
         input.addEventListener('blur', function() {
@@ -5094,17 +5377,16 @@ function addRevisionLink() {
 }
 
 function validateRevisionLink(input) {
+    const row = input.closest('.link-entry-row');
     const value = input.value.trim();
     if (value === '') {
-        input.style.borderColor = '#e2e8f0';
-        input.style.background = 'white';
+        if (row) row.classList.remove('invalid', 'valid');
         return true;
     }
-    
+
     const urlPattern = /^https?:\/\/.+/i;
     if (!urlPattern.test(value)) {
-        input.style.borderColor = '#ef4444';
-        input.style.background = '#fef2f2';
+        if (row) { row.classList.add('invalid'); row.classList.remove('valid'); }
         if (typeof window.showAlert === 'function') {
             window.showAlert('error', 'Please enter a valid URL starting with http:// or https://');
         } else {
@@ -5112,14 +5394,13 @@ function validateRevisionLink(input) {
         }
         return false;
     }
-    
-    input.style.borderColor = '#10b981';
-    input.style.background = '#f0fdf4';
+
+    if (row) { row.classList.add('valid'); row.classList.remove('invalid'); }
     return true;
 }
 
 function removeRevisionLink(button) {
-    const linkItem = button.closest('.link-item');
+    const linkItem = button.closest('.link-entry-row');
     if (linkItem) linkItem.remove();
 }
 
@@ -5166,7 +5447,52 @@ async function loadServiceRevisionHistory(requestId) {
         console.log('[Service] Success:', result.success);
         console.log('[Service] Revisions:', result.revisions ? result.revisions.length : 0);
         console.log('[Service] Data:', result);
-        
+
+        if (result.success) {
+            // Action-button / warning / rejected-banner visibility - driven purely by
+            // status and the real revision limit, independent of whether there are
+            // any revision entries yet to render.
+            const row = document.querySelector(`tr[data-id="${requestId}"]`);
+            const normalizedStatus = row ? row.dataset.status.toLowerCase().replace(/\s+/g, '-') : '';
+            const actionButtons = document.getElementById('serviceActionButtons');
+            const revisionLimitWarning = document.getElementById('serviceRevisionLimitWarning');
+            const revisionLimitWarningText = document.getElementById('serviceRevisionLimitWarningText');
+            const rejectedBanner = document.getElementById('serviceRejectedBanner');
+            const rejectedReasonText = document.getElementById('serviceRejectedReasonText');
+
+            if (normalizedStatus === 'rejected') {
+                if (actionButtons) actionButtons.style.display = 'none';
+                if (revisionLimitWarning) revisionLimitWarning.style.display = 'none';
+                if (rejectedBanner) {
+                    rejectedBanner.style.display = 'flex';
+                    if (rejectedReasonText) {
+                        rejectedReasonText.textContent = (row && row.dataset.rejectionReason) ? row.dataset.rejectionReason : '';
+                    }
+                }
+            } else {
+                if (rejectedBanner) rejectedBanner.style.display = 'none';
+
+                // Approve/Request-Revision only appear once the unit has actually sent deliverables
+                if (actionButtons) {
+                    actionButtons.style.display = (normalizedStatus === 'for-checking') ? 'flex' : 'none';
+                }
+
+                const revisionCount = result.revisionCount || 0;
+                const revisionLimit = result.revisionLimit || 2;
+                const limitReached = revisionCount >= revisionLimit;
+                const showRevisionBtn = document.getElementById('showServiceRevisionFormBtn');
+                if (showRevisionBtn) {
+                    showRevisionBtn.style.display = (normalizedStatus === 'for-checking' && limitReached) ? 'none' : 'inline-flex';
+                }
+                if (revisionLimitWarning) {
+                    revisionLimitWarning.style.display = (normalizedStatus === 'for-checking' && limitReached) ? 'flex' : 'none';
+                    if (revisionLimitWarningText && limitReached) {
+                        revisionLimitWarningText.textContent = `You have used all ${revisionLimit} revision requests for this service request. If you need further changes, please submit a new service request and reference this one, or ask the assigned unit to allow one more revision.`;
+                    }
+                }
+            }
+        }
+
         if (result.success && result.revisions && result.revisions.length > 0) {
             // Log each revision before filtering
             result.revisions.forEach((rev, idx) => {
@@ -5208,32 +5534,11 @@ async function loadServiceRevisionHistory(requestId) {
                     const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
                     historyContainer.appendChild(entry);
                 });
-                
-                // Check if request has status that allows revision
-                const row = document.querySelector(`tr[data-id="${requestId}"]`);
-                const status = row ? row.dataset.status : '';
-                
-                // Show revision request form if status is Completed or For Checking (normalize status comparison)
-                const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
-                console.log('[Service] Normalized status:', normalizedStatus);
-                console.log('[Service] Checking: completed?', normalizedStatus === 'completed');
-                console.log('[Service] Checking: for-checking?', normalizedStatus === 'for-checking');
-                console.log('[Service] serviceRevisionSection exists?', !!serviceRevisionSection);
-                
-                // IMPORTANT: Keep form hidden by default - it will be shown when user clicks "Request Revision" button
-                if ((normalizedStatus === 'completed' || normalizedStatus === 'for-checking' || normalizedStatus === 'approved') && serviceRevisionSection) {
-                    console.log('[Service] Status allows revision - keeping form hidden until user clicks button');
-                    serviceRevisionSection.style.display = 'none';
-                    
-                    // Show the action buttons (Request Revision and Mark as Complete)
-                    const actionButtons = document.getElementById('serviceActionButtons');
-                    if (actionButtons) {
-                        actionButtons.style.display = 'flex';
-                        console.log('[Service] ✅ Action buttons displayed');
-                    }
-                } else if (serviceRevisionSection) {
-                    serviceRevisionSection.style.display = 'none';
-                }
+
+                // Keep the revision-request composer hidden by default - it's revealed
+                // when the user clicks "Request Revision" (button visibility itself is
+                // already handled above, driven by status + the real revision limit).
+                if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
             } else {
                 // No revisions to show, but still show the section with empty message
                 if (modalContent) modalContent.classList.remove('has-revisions');
@@ -5246,25 +5551,6 @@ async function loadServiceRevisionHistory(requestId) {
                         <small>Revision history will appear here when updates are made to your request.</small>
                     </div>
                 `;
-            }
-            
-            // Check status for action buttons regardless of revision history
-            const row = document.querySelector(`tr[data-id="${requestId}"]`);
-            const status = row ? row.dataset.status : '';
-            const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
-            
-            if ((normalizedStatus === 'completed' || normalizedStatus === 'for-checking') && serviceRevisionSection) {
-                console.log('[Service] Status allows revision - showing action buttons');
-                serviceRevisionSection.style.display = 'none';
-                
-                // Show the action buttons (Request Revision and Mark as Complete)
-                const actionButtons = document.getElementById('serviceActionButtons');
-                if (actionButtons) {
-                    actionButtons.style.display = 'flex';
-                    console.log('[Service] ✅ Action buttons displayed');
-                }
-            } else if (serviceRevisionSection) {
-                serviceRevisionSection.style.display = 'none';
             }
         } else {
             // No revisions data - show empty message
@@ -5358,31 +5644,27 @@ function createServiceRevisionEntry(revision, index, total) {
     } else if (revision.type === 'initial') {
         typeLabel = 'Initial Request';
         badgeClass = 'badge-revision';
+    } else if (revision.type === 'rejected') {
+        typeLabel = '✕ Rejected';
+        badgeClass = 'badge-revoked';
+    } else if (revision.type === 'limit_override') {
+        typeLabel = 'Revision Limit Extended';
+        badgeClass = 'badge-approved';
     } else {
         typeLabel = 'Update';
         badgeClass = 'badge-revision';
     }
-    
-    let authorName = 'Unknown';
-    let authorUnit = '';
-    
-    if (revision.requestedBy) {
-        if (typeof revision.requestedBy === 'object' && revision.requestedBy.fName) {
-            authorName = `${revision.requestedBy.fName} ${revision.requestedBy.lName}`;
-            if (revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A') {
-                authorUnit = ` (${revision.requestedBy.unitTeam} Unit)`;
-            } else {
-                authorUnit = ' (User)';
-            }
-        }
-    } else if (revision.respondedBy) {
-        if (typeof revision.respondedBy === 'object' && revision.respondedBy.fName) {
-            authorName = `${revision.respondedBy.fName} ${revision.respondedBy.lName}`;
-            authorUnit = ' (User)';
-        }
-    } else if (revision.type === 'initial' && revision.by) {
-        authorName = revision.by;
-        authorUnit = ' (User)';
+
+    // Author label: on the requestor's own view, show the unit's TYPE only
+    // (never the individual member's name), and "You" for the requestor's own
+    // entries (this page is always the requestor's own view).
+    let authorName;
+    if (isUnitAction) {
+        authorName = (revision.requestedBy && typeof revision.requestedBy === 'object' && revision.requestedBy.unitTeam && revision.requestedBy.unitTeam !== 'N/A')
+            ? `${revision.requestedBy.unitTeam} Unit`
+            : 'Unit Team';
+    } else {
+        authorName = 'You';
     }
     
     const isLast = index === total - 1;
@@ -5431,13 +5713,14 @@ function createServiceRevisionEntry(revision, index, total) {
             (revision.responseNotes || 'Revision requested'));
     
     const files = revision.deliverableFiles || revision.responseFiles || [];
-    
+    const links = revision.revisionLinks || revision.responseLinks || [];
+
     entry.innerHTML = `
         <div class="revision-number-badge">#${index + 1}</div>
         <div class="revision-message-bubble">
             <div class="revision-bubble-header">
                 <div>
-                    <span class="revision-author">${escapeHtml(authorName)}${escapeHtml(authorUnit)}</span>
+                    <span class="revision-author">${escapeHtml(authorName)}</span>
                     <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
                 </div>
                 <div class="revision-timestamp">
@@ -5445,12 +5728,12 @@ function createServiceRevisionEntry(revision, index, total) {
                     <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
                 </div>
             </div>
-            
+
             <div class="message-content-section">
                 <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : revision.type === 'initial' ? 'REQUEST:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
-                <div class="content-text">${displayFormattedText(content)}</div>
+                <div class="content-text">${displayFormattedText(content, { skipMarkdown: !isUnitAction })}</div>
             </div>
-            
+
             ${files && files.length > 0 ? `
                 <div class="message-attachments-section">
                     <div class="attachments-header">
@@ -5464,11 +5747,38 @@ function createServiceRevisionEntry(revision, index, total) {
                     </div>
                 </div>
             ` : ''}
-            
+
+            ${links && links.length > 0 ? `
+                <div class="message-attachments-section" style="margin-top: 1rem;">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span class="attachments-count">${links.length} link${links.length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                        ${links.map(link => `
+                            <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer"
+                               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; color: #0891b2; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0ea5e9';"
+                               onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(link)}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
             ${statusIndicator}
         </div>
     `;
-    
+
     return entry;
 }
 
@@ -5518,9 +5828,9 @@ async function handleServiceRevision() {
     
     const bodyData = {
         revisionNotes: revisionText,
-        revisionLinks: links
+        links: links
     };
-    
+
     try {
         const response = await fetch(`/user/service/request-revision/${currentConversationId}`, {
             method: 'POST',
@@ -5746,10 +6056,10 @@ async function handleMarkServiceComplete() {
     }
     
     // Confirm action
-    if (!confirm('Are you sure you want to mark this service request as complete? This means you accept the deliverables and the request will be closed.')) {
+    if (!confirm('Are you sure you want to approve these deliverables? The unit will then finalize the task.')) {
         return;
     }
-    
+
     try {
         const response = await fetch(`/user/service/mark-complete/${currentConversationId}`, {
             method: 'POST',
@@ -5757,34 +6067,46 @@ async function handleMarkServiceComplete() {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
-            showAlert('success', result.message || 'Service request marked as complete!');
-            
+            showAlert('success', result.message || 'Deliverables approved successfully!');
+
             // Reload revision history immediately
             await loadServiceRevisionHistory(currentConversationId);
-            
-            // Update the status in the modal
+
+            // Update the status in the modal - the real status here is "Approved"
+            // (not "Completed" - that only happens later when the unit finalizes it)
             const statusBadge = document.getElementById('detailStatusBadge');
             const statusText = document.getElementById('detailStatus');
             if (statusBadge && statusText) {
-                statusText.textContent = 'Completed';
-                statusBadge.className = 'status-badge-large completed';
+                statusText.textContent = 'Approved';
+                statusBadge.className = 'status-badge-large approved';
             }
-            
-            // Hide action buttons since request is now complete
+
+            // Update the table row so the list reflects the new status without a reload
+            const row = document.querySelector(`tr[data-id="${currentConversationId}"]`);
+            if (row) {
+                row.setAttribute('data-status', 'Approved');
+                const statusCell = row.querySelector('.status-badge');
+                if (statusCell) {
+                    statusCell.textContent = 'Approved';
+                    statusCell.className = 'status-badge approved';
+                }
+            }
+
+            // Hide action buttons since the requestor has nothing left to do at this stage
             const actionButtons = document.getElementById('serviceActionButtons');
             if (actionButtons) {
                 actionButtons.style.display = 'none';
             }
         } else {
-            showAlert('error', result.message || 'Failed to mark as complete. Please try again.');
+            showAlert('error', result.message || 'Failed to approve deliverables. Please try again.');
         }
     } catch (error) {
-        console.error('[Service] Error marking as complete:', error);
-        showAlert('error', 'An error occurred while marking the service as complete.');
+        console.error('[Service] Error approving deliverables:', error);
+        showAlert('error', 'An error occurred while approving the deliverables.');
     }
 }
 
@@ -5821,29 +6143,39 @@ async function handleMarkServiceComplete() {
 
         <!-- Restoration Request Form -->
         <div id="restorationFormSection" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
-          <h3 style="margin-bottom: 1rem; color: #1e293b; font-size: 1.125rem;">Request Restoration</h3>
-          <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.9375rem;">If you believe this request should be restored, please provide a reason below. Administrators will review your request.</p>
-          
-          <form id="archivedRestorationForm" style="display: flex; flex-direction: column; gap: 1rem;">
-            <div>
-              <label for="restorationReason" style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 500;">Reason for Restoration:</label>
-              <textarea 
-                id="restorationReason" 
-                name="reason" 
-                rows="5" 
-                placeholder="Explain why this request should be restored..."
-                style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.9375rem;"
-                required></textarea>
-              <small style="display: block; margin-top: 0.25rem; color: #94a3b8;">Minimum 10 characters</small>
-            </div>
+          <div id="alreadyPendingBanner" style="display:none; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem;">
+            <p style="color: #92400e; margin: 0; font-weight: 500;">
+              <svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; display: inline; vertical-align: middle;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span id="alreadyPendingText">You already have a pending restoration request for this item.</span>
+            </p>
+          </div>
+          <div id="restorationFormInner">
+            <h3 style="margin-bottom: 1rem; color: #1e293b; font-size: 1.125rem;">Request Restoration</h3>
+            <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.9375rem;">If you believe this request should be restored, please provide a reason below. Administrators will review your request.</p>
 
-            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-              <button type="button" class="close-modal-btn" onclick="document.getElementById('archivedRequestModal').style.display='none'" style="background: #f1f5f9; color: #1e293b; padding: 0.625rem 1.25rem; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
-              <button type="submit" style="background: #059669; color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Submit Restoration Request</button>
-            </div>
+            <form id="archivedRestorationForm" style="display: flex; flex-direction: column; gap: 1rem;">
+              <div>
+                <label for="restorationReason" style="display: block; margin-bottom: 0.5rem; color: #1e293b; font-weight: 500;">Reason for Restoration:</label>
+                <textarea
+                  id="restorationReason"
+                  name="reason"
+                  rows="5"
+                  placeholder="Explain why this request should be restored..."
+                  style="width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.9375rem;"
+                  required></textarea>
+                <small style="display: block; margin-top: 0.25rem; color: #94a3b8;">Minimum 10 characters</small>
+              </div>
 
-            <div id="submissionStatus" style="display: none; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9375rem;"></div>
-          </form>
+              <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" class="close-modal-btn" onclick="document.getElementById('archivedRequestModal').style.display='none'" style="background: #f1f5f9; color: #1e293b; padding: 0.625rem 1.25rem; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
+                <button type="submit" style="background: #059669; color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Submit Restoration Request</button>
+              </div>
+
+              <div id="submissionStatus" style="display: none; padding: 1rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9375rem;"></div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -5892,20 +6224,39 @@ window.openArchivedRequestModal = function(requestId, requestType) {
               <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Status</label>
               <p style="margin: 0; color: #1e293b;"><span class="status-badge archived">${data.status || 'Archived'}</span></p>
             </div>
-            <div>
+            <div style="margin-bottom: 1rem;">
               <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Archived On</label>
               <p style="margin: 0; color: #1e293b;">${new Date(data.deletedAt).toLocaleString()}</p>
+            </div>
+            <div>
+              <label style="display: block; color: #64748b; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.25rem; text-transform: uppercase;">Archive Reason</label>
+              <p style="margin: 0; color: #1e293b;">${data.archiveReason || 'No reason provided.'}</p>
             </div>
           </div>
         `;
         modal.style.display = 'flex';
-        
+
         // Reset form
         if (form) {
           form.reset();
           form.dataset.requestId = requestId;
           form.dataset.requestType = requestType || 'approval';
           document.getElementById('submissionStatus').style.display = 'none';
+        }
+
+        // Show "already pending" banner instead of the form if this user already has a pending plea
+        const banner = document.getElementById('alreadyPendingBanner');
+        const formInner = document.getElementById('restorationFormInner');
+        if (data.hasPendingRestoration) {
+          if (banner) {
+            document.getElementById('alreadyPendingText').textContent =
+              `You already submitted a restoration request on ${data.myRestorationRequestedAt ? new Date(data.myRestorationRequestedAt).toLocaleDateString() : 'an earlier date'}: "${data.myRestorationReason || ''}" — awaiting admin review.`;
+            banner.style.display = 'block';
+          }
+          if (formInner) formInner.style.display = 'none';
+        } else {
+          if (banner) banner.style.display = 'none';
+          if (formInner) formInner.style.display = '';
         }
       } else {
         contentDiv.innerHTML = '<p style="color: #ef4444;">Error loading archived request details</p>';
@@ -5928,11 +6279,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const requestId = urlParams.get('requestId');
     const requestType = urlParams.get('type') || 'approval';
     console.log('Auto-opening archived request modal for:', requestId);
-    
-    // Wait for page to fully load
-    setTimeout(() => {
-      window.openArchivedRequestModal(requestId, requestType);
-    }, 500);
+    window.openArchivedRequestModal(requestId, requestType);
+    window.history.replaceState({}, document.title, window.location.pathname);
   }
   
   // Handle restoration form submission
@@ -6010,6 +6358,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+// Filter toggle for collapsible filter section
+window.toggleFilterSection = function(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.filter-toggle-icon');
+    if (body) body.classList.toggle('collapsed');
+    if (icon) icon.classList.toggle('rotated');
+};
+</script>
 <%- include('../partials/chatbot-widget') %>
 </body>
 </html>

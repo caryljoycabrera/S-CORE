@@ -453,13 +453,24 @@ function displayFormattedText(text) {
     
     if (!hasHtml) {
         formatted = escapeHtml(formatted);
+        // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+        // can't be used to smuggle in a javascript:/data: URI)
+        formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+            let trail = '';
+            const trailMatch = url.match(/[).,!?;:]+$/);
+            if (trailMatch) {
+                trail = trailMatch[0];
+                url = url.slice(0, -trail.length);
+            }
+            return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+        });
     }
-    
+
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
     formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
     formatted = formatted.replace(/\n/g, '<br>');
-    
+
     return formatted;
 }
 
@@ -2077,7 +2088,8 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         `).join('');
       } else {
-        linksSection.style.display = 'none';
+        linksSection.style.display = 'block';
+        linksContainer.innerHTML = '<p style="color:#6b7280;margin:0;">No links submitted</p>';
       }
     }
     // Show/hide additional file upload toggle based on status
@@ -2588,6 +2600,7 @@ window.openImagePreview = function(imageUrl, fileName) {
           specifictype: row.dataset.specifictype,
           file: row.dataset.file,
           files: row.dataset.files,
+          links: row.dataset.links,
           formattedDeadline: row.dataset.formattedDeadline,
           allowAdditionalUpload: row.dataset.allowAdditionalUpload,
           student: row.dataset.student
@@ -2667,6 +2680,7 @@ window.openImagePreview = function(imageUrl, fileName) {
         description: updatedRow.dataset.description,
         file: updatedRow.dataset.file,
         files: updatedRow.dataset.files,
+        links: updatedRow.dataset.links,
         formattedDeadline: updatedRow.dataset.formattedDeadline,
         allowAdditionalUpload: updatedRow.dataset.allowAdditionalUpload,
         student: updatedRow.dataset.student
@@ -3113,14 +3127,25 @@ console.log('✅ Services Admin script loaded successfully');
     
     if (!hasHtml) {
       formatted = window.escapeHtml(formatted);
+      // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+      // can't be used to smuggle in a javascript:/data: URI)
+      formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+        let trail = '';
+        const trailMatch = url.match(/[).,!?;:]+$/);
+        if (trailMatch) {
+          trail = trailMatch[0];
+          url = url.slice(0, -trail.length);
+        }
+        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+      });
     }
-    
+
     // Always run markdown conversion
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
     formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
     formatted = formatted.replace(/\n/g, '<br>');
-    
+
     return formatted;
   }
 
@@ -3470,3 +3495,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
   }
 });
+
+// ==========================================
+// FILTER TOGGLE SECTION
+// ==========================================
+window.toggleFilterSection = function(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.filter-toggle-icon');
+    if (body) {
+        body.classList.toggle('collapsed');
+    }
+    if (icon) {
+        icon.classList.toggle('rotated');
+    }
+};

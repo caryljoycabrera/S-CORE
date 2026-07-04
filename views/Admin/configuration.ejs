@@ -2664,6 +2664,110 @@
                 </div>
               </div>
 
+              <!-- ── Section: Pending Restoration Requests ─────────────── -->
+              <%
+                const pendingRestorationEntries = [];
+                (archivedRequests || []).forEach(function(request) {
+                  (request.restorationRequests || []).forEach(function(rr) {
+                    if ((rr.status || 'pending') === 'pending') {
+                      pendingRestorationEntries.push({ request: request, rr: rr });
+                    }
+                  });
+                });
+                pendingRestorationEntries.sort(function(a, b) { return new Date(b.rr.requestedAt || 0) - new Date(a.rr.requestedAt || 0); });
+              %>
+              <div style="margin-bottom: 24px;">
+              <div class="config-section" style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 28px;">
+                <h2 class="section-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1f2937;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;color:#f59e0b;margin-right:8px;"><use href="#icon-refresh"/></svg>
+                  Pending Restoration Requests
+                  <span id="pendingRestorationCount" style="margin-left:10px;font-size:0.8rem;font-weight:700;color:#92400e;background:#fef3c7;padding:3px 10px;border-radius:20px;">(<%= pendingRestorationEntries.length %> pending)</span>
+                </h2>
+                <p class="section-description" style="margin: 8px 0 16px 0; font-size: 0.875rem; color: #6b7280;">Requestors and units pleading to restore an archived request. Restore it, or delete the plea.</p>
+                <div class="prst-scroll-wrapper" style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:10px;scrollbar-width:thin;">
+                  <table id="pendingRestorationTable" style="width:100%;border-collapse:collapse;min-width:900px;">
+                    <thead style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+                      <tr>
+                        <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Type</th>
+                        <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Title</th>
+                        <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Requested By</th>
+                        <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Reason</th>
+                        <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Requested</th>
+                        <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pendingRestorationBody">
+                      <% if (pendingRestorationEntries.length > 0) { %>
+                        <% pendingRestorationEntries.forEach(function(entry) {
+                             const request = entry.request; const rr = entry.rr;
+                             const requester = (rr.requestedBy && rr.requestedBy.fName) ? (rr.requestedBy.fName + ' ' + (rr.requestedBy.lName || '')).trim() : 'Unknown';
+                             const requesterRole = (rr.requestedBy && rr.requestedBy.role === 'unit') ? 'Unit' : 'Requestor';
+                        %>
+                          <tr class="restoration-row"
+                              data-request-id="<%= request._id %>"
+                              data-request-type="<%= request.type %>"
+                              data-restoration-id="<%= rr._id %>"
+                              data-title="<%= request.title %>"
+                              data-prev-status="<%= request.previousStatus || 'Pending' %>"
+                              style="border-bottom:1px solid #f3f4f6;">
+                            <td style="padding:11px 10px;overflow:hidden;">
+                              <span class="<%= request.type === 'Request Approval' ? 'am-badge-approval' : 'am-badge-service' %>"
+                                style="display:inline-block;padding:4px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">
+                                <%= request.type === 'Request Approval' ? 'Approval' : 'Service' %>
+                              </span>
+                            </td>
+                            <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= request.title %>">
+                              <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:500;color:#1f2937;"><%= request.title %></div>
+                            </td>
+                            <td style="padding:11px 10px;overflow:hidden;max-width:0;">
+                              <div style="font-size:13px;color:#1f2937;"><%= requester %></div>
+                              <div style="font-size:11px;color:#9ca3af;"><%= requesterRole %></div>
+                            </td>
+                            <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="<%= rr.reason %>">
+                              <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#374151;"><%= rr.reason %></div>
+                            </td>
+                            <td style="padding:11px 10px;overflow:hidden;">
+                              <div style="font-size:12px;color:#4b5563;"><%= rr.requestedAt ? new Date(rr.requestedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'N/A' %></div>
+                            </td>
+                            <td style="padding:11px 10px;overflow:hidden;">
+                              <div style="display:flex;gap:5px;">
+                                <button onclick="amRestorePlea('<%= request._id %>','<%= request.type %>','<%= rr._id %>')" title="Restore"
+                                  style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#10b981;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><use href="#icon-undo"/></svg> Restore
+                                </button>
+                                <button onclick="amDismissRestoration('<%= request._id %>','<%= request.type %>','<%= rr._id %>')" title="Delete plea"
+                                  style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#ef4444;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><use href="#icon-trash-2"/></svg> Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        <% }) %>
+                      <% } else { %>
+                        <tr>
+                          <td colspan="6" style="padding:40px 20px;text-align:center;">
+                            <p style="font-size:14px;font-weight:600;color:#374151;margin:0 0 4px;">No pending restoration requests</p>
+                            <p style="font-size:12px;color:#9ca3af;margin:0;">Restoration pleas from requestors and units will appear here.</p>
+                          </td>
+                        </tr>
+                      <% } %>
+                    </tbody>
+                  </table>
+                </div>
+                <div style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:20px;flex-wrap:wrap;" id="prstPaginationControls">
+                  <button id="prstPrevBtn" onclick="prstChangePage(prstCurrentPage - 1)"
+                    style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer;font-size:14px;color:#374151;" disabled>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+                  </button>
+                  <div id="prstPageNumbers" style="display:flex;gap:4px;"></div>
+                  <button id="prstNextBtn" onclick="prstChangePage(prstCurrentPage + 1)"
+                    style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid #d1d5db;border-radius:8px;background:white;cursor:pointer;font-size:14px;color:#374151;" disabled>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+              </div>
+              </div>
+
               <!-- ── Section 2: Archive Table Header ───────────────────── -->
               <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
                 <div>
@@ -3160,6 +3264,75 @@
                   let archiveFilteredRows = []; // rows matching current filter
                   let archiveOrgMultiSelect = null;
 
+                  // ── Pending Restoration Requests: Pagination (no filters) ───
+                  const PRST_PAGE_SIZE = 10;
+                  let prstCurrentPage = 1;
+                  let prstAllRows = [];
+
+                  function prstInit() {
+                    prstAllRows = Array.from(document.querySelectorAll('#pendingRestorationBody .restoration-row'));
+                    prstRenderPage(1);
+                  }
+
+                  function prstRenderPage(page) {
+                    const total = prstAllRows.length;
+                    const totalPages = Math.max(1, Math.ceil(total / PRST_PAGE_SIZE));
+                    if (page < 1) page = 1;
+                    if (page > totalPages) page = totalPages;
+                    prstCurrentPage = page;
+
+                    const start = (page - 1) * PRST_PAGE_SIZE;
+                    const end   = Math.min(start + PRST_PAGE_SIZE, total);
+
+                    prstAllRows.forEach((r, i) => {
+                      r.style.display = (i >= start && i < end) ? '' : 'none';
+                    });
+
+                    const prevBtn = document.getElementById('prstPrevBtn');
+                    const nextBtn = document.getElementById('prstNextBtn');
+                    if (prevBtn) prevBtn.disabled = page <= 1;
+                    if (nextBtn) nextBtn.disabled = page >= totalPages;
+
+                    const numbersEl = document.getElementById('prstPageNumbers');
+                    if (!numbersEl) return;
+                    numbersEl.innerHTML = '';
+                    if (totalPages <= 1) return;
+
+                    const pgStyle = (active) =>
+                      `display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;`+
+                      `padding:0 6px;border:1px solid ${active?'#10b981':'#d1d5db'};border-radius:7px;`+
+                      `background:${active?'#10b981':'white'};color:${active?'white':'#374151'};`+
+                      `font-size:13px;font-weight:${active?700:400};cursor:pointer;transition:all .15s;`;
+
+                    const mkPageBtn = (p) => {
+                      const b = document.createElement('button');
+                      b.textContent = p;
+                      b.setAttribute('style', pgStyle(p === page));
+                      b.onclick = () => prstChangePage(p);
+                      numbersEl.appendChild(b);
+                    };
+                    const mkEllipsis = () => {
+                      const s = document.createElement('span');
+                      s.textContent = '…';
+                      s.style.cssText = 'padding:0 4px;color:#9ca3af;line-height:34px;font-size:14px;';
+                      numbersEl.appendChild(s);
+                    };
+
+                    if (totalPages <= 7) {
+                      for (let p = 1; p <= totalPages; p++) mkPageBtn(p);
+                    } else {
+                      mkPageBtn(1);
+                      if (page > 3) mkEllipsis();
+                      const lo = Math.max(2, page - 1);
+                      const hi = Math.min(totalPages - 1, page + 1);
+                      for (let p = lo; p <= hi; p++) mkPageBtn(p);
+                      if (page < totalPages - 2) mkEllipsis();
+                      mkPageBtn(totalPages);
+                    }
+                  }
+
+                  window.prstChangePage = function(page) { prstRenderPage(page); };
+
                   // Shared dropdown manager
                   const ArchiveDropdownManager = {
                     activeDropdown: null,
@@ -3362,8 +3535,80 @@
                         `;
                       }).join('');
 
+                      // Rebuild the Pending Restoration Requests panel from the same data
+                      const pendingBody = document.getElementById('pendingRestorationBody');
+                      if (pendingBody) {
+                        const pendingEntries = [];
+                        result.data.forEach(r => {
+                          (r.restorationRequests || []).forEach(rr => {
+                            if ((rr.status || 'pending') === 'pending') pendingEntries.push({ request: r, rr });
+                          });
+                        });
+                        pendingEntries.sort((a, b) => new Date(b.rr.requestedAt || 0) - new Date(a.rr.requestedAt || 0));
+
+                        const countEl = document.getElementById('pendingRestorationCount');
+                        if (countEl) countEl.textContent = `(${pendingEntries.length} pending)`;
+
+                        if (pendingEntries.length === 0) {
+                          pendingBody.innerHTML = `
+                            <tr>
+                              <td colspan="6" style="padding:40px 20px;text-align:center;">
+                                <p style="font-size:14px;font-weight:600;color:#374151;margin:0 0 4px;">No pending restoration requests</p>
+                                <p style="font-size:12px;color:#9ca3af;margin:0;">Restoration pleas from requestors and units will appear here.</p>
+                              </td>
+                            </tr>`;
+                        } else {
+                          pendingBody.innerHTML = pendingEntries.map(({ request, rr }) => {
+                            const requester = (rr.requestedBy && rr.requestedBy.fName) ? `${rr.requestedBy.fName} ${rr.requestedBy.lName || ''}`.trim() : 'Unknown';
+                            const requesterRole = (rr.requestedBy && rr.requestedBy.role === 'unit') ? 'Unit' : 'Requestor';
+                            const requestedDate = rr.requestedAt ? new Date(rr.requestedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
+                            return `
+                            <tr class="restoration-row"
+                                data-request-id="${request._id}"
+                                data-request-type="${request.type}"
+                                data-restoration-id="${rr._id}"
+                                data-title="${request.title}"
+                                data-prev-status="${request.previousStatus || 'Pending'}"
+                                style="border-bottom:1px solid #f3f4f6;">
+                              <td style="padding:11px 10px;overflow:hidden;">
+                                <span class="${request.type === 'Request Approval' ? 'am-badge-approval' : 'am-badge-service'}"
+                                  style="display:inline-block;padding:4px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">
+                                  ${request.type === 'Request Approval' ? 'Approval' : 'Service'}
+                                </span>
+                              </td>
+                              <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${request.title}">
+                                <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-weight:500;color:#1f2937;">${request.title}</div>
+                              </td>
+                              <td style="padding:11px 10px;overflow:hidden;max-width:0;">
+                                <div style="font-size:13px;color:#1f2937;">${requester}</div>
+                                <div style="font-size:11px;color:#9ca3af;">${requesterRole}</div>
+                              </td>
+                              <td style="padding:11px 10px;overflow:hidden;max-width:0;" title="${rr.reason}">
+                                <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px;color:#374151;">${rr.reason}</div>
+                              </td>
+                              <td style="padding:11px 10px;overflow:hidden;">
+                                <div style="font-size:12px;color:#4b5563;">${requestedDate}</div>
+                              </td>
+                              <td style="padding:11px 10px;overflow:hidden;">
+                                <div style="display:flex;gap:5px;">
+                                  <button onclick="amRestorePlea('${request._id}','${request.type}','${rr._id}')" title="Restore"
+                                    style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#10b981;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><use href="#icon-undo"/></svg> Restore
+                                  </button>
+                                  <button onclick="amDismissRestoration('${request._id}','${request.type}','${rr._id}')" title="Delete plea"
+                                    style="display:inline-flex;align-items:center;gap:3px;padding:6px 10px;background:#ef4444;color:white;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px;"><use href="#icon-trash-2"/></svg> Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>`;
+                          }).join('');
+                        }
+                      }
+
                       // Reinitialize the archive table for filtering/pagination
                       archiveInit();
+                      prstInit();
                     } catch (err) {
                       console.error('[Archive] Failed to load records:', err);
                     }
@@ -3536,7 +3781,7 @@
                         });
                         const data = await res.json();
                         if (data.success) {
-                          row.remove();
+                          loadArchiveRecordsFromAPI();
                           window.showToast && window.showToast(`Restored to ${statusSelect.value}.`);
                           closeAmRestoreModal();
                         } else {
@@ -3559,6 +3804,65 @@
                     document.body.classList.remove('modal-open');
                   };
 
+                  // Restore a request from a specific pending restoration plea (Pending Restoration Requests panel).
+                  // Reuses the same Restore modal as amRestoreRequest, but looks up title/prevStatus from the
+                  // plea row (unique per restoration-id) instead of the main archive table's row (shared request-id).
+                  window.amRestorePlea = function(id, type, restorationRequestId) {
+                    const row = document.querySelector(`tr[data-restoration-id="${restorationRequestId}"]`);
+                    if (!row) return;
+
+                    const title = row.dataset.title || 'Unknown Title';
+                    const prevStatus = row.dataset.prevStatus || 'Pending';
+
+                    document.getElementById('amRestoreTitle').textContent = title;
+                    document.getElementById('amRestoreType').textContent = type;
+                    document.getElementById('amRestorePrevStatus').textContent = prevStatus;
+
+                    const statusSelect = document.getElementById('amTargetStatus');
+                    statusSelect.innerHTML = '';
+
+                    const approvalStatuses = ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Completed'];
+                    const serviceStatuses = ['Pending', 'Queued', 'In Progress', 'For Checking', 'Approved', 'For Revision', 'Completed', 'Rejected'];
+                    const targetList = (type === 'Request Approval') ? approvalStatuses : serviceStatuses;
+
+                    targetList.forEach(s => {
+                      const opt = document.createElement('option');
+                      opt.value = s;
+                      opt.textContent = s;
+                      if (s.toLowerCase() === prevStatus.toLowerCase()) opt.selected = true;
+                      statusSelect.appendChild(opt);
+                    });
+
+                    const confirmBtn = document.getElementById('amRestoreConfirmBtn');
+                    confirmBtn.onclick = async () => {
+                      confirmBtn.disabled = true;
+                      confirmBtn.textContent = 'Restoring...';
+                      try {
+                        const res = await fetch('/admin/request/restore', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                          body: JSON.stringify({ requestId: id, requestType: type, targetStatus: statusSelect.value, restorationRequestId })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          loadArchiveRecordsFromAPI();
+                          window.showToast && window.showToast(`Restored to ${statusSelect.value}.`);
+                          closeAmRestoreModal();
+                        } else {
+                          alert('Restore failed: ' + (data.message || 'Unknown error'));
+                        }
+                      } catch (e) {
+                        alert('Network error.');
+                      } finally {
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = 'Restore Request';
+                      }
+                    };
+
+                    document.getElementById('amRestoreBackdrop').classList.add('show');
+                    document.body.classList.add('modal-open');
+                  };
+
                   window.amDeleteRequest = function(id, type) {
                     const row = document.querySelector(`tr[data-request-id="${id}"]`);
                     if (!row) return;
@@ -3578,7 +3882,7 @@
                         });
                         const data = await res.json();
                         if (data.success || res.ok) {
-                          row.remove();
+                          loadArchiveRecordsFromAPI();
                           window.showToast && window.showToast('Request permanently deleted.');
                           closeAmDeleteModal();
                         } else {
@@ -3600,6 +3904,49 @@
                     document.getElementById('amDeleteBackdrop').classList.remove('show');
                     document.body.classList.remove('modal-open');
                   };
+
+                  window.amDismissRestoration = function(id, type, restorationRequestId) {
+                    const row = document.querySelector(`tr[data-restoration-id="${restorationRequestId}"]`);
+                    const title = row?.dataset.title || 'this request';
+                    document.getElementById('amDismissTitle').textContent = `"${title}"`;
+                    document.getElementById('amDismissPermanent').checked = false;
+
+                    const confirmBtn = document.getElementById('amDismissConfirmBtn');
+                    confirmBtn.onclick = async () => {
+                      const permanent = document.getElementById('amDismissPermanent').checked;
+                      confirmBtn.disabled = true;
+                      confirmBtn.textContent = 'Deleting...';
+                      try {
+                        const res = await fetch('/admin/request/restoration/dismiss', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                          body: JSON.stringify({ requestId: id, requestType: type, restorationRequestId, permanent })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          loadArchiveRecordsFromAPI();
+                          window.showToast && window.showToast(data.message || 'Restoration request deleted.');
+                          closeAmDismissModal();
+                        } else {
+                          alert('Delete failed: ' + (data.message || 'Unknown error'));
+                        }
+                      } catch (e) {
+                        alert('Network error.');
+                      } finally {
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = 'Delete Request';
+                      }
+                    };
+
+                    document.getElementById('amDismissBackdrop').classList.add('show');
+                    document.body.classList.add('modal-open');
+                  };
+
+                  window.closeAmDismissModal = function() {
+                    document.getElementById('amDismissBackdrop').classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                  };
+
                   window.syncArchiveFields = function(fieldName, value) {
                     // Sync between System tab and Archive Manager tab
                     const field1 = document.getElementById(fieldName);
@@ -3659,6 +4006,7 @@
                   // Initialize archive on DOMContentLoaded
                   document.addEventListener('DOMContentLoaded', function() {
                     archiveInit();
+                    prstInit();
                   });
 
 
@@ -4249,6 +4597,16 @@
     border-top: 1px solid #e5e7eb;
     padding: 1.25rem;
   }
+  .prst-scroll-wrapper::-webkit-scrollbar {
+    height: 6px;
+  }
+  .prst-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+  .prst-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+  }
 </style>
 
 <script id="accordion-script">
@@ -4640,6 +4998,29 @@
       <div class="archive-modal-footer">
         <button class="archive-btn archive-btn-secondary" onclick="closeAmDeleteModal()">Keep Request</button>
         <button id="amDeleteConfirmBtn" class="archive-btn archive-btn-danger">Permanently Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dismiss Restoration Request Modal -->
+  <div id="amDismissBackdrop" class="archive-modal-backdrop modal" onclick="if(event.target===this) closeAmDismissModal()">
+    <div class="archive-modal">
+      <div class="archive-modal-header">
+        <h3 class="archive-modal-title" style="display:flex;align-items:center;gap:6px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><use href="#icon-trash-2"/></svg> Delete Restoration Request</h3>
+        <button class="archive-modal-close" onclick="closeAmDismissModal()">&times;</button>
+      </div>
+      <div class="archive-modal-body">
+        <p style="margin:0; font-weight:600; color:#1f2937; margin-bottom:8px;">Delete this restoration plea?</p>
+        <p style="margin:0; font-size:0.9rem; color:#6b7280; line-height:1.5;">The request stays archived either way — this only removes the plea itself.</p>
+        <div id="amDismissTitle" style="margin-top:12px; font-weight:700; color:#374151; font-style:italic;"></div>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:16px; cursor:pointer;">
+          <input type="checkbox" id="amDismissPermanent" style="width:16px;height:16px;cursor:pointer;">
+          <span style="font-size:0.85rem; color:#374151;">Permanently delete this request (no audit trail) — otherwise it's kept marked as rejected.</span>
+        </label>
+      </div>
+      <div class="archive-modal-footer">
+        <button class="archive-btn archive-btn-secondary" onclick="closeAmDismissModal()">Cancel</button>
+        <button id="amDismissConfirmBtn" class="archive-btn archive-btn-danger">Delete Request</button>
       </div>
     </div>
   </div>

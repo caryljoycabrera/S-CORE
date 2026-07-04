@@ -1198,10 +1198,11 @@ function populateModalData(rowData) {
         </div>
       `).join('');
     } else {
-      linksSection.style.display = 'none';
+      linksSection.style.display = 'block';
+      linksContainer.innerHTML = '<p style="color:#6b7280;margin:0;">No links submitted</p>';
     }
   }
-  
+
   // Load revision history based on request type
   if (currentRequestType === 'Service Request') {
     loadServiceRevisionHistory(currentRequestId);
@@ -2554,13 +2555,24 @@ function displayFormattedText(text) {
     
     if (!hasHtml) {
         formatted = escapeHtml(text);
+        // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+        // can't be used to smuggle in a javascript:/data: URI)
+        formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+            let trail = '';
+            const trailMatch = url.match(/[).,!?;:]+$/);
+            if (trailMatch) {
+                trail = trailMatch[0];
+                url = url.slice(0, -trail.length);
+            }
+            return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+        });
     }
-    
+
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
     formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
     formatted = formatted.replace(/\n/g, '<br>');
-    
+
     return formatted;
 }
 
@@ -3711,19 +3723,31 @@ function displayFormattedText(text) {
     
     // It's plain text, escape HTML first
     let formatted = escapeHtml(text);
-    
+
+    // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+    // can't be used to smuggle in a javascript:/data: URI)
+    formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+        let trail = '';
+        const trailMatch = url.match(/[).,!?;:]+$/);
+        if (trailMatch) {
+            trail = trailMatch[0];
+            url = url.slice(0, -trail.length);
+        }
+        return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+    });
+
     // Bold: **text** -> <strong>text</strong>
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    
+
     // Italic: *text* -> <em>text</em> (but not ** which is bold)
     formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-    
+
     // Underline: __text__ -> <u>text</u>
     formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-    
+
     // Preserve line breaks
     formatted = formatted.replace(/\n/g, '<br>');
-    
+
     return formatted;
 }
 
@@ -4202,8 +4226,22 @@ function resetServiceForm() {
     linksContainer.innerHTML = `
       <div class="link-input-group">
         <input type="text" name="links[]" class="link-input" placeholder="https://example.com" />
-        <button type="button" class="remove-link-btn" onclick="removeServiceLink(this)" style="display: none;">×</button>
+        <button type="button" class="remove-link-btn" onclick="removeServiceLink(this)" style="display: none;">A-</button>
       </div>
     `;
   }
 }
+
+// ==========================================
+// FILTER TOGGLE SECTION
+// ==========================================
+window.toggleFilterSection = function(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.filter-toggle-icon');
+    if (body) {
+        body.classList.toggle('collapsed');
+    }
+    if (icon) {
+        icon.classList.toggle('rotated');
+    }
+};

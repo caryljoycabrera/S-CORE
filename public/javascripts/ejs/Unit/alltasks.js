@@ -356,12 +356,12 @@ function initializeEventListeners() {
 
     const requestRevisionBtn = document.getElementById('requestRevisionBtn');
     if (requestRevisionBtn) {
-        requestRevisionBtn.addEventListener('click', showRevisionForm);
+        requestRevisionBtn.addEventListener('click', showAdminRevisionForm);
     }
 
     const cancelRevisionBtn = document.getElementById('cancelRevisionBtn');
     if (cancelRevisionBtn) {
-        cancelRevisionBtn.addEventListener('click', hideRevisionForm);
+        cancelRevisionBtn.addEventListener('click', hideAdminRevisionForm);
     }
 
     const submitRevisionBtn = document.getElementById('submitRevisionBtn');
@@ -397,7 +397,7 @@ function initializeEventListeners() {
 
     const requestAnotherRevisionBtn = document.getElementById('requestAnotherRevisionBtn');
     if (requestAnotherRevisionBtn) {
-        requestAnotherRevisionBtn.addEventListener('click', showRevisionForm);
+        requestAnotherRevisionBtn.addEventListener('click', showAdminRevisionForm);
     }
 
     // Service actions
@@ -405,6 +405,49 @@ function initializeEventListeners() {
     if (uploadDeliverablesBtn) {
         uploadDeliverablesBtn.addEventListener('click', uploadDeliverables);
     }
+
+    const startServiceBtn = document.getElementById('startServiceBtn');
+    if (startServiceBtn) {
+        startServiceBtn.addEventListener('click', startService);
+    }
+
+    const rejectServiceBtn = document.getElementById('rejectServiceBtn');
+    if (rejectServiceBtn) {
+        rejectServiceBtn.addEventListener('click', openRejectServiceModal);
+    }
+
+    const cancelRejectServiceBtn = document.getElementById('cancelRejectServiceBtn');
+    if (cancelRejectServiceBtn) {
+        cancelRejectServiceBtn.addEventListener('click', closeRejectServiceModal);
+    }
+
+    const submitRejectServiceBtn = document.getElementById('submitRejectServiceBtn');
+    if (submitRejectServiceBtn) {
+        submitRejectServiceBtn.addEventListener('click', rejectService);
+    }
+
+    const allowOneMoreRevisionBtn = document.getElementById('allowOneMoreRevisionBtn');
+    if (allowOneMoreRevisionBtn) {
+        allowOneMoreRevisionBtn.addEventListener('click', overrideRevisionLimit);
+    }
+
+    // Deliverable notes formatting toolbar - same live WYSIWYG mechanism as the team chat / revision composer
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('[data-deliverable-format]');
+        if (!target) return;
+        e.preventDefault();
+        applyChatFormat(target.getAttribute('data-deliverable-format'), 'deliverableNotes');
+    });
+    document.addEventListener('keydown', function(e) {
+        const deliverableNotes = document.getElementById('deliverableNotes');
+        if (!deliverableNotes || document.activeElement !== deliverableNotes) return;
+        if (!(e.ctrlKey || e.metaKey)) return;
+        const key = e.key.toLowerCase();
+        if (key === 'b' || key === 'i' || key === 'u') {
+            e.preventDefault();
+            applyChatFormat(key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'underline', 'deliverableNotes');
+        }
+    });
 
     // Complete task modal
     const openCompleteTaskModalBtn = document.getElementById('openCompleteTaskModalBtn');
@@ -623,7 +666,7 @@ function applyTableFilters() {
     
     tableRows.forEach(row => {
         const requestId = row.getAttribute('data-request-id')?.toLowerCase() || '';
-        const status = row.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
+        const status = row.getAttribute('data-status')?.toLowerCase() || '';
         const student = row.getAttribute('data-requestor')?.toLowerCase() || '';
         const studentOrg = row.getAttribute('data-student')?.toLowerCase() || '';
         const officeDept = row.getAttribute('data-office')?.toLowerCase() || '';
@@ -975,6 +1018,12 @@ function openRequestDetails(requestId, requestType) {
     }
 
     // Get all data attributes from row
+    if (!row.getAttribute('data-title') || !row.getAttribute('data-date-submitted')) {
+        console.warn('[openRequestDetails] Missing title/date on row for request', requestId, {
+            rawTitle: row.getAttribute('data-title'),
+            rawDate: row.getAttribute('data-date-submitted')
+        });
+    }
     const title = row.getAttribute('data-title') || 'Untitled';
     const requestor = row.getAttribute('data-requestor') || 'Unknown';
     const requestorEmail = row.getAttribute('data-requestor-email') || 'N/A';
@@ -1060,26 +1109,30 @@ function openRequestDetails(requestId, requestType) {
         const links = JSON.parse(linksJson);
         const linksSection = document.getElementById('linksSection');
         const linksContainer = document.getElementById('modalLinks');
-        if (links && links.length > 0 && linksContainer) {
-            linksContainer.innerHTML = links.map(link => `
-                <div class="link-item" style="margin-bottom:0.5rem;">
-                  <a href="${link}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;word-break:break-all;text-decoration:underline;">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:4px;vertical-align:middle;">
-                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                    </svg>
-                    ${link}
-                  </a>
-                </div>
-            `).join('');
+        if (linksContainer) {
+            if (links && links.length > 0) {
+                linksContainer.innerHTML = links.map(link => `
+                    <div class="link-item" style="margin-bottom:0.5rem;">
+                      <a href="${link}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;word-break:break-all;text-decoration:underline;">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:4px;vertical-align:middle;">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        ${link}
+                      </a>
+                    </div>
+                `).join('');
+            } else {
+                linksContainer.innerHTML = '<p style="color:#6b7280;margin:0;">No links submitted</p>';
+            }
             if (linksSection) linksSection.style.display = 'block';
-        } else {
-            if (linksSection) linksSection.style.display = 'none';
         }
     } catch (e) {
         console.error('Error parsing links:', e);
         const linksSection = document.getElementById('linksSection');
-        if (linksSection) linksSection.style.display = 'none';
+        const linksContainer = document.getElementById('modalLinks');
+        if (linksContainer) linksContainer.innerHTML = '<p style="color:#6b7280;margin:0;">No links submitted</p>';
+        if (linksSection) linksSection.style.display = 'block';
     }
 
     // Show deliverables if they exist
@@ -1136,30 +1189,55 @@ function openRequestDetails(requestId, requestType) {
         // Hide admin form section (Unit Actions) for service requests
         const adminFormSection = document.querySelector('.admin-form-section');
         if (adminFormSection) adminFormSection.style.display = 'none';
-        
+
         // Hide approve button for service requests
         const adminApproveBtn = document.getElementById('adminApproveBtn');
         if (adminApproveBtn) adminApproveBtn.style.display = 'none';
+
+        // Show the Start Service / Reject card for service requests (on the shared
+        // AllTasks modal, this card also exists for approval requests and must be
+        // hidden there - see the approval branch below).
+        const serviceTopActions = document.querySelector('.service-actions-card');
+        if (serviceTopActions) serviceTopActions.style.display = 'block';
+
+        // Set Start Service / Reject button visibility synchronously from row status
+        // (loadServiceRevisionHistory will refine/confirm this once its fetch resolves)
+        // Both only make sense before the unit has started the service - once
+        // acknowledged (In Progress or later), rejection is no longer offered.
+        const startServiceBtn = document.getElementById('startServiceBtn');
+        const rejectServiceBtn = document.getElementById('rejectServiceBtn');
+        if (startServiceBtn) startServiceBtn.style.display = (normalizedStatus === 'queued') ? 'inline-block' : 'none';
+        if (rejectServiceBtn) rejectServiceBtn.style.display = (normalizedStatus === 'queued') ? 'inline-block' : 'none';
     } else if (requestType === 'approval') {
         // Hide service actions panel for approval requests
         const serviceActionsPanel = document.getElementById('serviceActionsPanel');
         if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
-        
+
         // Hide complete task panel for approval requests
         const completeTaskPanel = document.getElementById('completeTaskPanel');
         if (completeTaskPanel) completeTaskPanel.style.display = 'none';
-        
+
+        // Hide the Start Service / Reject card - it's service-only, but on the
+        // shared AllTasks modal it's also in the DOM for approval requests.
+        const serviceTopActions = document.querySelector('.service-actions-card');
+        if (serviceTopActions) serviceTopActions.style.display = 'none';
+
         // Show admin form section (Unit Actions) for approval requests
         const adminFormSection = document.querySelector('.admin-form-section');
         if (adminFormSection) adminFormSection.style.display = 'block';
-        
-        // Show approve button for approval requests
+
         const adminApproveBtn = document.getElementById('adminApproveBtn');
-        if (adminApproveBtn) adminApproveBtn.style.display = 'inline-block';
+        const adminRevisionBtn = document.getElementById('adminRevisionBtn');
 
         if (isRevisionStatus(status) && awaitingResubmission) {
-            const adminFormSection = document.querySelector('.admin-form-section');
-            if (adminFormSection) adminFormSection.style.display = 'none';
+            // Unit already asked for revision and is waiting on the requestor -
+            // hide Approve, keep only Ask for Revisions visible.
+            if (adminApproveBtn) adminApproveBtn.style.display = 'none';
+            if (adminRevisionBtn) adminRevisionBtn.style.display = 'inline-block';
+        } else {
+            // Fresh / Queued / In Progress / Pending-after-resubmission - both actions available
+            if (adminApproveBtn) adminApproveBtn.style.display = 'inline-block';
+            if (adminRevisionBtn) adminRevisionBtn.style.display = 'inline-block';
         }
     }
 
@@ -1188,9 +1266,6 @@ function openRequestDetails(requestId, requestType) {
             adminFormSection.style.display = 'none';
         }
     }
-
-    // Handle Queued status - show Start Task button
-    handleQueuedStatus(status, requestId, requestType);
 
     // Load conversation messages
     loadConversation(requestId);
@@ -1371,7 +1446,36 @@ async function loadServiceRevisionHistory(requestId) {
         console.log('[Service Revision History] Success:', result.success);
         console.log('[Service Revision History] Revisions count:', result.revisions ? result.revisions.length : 0);
         console.log('[Service Revision History] Full response:', result);
-        
+
+        if (result.success) {
+            // Determine current status (prefer modal status, fallback to row status)
+            const modalStatusEl = document.getElementById('modalStatus');
+            const currentStatusEarly = modalStatusEl ? modalStatusEl.textContent.toLowerCase().trim() : '';
+            const tableRowEarly = document.querySelector(`tr[data-request-id="${requestId}"]`);
+            const rowStatusEarly = tableRowEarly ? tableRowEarly.getAttribute('data-status')?.toLowerCase().trim() : '';
+            const statusForButtons = currentStatusEarly || rowStatusEarly;
+
+            // Start Service / Reject buttons and revision-limit-override control.
+            // Both only make sense before the unit has started the service - once
+            // acknowledged (In Progress or later), rejection is no longer offered.
+            const startServiceBtn = document.getElementById('startServiceBtn');
+            const rejectServiceBtn = document.getElementById('rejectServiceBtn');
+            const revisionLimitOverridePanel = document.getElementById('revisionLimitOverridePanel');
+
+            if (startServiceBtn) {
+                startServiceBtn.style.display = (statusForButtons === 'queued') ? 'inline-block' : 'none';
+            }
+            if (rejectServiceBtn) {
+                rejectServiceBtn.style.display = (statusForButtons === 'queued') ? 'inline-block' : 'none';
+            }
+            const currentRevisionCount = result.revisionCount || 0;
+            const currentRevisionLimit = result.revisionLimit || 2;
+            if (revisionLimitOverridePanel) {
+                revisionLimitOverridePanel.style.display =
+                    (currentRevisionCount >= currentRevisionLimit && statusForButtons !== 'rejected') ? 'flex' : 'none';
+            }
+        }
+
         if (result.success && result.revisions && result.revisions.length > 0) {
             // Log each revision before filtering
             result.revisions.forEach((rev, idx) => {
@@ -1404,8 +1508,12 @@ async function loadServiceRevisionHistory(requestId) {
             const actualStatus = currentStatus || rowStatus;
             console.log('[Service Revision History] Actual status:', actualStatus);
             
-            // If approved and NOT already completed, show complete task panel
-            if (hasApprovedDeliverables && actualStatus !== 'completed') {
+            // If rejected, hide both action panels entirely
+            if (actualStatus === 'rejected') {
+                console.log('[Service Revision History] ✅ Request rejected - hiding all action panels');
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            } else if (hasApprovedDeliverables && actualStatus !== 'completed') {
                 console.log('[Service Revision History] ✅ Deliverables approved - hiding upload panel, showing complete task panel');
                 if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
                 if (completeTaskPanel) {
@@ -1419,10 +1527,14 @@ async function loadServiceRevisionHistory(requestId) {
                 console.log('[Service Revision History] ✅ Task already completed - hiding both panels');
                 if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
                 if (completeTaskPanel) completeTaskPanel.style.display = 'none';
-            } else {
-                // No approval yet - show upload panel
-                console.log('[Service Revision History] No approval yet - showing upload panel');
+            } else if (actualStatus !== 'queued') {
+                // No approval yet and service has been started - show upload panel
+                console.log('[Service Revision History] No approval yet and service started - showing upload panel');
                 if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            } else {
+                // Still queued - panel stays hidden until "Start Service" is clicked
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
                 if (completeTaskPanel) completeTaskPanel.style.display = 'none';
             }
             
@@ -1488,8 +1600,8 @@ async function loadServiceRevisionHistory(requestId) {
                 // Don't override panel visibility if:
                 // 1. Deliverables are approved (complete task panel should be showing)
                 // 2. Task is completed (both panels should be hidden)
-                if (serviceActionsPanel && !hasApproval && actualStatus !== 'completed') {
-                    // Show upload panel if no deliverables submitted OR if revisions are requested
+                if (serviceActionsPanel && !hasApproval && actualStatus !== 'queued' && actualStatus !== 'completed' && actualStatus !== 'rejected') {
+                    // Show upload panel if service started AND no deliverables submitted OR if revisions are requested
                     if (!hasDeliverable || hasRevisionRequest) {
                         serviceActionsPanel.style.display = 'block';
                         console.log('[Service Revision History] ✅ Showed service actions panel');
@@ -1601,6 +1713,12 @@ function createServiceRevisionEntry(revision, index, total) {
     } else if (revision.type === 'revision_requested') {
         typeLabel = 'Revision Requested';
         badgeClass = 'badge-revision';
+    } else if (revision.type === 'rejected') {
+        typeLabel = '✕ Rejected';
+        badgeClass = 'badge-revoked';
+    } else if (revision.type === 'limit_override') {
+        typeLabel = 'Revision Limit Extended';
+        badgeClass = 'badge-approved';
     } else {
         typeLabel = 'Update';
         badgeClass = 'badge-revision';
@@ -1647,6 +1765,17 @@ function createServiceRevisionEntry(revision, index, total) {
                 <span style="color: #10b981; font-weight: 600;">Approved by Requestor - Ready to Complete</span>
             </div>
         `;
+    } else if (revision.type === 'rejected') {
+        statusIndicator = `
+            <div class="status-indicator" style="background: linear-gradient(135deg, #fecaca, #fca5a5); color: #991b1b;">
+                <svg width="16" height="16" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                <span style="font-weight: 600;">Request Rejected</span>
+            </div>
+        `;
     } else if (isLast) {
         if (isUnitAction) {
             let statusText = 'Awaiting Requestor Review';
@@ -1685,6 +1814,9 @@ function createServiceRevisionEntry(revision, index, total) {
     
     // Get files
     const files = revision.deliverableFiles || revision.responseFiles || [];
+
+    // Get links
+    const links = revision.revisionLinks || revision.responseLinks || [];
     
     // Show revision number for completed entries, otherwise just sequential number
     const badgeNumber = (revision.type === 'completed' && revision.revisionNumber > 0) 
@@ -1707,9 +1839,9 @@ function createServiceRevisionEntry(revision, index, total) {
             
             <div class="message-content-section">
                 <div class="content-label">${isUnitAction ? 'UNIT UPDATE:' : 'REQUESTOR FEEDBACK:'}</div>
-                <div class="content-text">${displayFormattedText(content)}</div>
+                <div class="content-text">${displayFormattedText(content, { skipMarkdown: !isUnitAction })}</div>
             </div>
-            
+
             ${files && files.length > 0 ? `
                 <div class="message-attachments-section">
                     <div class="attachments-header">
@@ -1723,11 +1855,38 @@ function createServiceRevisionEntry(revision, index, total) {
                     </div>
                 </div>
             ` : ''}
-            
+
+            ${links && links.length > 0 ? `
+                <div class="message-attachments-section" style="margin-top: 1rem;">
+                    <div class="attachments-header">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span class="attachments-count">${links.length} link${links.length > 1 ? 's' : ''} attached</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem;">
+                        ${links.map(link => `
+                            <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer"
+                               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; color: #0ea5e9; text-decoration: none; transition: all 0.2s;"
+                               onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#0ea5e9';"
+                               onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(link)}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
             ${statusIndicator}
         </div>
     `;
-    
+
     return entry;
 }
 
@@ -1932,7 +2091,10 @@ function createRevisionEntry(revision, index, total) {
                         content = revision.responseNotes || revision.description || 'No response provided';
                     }
                     console.log('🎯 [Unit] Rendering content:', { isUnitAction, content, type: typeof content });
-                    return displayFormattedText(content);
+                    // Resubmission content (USER RESPONSE) is already-sanitized real HTML from
+                    // the requestor's Quill editor - skip the markdown pass to avoid mangling it.
+                    const isResubmissionContent = !isUnitAction && revision.type !== 'initial' && revision.type !== 'approved';
+                    return displayFormattedText(content, { skipMarkdown: isResubmissionContent });
                 })()}</div>
             </div>
             
@@ -2189,9 +2351,9 @@ function closeRequestModal() {
 
     const revisionComments = document.getElementById('revisionComments');
     if (revisionComments) {
-        revisionComments.value = '';
+        revisionComments.innerHTML = '';
     }
-    
+
     const selectedFilesPreview = document.getElementById('selectedFilesPreview');
     if (selectedFilesPreview) {
         selectedFilesPreview.innerHTML = '';
@@ -2559,41 +2721,6 @@ async function submitRevokeApproval() {
 
 window.confirmApproveRequest = confirmApproveRequest;
 
-// Function: showRevisionForm
-function showRevisionForm() {
-    const revisionForm = document.getElementById('revisionForm');
-    if (revisionForm) {
-        revisionForm.style.display = 'block';
-        
-        // Scroll the form into view smoothly
-        setTimeout(() => {
-            revisionForm.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest' 
-            });
-            
-            // Focus on the textarea
-            const revisionComments = document.getElementById('revisionComments');
-            if (revisionComments) {
-                revisionComments.focus();
-            }
-        }, 100);
-    }
-}
-
-// Function: hideRevisionForm
-function hideRevisionForm() {
-    const revisionForm = document.getElementById('revisionForm');
-    if (revisionForm) {
-        revisionForm.style.display = 'none';
-    }
-
-    const revisionNotes = document.getElementById('revisionNotes');
-    if (revisionNotes) {
-        revisionNotes.value = '';
-    }
-}
-
 // Function: submitRevision
 async function submitRevision() {
     if (!currentRequestId) {
@@ -2609,23 +2736,12 @@ async function submitRevision() {
         return;
     }
 
-    // Get content from Quill editor if available, otherwise from textarea
-    let revisionComments;
-    if (window.revisionCommentsQuill) {
-        const html = window.revisionCommentsQuill.root.innerHTML;
-        const text = window.revisionCommentsQuill.getText().trim();
-        revisionComments = html;
-        
-        if (!text) {
-            showErrorMessage('Please enter revision feedback');
-            return;
-        }
-    } else {
-        revisionComments = document.getElementById('revisionComments')?.value.trim();
-        if (!revisionComments) {
-            showErrorMessage('Please enter revision feedback');
-            return;
-        }
+    // Revision composer is a contenteditable div (same live-formatting mechanism as team chat)
+    const revisionCommentsEl = document.getElementById('revisionComments');
+    const revisionComments = htmlToMarkdown(revisionCommentsEl ? revisionCommentsEl.innerHTML : '');
+    if (!revisionComments.trim()) {
+        showErrorMessage('Please enter revision feedback');
+        return;
     }
 
     try {
@@ -2643,35 +2759,32 @@ async function submitRevision() {
 
         if (response.ok && result.success) {
             showSuccessMessage('Revision request submitted successfully');
-            
+
             // Clear and hide revision form
-            if (window.revisionCommentsQuill) {
-                window.revisionCommentsQuill.setText('');
-            } else {
-                document.getElementById('revisionComments').value = '';
-            }
-            clearRevisionLinks();
-            hideRevisionForm();
-            
+            hideAdminRevisionForm();
+
             // Reload revision history to show the new revision
             await loadRevisionHistory(currentRequestId);
-            
-            // Update modal status
+
+            // Update modal status and button visibility immediately
             const modalStatus = document.getElementById('modalStatus');
             if (modalStatus) {
                 modalStatus.textContent = 'FOR REVISION';
                 modalStatus.className = 'status-badge for-revision';
                 modalStatus.dataset.awaitingResubmission = 'true';
             }
-            
+            const adminApproveBtn = document.getElementById('adminApproveBtn');
+            if (adminApproveBtn) adminApproveBtn.style.display = 'none';
+
             // Update table row status in background without reload
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
             if (tableRow) {
-                const statusCell = tableRow.querySelector('.status');
+                const statusCell = tableRow.querySelector('.status-badge');
                 if (statusCell) {
                     statusCell.textContent = 'FOR REVISION';
-                    statusCell.className = 'status for-revision';
+                    statusCell.className = 'status-badge for-revision';
                 }
+                tableRow.setAttribute('data-status', 'For Revision');
                 tableRow.setAttribute('data-awaiting-resubmission', 'true');
             }
         } else {
@@ -2690,9 +2803,12 @@ async function uploadDeliverables() {
         return;
     }
 
+    const deliverableNotesEl = document.getElementById('deliverableNotes');
+    const notes = htmlToMarkdown(deliverableNotesEl ? deliverableNotesEl.innerHTML : '');
     const links = getLinkValues('deliverableLinks');
-    if (links.length === 0) {
-        showErrorMessage('Please provide at least one link');
+
+    if (!notes.trim() && links.length === 0) {
+        showErrorMessage('Please provide deliverable notes or at least one link');
         return;
     }
 
@@ -2702,18 +2818,18 @@ async function uploadDeliverables() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ links })
+            body: JSON.stringify({ notes, links })
         });
 
         const result = await response.json();
 
         if (response.ok && result.success) {
             showSuccessMessage(result.message || 'Deliverables uploaded successfully. Status changed to "For Checking".');
-            
-            // Clear link inputs
+
+            // Clear composer
+            if (deliverableNotesEl) deliverableNotesEl.innerHTML = '';
             const linkInputs = document.querySelectorAll('input[name="deliverableLinks"]');
             linkInputs.forEach(input => input.value = '');
-            document.getElementById('uploadDeliverablesBtn').disabled = true;
 
             // Update modal status
             const modalStatus = document.getElementById('modalStatus');
@@ -2721,15 +2837,16 @@ async function uploadDeliverables() {
                 modalStatus.textContent = 'FOR CHECKING';
                 modalStatus.className = 'status-badge for-checking';
             }
-            
+
             // Update table row status in background without reload
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
             if (tableRow) {
-                const statusCell = tableRow.querySelector('.status');
+                const statusCell = tableRow.querySelector('.status-badge');
                 if (statusCell) {
                     statusCell.textContent = 'FOR CHECKING';
-                    statusCell.className = 'status for-checking';
+                    statusCell.className = 'status-badge for-checking';
                 }
+                tableRow.setAttribute('data-status', 'For Checking');
             }
 
             // Reload service revision history if this is a service request
@@ -2742,6 +2859,160 @@ async function uploadDeliverables() {
     } catch (error) {
         console.error('Error uploading deliverables:', error);
         showErrorMessage('An error occurred while uploading deliverables');
+    }
+}
+
+// Function: startService - unit acknowledges a Queued service request, moving it to In Progress
+async function startService() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/unit/task/acknowledge/${currentRequestId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ taskType: 'service' })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage(result.message || 'Service started successfully.');
+
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'IN PROGRESS';
+                modalStatus.className = 'status-badge in-progress';
+            }
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status-badge');
+                if (statusCell) {
+                    statusCell.textContent = 'IN PROGRESS';
+                    statusCell.className = 'status-badge in-progress';
+                }
+                tableRow.setAttribute('data-status', 'In Progress');
+            }
+
+            if (currentRequestType === 'service') {
+                loadServiceRevisionHistory(currentRequestId);
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to start service');
+        }
+    } catch (error) {
+        console.error('Error starting service:', error);
+        showErrorMessage('An error occurred while starting the service');
+    }
+}
+
+// Function: openRejectServiceModal / closeRejectServiceModal - reject-reason modal helpers
+function openRejectServiceModal() {
+    const modal = document.getElementById('rejectServiceModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        const textarea = document.getElementById('rejectReasonInput');
+        if (textarea) textarea.value = '';
+    }
+}
+
+function closeRejectServiceModal() {
+    const modal = document.getElementById('rejectServiceModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Function: rejectService - submit the reject-reason modal
+async function rejectService() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    const reasonInput = document.getElementById('rejectReasonInput');
+    const reason = reasonInput ? reasonInput.value.trim() : '';
+
+    if (!reason) {
+        showErrorMessage('Please provide a reason for rejecting this request');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/unit/task/reject/${currentRequestId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage(result.message || 'Service request rejected.');
+            closeRejectServiceModal();
+
+            const modalStatus = document.getElementById('modalStatus');
+            if (modalStatus) {
+                modalStatus.textContent = 'REJECTED';
+                modalStatus.className = 'status-badge rejected';
+            }
+            const adminFormSection = document.querySelector('.admin-form-section');
+            if (adminFormSection) adminFormSection.style.display = 'none';
+
+            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (tableRow) {
+                const statusCell = tableRow.querySelector('.status-badge');
+                if (statusCell) {
+                    statusCell.textContent = 'REJECTED';
+                    statusCell.className = 'status-badge rejected';
+                }
+                tableRow.setAttribute('data-status', 'Rejected');
+            }
+
+            if (currentRequestType === 'service') {
+                loadServiceRevisionHistory(currentRequestId);
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to reject service request');
+        }
+    } catch (error) {
+        console.error('Error rejecting service request:', error);
+        showErrorMessage('An error occurred while rejecting the service request');
+    }
+}
+
+// Function: overrideRevisionLimit - unit grants the requestor one more revision beyond the standard cap
+async function overrideRevisionLimit() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    if (!confirm('Allow the requestor one additional revision beyond the standard limit?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/unit/task/override-revision-limit/${currentRequestId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showSuccessMessage('One additional revision has been allowed.');
+            if (currentRequestType === 'service') {
+                loadServiceRevisionHistory(currentRequestId);
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to override the revision limit');
+        }
+    } catch (error) {
+        console.error('Error overriding revision limit:', error);
+        showErrorMessage('An error occurred while overriding the revision limit');
     }
 }
 
@@ -2986,9 +3257,12 @@ function htmlToMarkdown(html) {
 }
 
 // Helper function to display formatted text (for revision history display)
-function displayFormattedText(text) {
+// opts.skipMarkdown: set true for content that is already sanitized, real HTML
+// (e.g. a requestor's Quill-produced resubmission) so literal */_ characters
+// inside it aren't re-interpreted as markdown.
+function displayFormattedText(text, opts = {}) {
     if (!text) return '';
-    
+
     // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
     let formatted = text
         .replace(/&amp;/g, '&')
@@ -3003,13 +3277,26 @@ function displayFormattedText(text) {
     // If it's plain text, escape HTML first
     if (!hasHtml) {
         formatted = escapeHtml(formatted);
+        // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+        // can't be used to smuggle in a javascript:/data: URI)
+        formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+            let trail = '';
+            const trailMatch = url.match(/[).,!?;:]+$/);
+            if (trailMatch) {
+                trail = trailMatch[0];
+                url = url.slice(0, -trail.length);
+            }
+            return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+        });
     }
-    
-    // Always parse simple markdown (even if it contains HTML, because backend mixes them)
-    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-    
+
+    if (!opts.skipMarkdown) {
+        // Parse simple markdown (even if it contains HTML, because backend mixes them)
+        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+        formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    }
+
     // Preserve line breaks
     // (Quill HTML usually doesn't have raw \n, so replacing them with <br> is safe for mixed content)
     formatted = formatted.replace(/\n/g, '<br>');
@@ -3372,11 +3659,6 @@ function clearConversationInput() {
 // TEXT FORMATTING FUNCTIONS
 // ==========================================
 
-function applyTextFormat(format) {
-    // Use the shared applyChatFormat which handles both contenteditable and textarea
-    applyChatFormat(format);
-}
-
 // Create global alias for notification system
 window.openConversationModal = openTeamConversationModal;
 
@@ -3416,20 +3698,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Text formatting buttons
-    const boldBtn = document.getElementById('boldBtn');
-    if (boldBtn) {
-        boldBtn.addEventListener('click', () => applyTextFormat('bold'));
-    }
+    // Text formatting buttons - team chat toolbar (real [data-chat-format] buttons)
+    document.querySelectorAll('[data-chat-format]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            applyChatFormat(btn.getAttribute('data-chat-format'), 'teamMessageInput');
+        });
+    });
 
-    const italicBtn = document.getElementById('italicBtn');
-    if (italicBtn) {
-        italicBtn.addEventListener('click', () => applyTextFormat('italic'));
-    }
-
-    const underlineBtn = document.getElementById('underlineBtn');
-    if (underlineBtn) {
-        underlineBtn.addEventListener('click', () => applyTextFormat('underline'));
+    // Ctrl/Cmd+B/I/U keyboard shortcuts for the team chat contenteditable
+    const teamMessageInputEl = document.getElementById('teamMessageInput');
+    if (teamMessageInputEl) {
+        teamMessageInputEl.addEventListener('keydown', function(e) {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            const key = e.key.toLowerCase();
+            if (key === 'b' || key === 'i' || key === 'u') {
+                e.preventDefault();
+                applyChatFormat(key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'underline', 'teamMessageInput');
+            }
+        });
     }
 
     // File upload buttons (placeholder - implement as needed)
@@ -3838,8 +4125,8 @@ window.applyRevokeFormat = function(format) {
 // TEXT FORMATTING FOR CHAT
 // ==========================================
 
-function applyChatFormat(format) {
-    const input = document.getElementById('teamMessageInput');
+function applyChatFormat(format, targetId = 'teamMessageInput') {
+    const input = document.getElementById(targetId);
     if (!input) return;
 
     // Detect contenteditable by tagName or attribute (more robust than isContentEditable)
@@ -3985,23 +4272,6 @@ window.closeImageViewer = function() {
     }
 };
 
-// ==========================================
-// QUEUED STATUS HANDLING - START TASK
-// ==========================================
-function handleQueuedStatus(status, requestId, requestType) {
-    const statusLower = status.toLowerCase().trim();
-    
-    const actionPanel = requestType === 'approval' 
-        ? document.getElementById('approvalActionsPanel')
-        : document.getElementById('serviceActionsPanel');
-    
-    if (!actionPanel) return;
-    
-    // Show the action panel for all statuses
-    actionPanel.style.display = 'block';
-}
-
-
 
 // Initialize action buttons when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -4059,6 +4329,8 @@ function showAdminRevisionForm() {
         revisionForm.style.display = 'block';
         // Scroll to the form
         revisionForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const revisionComments = document.getElementById('revisionComments');
+        if (revisionComments) revisionComments.focus();
     }
 }
 
@@ -4070,8 +4342,9 @@ function hideAdminRevisionForm() {
         // Clear the form
         const revisionComments = document.getElementById('revisionComments');
         if (revisionComments) {
-            revisionComments.value = '';
+            revisionComments.innerHTML = '';
         }
+        clearRevisionLinks();
     }
 }
 
@@ -4087,80 +4360,8 @@ function getLinkValues(inputName) {
     return Array.from(inputs).map(input => input.value.trim()).filter(v => v !== '');
 }
 
-// Function: submitAdminRevision - Submit admin revision request
-async function submitAdminRevision() {
-    if (!currentRequestId) {
-        showErrorMessage('No request selected');
-        return;
-    }
-
-    const modalStatus = document.getElementById('modalStatus');
-    const currentStatus = modalStatus ? modalStatus.textContent : '';
-    const awaitingResubmission = modalStatus?.dataset.awaitingResubmission === 'true';
-    if (isRevisionStatus(currentStatus) && awaitingResubmission) {
-        showErrorMessage('Request already under revision. Wait for requester resubmission before editing.');
-        return;
-    }
-
-    const revisionComments = document.getElementById('revisionComments')?.value.trim();
-    if (!revisionComments) {
-        showErrorMessage('Please enter revision feedback');
-        return;
-    }
-
-    try {
-        const links = getLinkValues('revisionLinks');
-
-        const response = await fetch(`/unit/task/revise/${currentRequestId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ revisionNotes: revisionComments, links })
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-            showSuccessMessage('Revision request submitted successfully');
-
-            // Clear and hide revision form
-            document.getElementById('revisionComments').value = '';
-            clearRevisionLinks();
-            hideAdminRevisionForm();
-
-            // Reload revision history to show the new revision immediately
-            await loadRevisionHistory(currentRequestId);
-
-            // Update modal status
-            const modalStatus = document.getElementById('modalStatus');
-            if (modalStatus) {
-                modalStatus.textContent = 'FOR REVISION';
-                modalStatus.className = 'status-badge for-revision';
-                modalStatus.dataset.awaitingResubmission = 'true';
-            }
-
-            // Update table row status in background without reload
-            const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
-            if (tableRow) {
-                const statusCell = tableRow.querySelector('.status-badge');
-                if (statusCell) {
-                    statusCell.textContent = 'FOR REVISION';
-                    statusCell.className = 'status-badge for-revision';
-                }
-                tableRow.setAttribute('data-status', 'For Revision');
-                tableRow.setAttribute('data-awaiting-resubmission', 'true');
-            }
-        } else {
-            showErrorMessage(result.message || 'Failed to submit revision request');
-        }
-    } catch (error) {
-        console.error('Error submitting revision:', error);
-        showErrorMessage('An error occurred while submitting the revision request');
-    }
-}
-
-// Function: initializeRevisionFormatting - Initialize text formatting for revision comments
+// Function: initializeRevisionFormatting - Initialize text formatting for the revision composer
+// (a contenteditable div, same live WYSIWYG mechanism as the team chat composer)
 function initializeRevisionFormatting() {
     // Use event delegation for revision formatting buttons
     document.addEventListener('click', function(e) {
@@ -4168,49 +4369,21 @@ function initializeRevisionFormatting() {
         if (target) {
             e.preventDefault();
             e.stopPropagation();
-
-            const revisionComments = document.getElementById('revisionComments');
-            if (!revisionComments) return;
-
-            const format = target.getAttribute('data-revision-format');
-            applyTextFormatting(revisionComments, format);
+            applyChatFormat(target.getAttribute('data-revision-format'), 'revisionComments');
         }
     });
 
-    // Keyboard shortcuts are handled in AllTasks.ejs to avoid duplication
-}
-
-// Function: applyTextFormatting - Apply text formatting to textarea
-function applyTextFormatting(textarea, format) {
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    const beforeText = textarea.value.substring(0, start);
-    const afterText = textarea.value.substring(end);
-
-    let formattedText = '';
-    if (format === 'bold') {
-        formattedText = `**${selectedText}**`;
-    } else if (format === 'italic') {
-        formattedText = `*${selectedText}*`;
-    } else if (format === 'underline') {
-        formattedText = `<u>${selectedText}</u>`;
-    }
-
-    // Insert formatted text
-    textarea.value = beforeText + formattedText + afterText;
-
-    // Position cursor - if no text selected, place between tags; if text selected, place after
-    let newPosition;
-    if (selectedText.length === 0) {
-        newPosition = start + (format === 'bold' ? 2 : 1);
-    } else {
-        newPosition = start + formattedText.length;
-    }
-    textarea.setSelectionRange(newPosition, newPosition);
-    textarea.focus();
+    // Ctrl/Cmd+B/I/U keyboard shortcuts, scoped to the revision composer
+    document.addEventListener('keydown', function(e) {
+        const revisionComments = document.getElementById('revisionComments');
+        if (!revisionComments || document.activeElement !== revisionComments) return;
+        if (!(e.ctrlKey || e.metaKey)) return;
+        const key = e.key.toLowerCase();
+        if (key === 'b' || key === 'i' || key === 'u') {
+            e.preventDefault();
+            applyChatFormat(key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'underline', 'revisionComments');
+        }
+    });
 }
 
 // Function: formatFileSize - Format file size for display
@@ -4374,3 +4547,17 @@ function checkURLParameters() {
         }, 300);
     }
 }
+
+// ==========================================
+// FILTER TOGGLE SECTION
+// ==========================================
+window.toggleFilterSection = function(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.filter-toggle-icon');
+    if (body) {
+        body.classList.toggle('collapsed');
+    }
+    if (icon) {
+        icon.classList.toggle('rotated');
+    }
+};

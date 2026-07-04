@@ -35,8 +35,19 @@ window.formatText = function(text) {
   
   if (!hasHtml) {
     formatted = window.escapeHtml(formatted);
+    // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+    // can't be used to smuggle in a javascript:/data: URI)
+    formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+      let trail = '';
+      const trailMatch = url.match(/[).,!?;:]+$/);
+      if (trailMatch) {
+        trail = trailMatch[0];
+        url = url.slice(0, -trail.length);
+      }
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+    });
   }
-  
+
   // Always run markdown conversion
   formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');

@@ -206,10 +206,18 @@
 
         <!-- Filter Options -->
         <div class="filter-section">
+            <div class="filter-toggle-header" onclick="toggleFilterSection(this)">
+              <span class="filter-toggle-header-text">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;">
+                  <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+                </svg>
+                Filters &amp; Options
+              </span>
+              <span class="filter-toggle-icon">▼</span>
+            </div>
+            <div class="filter-toggle-body collapsed">
           <div class="filter-container">
             <div class="filter-group">
-              <label class="filter-label">Filter by:</label>
-
               <!-- First Row: Request ID, User, Status, Assigned Unit -->
               <div class="filter-controls">
                 <div class="filter-item">
@@ -327,6 +335,7 @@
               </div>
             </div>
           </div>
+            </div>
         </div>
 
         <!-- Table -->
@@ -637,8 +646,14 @@
         <!-- Links Section -->
         <div id="detailsLinksSection" class="admin-info-card" style="display:none;">
           <div class="admin-card-header">
-            <h3>Reference Links</h3>
-            <p class="admin-card-subtitle">Links submitted with this request</p>
+            <h3>
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              Reference Links
+            </h3>
+            <p class="admin-card-subtitle">Links submitted by the requestor</p>
           </div>
           <div id="detailLinks" class="links-list"></div>
         </div>
@@ -1454,7 +1469,7 @@
   };
 </script>
 
-<script src="/javascripts/ejs/services.js"></script>
+<script src="/javascripts/ejs/services.js?v=20260703"></script>
 <script src="/javascripts/status-handler.js"></script>
 <script>
 // Sidebar hover effect

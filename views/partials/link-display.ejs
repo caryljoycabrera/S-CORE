@@ -1,0 +1,17 @@
+<% if (request.links && request.links.length > 0) { %>
+  <div class="<%= options?.containerClass || 'request-links-section' %>">
+    <h4 class="<%= options?.headingClass || 'links-heading' %>">Reference Links</h4>
+    <ul class="<%= options?.listClass || 'links-list' %>">
+      <% request.links.forEach(function(link) { %>
+        <li>
+          <a href="<%= link %>" 
+             target="_blank" 
+             class="<%= options?.linkClass || 'link-item' %>"
+             title="<%= link %>">
+            <%= link.length > 50 ? link.substring(0, 47) + '...' : link %>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+  </div>
+<% } %>

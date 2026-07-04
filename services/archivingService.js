@@ -61,11 +61,11 @@ const runArchivingTasks = async () => {
     };
 
     // --- Helper to process queries and notifications ---
-    const processArchiving = async (Model, query) => {
+    const processArchiving = async (Model, query, archiveReasonText) => {
       // 1. Find all matching elements
       const requests = await Model.find(query);
       if (requests.length === 0) return { modifiedCount: 0 };
-      
+
       const admins = await User.find({ role: 'admin' }, '_id');
       const adminIds = admins.map(a => a._id);
 
@@ -75,28 +75,28 @@ const runArchivingTasks = async () => {
         const requestId = req._id.toString();
         try {
           // Notify User - with modal URL for archived request restoration (user side page)
-          const userMessage = `Your request "${titleStr}" was automatically archived by the system. You can request restoration by clicking this notification.`;
-          const userUrl = requestType === 'approval' 
+          const userMessage = `Your request "${titleStr}" was automatically archived by the system (${archiveReasonText}). You can request restoration by clicking this notification.`;
+          const userUrl = requestType === 'approval'
             ? `/request-approvals?modal=archived&requestId=${requestId}&type=${requestType}`
             : `/service-requests?modal=archived&requestId=${requestId}&type=${requestType}`;
           if (req.userId) {
             await notificationService.notifySystem(req.userId._id || req.userId, 'Request Automatically Archived', userMessage, 'medium', userUrl);
           }
-          
+
           // Notify Units - with modal URL
           if (req.assignedUnits) {
             const unitMembers = await User.find({ unitTeam: req.assignedUnits, role: 'unit' }, '_id');
             const unitIds = unitMembers.map(u => u._id);
             if (unitIds.length > 0) {
-               const unitMessage = `The request "${titleStr}" assigned to your unit was automatically archived by the system. You can request restoration.`;
+               const unitMessage = `The request "${titleStr}" assigned to your unit was automatically archived by the system (${archiveReasonText}). You can request restoration.`;
                const unitUrl = `/unit/task-${requestType}s?modal=archived&requestId=${requestId}&type=${requestType}`;
                await notificationService.notifySystem(unitIds, 'Request Automatically Archived', unitMessage, 'medium', unitUrl);
             }
           }
-          
+
           // Notify Admins - with modal URL
           if (adminIds.length > 0) {
-            const adminMessage = `The request "${titleStr}" was automatically archived by the system.`;
+            const adminMessage = `The request "${titleStr}" was automatically archived by the system (${archiveReasonText}).`;
             const adminUrl = `/admin/${requestType}s?modal=archived&requestId=${requestId}&type=${requestType}`;
             await notificationService.notifySystem(adminIds, 'Request Automatically Archived', adminMessage, 'medium', adminUrl);
           }
@@ -108,21 +108,25 @@ const runArchivingTasks = async () => {
       // 2. Update them
       return await Model.updateMany(
         query,
-        [{ $set: { previousStatus: '$status', status: 'Archived', archivedAt: now, archivedBy: 'system' } }]
+        [{ $set: { previousStatus: '$status', status: 'Archived', archivedAt: now, archivedBy: 'system', archiveReason: archiveReasonText } }]
       );
     };
 
+    const completedReason = `Completed already for more than ${completedAfterDays} day(s).`;
+    const approvedReason = `Approved already for more than ${approvedAfterDays} day(s).`;
+    const revisionReason = `For Revision with no activity for more than ${revisionAfterDays} day(s) (Inactivity).`;
+
     // --- 4. Archive Completed requests in BOTH collections ---
-    const archivedCompletedApprovals = await processArchiving(RequestApproval, completedQuery);
-    const archivedCompletedServices = await processArchiving(ServiceRequest, completedQuery);
+    const archivedCompletedApprovals = await processArchiving(RequestApproval, completedQuery, completedReason);
+    const archivedCompletedServices = await processArchiving(ServiceRequest, completedQuery, completedReason);
 
     // --- 5. Archive Approved requests with their own cutoff ---
-    const archivedApprovedApprovals = await processArchiving(RequestApproval, approvedQuery);
-    const archivedApprovedServices = await processArchiving(ServiceRequest, approvedQuery);
+    const archivedApprovedApprovals = await processArchiving(RequestApproval, approvedQuery, approvedReason);
+    const archivedApprovedServices = await processArchiving(ServiceRequest, approvedQuery, approvedReason);
 
     // --- 6. Archive stale For Revision requests ---
-    const archivedRevisionApprovals = await processArchiving(RequestApproval, revisionQuery);
-    const archivedRevisionServices = await processArchiving(ServiceRequest, revisionQuery);
+    const archivedRevisionApprovals = await processArchiving(RequestApproval, revisionQuery, revisionReason);
+    const archivedRevisionServices = await processArchiving(ServiceRequest, revisionQuery, revisionReason);
 
 
     // --- 7. Log summary ---

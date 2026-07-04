@@ -830,3 +830,17 @@ function handleFileSelection(file) {
 
 // Add any additional functions you need for your specific functionality
 console.log('✅ Approvals Admin script loaded successfully');
+
+// ==========================================
+// FILTER TOGGLE SECTION
+// ==========================================
+window.toggleFilterSection = function(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.filter-toggle-icon');
+    if (body) {
+        body.classList.toggle('collapsed');
+    }
+    if (icon) {
+        icon.classList.toggle('rotated');
+    }
+};

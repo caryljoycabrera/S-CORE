@@ -5,6 +5,20 @@
 // ========================================
 
 // ========================================
+// FILTER TOGGLE SECTION
+// ========================================
+window.toggleFilterSection = function(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.filter-toggle-icon');
+    if (body) {
+        body.classList.toggle('collapsed');
+    }
+    if (icon) {
+        icon.classList.toggle('rotated');
+    }
+};
+
+// ========================================
 // DOM CACHE OBJECT - Centralized DOM references
 // ========================================
 const DOMCache = {

@@ -19,7 +19,7 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { requestLimiter } = require('../middleware/rateLimiter');
-const { sanitizeText, sanitizeMongoId, sanitizeString, sanitizeName, sanitizeEmail, sanitizePhone, escapeHtml } = require('../utils/sanitize');
+const { sanitizeText, sanitizeMongoId, sanitizeString, sanitizeName, sanitizeEmail, sanitizePhone, escapeHtml, sanitizeRichText } = require('../utils/sanitize');
 
 /**
  * GET /
@@ -310,7 +310,7 @@ router.get('/request-approvals', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    let approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
+    let approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
 
     // Status priority for sorting approvals
     const statusPriority = {
@@ -384,8 +384,8 @@ router.get('/service-requests', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    let serviceRequests = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true } })
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file createdAt updatedAt')
+    let serviceRequests = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links createdAt updatedAt')
       .lean();
 
     // Status priority for sorting services
@@ -464,8 +464,8 @@ router.get('/all-requests', async (req, res) => {
 
   try {
     const user = await User.findById(req.session.userId);
-    const approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
-    const services = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true } }).lean();
+    const approvals = await RequestApproval.find({ userId: user._id, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
+    const services = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } }).lean();
 
     // Combine all requests
     const allRequests = [
@@ -1292,9 +1292,9 @@ router.post('/resubmit-approval-request/:id', async (req, res) => {
     const newResubmission = {
       respondedBy: req.session.userId,
       respondedAt: new Date(),
-      responseNotes: resubmissionNotes || 'Resubmitted with updates',
+      responseNotes: sanitizeRichText(resubmissionNotes) || 'Resubmitted with updates',
       responseFiles: [],
-      links: linkArray,
+      responseLinks: linkArray.filter(l => /^https?:\/\//i.test(l)),
       status: 'responded'  // Valid enum values: 'pending', 'responded', 'resolved'
     };
     
@@ -1357,11 +1357,12 @@ router.post('/user/service/request-revision/:id', requireLogin, async (req, res)
       return res.status(400).json({ success: false, message: `Only completed or for-checking requests can be sent for revision. Current status: "${request.status}"` });
     }
 
-    // Check revision limit (2 revisions maximum)
-    if (request.revisionCount >= 2) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'This task has reached its 2-revision limit. For further changes, please submit a new Service Request and reference this one.' 
+    // Check revision limit (2 revisions maximum, unless the unit has granted overrides)
+    const effectiveLimit = 2 + (request.revisionLimitOverrides || 0);
+    if (request.revisionCount >= effectiveLimit) {
+      return res.status(400).json({
+        success: false,
+        message: `This task has reached its ${effectiveLimit}-revision limit. For further changes, please submit a new Service Request and reference this one, or ask the assigned unit to allow one more revision.`
       });
     }
 
@@ -1388,15 +1389,15 @@ router.post('/user/service/request-revision/:id', requireLogin, async (req, res)
       respondedAt: new Date(),
       responseNotes: String(revisionNotes),
       responseFiles: [],
-      links: linkArray,
+      responseLinks: linkArray,
       status: 'for_revision',
       revisionType: 'revision_requested',
       revisionNumber: request.revisionCount
     };
-    
+
     // Add to revision history
     request.revisionHistory.push(revisionEntry);
-    
+
     // Save the request
     await request.save();
 
@@ -1413,11 +1414,12 @@ router.post('/user/service/request-revision/:id', requireLogin, async (req, res)
 
     console.log('[REVISION] SUCCESS - Request saved with revision count:', request.revisionCount);
 
-    res.json({ 
-      success: true, 
-      message: `Revision request submitted successfully. (Revision ${request.revisionCount} of 2)`,
+    res.json({
+      success: true,
+      message: `Revision request submitted successfully. (Revision ${request.revisionCount} of ${effectiveLimit})`,
       revisionCount: request.revisionCount,
-      revisionsRemaining: 2 - request.revisionCount
+      revisionLimit: effectiveLimit,
+      revisionsRemaining: effectiveLimit - request.revisionCount
     });
   } catch (error) {
     console.error('Error requesting service revision:', error);
@@ -1475,7 +1477,7 @@ router.post('/user/service/mark-complete/:id', requireLogin, async (req, res) =>
 
     // Notify unit team that deliverables were approved
     try {
-      await notificationService.notifyServiceApproved(request._id, userId, request.assignedUnits);
+      await notificationService.notifyServiceApproved(request._id, userId, userId, request.assignedUnits);
     } catch (notifError) {
       console.error('Error sending approval notification:', notifError);
     }

@@ -210,10 +210,18 @@
       <hr style="margin: 0 3rem 2rem 3rem; border: none; border-top: 2px solid #e5e7eb;">
 
         <div class="filter-section">
+            <div class="filter-toggle-header" onclick="toggleFilterSection(this)">
+              <span class="filter-toggle-header-text">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;">
+                  <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+                </svg>
+                Filters &amp; Options
+              </span>
+              <span class="filter-toggle-icon">▼</span>
+            </div>
+            <div class="filter-toggle-body collapsed">
           <div class="filter-container">
             <div class="filter-group">
-              <label class="filter-label">Filter by:</label>
-              
               <!-- First Row: User ID, Name, Username, Email -->
               <div class="filter-controls">
                 <div class="filter-item">
@@ -311,6 +319,7 @@
                 <span id="resultsCount">Showing all users</span>
               </div>
             </div>
+          </div>
           </div>
         </div>
 

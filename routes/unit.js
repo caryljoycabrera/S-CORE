@@ -1316,84 +1316,6 @@ router.post('/unit/profile/delete-picture', requireUnit, async (req, res) => {
 });
 
 /**
- * POST /unit/task/approve/:id
- * Approve an approval request task
- */
-router.post('/unit/task/approve/:id', requireUnit, async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId);
-    const taskId = req.params.id;
-    const { remarks } = req.body;
-
-    // Validate remarks
-    if (!remarks || remarks.trim().length === 0) {
-      return res.status(400).json({ success: false, message: 'Final remarks are required for approval' });
-    }
-
-    // Find the approval request
-    const task = await RequestApproval.findById(taskId).populate('userId');
-    
-    if (!task) {
-      return res.status(404).json({ success: false, message: 'Task not found' });
-    }
-
-    if (isForRevisionStatus(task.status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot approve request while it is under revision. Wait for requester to submit revision first.'
-      });
-    }
-
-    // Verify the unit member's team is assigned to this task
-    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
-      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
-    }
-
-    // Update task status to Approved
-    task.status = 'Approved';
-    task.awaitingResubmission = false; // Clear resubmission flag
-    
-    // Add approval to revision history
-    if (!task.revisionHistory) {
-      task.revisionHistory = [];
-    }
-    
-    task.revisionHistory.push({
-      requestedBy: user._id,
-      requestedAt: new Date(),
-      revisionNotes: `Request approved by ${user.fName} ${user.lName} (${user.unitTeam} Unit)\n\nFinal Report/Remarks:\n${remarks.trim()}`,
-      revisionFiles: [],
-      status: 'resolved'
-    });
-    
-    await task.save();
-
-    // Broadcast active requests update to admins
-    const socketService = require('../services/socketService');
-    socketService.updateActiveRequestsCount();
-
-    // Send notification to the requestor
-    try {
-      await notificationService.notifyApprovalApproved(task._id, task.userId._id, user._id);
-    } catch (notifError) {
-      console.error('Error sending approval notification:', notifError);
-    }
-
-    // Notify admins that unit approved the request
-    try {
-      await notificationService.notifyAdminUnitApproved(task._id, user._id, task);
-    } catch (notifError) {
-      console.error('Error sending admin notification:', notifError);
-    }
-
-    res.json({ success: true, message: 'Task approved successfully' });
-  } catch (error) {
-    console.error('Error approving task:', error);
-    res.status(500).json({ success: false, message: 'Error approving task: ' + error.message });
-  }
-});
-
-/**
  * POST /unit/task/revoke-approval/:id
  * Revoke approval for an already-approved request
  */
@@ -1544,9 +1466,9 @@ router.post('/unit/task/revise/:id', requireUnit, async (req, res) => {
     task.revisionHistory.push({
       requestedBy: user._id,
       requestedAt: new Date(),
-      revisionNotes: revisionNotes,
+      revisionNotes: revisionNotes.replace(/<[^>]*>/g, ''),
       revisionFiles: [],
-      links: links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : [],
+      revisionLinks: links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : [],
       status: 'pending'
     });
 
@@ -1607,19 +1529,21 @@ router.post('/unit/task/upload/:id', requireUnit, async (req, res) => {
       return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
     }
 
-    // Get links from body
+    // Get links and notes from body
     const links = req.body.links;
-    const linkCount = links ? (Array.isArray(links) ? links.length : (typeof links === 'string' ? 1 : 0)) : 0;
+    const notes = req.body.notes;
+    const linkArray = links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : [];
+    const linkCount = linkArray.length;
 
     // Add deliverables to the task
     if (!task.deliverables) {
       task.deliverables = [];
     }
-    task.deliverables.push(...(links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : []));
-    
+    task.deliverables.push(...linkArray);
+
     // Update status to "For Checking" instead of completed
     task.status = 'For Checking';
-    
+
     // Add to revision history
     if (!task.revisionHistory) {
       task.revisionHistory = [];
@@ -1627,9 +1551,11 @@ router.post('/unit/task/upload/:id', requireUnit, async (req, res) => {
     task.revisionHistory.push({
       requestedBy: user._id,
       requestedAt: new Date(),
-      revisionNotes: `Deliverables uploaded by ${user.fName} ${user.lName} (${user.unitTeam} Unit)${task.revisionCount > 0 ? ` - Revision ${task.revisionCount}` : ''}`,
+      revisionNotes: (notes && notes.trim())
+        ? notes.trim()
+        : `Deliverables uploaded by ${user.fName} ${user.lName} (${user.unitTeam} Unit)${task.revisionCount > 0 ? ` - Revision ${task.revisionCount}` : ''}`,
       deliverableFiles: [],
-      links: links ? (Array.isArray(links) ? links : (typeof links === 'string' ? [links] : [])) : [],
+      revisionLinks: linkArray,
       status: 'for_checking',
       revisionType: 'deliverable_submitted',
       revisionNumber: task.revisionCount // Track which revision cycle these deliverables belong to
@@ -1888,6 +1814,112 @@ router.post('/unit/task/acknowledge/:id', requireUnit, async (req, res) => {
   } catch (error) {
     console.error('Error acknowledging task:', error);
     res.status(500).json({ success: false, message: 'Error acknowledging task: ' + error.message });
+  }
+});
+
+/**
+ * POST /unit/task/reject/:id
+ * Reject a service request with a required reason
+ */
+router.post('/unit/task/reject/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+    const { reason } = req.body;
+
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Please provide a reason for rejecting this request' });
+    }
+
+    const task = await ServiceRequest.findById(taskId).populate('userId');
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // Verify the unit member's team is assigned to this task
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    // Rejection is only offered before the unit starts the service - once
+    // acknowledged (In Progress or later), the request can no longer be rejected.
+    if (task.status !== 'Queued') {
+      return res.status(400).json({ success: false, message: `Cannot reject a request that is already ${task.status}` });
+    }
+
+    task.status = 'Rejected';
+    task.rejectionReason = reason.trim();
+
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
+    }
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: reason.trim(),
+      status: 'rejected',
+      revisionType: 'rejected',
+      revisionNumber: task.revisionCount
+    });
+
+    await task.save();
+
+    const socketService = require('../services/socketService');
+    socketService.updateActiveRequestsCount();
+
+    try {
+      await notificationService.notifyServiceRejected(task._id, task.userId._id, user._id, reason.trim());
+    } catch (notifError) {
+      console.error('Error sending rejection notification:', notifError);
+    }
+
+    res.json({ success: true, message: 'Service request rejected.' });
+  } catch (error) {
+    console.error('Error rejecting service request:', error);
+    res.status(500).json({ success: false, message: 'Error rejecting service request: ' + error.message });
+  }
+});
+
+/**
+ * POST /unit/task/override-revision-limit/:id
+ * Unit-only: grant the requestor one additional revision beyond the standard 2-revision cap
+ */
+router.post('/unit/task/override-revision-limit/:id', requireUnit, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    const taskId = req.params.id;
+
+    const task = await ServiceRequest.findById(taskId);
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    if (!task.assignedUnits || task.assignedUnits.toLowerCase() !== user.unitTeam.toLowerCase()) {
+      return res.status(403).json({ success: false, message: 'You are not assigned to this task' });
+    }
+
+    task.revisionLimitOverrides = (task.revisionLimitOverrides || 0) + 1;
+
+    if (!task.revisionHistory) {
+      task.revisionHistory = [];
+    }
+    task.revisionHistory.push({
+      requestedBy: user._id,
+      requestedAt: new Date(),
+      revisionNotes: `${user.fName} ${user.lName} (${user.unitTeam} Unit) allowed one additional revision beyond the standard limit.`,
+      status: 'limit_override',
+      revisionType: 'limit_override',
+      revisionNumber: task.revisionCount
+    });
+
+    await task.save();
+
+    res.json({ success: true, revisionLimitOverrides: task.revisionLimitOverrides, revisionLimit: 2 + task.revisionLimitOverrides });
+  } catch (error) {
+    console.error('Error overriding revision limit:', error);
+    res.status(500).json({ success: false, message: 'Error overriding revision limit: ' + error.message });
   }
 });
 

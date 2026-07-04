@@ -591,12 +591,13 @@ hr {
 
 /* Filter section spacing override */
 .filter-section {
-  background: white;
-  border: none;
-  border-radius: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--primary-green);
+  border-radius: 12px;
   padding: 1.25rem;
   margin: 0 3rem 1.5rem 3rem;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: visible !important;
   position: relative;
   z-index: 1;
@@ -3664,4 +3665,58 @@ hr {
 @media (max-width: 480px) {
   .table-section { border-radius: 8px; }
   .requests-table, .trash-requests-table { min-width: 800px !important; }
+}
+
+/* ==========================================
+   COLLAPSIBLE FILTER TOGGLE
+   ========================================== */
+.filter-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.25rem 0 0.75rem 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid #f1f5f9;
+  transition: margin-bottom 0.3s ease, border-color 0.3s ease;
+}
+
+.filter-toggle-header:hover {
+  opacity: 0.8;
+}
+
+.filter-toggle-header-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary-green);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-toggle-icon {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.filter-toggle-icon.rotated {
+  transform: rotate(-180deg);
+}
+
+.filter-toggle-body {
+  overflow: hidden;
+  max-height: 1000px;
+  opacity: 1;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+}
+
+.filter-toggle-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
 }
