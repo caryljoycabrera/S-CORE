@@ -1210,17 +1210,26 @@ function openRequestDetails(requestId, requestType) {
     };
     populateAdminForm(rowData);
 
+    // Reset the Approved indicator / Revoke Approval form to a clean state each
+    // time the modal is populated, so state doesn't leak between requests.
+    const approvalStatusIndicator = document.getElementById('approvalStatusIndicator');
+    const revokeApprovalFormEl = document.getElementById('revokeApprovalForm');
+    if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'none';
+    if (revokeApprovalFormEl) revokeApprovalFormEl.style.display = 'none';
+
     // Handle approved status - for approval requests, "Approved" is the final state
     if (status.toLowerCase() === 'approved' && requestType === 'approval') {
         const adminFormSection = document.querySelector('.admin-form-section');
         if (adminFormSection) {
-            // Hide the approve/revision buttons since request is already approved
+            // Hide the approve/revision buttons since request is already approved;
+            // show the Approved indicator with the Revoke Approval action instead.
             const adminActionButtons = document.querySelector('.admin-action-buttons');
             if (adminActionButtons) {
                 adminActionButtons.style.display = 'none';
             }
-            adminFormSection.style.display = 'none';
+            adminFormSection.style.display = 'block';
         }
+        if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'block';
     } else if (status.toLowerCase() === 'completed') {
         // Hide all action panels when already completed (for service requests)
         const adminFormSection = document.querySelector('.admin-form-section');

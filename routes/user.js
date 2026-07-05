@@ -490,19 +490,24 @@ router.get('/all-requests', async (req, res) => {
 
       if (type === "Request Approval") {
         const approvalPriority = {
-          "for revision": 2,
-          "approved": 3,
-          "rejected": 4,
-          "archived": 5
+          "queued": 2,
+          "for revision": 3,
+          "for checking": 3,
+          "approved": 4,
+          "rejected": 5,
+          "archived": 6
         };
         return approvalPriority[status] ?? 999;
       } else {
         const servicePriority = {
-          "approved": 2,
-          "for revision": 3,
-          "completed": 4,
-          "rejected": 5,
-          "archived": 6
+          "queued": 2,
+          "in progress": 3,
+          "for checking": 4,
+          "approved": 5,
+          "for revision": 5,
+          "completed": 6,
+          "rejected": 7,
+          "archived": 8
         };
         return servicePriority[status] ?? 999;
       }

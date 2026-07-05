@@ -33,7 +33,14 @@
       this.render();
       this.bindEvents();
       this.initSocket();
-      this.addBotMessage(this.config.greeting || 'Good day. How may I assist you?');
+      this.showGreeting();
+    }
+
+    showGreeting() {
+      const labels = Array.isArray(this.config?.starterSuggestions)
+        ? this.config.starterSuggestions.map((item) => item.question)
+        : [];
+      this.addBotMessage(this.config.greeting || 'Good day. How may I assist you?', labels);
     }
 
     async fetchConfig() {
@@ -125,7 +132,7 @@
           wrapper.classList.remove('open');
           if (this.messagesEl) this.messagesEl.innerHTML = '';
           this.currentFlowId = '';
-          this.addBotMessage(this.config.greeting || 'Good day. How may I assist you?');
+          this.showGreeting();
         });
       }
 
@@ -267,7 +274,11 @@
 
       const wrapper = document.createElement('div');
       wrapper.className = `chatbot-msg ${kind}`;
-      wrapper.textContent = text || '';
+      if (kind === 'bot') {
+        wrapper.innerHTML = text || '';
+      } else {
+        wrapper.textContent = text || '';
+      }
 
       if (kind === 'bot' && Array.isArray(suggestions) && suggestions.length > 0) {
         const list = document.createElement('div');

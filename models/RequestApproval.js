@@ -156,7 +156,7 @@ const requestApprovalSchema = new mongoose.Schema({
     }],
     status: {
       type: String,
-      enum: ['pending', 'responded', 'resolved', 'completed', 'approved'],  // Added 'approved' for complete-approval status
+      enum: ['pending', 'responded', 'resolved', 'completed', 'approved', 'revoked'],  // 'approved' for complete-approval status, 'revoked' for revoke-approval status
       default: 'pending'
     }
   }],

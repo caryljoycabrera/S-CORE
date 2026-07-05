@@ -69,6 +69,18 @@ const systemSettingsSchema = new mongoose.Schema({
     type: Number,
     default: 14 // Archive For Revision requests with no activity after 14 days
   },
+  archiveCompletedEnabled: {
+    type: Boolean,
+    default: true // If false, auto-archiving is skipped entirely for 'Completed' status
+  },
+  archiveApprovedEnabled: {
+    type: Boolean,
+    default: true // If false, auto-archiving is skipped entirely for 'Approved' status
+  },
+  archiveRevisionEnabled: {
+    type: Boolean,
+    default: true // If false, auto-archiving is skipped entirely for 'For Revision' status
+  },
   allowUserReactivation: {
     type: Boolean,
     default: false // If true, regular users can restore their own archived requests

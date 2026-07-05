@@ -1085,6 +1085,12 @@
   border-color: #f97316;
 }
 
+.status-badge-large.for-checking {
+  background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+  color: #6b21a8;
+  border-color: #a855f7;
+}
+
 .description-section {
   background: linear-gradient(145deg, #ffffff, #f8fafc);
   border-radius: 16px;
@@ -2483,11 +2489,6 @@ option:hover {
                           Queued
                         </label>
                         <label class="dropdown-option">
-                          <input type="checkbox" value="in-progress">
-                          <span class="checkbox-custom"></span>
-                          In Progress
-                        </label>
-                        <label class="dropdown-option">
                           <input type="checkbox" value="for-checking">
                           <span class="checkbox-custom"></span>
                           For Checking
@@ -2496,11 +2497,6 @@ option:hover {
                           <input type="checkbox" value="approved">
                           <span class="checkbox-custom"></span>
                           Approved
-                        </label>
-                        <label class="dropdown-option">
-                          <input type="checkbox" value="completed">
-                          <span class="checkbox-custom"></span>
-                          Completed
                         </label>
                         <label class="dropdown-option">
                           <input type="checkbox" value="for-revision">
@@ -4588,7 +4584,7 @@ async function submitFormData() {
     let visibleCount = 0;
 
     allRows.forEach(row => {
-      const rowStatus = row.dataset.status ? row.dataset.status.toLowerCase() : '';
+      const rowStatus = row.dataset.status ? row.dataset.status.toLowerCase().replace(/\s+/g, '-') : '';
       const rowTitle = row.dataset.title ? row.dataset.title.toLowerCase() : '';
       const rowOrganization = row.dataset.organization ? row.dataset.organization.toLowerCase() : '';
       const rowDate = row.dataset.date || '';

@@ -115,11 +115,13 @@
     const answerInput = document.getElementById('chatbotAnswer');
     const categoryInput = document.getElementById('chatbotCategory');
     const activeInput = document.getElementById('chatbotIsActive');
+    const starterInput = document.getElementById('chatbotIsStarterSuggestion');
 
     if (questionInput) questionInput.value = '';
     if (answerInput) answerInput.value = '';
     if (categoryInput) categoryInput.value = 'general';
     if (activeInput) activeInput.checked = true;
+    if (starterInput) starterInput.checked = false;
 
     updateCounter('chatbotQuestion', 'chatbotQuestionCount', 255);
     updateCounter('chatbotAnswer', 'chatbotAnswerCount', 2000);
@@ -142,11 +144,13 @@
     const questionInput = document.getElementById('chatbotQuestion');
     const answerInput = document.getElementById('chatbotAnswer');
     const activeInput = document.getElementById('chatbotIsActive');
+    const starterInput = document.getElementById('chatbotIsStarterSuggestion');
 
     if (categoryInput) categoryInput.value = normalizeCategory(entry.category || 'general');
     if (questionInput) questionInput.value = entry.question || '';
     if (answerInput) answerInput.value = entry.answer || '';
     if (activeInput) activeInput.checked = entry.isActive !== false;
+    if (starterInput) starterInput.checked = Boolean(entry.isStarterSuggestion);
 
     setTargetRoles([entry.role || currentRole]);
     updateCounter('chatbotQuestion', 'chatbotQuestionCount', 255);
@@ -199,6 +203,8 @@
       const greetingUnit = document.getElementById('chatbotGreetingUnit');
       const greetingAdmin = document.getElementById('chatbotGreetingAdmin');
       const fallback = document.getElementById('chatbotFallbackMessage');
+      const manualUrlRequestor = document.getElementById('chatbotManualUrlRequestor');
+      const manualUrlInternal = document.getElementById('chatbotManualUrlInternal');
 
       if (enableHomepage) enableHomepage.checked = Boolean(cfg.enabledPages?.homepage);
       if (enableUser) enableUser.checked = Boolean(cfg.enabledPages?.user);
@@ -213,6 +219,8 @@
       if (greetingUnit) greetingUnit.value = cfg.greetings?.unit || '';
       if (greetingAdmin) greetingAdmin.value = cfg.greetings?.admin || '';
       if (fallback) fallback.value = cfg.fallbackMessage || '';
+      if (manualUrlRequestor) manualUrlRequestor.value = cfg.manualUrls?.requestor || 'https://s-core-requestor-guide.pages.dev/';
+      if (manualUrlInternal) manualUrlInternal.value = cfg.manualUrls?.internal || 'https://s-core-digital-user-manual.pages.dev/';
     } catch (error) {
       console.error('[Chatbot Config] Failed loading settings:', error);
       showMessage('chatbotSettingsMsg', `Failed to load settings: ${error.message}`, false);
@@ -238,7 +246,11 @@
         unit: sanitizeText(document.getElementById('chatbotGreetingUnit')?.value),
         admin: sanitizeText(document.getElementById('chatbotGreetingAdmin')?.value)
       },
-      fallbackMessage: sanitizeText(document.getElementById('chatbotFallbackMessage')?.value)
+      fallbackMessage: sanitizeText(document.getElementById('chatbotFallbackMessage')?.value),
+      manualUrls: {
+        requestor: sanitizeText(document.getElementById('chatbotManualUrlRequestor')?.value, 'https://s-core-requestor-guide.pages.dev/'),
+        internal: sanitizeText(document.getElementById('chatbotManualUrlInternal')?.value, 'https://s-core-digital-user-manual.pages.dev/')
+      }
     };
 
     try {
@@ -311,12 +323,18 @@
       const statusLabel = entry.isActive ? 'Active' : 'Inact';
       const statusColor = entry.isActive ? '#166534' : '#6b7280';
       const statusBg = entry.isActive ? '#dcfce7' : '#f3f4f6';
+      const starterBadge = entry.isStarterSuggestion
+        ? '<span style="font-size: 0.65rem; font-weight: 700; color: #1d4ed8; background: #dbeafe; border-radius: 4px; padding: 2px 6px;">Starter</span>'
+        : '';
 
       return `
         <div style="border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px; background: #ffffff;">
           <div style="display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-bottom: 6px;">
             <span style="font-size: 0.70rem; font-weight: 700; color: #1f2937; background: #e5e7eb; border-radius: 4px; padding: 2px 6px;">${categoryLabel}</span>
-            <span style="font-size: 0.65rem; font-weight: 700; color: ${statusColor}; background: ${statusBg}; border-radius: 4px; padding: 2px 6px;">${statusLabel}</span>
+            <span style="display: flex; gap: 4px;">
+              ${starterBadge}
+              <span style="font-size: 0.65rem; font-weight: 700; color: ${statusColor}; background: ${statusBg}; border-radius: 4px; padding: 2px 6px;">${statusLabel}</span>
+            </span>
           </div>
           <p style="margin: 0 0 6px 0; font-size: 0.82rem; font-weight: 700; color: #1f2937;">${escapeHtml(entry.question || '')}</p>
           <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #4b5563; white-space: pre-wrap; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${escapeHtml(entry.answer || '')}</p>
@@ -367,7 +385,8 @@
         keywords: item.keywords || [],
         nextFlowId: item.nextFlowId || '',
         isActive: item.isActive !== false,
-        sortOrder: Number.isFinite(Number(item.sortOrder)) ? Number(item.sortOrder) : 0
+        sortOrder: Number.isFinite(Number(item.sortOrder)) ? Number(item.sortOrder) : 0,
+        isStarterSuggestion: item.isStarterSuggestion === true
       }));
       textarea.value = JSON.stringify(data, null, 2);
     } catch (error) {
@@ -530,7 +549,8 @@
         category: normalizeCategory(categoryInput?.value || 'general'),
         question,
         answer,
-        isActive: Boolean(isActiveInput?.checked)
+        isActive: Boolean(isActiveInput?.checked),
+        isStarterSuggestion: Boolean(document.getElementById('chatbotIsStarterSuggestion')?.checked)
       };
 
       try {
@@ -556,7 +576,8 @@
       category: normalizeCategory(categoryInput?.value || 'general'),
       question,
       answer,
-      isActive: Boolean(isActiveInput?.checked)
+      isActive: Boolean(isActiveInput?.checked),
+      isStarterSuggestion: Boolean(document.getElementById('chatbotIsStarterSuggestion')?.checked)
     };
 
     let successCount = 0;

@@ -580,12 +580,6 @@ hr {
   border: 1px solid #3b82f6;
 }
 
-.status-badge.for-checking {
-  background-color: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fbbf24;
-}
-
 .status-badge.for-revision {
   background-color: #fed7aa;
   color: #78350f;

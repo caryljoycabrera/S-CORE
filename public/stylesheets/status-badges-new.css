@@ -67,6 +67,19 @@
   border: 1px solid #f59e0b;
 }
 
+/* Archived Status - Neutral gray */
+.status-badge.archived {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.status-badge-large.archived {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #9ca3af;
+}
+
 /* Status icons */
 .status-badge::before {
   margin-right: 0.25rem;

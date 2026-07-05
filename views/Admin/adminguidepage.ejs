@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico?v=2">
+    <link rel="shortcut icon" href="/Picture/favicon.ico?v=2">
+    <meta name="theme-color" content="#1a5d1a">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Help & Guide - S-CORE Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/stylesheets/notifications.css">
+  <link rel="stylesheet" href="/stylesheets/admin-navbar.css">
+  <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
+  <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/unitguide.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/javascripts/alert-handler.js"></script>
+</head>
+<body>
+  <!-- SIDEBAR NAVIGATION -->
+  <div class="admin-sidebar" id="adminSidebar">
+    <!-- Profile Section at Top -->
+    <div class="sidebar-profile">
+      <a href="/admin/profile" class="sidebar-profile-link" title="Go to Profile">
+        <div class="sidebar-profile-icon-container">
+          <!-- SVG Icon (shows when collapsed) -->
+          <svg class="sidebar-profile-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <!-- Profile Avatar (shows when expanded) -->
+          <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>"
+               alt="<%= user.fName %> <%= user.lName %>"
+               class="sidebar-profile-avatar" />
+        </div>
+        <div class="sidebar-profile-info">
+          <p class="sidebar-profile-name"><%= user.fName %> <%= user.lName %></p>
+          <p class="sidebar-profile-role"><%= user.userType === 'nonstudent' ? 'Non-Student' : (user.userType || 'Admin') %></p>
+        </div>
+        <span class="sidebar-profile-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="sidebar-items">
+      <a href="/admin" class="sidebar-item" title="Dashboard">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+
+      <a href="/admin/analytics" class="sidebar-item" title="Analytics">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="20" x2="12" y2="10"></line>
+          <line x1="18" y1="20" x2="18" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="16"></line>
+        </svg>
+        <span class="sidebar-label">Analytics</span>
+      </a>
+
+      <a href="/admin/all-requests" class="sidebar-item" title="Track All Requests">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"></path>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+        </svg>
+        <span class="sidebar-label">Track All Requests</span>
+      </a>
+
+      <a href="/admin/approvals" class="sidebar-item" title="Manage Approvals">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span class="sidebar-label">Manage Approvals</span>
+      </a>
+
+      <a href="/admin/services" class="sidebar-item" title="Manage Services">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>
+        </svg>
+        <span class="sidebar-label">Manage Services</span>
+      </a>
+
+      <a href="/admin/users" class="sidebar-item" title="User Accounts">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 010 7.75"></path>
+        </svg>
+        <span class="sidebar-label">User Accounts</span>
+      </a>
+      <a href="/admin/announcement" class="sidebar-item" title="Announcements">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+        </svg>
+        <span class="sidebar-label">Announcements</span>
+      </a>
+
+      <a href="/admin/configuration" class="sidebar-item" title="Configuration">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span class="sidebar-label">Configuration</span>
+      </a>
+
+      <a href="/admin/reports" class="sidebar-item" title="Generate Reports">
+        <svg class="sidebar-icon" viewBox="0 0 105.53 122.88" fill="currentColor" stroke="none">
+          <path d="M98.66,87l2.84,2.85a1.9,1.9,0,0,1,0,2.71l-2.28,2.29a15.46,15.46,0,0,1,1.42,3.79h3a1.92,1.92,0,0,1,1.92,1.92v4a1.93,1.93,0,0,1-1.92,1.93h-3.23a15.4,15.4,0,0,1-1.67,3.67l2.09,2.09a1.93,1.93,0,0,1,0,2.72L98,117.86a1.93,1.93,0,0,1-2.72,0L93,115.58A15.88,15.88,0,0,1,89.16,117v3a1.93,1.93,0,0,1-1.92,1.92h-4A1.93,1.93,0,0,1,81.31,120v-3.23a15.32,15.32,0,0,1-3.68-1.68l-2.09,2.1a1.93,1.93,0,0,1-2.72,0L70,114.3a1.91,1.91,0,0,1,0-2.71l2.28-2.29a15.88,15.88,0,0,1-1.42-3.79h-3A1.93,1.93,0,0,1,66,103.59v-4a1.94,1.94,0,0,1,1.92-1.93H71.1A15.43,15.43,0,0,1,72.78,94l-2.1-2.09a1.93,1.93,0,0,1,0-2.72l2.85-2.84a1.91,1.91,0,0,1,2.71,0l2.29,2.28a15.83,15.83,0,0,1,3.79-1.42v-3a1.93,1.93,0,0,1,1.92-1.92h4a1.93,1.93,0,0,1,1.92,1.92v3.23a15,15,0,0,1,3.67,1.68L95.94,87a1.94,1.94,0,0,1,2.72,0ZM60.26,117a3,3,0,0,1,0,5.92H6.89A6.89,6.89,0,0,1,0,116V6.85A6.82,6.82,0,0,1,2,2,6.79,6.79,0,0,1,6.88,0H91.52a6.9,6.9,0,0,1,6.89,6.89V68.23c0,.06,0,.12,0,.18a3,3,0,0,1-5.94,0V6.89h0a1,1,0,0,0-.28-.68,1,1,0,0,0-.68-.29H6.89a.94.94,0,0,0-1,1V116h0a1,1,0,0,0,.28.67,1,1,0,0,0,.69.29H60.26ZM19,102.66V96H47.83v6.63l-28.82,0Zm55.3-42.9v6.11H65.62V59.76ZM58.77,54.38V65.87H50.08V54.38ZM43.24,37.92v28H34.55V37.92ZM27.7,26.41V65.87H19V26.41ZM69,29.31l13.11.05a13.14,13.14,0,0,1-3.91,9.29,13.55,13.55,0,0,1-1.91,1.56L69,29.31Zm-1.34-2.6L67,12.7a.51.51,0,0,1,.48-.53H68A14.56,14.56,0,0,1,82.69,25.67a.52.52,0,0,1-.47.54l-14,1a.49.49,0,0,1-.53-.46.08.08,0,0,0,0,0Zm.83-13.55.65,12.51L80.9,24.61a11.68,11.68,0,0,0-4-7.86c-2.46-2.27-4.74-3.62-8.32-3.58ZM66.1,28.7l7,12.17A14.05,14.05,0,1,1,64.06,14.8l2,13.9ZM19,84.83V78.15H59.86v6.63L19,84.83Zm66.73,9.38a7.89,7.89,0,1,1-7.89,7.89,7.89,7.89,0,0,1,7.89-7.89Z"/>
+        </svg>
+        <span class="sidebar-label">Generate Reports</span>
+      </a>
+
+      <a href="/admin/guide" class="sidebar-item active" title="Help & Guide">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span class="sidebar-label">Help & Guide</span>
+      </a>
+    </div>
+
+    <!-- Logout Button at Bottom -->
+    <div class="sidebar-bottom">
+      <a href="/logout" class="sidebar-item sidebar-logout" title="Logout">
+        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="sidebar-label">Logout</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT WITH HEADER -->
+  <div class="admin-main-content">
+    <!-- HEADER -->
+    <div class="overlap">
+      <!-- Left Group: Hamburger, Logo, Title -->
+      <div class="header-left-group">
+        <!-- Hamburger Menu Button for Mobile -->
+        <button class="admin-menu-toggle" id="adminMenuToggle" title="Open Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="group">
+          <img src="/Picture/logo.jpg" alt="S-CORE Logo" style="width:64px;height:59px;">
+        </div>
+        <a href="/admin" class="text-wrapper">S-CORE ADMIN</a>
+      </div>
+
+      <span class="text-wrapper-2">Help & Guide</span>
+
+      <div class="header-right-section">
+        <%- include('../partials/notifications') %>
+
+        <div class="dropdown-wrapper">
+          <div class="overlap-group dropdown-toggle" onclick="toggleDropdown()">
+            <div class="text-wrapper-3"><%= user.fName %> <%= user.lName %></div>
+            <div class="user">
+              <img class="user-icon" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="User Icon" />
+            </div>
+          </div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <a href="/admin/profile">My Profile</a>
+            <a href="/logout">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-container">
+      <div class="guide-hero">
+        <h1>Admin Guide</h1>
+        <p>Your official guide to overseeing S-CORE's workflow, configuration, and content</p>
+      </div>
+
+      <!-- Getting Started -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21,15 16,10 5,21"></polyline>
+            </svg>
+          </div>
+          <h2>Getting Started</h2>
+        </div>
+        <p>Welcome to the S-CORE Admin panel. As an Admin (Director or Secretary), you have full oversight of the platform: you configure the system, oversee every request across all units, manage user accounts, publish announcements, and control the public-facing website content. This guide covers everything available to you.</p>
+      </div>
+
+      <!-- Your Dashboard -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          <h2>Your Dashboard</h2>
+        </div>
+        <p>Your dashboard (<strong>Dashboard</strong> in the sidebar) gives you an at-a-glance view of the whole system:</p>
+        <ul>
+          <li>Action cards for quick navigation to All Requests, Approvals, Services, and Users</li>
+          <li>A calendar of upcoming deadlines across all units</li>
+          <li>KPI counters: Pending Assignment, Awaiting Approval, In Revision, Unassigned Tasks</li>
+          <li>Charts: Current Request Status, Active Tasks by Unit, Request Volume Over Time</li>
+          <li>Tables: Very Recent Requests, Urgent &amp; Overdue Tasks, Top Requests by Revision Count</li>
+        </ul>
+      </div>
+
+      <!-- Configuration -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </div>
+          <h2>Configuration</h2>
+        </div>
+        <p>The <strong>Configuration</strong> page is the control center for the entire platform. It has five tabs:</p>
+
+        <div class="guide-step">
+          <h4>System Configuration</h4>
+          <p>Define the master lists used as dropdown options everywhere else in the app: Organizations, Offices/Departments, Units &amp; Request Types, Request Statuses, User Roles &amp; Permissions, Announcement Priority Levels, and Announcement Types. This tab also holds the Automated Workflow &amp; Archiving day-limit settings (see Archiving below).</p>
+        </div>
+
+        <div class="guide-step">
+          <h4>Homepage Configuration</h4>
+          <p><strong>Changes here are visible to every visitor of the public website.</strong> Edit the Hero section, SCO Pledge, About section, Services section, Team section, Contact section, Social Media links, and Footer.</p>
+        </div>
+
+        <div class="guide-step">
+          <h4>About S-CORE Page Configuration</h4>
+          <p>Edit the public "/about-s-core" page: Header, System Overview, Platform Features, and Call-to-Action buttons.</p>
+        </div>
+
+        <div class="guide-step">
+          <h4>Archive Manager</h4>
+          <p>See the Archiving section below — this tab is where you configure and run archiving.</p>
+        </div>
+
+        <div class="guide-step">
+          <h4>Q&amp;A Chatbot</h4>
+          <p>Manage the chatbot's per-page visibility, greetings, manual-reference links, and the role-based Q&amp;A/starter-suggestion content shown to requestors, units, and admins.</p>
+        </div>
+      </div>
+
+      <!-- Archiving -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 8v13H3V8"></path>
+              <path d="M1 3h22v5H1z"></path>
+              <line x1="10" y1="12" x2="14" y2="12"></line>
+            </svg>
+          </div>
+          <h2>Archiving</h2>
+        </div>
+        <p>Archiving is managed from <strong>Configuration → Archive Manager</strong>.</p>
+        <ul>
+          <li><strong>Automatic archiving:</strong> A background job runs nightly and archives requests on its own — no action needed from you. It archives "Completed"/"Approved" requests once they pass their configured day-limit, and "For Revision" requests with no activity past their limit.</li>
+          <li><strong>Day-limit settings:</strong> Configure how many days each status waits before auto-archiving (defaults: 30 days for Completed, 30 for Approved, 14 for For Revision with no activity).</li>
+          <li><strong>Run Archiving Now:</strong> Trigger the same archiving logic immediately instead of waiting for the nightly job.</li>
+          <li><strong>Pending Restoration Requests:</strong> Requestors and units can ask for an archived request to be restored — review and approve/dismiss these here.</li>
+          <li><strong>Browse Archived Records:</strong> Search, filter, restore, or permanently delete archived requests.</li>
+        </ul>
+        <div class="guide-tip">
+          <strong>Note:</strong> Both requestors and units can ask for an archived request to be reactivated — the "Allow Users to Restore Their Own Archived Requests" setting governs this.
+        </div>
+      </div>
+
+      <!-- Monitoring All Requests -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+            </svg>
+          </div>
+          <h2>Monitoring All Requests</h2>
+        </div>
+        <p>Three pages give you full visibility into requests across every unit:</p>
+        <ul>
+          <li><strong>Track All Requests:</strong> Every request, both types, in one table.</li>
+          <li><strong>Manage Approvals:</strong> Only Request Approvals.</li>
+          <li><strong>Manage Services:</strong> Only Service Requests.</li>
+        </ul>
+        <p>On any of these pages you can:</p>
+        <ul>
+          <li>Filter by Request ID, requestor name, status, assigned unit, organization, office/department, and date range</li>
+          <li>Open a request's details, edit it, or update its status or deadline directly</li>
+          <li>Click <strong>Open Request Discussion</strong> to join the same Conversation thread used by the requestor and the assigned unit — you can message, clarify, or intervene on any request</li>
+          <li>View a Deleted Requests list, and restore or permanently delete from there</li>
+        </ul>
+      </div>
+
+      <!-- Reports -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <h2>Generating Reports</h2>
+        </div>
+        <ol>
+          <li>Go to <strong>Generate Reports</strong> in the sidebar.</li>
+          <li>Set your filters: a date-range preset or custom range, request type (all/approval/service), one or more units, one or more statuses, and a sort order.</li>
+          <li>Generate a preview, customize the export (file name, report title, colors, paper size, orientation).</li>
+          <li>Download as PDF or Excel.</li>
+        </ol>
+        <p>Every report you generate is saved to <strong>Generated Reports History</strong>, where you can view, edit, duplicate, delete, restore, or re-download it later.</p>
+      </div>
+
+      <!-- Analytics -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="20" x2="12" y2="10"></line>
+              <line x1="18" y1="20" x2="18" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+          </div>
+          <h2>Analytics</h2>
+        </div>
+        <p>The <strong>Analytics</strong> page gives deeper performance insight, filterable by date range, unit, request type, and status:</p>
+        <ul>
+          <li>At-a-glance KPIs</li>
+          <li>Request Status and Request Type distribution</li>
+          <li>Top Requestors and Request Volume Over Time</li>
+          <li>Active Workload, Average Turnaround Time, Total Workload, and Average Response Time — all broken down by unit</li>
+        </ul>
+        <p>Analytics data can also be exported to PDF, with its own history of past exports.</p>
+      </div>
+
+      <!-- User Management -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <h2>User Management</h2>
+        </div>
+        <p>The <strong>User Accounts</strong> page manages every account in the system, split into All / Approved / Pending / Denied tabs.</p>
+        <ul>
+          <li><strong>New registrations:</strong> Approve (grants the default Requestor role), Deny (with a reason), or Reset back to pending.</li>
+          <li><strong>Change Role:</strong> Promote or change a user between Requestor, Unit, and Admin. When you set a role to Unit, you must also assign which unit team (e.g., Graphics, Multimedia) they belong to — they'll only see tasks assigned to that team.</li>
+          <li><strong>Create User Invitation:</strong> Invite a new account directly.</li>
+          <li><strong>Deleted Users:</strong> Restore or permanently delete removed accounts.</li>
+        </ul>
+      </div>
+
+      <!-- Announcements -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+            </svg>
+          </div>
+          <h2>Announcements</h2>
+        </div>
+        <p>Go to <strong>Announcements</strong> to broadcast messages to your users:</p>
+        <ul>
+          <li>Compose a title, rich-text message, priority level, and announcement type (both configurable in System Configuration)</li>
+          <li>Choose recipients: All Users, By Organization, By Office/Department, or Specific Users</li>
+          <li>Optionally set a future <strong>Schedule Send Date &amp; Time</strong> — scheduled announcements are sent automatically by a background job at the scheduled time, you don't need to be online</li>
+          <li>Manage sent announcements: view, edit, delete, and restore from the Trash</li>
+        </ul>
+      </div>
+
+      <!-- More Information -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <h2>Need More Information?</h2>
+        </div>
+        <p>For additional details and reference material, you may check the official <a href="https://s-core-digital-user-manual.pages.dev/" target="_blank" rel="noopener noreferrer">S-CORE Digital User Manual</a>.</p>
+      </div>
+
+      <!-- Quick Access -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </div>
+          <h2>Quick Access</h2>
+        </div>
+        <div class="quick-links">
+          <a href="/admin" class="quick-link-card">
+            <div class="quick-link-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </div>
+            <h3>Dashboard</h3>
+            <p>View overview and KPIs</p>
+          </a>
+          <a href="/admin/all-requests" class="quick-link-card">
+            <div class="quick-link-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+              </svg>
+            </div>
+            <h3>Track All Requests</h3>
+            <p>Monitor every request</p>
+          </a>
+          <a href="/admin/configuration" class="quick-link-card">
+            <div class="quick-link-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+            <h3>Configuration</h3>
+            <p>System &amp; homepage settings</p>
+          </a>
+          <a href="/admin/reports" class="quick-link-card">
+            <div class="quick-link-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14,2 14,8 20,8"></polyline>
+              </svg>
+            </div>
+            <h3>Reports</h3>
+            <p>Generate and export reports</p>
+          </a>
+          <a href="/admin/users" class="quick-link-card">
+            <div class="quick-link-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <h3>User Accounts</h3>
+            <p>Manage roles and approvals</p>
+          </a>
+          <a href="/admin/announcement" class="quick-link-card">
+            <div class="quick-link-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m3 11 18-5v12L3 14v-3z"></path>
+              </svg>
+            </div>
+            <h3>Announcements</h3>
+            <p>Broadcast to users</p>
+          </a>
+        </div>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="/admin" class="back-to-dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12,19 5,12 12,5"></polyline>
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/javascripts/notifications.js"></script>
+  <script>
+    // Dropdown toggle functionality (navbar specific)
+    function toggleDropdown() {
+      const dropdown = document.getElementById('dropdownMenu');
+      if (dropdown) {
+        dropdown.classList.toggle('show');
+      }
+    }
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', function(e) {
+      if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-toggle')) {
+        const dropdown = document.getElementById('dropdownMenu');
+        if (dropdown && dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+        }
+      }
+    });
+
+    // Sidebar hover effect for desktop
+    const sidebar = document.getElementById('adminSidebar');
+    if (sidebar) {
+      sidebar.addEventListener('mouseenter', function() {
+        this.classList.add('expanded');
+      });
+      sidebar.addEventListener('mouseleave', function() {
+        this.classList.remove('expanded');
+      });
+    }
+
+    // Mobile Navigation Setup
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuToggle = document.getElementById('adminMenuToggle');
+      const sidebarEl = document.getElementById('adminSidebar');
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      function initMobileNavigation() {
+        if (menuToggle && sidebarEl) {
+          menuToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sidebarEl.classList.toggle('mobile-active');
+          });
+
+          document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+          }, { passive: true });
+
+          document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+          }, { passive: true });
+
+          document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+              if (!sidebarEl.contains(e.target) && !menuToggle.contains(e.target)) {
+                sidebarEl.classList.remove('mobile-active');
+              }
+            }
+          });
+
+          const sidebarLinks = sidebarEl.querySelectorAll('.sidebar-item, .sidebar-profile-link');
+          sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+              if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                  sidebarEl.classList.remove('mobile-active');
+                }, 100);
+              }
+            });
+          });
+        }
+      }
+
+      function handleSwipe() {
+        const swipeDistance = touchEndX - touchStartX;
+        const minSwipeDistance = 50;
+
+        if (swipeDistance > minSwipeDistance && touchStartX < 50) {
+          sidebarEl.classList.add('mobile-active');
+        } else if (swipeDistance < -minSwipeDistance && sidebarEl.classList.contains('mobile-active')) {
+          sidebarEl.classList.remove('mobile-active');
+        }
+      }
+
+      initMobileNavigation();
+    });
+  </script>
+</body>
+</html>

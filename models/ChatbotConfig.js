@@ -59,6 +59,16 @@ const chatbotConfigSchema = new mongoose.Schema({
     type: String,
     default: 'Thank you for your inquiry. I am unable to find an exact answer at this time. Please rephrase your question using key terms from your request.'
   },
+  manualUrls: {
+    requestor: {
+      type: String,
+      default: 'https://s-core-requestor-guide.pages.dev/'
+    },
+    internal: {
+      type: String,
+      default: 'https://s-core-digital-user-manual.pages.dev/'
+    }
+  },
   formalToneEnforced: {
     type: Boolean,
     default: true

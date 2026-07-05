@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Get filter data from database (passed from server via EJS)
   const dbData = window.filterDataFromDatabase || {};
-  const statusOptions = dbData.requestStatuses || ['pending', 'queued', 'in progress', 'approved', 'for revision', 'completed', 'rejected', 'archived'];
+  const statusOptions = dbData.requestStatuses || ['Pending', 'Queued', 'In Progress', 'For Checking', 'For Revision', 'Approved', 'Completed', 'Rejected', 'Archived'];
   const orgOptions = dbData.organizations || [];
   const officeOptions = dbData.offices || [];
   const unitOptions = dbData.units || [];

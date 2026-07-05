@@ -338,6 +338,18 @@
   border-color: #3b82f6;
 }
 
+.status-badge-large.for-revision {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #78350f;
+  border-color: #f97316;
+}
+
+.status-badge-large.for-checking {
+  background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+  color: #6b21a8;
+  border-color: #a855f7;
+}
+
 .deadline-badge-large {
   display: inline-flex;
   align-items: center;
@@ -3766,26 +3778,14 @@ function updateStatusDisplay() {
 
 // Get selected status values for filtering
 function getSelectedStatuses() {
-  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
+  const checkedBoxes = Array.from(statusCheckboxes).filter(cb =>
     cb.checked && cb.value !== 'all'
   );
-  
+
   if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
     return [];
   }
-  
-  return checkedBoxes.map(cb => cb.value.toLowerCase());
-}
-// Get selected status values for filtering
-function getSelectedStatuses() {
-  const checkedBoxes = Array.from(statusCheckboxes).filter(cb => 
-    cb.checked && cb.value !== 'all'
-  );
-  
-  if (allStatusCheckbox.checked || checkedBoxes.length === 0) {
-    return [];
-  }
-  
+
   return checkedBoxes.map(cb => cb.value.toLowerCase());
 }
 

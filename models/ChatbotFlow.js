@@ -85,6 +85,11 @@ const chatbotFlowSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  isStarterSuggestion: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -121,5 +126,6 @@ chatbotFlowSchema.pre('validate', function normalizeFlow(next) {
 
 chatbotFlowSchema.index({ role: 1, questionNormalized: 1 }, { unique: true });
 chatbotFlowSchema.index({ role: 1, isActive: 1, sortOrder: 1 });
+chatbotFlowSchema.index({ role: 1, isActive: 1, isStarterSuggestion: 1, sortOrder: 1 });
 
 module.exports = mongoose.models.ChatbotFlow || mongoose.model('ChatbotFlow', chatbotFlowSchema);

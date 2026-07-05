@@ -211,9 +211,9 @@
           <li>In the modal, enter a clear title and detailed description of your file and what needs approval.</li>
           <li>Select the approval type (e.g., Publication, Caption, Project Proposal).</li>
           <li>Set the priority and deadline (submit at least 3 working days in advance).</li>
-          <li>Upload your file(s) for review (e.g., pubmat, document, caption).</li>
+          <li>Paste a link to your file(s) for review (e.g., Google Drive, Dropbox, or any shareable cloud link). File uploads are not supported — links only.</li>
           <li>Review all details, then click <strong>Submit</strong>. Your request is now locked.</li>
-          <li>If your status changes to <strong>For Revision</strong>, use the modal to upload new files and respond to feedback in the Conversation tab.</li>
+          <li>If your status changes to <strong>For Revision</strong>, use the modal to add a new link and respond to feedback in the Conversation tab.</li>
         </ol>
       </div>
       <div class="guide-step">
@@ -231,9 +231,9 @@
           <li>Click <strong>Request for Service</strong> in the sidebar.</li>
           <li>In the modal, enter a clear title and detailed description of what you want created.</li>
           <li>Set the priority and deadline (submit at least 7 working days in advance).</li>
-          <li>Attach any reference files, logos, or text needed for the task.</li>
+          <li>Paste links to any reference files, logos, or text needed for the task. File uploads are not supported — links only.</li>
           <li>Review all details, then click <strong>Submit</strong>. Your request is now locked.</li>
-          <li>If your status changes to <strong>For Revision</strong>, use the modal to upload new files and respond to feedback in the Conversation tab.</li>
+          <li>If your status changes to <strong>For Revision</strong>, use the modal to add a new link and respond to feedback in the Conversation tab.</li>
         </ol>
       </div>
     </div>
@@ -252,9 +252,12 @@
       <ul>
         <li>Click "Request for Approval" or "Request for Service" on the sidebar.</li>
         <li>Fill out the form with a clear and specific title and a detailed description. (e.g., "Need pubmat for 'CSO Week - Day 1'" is better than "Pubmat").</li>
-        <li>Attach all necessary files.</li>
+        <li>Add links to all necessary files.</li>
         <li>Click "Submit."</li>
       </ul>
+      <div class="guide-warning" style="background:#eff6ff;border-color:#bfdbfe;">
+        <strong>LINKS ONLY:</strong> S-CORE does not support direct file uploads for requests. Paste a shareable link to your file (Google Drive, Dropbox, or any similar cloud storage) in the Links field instead.
+      </div>
       <div class="guide-images-container" style="display: flex; gap: 20px; margin: 24px 0; justify-content: center; flex-wrap: wrap;">
         <div class="form-image-wrapper" style="flex: 1; min-width: 0; max-width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <img src="/Picture/approvalform.png" alt="Request for Approval Form" style="width: 100%; height: auto; border-radius: 8px; display: block;" />
@@ -264,7 +267,7 @@
         </div>
       </div>
       <div class="guide-warning">
-        <strong>CRITICAL RULE:</strong> Once you click "Submit," your request is locked and cannot be edited. You can only upload new files if an SCO member sets your task status to "For Revision". Please double-check your submission before you submit it.
+        <strong>CRITICAL RULE:</strong> Once you click "Submit," your request is locked and cannot be edited. You can only add new links if an SCO member sets your task status to "For Revision". Please double-check your submission before you submit it.
       </div>
     </div>
 
@@ -279,18 +282,45 @@
         </div>
         <h2>Understanding Your Request Status</h2>
       </div>
-      <p>Your request page will show the status of your tasks. Here is what they mean:</p>
+      <p>Request Approval and Service Request each follow their own status lifecycle. Here is exactly what happens after you submit.</p>
       <div class="guide-image-container" style="text-align: center; margin: 24px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <img src="/Picture/status.png" alt="User Dashboard Screenshot" style="width: 100%; max-width: 800px; height: auto; border-radius: 8px; display: block; margin: 0 auto;" />
       </div>
-      <ul>
-        <li><strong>Pending:</strong> Your request has been submitted and is in the queue for an Admin to review and assign to a unit team.</li>
-        <li><strong>In Progress:</strong> An SCO unit member has acknowledged your task and is actively working on it.</li>
-        <li><strong>For Revision:</strong> <span style="color:#dc2626;font-weight:600;">ACTION REQUIRED.</span> An SCO member has reviewed your task and needs changes. You must check the Conversation tab to read their feedback. This is the only status that allows you to upload new files.</li>
-        <li><strong>Approved:</strong> (For Approval Requests) Your submitted file has been reviewed and is officially approved. The task is complete.</li>
-        <li><strong>Completed:</strong> (For Service Requests) The SCO unit has finished your task and uploaded the final file. Check the task details to download your deliverable.</li>
-        <li><strong>Rejected:</strong> The request was not approved. Check the Conversation tab for the reason.</li>
-      </ul>
+
+      <div class="guide-step">
+        <h4>Request Approval Lifecycle</h4>
+        <ol style="margin-top:12px;">
+          <li><strong>Queued:</strong> Your request has just been submitted and is waiting for the unit to review it.</li>
+          <li><strong>For Revision:</strong> <span style="color:#dc2626;font-weight:600;">ACTION REQUIRED.</span> The unit reviewed your submission and needs changes. Check the Conversation tab for feedback, then add a new link and resubmit.</li>
+          <li><strong>For Checking:</strong> You resubmitted your revision, and the unit is checking it again.</li>
+          <li><em>Steps 2 and 3 repeat</em> — your request keeps moving between <strong>For Revision</strong> and <strong>For Checking</strong> — until the unit is satisfied.</li>
+          <li><strong>Approved:</strong> Final status. Your file has been officially approved and the task is complete.</li>
+        </ol>
+      </div>
+
+      <div class="guide-step">
+        <h4>Service Request Lifecycle</h4>
+        <ol style="margin-top:12px;">
+          <li><strong>Queued:</strong> Your request has just been submitted and is waiting for a unit to pick it up.</li>
+          <li><strong>In Progress:</strong> A unit has started working on your deliverable. Both you and the unit can see this status.</li>
+          <li><strong>For Checking:</strong> <span style="color:#dc2626;font-weight:600;">ACTION REQUIRED.</span> The unit has sent a finished deliverable. Check the task details and review it.</li>
+          <li>From there, you either:
+            <ul style="margin-top:8px;">
+              <li><strong>Approve it</strong> — the task closes as <strong>Approved</strong>, or</li>
+              <li><strong>Request a revision</strong> — the status becomes <strong>For Revision</strong> and goes back to the unit.</li>
+            </ul>
+          </li>
+          <li><em>Steps 2 through 4 repeat</em> until you are satisfied and approve the deliverable.</li>
+        </ol>
+      </div>
+
+      <div class="guide-step">
+        <h4>Other Statuses You May See</h4>
+        <ul>
+          <li><strong>Rejected:</strong> The request was denied outright. Check the Conversation tab for the reason.</li>
+          <li><strong>Archived:</strong> An older, already-resolved request that has been moved out of your active list for reference.</li>
+        </ul>
+      </div>
     </div>
 
     <!-- 5. Notifications -->
@@ -307,8 +337,8 @@
       <p>The bell icon is your most important tool for tracking progress. You will receive a notification when:</p>
       <ul>
         <li>An Admin or Unit Member sends you a new message in the Conversation tab.</li>
-        <li>The status of your request changes (e.g., from "Pending" to "In Progress").</li>
-        <li>A unit member uploads a final file for your Service Request.</li>
+        <li>The status of your request changes (e.g., from "Queued" to "In Progress").</li>
+        <li>A unit member submits a deliverable link for your Service Request.</li>
         <li>An Admin posts a system-wide announcement.</li>
       </ul>
     </div>
@@ -327,14 +357,26 @@
         <li><strong>SUBMIT EARLY!</strong> The SCO processes requests based on official timelines. Submitting a request "for tomorrow" will likely be rejected.</li>
         <li>Approval Requests: Submit at least 3 working days in advance.</li>
         <li>Service Requests: Submit at least 7 working days in advance.</li>
-        <li><strong>BE DETAILED.</strong> Provide clear titles, detailed descriptions, and attach all necessary files (logos, text files, photos) in your first submission. This prevents delays.</li>
+        <li><strong>BE DETAILED.</strong> Provide clear titles, detailed descriptions, and links to all necessary files (logos, text files, photos) in your first submission. This prevents delays.</li>
         <li><strong>USE THE CONVERSATION TAB.</strong> This is your only official channel for communicating about a task. Do not rely on email. Use the Conversation tab to ask questions, respond to feedback, and get updates.</li>
-        <li><strong>CHECK "FOR REVISION" TASKS.</strong> If you see a task is "For Revision," your action is required. Open the task, read the feedback in the Conversation tab, make the changes, and upload your new file.</li>
+        <li><strong>CHECK "FOR REVISION" TASKS.</strong> If you see a task is "For Revision," your action is required. Open the task, read the feedback in the Conversation tab, make the changes, and update your link(s).</li>
       </ul>
     </div>
 
-
-
+    <!-- More Information -->
+    <div class="guide-section">
+      <div class="guide-section-header">
+        <div class="guide-section-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        <h2>Need More Information?</h2>
+      </div>
+      <p>For additional details and reference material, you may check the official <a href="https://s-core-requestor-guide.pages.dev/" target="_blank" rel="noopener noreferrer">S-CORE Requestor Guide</a>.</p>
+    </div>
 
     <!-- Quick Access Shortcuts (Moved to End) -->
     <div class="guide-section">

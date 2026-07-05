@@ -32,7 +32,11 @@ const runArchivingTasks = async () => {
       ? settings.archiveRevisionAfterDays
       : 14;
 
-    console.log(`[ArchivingService] Rules: Completed after ${completedAfterDays}d, Approved after ${approvedAfterDays}d, For Revision after ${revisionAfterDays}d`);
+    const completedEnabled = !(settings && settings.archiveCompletedEnabled === false);
+    const approvedEnabled  = !(settings && settings.archiveApprovedEnabled === false);
+    const revisionEnabled  = !(settings && settings.archiveRevisionEnabled === false);
+
+    console.log(`[ArchivingService] Rules: Completed after ${completedAfterDays}d (${completedEnabled ? 'enabled' : 'disabled'}), Approved after ${approvedAfterDays}d (${approvedEnabled ? 'enabled' : 'disabled'}), For Revision after ${revisionAfterDays}d (${revisionEnabled ? 'enabled' : 'disabled'})`);
 
     const now = new Date();
 
@@ -116,17 +120,19 @@ const runArchivingTasks = async () => {
     const approvedReason = `Approved already for more than ${approvedAfterDays} day(s).`;
     const revisionReason = `For Revision with no activity for more than ${revisionAfterDays} day(s) (Inactivity).`;
 
+    const skipped = { modifiedCount: 0 };
+
     // --- 4. Archive Completed requests in BOTH collections ---
-    const archivedCompletedApprovals = await processArchiving(RequestApproval, completedQuery, completedReason);
-    const archivedCompletedServices = await processArchiving(ServiceRequest, completedQuery, completedReason);
+    const archivedCompletedApprovals = completedEnabled ? await processArchiving(RequestApproval, completedQuery, completedReason) : skipped;
+    const archivedCompletedServices = completedEnabled ? await processArchiving(ServiceRequest, completedQuery, completedReason) : skipped;
 
     // --- 5. Archive Approved requests with their own cutoff ---
-    const archivedApprovedApprovals = await processArchiving(RequestApproval, approvedQuery, approvedReason);
-    const archivedApprovedServices = await processArchiving(ServiceRequest, approvedQuery, approvedReason);
+    const archivedApprovedApprovals = approvedEnabled ? await processArchiving(RequestApproval, approvedQuery, approvedReason) : skipped;
+    const archivedApprovedServices = approvedEnabled ? await processArchiving(ServiceRequest, approvedQuery, approvedReason) : skipped;
 
     // --- 6. Archive stale For Revision requests ---
-    const archivedRevisionApprovals = await processArchiving(RequestApproval, revisionQuery, revisionReason);
-    const archivedRevisionServices = await processArchiving(ServiceRequest, revisionQuery, revisionReason);
+    const archivedRevisionApprovals = revisionEnabled ? await processArchiving(RequestApproval, revisionQuery, revisionReason) : skipped;
+    const archivedRevisionServices = revisionEnabled ? await processArchiving(ServiceRequest, revisionQuery, revisionReason) : skipped;
 
 
     // --- 7. Log summary ---

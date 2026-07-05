@@ -576,6 +576,22 @@ router.get('/admin/profile', async (req, res) => {
 });
 
 /**
+ * GET /admin/guide
+ * Admin help & guide page
+ */
+router.get('/admin/guide', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    res.render('Admin/adminguidepage', { user });
+  } catch (err) {
+    console.error('Error loading admin guide:', err);
+    if (!res.headersSent) {
+      res.status(500).render('error', { message: 'Failed to load guide.' });
+    }
+  }
+});
+
+/**
  * POST /admin/announcement/send
  * Create a broadcast message and send notifications
  */
@@ -6428,20 +6444,28 @@ router.post('/admin/archive-settings', requireAdmin, async (req, res) => {
   try {
     const settingsService = require('../services/settingsService');
 
+    const toBool = (value) => value === true || value === 'true' || value === 'on';
+
     const completedDays = parseInt(req.body.archiveCompletedAfterDays, 10);
     const approvedDays  = parseInt(req.body.archiveApprovedAfterDays,  10);
     const revisionDays  = parseInt(req.body.archiveRevisionAfterDays,  10);
-    const allowReactivation = req.body.allowUserReactivation === 'true' || req.body.allowUserReactivation === 'on';
+    const allowReactivation = toBool(req.body.allowUserReactivation);
+    const completedEnabled = toBool(req.body.archiveCompletedEnabled);
+    const approvedEnabled  = toBool(req.body.archiveApprovedEnabled);
+    const revisionEnabled  = toBool(req.body.archiveRevisionEnabled);
 
     const updates = {};
     if (!isNaN(completedDays)) updates.archiveCompletedAfterDays = completedDays;
     if (!isNaN(approvedDays))  updates.archiveApprovedAfterDays  = approvedDays;
     if (!isNaN(revisionDays))  updates.archiveRevisionAfterDays  = revisionDays;
     updates.allowUserReactivation = allowReactivation;
+    updates.archiveCompletedEnabled = completedEnabled;
+    updates.archiveApprovedEnabled = approvedEnabled;
+    updates.archiveRevisionEnabled = revisionEnabled;
 
     await settingsService.updateSettings(updates);
 
-    console.log(`[ADMIN] Archive settings saved: completed=${completedDays}d, approved=${approvedDays}d, revision=${revisionDays}d, reactivation=${allowReactivation}`);
+    console.log(`[ADMIN] Archive settings saved: completed=${completedDays}d(${completedEnabled}), approved=${approvedDays}d(${approvedEnabled}), revision=${revisionDays}d(${revisionEnabled}), reactivation=${allowReactivation}`);
     return res.json({ success: true, message: 'Archive settings saved.' });
   } catch (error) {
     console.error('[ADMIN] Error saving archive settings:', error);

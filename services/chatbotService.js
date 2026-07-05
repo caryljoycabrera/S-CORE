@@ -81,6 +81,11 @@ async function ensureConfig() {
   }
 }
 
+function appendManualUrlLink(text, manualUrl) {
+  const safeUrl = manualUrl.replace(/"/g, '&quot;');
+  return `${text}\n\nFor more information, you may refer to this <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">reference guide</a>.`;
+}
+
 function scoreFlowMatch(flow, tokens, normalizedMessage) {
   if (!flow || !flow.question) return 0;
 
@@ -125,6 +130,10 @@ function getConfigExportPayload(config) {
       config?.fallbackMessage || 'Thank you for your inquiry. I am unable to find an exact answer at this time.',
       500
     ),
+    manualUrls: {
+      requestor: sanitizeText(config?.manualUrls?.requestor || 'https://s-core-requestor-guide.pages.dev/'),
+      internal: sanitizeText(config?.manualUrls?.internal || 'https://s-core-digital-user-manual.pages.dev/')
+    },
     formalToneEnforced: Boolean(config?.formalToneEnforced),
     useSocketRealtime: Boolean(config?.useSocketRealtime)
   };
@@ -133,6 +142,23 @@ function getConfigExportPayload(config) {
 class ChatbotService {
   async getAdminConfig() {
     return ensureConfig();
+  }
+
+  async getStarterSuggestions(role) {
+    const resolvedRole = normalizeRole(role);
+    if (resolvedRole === 'public') return [];
+
+    const flows = await ChatbotFlow.find({
+      role: resolvedRole,
+      isActive: true,
+      isStarterSuggestion: true
+    })
+      .sort({ sortOrder: 1, updatedAt: -1 })
+      .limit(3)
+      .select('question flowId')
+      .lean();
+
+    return flows.map((flow) => ({ flowId: flow.flowId, question: flow.question }));
   }
 
   async getClientConfig(page, role) {
@@ -146,6 +172,8 @@ class ChatbotService {
       (config.greetings && config.greetings.public) ||
       'Good day. How may I assist you?';
 
+    const starterSuggestions = enabled ? await this.getStarterSuggestions(resolvedRole) : [];
+
     return {
       enabled,
       page: resolvedPage,
@@ -157,9 +185,14 @@ class ChatbotService {
         width: config.widget?.width || 360
       },
       greeting,
+      starterSuggestions,
       fallbackMessage:
         config.fallbackMessage ||
         'Thank you for your inquiry. I am unable to find an exact answer at this time.',
+      manualUrls: {
+        requestor: config.manualUrls?.requestor || 'https://s-core-requestor-guide.pages.dev/',
+        internal: config.manualUrls?.internal || 'https://s-core-digital-user-manual.pages.dev/'
+      },
       useSocketRealtime: Boolean(config.useSocketRealtime),
       formalToneEnforced: Boolean(config.formalToneEnforced)
     };
@@ -191,6 +224,10 @@ class ChatbotService {
           'Thank you for your inquiry. I am unable to find an exact answer at this time.',
         500
       ),
+      manualUrls: {
+        requestor: sanitizeText(updates?.manualUrls?.requestor || 'https://s-core-requestor-guide.pages.dev/'),
+        internal: sanitizeText(updates?.manualUrls?.internal || 'https://s-core-digital-user-manual.pages.dev/')
+      },
       formalToneEnforced: Boolean(updates?.formalToneEnforced),
       useSocketRealtime: Boolean(updates?.useSocketRealtime),
       updatedBy: userId || null
@@ -264,6 +301,7 @@ class ChatbotService {
       nextFlowId: sanitizeText(data?.nextFlowId || '', 100),
       isActive: data?.isActive !== false,
       sortOrder: Number.isFinite(Number(data?.sortOrder)) ? Number(data.sortOrder) : 0,
+      isStarterSuggestion: Boolean(data?.isStarterSuggestion),
       createdBy: userId || null,
       updatedBy: userId || null
     });
@@ -312,6 +350,10 @@ class ChatbotService {
     if (updates.sortOrder !== undefined) {
       const parsedOrder = Number(updates.sortOrder);
       existing.sortOrder = Number.isFinite(parsedOrder) ? parsedOrder : existing.sortOrder;
+    }
+
+    if (typeof updates.isStarterSuggestion === 'boolean') {
+      existing.isStarterSuggestion = updates.isStarterSuggestion;
     }
 
     existing.updatedBy = userId || existing.updatedBy;
@@ -401,6 +443,7 @@ class ChatbotService {
         nextFlowId: sanitizeText(flow?.nextFlowId || '', 120),
         isActive: flow?.isActive !== false,
         sortOrder: Number.isFinite(Number(flow?.sortOrder)) ? Number(flow.sortOrder) : index,
+        isStarterSuggestion: Boolean(flow?.isStarterSuggestion),
         createdBy: userId || null,
         updatedBy: userId || null
       };
@@ -441,7 +484,8 @@ class ChatbotService {
           : [],
         nextFlowId: sanitizeText(flow.nextFlowId || '', 120),
         isActive: flow.isActive !== false,
-        sortOrder: Number.isFinite(Number(flow.sortOrder)) ? Number(flow.sortOrder) : 0
+        sortOrder: Number.isFinite(Number(flow.sortOrder)) ? Number(flow.sortOrder) : 0,
+        isStarterSuggestion: flow.isStarterSuggestion === true
       });
     });
 
@@ -476,6 +520,10 @@ class ChatbotService {
           admin: 'Good day. How may I assist you with administrative tasks today?'
         },
         fallbackMessage: 'Thank you for your inquiry. I am unable to find an exact answer at this time.',
+        manualUrls: {
+          requestor: 'https://s-core-requestor-guide.pages.dev/',
+          internal: 'https://s-core-digital-user-manual.pages.dev/'
+        },
         formalToneEnforced: true,
         useSocketRealtime: true
       },
@@ -489,7 +537,8 @@ class ChatbotService {
             keywords: ['submit', 'request', 'create'],
             nextFlowId: '',
             isActive: true,
-            sortOrder: 0
+            sortOrder: 0,
+            isStarterSuggestion: false
           }
         ],
         user: [],
@@ -536,6 +585,13 @@ class ChatbotService {
 
     if (typeof incomingConfig.fallbackMessage === 'string') {
       nextConfig.fallbackMessage = sanitizeText(incomingConfig.fallbackMessage, 500);
+    }
+
+    if (incomingConfig.manualUrls && typeof incomingConfig.manualUrls === 'object') {
+      nextConfig.manualUrls = {
+        requestor: sanitizeText(incomingConfig.manualUrls.requestor || nextConfig.manualUrls?.requestor || 'https://s-core-requestor-guide.pages.dev/'),
+        internal: sanitizeText(incomingConfig.manualUrls.internal || nextConfig.manualUrls?.internal || 'https://s-core-digital-user-manual.pages.dev/')
+      };
     }
 
     if (typeof incomingConfig.formalToneEnforced === 'boolean') {
@@ -600,6 +656,10 @@ class ChatbotService {
 
     const normalizedMessage = normalizeQuestion(message);
 
+    const manualUrl = (role === 'user' || role === 'public')
+      ? (config.manualUrls?.requestor || 'https://s-core-requestor-guide.pages.dev/')
+      : (config.manualUrls?.internal || 'https://s-core-digital-user-manual.pages.dev/');
+
     // If current flow exists and has explicit next flow, prefer it.
     if (payload?.currentFlowId) {
       const current = await ChatbotFlow.findOne({
@@ -618,7 +678,7 @@ class ChatbotService {
             enabled: true,
             matched: true,
             flowId: next.flowId,
-            answer: toFormalTone(next.answer, config.formalToneEnforced),
+            answer: appendManualUrlLink(toFormalTone(next.answer, config.formalToneEnforced), manualUrl),
             suggestions: []
           };
         }
@@ -645,6 +705,7 @@ class ChatbotService {
     });
 
     if (best && bestScore >= 120) {
+      const answer = appendManualUrlLink(toFormalTone(best.answer, config.formalToneEnforced), manualUrl);
       const suggestions = candidates
         .filter((item) => item._id.toString() !== best._id.toString())
         .slice(0, 3)
@@ -654,16 +715,18 @@ class ChatbotService {
         enabled: true,
         matched: true,
         flowId: best.flowId,
-        answer: toFormalTone(best.answer, config.formalToneEnforced),
+        answer,
         suggestions
       };
     }
+
+    const fallback = appendManualUrlLink(config.fallbackMessage, manualUrl);
 
     return {
       enabled: true,
       matched: false,
       flowId: null,
-      answer: config.fallbackMessage,
+      answer: fallback,
       suggestions: candidates.slice(0, 3).map((item) => item.question)
     };
   }

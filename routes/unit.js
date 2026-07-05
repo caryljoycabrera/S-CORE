@@ -1347,7 +1347,8 @@ router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
     // Change status to "For Revision" instead of Pending
     const previousStatus = task.status;
     task.status = 'For Revision';
-    
+    task.awaitingResubmission = true;
+
     // Add revocation to revision history
     if (!task.revisionHistory) {
       task.revisionHistory = [];
@@ -1372,16 +1373,16 @@ router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
 
     // Send notification to the requestor
     try {
-      const notificationMessage = reason 
-        ? `Approval revoked by ${user.unitTeam || 'unit'} team. Revision required. Reason: ${reason}`
-        : `Approval revoked by ${user.unitTeam || 'unit'} team. Please review and make necessary revisions.`;
-      
+      const notificationMessage = reason
+        ? `Your request "${task.title}" was previously approved, but the ${user.unitTeam || 'unit'} team has revoked that approval. You must review the reason below and resubmit for approval again. Reason: ${reason}`
+        : `Your request "${task.title}" was previously approved, but the ${user.unitTeam || 'unit'} team has revoked that approval. You must review their feedback in the Conversation tab and resubmit for approval again.`;
+
       await notificationService.createNotification({
         recipient: task.userId._id,
         sender: user._id,
-        title: '⚠️ Approval Revoked - Revision Required',
+        title: '⚠️ Approval Revoked - Resubmission Required',
         message: notificationMessage,
-        type: 'revision_required',
+        type: 'approval_revision',
         relatedId: task._id,
         relatedModel: 'RequestApproval',
         priority: 'high',
@@ -1402,7 +1403,7 @@ router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
           sender: user._id,
           title: 'Approval Revoked - Revision Required',
           message: `${unitName} team revoked approval for: "${task.title}". Status changed to For Revision.`,
-          type: 'approval_revoked',
+          type: 'approval_revision',
           relatedId: task._id,
           relatedModel: 'RequestApproval',
           priority: 'high',

@@ -159,7 +159,7 @@
           <li>Review and process all tasks assigned to your unit</li>
           <li>Provide clear, professional communication to requestors via the Conversation feature</li>
           <li>Update task statuses (e.g., "In Progress," "Completed") accurately</li>
-          <li>Upload all final deliverables and files to the S-CORE system</li>
+          <li>Submit links to all final deliverables in the S-CORE system</li>
           <li>Meet all processing deadlines and quality standards</li>
         </ul>
         
@@ -213,19 +213,20 @@
           
           <h4>What This Means:</h4>
           <ul>
-            <li>The requestor created their own content and uploaded it</li>
+            <li>The requestor created their own content and provided a link to it</li>
             <li>You check if their work meets standards</li>
             <li>You are NOT creating anything - only reviewing</li>
           </ul>
 
           <h4>Your Action Buttons:</h4>
           <ul>
-            <li><strong>"Approve":</strong> Use if submission is correct and final → Sets status to "Approved"</li>
-            <li><strong>"For Revision":</strong> Use if errors exist → Explain what needs fixing in Conversation</li>
+            <li><strong>"Approve":</strong> Use if submission is correct and final. Provide final remarks → Sets status to "Approved" (this is the only final status; there is no reject option once a request reaches your unit)</li>
+            <li><strong>"For Revision":</strong> Use if errors exist → Explain what needs fixing in Conversation. When the requestor resubmits, the status becomes "For Checking" for you to review again. This can repeat as many times as needed.</li>
+            <li><strong>"Revoke Approval":</strong> If you approved by mistake, you can revoke it — this sends the status back to "For Revision" so it can be corrected.</li>
           </ul>
 
                 <h4>Final Status:</h4>
-                <p>✅ <strong>Approved</strong> (accepted) or ❌ <strong>Rejected</strong> (cannot approve)</p>
+                <p>✅ <strong>Approved</strong> — the only final status for Approval Requests.</p>
               </div>
 
               <div class="guide-image-placeholder">
@@ -257,18 +258,20 @@
 
           <h4>Your Action Buttons:</h4>
           <ul>
-            <li><strong>"Upload Deliverable":</strong> Attach your final file(s) that you created</li>
-            <li><strong>"Mark as Completed":</strong> Click after uploading → Sets status to "Completed" and notifies requestor</li>
+            <li><strong>"Reject":</strong> Available only before you start (status "Queued"). Requires a reason → Sets status to "Rejected" (final)</li>
+            <li><strong>"Start" / "Acknowledge":</strong> Begin working → Sets status to "In Progress" (visible to both you and the requestor)</li>
+            <li><strong>"Submit Deliverable":</strong> Paste link(s) to your finished work, plus notes → Sets status to "For Checking" so the requestor can review it</li>
+            <li><strong>"Mark Final Complete":</strong> Once the requestor reviews and approves the deliverable (status becomes "Approved"), provide final remarks here → Sets status to "Completed" — this is the true final status</li>
           </ul>
 
           <h4>Final Status:</h4>
-          <p>✅ <strong>Completed</strong> (delivered) or ❌ <strong>Rejected</strong> (cannot fulfill)</p>
+          <p>Requestor reviews your submitted link(s) ("For Checking") → they either approve it ("Approved," then you finalize to <strong>Completed</strong>) or send it back ("For Revision," and you resubmit a new link). If you decline before starting, the final status is <strong>Rejected</strong>.</p>
         </div>
 
         <div class="guide-image-placeholder">
           <img src="/Picture/serviceprocess.png" alt="Service Request Process - Initial Steps" style="width: 100%; max-width: 800px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px;">
-          <img src="/Picture/serviceprocess2.png" alt="Service Request Process - Upload and Completion" style="width: 100%; max-width: 800px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px;">
-          <p>Step-by-Step: Completing a Service Request with Upload</p>
+          <img src="/Picture/serviceprocess2.png" alt="Service Request Process - Deliverable Link and Completion" style="width: 100%; max-width: 800px; height: auto; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 16px;">
+          <p>Step-by-Step: Completing a Service Request with a Deliverable Link</p>
         </div>
 
         <!-- COMPARISON TABLE -->
@@ -294,14 +297,14 @@
               <td style="padding: 12px;">You</td>
             </tr>
             <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; font-weight: 600; background: #f9fafb;">Who Uploads Final Files?</td>
-              <td style="padding: 12px;">Requestor</td>
-              <td style="padding: 12px;">You</td>
+              <td style="padding: 12px; font-weight: 600; background: #f9fafb;">Who Provides Final Link(s)?</td>
+              <td style="padding: 12px;">Requestor (their original link)</td>
+              <td style="padding: 12px;">You (your deliverable link)</td>
             </tr>
             <tr style="border-bottom: 1px solid #e5e7eb;">
               <td style="padding: 12px; font-weight: 600; background: #f9fafb;">Main Action</td>
               <td style="padding: 12px;">Approve or For Revision</td>
-              <td style="padding: 12px;">Upload Deliverable + Mark Completed</td>
+              <td style="padding: 12px;">Submit Deliverable Link → requestor Approves → Mark Final Complete</td>
             </tr>
             <tr>
               <td style="padding: 12px; font-weight: 600; background: #f9fafb;">Final Status</td>
@@ -327,89 +330,28 @@
           <h2>Task Status Workflow</h2>
         </div>
         
-        <p>This is how a task moves through the system. Your actions are in bold.</p>
+        <p>Approval Requests and Service Requests each follow their own status lifecycle. Your actions are in bold.</p>
 
-       
-        
         <div class="guide-step">
-          <h4>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #f59e0b;">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              Pending
-            </span>
-          </h4>
-          <p>A new task has been assigned to your unit by an Admin. It's in your "inbox" (the Workload Snapshot) waiting for you.</p>
+          <h4>Approval Request Lifecycle</h4>
+          <ol style="margin-top:12px;">
+            <li><strong>Queued:</strong> A new task has been assigned to your unit by an Admin. It's waiting for you to review.</li>
+            <li><strong>For Revision:</strong> <span style="color:#dc2626;font-weight:600;">Your action.</span> You reviewed and found issues — explain what needs fixing in the Conversation tab.</li>
+            <li><strong>For Checking:</strong> The requestor resubmitted their revision. Review it again.</li>
+            <li><em>Steps 2 and 3 repeat</em> — the task keeps moving between <strong>For Revision</strong> and <strong>For Checking</strong> — until you're satisfied.</li>
+            <li><strong>Approved:</strong> <span style="color:#dc2626;font-weight:600;">Your action.</span> Final status. Provide final remarks to approve. (You can use "Revoke Approval" afterward if you approved by mistake, which sends it back to "For Revision".)</li>
+          </ol>
         </div>
-        
+
         <div class="guide-step">
-          <h4>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #3b82f6;">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              In Progress
-            </span>
-          </h4>
-          <p><strong>You should manually set this status</strong> as soon as you start working on a task. This notifies the Admin and the requestor that you have acknowledged the task.</p>
-        </div>
-        
-        <div class="guide-step">
-          <h4>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #f59e0b;">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-              For Revision
-            </span>
-          </h4>
-          <p>(Approval Requests only) <strong>You set this</strong> to send the task back to the requestor for changes.</p>
-        </div>
-        
-        <div class="guide-step">
-          <h4>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #10b981;">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              Approved (Approval Requests)
-            </span>
-          </h4>
-          <p>(Approval Requests only) <strong>You set this</strong> when the task is finished and accepted.</p>
-        </div>
-        
-        <div class="guide-step">
-          <h4>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #10b981;">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              Completed (Service Requests)
-            </span>
-          </h4>
-          <p>(Service Requests only) <strong>You set this</strong> after you upload the final file.</p>
-        </div>
-        
-        <div class="guide-step">
-          <h4>
-            <span style="display: inline-flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; color: #ef4444;">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="15" y1="9" x2="9" y2="15"></line>
-                <line x1="9" y1="9" x2="15" y2="15"></line>
-              </svg>
-              Rejected
-            </span>
-          </h4>
-          <p><strong>You set this</strong> if the request is impossible, out of scope, or violates guidelines. You must provide a clear reason in the Conversation tab.</p>
+          <h4>Service Request Lifecycle</h4>
+          <ol style="margin-top:12px;">
+            <li><strong>Queued:</strong> A new task has been assigned to your unit. While it's still Queued, you may <strong>Reject</strong> it with a reason if you cannot fulfill it.</li>
+            <li><strong>In Progress:</strong> <span style="color:#dc2626;font-weight:600;">Your action.</span> Acknowledge/start the task. This notifies the requestor that you're working on it.</li>
+            <li><strong>For Checking:</strong> <span style="color:#dc2626;font-weight:600;">Your action.</span> Submit your deliverable link(s) and notes for the requestor to review.</li>
+            <li>The requestor then either <strong>Approves</strong> it, or sends it back as <strong>For Revision</strong> — in which case you submit a new deliverable link and it returns to "For Checking".</li>
+            <li><strong>Completed:</strong> <span style="color:#dc2626;font-weight:600;">Your action.</span> Once the requestor has approved, provide final remarks to mark it Completed — this is the true final status.</li>
+          </ol>
         </div>
       </div>
 
@@ -436,8 +378,8 @@
         
         <ul>
           <li><strong>Ask Questions:</strong> Use it to ask for clarification (e.g., "What size do you need this poster?")</li>
-          <li><strong>Give Feedback:</strong> Use it to explain why a task is "For Revision" (e.g., "Please correct the spelling of the event title and re-upload.")</li>
-          <li><strong>Send Drafts:</strong> Attach a watermarked draft (as a .jpg or .pdf) in a message to get feedback from the requestor before you upload the final deliverable</li>
+          <li><strong>Give Feedback:</strong> Use it to explain why a task is "For Revision" (e.g., "Please correct the spelling of the event title and resubmit the link.")</li>
+          <li><strong>Send Drafts:</strong> Share a link to a watermarked draft in a message to get feedback from the requestor before you submit the final deliverable link</li>
         </ul>
 
         <div class="guide-image-placeholder">
@@ -458,19 +400,19 @@
               <polyline points="13 2 13 9 20 9"></polyline>
             </svg>
           </div>
-          <h2>File Management (Critical Rule)</h2>
-        </div>
-        
-        <div class="guide-warning">
-          <strong>Important:</strong> Requestors CANNOT edit submissions. They can only upload new files when you set the task status to "For Revision".
+          <h2>Link Management (Critical Rule)</h2>
         </div>
 
-        <h3>How File Uploads Work</h3>
+        <div class="guide-warning">
+          <strong>Important:</strong> S-CORE does not support file uploads for requests — everything is link-based. Requestors CANNOT edit submissions. They can only add a new link when you set the task status to "For Revision".
+        </div>
+
+        <h3>How Links Work</h3>
         <ul>
-          <li><strong>Requestors Upload Initial Files:</strong> When creating a request, users attach their files</li>
-          <li><strong>Upload Lock:</strong> After submission, requestors cannot upload more files</li>
-          <li><strong>"For Revision" Unlocks Uploads:</strong> When you set status to "For Revision," the upload button automatically re-enables for the requestor</li>
-          <li><strong>You Upload Deliverables:</strong> For Service Requests, you use the "Upload Deliverable" button to submit your final, completed work</li>
+          <li><strong>Requestors Provide Initial Links:</strong> When creating a request, users paste a link to their file(s) (Google Drive, Dropbox, or similar)</li>
+          <li><strong>Link Lock:</strong> After submission, requestors cannot add more links</li>
+          <li><strong>"For Revision" Unlocks Links:</strong> When you set status to "For Revision," the requestor can add a new link and resubmit</li>
+          <li><strong>You Submit Deliverable Links:</strong> For Service Requests, you paste a link to your finished work via "Submit Deliverable"</li>
         </ul>
 
         <div class="guide-image-placeholder">
@@ -479,16 +421,16 @@
             <circle cx="8.5" cy="8.5" r="1.5"></circle>
             <polyline points="21 15 16 10 5 21"></polyline>
           </svg>
-          <p>Upload Deliverable Button Location and Usage</p>
+          <p>Submit Deliverable Button Location and Usage</p>
         </div>
 
         <div class="guide-step">
-          <h4>Best Practices for File Management</h4>
+          <h4>Best Practices for Link Management</h4>
           <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li>Always download and review all requester files before processing</li>
-            <li>For Service Requests, upload final files in high-quality formats (PNG, PDF, MP4, etc.)</li>
-            <li>Use clear, descriptive file names (e.g., "EventPoster_Final_2024.png")</li>
-            <li>Verify file uploads completed successfully before marking as Completed</li>
+            <li>Always open and review all requester links before processing</li>
+            <li>For Service Requests, host final files in high-quality formats (PNG, PDF, MP4, etc.) and ensure the link's sharing permissions allow the requestor to view it</li>
+            <li>Use clear, descriptive file names on the hosted files (e.g., "EventPoster_Final_2024.png")</li>
+            <li>Verify your deliverable link is accessible before marking the task Completed</li>
           </ul>
         </div>
       </div>
@@ -510,7 +452,7 @@
         <ul>
           <li>An Admin assigns a new task to your unit</li>
           <li>A requestor sends you a new message in a Conversation</li>
-          <li>A requestor uploads a new file for a task that was "For Revision"</li>
+          <li>A requestor adds a new link for a task that was "For Revision"</li>
           <li>A task you are assigned to is approaching its deadline</li>
         </ul>
 
@@ -546,7 +488,7 @@
           <ul style="margin: 8px 0 0 0; padding-left: 20px;">
             <li>Request title and description</li>
             <li>Requester details (name, organization, contact)</li>
-            <li>All attached files and documents</li>
+            <li>All links to files and documents provided</li>
             <li>Specified deadline and priority level</li>
           </ul>
         </div>
@@ -577,9 +519,9 @@
           <p>Based on your evaluation, update the task status appropriately:</p>
           <ul style="margin: 8px 0 0 0; padding-left: 20px;">
             <li>If incomplete → Set to "For Revision" with clear instructions</li>
-            <li>If valid approval request → Set to "Approved"</li>
-            <li>If service completed → Set to "Completed"</li>
-            <li>If cannot proceed → Set to "Rejected" with justification</li>
+            <li>If valid approval request → Approve with final remarks (sets status to "Approved")</li>
+            <li>If service deliverable is ready → Submit your deliverable link (sets status to "For Checking"); once the requestor approves, mark it "Completed" with final remarks</li>
+            <li>If a Service Request cannot proceed before you start → Set to "Rejected" with justification</li>
           </ul>
         </div>
         
@@ -590,7 +532,7 @@
             <li>Document your decision in the conversation</li>
             <li>Ensure all communications are professional and clear</li>
             <li>Verify the requester has all necessary information</li>
-            <li>Update status to final state (Approved/Completed/Rejected)</li>
+            <li>Update status to final state (Approved for approvals; Completed or Rejected for services)</li>
           </ul>
         </div>
         
@@ -700,7 +642,7 @@
           <li>Explain why the revisions are necessary</li>
           <li>Provide examples or templates if helpful</li>
           <li>Set expectations for turnaround time</li>
-          <li>Inform them that file upload is now enabled</li>
+          <li>Inform them that they can now add a new link and resubmit</li>
         </ul>
         
         <h3>When Rejecting Requests</h3>
@@ -729,27 +671,27 @@
           <h2>File Management & Revisions</h2>
         </div>
         
-        <h3>Reviewing Attachments</h3>
+        <h3>Reviewing Links</h3>
         <ul>
-          <li>Review all attached files before making any decisions</li>
-          <li>Check file formats and ensure they can be opened</li>
-          <li>Verify documents are complete and legible</li>
+          <li>Review all provided links before making any decisions</li>
+          <li>Check that each link opens and permissions allow you to view it</li>
+          <li>Verify the linked documents are complete and legible</li>
           <li>Look for required signatures or endorsements</li>
-          <li>Download important files for your records if needed</li>
+          <li>Note important links for your records if needed</li>
         </ul>
-        
+
         <h3>Revision System</h3>
         <p>When you set a task status to "For Revision":</p>
         <ul>
-          <li>The system automatically enables file uploads for the requester</li>
-          <li>Requester can add new files or upload revised versions</li>
-          <li>You'll receive a notification when new files are uploaded</li>
-          <li>Always review the latest uploaded files before final approval</li>
-          <li>Original files remain accessible for comparison</li>
+          <li>The system automatically allows the requester to add a new link</li>
+          <li>Requester submits a revised link and resubmits</li>
+          <li>You'll receive a notification when a new link is submitted</li>
+          <li>Always review the latest link before final approval</li>
+          <li>Original links remain accessible for comparison</li>
         </ul>
-        
+
         <div class="guide-warning">
-          <strong>Important:</strong> Requesters cannot edit their original submission. They can only add new files when status is "For Revision". Guide them on what specific files need to be re-uploaded.
+          <strong>Important:</strong> Requesters cannot edit their original submission. They can only add a new link when status is "For Revision". Guide them on what specifically needs to be corrected.
         </div>
       </div>
 
@@ -770,7 +712,7 @@
         <ul>
           <li><strong>New Task Assignments:</strong> When admin assigns a new task to your unit</li>
           <li><strong>Task Updates:</strong> When requester responds to revision requests</li>
-          <li><strong>New Files:</strong> When requester uploads additional documents</li>
+          <li><strong>New Links:</strong> When requester adds a new link during revision</li>
           <li><strong>Conversation Messages:</strong> When requester sends a new message</li>
           <li><strong>Deadline Reminders:</strong> Automated alerts for approaching deadlines</li>
         </ul>
@@ -803,15 +745,30 @@
         </div>
         
         <ul>
-          <li><strong>Requester Limitations:</strong> Once submitted, requesters cannot edit their requests. They can only upload additional files when status is "For Revision".</li>
+          <li><strong>Requester Limitations:</strong> Once submitted, requesters cannot edit their requests. They can only add a new link when status is "For Revision".</li>
           <li><strong>Status Change Notifications:</strong> Every time you update a task status, the requester receives an automatic notification.</li>
-          <li><strong>Task Type Matters:</strong> Use "Approved" for Approval Requests and "Completed" for Service Requests.</li>
+          <li><strong>Task Type Matters:</strong> Approve with final remarks for Approval Requests ("Approved" is final). For Service Requests, submit your deliverable link ("For Checking"), then mark "Completed" with final remarks only after the requestor approves.</li>
           <li><strong>Quality Over Speed:</strong> Thorough initial review prevents multiple revision cycles and saves time overall.</li>
           <li><strong>Team Coordination:</strong> Check with unit colleagues before processing complex or unfamiliar requests.</li>
           <li><strong>Escalation Path:</strong> Contact admin if you encounter blockers, policy questions, or cannot meet deadlines.</li>
           <li><strong>Documentation:</strong> All conversations are permanent records. Maintain professional and complete documentation.</li>
           <li><strong>Shared Access:</strong> All unit team members can see tasks assigned to your unit. Coordinate to avoid duplicate work.</li>
         </ul>
+      </div>
+
+      <!-- More Information -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <div class="guide-section-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <h2>Need More Information?</h2>
+        </div>
+        <p>For additional details and reference material, you may check the official <a href="https://s-core-digital-user-manual.pages.dev/" target="_blank" rel="noopener noreferrer">S-CORE Digital User Manual</a>.</p>
       </div>
 
       <!-- Quick Reference -->
