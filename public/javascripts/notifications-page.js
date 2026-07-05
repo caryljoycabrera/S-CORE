@@ -22,6 +22,9 @@ class NotificationsPageManager {
     this.hideSenderForTypes = options.hideSenderForTypes || ['user_approved'];
     this.additionalIcons = options.additionalIcons || {};
     
+    // Selection mode
+    this.selectionEnabled = options.selectionEnabled || false;
+    
     // State
     this.currentPage = 1;
     this.totalPages = 1;
@@ -258,6 +261,7 @@ class NotificationsPageManager {
               </button>
             ` : ''}
             ${isDeletable ? `
+              ${this.selectionEnabled ? `<input type="checkbox" class="nt-checkbox nt-action-checkbox" data-id="${notifId}" title="Select for deletion">` : ''}
               <button class="notification-page-action-btn delete" data-id="${notifId}" title="Delete">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3,6 5,6 21,6"></polyline>

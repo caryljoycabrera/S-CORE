@@ -295,6 +295,7 @@ router.get('/unit/dashboard', requireUnit, async (req, res) => {
       announcements = await BroadcastMessage
         .find({
           $and: [
+            { isDeleted: { $ne: true } },
             {
               $or: [
                 { expiresAt: { $gte: now } },
@@ -1082,6 +1083,7 @@ router.get('/api/unit-announcements', requireUnit, async (req, res) => {
     // Get active announcements from admins
     const announcements = await BroadcastMessage
       .find({
+        isDeleted: { $ne: true },
         expiresAt: { $gte: new Date() }
       })
       .populate('senderId', 'fName lName role')
@@ -2165,6 +2167,7 @@ router.get('/unit/dashboard/announcements', requireUnit, async (req, res) => {
       announcements = await BroadcastMessage
         .find({
           $and: [
+            { isDeleted: { $ne: true } },
             {
               $or: [
                 { expiresAt: { $gte: now } },

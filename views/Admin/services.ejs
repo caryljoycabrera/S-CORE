@@ -437,7 +437,12 @@
 
           <% if (serviceRequests.length === 0) { %>
           <div class="no-requests-message">
-            No service requests available
+            <svg width="64" height="64" fill="none" stroke="#059669" stroke-width="1.5" viewBox="0 0 24 24" style="display: block; margin: 0 auto 1rem;">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <h3 style="color: #065f46; margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 600;">No Requests Found</h3>
+            <p style="color: #6b7280; margin: 0; font-size: 0.9rem;">No service requests match your current filters or search criteria.</p>
           </div>
           <% } %>
         </section>

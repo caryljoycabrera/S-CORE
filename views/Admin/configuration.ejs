@@ -123,18 +123,39 @@
     }
 
     /* Modal Backdrop & Body Fixes */
-    body.modal-open {
+    body.modal-open,
+    body:has(.preview-modal.active) {
       overflow: hidden !important;
     }
     /* Force sidebar and header below backdrop when modal is open */
     body.modal-open .admin-sidebar, 
     body.modal-open #adminSidebar,
+    body.modal-open .admin-sidebar *,
+    body.modal-open #adminSidebar *,
     body.modal-open .overlap, 
+    body.modal-open .overlap *,
     body.modal-open .admin-header,
+    body.modal-open .admin-header *,
     body.modal-open .admin-menu-toggle,
-    body.modal-open #adminMenuToggle {
+    body.modal-open #adminMenuToggle,
+    body:has(.preview-modal.active) .admin-sidebar,
+    body:has(.preview-modal.active) #adminSidebar,
+    body:has(.preview-modal.active) .admin-sidebar *,
+    body:has(.preview-modal.active) #adminSidebar *,
+    body:has(.preview-modal.active) .overlap,
+    body:has(.preview-modal.active) .overlap *,
+    body:has(.preview-modal.active) .admin-header,
+    body:has(.preview-modal.active) .admin-header *,
+    body:has(.preview-modal.active) .admin-menu-toggle,
+    body:has(.preview-modal.active) #adminMenuToggle {
       z-index: 50 !important;
       pointer-events: none !important;
+    }
+    /* Raise admin-main-content so modals inside it stack above sidebar */
+    body.modal-open .admin-main-content,
+    body:has(.preview-modal.active) .admin-main-content {
+      z-index: 200 !important;
+      position: relative;
     }
 
     .archive-modal-backdrop {
@@ -142,7 +163,7 @@
       top: 0 !important; left: 0 !important; 
       width: 100vw !important; height: 100vh !important;
       background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(5px);
-      z-index: 10001 !important; align-items: center; justify-content: center;
+      z-index: 999999 !important; align-items: center; justify-content: center;
       padding: 20px; transition: all 0.3s ease;
     }
     .archive-modal-backdrop.show { display: flex; }
@@ -2828,7 +2849,8 @@
               <!-- ── Archive Table ─────────────────────────────────────── -->
                <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:10px;">
                 <table id="archiveManagerTable" style="width:100%;border-collapse:collapse;min-width:1400px;">
-                  <colgroup>
+                   <colgroup>
+                    <col style="width:48px;">
                     <col style="min-width:110px; width:8%;">
                     <col style="min-width:200px; width:16%;">
                     <col style="min-width:170px; width:13%;">
@@ -2843,6 +2865,9 @@
                   </colgroup>
                   <thead style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
                     <tr>
+                      <th style="padding:14px 6px;text-align:center;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;width:48px;">
+                        <input type="checkbox" id="archiveSelectAll" onchange="toggleArchiveSelectAll(this)" style="width:16px;height:16px;cursor:pointer;">
+                      </th>
                       <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Type</th>
                       <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Title</th>
                       <th style="padding:14px 10px;text-align:left;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Organization</th>
@@ -2868,6 +2893,9 @@
                             data-archive-source="<%= request.archiveSource %>"
                             data-prev-status="<%= request.previousStatus || 'Pending' %>"
                             style="border-bottom:1px solid #f3f4f6;">
+                          <td style="padding:11px 6px;text-align:center;width:48px;">
+                            <input type="checkbox" class="archive-row-select" value="<%= request._id %>" data-type="<%= request.type %>" onchange="toggleArchiveRowSelect()" style="width:16px;height:16px;cursor:pointer;">
+                          </td>
                           <td style="padding:11px 10px;overflow:hidden;">
                             <span class="<%= request.type === 'Request Approval' ? 'am-badge-approval' : 'am-badge-service' %>"
                               style="display:inline-block;padding:4px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">
@@ -2931,7 +2959,7 @@
                       <% }) %>
                     <% } else { %>
                       <tr>
-                        <td colspan="8" style="padding:60px 20px;text-align:center;">
+                        <td colspan="12" style="padding:60px 20px;text-align:center;">
                           <div style="font-size:2.5rem;margin-bottom:12px;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;color:#9ca3af;"><use href="#icon-inbox"/></svg></div>
                           <p style="font-size:16px;font-weight:600;color:#374151;margin:0 0 6px;">No archived requests</p>
                           <p style="font-size:13px;color:#9ca3af;margin:0;">Automatically archived or manually deleted requests will appear here.</p>
@@ -2940,6 +2968,19 @@
                     <% } %>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- ── Bulk Delete Action Bar ─────────────────────────────── -->
+              <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap;" id="archiveBulkActionBar">
+                <span id="archiveSelectedCount" style="font-size:13px;font-weight:600;color:#6b7280;display:none;"></span>
+                <button type="button" id="archiveDeleteSelectedBtn" onclick="archiveDeleteSelected()" disabled
+                  style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#ef4444;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;opacity:0.5;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete Selected
+                </button>
+                <button type="button" id="archiveDeleteAllBtn" onclick="archiveDeleteAll()"
+                  style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#dc2626;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Delete All
+                </button>
               </div>
 
               <!-- ── Pagination ─────────────────────────────────────────── -->
@@ -3438,6 +3479,12 @@
                   }
 
                   function archiveInit() {
+                    // Clear any stale selection state
+                    if (typeof archiveSelectedIds !== 'undefined') archiveSelectedIds.clear();
+                    const selectAll = document.getElementById('archiveSelectAll');
+                    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+                    archiveUpdateSelectedCount();
+                    
                     const orgOpts = <%- JSON.stringify(settings?.organizations || []) %>;
                     archiveOrgMultiSelect = new EnhancedMultiSelect('archiveOrgFilterMulti', orgOpts, 'Select Organizations', true);
                     document.getElementById('archiveOrgFilterMulti').addEventListener('selectionChange', () => archiveApplyFilter());
@@ -3486,6 +3533,9 @@
                             data-archive-source="${r.archiveSource}"
                             data-prev-status="${r.previousStatus || 'Pending'}"
                             style="border-bottom:1px solid #f3f4f6;">
+                          <td style="padding:11px 6px;text-align:center;width:48px;">
+                            <input type="checkbox" class="archive-row-select" value="${r._id}" data-type="${r.type}" onchange="toggleArchiveRowSelect()" style="width:16px;height:16px;cursor:pointer;">
+                          </td>
                           <td style="padding:11px 10px;overflow:hidden;">
                             <span class="${r.type === 'Request Approval' ? 'am-badge-approval' : 'am-badge-service'}"
                               style="display:inline-block;padding:4px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;">
@@ -3615,6 +3665,12 @@
                   }
 
                   function archiveInit() {
+                    // Clear any stale selection state
+                    if (typeof archiveSelectedIds !== 'undefined') archiveSelectedIds.clear();
+                    const selectAll = document.getElementById('archiveSelectAll');
+                    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+                    if (typeof archiveUpdateSelectedCount === 'function') archiveUpdateSelectedCount();
+                    
                     const orgOpts = <%- JSON.stringify(settings?.organizations || []) %>;
                     archiveOrgMultiSelect = new EnhancedMultiSelect('archiveOrgFilterMulti', orgOpts, 'Select Organizations', true);
                     document.getElementById('archiveOrgFilterMulti').addEventListener('selectionChange', () => archiveApplyFilter());
@@ -3740,6 +3796,142 @@
                     if (archiveOrgMultiSelect) archiveOrgMultiSelect.reset();
                     archiveApplyFilter();
                   };
+
+                   // ── Archive Selection State ──────────────────────────────
+                   let archiveSelectedIds = new Set();
+
+                   function archiveUpdateSelectedCount() {
+                     const count = archiveSelectedIds.size;
+                     const btn = document.getElementById('archiveDeleteSelectedBtn');
+                     const label = document.getElementById('archiveSelectedCount');
+                     const selectAll = document.getElementById('archiveSelectAll');
+                     if (label) {
+                       label.style.display = count > 0 ? 'inline' : 'none';
+                       label.textContent = count + ' selected';
+                     }
+                     if (btn) {
+                       btn.disabled = count === 0;
+                       btn.style.opacity = count === 0 ? '0.5' : '1';
+                       btn.innerHTML = count > 0
+                         ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete Selected (' + count + ')'
+                         : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete Selected';
+                     }
+                     if (selectAll) {
+                       const allCheckboxes = document.querySelectorAll('#archiveManagerBody .archive-row-select');
+                       const visibleCheckboxes = Array.from(allCheckboxes).filter(cb => cb.closest('.archive-row').style.display !== 'none');
+                       const checkedVisible = visibleCheckboxes.filter(cb => cb.checked);
+                       selectAll.checked = visibleCheckboxes.length > 0 && checkedVisible.length === visibleCheckboxes.length;
+                       selectAll.indeterminate = checkedVisible.length > 0 && checkedVisible.length < visibleCheckboxes.length;
+                     }
+                   }
+
+                   window.toggleArchiveSelectAll = function(checkbox) {
+                     const checkboxes = document.querySelectorAll('#archiveManagerBody .archive-row-select');
+                     checkboxes.forEach(cb => {
+                       const row = cb.closest('.archive-row');
+                       if (row.style.display !== 'none') {
+                         cb.checked = checkbox.checked;
+                         if (cb.checked) {
+                           archiveSelectedIds.add(cb.value);
+                         } else {
+                           archiveSelectedIds.delete(cb.value);
+                         }
+                       }
+                     });
+                     archiveUpdateSelectedCount();
+                   };
+
+                   window.toggleArchiveRowSelect = function() {
+                     const checkboxes = document.querySelectorAll('#archiveManagerBody .archive-row-select');
+                     archiveSelectedIds.clear();
+                     checkboxes.forEach(cb => {
+                       if (cb.checked) {
+                         archiveSelectedIds.add(cb.value);
+                       }
+                     });
+                     archiveUpdateSelectedCount();
+                   };
+
+                   window.archiveDeleteSelected = function() {
+                     const count = archiveSelectedIds.size;
+                     if (count === 0) return;
+                     document.getElementById('amBulkDeleteTitle').textContent = 'Delete ' + count + ' archived request' + (count > 1 ? 's' : '') + '?';
+                     document.getElementById('amBulkDeleteDesc').textContent = 'This will permanently delete ' + count + ' selected archived request' + (count > 1 ? 's' : '') + '. This action cannot be undone.';
+                     const confirmBtn = document.getElementById('amBulkDeleteConfirmBtn');
+                     confirmBtn.onclick = async function() {
+                       confirmBtn.disabled = true;
+                       confirmBtn.textContent = 'Deleting...';
+                       try {
+                         const items = Array.from(archiveSelectedIds).map(id => {
+                           const row = document.querySelector('tr[data-request-id="' + id + '"]');
+                           return { requestId: id, requestType: row ? row.dataset.requestType : 'Request Approval' };
+                         });
+                         const res = await fetch('/admin/request/bulk-permanent-delete', {
+                           method: 'POST',
+                           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                           body: JSON.stringify({ items: items })
+                         });
+                         const data = await res.json();
+                         if (data.success) {
+                           archiveSelectedIds.clear();
+                           loadArchiveRecordsFromAPI();
+                           window.showToast && window.showToast(data.message || 'Deleted ' + data.deleted + ' request(s).');
+                           closeAmBulkDeleteModal();
+                         } else {
+                           alert('Delete failed: ' + (data.message || 'Unknown error'));
+                         }
+                       } catch (e) {
+                         alert('Network error.');
+                       } finally {
+                         confirmBtn.disabled = false;
+                         confirmBtn.textContent = 'Delete';
+                       }
+                     };
+                     document.getElementById('amBulkDeleteBackdrop').classList.add('show');
+                     document.body.classList.add('modal-open');
+                   };
+
+                   window.closeAmBulkDeleteModal = function() {
+                     document.getElementById('amBulkDeleteBackdrop').classList.remove('show');
+                     document.body.classList.remove('modal-open');
+                   };
+
+                   window.archiveDeleteAll = function() {
+                     document.getElementById('amDeleteAllTitle').textContent = 'Delete ALL Archived Records?';
+                     document.getElementById('amDeleteAllDesc').textContent = 'This will permanently delete every archived request in the system. This action cannot be undone. Proceed with extreme caution.';
+                     const confirmBtn = document.getElementById('amDeleteAllConfirmBtn');
+                     confirmBtn.onclick = async function() {
+                       confirmBtn.disabled = true;
+                       confirmBtn.textContent = 'Deleting All...';
+                       try {
+                         const res = await fetch('/admin/request/delete-all-archived', {
+                           method: 'POST',
+                           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                         });
+                         const data = await res.json();
+                         if (data.success) {
+                           archiveSelectedIds.clear();
+                           loadArchiveRecordsFromAPI();
+                           window.showToast && window.showToast(data.message || 'All archived records deleted.');
+                           closeAmDeleteAllModal();
+                         } else {
+                           alert('Delete failed: ' + (data.message || 'Unknown error'));
+                         }
+                       } catch (e) {
+                         alert('Network error.');
+                       } finally {
+                         confirmBtn.disabled = false;
+                         confirmBtn.textContent = 'Delete All';
+                       }
+                     };
+                     document.getElementById('amDeleteAllBackdrop').classList.add('show');
+                     document.body.classList.add('modal-open');
+                   };
+
+                   window.closeAmDeleteAllModal = function() {
+                     document.getElementById('amDeleteAllBackdrop').classList.remove('show');
+                     document.body.classList.remove('modal-open');
+                   };
 
                    window.amRestoreRequest = function(id, type) {
                     const row = document.querySelector(`tr[data-request-id="${id}"]`);
@@ -5021,6 +5213,56 @@
       <div class="archive-modal-footer">
         <button class="archive-btn archive-btn-secondary" onclick="closeAmDismissModal()">Cancel</button>
         <button id="amDismissConfirmBtn" class="archive-btn archive-btn-danger">Delete Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Delete Selected Modal -->
+  <div id="amBulkDeleteBackdrop" class="archive-modal-backdrop modal" onclick="if(event.target===this) closeAmBulkDeleteModal()">
+    <div class="archive-modal">
+      <div class="archive-modal-header">
+        <h3 class="archive-modal-title" style="display:flex;align-items:center;gap:6px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><use href="#icon-alert-triangle"/></svg> Bulk Delete</h3>
+        <button class="archive-modal-close" onclick="closeAmBulkDeleteModal()">&times;</button>
+      </div>
+      <div class="archive-modal-body">
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="background:#fee2e2; padding:10px; border-radius:10px; color:#ef4444;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+          </div>
+          <div>
+            <p id="amBulkDeleteTitle" style="margin:0; font-weight:700; color:#1f2937; margin-bottom:8px; font-size:1.05rem;"></p>
+            <p id="amBulkDeleteDesc" style="margin:0; font-size:0.9rem; color:#6b7280; line-height:1.5;"></p>
+          </div>
+        </div>
+      </div>
+      <div class="archive-modal-footer">
+        <button class="archive-btn archive-btn-secondary" onclick="closeAmBulkDeleteModal()">Cancel</button>
+        <button id="amBulkDeleteConfirmBtn" class="archive-btn archive-btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete All Archived Modal -->
+  <div id="amDeleteAllBackdrop" class="archive-modal-backdrop modal" onclick="if(event.target===this) closeAmDeleteAllModal()">
+    <div class="archive-modal">
+      <div class="archive-modal-header">
+        <h3 class="archive-modal-title" style="display:flex;align-items:center;gap:6px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><use href="#icon-alert-triangle"/></svg> Delete All</h3>
+        <button class="archive-modal-close" onclick="closeAmDeleteAllModal()">&times;</button>
+      </div>
+      <div class="archive-modal-body">
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="background:#fef2f2; padding:10px; border-radius:10px; color:#dc2626;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+          </div>
+          <div>
+            <p id="amDeleteAllTitle" style="margin:0; font-weight:700; color:#1f2937; margin-bottom:8px; font-size:1.05rem;"></p>
+            <p id="amDeleteAllDesc" style="margin:0; font-size:0.9rem; color:#6b7280; line-height:1.5;"></p>
+          </div>
+        </div>
+      </div>
+      <div class="archive-modal-footer">
+        <button class="archive-btn archive-btn-secondary" onclick="closeAmDeleteAllModal()">Cancel</button>
+        <button id="amDeleteAllConfirmBtn" class="archive-btn archive-btn-danger" style="background:#7f1d1d;">Delete All</button>
       </div>
     </div>
   </div>

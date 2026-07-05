@@ -4093,6 +4093,67 @@ router.delete('/admin/request/permanent-delete', requireAdmin, async (req, res) 
   }
 });
 
+/**
+ * POST /admin/request/bulk-permanent-delete
+ * Permanently delete multiple archived requests at once
+ */
+router.post('/admin/request/bulk-permanent-delete', requireAdmin, async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'No items provided' });
+    }
+
+    let deleted = 0;
+    let errors = 0;
+
+    for (const item of items) {
+      const { requestId, requestType } = item;
+      if (!requestId || !requestType) { errors++; continue; }
+
+      const Model = requestType === 'Request Approval' ? RequestApproval : ServiceRequest;
+      const result = await Model.findByIdAndDelete(requestId);
+      if (result) deleted++; else errors++;
+    }
+
+    res.json({
+      success: true,
+      deleted,
+      errors,
+      message: `Deleted ${deleted} request${deleted !== 1 ? 's' : ''}${errors ? ' (' + errors + ' failed)' : ''}.`
+    });
+  } catch (error) {
+    console.error('Error in bulk permanent delete:', error);
+    res.status(500).json({ success: false, message: 'Failed to permanently delete requests' });
+  }
+});
+
+/**
+ * POST /admin/request/delete-all-archived
+ * Permanently delete ALL archived records from both collections
+ */
+router.post('/admin/request/delete-all-archived', requireAdmin, async (req, res) => {
+  try {
+    const [delApprovals, delServices, archApprovals, archServices] = await Promise.all([
+      RequestApproval.deleteMany({ isDeleted: true }),
+      ServiceRequest.deleteMany({ isDeleted: true }),
+      RequestApproval.deleteMany({ status: 'Archived', isDeleted: { $ne: true } }),
+      ServiceRequest.deleteMany({ status: 'Archived', isDeleted: { $ne: true } })
+    ]);
+
+    const total = delApprovals.deletedCount + delServices.deletedCount + archApprovals.deletedCount + archServices.deletedCount;
+
+    res.json({
+      success: true,
+      deleted: total,
+      message: `All archived records deleted (${total} request${total !== 1 ? 's' : ''}).`
+    });
+  } catch (error) {
+    console.error('Error deleting all archived:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete all archived records' });
+  }
+});
+
 // ========================================
 // REQUEST TYPE MANAGEMENT ROUTES
 // ========================================

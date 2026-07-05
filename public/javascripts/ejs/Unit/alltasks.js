@@ -1,4 +1,4 @@
-// Global Variables
+﻿// Global Variables
 let currentRequestId = null;
 let currentRequestType = null;
 let selectedFiles = [];
@@ -1035,9 +1035,7 @@ function openRequestDetails(requestId, requestType) {
     const deadline = row.getAttribute('data-deadline') || '';
     const serviceType = row.getAttribute('data-service-type') || '';
     const specificRequestType = row.getAttribute('data-specific-request-type') || '';
-    const filesJson = row.getAttribute('data-files') || '[]';
     const linksJson = row.getAttribute('data-links') || '[]';
-    const deliverablesJson = row.getAttribute('data-deliverables') || '[]';
 
     // Populate modal with data
     document.getElementById('modalTitle').textContent = title;
@@ -1086,24 +1084,6 @@ function openRequestDetails(requestId, requestType) {
         }
     }
 
-    // Show files if they exist
-    try {
-        const files = JSON.parse(filesJson);
-        const filesSection = document.getElementById('filesSection');
-        const filesContainer = document.getElementById('modalFiles');
-        if (files && files.length > 0) {
-            filesContainer.innerHTML = '';
-            createEnhancedFilePreview(files, filesContainer, dateSubmitted);
-            if (filesSection) filesSection.style.display = 'block';
-        } else {
-            if (filesSection) filesSection.style.display = 'none';
-        }
-    } catch (e) {
-        console.error('Error parsing files:', e);
-        const filesSection = document.getElementById('filesSection');
-        if (filesSection) filesSection.style.display = 'none';
-    }
-
     // Show links if they exist
     try {
         const links = JSON.parse(linksJson);
@@ -1133,24 +1113,6 @@ function openRequestDetails(requestId, requestType) {
         const linksContainer = document.getElementById('modalLinks');
         if (linksContainer) linksContainer.innerHTML = '<p style="color:#6b7280;margin:0;">No links submitted</p>';
         if (linksSection) linksSection.style.display = 'block';
-    }
-
-    // Show deliverables if they exist
-    try {
-        const deliverables = JSON.parse(deliverablesJson);
-        const deliverablesSection = document.getElementById('deliverablesSection');
-        const deliverablesContainer = document.getElementById('modalDeliverables');
-        if (deliverables && deliverables.length > 0) {
-            deliverablesContainer.innerHTML = '';
-            createEnhancedFilePreview(deliverables, deliverablesContainer, dateSubmitted);
-            if (deliverablesSection) deliverablesSection.style.display = 'block';
-        } else {
-            if (deliverablesSection) deliverablesSection.style.display = 'none';
-        }
-    } catch (e) {
-        console.error('Error parsing deliverables:', e);
-        const deliverablesSection = document.getElementById('deliverablesSection');
-        if (deliverablesSection) deliverablesSection.style.display = 'none';
     }
 
     // Update modal header color based on request type
@@ -1474,6 +1436,30 @@ async function loadServiceRevisionHistory(requestId) {
                 revisionLimitOverridePanel.style.display =
                     (currentRevisionCount >= currentRevisionLimit && statusForButtons !== 'rejected') ? 'flex' : 'none';
             }
+
+            // Decide serviceActionsPanel/completeTaskPanel visibility unconditionally,
+            // since a freshly-started service has zero revisions yet and must not be
+            // stuck hidden waiting for a revision entry that only this panel can create.
+            const hasApprovedDeliverablesEarly = (result.revisions || []).some(rev => rev.type === 'approved_by_requestor');
+            if (statusForButtons === 'rejected') {
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            } else if (hasApprovedDeliverablesEarly && statusForButtons !== 'completed') {
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) {
+                    completeTaskPanel.style.display = 'block';
+                    setTimeout(() => completeTaskPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300);
+                }
+            } else if (statusForButtons === 'completed') {
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            } else if (statusForButtons !== 'queued') {
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            } else {
+                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
+                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
+            }
         }
 
         if (result.success && result.revisions && result.revisions.length > 0) {
@@ -1490,54 +1476,22 @@ async function loadServiceRevisionHistory(requestId) {
                 console.log('[Service Revision History] =====================================');
             });
             
-            // Check if requestor has approved deliverables
-            const hasApprovedDeliverables = result.revisions.some(rev => rev.type === 'approved_by_requestor');
-            console.log('[Service Revision History] Has approved deliverables:', hasApprovedDeliverables);
-            
             // Get current status from the modal status badge
             const modalStatus = document.getElementById('modalStatus');
             const currentStatus = modalStatus ? modalStatus.textContent.toLowerCase().trim() : '';
             console.log('[Service Revision History] Current modal status:', currentStatus);
-            
+
             // Also check the table row status for more accurate detection
             const tableRow = document.querySelector(`tr[data-request-id="${requestId}"]`);
             const rowStatus = tableRow ? tableRow.getAttribute('data-status')?.toLowerCase().trim() : '';
             console.log('[Service Revision History] Table row status:', rowStatus);
-            
+
             // Determine the actual status (prefer modal status, fallback to row status)
             const actualStatus = currentStatus || rowStatus;
             console.log('[Service Revision History] Actual status:', actualStatus);
-            
-            // If rejected, hide both action panels entirely
-            if (actualStatus === 'rejected') {
-                console.log('[Service Revision History] ✅ Request rejected - hiding all action panels');
-                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
-                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
-            } else if (hasApprovedDeliverables && actualStatus !== 'completed') {
-                console.log('[Service Revision History] ✅ Deliverables approved - hiding upload panel, showing complete task panel');
-                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
-                if (completeTaskPanel) {
-                    completeTaskPanel.style.display = 'block';
-                    // Scroll the panel into view
-                    setTimeout(() => {
-                        completeTaskPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 300);
-                }
-            } else if (actualStatus === 'completed') {
-                console.log('[Service Revision History] ✅ Task already completed - hiding both panels');
-                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
-                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
-            } else if (actualStatus !== 'queued') {
-                // No approval yet and service has been started - show upload panel
-                console.log('[Service Revision History] No approval yet and service started - showing upload panel');
-                if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
-                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
-            } else {
-                // Still queued - panel stays hidden until "Start Service" is clicked
-                if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
-                if (completeTaskPanel) completeTaskPanel.style.display = 'none';
-            }
-            
+            // (serviceActionsPanel/completeTaskPanel visibility is now decided unconditionally
+            // above, before this length>0 gate - see statusForButtons block)
+
             // Filter out initial submission
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
             
@@ -3291,10 +3245,13 @@ function displayFormattedText(text, opts = {}) {
     }
 
     if (!opts.skipMarkdown) {
-        // Parse simple markdown (even if it contains HTML, because backend mixes them)
-        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // Parse simple markdown (even if it contains HTML, because backend mixes them).
+        // Italic/underline must run before bold: bold's [^*]+ span requires zero
+        // asterisks in between, which breaks if a nested italic *marker* is still
+        // unconverted (e.g. combined bold+italic+underline: **__*text*__**).
         formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
         formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     }
 
     // Preserve line breaks
@@ -3738,245 +3695,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Enhanced file preview function (like user side)
-function createEnhancedFilePreview(allFiles, previewContainer, uploadTimestamp) {
-  if (!previewContainer) return;
-  
-  if (allFiles.length > 0) {
-    const enhancedPreview = document.createElement('div');
-    enhancedPreview.className = 'enhanced-file-preview';
-    
-    let fileGridHTML = `
-      <h3>
-        <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-        </svg>
-        Attached Files (${allFiles.length})
-      </h3>
-      <div class="file-grid">
-    `;
-    
-    allFiles.forEach((file, index) => {
-      const fileObj = typeof file === 'string' ? { filename: file, originalname: file } : file;
-      const fileName = fileObj.originalname || fileObj.filename || file;
-      const fileUrl = `/uploads/${fileObj.filename || file}`;
-      const ext = fileName.split('.').pop().toLowerCase();
-      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
-      const isPDF = ext === 'pdf';
-      const isDoc = ['doc', 'docx'].includes(ext);
-      const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
-      const isText = ['txt', 'rtf'].includes(ext);
-      
-      // Get upload timestamp from request creation time or file metadata
-      let uploadTimeInfo = '';
-      const timestamp = fileObj.createdAt || fileObj.uploadedAt || fileObj.timestamp || uploadTimestamp;
-      if (timestamp) {
-        const uploadDate = new Date(timestamp);
-        uploadTimeInfo = uploadDate.toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      }
-      
-      // Determine file icon
-      let fileIcon = `
-        <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="4" y="4" width="16" height="16" rx="2"/>
-          <line x1="8" y1="8" x2="16" y2="8"/>
-          <line x1="8" y1="12" x2="16" y2="12"/>
-          <line x1="8" y1="16" x2="12" y2="16"/>
-        </svg>
-      `;
-
-      if (isImage) {
-        fileIcon = `
-          <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <circle cx="8" cy="8" r="2"/>
-            <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-          </svg>
-        `;
-      } else if (isPDF) {
-        fileIcon = `
-          <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="4" y="2" width="16" height="20" rx="2"/>
-            <path d="M8 6h8M8 10h8M8 14h4"/>
-          </svg>
-        `;
-      } else if (isDoc) {
-        fileIcon = `
-          <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="4" y="2" width="16" height="20" rx="2"/>
-          </svg>
-        `;
-      } else if (isSpreadsheet) {
-        fileIcon = `
-          <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <rect x="7" y="10" width="2" height="7"/>
-            <rect x="11" y="7" width="2" height="10"/>
-            <rect x="15" y="13" width="2" height="4"/>
-          </svg>
-        `;
-      } else if (isText) {
-        fileIcon = `
-          <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="4" y="2" width="16" height="20" rx="2"/>
-            <line x1="8" y1="8" x2="16" y2="8"/>
-            <line x1="8" y1="12" x2="16" y2="12"/>
-          </svg>
-        `;
-      }
-      
-      fileGridHTML += `
-        <div class="enhanced-file-item">
-          <div class="file-header-enhanced">
-            <div style="color: #059669;">${fileIcon}</div>
-            <div class="file-info-enhanced">
-              <div class="file-name-enhanced" title="${fileName}">${fileName}</div>
-              <div class="file-type-enhanced">
-                <span>${ext.toUpperCase()} FILE</span>
-                ${uploadTimeInfo ? `<span class="file-upload-timestamp" title="Uploaded: ${uploadTimeInfo}">
-                  <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 3px;">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  ${uploadTimeInfo}
-                </span>` : ''}
-              </div>
-            </div>
-          </div>
-          
-          <div class="file-preview-container">
-      `;
-      
-      if (isImage) {
-        fileGridHTML += `
-          <img src="${fileUrl}" 
-               alt="Preview of ${fileName}" 
-               onclick="openImagePreview('${fileUrl}', '${fileName}')"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 160px;">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">
-              <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <circle cx="8" cy="8" r="2"/>
-                <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-              </svg>
-            </div>
-            <p>Preview Not Available</p>
-            <small>Click download</small>
-          </div>
-        `;
-      } else if (isPDF) {
-        fileGridHTML += `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 160px;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">
-              <svg width="40" height="40" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="4" y="2" width="16" height="20" rx="2"/>
-                <path d="M8 6h8M8 10h8M8 14h4"/>
-              </svg>
-            </div>
-            <p><strong>PDF Document</strong></p>
-            <small>Click download to view</small>
-          </div>
-        `;
-      } else if (isDoc) {
-        fileGridHTML += `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 160px;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">
-              <svg width="40" height="40" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="4" y="2" width="16" height="20" rx="2"/>
-              </svg>
-            </div>
-            <p><strong>Word Document</strong></p>
-            <small>Click download to view</small>
-          </div>
-        `;
-      } else if (isSpreadsheet) {
-        fileGridHTML += `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 160px;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">
-              <svg width="40" height="40" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <rect x="7" y="10" width="2" height="7"/>
-                <rect x="11" y="7" width="2" height="10"/>
-                <rect x="15" y="13" width="2" height="4"/>
-              </svg>
-            </div>
-            <p><strong>Spreadsheet</strong></p>
-            <small>Click download to view</small>
-          </div>
-        `;
-      } else {
-        fileGridHTML += `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 160px;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">${fileIcon}</div>
-            <p><strong>Document File</strong></p>
-            <small>Click download to view</small>
-          </div>
-        `;
-      }
-      
-      fileGridHTML += `
-        </div>
-        
-        <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
-          <a href="${fileUrl}" download="${fileName}" class="download-btn-enhanced">
-            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-            </svg>
-            Download
-          </a>
-          ${isPDF ? `<button onclick="viewPdf('${fileUrl}', '${fileName}')" class="download-btn-enhanced" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
-            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            View PDF
-          </button>` : ''}
-          ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${fileName}')" class="download-btn-enhanced" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            View
-          </button>` : ''}
-        </div>
-      </div>
-      `;
-    });
-    
-    fileGridHTML += `</div>`;
-    enhancedPreview.innerHTML = fileGridHTML;
-    previewContainer.appendChild(enhancedPreview);
-  } else {
-    previewContainer.innerHTML = `
-      <div class="enhanced-file-preview">
-        <h3>
-          <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-          </svg>
-          Attached Files
-        </h3>
-        <div class="no-files-message">
-          <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.6;">
-            <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-              <rect x="3" y="7" width="18" height="11" rx="2"/>
-              <path d="M3 7l9 6 9-6"/>
-            </svg>
-          </div>
-          <div class="no-files-title">No Files Attached</div>
-          <div class="no-files-subtitle">
-            This request was submitted without any file attachments.
-          </div>
-        </div>
-      </div>
-    `;
-  }
-}
 
 // Image preview modal function
 window.openImagePreview = function(imageUrl, fileName) {

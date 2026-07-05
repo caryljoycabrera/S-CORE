@@ -2594,7 +2594,7 @@ option:hover {
         </div>
 
         <section class="table-section" style="overflow-x: auto;">
-          <table class="requests-table" style="width: 100%; border-collapse: collapse; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
+          <table class="requests-table" style="width: 100%; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
               <tr>
                 <th>Request ID</th>
@@ -2646,11 +2646,7 @@ option:hover {
             <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
           </div>
 
-          <% if (!allRequests || allRequests.length === 0) { %>
-          <div class="no-requests-message">
-            <p>No requests found.</p>
-          </div>
-          <% } %>
+
         </section>
 
         <!-- Back to Dashboard Button -->
@@ -3930,30 +3926,49 @@ function getLinkValues() {
     return div.innerHTML;
   }
 
-  // Helper function to format text with markdown-style syntax
-  // opts.skipMarkdown: set true for already-sanitized real HTML (e.g. a Quill
-  // resubmission) so literal */_ characters inside it aren't re-interpreted.
+  // Helper function to display formatted text (for revision history display)
+  // opts.skipMarkdown: set true for content that is already sanitized, real HTML
+  // (e.g. a requestor's Quill-produced resubmission) so literal */_ characters
+  // inside it aren't re-interpreted as markdown.
   function displayFormattedText(text, opts = {}) {
     if (!text) return '';
 
-    // Check if the text is already HTML (from Quill editor)
-    // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
-    if (opts.skipMarkdown || text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
-        // It's HTML content from Quill, return as-is
-        return text;
+    // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
+    let formatted = text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+
+    const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(formatted);
+
+    // If it's plain text, escape HTML first
+    if (!hasHtml) {
+        formatted = escapeHtml(formatted);
+        // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+        // can't be used to smuggle in a javascript:/data: URI)
+        formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+            let trail = '';
+            const trailMatch = url.match(/[).,!?;:]+$/);
+            if (trailMatch) {
+                trail = trailMatch[0];
+                url = url.slice(0, -trail.length);
+            }
+            return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+        });
     }
 
-    // It's plain text, escape HTML first
-    let formatted = escapeHtml(text);
-
-    // Bold: **text** -> <strong>text</strong>
-    formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // Italic: *text* -> <em>text</em> (but not ** which is bold)
-    formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-
-    // Underline: __text__ -> <u>text</u>
-    formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+    if (!opts.skipMarkdown) {
+        // Parse simple markdown (even if it contains HTML, because backend mixes them).
+        // Italic/underline must run before bold: bold's [^*]+ span requires zero
+        // asterisks in between, which breaks if a nested italic *marker* is still
+        // unconverted (e.g. combined bold+italic+underline: **__*text*__**).
+        formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+        formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    }
 
     // Preserve line breaks
     formatted = formatted.replace(/\n/g, '<br>');
@@ -4630,12 +4645,12 @@ async function submitFormData() {
         noResultsRow.id = 'noResultsRow';
         noResultsRow.innerHTML = `
           <td colspan="6" style="text-align: center; padding: 3rem; color: #6b7280;">
-            <svg width="48" height="48" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; display: block;">
+            <svg width="48" height="48" fill="none" stroke="#059669" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; display: block;">
               <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
-            <p>Try adjusting your filters to see more results.</p>
+            <h3 style="margin: 0 0 0.5rem; color: #065f46; font-size: 1.1rem; font-weight: 600;">No Requests Found</h3>
+            <p style="color: #6b7280; margin: 0; font-size: 0.9rem;">Try adjusting your filters to see more results.</p>
           </td>
         `;
         tbody.appendChild(noResultsRow);
@@ -6135,20 +6150,6 @@ function createRevisionEntry(revision, index, total, isLastPage = true) {
                 })()}</div>
             </div>
 
-            ${((revision.revisionFiles && revision.revisionFiles.length > 0) || (revision.responseFiles && revision.responseFiles.length > 0)) ? `
-                <div class="message-attachments-section">
-                    <div class="attachments-header">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                        </svg>
-                        <span class="attachments-count">${(revision.revisionFiles || revision.responseFiles).length} file${(revision.revisionFiles || revision.responseFiles).length > 1 ? 's' : ''} attached</span>
-                    </div>
-                    <div class="attachments-grid">
-                        ${(revision.revisionFiles || revision.responseFiles).map(file => createRevisionFileCard(file)).join('')}
-                    </div>
-                </div>
-            ` : ''}
-
             ${((revision.revisionLinks && revision.revisionLinks.length > 0) || (revision.responseLinks && revision.responseLinks.length > 0)) ? `
                 <div class="message-attachments-section" style="margin-top: 1rem;">
                     <div class="attachments-header">
@@ -6181,62 +6182,6 @@ function createRevisionEntry(revision, index, total, isLastPage = true) {
     `;
 
     return entry;
-}
-
-function createRevisionFileCard(file) {
-    console.log('📁 Creating file card for:', file);
-    const filename = typeof file === 'string' ? file : (file.filename || file.name || file);
-    const displayName = typeof file === 'object' ? (file.originalname || file.filename || file.name) : file;
-    const ext = filename.split('.').pop().toLowerCase();
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-    const isPDF = ext === 'pdf';
-    console.log('📁 File details:', { filename, displayName, ext, isImage, isPDF });
-    
-    // Extract timestamp from filename if present (format: upload-timestamp-randomnumber.ext)
-    let uploadDate = '';
-    const timestampMatch = filename.match(/upload-?(\d{13})/);
-    console.log('📅 Timestamp extraction:', {
-        filename,
-        timestampMatch,
-        hasMatch: !!timestampMatch,
-        extractedTimestamp: timestampMatch ? timestampMatch[1] : null
-    });
-    if (timestampMatch) {
-        const timestamp = parseInt(timestampMatch[1]);
-        const date = new Date(timestamp);
-        uploadDate = date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        console.log('✅ Extracted date:', uploadDate);
-    } else {
-        console.log('⚠️ No timestamp match found in filename');
-    }
-    
-    let iconColor = '#64748b';
-    if (isImage) iconColor = '#059669';
-    else if (isPDF) iconColor = '#dc2626';
-    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
-    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
-    
-    return `
-        <div class="revision-file-card">
-            <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" rx="2"/>
-                    <line x1="8" y1="8" x2="16" y2="8"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                </svg>
-            </div>
-            <div class="revision-file-info">
-                <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
-                <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
-            </div>
-        </div>
-    `;
 }
 
 // Handle resubmission (Submit for Approval Again)
@@ -6330,19 +6275,19 @@ async function handleResubmission() {
             // Update the status badge in the modal
             const statusBadge = document.getElementById('modalStatusBadge');
             if (statusBadge) {
-                statusBadge.textContent = 'Pending';
-                statusBadge.className = 'status-badge-large pending';
+                statusBadge.textContent = 'For Checking';
+                statusBadge.className = 'status-badge-large for-checking';
             }
-            
+
             // Update the table row status without reloading
             const row = document.querySelector(`tr[data-id="${currentConversationId}"]`);
             if (row) {
                 const statusCell = row.querySelector('.status-badge');
                 if (statusCell) {
-                    statusCell.textContent = 'Pending';
-                    statusCell.className = 'status-badge pending';
+                    statusCell.textContent = 'For Checking';
+                    statusCell.className = 'status-badge for-checking';
                 }
-                row.dataset.status = 'Pending';
+                row.dataset.status = 'For Checking';
             }
         } else {
             if (typeof window.showAlert === 'function') {
@@ -6650,21 +6595,8 @@ function createServiceRevisionEntry(revision, index, total) {
           </div>
           <div class="message-content-section">
             <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : revision.type === 'initial' ? 'REQUEST:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
-            <div class="content-text">${displayFormattedText(content)}</div>
+            <div class="content-text">${displayFormattedText(content, { skipMarkdown: !isUnitAction })}</div>
           </div>
-          ${files && files.length > 0 ? `
-            <div class="message-attachments-section">
-              <div class="attachments-header">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                </svg>
-                <span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span>
-              </div>
-              <div class="attachments-grid">
-                ${files.map(file => createRevisionFileCard(file)).join('')}
-              </div>
-            </div>
-          ` : ''}
           ${statusIndicator}
         </div>
       `;

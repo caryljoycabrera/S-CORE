@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico?v=2">
@@ -3171,7 +3171,7 @@
         </div>
 
         <section class="table-section" style="overflow-x: auto;">
-          <table class="requests-table" style="width: 100%; border-collapse: collapse; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
+          <table class="requests-table" style="width: 100%; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
               <tr>
                 <th>Request ID</th>
@@ -3251,11 +3251,7 @@
             <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
           </div>
 
-          <% if (!allRequests || allRequests.length === 0) { %>
-          <div class="no-requests-message">
-            <p>No requests found.</p>
-          </div>
-          <% } %>
+
         </section>
 
         <!-- Back to Dashboard Button -->
@@ -5378,12 +5374,12 @@ function getLinkValues() {
           noResultsRow.id = 'noResultsRow';
           noResultsRow.innerHTML = `
           <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
-            <svg width="48" height="48" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; display: block;">
+            <svg width="48" height="48" fill="none" stroke="#059669" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; display: block;">
               <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
-            <p>Try adjusting your filters to see more results.</p>
+            <h3 style="margin: 0 0 0.5rem; color: #065f46; font-size: 1.1rem; font-weight: 600;">No Requests Found</h3>
+            <p style="color: #6b7280; margin: 0; font-size: 0.9rem;">Try adjusting your filters to see more results.</p>
           </td>
         `;
           tbody.appendChild(noResultsRow);
@@ -5859,222 +5855,6 @@ function showDeadlineErrorModal(workingDays) {
   }
   });
 
-    // Enhanced file preview function
-    function createEnhancedFilePreview(allFiles, previewContainer) {
-      if (!previewContainer) return;
-      
-      if (allFiles.length > 0) {
-        const enhancedPreview = document.createElement('div');
-        enhancedPreview.className = 'enhanced-file-preview';
-        
-        let fileGridHTML = `
-          <h3>
-            <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
-            </svg>
-            Attached Files (${allFiles.length})
-          </h3>
-          <div class="file-grid">
-        `;
-        
-        allFiles.forEach((file, index) => {
-          if (file && file.trim()) {
-            const fileUrl = `/uploads/${file.trim()}`;
-            const ext = file.split('.').pop().toLowerCase();
-            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext);
-            const isPDF = ext === 'pdf';
-            const isDoc = ['doc', 'docx'].includes(ext);
-            const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
-            const isText = ['txt', 'rtf'].includes(ext);
-            
-            // Determine file icon and preview
-            let fileIcon = `
-              <svg width="20" height="20" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="4" y="4" width="16" height="16" rx="2"/>
-                <line x1="8" y1="8" x2="16" y2="8"/>
-                <line x1="8" y1="12" x2="16" y2="12"/>
-                <line x1="8" y1="16" x2="12" y2="16"/>
-              </svg>
-            `;
-
-            if (isImage) {
-              fileIcon = `
-                <svg width="20" height="20" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8" cy="8" r="2"/>
-                  <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-                </svg>
-              `;
-            } else if (isPDF) {
-              fileIcon = `
-                <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="4" y="2" width="16" height="20" rx="2"/>
-                  <path d="M8 6h8M8 10h8M8 14h4"/>
-                </svg>
-              `;
-            } else if (isDoc) {
-              fileIcon = `
-                <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="4" y="2" width="16" height="20" rx="2"/>
-                  <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
-                </svg>
-              `;
-            } else if (isSpreadsheet) {
-              fileIcon = `
-                <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <rect x="7" y="10" width="2" height="7"/>
-                  <rect x="11" y="7" width="2" height="10"/>
-                  <rect x="15" y="13" width="2" height="4"/>
-                </svg>
-              `;
-            } else if (isText) {
-              fileIcon = `
-                <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="4" y="2" width="16" height="20" rx="2"/>
-                  <line x1="8" y1="8" x2="16" y2="8"/>
-                  <line x1="8" y1="12" x2="16" y2="12"/>
-                </svg>
-              `;
-            }
-            
-            fileGridHTML += `
-              <div class="enhanced-file-item">
-                <div class="file-header-enhanced">
-                  <div style="color: #059669;">${fileIcon}</div>
-                  <div class="file-info-enhanced">
-                    <div class="file-name-enhanced" title="${file}">${file}</div>
-                    <div class="file-type-enhanced">${ext.toUpperCase()} File</div>
-                  </div>
-                </div>
-                
-                <div class="file-preview-container">
-            `;
-            
-            if (isImage) {
-              fileGridHTML += `
-                <img src="${fileUrl}" 
-                     alt="Preview of ${file}" 
-                     style="max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; cursor: pointer;"
-                     onclick="openImagePreview('${fileUrl}', '${file}')"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
-                  <div style="font-size: 2rem; margin-bottom: 0.5rem;">
-                    <svg width="32" height="32" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                      <circle cx="8" cy="8" r="2"/>
-                      <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-                    </svg>
-                  </div>
-                  <p>Image Preview Not Available</p>
-                  <small>Click download to view</small>
-                </div>
-              `;
-            } else if (isPDF) {
-              fileGridHTML += `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #dc2626; height: 200px;">
-                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                    <svg width="48" height="48" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24">
-                      <rect x="4" y="2" width="16" height="20" rx="2"/>
-                      <path d="M8 6h8M8 10h8M8 14h4"/>
-                    </svg>
-                  </div>
-                  <p><strong>PDF Document</strong></p>
-                  <small>Click download to view</small>
-                </div>
-              `;
-            } else if (isDoc) {
-              fileGridHTML += `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2563eb; height: 200px;">
-                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                    <svg width="48" height="48" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
-                      <rect x="4" y="2" width="16" height="20" rx="2"/>
-                      <text x="8" y="16" font-size="6" fill="#2563eb" font-family="Arial" font-weight="bold">W</text>
-                    </svg>
-                  </div>
-                  <p><strong>Word Document</strong></p>
-                  <small>Click download to view</small>
-                </div>
-              `;
-            } else if (isSpreadsheet) {
-              fileGridHTML += `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #16a34a; height: 200px;">
-                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-                    <svg width="48" height="48" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                      <rect x="7" y="10" width="2" height="7"/>
-                      <rect x="11" y="7" width="2" height="10"/>
-                      <rect x="15" y="13" width="2" height="4"/>
-                    </svg>
-                  </div>
-                  <p><strong>Spreadsheet</strong></p>
-                  <small>Click download to view</small>
-                </div>
-              `;
-            } else {
-              fileGridHTML += `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #64748b; height: 200px;">
-                  <div style="font-size: 3rem; margin-bottom: 0.5rem;">${fileIcon}</div>
-                  <p><strong>Document File</strong></p>
-                  <small>Click download to view</small>
-                </div>
-              `;
-            }
-            
-            fileGridHTML += `
-              </div>
-              
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; justify-content: center; align-items: stretch; width: 100%;">
-                <a href="${fileUrl}" target="_blank" download="${file}" class="download-btn-enhanced">
-                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                  </svg>
-                  Download
-                </a>
-                ${isImage ? `<button onclick="openImagePreview('${fileUrl}', '${file}')" class="download-btn-enhanced" style="background: #3b82f6;">
-                  <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-                    <ellipse cx="12" cy="12" rx="9" ry="6"/>
-                    <circle cx="12" cy="12" r="2"/>
-                  </svg>
-                  View
-                </button>` : ''}
-              </div>
-            </div>
-            `;
-          }
-        });
-        
-        fileGridHTML += `</div>`;
-        enhancedPreview.innerHTML = fileGridHTML;
-        previewContainer.appendChild(enhancedPreview);
-      } else {
-        previewContainer.innerHTML = `
-          <div class="enhanced-file-preview">
-            <h3>
-              <svg width="20" height="20" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M17.5 6.5l-7.5 7.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 1 0-7.1-7.1l-9.2 9.2"/>
-              </svg>
-              Attached Files
-            </h3>
-            <div class="no-files-message" style="text-align: center; padding: 3rem 2rem; color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px dashed #cbd5e1;">
-              <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.6;">
-                <svg width="64" height="64" fill="none" stroke="#64748b" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="3" y="7" width="18" height="11" rx="2"/>
-                  <path d="M3 7l9 6 9-6"/>
-                </svg>
-              </div>
-              <div class="no-files-title" style="font-size: 1.25rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;">
-                No Files Attached
-              </div>
-              <div class="no-files-subtitle" style="font-size: 0.95rem; color: #64748b; line-height: 1.5;">
-                This request was submitted without any file attachments.<br>
-                <small>Files may have been uploaded but are not accessible.</small>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-    }
 
     // Add image preview modal function
     window.openImagePreview = function(imageUrl, fileName) {
@@ -7093,20 +6873,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="content-text">${displayFormattedText(content, { skipMarkdown: !isUnitAction })}</div>
                 </div>
 
-                ${files && files.length > 0 ? `
-                    <div class="message-attachments-section">
-                        <div class="attachments-header">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                            </svg>
-                            <span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span>
-                        </div>
-                        <div class="attachments-grid">
-                            ${files.map(file => createRevisionFileCard(file)).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-
                 ${links && links.length > 0 ? `
                     <div class="message-attachments-section" style="margin-top: 1rem;">
                         <div class="attachments-header">
@@ -7141,142 +6907,52 @@ document.addEventListener('DOMContentLoaded', function() {
         return entry;
     }
 
-    // opts.skipMarkdown: set true for already-sanitized real HTML (e.g. a Quill
-    // resubmission/revision) so literal */_ characters inside it aren't re-interpreted.
+    // opts.skipMarkdown: set true for content that is already sanitized, real HTML
+    // (e.g. a requestor's Quill-produced resubmission) so literal */_ characters
+    // inside it aren't re-interpreted as markdown.
     function displayFormattedText(text, opts = {}) {
         if (!text) return '';
 
-        // Check if the text is already HTML (from Quill editor)
-        // Quill outputs HTML like <p>text</p>, <strong>bold</strong>, etc.
-        if (opts.skipMarkdown || text.includes('<p>') || text.includes('<strong>') || text.includes('<em>') || text.includes('<u>')) {
-            // It's HTML content from Quill, return as-is
-            return text;
+        // Decode HTML entities first (handles legacy &lt;b&gt; stored messages)
+        let formatted = text
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#039;/g, "'")
+            .replace(/&nbsp;/g, ' ');
+
+        const hasHtml = /<\/?(p|div|strong|b|em|i|u|a|br|span)[\s>]/i.test(formatted);
+
+        // If it's plain text, escape HTML first
+        if (!hasHtml) {
+            formatted = escapeHtml(formatted);
+            // Auto-link bare URLs (only matches literal http(s):// prefixes, so this
+            // can't be used to smuggle in a javascript:/data: URI)
+            formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, function (url) {
+                let trail = '';
+                const trailMatch = url.match(/[).,!?;:]+$/);
+                if (trailMatch) {
+                    trail = trailMatch[0];
+                    url = url.slice(0, -trail.length);
+                }
+                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>' + trail;
+            });
         }
 
-        // It's plain text, escape HTML first
-        let formatted = escapeHtml(text);
-        
-        // Bold: **text** -> <strong>text</strong>
-        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        
-        // Italic: *text* -> <em>text</em> (but not ** which is bold)
-        formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-        
-        // Underline: __text__ -> <u>text</u>
-        formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
-        
+        if (!opts.skipMarkdown) {
+            // Italic/underline must run before bold: bold's [^*]+ span requires zero
+            // asterisks in between, which breaks if a nested italic *marker* is still
+            // unconverted (e.g. combined bold+italic+underline: **__*text*__**).
+            formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
+            formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+            formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        }
+
         // Preserve line breaks
         formatted = formatted.replace(/\n/g, '<br>');
-        
+
         return formatted;
-    }
-
-    // Helper function to truncate long filenames intelligently
-    function truncateFilename(filename, maxLength = 50) {
-        if (!filename || filename.length <= maxLength) return filename;
-        
-        const ext = filename.split('.').pop();
-        const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
-        const availableLength = maxLength - ext.length - 4; // 4 for "...."
-        
-        if (availableLength < 10) {
-            // Very short limit, just show start and extension
-            return nameWithoutExt.substring(0, 10) + '...' + ext;
-        }
-        
-        // Show start and end of filename with ellipsis in middle
-        const startLength = Math.ceil(availableLength * 0.6);
-        const endLength = Math.floor(availableLength * 0.4);
-        
-        return nameWithoutExt.substring(0, startLength) + '...' + nameWithoutExt.substring(nameWithoutExt.length - endLength) + '.' + ext;
-    }
-
-    function createRevisionFileCard(file) {
-        console.log('📁 [ServiceRequest] Creating file card for:', file);
-        const filename = typeof file === 'string' ? file : (file.filename || file.name || file);
-        const displayName = typeof file === 'object' ? (file.originalname || file.filename || file.name) : file;
-        const truncatedName = truncateFilename(displayName, 45);
-        const ext = filename.split('.').pop().toLowerCase();
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-        const isPDF = ext === 'pdf';
-        console.log('📁 [ServiceRequest] File details:', { filename, displayName, ext, isImage, isPDF });
-        
-        // Extract timestamp from filename if present (format: upload-timestamp-randomnumber.ext)
-        let uploadDate = '';
-        const timestampMatch = filename.match(/upload-?(\d{13})/);
-        console.log('📅 [ServiceRequest] Timestamp extraction:', {
-            filename,
-            timestampMatch,
-            hasMatch: !!timestampMatch,
-            extractedTimestamp: timestampMatch ? timestampMatch[1] : null
-        });
-        if (timestampMatch) {
-            const timestamp = parseInt(timestampMatch[1]);
-            const date = new Date(timestamp);
-            uploadDate = date.toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            console.log('✅ [ServiceRequest] Extracted date:', uploadDate);
-        } else {
-            console.log('⚠️ [ServiceRequest] No timestamp match found in filename');
-        }
-        
-        let iconColor = '#64748b';
-        if (isImage) iconColor = '#059669';
-        else if (isPDF) iconColor = '#dc2626';
-        else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
-        else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
-        
-        return `
-            <div class="revision-file-card">
-                <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <rect x="4" y="4" width="16" height="16" rx="2"/>
-                        <line x1="8" y1="8" x2="16" y2="8"/>
-                        <line x1="8" y1="12" x2="16" y2="12"/>
-                    </svg>
-                </div>
-                <div class="revision-file-info">
-                    <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(truncatedName)}</div>
-                    <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
-                </div>
-                <div class="revision-file-actions">
-                    ${isImage ? `
-                    <button onclick="viewImage('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </button>
-                    ` : isPDF ? `
-                    <button onclick="viewPdf('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </button>
-                    ` : `
-                    <button onclick="viewFile('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View File" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </button>
-                    `}
-                    <a href="/uploads/${filename}" download="${escapeHtml(displayName)}" class="revision-file-btn" title="Download">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        `;
     }
 
     async function handleServiceRevision() {

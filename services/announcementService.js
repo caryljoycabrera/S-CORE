@@ -32,36 +32,7 @@ class AnnouncementService {
       } = announcementData;
 
       // Determine actual recipients
-      let recipientIds = [];
-      let recipientCount = 0;
-
-      if (recipientType === 'all') {
-        const allUsers = await User.find().select('_id');
-        recipientIds = allUsers.map(u => u._id);
-        recipientCount = allUsers.length;
-      } else if (recipientType === 'organization' && organization) {
-        const orgUsers = await User.find({ 
-          $or: [
-            { organization: organization },
-            { affiliation: organization },
-            { studentOrganization: organization }
-          ]
-        }).select('_id');
-        recipientIds = orgUsers.map(u => u._id);
-        recipientCount = orgUsers.length;
-      } else if (recipientType === 'office' && office) {
-        const officeUsers = await User.find({ 
-          $or: [
-            { affiliation: office }, // non-students have affiliation array
-            { studentOrganization: office } // students have studentOrganization array
-          ]
-        }).select('_id');
-        recipientIds = officeUsers.map(u => u._id);
-        recipientCount = officeUsers.length;
-      } else if (recipientType === 'specific' && recipients.length > 0) {
-        recipientIds = recipients;
-        recipientCount = recipients.length;
-      }
+      const recipientIds = await this._resolveRecipientIds(recipientType, organization, office, recipients);
 
       const announcement = new BroadcastMessage({
         title,
@@ -87,6 +58,37 @@ class AnnouncementService {
       console.error('Error creating announcement:', error);
       throw new Error('Failed to create announcement');
     }
+  }
+
+  /**
+   * Resolve the list of recipient user IDs for a given recipient selection
+   * @returns {Promise<Array<String>>}
+   */
+  async _resolveRecipientIds(recipientType, organization, office, recipients = []) {
+    if (recipientType === 'all') {
+      const allUsers = await User.find().select('_id');
+      return allUsers.map(u => u._id.toString());
+    } else if (recipientType === 'organization' && organization) {
+      const orgUsers = await User.find({
+        $or: [
+          { organization: organization },
+          { affiliation: organization },
+          { studentOrganization: organization }
+        ]
+      }).select('_id');
+      return orgUsers.map(u => u._id.toString());
+    } else if (recipientType === 'office' && office) {
+      const officeUsers = await User.find({
+        $or: [
+          { affiliation: office }, // non-students have affiliation array
+          { studentOrganization: office } // students have studentOrganization array
+        ]
+      }).select('_id');
+      return officeUsers.map(u => u._id.toString());
+    } else if (recipientType === 'specific') {
+      return (recipients || []).map(id => id.toString());
+    }
+    return [];
   }
 
   /**
@@ -199,17 +201,36 @@ class AnnouncementService {
    */
   async updateAnnouncement(announcementId, updates) {
     try {
+      const { recipientType, organization, office, recipients, scheduledTime, ...fields } = updates;
+
+      const updateFields = { ...fields, updatedAt: new Date() };
+
+      let recipientIds = null;
+      if (recipientType) {
+        recipientIds = await this._resolveRecipientIds(recipientType, organization, office, recipients);
+        updateFields.isVisibleToAll = recipientType === 'all';
+        updateFields.recipients = recipientIds.map(id => ({ userId: id }));
+      }
+
+      if (scheduledTime !== undefined) {
+        updateFields.scheduledTime = scheduledTime ? new Date(scheduledTime) : null;
+        updateFields.status = scheduledTime ? 'scheduled' : 'active';
+      }
+
       const announcement = await BroadcastMessage.findByIdAndUpdate(
         announcementId,
-        {
-          ...updates,
-          updatedAt: new Date()
-        },
+        updateFields,
         { new: true }
       );
 
       if (!announcement) {
         throw new Error('Announcement not found');
+      }
+
+      // Notify recipients now unless this is scheduled for a future time
+      const isFutureScheduled = announcement.scheduledTime && announcement.scheduledTime > new Date();
+      if (recipientIds && recipientIds.length > 0 && !isFutureScheduled) {
+        await this.sendAnnouncement(announcement._id, recipientIds);
       }
 
       return announcement;
@@ -289,7 +310,8 @@ class AnnouncementService {
   async getAnnouncement(announcementId) {
     try {
       const announcement = await BroadcastMessage.findById(announcementId)
-        .populate('sentBy', 'fName lName email');
+        .populate('sentBy', 'fName lName email')
+        .populate('recipients.userId', 'fName lName email');
 
       if (!announcement) {
         throw new Error('Announcement not found');

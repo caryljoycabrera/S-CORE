@@ -79,6 +79,64 @@
     .modal-btn.danger { background: #ef4444; color: white; }
     .modal-btn.danger:hover { background: #dc2626; transform: translateY(-1px); }
 
+    /* User Search Select */
+    .user-search-select { position: relative; }
+    .user-search-results {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 50;
+    }
+    .user-search-results.show { display: block; }
+    .user-search-result-item {
+      padding: 0.625rem 0.875rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #374151;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .user-search-result-item:last-child { border-bottom: none; }
+    .user-search-result-item:hover { background: #f0fdf4; }
+    .user-search-result-item .result-email { color: #6b7280; font-size: 0.75rem; }
+    .user-search-empty { padding: 0.75rem; font-size: 0.8125rem; color: #6b7280; text-align: center; }
+    .selected-users-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .user-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #f0fdf4;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      border-radius: 20px;
+      padding: 0.375rem 0.5rem 0.375rem 0.875rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+    }
+    .user-chip-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #065f46;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .user-chip-remove:hover { background: #a7f3d0; }
+
     /* Checkbox Group */
     .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .checkbox-item { display: flex; align-items: center; gap: 0.5rem; }
@@ -524,11 +582,12 @@
         </div>
 
         <div id="userSelectBlock" class="form-group" style="display: none;">
-          <label class="form-label" for="userSelect">Select Users</label>
-          <select id="userSelect" class="form-input" multiple style="min-height: 120px;">
-            <option value="">-- Select users --</option>
-          </select>
-          <small>Hold Ctrl/Cmd to select multiple</small>
+          <label class="form-label" for="userSearchInput">Select Users</label>
+          <div class="user-search-select">
+            <input type="text" id="userSearchInput" class="form-input" placeholder="Search by name or email...">
+            <div id="userSearchResults" class="user-search-results"></div>
+          </div>
+          <div id="selectedUsersChips" class="selected-users-chips"></div>
         </div>
 
         <div class="form-group">
@@ -808,28 +867,92 @@
         tInput.addEventListener('input', () => checkTime(tInput.value));
       }
 
-      // Load users for specific user selection
-      loadUsers();
+      // Wire up user search-select for specific recipients
+      initUserSearchSelect();
     });
 
-    // Load users for multi-select
-    async function loadUsers() {
+    // ========== USER SEARCH-SELECT (Specific Recipients) ==========
+    let selectedUsers = new Map(); // userId -> { fName, lName, email }
+    let userSearchDebounce = null;
+
+    function initUserSearchSelect() {
+      const searchInput = document.getElementById('userSearchInput');
+      const resultsBox = document.getElementById('userSearchResults');
+      if (!searchInput || !resultsBox) return;
+
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim();
+        clearTimeout(userSearchDebounce);
+
+        if (query.length < 2) {
+          resultsBox.classList.remove('show');
+          resultsBox.innerHTML = '';
+          return;
+        }
+
+        userSearchDebounce = setTimeout(() => searchUsers(query), 300);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.user-search-select')) {
+          resultsBox.classList.remove('show');
+        }
+      });
+    }
+
+    async function searchUsers(query) {
+      const resultsBox = document.getElementById('userSearchResults');
       try {
-        const response = await fetch('/api/users');
-        if (response.ok) {
-          const data = await response.json();
-          const userSelect = document.getElementById('userSelect');
-          userSelect.innerHTML = '';
-          (data.users || data).forEach(user => {
-            const option = document.createElement('option');
-            option.value = user._id;
-            option.textContent = `${user.fName} ${user.lName} - ${user.email || user.organization || ''}`;
-            userSelect.appendChild(option);
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+        const users = await response.json();
+
+        const matches = (Array.isArray(users) ? users : []).filter(u => !selectedUsers.has(u._id));
+
+        if (matches.length === 0) {
+          resultsBox.innerHTML = '<div class="user-search-empty">No matching users found</div>';
+        } else {
+          resultsBox.innerHTML = matches.map(u => `
+            <div class="user-search-result-item" data-user-id="${u._id}" data-fname="${u.fName}" data-lname="${u.lName}" data-email="${u.email || ''}">
+              ${u.fName} ${u.lName}<br><span class="result-email">${u.email || ''}</span>
+            </div>
+          `).join('');
+
+          resultsBox.querySelectorAll('.user-search-result-item').forEach(item => {
+            item.addEventListener('click', () => {
+              selectedUsers.set(item.dataset.userId, {
+                fName: item.dataset.fname,
+                lName: item.dataset.lname,
+                email: item.dataset.email
+              });
+              renderSelectedUsersChips();
+              document.getElementById('userSearchInput').value = '';
+              resultsBox.classList.remove('show');
+              resultsBox.innerHTML = '';
+            });
           });
         }
+
+        resultsBox.classList.add('show');
       } catch (error) {
-        console.error('Error loading users:', error);
+        console.error('Error searching users:', error);
       }
+    }
+
+    function removeSelectedUser(userId) {
+      selectedUsers.delete(userId);
+      renderSelectedUsersChips();
+    }
+
+    function renderSelectedUsersChips() {
+      const chipsBox = document.getElementById('selectedUsersChips');
+      if (!chipsBox) return;
+
+      chipsBox.innerHTML = Array.from(selectedUsers.entries()).map(([userId, u]) => `
+        <span class="user-chip">
+          ${u.fName} ${u.lName}
+          <button type="button" class="user-chip-remove" onclick="removeSelectedUser('${userId}')" title="Remove">&times;</button>
+        </span>
+      `).join('');
     }
 
     function toggleDropdown() {
@@ -859,7 +982,12 @@
       document.getElementById('recipientAll').checked = true;
       document.getElementById('scheduledDate').value = '';
       document.getElementById('scheduledTime').value = '';
-      
+
+      selectedUsers.clear();
+      renderSelectedUsersChips();
+      document.getElementById('userSearchInput').value = '';
+      document.getElementById('userSearchResults').classList.remove('show');
+
       const timeWarn = document.getElementById('timeWarning');
       if (timeWarn) timeWarn.style.display = 'none';
 
@@ -880,7 +1008,26 @@
           announcementQuill.root.innerHTML = data.announcement.content;
           document.getElementById('announcementPriority').value = data.announcement.priority || 'medium';
           document.getElementById('announcementType').value = data.announcement.type || 'News';
-          
+
+          // Restore recipient selection
+          selectedUsers.clear();
+          document.getElementById('userSearchInput').value = '';
+          document.getElementById('userSearchResults').classList.remove('show');
+          const recipients = data.announcement.recipients || [];
+          if (!data.announcement.isVisibleToAll && recipients.length > 0) {
+            recipients.forEach(r => {
+              const u = r.userId;
+              if (u && u._id) {
+                selectedUsers.set(u._id, { fName: u.fName || '', lName: u.lName || '', email: u.email || '' });
+              }
+            });
+            document.getElementById('recipientSpecific').checked = true;
+          } else {
+            document.getElementById('recipientAll').checked = true;
+          }
+          renderSelectedUsersChips();
+          toggleRecipientOptions();
+
           // Populate scheduledTime if it exists
           if (data.announcement.scheduledTime) {
             // Convert UTC back to UTC+8 for display
@@ -1038,7 +1185,7 @@
           return;
         }
       } else if (recipientType === 'specific') {
-        data.recipients = Array.from(document.getElementById('userSelect').selectedOptions).map(opt => opt.value);
+        data.recipients = Array.from(selectedUsers.keys());
         if (data.recipients.length === 0) {
           showAlert('Please select at least one user', 'error');
           if (submitBtn) {

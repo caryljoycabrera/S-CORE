@@ -813,6 +813,33 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
     }
   }
 
+  // Bulk delete notifications by IDs
+  async bulkDeleteNotifications(ids, userId) {
+    try {
+      const result = await Notification.deleteMany({
+        _id: { $in: ids },
+        recipient: userId
+      });
+      socketService.emitToUser(userId, 'notificationsBulkDeleted', { count: result.deletedCount });
+      return result;
+    } catch (error) {
+      console.error('Error bulk deleting notifications:', error);
+      throw error;
+    }
+  }
+
+  // Delete all notifications for a user
+  async deleteAllNotifications(userId) {
+    try {
+      const result = await Notification.deleteMany({ recipient: userId });
+      socketService.emitToUser(userId, 'notificationsAllDeleted', { count: result.deletedCount });
+      return result;
+    } catch (error) {
+      console.error('Error deleting all notifications:', error);
+      throw error;
+    }
+  }
+
   // Delete old notifications (cleanup job)
   async deleteOldNotifications(daysOld = 30) {
     try {

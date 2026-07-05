@@ -1302,8 +1302,8 @@ router.post('/resubmit-approval-request/:id', async (req, res) => {
     request.revisionHistory.push(newResubmission);
     console.log('✅ Total revision history entries:', request.revisionHistory.length);
 
-    // Change status back to Pending for unit to review again
-    request.status = 'Pending';
+    // Mark as awaiting unit re-check rather than reverting to a plain Pending state
+    request.status = 'For Checking';
     request.awaitingResubmission = false;
     await request.save();
     console.log('✅ Request saved with new resubmission entry');

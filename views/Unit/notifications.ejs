@@ -49,6 +49,100 @@
     @media (max-width: 480px) {
       .student-side { padding: 0.75rem; }
     }
+
+    /* ── Bulk Delete UI ─────────────────────────────────────────── */
+    .notifications-actions .btn.danger { color: #dc2626; }
+    .notifications-actions .btn.danger:hover { background: #fef2f2; border-color: #dc2626; }
+    .notifications-actions .btn.danger.active { background: #fef2f2; border-color: #dc2626; color: #dc2626; font-weight: 600; }
+    .nt-action-checkbox { display: none; width: 18px; height: 18px; cursor: pointer; accent-color: #dc2626; border-radius: 4px; margin: 0; align-self: center; }
+    .nt-delete-mode .nt-action-checkbox { display: inline-flex !important; }
+    .nt-delete-mode .notification-page-action-btn.delete { display: none !important; }
+    .nt-delete-mode .notification-page-item-actions { opacity: 1 !important; }
+    .nt-delete-mode .notification-page-item { cursor: default; }
+    .notification-page-item.nt-selected { background: #fef2f2 !important; border-left: 4px solid #dc2626 !important; }
+
+    /* ── Bottom Action Bar ───────────────────────────────────────── */
+    .nt-action-bar { display: none; justify-content: flex-end; align-items: center; gap: 12px; padding: 14px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; }
+    .nt-delete-mode .nt-action-bar { display: flex !important; }
+    .nt-action-bar .nt-count { font-size: 13px; font-weight: 600; color: #6b7280; }
+    .nt-action-bar .nt-btn {
+      padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px;
+      border: none; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .nt-action-bar .nt-btn-danger { background: #ef4444; color: white; }
+    .nt-action-bar .nt-btn-danger:hover { background: #dc2626; }
+    .nt-action-bar .nt-btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+    .nt-action-bar .nt-btn-outline { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+    .nt-action-bar .nt-btn-outline:hover { background: #f3f4f6; }
+
+    /* ── Modal Backdrop ──────────────────────────────────────────── */
+    .nt-modal-backdrop {
+      display: none; position: fixed; top: 0 !important; left: 0 !important;
+      width: 100vw !important; height: 100vh !important; z-index: 999999 !important;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(5px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .nt-modal-backdrop.show { display: flex; }
+    .nt-modal {
+      background: white; border-radius: 12px; width: 100%; max-width: 480px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      overflow: hidden; transform: translateY(20px); transition: transform 0.3s ease;
+    }
+    .nt-modal-backdrop.show .nt-modal { transform: translateY(0); }
+    .nt-modal-header {
+      padding: 20px 24px; border-bottom: 1px solid #f3f4f6;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nt-modal-title { font-weight: 700; color: #1f2937; font-size: 1.1rem; margin: 0; }
+    .nt-modal-close {
+      background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer;
+      line-height: 1; transition: color 0.15s;
+    }
+    .nt-modal-close:hover { color: #4b5563; }
+    .nt-modal-body { padding: 24px; }
+    .nt-modal-footer {
+      padding: 16px 24px; background: #f9fafb; border-top: 1px solid #f3f4f6;
+      display: flex; justify-content: flex-end; gap: 12px;
+    }
+    .nt-btn-secondary {
+      padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.2s; border: none;
+      background: #f3f4f6; color: #4b5563;
+    }
+    .nt-btn-secondary:hover { background: #e5e7eb; }
+    .nt-btn-primary-danger {
+      padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+      font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.2s; border: none;
+      background: #ef4444; color: white;
+    }
+    .nt-btn-primary-danger:hover { background: #dc2626; }
+    .nt-btn-primary-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Sidebar behind backdrop ─────────────────────────────────── */
+    body.nt-modal-active {
+      overflow: hidden !important;
+    }
+    body.nt-modal-active .unit-sidebar,
+    body.nt-modal-active #unitSidebar,
+    body.nt-modal-active .unit-sidebar *,
+    body.nt-modal-active #unitSidebar *,
+    body.nt-modal-active .overlap,
+    body.nt-modal-active .overlap *,
+    body:has(.nt-modal-backdrop.show) .unit-sidebar,
+    body:has(.nt-modal-backdrop.show) #unitSidebar,
+    body:has(.nt-modal-backdrop.show) .unit-sidebar *,
+    body:has(.nt-modal-backdrop.show) #unitSidebar *,
+    body:has(.nt-modal-backdrop.show) .overlap,
+    body:has(.nt-modal-backdrop.show) .overlap * {
+      z-index: 50 !important;
+      pointer-events: none !important;
+    }
+    body.nt-modal-active .unit-main-content,
+    body:has(.nt-modal-backdrop.show) .unit-main-content {
+      z-index: 200 !important;
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -113,6 +207,13 @@
         <button class="btn" id="refresh-btn">
           Refresh
         </button>
+        <button class="btn danger" id="ntDeleteToggleBtn" onclick="ntToggleDeleteMode()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3,6 5,6 21,6"></polyline>
+            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+          </svg>
+          Delete
+        </button>
       </div>
     </div>
 
@@ -129,6 +230,13 @@
       <div class="loading">Loading notifications...</div>
     </div>
 
+    <div class="nt-action-bar">
+      <span class="nt-count" id="ntSelectedCount"></span>
+      <button class="nt-btn nt-btn-outline" id="ntSelectAllBtn" onclick="ntToggleSelectAll()" style="display:none;">Select All</button>
+      <button class="nt-btn nt-btn-danger" id="ntDeleteSelectedBtn" onclick="ntDeleteSelected()" disabled>Delete Selected</button>
+      <button class="nt-btn nt-btn-danger" id="ntDeleteAllBtn" onclick="ntDeleteAll()">Delete All</button>
+    </div>
+
     <div class="pagination" id="pagination" style="display: none;">
       <button id="prev-btn" onclick="previousPage()">Previous</button>
       <span id="page-info">Page 1 of 1</span>
@@ -137,6 +245,44 @@
     </div>
   </div>
   </div>
+  </div>
+
+  <!-- ── Bulk Delete Confirmation Modal ─────────────────────────── -->
+  <div class="nt-modal-backdrop" id="ntDeleteModal">
+    <div class="nt-modal">
+      <div class="nt-modal-header">
+        <h3 class="nt-modal-title">Delete Notifications</h3>
+        <button class="nt-modal-close" onclick="ntCloseModal('ntDeleteModal')">&times;</button>
+      </div>
+      <div class="nt-modal-body">
+        <p style="color:#4b5563;margin:0;line-height:1.6;">
+          Are you sure you want to delete the <strong id="ntDeleteCount">0</strong> selected notification(s)? This action cannot be undone.
+        </p>
+      </div>
+      <div class="nt-modal-footer">
+        <button class="nt-btn-secondary" onclick="ntCloseModal('ntDeleteModal')">Cancel</button>
+        <button class="nt-btn-primary-danger" id="ntConfirmDeleteBtn" onclick="ntConfirmDeleteSelected()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete All Confirmation Modal ───────────────────────────── -->
+  <div class="nt-modal-backdrop" id="ntDeleteAllModal">
+    <div class="nt-modal">
+      <div class="nt-modal-header">
+        <h3 class="nt-modal-title">Delete All Notifications</h3>
+        <button class="nt-modal-close" onclick="ntCloseModal('ntDeleteAllModal')">&times;</button>
+      </div>
+      <div class="nt-modal-body">
+        <p style="color:#4b5563;margin:0;line-height:1.6;">
+          Are you sure you want to delete all <strong id="ntDeleteCountAll">0</strong> notification(s) on this page? This action cannot be undone.
+        </p>
+      </div>
+      <div class="nt-modal-footer">
+        <button class="nt-btn-secondary" onclick="ntCloseModal('ntDeleteAllModal')">Cancel</button>
+        <button class="nt-btn-primary-danger" id="ntConfirmDeleteAllBtn" onclick="ntConfirmDeleteAll()">Delete All</button>
+      </div>
+    </div>
   </div>
 
   <!-- Onboarding Modal -->
@@ -286,29 +432,6 @@
     </div>
   </div>
 
-  <!-- Announcement Detail Modal -->
-  <div id="announcementDetailModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-    <div class="modal-content" style="background: white; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
-      <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: flex-start;">
-        <div style="flex: 1;">
-          <h2 id="modalTitle" class="modal-title" style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #1f2937;"></h2>
-          <span id="modalDate" style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem; display: block;"></span>
-        </div>
-        <button onclick="closeAnnouncementModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s ease;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='none'">&times;</button>
-      </div>
-      <div class="modal-body" style="padding: 1.5rem;">
-        <div id="modalContent" style="line-height: 1.6; color: #1f2937;"></div>
-        <div id="modalMeta" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
-          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>From:</strong> <span id="modalFrom"></span></p>
-          <p style="margin: 0.5rem 0; color: #6b7280;"><strong>Priority:</strong> <span id="modalPriority"></span></p>
-        </div>
-      </div>
-      <div class="modal-actions" style="padding: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.75rem; justify-content: flex-end;">
-        <button onclick="closeAnnouncementModal()" style="padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; border: 2px solid #e5e7eb; background: #f3f4f6; color: #374151; transition: all 0.2s ease;" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">Close</button>
-      </div>
-    </div>
-  </div>
-
   <!-- User Data for JavaScript -->
   <script id="user-data" type="application/json"><%- JSON.stringify({ id: user._id, role: user.role, name: user.fName + ' ' + user.lName, showOnboarding: showOnboarding }) %></script>
 
@@ -329,7 +452,8 @@
         'unit_approved': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17,11 19,13 23,9"></polyline></svg>'
       },
       // Unit-specific: hide sender for unit_approved notifications
-      hideSenderForTypes: ['user_approved', 'unit_approved']
+      hideSenderForTypes: ['user_approved', 'unit_approved'],
+      selectionEnabled: true
     });
 
     // Global functions for inline event handlers
@@ -481,8 +605,8 @@
         const announcement = result.announcement;
 
         // Update modal content
-        document.getElementById('modalTitle').textContent = announcement.title;
-        document.getElementById('modalDate').textContent = new Date(announcement.createdAt).toLocaleDateString('en-US', { 
+        document.getElementById('announcementModalTitle').textContent = announcement.title;
+        document.getElementById('announcementModalDate').textContent = new Date(announcement.createdAt).toLocaleDateString('en-US', { 
           month: 'long', 
           day: 'numeric', 
           year: 'numeric',
@@ -491,15 +615,15 @@
         });
         
         // Render HTML content (from Quill editor)
-        document.getElementById('modalContent').innerHTML = announcement.content;
+        document.getElementById('announcementModalContent').innerHTML = announcement.content;
         
-        document.getElementById('modalFrom').textContent = announcement.sentBy 
+        document.getElementById('announcementModalFrom').textContent = announcement.sentBy 
           ? `${announcement.sentBy.fName} ${announcement.sentBy.lName}` 
           : 'Admin';
         
         const priorityText = announcement.priority === 'high' ? 'Urgent' : 
                              announcement.priority === 'medium' ? 'Important' : 'Low';
-        document.getElementById('modalPriority').textContent = priorityText;
+        document.getElementById('announcementModalPriority').textContent = priorityText;
         
         // Show modal
         document.getElementById('announcementDetailModal').style.display = 'flex';
@@ -542,6 +666,163 @@
         }, 1000);
       }
     });
+
+    // ═══════════════════════════════════════════════
+    // Bulk Delete — Selection Management
+    // ═══════════════════════════════════════════════
+
+    let ntDeleteMode = false;
+
+    function ntToggleDeleteMode() {
+      ntDeleteMode = !ntDeleteMode;
+      const container = document.querySelector('.notifications-page');
+      const btn = document.getElementById('ntDeleteToggleBtn');
+      if (ntDeleteMode) {
+        container.classList.add('nt-delete-mode');
+        btn.classList.add('active');
+        btn.textContent = 'Cancel';
+      } else {
+        container.classList.remove('nt-delete-mode');
+        btn.classList.remove('active');
+        btn.textContent = 'Delete';
+        ntClearSelections();
+      }
+    }
+
+    function ntClearSelections() {
+      document.querySelectorAll('.nt-checkbox').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.notification-page-item.nt-selected').forEach(el => el.classList.remove('nt-selected'));
+      ntUpdateUI();
+    }
+
+    function ntUpdateUI() {
+      const checkboxes = document.querySelectorAll('.nt-checkbox');
+      const checked = document.querySelectorAll('.nt-checkbox:checked');
+      const count = checked.length;
+      const total = checkboxes.length;
+      const countEl = document.getElementById('ntSelectedCount');
+      const delBtn = document.getElementById('ntDeleteSelectedBtn');
+      const selectAllBtn = document.getElementById('ntSelectAllBtn');
+      countEl.textContent = count > 0 ? `${count} selected` : '';
+      delBtn.disabled = count === 0;
+      if (selectAllBtn) {
+        selectAllBtn.style.display = total > 0 && ntDeleteMode ? 'inline-flex' : 'none';
+        selectAllBtn.textContent = count === total ? 'Deselect All' : 'Select All';
+      }
+    }
+
+    // Delegate checkbox change + click-to-select item
+    document.addEventListener('change', (e) => {
+      if (e.target.classList.contains('nt-checkbox')) {
+        const item = e.target.closest('.notification-page-item');
+        if (item) item.classList.toggle('nt-selected', e.target.checked);
+        ntUpdateUI();
+      }
+    });
+
+    // Click on notification body toggles checkbox
+    document.addEventListener('click', (e) => {
+      const item = e.target.closest('.notification-page-item');
+      if (item && ntDeleteMode) {
+        if (e.target.closest('.nt-action-checkbox') || e.target.closest('.notification-page-item-actions')) return;
+        const cb = item.querySelector('.nt-checkbox');
+        if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
+      }
+    });
+
+    function ntToggleSelectAll() {
+      const allChecked = document.querySelectorAll('.nt-checkbox:checked').length === document.querySelectorAll('.nt-checkbox').length;
+      document.querySelectorAll('.nt-checkbox').forEach(cb => {
+        cb.checked = !allChecked;
+        const item = cb.closest('.notification-page-item');
+        if (item) item.classList.toggle('nt-selected', cb.checked);
+      });
+      ntUpdateUI();
+    }
+
+    function ntShowModal(id) {
+      document.getElementById(id).classList.add('show');
+      document.body.classList.add('nt-modal-active');
+    }
+
+    function ntCloseModal(id) {
+      document.getElementById(id).classList.remove('show');
+      document.body.classList.remove('nt-modal-active');
+    }
+
+    // Close modals on backdrop click
+    document.querySelectorAll('.nt-modal-backdrop').forEach(bd => {
+      bd.addEventListener('click', (e) => {
+        if (e.target === bd) ntCloseModal(bd.id);
+      });
+    });
+
+    function ntDeleteSelected() {
+      const checked = document.querySelectorAll('.nt-checkbox:checked');
+      if (checked.length === 0) return;
+      document.getElementById('ntDeleteCount').textContent = checked.length;
+      ntShowModal('ntDeleteModal');
+    }
+
+    async function ntConfirmDeleteSelected() {
+      const btn = document.getElementById('ntConfirmDeleteBtn');
+      btn.disabled = true; btn.textContent = 'Deleting...';
+      const ids = [...document.querySelectorAll('.nt-checkbox:checked')].map(cb => cb.dataset.id);
+      try {
+        const res = await fetch('/api/notifications/bulk-delete', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+        const data = await res.json();
+        if (data.success) {
+          ntCloseModal('ntDeleteModal');
+          ntToggleDeleteMode();
+          if (notificationsPage) notificationsPage.loadNotifications();
+          if (window.notificationSystem) window.notificationSystem.refreshNotifications();
+        } else {
+          alert(data.message || 'Failed to delete');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Delete';
+      }
+    }
+
+    function ntDeleteAll() {
+      const allIds = [...document.querySelectorAll('.nt-checkbox')].map(cb => cb.dataset.id).filter(Boolean);
+      if (allIds.length === 0) { alert('No notifications on this page to delete.'); return; }
+      document.getElementById('ntDeleteCountAll').textContent = allIds.length;
+      ntShowModal('ntDeleteAllModal');
+    }
+
+    async function ntConfirmDeleteAll() {
+      const btn = document.getElementById('ntConfirmDeleteAllBtn');
+      btn.disabled = true; btn.textContent = 'Deleting...';
+      const ids = [...document.querySelectorAll('.nt-checkbox')].map(cb => cb.dataset.id).filter(Boolean);
+      if (ids.length === 0) { ntCloseModal('ntDeleteAllModal'); btn.disabled = false; btn.textContent = 'Delete All'; return; }
+      try {
+        const res = await fetch('/api/notifications/bulk-delete', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+        const data = await res.json();
+        if (data.success) {
+          ntCloseModal('ntDeleteAllModal');
+          if (ntDeleteMode) ntToggleDeleteMode();
+          if (notificationsPage) notificationsPage.loadNotifications();
+          if (window.notificationSystem) window.notificationSystem.refreshNotifications();
+        } else {
+          alert(data.message || 'Failed to delete');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Delete All';
+      }
+    }
   </script>
 </body>
 </html>

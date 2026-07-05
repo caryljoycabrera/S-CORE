@@ -338,15 +338,12 @@
                 <% } else { %>
                   <tr>
                     <td colspan="7" style="text-align: center; padding: 3rem; color: #64748b;">
-                      <div style="font-size: 3rem; margin-bottom: 1rem;">
-                        <svg width="64" height="64" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24" style="display: inline-block;">
-                          <rect x="4" y="4" width="16" height="16" rx="2"/>
-                          <line x1="8" y1="8" x2="16" y2="8"/>
-                          <line x1="8" y1="12" x2="16" y2="12"/>
-                          <line x1="8" y1="16" x2="12" y2="16"/>
-                        </svg>
-                      </div>
-                      <p>No service requests assigned to your unit yet</p>
+                      <svg width="64" height="64" fill="none" stroke="#059669" stroke-width="1.5" viewBox="0 0 24 24" style="display: block; margin: 0 auto 1rem;">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                      </svg>
+                      <h3 style="color: #065f46; margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 600;">No Tasks Found</h3>
+                      <p style="color: #6b7280; margin: 0; font-size: 0.9rem;">No service tasks assigned to your unit yet.</p>
                     </td>
                   </tr>
                 <% } %>
@@ -446,13 +443,6 @@
             <div id="modalLinks"></div>
           </div>
 
-          <div id="deliverablesSection" class="unit-info-card" style="display: none;">
-            <div class="unit-card-header">
-              <h3>Deliverables</h3>
-              <p class="unit-card-subtitle">Files uploaded by unit team</p>
-            </div>
-            <div id="modalDeliverables"></div>
-          </div>
         </div>
 
         <div class="unit-right-column">

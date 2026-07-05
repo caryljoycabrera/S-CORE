@@ -2194,7 +2194,7 @@
 </div>
 
         <section class="table-section" style="overflow-x: auto;">
-          <table class="requests-table" style="width: 100%; border-collapse: collapse; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
+          <table class="requests-table" style="width: 100%; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow: hidden; background: white;">
             <thead style="background: var(--light-green); color: var(--primary-green);">
               <tr>
                 <th>Request ID</th>
@@ -2265,12 +2265,6 @@
             <div id="pageInfo" style="font-weight: 500; color: #64748b;">Page 1</div>
             <button id="nextPageBtn" onclick="nextPage()" style="padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; background: white; transition: all 0.2s;" title="Next page">Next →</button>
           </div>
-
-          <% if (!allRequests || allRequests.length === 0) { %>
-          <div class="no-requests-message">
-            <p>No requests found.</p>
-          </div>
-          <% } %>
         </section>
 
         <!-- Back to Dashboard Button -->
@@ -3086,6 +3080,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize pagination
   filteredRows = allRows;
   updateTableDisplay();
+  toggleNoResultsMessage(filteredRows.length === 0);
 });
 
 // Modal close handler
@@ -3266,21 +3261,21 @@ function toggleNoResultsMessage(show) {
   
   if (show && !noResultsRow) {
     const tbody = document.getElementById('requestsTableBody');
-    noResultsRow = document.createElement('tr');
-    noResultsRow.id = 'noResultsRow';
-    noResultsRow.innerHTML = `
-      <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">
-          <svg width="48" height="48" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
+    if (tbody) {
+      noResultsRow = document.createElement('tr');
+      noResultsRow.id = 'noResultsRow';
+      noResultsRow.innerHTML = `
+        <td colspan="7" style="text-align: center; padding: 3rem; color: #6b7280;">
+          <svg width="48" height="48" fill="none" stroke="#059669" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; display: block;">
             <circle cx="11" cy="11" r="8"/>
-            <path d="M21 21l-4.35-4.35"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-        </div>
-        <h3 style="margin-bottom: 0.5rem; color: var(--primary-green);">No requests found</h3>
-        <p>Try adjusting your filters to see more results.</p>
-      </td>
-    `;
-    tbody.appendChild(noResultsRow);
+          <h3 style="margin: 0 0 0.5rem; color: #065f46; font-size: 1.1rem; font-weight: 600;">No Requests Found</h3>
+          <p style="color: #6b7280; margin: 0; font-size: 0.9rem;">Try adjusting your filters to see more results.</p>
+        </td>
+      `;
+      tbody.appendChild(noResultsRow);
+    }
   } else if (!show && noResultsRow) {
     noResultsRow.remove();
   }
@@ -4482,9 +4477,12 @@ function displayFormattedText(text, opts = {}) {
     }
 
     if (!opts.skipMarkdown) {
-        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // Italic/underline must run before bold: bold's [^*]+ span requires zero
+        // asterisks in between, which breaks if a nested italic *marker* is still
+        // unconverted (e.g. combined bold+italic+underline: **__*text*__**).
         formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
         formatted = formatted.replace(/__([^_]+)__/g, '<u>$1</u>');
+        formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     }
     formatted = formatted.replace(/\n/g, '<br>');
 
@@ -4990,20 +4988,6 @@ function createRevisionEntry(revision, index, total, isLastPage = true) {
                 })()}</div>
             </div>
             
-            ${((revision.revisionFiles && revision.revisionFiles.length > 0) || (revision.responseFiles && revision.responseFiles.length > 0)) ? `
-                <div class="message-attachments-section">
-                    <div class="attachments-header">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                        </svg>
-                        <span class="attachments-count">${(revision.revisionFiles || revision.responseFiles).length} file${(revision.revisionFiles || revision.responseFiles).length > 1 ? 's' : ''} attached</span>
-                    </div>
-                    <div class="attachments-grid">
-                        ${(revision.revisionFiles || revision.responseFiles).map(file => createRevisionFileCard(file)).join('')}
-                    </div>
-                </div>
-            ` : ''}
-            
             ${((revision.revisionLinks && revision.revisionLinks.length > 0) || (revision.responseLinks && revision.responseLinks.length > 0)) ? `
                 <div class="message-attachments-section" style="margin-top: 1rem;">
                     <div class="attachments-header">
@@ -5036,86 +5020,6 @@ function createRevisionEntry(revision, index, total, isLastPage = true) {
     `;
     
     return entry;
-}
-
-function createRevisionFileCard(file) {
-    console.log('📁 [AllRequests] Creating file card for:', file);
-    const filename = typeof file === 'string' ? file : (file.filename || file.name || file);
-    const displayName = typeof file === 'object' ? (file.originalname || file.filename || file.name) : file;
-    const ext = filename.split('.').pop().toLowerCase();
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-    const isPDF = ext === 'pdf';
-    console.log('📁 [AllRequests] File details:', { filename, displayName, ext, isImage, isPDF });
-    
-    // Extract timestamp from filename if present (format: upload-timestamp-randomnumber.ext)
-    let uploadDate = '';
-    const timestampMatch = filename.match(/upload-?(\d{13})/);
-    console.log('📅 [AllRequests] Timestamp extraction:', {
-        filename,
-        timestampMatch,
-        hasMatch: !!timestampMatch,
-        extractedTimestamp: timestampMatch ? timestampMatch[1] : null
-    });
-    if (timestampMatch) {
-        const timestamp = parseInt(timestampMatch[1]);
-        const date = new Date(timestamp);
-        uploadDate = date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        console.log('✅ [AllRequests] Extracted date:', uploadDate);
-    } else {
-        console.log('⚠️ [AllRequests] No timestamp match found in filename');
-    }
-    
-    let iconColor = '#64748b';
-    if (isImage) iconColor = '#059669';
-    else if (isPDF) iconColor = '#dc2626';
-    else if (['doc', 'docx'].includes(ext)) iconColor = '#2563eb';
-    else if (['xls', 'xlsx'].includes(ext)) iconColor = '#16a34a';
-    
-    return `
-        <div class="revision-file-card">
-            <div class="revision-file-icon" style="background: ${iconColor}20; color: ${iconColor};">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="4" y="4" width="16" height="16" rx="2"/>
-                    <line x1="8" y1="8" x2="16" y2="8"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                </svg>
-            </div>
-            <div class="revision-file-info">
-                <div class="revision-file-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</div>
-                <div class="revision-file-size">${ext.toUpperCase()}${uploadDate ? ` • ${uploadDate}` : ''}</div>
-            </div>
-            <div class="revision-file-actions">
-                ${isImage ? `
-                <button onclick="viewImage('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View Image" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                </button>
-                ` : isPDF ? `
-                <button onclick="viewPdf('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View PDF" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                </button>
-                ` : `
-                <button onclick="viewFile('/uploads/${filename}', '${escapeHtml(displayName)}')" class="revision-file-btn" title="View File" style="border: none; background: none; cursor: pointer; padding: 0; margin-right: 8px;">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                </button>
-                `}
-                <a href=\"/uploads/${filename}\" download=\"${escapeHtml(displayName)}\" class=\"revision-file-btn\" title=\"Download\" style=\"border: none; background: #10b981; color: white; cursor: pointer; padding: 6px 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; margin-left: 4px;\">\n                    <svg width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" viewBox=\"0 0 24 24\">\n                        <path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/>\n                        <polyline points=\"7 10 12 15 17 10\"/>\n                        <line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/>\n                    </svg>\n                </a>\n            </div>
-        </div>
-    `;
 }
 
 // Handle resubmission (Submit for Approval Again)
@@ -5209,19 +5113,19 @@ async function handleResubmission() {
             // Update the status badge in the modal
             const statusBadge = document.getElementById('modalStatusBadge');
             if (statusBadge) {
-                statusBadge.textContent = 'Pending';
-                statusBadge.className = 'status-badge-large pending';
+                statusBadge.textContent = 'For Checking';
+                statusBadge.className = 'status-badge-large for-checking';
             }
-            
+
             // Update the table row status without reloading
             const row = document.querySelector(`tr[data-id="${currentConversationId}"]`);
             if (row) {
                 const statusCell = row.querySelector('.status-badge');
                 if (statusCell) {
-                    statusCell.textContent = 'Pending';
-                    statusCell.className = 'status-badge pending';
+                    statusCell.textContent = 'For Checking';
+                    statusCell.className = 'status-badge for-checking';
                 }
-                row.dataset.status = 'Pending';
+                row.dataset.status = 'For Checking';
             }
         } else {
             if (typeof window.showAlert === 'function') {
@@ -5733,20 +5637,6 @@ function createServiceRevisionEntry(revision, index, total) {
                 <div class="content-label">${revision.type === 'message' ? 'MESSAGE:' : revision.type === 'initial' ? 'REQUEST:' : (isUnitAction ? 'UNIT UPDATE:' : 'YOUR FEEDBACK:')}</div>
                 <div class="content-text">${displayFormattedText(content, { skipMarkdown: !isUnitAction })}</div>
             </div>
-
-            ${files && files.length > 0 ? `
-                <div class="message-attachments-section">
-                    <div class="attachments-header">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                        </svg>
-                        <span class="attachments-count">${files.length} file${files.length > 1 ? 's' : ''} attached</span>
-                    </div>
-                    <div class="attachments-grid">
-                        ${files.map(file => createRevisionFileCard(file)).join('')}
-                    </div>
-                </div>
-            ` : ''}
 
             ${links && links.length > 0 ? `
                 <div class="message-attachments-section" style="margin-top: 1rem;">

@@ -51,7 +51,7 @@ const requestApprovalSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'Pending',
-    enum: ['Pending', 'Queued', 'In Progress', 'For Revision', 'Approved', 'Rejected', 'Completed', 'Archived']
+    enum: ['Pending', 'Queued', 'In Progress', 'For Revision', 'For Checking', 'Approved', 'Rejected', 'Completed', 'Archived']
   },
 
   // Administrative assignment

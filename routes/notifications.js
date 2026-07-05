@@ -208,6 +208,38 @@ router.delete('/api/notifications/:id', requireAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/notifications/bulk-delete
+ * Delete multiple notifications at once
+ */
+router.post('/api/notifications/bulk-delete', requireAuth, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'No notification IDs provided' });
+    }
+    const result = await notificationService.bulkDeleteNotifications(ids, req.user._id);
+    res.json({ success: true, deleted: result.deletedCount, message: `Deleted ${result.deletedCount} notification(s)` });
+  } catch (error) {
+    console.error('Error bulk deleting notifications:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete notifications' });
+  }
+});
+
+/**
+ * DELETE /api/notifications/delete-all
+ * Delete all notifications for the current user
+ */
+router.delete('/api/notifications/delete-all', requireAuth, async (req, res) => {
+  try {
+    const result = await notificationService.deleteAllNotifications(req.user._id);
+    res.json({ success: true, deleted: result.deletedCount, message: `Deleted ${result.deletedCount} notification(s)` });
+  } catch (error) {
+    console.error('Error deleting all notifications:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete all notifications' });
+  }
+});
+
+/**
  * GET /api/notifications/stats
  * Get notification statistics for the authenticated user
  */
