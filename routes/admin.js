@@ -3980,6 +3980,19 @@ router.put('/admin/request/edit', requireAdmin, async (req, res) => {
             actionUrl
           );
         }
+
+        // Notify members of the assigned unit(s) about the edit
+        if (request.assignedUnits) {
+          const unitMembers = await User.find({ unitTeam: request.assignedUnits, role: 'unit' }, '_id');
+          const unitIds = unitMembers.map(u => u._id);
+          if (unitIds.length > 0) {
+            const unitMessage = `The request "${titleStr}" assigned to your unit was edited by ${adminNameFull}.`;
+            const unitNotificationUrl = requestType === 'Request Approval'
+              ? `/unit/task-approvals?modal=request&requestId=${request._id}&type=approval`
+              : `/unit/task-services?modal=request&requestId=${request._id}&type=service`;
+            await notificationService.notifySystem(unitIds, 'Request Updated', unitMessage, 'medium', unitNotificationUrl);
+          }
+        }
       }
     } catch (notifError) {
       console.error('Error sending request edit notification:', notifError);

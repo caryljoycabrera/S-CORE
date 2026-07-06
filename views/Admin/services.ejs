@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="/stylesheets/ejs/admin-trash-modal.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/services-revision-styles.css" />
   <link rel="stylesheet" href="/stylesheets/admin-created-indicator.css" />
+  <link rel="stylesheet" href="/stylesheets/org-select-dropdown.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <!-- Quill Editor -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -1402,8 +1403,8 @@
 
         <div class="form-group" id="organizationGroup">
           <label for="organization">Organization/Office/Dept:</label>
-          <input type="text" id="organization" name="organization" placeholder="Enter organization/office/dept..." required />
-          <small id="organizationHint" style="color: #6b7280; margin-top: 0.25rem; display: block;">Auto-filled when you select a user; otherwise enter manually.</small>
+          <input type="text" id="organization" name="organization" placeholder="Enter organization/office/dept... (optional)" />
+          <small id="organizationHint" style="color: #6b7280; margin-top: 0.25rem; display: block;">Optional — auto-filled when you select a user above.</small>
         </div>
 
         <div class="form-group full-width">
@@ -1482,6 +1483,8 @@
           <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
           <input type="hidden" id="description" name="description" required>
         </div>
+
+        <div id="createRequestFormError" style="display: none; grid-column: 1 / -1; background: #fee2e2; border: 1px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 8px; padding: 0.75rem 1rem; color: #991b1b; font-size: 0.9rem; font-weight: 500;"></div>
 
         <div class="form-actions">
           <button type="button" id="cancelModalBtn">Cancel</button>
@@ -1987,52 +1990,127 @@ function collectUserOrganizations(selectedUser) {
   return [...new Set(orgs)];
 }
 
+// Reset the organization control back to a plain text input; returns the input
+function resetOrganizationControl() {
+  const wrapper = document.getElementById('organizationSelect');
+  const current = document.getElementById('organization');
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'organization';
+  input.name = 'organization';
+  input.placeholder = 'Enter organization/office/dept... (optional)';
+  if (wrapper) {
+    wrapper.replaceWith(input);
+  } else if (current) {
+    input.className = current.className;
+    current.replaceWith(input);
+  }
+  window.adminRequestAllowedOrgs = null;
+  return input;
+}
+
+// Called when the "create for user" field is cleared: org becomes optional free text
+window.onAdminRequestUserCleared = function() {
+  const hint = document.getElementById('organizationHint');
+  const input = resetOrganizationControl();
+  input.required = false;
+  if (hint) hint.textContent = 'Optional — auto-filled when you select a user above.';
+};
+
+// Build a searchable dropdown so the admin picks exactly one of the user's orgs
+function buildOrganizationDropdown(currentInput, orgs) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'org-select';
+  wrapper.id = 'organizationSelect';
+  wrapper.innerHTML =
+    '<button type="button" class="org-select-toggle">' +
+      '<span class="org-select-value org-select-placeholder">Select organization/office/dept...</span>' +
+      '<span class="org-select-arrow">▼</span>' +
+    '</button>' +
+    '<div class="org-select-menu" style="display:none;">' +
+      '<input type="text" class="org-select-search" placeholder="Search organizations/offices/depts...">' +
+      '<div class="org-select-options"></div>' +
+    '</div>';
+  const hidden = document.createElement('input');
+  hidden.type = 'hidden';
+  hidden.id = 'organization';
+  hidden.name = 'organization';
+  wrapper.appendChild(hidden);
+  currentInput.replaceWith(wrapper);
+
+  const menu = wrapper.querySelector('.org-select-menu');
+  const search = wrapper.querySelector('.org-select-search');
+  const optionsBox = wrapper.querySelector('.org-select-options');
+  const valueLabel = wrapper.querySelector('.org-select-value');
+
+  function renderOptions(filter) {
+    optionsBox.innerHTML = '';
+    const q = (filter || '').toLowerCase();
+    orgs.filter(o => o.toLowerCase().includes(q)).forEach(org => {
+      const opt = document.createElement('div');
+      opt.className = 'org-select-option' + (org === hidden.value ? ' selected' : '');
+      opt.textContent = org;
+      opt.addEventListener('click', function() {
+        hidden.value = org;
+        valueLabel.textContent = org;
+        valueLabel.classList.remove('org-select-placeholder');
+        menu.style.display = 'none';
+      });
+      optionsBox.appendChild(opt);
+    });
+    if (!optionsBox.children.length) {
+      const empty = document.createElement('div');
+      empty.className = 'org-select-empty';
+      empty.textContent = 'No matches';
+      optionsBox.appendChild(empty);
+    }
+  }
+
+  wrapper.querySelector('.org-select-toggle').addEventListener('click', function() {
+    const isOpen = menu.style.display !== 'none';
+    menu.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) {
+      search.value = '';
+      renderOptions('');
+      search.focus();
+    }
+  });
+  search.addEventListener('input', function() { renderOptions(search.value); });
+  renderOptions('');
+}
+
+// Single delegated listener closes the dropdown on outside click
+document.addEventListener('click', function(e) {
+  const wrapper = document.getElementById('organizationSelect');
+  if (wrapper && !wrapper.contains(e.target)) {
+    const menu = wrapper.querySelector('.org-select-menu');
+    if (menu) menu.style.display = 'none';
+  }
+});
+
 // Called by services.js when the admin picks a user from the suggestions
 window.onAdminRequestUserSelected = function(selectedUser) {
-  const group = document.getElementById('organizationGroup');
   const hint = document.getElementById('organizationHint');
-  const current = document.getElementById('organization');
-  if (!group || !current) return;
-
+  const input = resetOrganizationControl();
   const orgs = collectUserOrganizations(selectedUser);
-  let replacement;
 
   if (orgs.length === 1) {
     // Exactly one org: auto-fill, read-only
-    replacement = document.createElement('input');
-    replacement.type = 'text';
-    replacement.value = orgs[0];
-    replacement.readOnly = true;
+    input.value = orgs[0];
+    input.readOnly = true;
+    input.required = true;
     if (hint) hint.textContent = 'Auto-filled from the selected user\'s profile.';
   } else if (orgs.length > 1) {
-    // Multiple orgs: let the admin select one
-    replacement = document.createElement('select');
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.disabled = true;
-    placeholder.selected = true;
-    placeholder.textContent = 'Select organization/office/dept...';
-    replacement.appendChild(placeholder);
-    orgs.forEach(org => {
-      const option = document.createElement('option');
-      option.value = org;
-      option.textContent = org;
-      replacement.appendChild(option);
-    });
+    // Multiple orgs: searchable dropdown, admin picks exactly one
+    buildOrganizationDropdown(input, orgs);
+    window.adminRequestAllowedOrgs = orgs;
     if (hint) hint.textContent = 'This user belongs to ' + orgs.length + ' organizations — pick the one this request is for.';
   } else {
-    // No orgs on profile: free text
-    replacement = document.createElement('input');
-    replacement.type = 'text';
-    replacement.placeholder = 'Enter organization/office/dept...';
+    // No orgs on profile: free text, required since this request is for a user
+    input.placeholder = 'Enter organization/office/dept...';
+    input.required = true;
     if (hint) hint.textContent = 'No organization found on this user\'s profile — enter one manually.';
   }
-
-  replacement.id = 'organization';
-  replacement.name = 'organization';
-  replacement.required = true;
-  replacement.className = current.className;
-  current.replaceWith(replacement);
 };
 
 // ===== LINKS MANAGEMENT =====
@@ -2053,23 +2131,43 @@ window.handleServiceFormSubmit = function(event) {
   event.preventDefault();
   const form = event.target;
 
+  // Show validation errors inline in the form (native alert() is suppressed by alert-handler.js)
+  const showFormError = (message) => {
+    const err = document.getElementById('createRequestFormError');
+    if (!err) { alert(message); return; }
+    err.textContent = message;
+    err.style.display = 'block';
+    err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+  const errBox = document.getElementById('createRequestFormError');
+  if (errBox) errBox.style.display = 'none';
+
   // User selection is optional: if the admin typed a name but never picked a
   // suggestion, stop them (they probably intended to select someone)
   if (document.getElementById('requestForUser').value.trim() && !document.getElementById('requestForUserId').value) {
-    alert('Please select the user from the suggestions, or clear the field to create this request yourself as admin.');
+    showFormError('Please select the user from the suggestions, or clear the field to create this request yourself as admin.');
     return false;
+  }
+
+  // When the selected user has multiple orgs, the value must be one of them
+  if (window.adminRequestAllowedOrgs) {
+    const orgValue = (document.getElementById('organization')?.value || '').trim();
+    if (!window.adminRequestAllowedOrgs.includes(orgValue)) {
+      showFormError("Please pick one of the selected user's organizations/offices/departments from the list.");
+      return false;
+    }
   }
 
   // A deadline is required for service requests
   if (!document.getElementById('deadline').value) {
-    alert('Please set a deadline for this service request.');
+    showFormError('Please set a deadline for this service request.');
     return false;
   }
 
   // Get Quill content
   if (serviceDescriptionQuill) {
     if (!serviceDescriptionQuill.getText().trim()) {
-      alert('Please enter a description');
+      showFormError('Please enter a description.');
       return false;
     }
     document.getElementById('description').value = serviceDescriptionQuill.root.innerHTML;
@@ -2093,13 +2191,13 @@ window.handleServiceFormSubmit = function(event) {
       if (data.success) {
         window.location.href = data.redirectUrl || '/admin/services?submitted=true';
       } else {
-        alert(data.message || 'Failed to submit request.');
+        showFormError(data.message || 'Failed to submit request.');
         if (submitBtn) submitBtn.disabled = false;
       }
     })
     .catch(err => {
       console.error('Error submitting request:', err);
-      alert('Failed to submit request. Please try again.');
+      showFormError('Failed to submit request. Please try again.');
       if (submitBtn) submitBtn.disabled = false;
     });
 

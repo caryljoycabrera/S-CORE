@@ -441,6 +441,9 @@ document.addEventListener('DOMContentLoaded', function() {
       const userIdInput = document.getElementById('requestForUserId');
       if (userInput) userInput.value = '';
       if (userIdInput) userIdInput.value = '';
+      if (typeof window.onAdminRequestUserCleared === 'function') window.onAdminRequestUserCleared();
+      const formError = document.getElementById('createRequestFormError');
+      if (formError) formError.style.display = 'none';
     };
   }
   
@@ -463,6 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (query.length < 2) {
         userSuggestionsDropdown.style.display = 'none';
         requestForUserIdInput.value = '';
+        if (typeof window.onAdminRequestUserCleared === 'function') window.onAdminRequestUserCleared();
         return;
       }
       
@@ -552,7 +556,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Clear hidden ID if user manually changes input
     requestForUserInput.addEventListener('keydown', function() {
-      requestForUserIdInput.value = '';
+      if (requestForUserIdInput.value) {
+        requestForUserIdInput.value = '';
+        if (typeof window.onAdminRequestUserCleared === 'function') window.onAdminRequestUserCleared();
+      }
     });
   }
   
@@ -841,7 +848,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Always push bottom statuses to the bottom
         if (aIsBottom && !bIsBottom) return 1;
         if (!aIsBottom && bIsBottom) return -1;
-        
+
+        // High-priority org/office/dept rows always pin to the top of their group
+        const aHP = a.element?.classList.contains('priority-row') || false;
+        const bHP = b.element?.classList.contains('priority-row') || false;
+        if (aHP !== bHP) return aHP ? -1 : 1;
+
         // If both are bottom statuses, sort by status order first, then by date newest to oldest
         if (aIsBottom && bIsBottom) {
           const aStatus = a.status?.toLowerCase();

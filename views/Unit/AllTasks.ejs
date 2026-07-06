@@ -236,6 +236,20 @@
               <tbody id="requestsTableBody">
                 <% 
                 // Combine approval and service requests with smart sorting
+                const hpOrgs = highPriorityOrgs || [];
+                // Same organization derivation used for the row's priority-row class below
+                const getOrgFor = (r) => {
+                  let org = (r.organization || '').trim();
+                  if (!org && r.userId) {
+                    if (r.userId.studentOrganization && Array.isArray(r.userId.studentOrganization) && r.userId.studentOrganization.length > 0) {
+                      org = r.userId.studentOrganization[0];
+                    } else if (r.userId.affiliation && Array.isArray(r.userId.affiliation) && r.userId.affiliation.length > 0) {
+                      org = r.userId.affiliation[0];
+                    }
+                  }
+                  return org;
+                };
+                const isPriorityReq = (r) => hpOrgs.includes(getOrgFor(r));
                 const allRequests = [
                   ...(approvalRequests || []).map(r => ({...r, requestType: 'approval'})),
                   ...(serviceRequests || []).map(r => ({...r, requestType: 'service'}))
@@ -256,7 +270,17 @@
                   
                   const aPriority = statusPriority[a.status] || 999;
                   const bPriority = statusPriority[b.status] || 999;
-                  
+
+                  // Active requests (1-4) always come before finalized ones
+                  const aGroup = aPriority <= 4 ? 0 : 1;
+                  const bGroup = bPriority <= 4 ? 0 : 1;
+                  if (aGroup !== bGroup) return aGroup - bGroup;
+
+                  // High-priority org/office/dept requests pin to the top of their group
+                  const aHP = isPriorityReq(a);
+                  const bHP = isPriorityReq(b);
+                  if (aHP !== bHP) return aHP ? -1 : 1;
+
                   // If same priority status, sort by deadline (urgent first)
                   if (aPriority === bPriority) {
                     // For active statuses (1-4), sort by deadline (nearest first)

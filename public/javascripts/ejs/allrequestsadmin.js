@@ -838,6 +838,11 @@ function initializeFilters() {
       if (aIsBottom && !bIsBottom) return 1;
       if (!aIsBottom && bIsBottom) return -1;
 
+      // High-priority org/office/dept rows always pin to the top of their group
+      const aHP = a.element?.classList.contains('priority-row') || false;
+      const bHP = b.element?.classList.contains('priority-row') || false;
+      if (aHP !== bHP) return aHP ? -1 : 1;
+
       // If both are bottom-status requests, enforce fixed ordering
       if (aIsBottom && bIsBottom) {
         if (aPriority !== bPriority) {

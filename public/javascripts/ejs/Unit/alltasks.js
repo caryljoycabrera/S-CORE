@@ -937,8 +937,13 @@ function applySorting() {
     
     // Sort active rows based on selected option
     activeRows.sort((a, b) => {
+        // High-priority org/office/dept rows always pin to the top of their group
+        const aHP = a.classList.contains('priority-row');
+        const bHP = b.classList.contains('priority-row');
+        if (aHP !== bHP) return aHP ? -1 : 1;
+
         let aValue, bValue;
-        
+
         switch(sortValue) {
             case 'deadline-asc':
                 // Soonest deadline first
@@ -981,6 +986,11 @@ function applySorting() {
     
     // Sort completed/archived rows by status priority then by date (newest first)
     completedRows.sort((a, b) => {
+        // High-priority org/office/dept rows always pin to the top of their group
+        const aHP = a.classList.contains('priority-row');
+        const bHP = b.classList.contains('priority-row');
+        if (aHP !== bHP) return aHP ? -1 : 1;
+
         const aStatus = a.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
         const bStatus = b.getAttribute('data-status')?.toLowerCase().replace(/\s+/g, '-') || '';
         

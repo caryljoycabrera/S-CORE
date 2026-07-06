@@ -1,0 +1,97 @@
+/* ========================================
+   ORGANIZATION SEARCHABLE DROPDOWN
+   Single-select dropdown with a search box, used in the admin
+   "Create Request" modals when the selected requestor belongs to
+   more than one organization/office/department.
+   ======================================== */
+
+.org-select {
+  position: relative;
+  width: 100%;
+}
+
+.org-select-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #1f2937;
+  cursor: pointer;
+  text-align: left;
+}
+
+.org-select-toggle:hover {
+  border-color: #9ca3af;
+}
+
+.org-select-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.org-select-value.org-select-placeholder {
+  color: #9ca3af;
+}
+
+.org-select-arrow {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  font-size: 0.65rem;
+  color: #6b7280;
+}
+
+.org-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.org-select-search {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.org-select-options {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.org-select-option {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.9rem;
+  color: #1f2937;
+  cursor: pointer;
+}
+
+.org-select-option:hover {
+  background: #f0fdf4;
+}
+
+.org-select-option.selected {
+  background: #dcfce7;
+  font-weight: 600;
+}
+
+.org-select-empty {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
