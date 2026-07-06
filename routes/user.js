@@ -385,7 +385,7 @@ router.get('/service-requests', async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     let serviceRequests = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links createdByAdmin createdAt updatedAt')
       .lean();
 
     // Status priority for sorting services
@@ -985,7 +985,7 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const { projectTitle, organization, description, specificRequestType, links } = req.body;
+  const { projectTitle, organization, description, specificRequestType, links, requestForUserId, assignedUnits: requestedUnit } = req.body;
 
   console.log('Organization received:', organization);
   console.log('Specific Request Type received:', specificRequestType);
@@ -998,8 +998,15 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
     });
   }
 
+  // Admins may create a request on behalf of another user and pick the unit
+  const isAdmin = req.session.role === 'admin';
+  const targetUserId = (isAdmin && requestForUserId) ? requestForUserId : req.session.userId;
+
   try {
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(targetUserId);
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Selected user not found' });
+    }
 
     let actualOrganization = 'N/A';
 
@@ -1044,14 +1051,15 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
     const { addWorkingDays } = require('../utils/helpers');
     const deadline = addWorkingDays(new Date(), getDefaultDeadlineDays());
 
-    // Auto-assign unit based on request type
+    // Auto-assign unit based on request type; an admin's explicit choice wins
     const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);
-    const assignedUnits = autoAssignedUnit || 'Not yet assigned';
-    
-    // Smart Triage: Set status based on whether it's auto-assigned
-    // If auto-assigned (specified type), set to 'Queued' for unit inbox
-    // If not auto-assigned (custom type), set to 'Pending' for admin inbox
-    const initialStatus = autoAssignedUnit ? 'Queued' : 'Pending';
+    const chosenUnit = (isAdmin && requestedUnit && requestedUnit.trim()) ? requestedUnit.trim() : autoAssignedUnit;
+    const assignedUnits = chosenUnit || 'Not yet assigned';
+
+    // Smart Triage: Set status based on whether a unit is assigned
+    // If assigned (auto or by admin), set to 'Queued' for unit inbox
+    // If not assigned (custom type), set to 'Pending' for admin inbox
+    const initialStatus = chosenUnit ? 'Queued' : 'Pending';
 
     const newRequest = new RequestApproval({
       title: projectTitle,
@@ -1059,11 +1067,13 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
       description,
       specificRequestType: specificRequestType,
       deadline: deadline,
-      userId: req.session.userId,
+      userId: targetUserId,
       links: links ? (Array.isArray(links) ? links : [links]) : [],
       status: initialStatus,
       assignedUnits: assignedUnits,
-      originalAssignedUnits: autoAssignedUnit // Store original auto-assignment
+      originalAssignedUnits: chosenUnit, // Store original assignment
+      createdByAdmin: isAdmin ? true : false,
+      createdBy: isAdmin ? req.session.userId : null
     });
 
     await newRequest.save();
@@ -1071,36 +1081,47 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
     console.log('Request approval saved with specific type:', specificRequestType);
     console.log('Request approval saved with files:', links);
 
-    // Send notifications to admins
-    try {
-      const admins = await User.find({ role: 'admin' });
-      const adminIds = admins.map(admin => admin._id);
-      await notificationService.notifyApprovalCreated(newRequest._id, req.session.userId, adminIds);
-    } catch (notifError) {
-      console.error('Error sending approval creation notifications:', notifError);
+    // Notify target user if admin created request on their behalf
+    if (isAdmin && requestForUserId) {
+      try {
+        await notificationService.notifyUserRequestCreatedByAdmin(newRequest._id, targetUserId, req.session.userId);
+      } catch (notifError) {
+        console.error('Error notifying target user about admin-created request:', notifError);
+      }
     }
 
-    // Notify assigned unit members if auto-assigned
-    if (autoAssignedUnit && autoAssignedUnit !== '') {
+    // Send notifications to admins (skip when an admin created it themselves — redundant)
+    if (!isAdmin) {
+      try {
+        const admins = await User.find({ role: 'admin' });
+        const adminIds = admins.map(admin => admin._id);
+        await notificationService.notifyApprovalCreated(newRequest._id, targetUserId, adminIds, null);
+      } catch (notifError) {
+        console.error('Error sending approval creation notifications:', notifError);
+      }
+    }
+
+    // Notify assigned unit members if a unit was assigned
+    if (chosenUnit && chosenUnit !== '') {
       try {
         console.log(`🚀 USER ROUTE (APPROVAL): Attempting to notify unit members`);
-        console.log(`🚀 USER ROUTE (APPROVAL): autoAssignedUnit =`, autoAssignedUnit);
+        console.log(`🚀 USER ROUTE (APPROVAL): assigned unit =`, chosenUnit);
         console.log(`🚀 USER ROUTE (APPROVAL): Request ID =`, newRequest._id);
-        await notificationService.notifyUnitTaskAssigned(newRequest._id, 'approval', autoAssignedUnit, null);
-        console.log('✅ USER ROUTE (APPROVAL): Unit notification sent for auto-assigned approval request to:', autoAssignedUnit);
+        await notificationService.notifyUnitTaskAssigned(newRequest._id, 'approval', chosenUnit, null);
+        console.log('✅ USER ROUTE (APPROVAL): Unit notification sent for assigned approval request to:', chosenUnit);
       } catch (unitNotifError) {
         console.error('❌ USER ROUTE (APPROVAL): Error sending unit notification:', unitNotifError);
         console.error('❌ USER ROUTE (APPROVAL): Error stack:', unitNotifError.stack);
       }
     } else {
-      console.log('⚠️ USER ROUTE (APPROVAL): No unit auto-assigned or empty unit:', autoAssignedUnit);
+      console.log('⚠️ USER ROUTE (APPROVAL): No unit assigned or empty unit:', chosenUnit);
     }
 
     // Return JSON response instead of redirect
     res.json({
       success: true,
       message: 'Request submitted successfully',
-      redirectUrl: '/request-approvals?submitted=true'
+      redirectUrl: isAdmin ? '/admin/approvals?submitted=true' : '/request-approvals?submitted=true'
     });
   } catch (err) {
     console.error('Error saving request approval:', err);
@@ -1125,13 +1146,21 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
 router.post('/submit-service-request', requestLimiter, async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
 
-  const { projectTitle, organization, description, deadline, specificRequestType, isCustomType, links } = req.body;
+  const { projectTitle, organization, description, deadline, specificRequestType, isCustomType, links, requestForUserId, assignedUnits: requestedUnit } = req.body;
 
   console.log('Organization received:', organization);
   console.log('Specific Request Type received:', specificRequestType);
 
+  // Admins may create a service request on behalf of another user and pick the unit
+  const isAdmin = req.session.role === 'admin';
+  const isAdminOnBehalf = isAdmin && requestForUserId;
+  const targetUserId = isAdminOnBehalf ? requestForUserId : req.session.userId;
+
   try {
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(targetUserId);
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Selected user not found' });
+    }
 
     let actualOrganization = 'N/A';
 
@@ -1161,14 +1190,15 @@ router.post('/submit-service-request', requestLimiter, async (req, res) => {
       throw new Error('Organization must be a single string value');
     }
 
-    // Auto-assign unit based on request type
+    // Auto-assign unit based on request type; an admin's explicit choice wins
     const autoAssignedUnit = getAutoAssignedUnit(specificRequestType);
-    const assignedUnits = autoAssignedUnit || 'Not yet assigned';
-    
-    // Smart Triage: Set status based on whether it's auto-assigned
-    // If auto-assigned (specified type), set to 'Queued' for unit inbox
-    // If not auto-assigned (custom type), set to 'Pending' for admin inbox
-    const initialStatus = autoAssignedUnit ? 'Queued' : 'Pending';
+    const chosenUnit = (isAdmin && requestedUnit && requestedUnit.trim()) ? requestedUnit.trim() : autoAssignedUnit;
+    const assignedUnits = chosenUnit || 'Not yet assigned';
+
+    // Smart Triage: Set status based on whether a unit is assigned
+    // If assigned (auto or by admin), set to 'Queued' for unit inbox
+    // If not assigned (custom type), set to 'Pending' for admin inbox
+    const initialStatus = chosenUnit ? 'Queued' : 'Pending';
 
     const newRequest = new ServiceRequest({
       title: projectTitle,
@@ -1176,11 +1206,13 @@ router.post('/submit-service-request', requestLimiter, async (req, res) => {
       description,
       deadline,
       specificRequestType: specificRequestType,
-      userId: req.session.userId,
+      userId: targetUserId,
       links: links ? (Array.isArray(links) ? links : [links]) : [],
       status: initialStatus,
       assignedUnits: assignedUnits,
-      originalAssignedUnits: autoAssignedUnit // Store original auto-assignment
+      originalAssignedUnits: chosenUnit, // Store original assignment
+      createdByAdmin: isAdmin ? true : false,
+      createdBy: isAdmin ? req.session.userId : null
     });
 
     await newRequest.save();
@@ -1230,34 +1262,56 @@ router.post('/submit-service-request', requestLimiter, async (req, res) => {
       }
     }
 
-    // Send notifications to admins
-    try {
-      const admins = await User.find({ role: 'admin' });
-      const adminIds = admins.map(admin => admin._id);
-      await notificationService.notifyServiceCreated(newRequest._id, req.session.userId, adminIds);
-    } catch (notifError) {
-      console.error('Error sending service creation notifications:', notifError);
+    // Notify target user if admin created request on their behalf
+    if (isAdminOnBehalf) {
+      try {
+        await notificationService.notifyUserServiceCreatedByAdmin(newRequest._id, targetUserId, req.session.userId);
+      } catch (notifError) {
+        console.error('Error notifying target user about admin-created request:', notifError);
+      }
     }
 
-    // Notify assigned unit members if auto-assigned
-    if (autoAssignedUnit && autoAssignedUnit !== '') {
+    // Send notifications to admins (skip when an admin created it themselves — redundant)
+    if (!isAdmin) {
+      try {
+        const admins = await User.find({ role: 'admin' });
+        const adminIds = admins.map(admin => admin._id);
+        await notificationService.notifyServiceCreated(newRequest._id, targetUserId, adminIds, null);
+      } catch (notifError) {
+        console.error('Error sending service creation notifications:', notifError);
+      }
+    }
+
+    // Notify assigned unit members if a unit was assigned
+    if (chosenUnit && chosenUnit !== '') {
       try {
         console.log(`🚀 USER ROUTE: Attempting to notify unit members`);
-        console.log(`🚀 USER ROUTE: autoAssignedUnit =`, autoAssignedUnit);
+        console.log(`🚀 USER ROUTE: assigned unit =`, chosenUnit);
         console.log(`🚀 USER ROUTE: Request ID =`, newRequest._id);
-        await notificationService.notifyUnitTaskAssigned(newRequest._id, 'service', autoAssignedUnit, null);
-        console.log('✅ USER ROUTE: Unit notification sent for auto-assigned service request to:', autoAssignedUnit);
+        await notificationService.notifyUnitTaskAssigned(newRequest._id, 'service', chosenUnit, null);
+        console.log('✅ USER ROUTE: Unit notification sent for assigned service request to:', chosenUnit);
       } catch (unitNotifError) {
         console.error('❌ USER ROUTE: Error sending unit notification:', unitNotifError);
         console.error('❌ USER ROUTE: Error stack:', unitNotifError.stack);
       }
     } else {
-      console.log('⚠️ USER ROUTE: No unit auto-assigned or empty unit:', autoAssignedUnit);
+      console.log('⚠️ USER ROUTE: No unit assigned or empty unit:', chosenUnit);
     }
 
+    // Admin modal submits JSON via fetch; the user-side form still expects a redirect
+    if (isAdmin) {
+      return res.json({
+        success: true,
+        message: 'Service request submitted successfully',
+        redirectUrl: '/admin/services?submitted=true'
+      });
+    }
     res.redirect('/service-requests');
   } catch (err) {
     console.error('Error saving service request:', err);
+    if (isAdmin) {
+      return res.status(500).json({ success: false, message: 'Failed to save service request: ' + err.message });
+    }
     res.status(500).send('Failed to save service request: ' + err.message);
   }
 });

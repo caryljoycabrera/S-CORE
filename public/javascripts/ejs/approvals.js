@@ -525,8 +525,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 requestForUserInput.value = `${userName} (${userEmail})`;
                 requestForUserIdInput.value = userId;
                 userSuggestionsDropdown.style.display = 'none';
-                
+
                 console.log('[USER SEARCH] Selected user:', { userId, userName, userEmail });
+
+                // Let the page react to the selection (e.g., auto-fill organization)
+                const selectedUser = usersCache.find(u => u._id === userId);
+                if (selectedUser && typeof window.onAdminRequestUserSelected === 'function') {
+                  window.onAdminRequestUserSelected(selectedUser);
+                }
               });
             });
           }
@@ -1901,6 +1907,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate general information
     setElementText('detailTitle', rowData.title);
     setElementText('detailStudent', rowData.student);
+    // Toggle admin-created label
+    const detailAdminLabel = document.getElementById('detailAdminLabel');
+    if (detailAdminLabel) {
+      detailAdminLabel.style.display = rowData.adminCreated === 'true' ? 'inline' : 'none';
+    }
     setElementText('detailType', 'Request Approval');
     setElementText('detailOrganization', rowData.organization);
     setElementText('detailDatetime', rowData.datetime);
@@ -2458,7 +2469,8 @@ window.openImagePreview = function(imageUrl, fileName) {
         files: updatedRow.dataset.files,
         links: updatedRow.dataset.links,
         allowAdditionalUpload: updatedRow.dataset.allowAdditionalUpload,
-        student: updatedRow.dataset.student
+        student: updatedRow.dataset.student,
+        adminCreated: updatedRow.dataset.adminCreated
       };
       
       currentRequestId = rowData.id;
@@ -2642,7 +2654,8 @@ window.openImagePreview = function(imageUrl, fileName) {
           files: row.dataset.files,
           links: row.dataset.links,
           allowAdditionalUpload: row.dataset.allowAdditionalUpload,
-          student: row.dataset.student
+          student: row.dataset.student,
+          adminCreated: row.dataset.adminCreated
         };
 
         console.log('Row clicked with data:', rowData);

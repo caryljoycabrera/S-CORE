@@ -602,8 +602,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 requestForUserInput.value = `${userName} (${userEmail})`;
                 requestForUserIdInput.value = userId;
                 userSuggestionsDropdown.style.display = 'none';
-                
+
                 console.log('[USER SEARCH] Selected user:', { userId, userName, userEmail });
+
+                // Auto-fill the organization field from the selected user's profile
+                const selectedUser = usersCache.find(u => u._id === userId);
+                if (selectedUser && typeof window.onAdminRequestUserSelected === 'function') {
+                  window.onAdminRequestUserSelected(selectedUser);
+                }
               });
             });
           }

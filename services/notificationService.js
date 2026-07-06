@@ -103,7 +103,7 @@ class NotificationService {
    */
 
   // Notify admins when a new service request is created
-  async notifyServiceCreated(serviceId, userId, adminIds = null) {
+  async notifyServiceCreated(serviceId, userId, adminIds = null, createdByAdminId = null) {
     try {
       const user = await User.findById(userId);
       const serviceRequest = await require('../models/ServiceRequest').findById(serviceId);
@@ -116,13 +116,30 @@ class NotificationService {
       }
 
       const assignedUnit = serviceRequest.assignedUnits || 'Not yet assigned';
+      const requestTitle = serviceRequest.title || 'Service Request';
+      let title, message, senderId;
+
+      if (createdByAdminId) {
+        const adminUser = await User.findById(createdByAdminId);
+        const adminName = adminUser ? `${adminUser.fName} ${adminUser.lName}` : 'Admin';
+        title = 'Admin-Created Service Request';
+        message = String(createdByAdminId) === String(userId)
+          ? `Admin ${adminName} created a service request: ${requestTitle} (assigned to: ${assignedUnit})`
+          : `${adminName} created a service request on behalf of ${user.fName} ${user.lName}: ${requestTitle} (assigned to: ${assignedUnit})`;
+        senderId = createdByAdminId;
+      } else {
+        title = 'New Service Request Auto-Assigned';
+        message = `${user.fName} ${user.lName} submitted a service request and it has been auto-assigned to: ${assignedUnit}`;
+        senderId = userId;
+      }
+
       const notificationData = {
-        title: 'New Service Request Auto-Assigned',
-        message: `${user.fName} ${user.lName} submitted a service request and it has been auto-assigned to: ${assignedUnit}`,
+        title,
+        message,
         type: 'service_created',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
-        sender: userId,
+        sender: senderId,
         priority: 'medium',
         actionUrl: `/admin/services?modal=true&requestId=${serviceId}&type=service`
       };
@@ -252,7 +269,7 @@ class NotificationService {
    */
 
   // Notify admins when a new approval request is created
-  async notifyApprovalCreated(approvalId, userId, adminIds = null) {
+  async notifyApprovalCreated(approvalId, userId, adminIds = null, createdByAdminId = null) {
     try {
       const user = await User.findById(userId);
       const approvalRequest = await require('../models/RequestApproval').findById(approvalId);
@@ -264,13 +281,30 @@ class NotificationService {
       }
 
       const assignedUnit = approvalRequest?.assignedUnits || 'Not yet assigned';
+      const requestTitle = approvalRequest?.title || 'Approval Request';
+      let title, message, senderId;
+
+      if (createdByAdminId) {
+        const adminUser = await User.findById(createdByAdminId);
+        const adminName = adminUser ? `${adminUser.fName} ${adminUser.lName}` : 'Admin';
+        title = 'Admin-Created Approval Request';
+        message = String(createdByAdminId) === String(userId)
+          ? `Admin ${adminName} created an approval request: ${requestTitle} (assigned to: ${assignedUnit})`
+          : `${adminName} created an approval request on behalf of ${user.fName} ${user.lName}: ${requestTitle} (assigned to: ${assignedUnit})`;
+        senderId = createdByAdminId;
+      } else {
+        title = 'New Approval Request Auto-Assigned';
+        message = `${user.fName} ${user.lName} submitted an approval request and it has been auto-assigned to: ${assignedUnit}`;
+        senderId = userId;
+      }
+
       const notificationData = {
-        title: 'New Approval Request Auto-Assigned',
-        message: `${user.fName} ${user.lName} submitted an approval request and it has been auto-assigned to: ${assignedUnit}`,
+        title,
+        message,
         type: 'approval_created',
         relatedId: approvalId,
         relatedModel: 'RequestApproval',
-        sender: userId,
+        sender: senderId,
         priority: 'medium',
         actionUrl: `/admin/approvals?modal=true&requestId=${approvalId}&type=approval`
       };
@@ -283,6 +317,56 @@ class NotificationService {
       console.log(`Approval creation notifications sent to ${adminIds.length} admin(s)`);
     } catch (error) {
       console.error('Error notifying approval creation:', error);
+    }
+  }
+
+  // Notify target user when an admin creates a request on their behalf
+  async notifyUserRequestCreatedByAdmin(approvalId, targetUserId, adminId) {
+    try {
+      const adminUser = await User.findById(adminId);
+      if (!adminUser) throw new Error('Admin not found');
+      const adminName = `${adminUser.fName} ${adminUser.lName}`;
+      const approvalRequest = await require('../models/RequestApproval').findById(approvalId);
+      const title = approvalRequest ? approvalRequest.title : 'Request';
+      await this.createNotification({
+        recipient: targetUserId,
+        sender: adminId,
+        title: 'Approval Request Created for You',
+        message: `Admin ${adminName} created an approval request on your behalf: ${title}`,
+        type: 'approval_created',
+        relatedId: approvalId,
+        relatedModel: 'RequestApproval',
+        priority: 'medium',
+        actionUrl: `/request-approvals?modal=true&requestId=${approvalId}&type=approval`
+      });
+      console.log(`Notification sent to target user ${targetUserId} about admin-created request`);
+    } catch (error) {
+      console.error('Error notifying target user about admin-created request:', error);
+    }
+  }
+
+  // Notify user when an admin creates a service request on their behalf
+  async notifyUserServiceCreatedByAdmin(serviceId, targetUserId, adminId) {
+    try {
+      const adminUser = await User.findById(adminId);
+      if (!adminUser) throw new Error('Admin not found');
+      const adminName = `${adminUser.fName} ${adminUser.lName}`;
+      const serviceRequest = await require('../models/ServiceRequest').findById(serviceId);
+      const title = serviceRequest ? serviceRequest.title : 'Request';
+      await this.createNotification({
+        recipient: targetUserId,
+        sender: adminId,
+        title: 'Service Request Created for You',
+        message: `Admin ${adminName} created a service request on your behalf: ${title}`,
+        type: 'service_created',
+        relatedId: serviceId,
+        relatedModel: 'ServiceRequest',
+        priority: 'medium',
+        actionUrl: `/service-requests?modal=true&requestId=${serviceId}&type=service`
+      });
+      console.log(`Notification sent to target user ${targetUserId} about admin-created service request`);
+    } catch (error) {
+      console.error('Error notifying target user about admin-created service request:', error);
     }
   }
 
@@ -947,9 +1031,30 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
         ? `/unit/tasks?modal=true&requestId=${requestId}&type=approval`
         : `/unit/tasks?modal=true&requestId=${requestId}&type=service`;
 
+      // Check if request was created by admin on behalf of user
+      let adminCreatedMessage = '';
+      try {
+        const RequestModel = require(`../models/${requestType === 'approval' ? 'RequestApproval' : 'ServiceRequest'}`);
+        const requestDoc = await RequestModel.findById(requestId)
+          .populate('createdBy', 'fName lName')
+          .populate('userId', 'fName lName');
+        if (requestDoc && requestDoc.createdByAdmin && requestDoc.createdBy) {
+          const adminName = `${requestDoc.createdBy.fName} ${requestDoc.createdBy.lName}`;
+          const isSelfCreated = requestDoc.userId && String(requestDoc.userId._id) === String(requestDoc.createdBy._id);
+          if (isSelfCreated) {
+            adminCreatedMessage = `Admin ${adminName} created this ${requestTypeName} and assigned it to your unit team`;
+          } else {
+            const requestorName = requestDoc.userId ? `${requestDoc.userId.fName} ${requestDoc.userId.lName}` : 'the requestor';
+            adminCreatedMessage = `Admin ${adminName} created this ${requestTypeName} on behalf of ${requestorName} and assigned it to your unit team`;
+          }
+        }
+      } catch (err) {
+        // silently continue
+      }
+
       const notificationData = {
         title: `New Task Assigned to ${unitsArray.join(', ')}`,
-        message: `A new ${requestTypeName} has been assigned to your unit team`,
+        message: adminCreatedMessage || `A new ${requestTypeName} has been assigned to your unit team`,
         type: 'unit_task_assigned',
         relatedId: requestId,
         relatedModel: requestType === 'approval' ? 'RequestApproval' : 'ServiceRequest',

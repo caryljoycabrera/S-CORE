@@ -148,6 +148,17 @@ const serviceRequestSchema = new mongoose.Schema({
     default: true
   },
 
+  // Created by admin on behalf of user
+  createdByAdmin: {
+    type: Boolean,
+    default: false
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+
   // Admin viewing tracking
   viewed: {
     type: Boolean,

@@ -2238,7 +2238,7 @@ function openModal(id) {
         placeholder: "Search and select organizations...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#updateProfileModal'),
+        dropdownParent: document.body,
         closeOnSelect: false,
         dropdownCssClass: 'select2-dropdown-above-modal',
         templateResult: function(data) {
@@ -2362,7 +2362,7 @@ function openModal(id) {
         placeholder: "Search or select office(s)/department(s)",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#updateProfileModal'),
+        dropdownParent: document.body,
         closeOnSelect: false,
         dropdownCssClass: 'select2-dropdown-above-modal'
       });

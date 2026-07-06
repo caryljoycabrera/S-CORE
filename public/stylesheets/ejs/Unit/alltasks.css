@@ -101,6 +101,43 @@
     cursor: pointer;
   }
 
+  /* Admin-created request rows */
+  .requests-table tbody tr[data-created-by-admin="true"] > td {
+    background-color: #f0fff4;
+  }
+
+  .requests-table tbody tr[data-created-by-admin="true"] > td:first-child {
+    border-left: 4px solid #28a745;
+  }
+
+  .requests-table tbody tr[data-created-by-admin="true"]:hover > td {
+    background-color: #e2f5e8; /* keep green tint on hover (tr hover bg is hidden behind td bg) */
+  }
+
+  /* Note under the table explaining the admin-created highlight */
+  .admin-created-note {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding: 0.6rem 0.9rem;
+    background: #f0fff4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #166534;
+  }
+
+  .admin-created-note .admin-created-swatch {
+    flex-shrink: 0;
+    width: 26px;
+    height: 14px;
+    border-radius: 3px;
+    background: #f0fff4;
+    border: 1px solid #bbf7d0;
+    border-left: 4px solid #28a745;
+  }
+
   /* Responsive breathing room */
   /* ==========================================
      TYPE BADGE STYLES

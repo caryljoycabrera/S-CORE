@@ -664,7 +664,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
     let approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt')
       .lean();
 
     // Add display organization logic
@@ -690,14 +690,18 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
       };
     });
 
-    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
-    res.render('Admin/approvals', { 
-      approvals: approvals, 
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices, getRequestTypeMappings, getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(approvals, highPriorityOrgs);
+    res.render('Admin/approvals', {
+      approvals: approvals,
       user: req.user,
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      requestTypeMappings: getRequestTypeMappings(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error fetching admin approvals:', err);
@@ -767,7 +771,9 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
       return 0;
     });
 
-    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices, getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(approvals, highPriorityOrgs);
     res.render('Admin/approvals', { 
       approvals, 
       user: req.user, 
@@ -775,7 +781,8 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading admin approvals:', err);
@@ -791,7 +798,7 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
   try {
     let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt')
       .lean();
 
     // Status priority for sorting
@@ -845,14 +852,18 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
 
-    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
-    res.render('Admin/services', { 
-      serviceRequests: serviceRequestsWithDisplay, 
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices, getRequestTypeMappings, getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(serviceRequestsWithDisplay, highPriorityOrgs);
+    res.render('Admin/services', {
+      serviceRequests: serviceRequestsWithDisplay,
       user: req.user,
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      requestTypeMappings: getRequestTypeMappings(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading admin services:', err);
@@ -869,7 +880,7 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt')
       .lean();
 
     // Status priority for sorting
@@ -922,7 +933,9 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
 
-    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices, getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(serviceRequestsWithDisplay, highPriorityOrgs);
     res.render('Admin/services', { 
       serviceRequests: serviceRequestsWithDisplay, 
       user: req.user, 
@@ -930,7 +943,8 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading admin services:', err);
@@ -1105,7 +1119,9 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       return 0;
     });
 
-    const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
+    const { getUnits, getRequestStatuses, getOrganizations, getOffices, getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(allRequests, highPriorityOrgs);
     
     res.render('Admin/allrequestsadmin', {
       allRequests,
@@ -1113,7 +1129,8 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading all admin requests:', err);
@@ -6533,6 +6550,11 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
       req.body.officesList.split('\n').map(office => office.trim()).filter(office => office) : 
       [];
 
+    // Process high priority organizations/offices/departments
+    const highPriorityOrgs = req.body.highPriorityOrgs ?
+      req.body.highPriorityOrgs.split('\n').map(entry => entry.trim()).filter(entry => entry) :
+      [];
+
     // Process request statuses
     const requestStatuses = req.body.requestStatuses ? 
       req.body.requestStatuses.split('\n').map(status => status.trim()).filter(status => status) : 
@@ -6595,6 +6617,7 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
       organizations: organizations,
       units: units,
       offices: offices,
+      highPriorityOrgs: highPriorityOrgs,
       requestStatuses: requestStatuses,
       userRoles: userRoles,
       announcementPriorities: announcementPriorities,

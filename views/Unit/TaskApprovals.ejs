@@ -16,13 +16,22 @@
   <link rel="stylesheet" href="/stylesheets/unit-navbar.css" />
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
-  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=6" />
+  <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks.css?v=7" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-modal.css?v=11" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/alltasks-conversation-modal.css?v=3" />
   <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
   <script src="/javascripts/unit-navbar.js"></script>
+  <style>
+    tr.priority-row {
+      border-left: 4px solid #ef4444 !important;
+      background-color: #fef2f2 !important;
+    }
+    tr.priority-row td:first-child {
+      border-left: none !important;
+    }
+  </style>
 </head>
 <body>
   <!-- Unit Sidebar Navigation -->
@@ -281,7 +290,7 @@
                       const description = request.description || '';
                       const requestorEmail = request.userId ? request.userId.email : '';
                     %>
-                    <tr class="request-row clickable" 
+                    <tr class="request-row clickable <%= (highPriorityOrgs || []).includes(organization) ? 'priority-row' : '' %>" 
                         data-request-id="<%= request._id %>"
                         data-request-type="<%= type %>"
                         data-title="<%= title.replace(/"/g, '&quot;') %>"
@@ -294,7 +303,9 @@
                         data-awaiting-resubmission="<%= request.awaitingResubmission ? 'true' : 'false' %>"
                         data-files='<%= JSON.stringify(files) %>'
                         data-links='<%= JSON.stringify(request.links || []) %>'
-                        data-deadline="<%= deadline %>">
+                        data-deadline="<%= deadline %>"
+                        data-created-by-admin="<%= request.createdByAdmin ? 'true' : 'false' %>"
+                        title="<%= request.createdByAdmin ? 'Assigned by admin' : '' %>">
                       <td>
                         <span class="type-badge <%= type %>">
                           Approval
@@ -342,6 +353,12 @@
                 <% } %>
               </tbody>
             </table>
+            <% if (allRequests && allRequests.some(r => r.createdByAdmin)) { %>
+              <div class="admin-created-note">
+                <span class="admin-created-swatch"></span>
+                <span>Rows highlighted in green are requests created by an admin on behalf of the requestor.</span>
+              </div>
+            <% } %>
           </div>
         </section>
       </div>
@@ -1040,5 +1057,8 @@
     });
   </script>
   <script src="/javascripts/status-handler.js"></script>
+
+  <!-- Chatbot Widget -->
+  <%- include('../partials/chatbot-widget', { page: 'unit' }) %>
   </body>
   </html>

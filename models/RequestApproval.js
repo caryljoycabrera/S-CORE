@@ -204,6 +204,17 @@ const requestApprovalSchema = new mongoose.Schema({
     }
   }],
 
+  // Created by admin on behalf of user
+  createdByAdmin: {
+    type: Boolean,
+    default: false
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+
   // Archive reason (why it was archived) and archive source (manual vs auto-archive)
   archiveReason: {
     type: String,

@@ -8,7 +8,9 @@
   position: fixed;
   right: 1rem;
   bottom: 1rem;
-  z-index: 99990;
+  /* Above app modals (100001-100002) and select2 overrides (999999)
+     so the assistant stays reachable on every page and screen size */
+  z-index: 1000000;
   font-family: 'Inter', sans-serif;
 }
 

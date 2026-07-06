@@ -441,7 +441,8 @@ function openModalFromRow(row) {
     links: row.dataset.links,
     formattedDeadline: row.dataset.formattedDeadline,
     student: row.dataset.student,
-    specifictype: row.dataset.specifictype
+    specifictype: row.dataset.specifictype,
+    adminCreated: row.dataset.adminCreated
   };
 
   openModal(rowData);
@@ -1156,6 +1157,11 @@ function populateModalData(rowData) {
   // Basic info population
   setDetailText('detailTitle', rowData.title);
   setDetailText('detailStudent', rowData.student);
+  // Toggle admin-created label
+  const detailAdminLabel = document.getElementById('detailAdminLabel');
+  if (detailAdminLabel) {
+    detailAdminLabel.style.display = rowData.adminCreated === 'true' ? 'inline' : 'none';
+  }
   setDetailText('detailType', rowData.type);
   setDetailText('detailSpecificRequest', rowData.specifictype);
   setDetailText('detailOrganization', rowData.organization);

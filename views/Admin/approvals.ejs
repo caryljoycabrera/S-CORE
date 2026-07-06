@@ -24,7 +24,21 @@
   <link rel="stylesheet" href="/stylesheets/ejs/admin-edit-modal.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/admin-trash-modal.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <!-- Quill Editor (used by the Create Request modal description field) -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <link rel="stylesheet" href="/stylesheets/quill-custom.css">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
   <script src="/javascripts/alert-handler.js"></script>
+  <link rel="stylesheet" href="/stylesheets/admin-created-indicator.css" />
+  <style>
+    tr.priority-row {
+      border-left: 4px solid #ef4444 !important;
+      background-color: #fef2f2 !important;
+    }
+    tr.priority-row td:first-child {
+      border-left: none !important;
+    }
+  </style>
 </head>
 <body>
   <!-- SIDEBAR NAVIGATION -->
@@ -380,10 +394,10 @@
                   displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
                 }
               %>
-              <tr class="request-row"
-    data-id="<%= request._id %>"
-    data-request-id="<%= request._id.toString().slice(-6) %>"
-    data-type="Request Approval"
+              <tr class="request-row <%= (highPriorityOrgs || []).includes((request.displayOrganization || request.organization)) ? 'priority-row' : '' %>"
+     data-id="<%= request._id %>"
+     data-request-id="<%= request._id.toString().slice(-6) %>"
+     data-type="Request Approval"
     data-title="<%= request.title %>"
     data-status="<%= request.status.toLowerCase() %>"
     data-organization="<%= request.displayOrganization || request.organization %>"
@@ -403,7 +417,9 @@
       type: typeof request.allowAdditionalFileUpload,
       final: request.allowAdditionalFileUpload ? 'true' : 'false'
     }) %>"
-    data-student="<%= displayUserName %>">
+    data-student="<%= displayUserName %>"
+    data-admin-created="<%= request.createdByAdmin || false %>"
+    title="<%= request.createdByAdmin ? 'Created by admin' : '' %>">
                 <td><%= request._id.toString().slice(-6) %></td>
                 <td><%= displayUserName %></td>
                 <td><div class="table-cell-wrapper"><%= request.title %></div></td>
@@ -434,6 +450,12 @@
               <% }); %>
             </tbody>
           </table>
+          <% if (approvals.some(r => r.createdByAdmin)) { %>
+            <div class="admin-created-note">
+              <span class="admin-created-swatch"></span>
+              <span>Rows highlighted in green are requests created by an admin on behalf of the requestor.</span>
+            </div>
+          <% } %>
 
           <% if (approvals.length === 0) { %>
           <div class="no-requests-message">
@@ -537,6 +559,7 @@
     <div class="info-item">
       <span class="info-label">Requested By:</span>
       <span class="info-value" id="detailStudent"></span>
+      <span id="detailAdminLabel" style="display:none; color:#6f42c1; font-size:0.75rem; font-weight:600; margin-left:6px;">Created by admin</span>
     </div>
     <div class="info-item">
       <span class="info-label">Request Type:</span>
@@ -802,7 +825,213 @@
               color: #64748b;
               font-size: 14px;
             }
-            
+
+            /* ============================================
+               CREATE REQUEST MODAL FORM LAYOUT
+               Matches the requestor create modal in
+               views/User/Requestapproval.ejs
+               ============================================ */
+            #requestModal .modal-content {
+              max-width: 1100px !important;
+            }
+
+            #requestModal .modal-body {
+              padding: 0;
+              overflow-y: auto;
+            }
+
+            #requestModal .modal-form {
+              padding: 1.5rem 2rem 2rem;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 1.5rem;
+            }
+
+            #requestModal .form-group {
+              display: flex;
+              flex-direction: column;
+            }
+
+            #requestModal .form-group.full-width {
+              grid-column: 1 / -1;
+            }
+
+            #requestModal .form-group label {
+              font-weight: 600;
+              font-size: 0.875rem;
+              color: #374151;
+              margin-bottom: 0.5rem;
+              display: block;
+            }
+
+            #requestModal .form-group input,
+            #requestModal .form-group select,
+            #requestModal .form-group textarea {
+              width: 100%;
+              padding: 0.75rem;
+              border: 2px solid #e5e7eb;
+              border-radius: 0.5rem;
+              font-size: 1rem;
+              background-color: white;
+              color: #1f2937;
+              transition: all 0.3s ease;
+              font-family: inherit;
+              box-sizing: border-box;
+            }
+
+            #requestModal .form-group input:focus,
+            #requestModal .form-group select:focus,
+            #requestModal .form-group textarea:focus {
+              outline: none;
+              border-color: var(--primary-green);
+              box-shadow: 0 0 0 3px rgba(64, 139, 78, 0.1);
+            }
+
+            #requestModal #linksContainer {
+              margin-bottom: 1rem;
+            }
+
+            #requestModal .link-item {
+              display: flex;
+              align-items: center;
+              gap: 0.75rem;
+              margin-bottom: 0.75rem;
+              padding: 0.75rem;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              transition: all 0.3s ease;
+            }
+
+            #requestModal .link-item:hover {
+              border-color: var(--primary-green);
+              background: #f0fdf4;
+            }
+
+            #requestModal .link-item .link-input {
+              flex: 1;
+              padding: 0.5rem;
+              border: 1px solid #d1d5db;
+              border-radius: 6px;
+              font-size: 0.875rem;
+              background: white;
+            }
+
+            #requestModal .remove-link-btn {
+              background: transparent;
+              color: #6b7280;
+              border: none;
+              font-size: 2rem;
+              line-height: 1;
+              cursor: pointer;
+              padding: 0;
+              width: 32px;
+              height: 32px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.3s ease;
+            }
+
+            #requestModal .remove-link-btn:hover {
+              color: #dc2626;
+              transform: scale(1.1);
+            }
+
+            #requestModal .add-link-btn {
+              background: linear-gradient(135deg, var(--primary-green), #20c997);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              padding: 0.75rem 1.5rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.875rem;
+              box-shadow: 0 2px 8px rgba(64, 139, 78, 0.2);
+            }
+
+            #requestModal .add-link-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 16px rgba(64, 139, 78, 0.3);
+            }
+
+            #requestModal .form-actions {
+              grid-column: 1 / -1;
+              display: flex;
+              gap: 1rem;
+              justify-content: flex-end;
+              padding-top: 1.5rem;
+              margin-top: 0.5rem;
+              border-top: 2px solid #f1f5f9;
+            }
+
+            #requestModal .form-actions button {
+              padding: 0.875rem 2rem;
+              border-radius: 12px;
+              font-weight: 600;
+              font-size: 1rem;
+              transition: all 0.3s ease;
+              cursor: pointer;
+              border: none;
+              min-width: 120px;
+            }
+
+            #requestModal .form-actions button[type="submit"] {
+              background: linear-gradient(135deg, var(--primary-green), #20c997);
+              color: white;
+              box-shadow: 0 4px 12px rgba(64, 139, 78, 0.3);
+            }
+
+            #requestModal .form-actions button[type="submit"]:hover {
+              background: linear-gradient(135deg, #157347, var(--primary-green));
+              transform: translateY(-2px);
+              box-shadow: 0 8px 20px rgba(64, 139, 78, 0.4);
+            }
+
+            #requestModal .form-actions button[type="button"] {
+              background: #f1f5f9;
+              color: #64748b;
+              border: 2px solid #e2e8f0;
+            }
+
+            #requestModal .form-actions button[type="button"]:hover {
+              background: #e2e8f0;
+              color: #475569;
+            }
+
+            #requestModal .recommended-unit-hint {
+              color: #6b7280;
+              font-size: 0.8125rem;
+              margin-top: 0.375rem;
+              display: block;
+            }
+
+            #requestModal .recommended-unit-hint.has-recommendation {
+              color: #166534;
+              font-weight: 600;
+            }
+
+            @media (max-width: 768px) {
+              #requestModal .modal-form {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+              }
+
+              #requestModal .form-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+              }
+
+              #requestModal .form-actions button {
+                width: 100%;
+              }
+            }
+
             /* Toggle Switch Styles */
             .toggle-switch {
               position: relative;
@@ -1154,21 +1383,70 @@
     <div class="modal-body">
       <form class="modal-form" action="/submit-request-approval" method="POST" id="requestForm" onsubmit="return handleFormSubmit(event)">
         <div class="form-group full-width" style="position: relative;">
-          <label for="requestForUser">Create Request For User: <span style="color: #dc2626;">*</span></label>
-          <input type="text" id="requestForUser" name="requestForUser" required placeholder="Search user by name or email..." autocomplete="off" />
+          <label for="requestForUser">Create Request For User: <span style="color: #6b7280; font-weight: 400;">(Optional)</span></label>
+          <input type="text" id="requestForUser" name="requestForUser" placeholder="Search user by name or email..." autocomplete="off" />
           <div id="userSuggestionsDropdown" class="user-suggestions-dropdown" style="display: none;"></div>
-          <input type="hidden" id="requestForUserId" name="requestForUserId" required />
-          <small style="color: #6b7280; margin-top: 0.25rem; display: block;">Type to search for a user. This request will be created on behalf of the selected user.</small>
+          <input type="hidden" id="requestForUserId" name="requestForUserId" />
+          <small style="color: #6b7280; margin-top: 0.25rem; display: block;">Type to search for a user to create this request on their behalf. Leave empty to create it yourself as admin (e.g., an internal task for a unit).</small>
         </div>
-        
+
         <div class="form-group">
           <label for="projectTitle">Project/Event Title:</label>
           <input type="text" id="projectTitle" name="projectTitle" required placeholder="Enter project or event title..." />
         </div>
-        
-        <div class="form-group">
-          <label for="organization">Organization:</label>
-          <input type="text" id="organization" name="organization" placeholder="Enter organization/department" required />
+
+        <div class="form-group" id="organizationGroup">
+          <label for="organization">Organization/Office/Dept:</label>
+          <input type="text" id="organization" name="organization" placeholder="Enter organization/office/dept..." required />
+          <small id="organizationHint" style="color: #6b7280; margin-top: 0.25rem; display: block;">Auto-filled when you select a user; otherwise enter manually.</small>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="specificRequestType">Select Specific Request Type:</label>
+          <small style="color: #6b7280; margin-bottom: 0.5rem; display: block;">These are the specific request types offered under each unit's category (configured in Units &amp; Request Types Management). Picking one pinpoints the recommended unit below.</small>
+          <div style="display: flex; gap: 1rem; align-items: flex-start;">
+            <div style="flex: 1;">
+              <select id="specificRequestType" name="specificRequestType" class="form-control" required
+                onchange="
+                  const custom = document.getElementById('customRequestType');
+                  if(this.value) {
+                    custom.value = '';
+                    custom.name = '';
+                    this.name = 'specificRequestType';
+                  }
+                ">
+                <option value="" disabled selected>Select request type...</option>
+              </select>
+            </div>
+            <div style="flex: 0 0 auto; padding-top: 0.5rem;"><span style="color: #6b7280; font-size: 0.875rem;">or</span></div>
+            <div style="flex: 1;">
+              <input type="text" id="customRequestType" class="form-control" placeholder="Or enter custom type..." maxlength="100"
+                oninput="
+                  const select = document.getElementById('specificRequestType');
+                  if(this.value.trim() !== '') {
+                    select.removeAttribute('required');
+                    select.value = '';
+                    select.name = '';
+                    this.name = 'specificRequestType';
+                  } else {
+                    select.setAttribute('required', 'required');
+                    this.name = '';
+                    select.name = 'specificRequestType';
+                  }
+                ">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="assignedUnitSelect">Assign to Unit:</label>
+          <select id="assignedUnitSelect" name="assignedUnits" class="form-control">
+            <option value="" selected>Auto-assign based on request type</option>
+            <% units.forEach(unit => { %>
+              <option value="<%= unit %>"><%= unit %></option>
+            <% }); %>
+          </select>
+          <small id="recommendedUnitHint" class="recommended-unit-hint">Pick a request type to see the recommended unit, or choose a unit yourself.</small>
         </div>
 
         <div class="form-group full-width">
@@ -1187,44 +1465,6 @@
             Add Link
           </button>
         </div>
-
-        <div class="form-group full-width">
-          <label for="specificRequestType">Select Request Type:</label>
-          <div style="display: flex; gap: 1rem; align-items: flex-start;">
-            <div style="flex: 1;">
-              <select id="specificRequestType" name="specificRequestType" class="form-control" required
-                onchange="
-                  const custom = document.getElementById('customRequestType');
-                  if(this.value) {
-                    custom.value = '';
-                    custom.name = '';
-                    this.name = 'specificRequestType';
-                  }
-                ">
-                <option value="" disabled selected>Select request type...</option>
-              </select>
-            </div>
-            <div style="flex: 0 0 auto; padding-top: 0.5rem;"><span style="color: #6b7280; font-size: 0.875rem;">or</span></div>
-            <div style="flex: 1;">
-              <input type="text" id="customRequestType" class="form-control" placeholder="Enter custom type..." maxlength="100" 
-                oninput="
-                  const select = document.getElementById('specificRequestType');
-                  if(this.value.trim() !== '') {
-                    select.removeAttribute('required');
-                    select.value = '';
-                    select.name = '';
-                    this.name = 'specificRequestType';
-                  } else {
-                    select.setAttribute('required', 'required');
-                    this.name = '';
-                    select.name = 'specificRequestType';
-                  }
-                ">
-            </div>
-          </div>
-        </div>
-
-
 
         <div class="form-group full-width">
           <label for="description">Description:</label>
@@ -1263,6 +1503,49 @@
 // ===== QUILL RICH TEXT EDITOR FOR CREATE REQUEST MODAL =====
 let approvalDescriptionQuill = null;
 
+// Unit recommendations from system configuration (Units & Request Types Management)
+const unitRecommendations = <%- JSON.stringify(requestTypeMappings || []) %>;
+
+function getRecommendedUnit(requestType) {
+  const mapping = unitRecommendations.find(m => m.requestType === requestType);
+  return mapping ? mapping.recommendedUnit : '';
+}
+
+function updateRecommendedUnit() {
+  const typeSelect = document.getElementById('specificRequestType');
+  const customType = document.getElementById('customRequestType');
+  const unitSelect = document.getElementById('assignedUnitSelect');
+  const hint = document.getElementById('recommendedUnitHint');
+  if (!unitSelect || !hint) return;
+
+  // Reset option labels
+  Array.from(unitSelect.options).forEach(opt => {
+    if (opt.value) opt.textContent = opt.value;
+  });
+
+  const recommended = (customType && customType.value.trim())
+    ? ''
+    : getRecommendedUnit(typeSelect ? typeSelect.value : '');
+
+  if (recommended) {
+    const match = Array.from(unitSelect.options).find(opt => opt.value === recommended);
+    if (match) {
+      match.textContent = recommended + ' ★ Recommended';
+      unitSelect.value = recommended;
+    }
+    hint.classList.add('has-recommendation');
+    hint.textContent = 'Recommended unit for this request type: ' + recommended + '. You can still pick a different unit.';
+  } else {
+    hint.classList.remove('has-recommendation');
+    if (customType && customType.value.trim()) {
+      unitSelect.value = '';
+      hint.textContent = 'No recommendation for custom request types — pick a unit, or leave on auto-assign (goes to admin inbox as Pending).';
+    } else {
+      hint.textContent = 'Pick a request type to see the recommended unit, or choose a unit yourself.';
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Quill Editor for Description
   if (document.getElementById('descriptionEditor')) {
@@ -1281,32 +1564,118 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Load request types from database
-  fetch('/api/request-types?requestCategory=Request Approval')
-    .then(res => {
-      if (!res.ok) {
-        console.warn('Failed to fetch request types:', res.status);
-        return null;
-      }
-      return res.json();
-    })
-    .then(data => {
-      if (!data || !data.types) {
-        console.warn('No request types returned from API');
-        return;
-      }
-      const select = document.getElementById('specificRequestType');
-      if (select) {
+  // Populate request types from the Units & Request Types configuration,
+  // grouped by the unit category each type belongs to
+  const typeSelect = document.getElementById('specificRequestType');
+  if (typeSelect && unitRecommendations.length > 0) {
+    const typesByUnit = {};
+    unitRecommendations.forEach(mapping => {
+      if (!mapping.requestType) return;
+      const unit = mapping.recommendedUnit || 'Other';
+      (typesByUnit[unit] = typesByUnit[unit] || []).push(mapping.requestType);
+    });
+    Object.keys(typesByUnit).forEach(unit => {
+      const group = document.createElement('optgroup');
+      group.label = unit;
+      typesByUnit[unit].forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        group.appendChild(option);
+      });
+      typeSelect.appendChild(group);
+    });
+  } else if (typeSelect) {
+    // Fallback: no configured mappings — load from the request-types API
+    fetch('/api/request-types?requestCategory=Request Approval')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!data || !data.types) return;
         data.types.forEach(type => {
           const option = document.createElement('option');
-          option.value = type;
-          option.textContent = type;
-          select.appendChild(option);
+          option.value = type.name || type;
+          option.textContent = type.name || type;
+          typeSelect.appendChild(option);
         });
-      }
-    })
-    .catch(err => console.warn('Error loading request types:', err));
+      })
+      .catch(err => console.warn('Error loading request types:', err));
+  }
+
+  // Recommend a unit whenever the request type changes
+  document.getElementById('specificRequestType')?.addEventListener('change', updateRecommendedUnit);
+  document.getElementById('customRequestType')?.addEventListener('input', updateRecommendedUnit);
 });
+
+// ===== ORGANIZATION AUTO-FILL FROM SELECTED USER =====
+function collectUserOrganizations(selectedUser) {
+  const splitList = (value) => {
+    if (Array.isArray(value)) {
+      return value.flatMap(v => String(v).split(',')).map(o => o.trim()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+      return value.split(',').map(o => o.trim()).filter(Boolean);
+    }
+    return [];
+  };
+
+  let orgs = [];
+  if (selectedUser.userType === 'student') {
+    orgs = splitList(selectedUser.studentOrganization);
+  } else {
+    orgs = splitList(selectedUser.affiliation)
+      .concat(splitList(selectedUser.office))
+      .concat(splitList(selectedUser.department));
+  }
+  return [...new Set(orgs)];
+}
+
+// Called by approvals.js when the admin picks a user from the suggestions
+window.onAdminRequestUserSelected = function(selectedUser) {
+  const group = document.getElementById('organizationGroup');
+  const hint = document.getElementById('organizationHint');
+  const current = document.getElementById('organization');
+  if (!group || !current) return;
+
+  const orgs = collectUserOrganizations(selectedUser);
+  let replacement;
+
+  if (orgs.length === 1) {
+    // Exactly one org: auto-fill, read-only
+    replacement = document.createElement('input');
+    replacement.type = 'text';
+    replacement.value = orgs[0];
+    replacement.readOnly = true;
+    if (hint) hint.textContent = 'Auto-filled from the selected user\'s profile.';
+  } else if (orgs.length > 1) {
+    // Multiple orgs: let the admin search (type-ahead) and select
+    replacement = document.createElement('select');
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = 'Select organization/office/dept...';
+    replacement.appendChild(placeholder);
+    orgs.forEach(org => {
+      const option = document.createElement('option');
+      option.value = org;
+      option.textContent = org;
+      replacement.appendChild(option);
+    });
+    if (hint) hint.textContent = 'This user belongs to ' + orgs.length + ' organizations — pick the one this request is for.';
+  } else {
+    // No orgs on profile: free text
+    replacement = document.createElement('input');
+    replacement.type = 'text';
+    replacement.placeholder = 'Enter organization/office/dept...';
+    if (hint) hint.textContent = 'No organization found on this user\'s profile — enter one manually.';
+  }
+
+  replacement.id = 'organization';
+  replacement.name = 'organization';
+  replacement.required = true;
+  replacement.className = current.className;
+  current.replaceWith(replacement);
+};
 
 // ===== LINKS MANAGEMENT =====
 window.addAdminLinkInput = function() {
@@ -1323,21 +1692,53 @@ window.addAdminLinkInput = function() {
 // ===== FORM SUBMISSION =====
 window.handleFormSubmit = function(event) {
   event.preventDefault();
-  
+  const form = event.target;
+
+  // User selection is optional: if the admin typed a name but never picked a
+  // suggestion, stop them (they probably intended to select someone)
+  if (document.getElementById('requestForUser').value.trim() && !document.getElementById('requestForUserId').value) {
+    alert('Please select the user from the suggestions, or clear the field to create this request yourself as admin.');
+    return false;
+  }
+
   // Get Quill content
   if (approvalDescriptionQuill) {
-    const description = approvalDescriptionQuill.root.innerHTML;
-    document.getElementById('description').value = description;
-    
     if (!approvalDescriptionQuill.getText().trim()) {
       alert('Please enter a description');
       return false;
     }
+    document.getElementById('description').value = approvalDescriptionQuill.root.innerHTML;
   }
 
-  // Submit form
-  event.target.submit();
-  return true;
+  const formObj = Object.fromEntries(new FormData(form));
+  formObj.links = Array.from(document.querySelectorAll('#linksContainer .link-input'))
+    .map(input => input.value.trim())
+    .filter(Boolean);
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+
+  fetch('/submit-request-approval', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formObj)
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = data.redirectUrl || '/admin/approvals?submitted=true';
+      } else {
+        alert(data.message || 'Failed to submit request.');
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    })
+    .catch(err => {
+      console.error('Error submitting request:', err);
+      alert('Failed to submit request. Please try again.');
+      if (submitBtn) submitBtn.disabled = false;
+    });
+
+  return false;
 };
 
 // Modal close handlers
@@ -1345,6 +1746,7 @@ document.getElementById('cancelModalBtn')?.addEventListener('click', () => {
   document.getElementById('requestModal').style.display = 'none';
   document.getElementById('requestForm')?.reset();
   if (approvalDescriptionQuill) approvalDescriptionQuill.setContents([]);
+  updateRecommendedUnit();
 });
 </script>
 
@@ -1441,6 +1843,8 @@ document.getElementById('cancelModalBtn')?.addEventListener('click', () => {
   });
 </script>
 
+<!-- Admin created status handled via CSS border-left on tr[data-admin-created="true"] -->
+
   <%- include('../partials/chatbot-widget') %>
 </body>
 <!-- ===========================================
@@ -1476,7 +1880,7 @@ document.getElementById('cancelModalBtn')?.addEventListener('click', () => {
    Dependencies: Requires jQuery (if used), connects to various API endpoints
    Connection: This script enables interactive features like filtering, modals, and form handling
    =========================================== -->
-<script src="/javascripts/ejs/approvals.js?v=20260703"></script>
+<script src="/javascripts/ejs/approvals.js?v=20260706"></script>
 <script src="/javascripts/status-handler.js"></script>
 <script>
 // Sidebar hover effect

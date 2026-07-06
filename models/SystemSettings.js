@@ -99,6 +99,12 @@ const systemSettingsSchema = new mongoose.Schema({
     type: String
   }],
 
+  // High Priority Organizations/Offices/Departments
+  // Requests matching these will have red border + light red bg and sort to top
+  highPriorityOrgs: [{
+    type: String
+  }],
+
   // Request Management Settings
   requestStatuses: [{
     type: String,

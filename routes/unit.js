@@ -680,13 +680,18 @@ router.get('/unit/tasks', requireUnit, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    const { getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(approvalRequests, highPriorityOrgs);
+    sortPriorityToTop(serviceRequests, highPriorityOrgs);
     res.render('Unit/AllTasks', {
       user,
       unitTeam: user.unitTeam,
       approvalRequests,
       serviceRequests,
       units: getUnits(),
-      requestStatuses: getRequestStatuses()
+      requestStatuses: getRequestStatuses(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading unit tasks:', err);
@@ -778,6 +783,10 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    const { getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(approvalRequests, highPriorityOrgs);
+    sortPriorityToTop(serviceRequests, highPriorityOrgs);
     res.render('Unit/AllTasks', {
       user,
       unitTeam: user.unitTeam,
@@ -786,7 +795,8 @@ router.get('/unit/all-tasks', requireUnit, async (req, res) => {
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading all tasks:', err);
@@ -822,6 +832,9 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    const { getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(approvalRequests, highPriorityOrgs);
     res.render('Unit/TaskApprovals', {
       user,
       unitTeam: user.unitTeam,
@@ -829,7 +842,8 @@ router.get('/unit/task-approvals', requireUnit, async (req, res) => {
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading task approvals:', err);
@@ -882,6 +896,9 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
       isViewOnly: !currentServiceRequests.some(curr => curr._id.toString() === request._id.toString())
     }));
 
+    const { getHighPriorityOrgs, sortPriorityToTop } = require('../utils/settingsHelpers');
+    const highPriorityOrgs = getHighPriorityOrgs();
+    sortPriorityToTop(allServiceRequests, highPriorityOrgs);
     res.render('Unit/TaskServices', {
       user,
       unitTeam: user.unitTeam,
@@ -889,7 +906,8 @@ router.get('/unit/task-services', requireUnit, async (req, res) => {
       units: getUnits(),
       requestStatuses: getRequestStatuses(),
       organizations: getOrganizations(),
-      offices: getOffices()
+      offices: getOffices(),
+      highPriorityOrgs: highPriorityOrgs
     });
   } catch (err) {
     console.error('Error loading task services:', err);

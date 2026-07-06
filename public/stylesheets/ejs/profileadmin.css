@@ -844,16 +844,15 @@
   transform: translateY(-1px);
 }
 
-.toggle-org-button:before {
-  content: "➕";
-  font-size: 14px;
-  transition: transform 0.3s ease;
+.toggle-org-button .toggle-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
-.toggle-org-button.expanded:before {
-  content: "➖";
-  transform: rotate(180deg);
-}
+.toggle-org-button .expanded-icon { display: none; }
+.toggle-org-button.expanded .plus-icon { display: none; }
+.toggle-org-button.expanded .expanded-icon { display: inline; }
 
 .custom-org-input-group {
   display: flex;

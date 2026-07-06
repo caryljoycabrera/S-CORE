@@ -210,8 +210,7 @@ router.get('/api/users/search', requireAdmin, async (req, res) => {
     console.log('[API /api/users/search] Search criteria:', JSON.stringify(searchCriteria, null, 2));
     
     const users = await User.find(searchCriteria)
-    .select('_id fName lName email userType')
-    .limit(10)
+    .select('_id fName lName email userType studentOrganization affiliation office department')
     .lean();
 
     console.log('[API /api/users/search] Found', users.length, 'users');

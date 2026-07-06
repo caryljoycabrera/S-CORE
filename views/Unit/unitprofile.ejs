@@ -497,16 +497,15 @@ body.profile-page .student-side > .div {
   transform: translateY(-1px);
 }
 
-.toggle-org-button:before {
-  content: "➕";
-  font-size: 14px;
-  transition: transform 0.3s ease;
+.toggle-org-button .toggle-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
-.toggle-org-button.expanded:before {
-  content: "➖";
-  transform: rotate(180deg);
-}
+.toggle-org-button .expanded-icon { display: none; }
+.toggle-org-button.expanded .plus-icon { display: none; }
+.toggle-org-button.expanded .expanded-icon { display: inline; }
 
 /* =========================== */
 /* ADD ORGANIZATION INPUT      */
@@ -1653,7 +1652,7 @@ body > .select2-container--default {
             
             <div class="form-group">
               <label for="mName">Middle Name <span class="required">*</span></label>
-              <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+              <input name="mName" id="mName" type="text" value="<%= user.mName %>" />
             </div>
             
             <div class="form-group">
@@ -1733,6 +1732,8 @@ body > .select2-container--default {
 
               <div class="custom-org-section" id="customOrgSection">
                 <button type="button" class="toggle-org-button" id="toggleCustomOrg">
+                  <svg class="toggle-icon plus-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <svg class="toggle-icon expanded-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   Add organization not in the list
                 </button>
 
@@ -1794,6 +1795,8 @@ body > .select2-container--default {
 
               <!-- Toggle Button for Custom Office -->
               <button type="button" class="toggle-org-button" id="toggleCustomOfficeBtn">
+                <svg class="toggle-icon plus-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg class="toggle-icon expanded-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Can't find your office/department? Add it here
               </button>
 
@@ -2081,8 +2084,21 @@ body > .select2-container--default {
 // Sidebar hover effect - Unit sidebar uses different behavior (handled in unit-navbar.js)
 // No need for manual hover effect here
 
+// Wait for shared system data to load from API
+function waitForSystemData() {
+  return new Promise(resolve => {
+    if ((window.studentOrgsArray && window.studentOrgsArray.length > 0) || 
+        (window.affiliationsArray && window.affiliationsArray.length > 0)) {
+      resolve(); return;
+    }
+    const handler = () => { window.removeEventListener('systemDataLoaded', handler); resolve(); };
+    window.addEventListener('systemDataLoaded', handler);
+    setTimeout(() => { window.removeEventListener('systemDataLoaded', handler); resolve(); }, 5000);
+  });
+}
+
 // OVERRIDE openModal function with EJS template support
-function openModal(id) {
+async function openModal(id) {
   console.log('=== OPENING MODAL ===');
   console.log('Modal ID:', id);
   console.log('User Type:', '<%= user.userType %>');
@@ -2095,6 +2111,9 @@ function openModal(id) {
   
   modal.style.display = 'flex';
   console.log('Modal display set to flex');
+
+  // Wait for system data to load before initializing Select2
+  await waitForSystemData();
 
   // Student logic with enhanced functionality
   if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
@@ -2168,7 +2187,7 @@ function openModal(id) {
         placeholder: "Search and select organizations...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#updateProfileModal'),
+        dropdownParent: document.body,
         closeOnSelect: false,
         dropdownCssClass: 'select2-dropdown-above-modal',
         templateResult: function(data) {
@@ -2307,7 +2326,7 @@ function openModal(id) {
         placeholder: "Search and select office/department...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#updateProfileModal'),
+        dropdownParent: document.body,
         closeOnSelect: false,
         dropdownCssClass: 'select2-dropdown-above-modal',
         templateResult: function(data) {
@@ -2452,14 +2471,19 @@ function setupOrganizationClickHandlers() {
 
 // Toggle custom organization input
 function toggleCustomOrg() {
-  const customOrgContainer = document.getElementById('customOrgSection');
-  const isVisible = customOrgContainer.style.display !== 'none';
-  customOrgContainer.style.display = isVisible ? 'none' : 'block';
+  const container = document.getElementById('customOrgContainer');
+  const button = document.getElementById('toggleCustomOrg');
+  const section = document.getElementById('customOrgSection');
+  const input = document.getElementById('otherOrganization');
+  const isVisible = container.style.display !== 'none';
+  container.style.display = isVisible ? 'none' : 'block';
+  if (button) button.classList.toggle('expanded', !isVisible);
+  if (section) section.classList.toggle('expanded', !isVisible);
   
   if (!isVisible) {
-    document.getElementById('otherOrganization').focus();
+    setTimeout(() => input.focus(), 100);
   } else {
-    document.getElementById('otherOrganization').value = '';
+    input.value = '';
     hideFeedback();
   }
 }
@@ -2570,8 +2594,10 @@ function setupOfficeClickHandlers() {
 // Toggle custom office input
 function toggleCustomOffice() {
   const customOfficeContainer = document.getElementById('customOfficeContainer');
+  const button = document.getElementById('toggleCustomOfficeBtn');
   const isVisible = customOfficeContainer.style.display !== 'none';
   customOfficeContainer.style.display = isVisible ? 'none' : 'block';
+  if (button) button.classList.toggle('expanded', !isVisible);
   
   if (!isVisible) {
     document.getElementById('otherOffice').focus();

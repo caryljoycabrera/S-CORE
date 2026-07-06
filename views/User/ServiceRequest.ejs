@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="/stylesheets/ejs/admin-modal-two-column.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/admin-created-indicator.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <!-- Quill Editor -->
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -3221,7 +3222,9 @@
                   data-file="<%= request.file ? request.file : '' %>"
                   data-files="<%= request.files ? request.files.join(',') : '' %>"
                   data-links='<%= JSON.stringify(request.links || []) %>'
-                  data-revision-count="<%= request.revisionCount || 0 %>">
+                  data-revision-count="<%= request.revisionCount || 0 %>"
+                  data-createdbyadmin="<%= request.createdByAdmin ? 'true' : 'false' %>"
+                  title="<%= request.createdByAdmin ? 'Created for you by admin' : '' %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
                   <td><%= request.organization %></td>
@@ -3257,6 +3260,12 @@
               <% }); %>
             </tbody>
           </table>
+          <% if (allRequests && allRequests.some(r => r.createdByAdmin && r.status !== 'Archived')) { %>
+            <div class="admin-created-note">
+              <span class="admin-created-swatch"></span>
+              <span>Rows highlighted in green are requests created for you by an admin.</span>
+            </div>
+          <% } %>
 
           <!-- Pagination Controls -->
           <div id="paginationControls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
@@ -7253,6 +7262,7 @@ window.toggleFilterSection = function(header) {
     if (icon) icon.classList.toggle('rotated');
 };
 </script>
+<%- include('../partials/chatbot-widget') %>
 </body>
 </html>
  

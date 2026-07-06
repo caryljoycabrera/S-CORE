@@ -90,6 +90,36 @@ function getRequestTypeMappings() {
 }
 
 /**
+ * Get high priority organizations/offices/departments from settings
+ * @returns {Array} Array of priority entry names
+ */
+function getHighPriorityOrgs() {
+  return settingsService.getSetting('highPriorityOrgs', []);
+}
+
+/**
+ * Sort an array of request objects so priority org entries float to the top
+ * Uses request.displayOrganization || request.organization to match against highPriorityOrgs.
+ * @param {Array} requests - Array of request objects
+ * @param {Array} highPriorityOrgs - Array of priority org/office/dept names
+ * @returns {Array} Re-sorted array (mutates and returns original)
+ */
+function sortPriorityToTop(requests, highPriorityOrgs) {
+  if (!highPriorityOrgs || highPriorityOrgs.length === 0) return requests;
+  const hpLower = highPriorityOrgs.map(o => o.toLowerCase());
+  requests.sort((a, b) => {
+    const orgA = ((a.displayOrganization || a.organization) || '').toLowerCase();
+    const orgB = ((b.displayOrganization || b.organization) || '').toLowerCase();
+    const aIsPriority = hpLower.includes(orgA);
+    const bIsPriority = hpLower.includes(orgB);
+    if (aIsPriority && !bIsPriority) return -1;
+    if (!aIsPriority && bIsPriority) return 1;
+    return 0;
+  });
+  return requests;
+}
+
+/**
  * Get all unique request types from mappings
  * @returns {Array} Array of unique request type names
  */
@@ -202,6 +232,8 @@ module.exports = {
   getRequestTypeMappings,
   getRequestTypes,
   getAutoAssignedUnit,
+  getHighPriorityOrgs,
+  sortPriorityToTop,
   getMaxFileSize,
   getAllowedFileTypes,
   getDefaultDeadlineDays,

@@ -582,6 +582,17 @@
     }
 
     /* Responsive Design */
+    @media (max-width: 1200px) {
+      .config-tab {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+      }
+      .config-tab svg {
+        width: 15px;
+        height: 15px;
+      }
+    }
+
     @media (max-width: 768px) {
       .config-container {
         max-width: 100%;
@@ -589,7 +600,18 @@
       }
 
       .config-tabs {
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 0.3rem;
+      }
+
+      .config-tab {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.75rem;
+      }
+      .config-tab svg {
+        width: 14px;
+        height: 14px;
       }
 
       .config-sticky-bar {
@@ -605,6 +627,153 @@
         font-size: 0.8rem;
         flex: 1;
         justify-content: center;
+      }
+
+      /* Archive Manager responsive */
+      .archive-search-wrapper {
+        min-width: 180px;
+      }
+      .enhanced-multi-select-wrapper {
+        width: 180px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .config-tabs {
+        display: none;
+      }
+      .config-tabs-mobile-select {
+        display: block;
+        width: 100%;
+        padding: 0.85rem 1rem;
+        margin-bottom: 1.5rem;
+        border: 2px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-family: 'Inter', sans-serif;
+        background: white;
+        color: #374151;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1.25rem;
+        padding-right: 2.5rem;
+      }
+      .config-tabs-mobile-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+      /* Archive Manager responsive */
+      #archivemanager-tab .config-section,
+      #archivemanager-tab > div > div {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+      #archivemanager-tab > div:first-child {
+        padding: 16px !important;
+      }
+      .archive-search-wrapper {
+        min-width: 100%;
+      }
+      .archive-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .archive-filter-row .archive-filter-item {
+        width: 100%;
+      }
+      .enhanced-multi-select-wrapper {
+        width: 100%;
+      }
+      .archive-select-native {
+        width: 100%;
+      }
+      #archivemanager-tab .archive-filter-row button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    /* ── Chatbot Tab Responsive ── */
+
+    /* Base mobile-first (<600px) */
+    #chatbot-tab > div:first-of-type {
+      padding: 1rem !important;
+    }
+    #chatbot-tab .config-header h1 {
+      font-size: clamp(1rem, 5vw, 1.25rem);
+    }
+    #chatbot-tab h3 {
+      font-size: clamp(0.9rem, 4vw, 1rem);
+    }
+    #chatbot-tab h4 {
+      font-size: clamp(0.82rem, 3.5vw, 0.9rem);
+    }
+    #chatbot-tab .chatbot-qa-grid {
+      grid-template-columns: 1fr !important;
+    }
+    #chatbot-tab .chatbot-role-btn {
+      flex: 1 1 auto;
+      justify-content: center;
+      font-size: clamp(0.75rem, 3vw, 0.9rem);
+      padding: clamp(6px, 2vw, 10px) clamp(10px, 3vw, 16px);
+    }
+    #chatbot-tab .chatbot-role-btn svg {
+      width: clamp(12px, 3vw, 16px);
+      height: clamp(12px, 3vw, 16px);
+    }
+    #chatbot-tab .import-export-row input[type="file"] {
+      max-width: 100% !important;
+    }
+    #chatbot-tab .import-export-row button,
+    #chatbot-tab .import-export-row input {
+      flex: 1 1 100%;
+    }
+    #chatbot-tab .role-selector-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 8px !important;
+    }
+    #chatbot-tab .role-selector-header > div {
+      width: 100%;
+    }
+    #chatbot-tab .role-selector-header button {
+      flex: 1;
+    }
+    #chatbot-tab .global-settings-inner {
+      padding: 12px !important;
+    }
+    #chatbot-tab .chatbot-section-pad {
+      padding: 12px !important;
+    }
+
+    /* Tablet (601-1024px) */
+    @media (min-width: 601px) and (max-width: 1024px) {
+      #chatbot-tab > div:first-of-type {
+        padding: 1rem 20px 20px !important;
+      }
+      #chatbot-tab .chatbot-qa-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      #chatbot-tab .role-selector-header {
+        flex-direction: row !important;
+      }
+      .archive-search-wrapper {
+        min-width: 160px;
+      }
+      .enhanced-multi-select-wrapper {
+        width: 160px;
+      }
+    }
+
+    /* Desktop (1025px+) */
+    @media (min-width: 1025px) {
+      #chatbot-tab .chatbot-qa-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
       }
     }
 
@@ -748,6 +917,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.375rem;
+      flex-shrink: 0;
     }
 
     .config-tab:hover {
@@ -768,6 +938,11 @@
 
     .tab-content.active {
       display: block;
+    }
+
+    /* Mobile tab dropdown - hidden by default */
+    .config-tabs-mobile-select {
+      display: none;
     }
 
     /* Sticky Bottom Action Bar */
@@ -1217,6 +1392,15 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-help-circle"/></svg>Q&A Chatbot
         </button>
       </div>
+
+      <!-- Mobile tab dropdown (visible only on small screens) -->
+      <select class="config-tabs-mobile-select" id="configTabSelect" onchange="switchTab(this.value)">
+        <option value="system">System Configuration</option>
+        <option value="homepage">Homepage Configuration</option>
+        <option value="aboutscore">About S-CORE Page Configuration</option>
+        <option value="archivemanager">Archive Manager</option>
+        <option value="chatbot">Q&amp;A Chatbot</option>
+      </select>
 
       <!-- Homepage Configuration Tab -->
       <div id="homepage-tab" class="tab-content">
@@ -2241,6 +2425,83 @@
                       </div>
                     </div>
 
+                    <!-- High Priority Organizations/Offices/Departments -->
+                    <div class="config-section">
+                      <h2 class="section-title">
+                        <svg class="section-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-alert-triangle"/></svg>
+                        High Priority Organizations/Offices/Departments
+                      </h2>
+                      <p class="section-description">
+                        Manage organizations, offices, or departments whose requests should appear highlighted with a red left border, light red background, and always on top of every request table.
+                      </p>
+                      <div class="form-group">
+                        <label for="highPriorityOrgs_select">Current Prioritized Entries</label>
+                        <% 
+                          const highPriorityOrgs = (settings && settings.highPriorityOrgs && settings.highPriorityOrgs.length > 0) ? settings.highPriorityOrgs : [];
+                          const allOrgs = (settings && settings.organizations && settings.organizations.length > 0) ? 
+                            (Array.isArray(settings.organizations) ? settings.organizations.map(org => typeof org === 'string' ? org : org.name) : []) : [];
+                          const allOffices = (settings && settings.offices && settings.offices.length > 0) ? settings.offices : [];
+                        %>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                          <select id="highPriorityOrgs_select" style="flex: 1; min-width: 0; margin-bottom: 0;">
+                            <% highPriorityOrgs.forEach(function(entry) { %>
+                              <option value="<%= entry %>"><%= entry %></option>
+                            <% }); %>
+                          </select>
+                          <button type="button" class="btn-remove-item" onclick="removeDropdownEntry('highPriorityOrgs')" style="position: static; width: auto; height: auto; padding: 0 1rem; border-radius: 0.5rem;" title="Remove selected">
+                            <span>×</span> Remove
+                          </button>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0.75rem 0;">
+
+                        <label style="font-weight: 600; color: #374151; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">Add from Organizations</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                          <div class="enhanced-multi-select-wrapper" style="width:auto;flex:1;">
+                            <div class="enhanced-multi-select" id="highPriorityOrgSelect">
+                              <div class="select-display" data-placeholder="Select Organization">
+                                <span class="selected-text">Select Organization</span>
+                                <span class="dropdown-arrow">▼</span>
+                              </div>
+                              <div class="select-dropdown">
+                                <div class="search-container">
+                                  <input type="text" class="search-input" placeholder="Search organizations...">
+                                </div>
+                                <div class="options-container"></div>
+                              </div>
+                            </div>
+                          </div>
+                          <button type="button" class="btn-add-item" onclick="addFromSearchableSelect('highPriorityOrgSelect', 'highPriorityOrgs')" style="height: auto; margin: 0;">
+                            <span>+</span> Add
+                          </button>
+                        </div>
+
+                        <label style="font-weight: 600; color: #374151; font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">Add from Offices/Departments</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                          <div class="enhanced-multi-select-wrapper" style="width:auto;flex:1;">
+                            <div class="enhanced-multi-select" id="highPriorityOfficeSelect">
+                              <div class="select-display" data-placeholder="Select Office/Dept">
+                                <span class="selected-text">Select Office/Dept</span>
+                                <span class="dropdown-arrow">▼</span>
+                              </div>
+                              <div class="select-dropdown">
+                                <div class="search-container">
+                                  <input type="text" class="search-input" placeholder="Search offices/departments...">
+                                </div>
+                                <div class="options-container"></div>
+                              </div>
+                            </div>
+                          </div>
+                          <button type="button" class="btn-add-item" onclick="addFromSearchableSelect('highPriorityOfficeSelect', 'highPriorityOrgs')" style="height: auto; margin: 0;">
+                            <span>+</span> Add
+                          </button>
+                        </div>
+
+                        <textarea id="highPriorityOrgs" name="highPriorityOrgs" style="display:none;"><%= highPriorityOrgs.join('\n') %></textarea>
+                        <p class="form-hint">Search and select an organization or office from the dropdowns above, then click Add. Must match the name exactly as it appears on requests.</p>
+                      </div>
+                    </div>
+
                     <h3 class="config-group-title">Requests & Workflows</h3>
 
                     <!-- Units and Request Types Management Section -->
@@ -2640,7 +2901,7 @@
                 <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 16px 0;">
 
                 <!-- Day-limit inputs -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
                   <div class="form-group">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                       <label for="archiveCompletedAfterDays2" style="font-weight:600;color:#374151;font-size:0.85rem;margin:0;">Archive 'Completed' (days)</label>
@@ -3053,13 +3314,13 @@
               <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 0 0 16px;">
 
               <!-- Global Chatbot Settings -->
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+              <div class="global-settings-inner" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 12px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Global Settings</h3>
 
                 <div style="margin-bottom: 14px; padding: 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #eff6ff;">
                   <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; font-weight: 700; color: #1e3a8a;">Import/Export Settings Template</h4>
                   <p style="margin: 0 0 10px 0; font-size: 0.82rem; color: #334155;">Download template, edit JSON, import file to apply config and flows. Export current settings anytime for backup.</p>
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <div class="import-export-row" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                     <button type="button" id="chatbotDownloadTemplateBtn" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #bfdbfe; background: #ffffff; color: #1d4ed8; font-weight: 600; cursor: pointer;">Download Template</button>
                     <button type="button" id="chatbotExportSettingsBtn" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; font-weight: 600; cursor: pointer;">Export Current</button>
                     <input type="file" id="chatbotImportFile" accept=".json,application/json" style="max-width: 250px; font-size: 0.8rem;" />
@@ -3139,8 +3400,8 @@
               </div>
 
               <!-- Role Selector & Targets -->
-              <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div class="chatbot-section-pad" style="margin-bottom: 20px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc;">
+                <div class="role-selector-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                   <label style="font-weight: 600; color: #374151; font-size: 0.9rem; margin: 0;">Select Role Environment & Add/Edit Targets</label>
                   <div style="display: flex; gap: 8px;">
                     <button type="button" id="chatbotSelectCurrentRoleBtn" style="padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Target Current Only</button>
@@ -3157,7 +3418,7 @@
               </div>
 
               <!-- Add Q&A Form -->
-              <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <div class="chatbot-section-pad" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
                 <h3 id="chatbotFormTitle" style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Add New Question</h3>
                 
                 <div style="display: grid; gap: 12px;">
@@ -3210,7 +3471,7 @@
               <!-- Q&A Columns (4 Roles) -->
               <div>
                 <h3 style="margin: 0 0 16px 0; font-size: 1rem; font-weight: 700; color: #1f2937;">Questions By Role Environment</h3>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                <div class="chatbot-qa-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
                   
                   <!-- User Column -->
                   <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
@@ -3338,6 +3599,11 @@
                     if (activeButton) {
                       activeButton.classList.add('active');
                     }
+                    // Sync mobile dropdown
+                    const mobileSelect = document.getElementById('configTabSelect');
+                    if (mobileSelect) {
+                      mobileSelect.value = tabName;
+                    }
                     // Store active tab in localStorage
                     localStorage.setItem('activeConfigTab', tabName);
 
@@ -3442,6 +3708,71 @@
                     },
                     clearActive(dropdown) { if (this.activeDropdown === dropdown) { this.activeDropdown = null; } }
                   };
+
+                  class SearchableSelect {
+                    constructor(containerId, options) {
+                      this.container = document.getElementById(containerId);
+                      if (!this.container) return;
+                      this.options = options;
+                      this.selectedValue = '';
+                      this.isOpen = false;
+                      this.init();
+                    }
+                    init() {
+                      this.display = this.container.querySelector('.select-display');
+                      this.dropdown = this.container.querySelector('.select-dropdown');
+                      this.searchInput = this.dropdown.querySelector('.search-input');
+                      this.optionsContainer = this.dropdown.querySelector('.options-container');
+                      this.selectedText = this.display.querySelector('.selected-text');
+                      this.populateOptions();
+                      this.attachEventListeners();
+                      this.container._searchableSelect = this;
+                    }
+                    populateOptions() {
+                      this.optionsContainer.innerHTML = '';
+                      this.options.forEach(opt => {
+                        const el = document.createElement('div');
+                        el.className = 'dropdown-option';
+                        el.textContent = opt;
+                        el.dataset.value = opt;
+                        el.addEventListener('click', () => this.selectOption(opt));
+                        this.optionsContainer.appendChild(el);
+                      });
+                    }
+                    selectOption(val) {
+                      this.selectedValue = val;
+                      this.selectedText.textContent = val || this.display.dataset.placeholder || 'Select';
+                      this.close();
+                    }
+                    attachEventListeners() {
+                      this.display.addEventListener('click', (e) => { e.stopPropagation(); this.toggle(); });
+                      if (this.searchInput) {
+                        this.searchInput.addEventListener('input', (e) => { this.filterOptions(e.target.value); });
+                      }
+                      document.addEventListener('click', (e) => { if (!this.container.contains(e.target)) { this.close(); } });
+                      this.dropdown.addEventListener('click', (e) => { e.stopPropagation(); });
+                    }
+                    filterOptions(term) {
+                      const q = term.toLowerCase();
+                      this.optionsContainer.querySelectorAll('.dropdown-option').forEach(el => {
+                        el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+                      });
+                    }
+                    getValue() { return this.selectedValue; }
+                    toggle() { this.isOpen ? this.close() : this.open(); }
+                    open() { this.isOpen = true; this.display.classList.add('active'); this.dropdown.classList.add('show'); if (this.searchInput) this.searchInput.focus(); }
+                    close() { this.isOpen = false; this.display.classList.remove('active'); this.dropdown.classList.remove('show'); }
+
+                  }
+
+                  // Init searchable source selects for high-priority orgs/offices
+                  {
+                    const orgsData = <%- JSON.stringify((settings && settings.organizations && settings.organizations.length > 0) ?
+                      (Array.isArray(settings.organizations) ? settings.organizations.map(function(o){return typeof o === 'string' ? o : o.name;}) : []) : []) %>;
+                    const officesData = <%- JSON.stringify((settings && settings.offices && settings.offices.length > 0) ? settings.offices : []) %>;
+                    new SearchableSelect('highPriorityOrgSelect', orgsData);
+                    new SearchableSelect('highPriorityOfficeSelect', officesData);
+                  }
 
                   class EnhancedMultiSelect {
                     constructor(containerId, options, placeholder = 'Select options', hasSearch = true) {
@@ -5384,6 +5715,29 @@
         input.value = '';
         updateTextareaFromSelect(targetId);
       }
+    }
+
+    function addFromSearchableSelect(widgetId, targetId) {
+      const widget = document.getElementById(widgetId);
+      if (!widget || !widget._searchableSelect) return;
+      const val = widget._searchableSelect.getValue();
+      if (!val) return;
+      const targetSelect = document.getElementById(targetId + '_select');
+      let exists = false;
+      for(let i=0; i<targetSelect.options.length; i++){
+        if(targetSelect.options[i].value === val) {
+          exists = true;
+          break;
+        }
+      }
+      if(!exists) {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        targetSelect.appendChild(opt);
+      }
+      targetSelect.value = val;
+      updateTextareaFromSelect(targetId);
     }
 
     function removeDropdownEntry(targetId) {

@@ -34,7 +34,63 @@ body.profile-page .student-side > .div {
   margin-right: 0;
 }
 
+/* =========================== */
+/* SELECT2 COMPREHENSIVE FIXES */
+/* =========================== */
 
+/* Force Select2 to appear on top of everything */
+.select2-container,
+.select2-container--default,
+.select2-container--open {
+  z-index: 999999 !important;
+}
+
+.select2-dropdown,
+.select2-dropdown--above,
+.select2-dropdown--below {
+  z-index: 999999 !important;
+}
+
+/* Ensure Select2 search is accessible */
+.select2-search,
+.select2-search--dropdown {
+  z-index: 999999 !important;
+}
+
+/* Make sure Select2 results are visible */
+.select2-results,
+.select2-results__options {
+  z-index: 999999 !important;
+}
+
+/* Body-appended Select2 containers */
+body > .select2-container--open,
+body > .select2-container--default {
+  z-index: 999999 !important;
+}
+
+/* Specific modal-related Select2 */
+#updateProfileModal .select2-container,
+#updateProfileModal ~ .select2-container,
+.modal ~ .select2-container {
+  z-index: 999999 !important;
+}
+
+/* Prevent pointer-events issues */
+.select2-dropdown {
+  pointer-events: auto !important;
+}
+
+/* Allow dropdown to overflow - these sections are inside scrollable modal-content */
+.organization-section,
+.office-section {
+  position: relative;
+  overflow: visible !important;
+}
+
+.form-group {
+  position: relative;
+}
 </style>
 
 </head>
@@ -416,7 +472,7 @@ body.profile-page .student-side > .div {
             
             <div class="form-group">
               <label for="mName">Middle Name <span class="required">*</span></label>
-              <input name="mName" id="mName" type="text" value="<%= user.mName %>" required />
+              <input name="mName" id="mName" type="text" value="<%= user.mName %>" />
             </div>
             
             <div class="form-group">
@@ -496,6 +552,8 @@ body.profile-page .student-side > .div {
 
               <div class="custom-org-section" id="customOrgSection">
                 <button type="button" class="toggle-org-button" id="toggleCustomOrg">
+                  <svg class="toggle-icon plus-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <svg class="toggle-icon expanded-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   Add organization not in the list
                 </button>
 
@@ -557,6 +615,8 @@ body.profile-page .student-side > .div {
 
               <!-- Toggle Button for Custom Office -->
               <button type="button" class="toggle-org-button" id="toggleCustomOfficeBtn">
+                <svg class="toggle-icon plus-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg class="toggle-icon expanded-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Can't find your office/department? Add it here
               </button>
 
@@ -852,8 +912,21 @@ if (sidebar) {
   });
 }
 
+// Wait for shared system data to load from API
+function waitForSystemData() {
+  return new Promise(resolve => {
+    if ((window.studentOrgsArray && window.studentOrgsArray.length > 0) || 
+        (window.affiliationsArray && window.affiliationsArray.length > 0)) {
+      resolve(); return;
+    }
+    const handler = () => { window.removeEventListener('systemDataLoaded', handler); resolve(); };
+    window.addEventListener('systemDataLoaded', handler);
+    setTimeout(() => { window.removeEventListener('systemDataLoaded', handler); resolve(); }, 5000);
+  });
+}
+
 // OVERRIDE openModal function with EJS template support
-function openModal(id) {
+async function openModal(id) {
   console.log('=== OPENING MODAL ===');
   console.log('Modal ID:', id);
   console.log('User Type:', '<%= user.userType %>');
@@ -866,6 +939,9 @@ function openModal(id) {
   
   modal.style.display = 'flex';
   console.log('Modal display set to flex');
+
+  // Wait for system data to load before initializing Select2
+  await waitForSystemData();
 
   // Student logic with enhanced functionality
   if (id === 'updateProfileModal' && '<%= user.userType %>' === 'student') {
@@ -939,7 +1015,7 @@ function openModal(id) {
         placeholder: "Search and select organizations...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#updateProfileModal'),
+        dropdownParent: document.body,
         closeOnSelect: false,
         dropdownCssClass: 'select2-dropdown-above-modal',
         templateResult: function(data) {
@@ -1078,7 +1154,7 @@ function openModal(id) {
         placeholder: "Search and select office/department...",
         allowClear: true,
         width: '100%',
-        dropdownParent: $('#updateProfileModal'),
+        dropdownParent: document.body,
         closeOnSelect: false,
         dropdownCssClass: 'select2-dropdown-above-modal',
         templateResult: function(data) {
@@ -1223,14 +1299,19 @@ function setupOrganizationClickHandlers() {
 
 // Toggle custom organization input
 function toggleCustomOrg() {
-  const customOrgContainer = document.getElementById('customOrgSection');
-  const isVisible = customOrgContainer.style.display !== 'none';
-  customOrgContainer.style.display = isVisible ? 'none' : 'block';
+  const container = document.getElementById('customOrgContainer');
+  const button = document.getElementById('toggleCustomOrg');
+  const section = document.getElementById('customOrgSection');
+  const input = document.getElementById('otherOrganization');
+  const isVisible = container.style.display !== 'none';
+  container.style.display = isVisible ? 'none' : 'block';
+  if (button) button.classList.toggle('expanded', !isVisible);
+  if (section) section.classList.toggle('expanded', !isVisible);
   
   if (!isVisible) {
-    document.getElementById('otherOrganization').focus();
+    setTimeout(() => input.focus(), 100);
   } else {
-    document.getElementById('otherOrganization').value = '';
+    input.value = '';
     hideFeedback();
   }
 }
@@ -1341,8 +1422,10 @@ function setupOfficeClickHandlers() {
 // Toggle custom office input
 function toggleCustomOffice() {
   const customOfficeContainer = document.getElementById('customOfficeContainer');
+  const button = document.getElementById('toggleCustomOfficeBtn');
   const isVisible = customOfficeContainer.style.display !== 'none';
   customOfficeContainer.style.display = isVisible ? 'none' : 'block';
+  if (button) button.classList.toggle('expanded', !isVisible);
   
   if (!isVisible) {
     document.getElementById('otherOffice').focus();

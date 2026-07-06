@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/stylesheets/ejs/admin-modal-two-column.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/User/conversation-modal.css?v=20251114101500" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
+  <link rel="stylesheet" href="/stylesheets/admin-created-indicator.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 <!-- Quill Editor -->
@@ -1880,6 +1881,7 @@
   padding: 0 !important;
   overflow: hidden;
 }
+
 </style>
 </head>
 <body>
@@ -2251,7 +2253,9 @@
     data-description="<%= request.description %>"
     data-links='<%= JSON.stringify(request.links || []) %>'
     data-file="<%= request.file ? request.file : '' %>"
-    data-files="<%= request.files ? request.files.join(',') : '' %>">
+    data-files="<%= request.files ? request.files.join(',') : '' %>"
+    data-createdbyadmin="<%= request.createdByAdmin ? 'true' : 'false' %>"
+    title="<%= request.createdByAdmin ? 'Created for you by admin' : '' %>">
     <td><%= request._id.toString().slice(-6) %></td>
     <td>
       <% if (request.type === 'Request Approval') { %>
@@ -2278,6 +2282,12 @@
   <% }); %>
 </tbody>
           </table>
+          <% if (allRequests && allRequests.some(r => r.createdByAdmin && r.status !== 'Archived')) { %>
+            <div class="admin-created-note">
+              <span class="admin-created-swatch"></span>
+              <span>Rows highlighted in green are requests created for you by an admin.</span>
+            </div>
+          <% } %>
 
           <!-- Pagination Controls -->
           <div id="paginationControls" style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
@@ -2340,6 +2350,7 @@
           <div class="details-field">
             <div class="details-label">Project Title</div>
             <div class="details-value" id="detailTitle"></div>
+            <span id="adminCreatedLabelDetail" style="display:none; color: #6f42c1; font-size: 0.85rem; font-weight: 600; margin-left: 6px;">Created by admin</span>
           </div>
           
           <div class="details-field">
@@ -3353,6 +3364,12 @@ document.querySelectorAll('.request-row').forEach(row => {
     if (detailType) detailType.innerText = row.dataset.type || '';
      if (detailSpecificType) detailSpecificType.innerText = row.dataset.specifictype || 'Not specified';
     if (detailTitle) detailTitle.innerText = row.dataset.title || '';
+    
+    // Toggle admin created label in modal
+    const isAdminCreated = row.dataset.createdbyadmin === 'true';
+    const adminCreatedLabelDetail = document.getElementById('adminCreatedLabelDetail');
+    if (adminCreatedLabelDetail) adminCreatedLabelDetail.style.display = isAdminCreated ? 'inline' : 'none';
+    
     if (detailOrganization) detailOrganization.innerText = row.dataset.organization || '';
     if (detailDescription) detailDescription.innerHTML = row.dataset.description || 'No description provided';
     if (detailUnits) detailUnits.innerText = row.dataset.units || 'Not yet assigned';

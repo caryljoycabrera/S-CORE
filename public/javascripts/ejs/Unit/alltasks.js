@@ -1040,6 +1040,12 @@ function openRequestDetails(requestId, requestType) {
     // Populate modal with data
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalRequestor').textContent = requestor;
+    // Toggle admin-created label in modal
+    const adminLabel = document.getElementById('modalAdminCreatedLabel');
+    if (adminLabel) {
+        const isAdminCreated = row.getAttribute('data-created-by-admin') === 'true';
+        adminLabel.style.display = isAdminCreated ? 'inline' : 'none';
+    }
     document.getElementById('modalRequestorEmail').textContent = requestorEmail;
     document.getElementById('modalOrganization').textContent = organization;
     document.getElementById('modalDate').textContent = dateSubmitted;

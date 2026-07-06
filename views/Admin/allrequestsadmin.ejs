@@ -33,8 +33,16 @@
 
   <!-- Admin All Requests Page Specific Stylesheet -->
   <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
-
-
+  <link rel="stylesheet" href="/stylesheets/admin-created-indicator.css" />
+  <style>
+    tr.priority-row {
+      border-left: 4px solid #ef4444 !important;
+      background-color: #fef2f2 !important;
+    }
+    tr.priority-row td:first-child {
+      border-left: none !important;
+    }
+  </style>
 </head>
 <body>
   <!-- SIDEBAR NAVIGATION -->
@@ -396,7 +404,7 @@
                   displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
                 }
               %>
-              <tr class="request-row"
+              <tr class="request-row <%= (highPriorityOrgs || []).includes((request.displayOrganization || request.organization)) ? 'priority-row' : '' %>"
                 data-id="<%= request._id %>"
                 data-request-id="<%= request._id.toString().slice(-6) %>"
                 data-type="<%= request.type %>"
@@ -414,7 +422,9 @@
                 data-links="<%= request.links ? request.links.join(',') : '' %>"
                 data-deadline="<%= localDeadline %>"
                 data-formatted-deadline="<%= formattedDeadline %>"
-                data-student="<%= displayUserName %>">
+                data-student="<%= displayUserName %>"
+                data-admin-created="<%= request.createdByAdmin || false %>"
+                title="<%= request.createdByAdmin ? 'Created by admin' : '' %>">
                 <td data-label="ID"><%= request._id.toString().slice(-6) %></td>
                 <td data-label="Type">
                   <% if (request.type === 'Request Approval') { %>
@@ -442,6 +452,12 @@
               <% }); %>
             </tbody>
           </table>
+          <% if (allRequests.some(r => r.createdByAdmin)) { %>
+            <div class="admin-created-note">
+              <span class="admin-created-swatch"></span>
+              <span>Rows highlighted in green are requests created by an admin on behalf of the requestor.</span>
+            </div>
+          <% } %>
 
           <% if (allRequests.length === 0) { %>
           <div style="text-align: center; padding: 2rem; color: #6b7280;">
@@ -635,6 +651,7 @@
               <div class="info-item">
                 <span class="info-label">Requested By:</span>
                 <span class="info-value" id="detailStudent"></span>
+                <span id="detailAdminLabel" style="display:none; color:#6f42c1; font-size:0.75rem; font-weight:600; margin-left:6px;">Created by admin</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Request Type:</span>
@@ -1672,5 +1689,10 @@ document.addEventListener('DOMContentLoaded', () => {
    =========================================== -->
 <script src="/javascripts/ejs/allrequestsadmin.js?v=20260703"></script>
 <script src="/javascripts/status-handler.js"></script>
+
+<!-- Admin created status handled via CSS border-left on tr[data-admin-created="true"] -->
+
+<!-- Chatbot Widget -->
+<%- include('../partials/chatbot-widget') %>
 </body>
 </html>
