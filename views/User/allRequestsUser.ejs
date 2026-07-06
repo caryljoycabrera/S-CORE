@@ -1648,7 +1648,7 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   z-index: 999;
   max-height: 400px;
-  overflow: hidden;
+  overflow-y: auto;
   animation: dropdownSlideIn 0.2s ease-out;
 }
 
@@ -1859,10 +1859,18 @@
 }
 
 .filter-toggle-body {
-  overflow: hidden;
+  /* Stays clipped only while collapsed/expanding; visible otherwise so
+     absolutely-positioned filter dropdowns can escape this wrapper */
+  overflow: visible;
   max-height: 1000px;
   opacity: 1;
   transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+  animation: filterBodyClipDuringExpand 0.4s;
+}
+
+@keyframes filterBodyClipDuringExpand {
+  from { overflow: hidden; }
+  to { overflow: hidden; }
 }
 
 .filter-toggle-body.collapsed {
