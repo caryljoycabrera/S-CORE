@@ -101,7 +101,35 @@
     cursor: pointer;
   }
 
-  /* Admin-created request rows */
+  /* ==========================================
+     PRIORITY ROW — high-priority org/office/dept
+     ========================================== */
+  tr.priority-row {
+    border-left: 4px solid #ef4444 !important;
+    background-color: #fef2f2 !important;
+  }
+  tr.priority-row td:first-child {
+    border-left: none !important;
+  }
+
+  /* Priority org cell — bold red text */
+  .priority-org-cell {
+    font-weight: 700 !important;
+    color: #dc2626 !important;
+  }
+
+  /* Combined: priority + admin-created — keep admin green bg and border, red org cell */
+  tr.priority-row[data-created-by-admin="true"] > td {
+    background-color: #f0fff4 !important;
+  }
+  tr.priority-row[data-created-by-admin="true"]:hover > td {
+    background-color: #e2f5e8 !important;
+  }
+  tr.priority-row[data-created-by-admin="true"] > td:first-child {
+    border-left: 4px solid #28a745 !important;
+  }
+
+  /* Admin-created request rows (non-priority) */
   .requests-table tbody tr[data-created-by-admin="true"] > td {
     background-color: #f0fff4;
   }
@@ -111,7 +139,30 @@
   }
 
   .requests-table tbody tr[data-created-by-admin="true"]:hover > td {
-    background-color: #e2f5e8; /* keep green tint on hover (tr hover bg is hidden behind td bg) */
+    background-color: #e2f5e8;
+  }
+
+  /* Note explaining the priority-org highlight */
+  .priority-note {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    background: #fff1f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #9f1239;
+  }
+
+  .priority-note::before {
+    content: '';
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: #dc2626;
   }
 
   /* Note under the table explaining the admin-created highlight */
@@ -2134,4 +2185,46 @@
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden;
+}
+
+/* Revision history pager (shared by approval and service revision timelines) */
+.revision-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.revision-pager:empty {
+  margin-top: 0;
+}
+
+.pager-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pager-btn:hover:not(:disabled) {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+  background: #f0fdf4;
+}
+
+.pager-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pager-status {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
 }

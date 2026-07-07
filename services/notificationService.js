@@ -1458,14 +1458,15 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
   }
 
   // Notify unit when user requests revision on completed task
-  async notifyUnitRevisionRequested(requestId, requestorId, assignedUnits, revisionCount) {
+  async notifyUnitRevisionRequested(requestId, requestorId, assignedUnits, revisionCount, revisionLimit = 2) {
     try {
       console.log('🔄 [REVISION NOTIFICATION] Starting notification process');
       console.log('🔄 notifyUnitRevisionRequested called with:', {
         requestId,
         requestorId,
         assignedUnits,
-        revisionCount
+        revisionCount,
+        revisionLimit
       });
       
       const unitsArray = typeof assignedUnits === 'string' 
@@ -1494,7 +1495,7 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
       }
 
       const requestor = await User.findById(requestorId);
-      const revisionsRemaining = 2 - revisionCount;
+      const revisionsRemaining = revisionLimit - revisionCount;
 
       console.log('🔄 [REVISION NOTIFICATION] Requestor:', requestor ? `${requestor.fName} ${requestor.lName}` : 'Unknown');
 
@@ -1522,6 +1523,26 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
       console.error('❌ [REVISION NOTIFICATION] Error notifying unit of revision request:', error);
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
+    }
+  }
+
+  // Notify requestor when a unit grants one more revision beyond the standard cap
+  async notifyRequestorRevisionLimitOverridden(requestId, requestorId, unitTeam, revisionLimit) {
+    try {
+      const unitName = unitTeam || 'Unit';
+
+      await this.createNotification({
+        recipient: requestorId,
+        title: 'One More Revision Allowed',
+        message: `${unitName} team has allowed you one more revision (up to ${revisionLimit} total) for this service request.`,
+        type: 'revision_limit_overridden',
+        relatedId: requestId,
+        relatedModel: 'ServiceRequest',
+        priority: 'high',
+        actionUrl: `/service-requests?modal=true&requestId=${requestId}&type=service`
+      });
+    } catch (error) {
+      console.error('Error notifying requestor of revision limit override:', error);
     }
   }
 

@@ -23,15 +23,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
   <script src="/javascripts/unit-navbar.js"></script>
-  <style>
-    tr.priority-row {
-      border-left: 4px solid #ef4444 !important;
-      background-color: #fef2f2 !important;
-    }
-    tr.priority-row td:first-child {
-      border-left: none !important;
-    }
-  </style>
 </head>
 <body>
   <!-- Unit Sidebar Navigation -->
@@ -365,7 +356,7 @@
                       </td>
                       <td><%= requestor %></td>
                       <td class="title-cell"><%= title %></td>
-                      <td><%= organization %></td>
+                      <td class="<%= (highPriorityOrgs || []).includes(organization) ? 'priority-org-cell' : '' %>"><%= organization %></td>
                       <td>
                         <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>
                       </td>
@@ -410,6 +401,9 @@
                 <span class="admin-created-swatch"></span>
                 <span>Rows highlighted in green are requests created by an admin on behalf of the requestor.</span>
               </div>
+            <% } %>
+            <% if (highPriorityOrgs && highPriorityOrgs.length > 0) { %>
+              <div class="priority-note">Requests with red organization text are high-priority tasks.</div>
             <% } %>
           </div>
         </section>
@@ -640,6 +634,21 @@
             </div>
           </div>
 
+          <!-- Requestor Resubmitted Banner — shown when status is "For Checking" -->
+          <div id="requestorResubmittedBanner" class="unit-action-panel" style="display: none; background: #eff6ff; border: 2px solid #93c5fd;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <svg width="24" height="24" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <div>
+                <p style="margin: 0; font-weight: 600; color: #1e40af;">Requestor Resubmitted</p>
+                <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: #1e40af;">The requestor has responded to your revision request. Review their changes and take action.</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Service Unit Actions (Start / Reject) -->
           <div class="service-actions-card" id="serviceTopActions">
             <h3>
@@ -738,6 +747,7 @@
               <p>Complete timeline of all revisions and resubmissions</p>
             </div>
             <div id="revisionHistoryContainer" class="revision-history-timeline"></div>
+            <div id="revisionHistoryPager" class="revision-pager"></div>
           </div>
 
           <div id="revisionLimitOverridePanel" class="unit-action-panel" style="display: none; background: #fffbeb; border: 2px solid #f59e0b;">

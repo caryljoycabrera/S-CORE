@@ -2884,6 +2884,48 @@
   padding: 0 !important;
   overflow: hidden;
 }
+
+/* Revision history pager */
+.revision-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.revision-pager:empty {
+  margin-top: 0;
+}
+
+.pager-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pager-btn:hover:not(:disabled) {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+  background: #f0fdf4;
+}
+
+.pager-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pager-status {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
 </style>
 </head>
 
@@ -4072,6 +4114,7 @@ function getLinkValues() {
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
             </div>
+            <div id="revisionHistoryPager" class="revision-pager"></div>
             <!-- Action Buttons for Service Requests with "For Checking" status -->
             <div id="serviceActionButtons" style="margin-top: 1.5rem; display: none; gap: 0.75rem; flex-wrap: wrap;">
               <button type="button" id="showServiceRevisionFormBtn" onclick="toggleServiceRevisionForm()" 
@@ -4082,22 +4125,26 @@ function getLinkValues() {
               </svg>
                 <span id="revisionFormToggleText">Request Revision</span>
             </button>
-            <div id="revisionLimitWarning" style="display: none; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 1rem 1.25rem; color: #92400e; font-size: 0.875rem; align-items: flex-start; gap: 0.75rem; width: 100%;">
-              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 2px;">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-              </svg>
-              <div>
-                <strong style="display: block; margin-bottom: 0.25rem;">Revision Limit Reached</strong>
-                <span>You have used all 2 revision requests for this service request. If you need further changes, please submit a new service request and reference this one.</span>
-              </div>
-            </div>
-            <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()" 
+            <button type="button" id="markServiceCompleteBtn2" onclick="handleMarkServiceComplete()"
                     style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 0.875rem 1.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
               Approve
             </button>
+          </div>
+
+          <!-- Revision limit reached notice (service requests) - sibling of
+               serviceActionButtons so it can stay visible even when that
+               container is hidden (e.g. while status is "For Revision") -->
+          <div id="revisionLimitWarning" style="display: none; margin-top: 1rem; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 1rem 1.25rem; color: #92400e; font-size: 0.875rem; align-items: flex-start; gap: 0.75rem; width: 100%;">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 2px;">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            <div>
+              <strong style="display: block; margin-bottom: 0.25rem;">Revision Limit Reached</strong>
+              <span>You have used all 2 revision requests for this service request. If you need further changes, please submit a new service request and reference this one.</span>
+            </div>
           </div>
 
           <!-- Rejected notice (service requests) -->
@@ -4806,6 +4853,18 @@ function getLinkValues() {
     const allStatusCheckbox = statusDropdown ? statusDropdown.querySelector('input[value="all"]') : null;
 
     let currentConversationId = null;
+
+    // Instantly reflect a unit granting one more revision, without waiting for a reload
+    document.addEventListener('scoreRevisionLimitOverridden', (e) => {
+      const requestId = e.detail && e.detail.requestId;
+      if (!requestId) return;
+      if (typeof window.showAlert === 'function') {
+        window.showAlert('info', 'The unit has granted you one more revision for this request.');
+      }
+      if (currentConversationId === requestId) {
+        loadServiceRevisionHistory(requestId);
+      }
+    });
 
     // Filter variables
     let organizationFilter;
@@ -6542,10 +6601,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== SERVICE REVISION HISTORY FUNCTIONS =====
     let serviceRevisionQuill = null;
 
-    async function loadServiceRevisionHistory(requestId) {
+    async function loadServiceRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
         console.log('[Service] ===== STARTING LOAD =====');
         console.log('[Service] Request ID:', requestId);
         const historyContainer = document.getElementById('revisionHistoryContainer');
+        const pagerContainer = document.getElementById('revisionHistoryPager');
         const rightColumn = document.getElementById('requestorRightColumn');
         const modalBody = document.querySelector('.unit-modal-body');
         const modalContent = document.querySelector('.unit-modal-wide');
@@ -6573,9 +6633,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             console.log('[Service] Fetching API...');
-            const response = await fetch(`/api/service-revision-history/${requestId}`);
+            const response = await fetch(`/api/service-revision-history/${requestId}?page=${page}&limit=5`);
             console.log('[Service] API status:', response.status);
-            
+
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 console.log('[Service] ❌ Non-JSON response');
@@ -6589,6 +6649,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <small>Revision history will appear here when updates are made to your request.</small>
                     </div>
                 `;
+                if (pagerContainer) pagerContainer.innerHTML = '';
                 return;
             }
             
@@ -6600,7 +6661,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // status and the real revision limit, independent of whether there are
                 // any revision entries yet to render.
                 const row = document.querySelector(`tr[data-id="${requestId}"]`);
-                const normalizedStatus = row ? row.dataset.status.toLowerCase().replace(/\s+/g, '-') : '';
+                // Prefer the status this same response just fetched from the server -
+                // the row's data-status can go stale (e.g. after a revision request
+                // that never updated the DOM), which previously made the "limit
+                // reached" banner disappear even though the server-side status/limit
+                // truly called for showing it.
+                const normalizedStatus = (result.status || (row ? row.dataset.status : '') || '').toLowerCase().replace(/\s+/g, '-');
+                if (row) {
+                    row.dataset.status = result.status || row.dataset.status;
+                }
                 const actionButtons = document.getElementById('serviceActionButtons');
                 const revisionButton = document.getElementById('showServiceRevisionFormBtn');
                 const warningMessage = document.getElementById('revisionLimitWarning');
@@ -6610,6 +6679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (normalizedStatus === 'rejected') {
                     if (actionButtons) actionButtons.style.display = 'none';
                     if (serviceRevisionSection) serviceRevisionSection.style.display = 'none';
+                    if (warningMessage) warningMessage.style.display = 'none';
                     if (rejectedBanner) {
                         rejectedBanner.style.display = 'flex';
                         if (rejectedReasonText) {
@@ -6619,23 +6689,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     if (rejectedBanner) rejectedBanner.style.display = 'none';
 
+                    const revisionCount = result.revisionCount || 0;
+                    const revisionLimit = result.revisionLimit || 2;
+                    const limitReached = revisionCount >= revisionLimit;
+                    // The "last revision used" note must persist once the limit is hit -
+                    // not just while status is "for-checking". It should stay visible
+                    // while the unit is still reviewing the final revision ("for-revision")
+                    // too, and survive reloads (both statuses reach here via result.status).
+                    const revisionLimitIrrelevant = normalizedStatus === 'approved' || normalizedStatus === 'completed';
+                    if (warningMessage) {
+                        warningMessage.style.display = (limitReached && !revisionLimitIrrelevant) ? 'flex' : 'none';
+                        if (limitReached) {
+                            const warningSpan = warningMessage.querySelector('span');
+                            if (warningSpan) {
+                                warningSpan.textContent = `You have used all ${revisionLimit} revision requests for this service request. If you need further changes, please submit a new service request and reference this one, or ask the assigned unit to allow one more revision.`;
+                            }
+                        }
+                    }
+
                     // Approve/Request-Revision only appear once the unit has actually sent deliverables
                     if (normalizedStatus === 'for-checking') {
                         if (actionButtons) actionButtons.style.display = 'flex';
 
-                        const revisionCount = result.revisionCount || 0;
-                        const revisionLimit = result.revisionLimit || 2;
-                        const limitReached = revisionCount >= revisionLimit;
-
                         if (limitReached) {
                             if (revisionButton) revisionButton.style.display = 'none';
-                            if (warningMessage) {
-                                warningMessage.style.display = 'flex';
-                                const warningSpan = warningMessage.querySelector('span');
-                                if (warningSpan) {
-                                    warningSpan.textContent = `You have used all ${revisionLimit} revision requests for this service request. If you need further changes, please submit a new service request and reference this one, or ask the assigned unit to allow one more revision.`;
-                                }
-                            }
                         } else {
                             if (revisionButton) {
                                 revisionButton.style.display = 'inline-flex';
@@ -6644,7 +6721,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 revisionButton.style.cursor = 'pointer';
                                 revisionButton.title = `Request Revision (${revisionCount}/${revisionLimit} used)`;
                             }
-                            if (warningMessage) warningMessage.style.display = 'none';
                         }
 
                         // Initialize Quill editor if not already initialized
@@ -6681,14 +6757,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     historyContainer.innerHTML = '';
 
+                    const pagination = result.pagination || { page: 1, totalPages: 1 };
+                    const isLastPage = pagination.page >= pagination.totalPages;
+
                     revisionsToShow.forEach((revision, index) => {
                         console.log(`[Service] Creating entry ${index + 1}: ${revision.type}`);
-                        const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                        const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
                         historyContainer.appendChild(entry);
                     });
+
+                    renderRevisionPager(pagerContainer, requestId, pagination, 'loadServiceRevisionHistory');
                 } else {
                     // No revisions to show, but still show the section with empty message
                     if (modalContent) modalContent.classList.remove('has-revisions');
+                    if (pagerContainer) pagerContainer.innerHTML = '';
                     historyContainer.innerHTML = `
                         <div style="text-align: center; padding: 2rem; color: #64748b;">
                             <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -6702,6 +6784,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // API call successful but no revisions
                 if (modalContent) modalContent.classList.remove('has-revisions');
+                if (pagerContainer) pagerContainer.innerHTML = '';
                 historyContainer.innerHTML = `
                     <div style="text-align: center; padding: 2rem; color: #64748b;">
                         <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -6716,6 +6799,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('[Service] Error loading revision history:', error);
             // Show error message in revision history section
             if (modalContent) modalContent.classList.remove('has-revisions');
+            if (pagerContainer) pagerContainer.innerHTML = '';
             historyContainer.innerHTML = `
                 <div style="text-align: center; padding: 2rem; color: #dc2626;">
                     <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -6730,7 +6814,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function createServiceRevisionEntry(revision, index, total) {
+    // loaderFnName lets this single helper serve both loadRevisionHistory
+    // (approval requests, if ever added here) and loadServiceRevisionHistory.
+    function renderRevisionPager(pagerContainer, requestId, pagination, loaderFnName = 'loadServiceRevisionHistory') {
+        if (!pagerContainer) return;
+        const { page, totalPages } = pagination;
+        if (!totalPages || totalPages <= 1) {
+            pagerContainer.innerHTML = '';
+            return;
+        }
+        pagerContainer.innerHTML = `
+            <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page - 1})">‹ Prev</button>
+            <span class="pager-status">Page ${page} of ${totalPages}</span>
+            <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page + 1})">Next ›</button>
+        `;
+    }
+
+    function createServiceRevisionEntry(revision, index, total, isLastPage = true) {
         console.log('[Service] Creating revision entry:', revision);
         
         const entry = document.createElement('div');
@@ -6814,7 +6914,7 @@ document.addEventListener('DOMContentLoaded', function() {
             authorName = 'You';
         }
         
-        const isLast = index === total - 1;
+        const isLast = isLastPage && index === total - 1;
         let statusIndicator = '';
         
         if (revision.type === 'completed') {

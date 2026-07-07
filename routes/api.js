@@ -353,16 +353,16 @@ router.get('/api/deadlines/:date/details', requireLogin, async (req, res) => {
     // Process the data
     const processedApprovals = approvals.map(approval => ({
       ...approval,
-      displayOrganization: approval.userId?.userType === 'nonstudent'
+      displayOrganization: approval.organization || (approval.userId?.userType === 'nonstudent'
         ? (Array.isArray(approval.userId.affiliation) ? approval.userId.affiliation.join(', ') : approval.userId.affiliation)
-        : approval.organization || 'N/A'
+        : 'N/A')
     }));
 
     const processedServices = services.map(service => ({
       ...service,
-      displayOrganization: service.userId?.userType === 'nonstudent'
+      displayOrganization: service.organization || (service.userId?.userType === 'nonstudent'
         ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
-        : service.organization || 'N/A'
+        : 'N/A')
     }));
 
     const response = {
@@ -480,16 +480,16 @@ router.get('/api/admin/calendar-requests/:date/details', requireAdmin, async (re
     // Process the data
     const processedApprovals = approvals.map(approval => ({
       ...approval,
-      displayOrganization: approval.userId?.userType === 'nonstudent'
+      displayOrganization: approval.organization || (approval.userId?.userType === 'nonstudent'
         ? (Array.isArray(approval.userId.affiliation) ? approval.userId.affiliation.join(', ') : approval.userId.affiliation)
-        : approval.organization || 'N/A'
+        : 'N/A')
     }));
 
     const processedServices = services.map(service => ({
       ...service,
-      displayOrganization: service.userId?.userType === 'nonstudent'
+      displayOrganization: service.organization || (service.userId?.userType === 'nonstudent'
         ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
-        : service.organization || 'N/A'
+        : 'N/A')
     }));
 
     const response = {
@@ -1041,7 +1041,7 @@ router.get('/api/revision-history/:requestId', requireLogin, async (req, res) =>
 
     // Paginate
     const total = revisions.length;
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 5, 1), 100);
     const totalPages = Math.max(Math.ceil(total / limit), 1);
     const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), totalPages);
     const start = (page - 1) * limit;
@@ -1200,7 +1200,7 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
 
     // Paginate
     const total = revisions.length;
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 5, 1), 100);
     const totalPages = Math.max(Math.ceil(total / limit), 1);
     const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), totalPages);
     const start = (page - 1) * limit;
@@ -1211,7 +1211,8 @@ router.get('/api/service-revision-history/:requestId', requireLogin, async (req,
       revisions: pageSlice,
       pagination: { page, limit, total, totalPages },
       revisionCount: serviceRequest.revisionCount || 0,
-      revisionLimit: 2 + (serviceRequest.revisionLimitOverrides || 0)
+      revisionLimit: 2 + (serviceRequest.revisionLimitOverrides || 0),
+      status: serviceRequest.status
     });
   } catch (err) {
     console.error('Error fetching service revision history:', err);

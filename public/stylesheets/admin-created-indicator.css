@@ -27,6 +27,79 @@
   background-color: #e2f5e8; /* keep green tint on hover (tr hover bg is hidden behind td bg) */
 }
 
+/* ==========================================
+   PRIORITY ROW — high-priority org/office/dept
+   ========================================== */
+tr.priority-row {
+  border-left: 4px solid #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+tr.priority-row td:first-child {
+  border-left: none !important;
+}
+
+/* Priority org cell — bold red text */
+.priority-org-cell {
+  font-weight: 700 !important;
+  color: #dc2626 !important;
+}
+
+/* Combined: priority + admin-created — keep admin green bg and border, red org cell */
+tr.priority-row[data-admin-created="true"] > td {
+  background-color: #f0fff4 !important;
+}
+tr.priority-row[data-admin-created="true"]:hover > td {
+  background-color: #e2f5e8 !important;
+}
+tr.priority-row[data-admin-created="true"] > td:first-child {
+  border-left: 4px solid #28a745 !important;
+}
+
+/* Combined: priority + admin-created (unit pages) */
+tr.priority-row[data-created-by-admin="true"] > td {
+  background-color: #f0fff4 !important;
+}
+tr.priority-row[data-created-by-admin="true"]:hover > td {
+  background-color: #e2f5e8 !important;
+}
+tr.priority-row[data-created-by-admin="true"] > td:first-child {
+  border-left: 4px solid #28a745 !important;
+}
+
+/* Combined: priority + admin-created (user pages) */
+tr.priority-row[data-createdbyadmin="true"] > td {
+  background-color: #f0fff4 !important;
+}
+tr.priority-row[data-createdbyadmin="true"]:hover > td {
+  background-color: #e2f5e8 !important;
+}
+tr.priority-row[data-createdbyadmin="true"] > td:first-child {
+  border-left: 4px solid #28a745 !important;
+}
+
+/* Note explaining the priority-org highlight */
+.priority-note {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #9f1239;
+}
+
+.priority-note::before {
+  content: '';
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: #dc2626;
+}
+
 /* Note under the table explaining the highlight */
 .admin-created-note {
   display: flex;

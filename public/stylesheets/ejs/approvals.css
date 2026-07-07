@@ -3720,3 +3720,45 @@ hr {
   padding: 0 !important;
   overflow: hidden;
 }
+
+/* Revision history pager */
+.revision-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.revision-pager:empty {
+  margin-top: 0;
+}
+
+.pager-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pager-btn:hover:not(:disabled) {
+  border-color: var(--primary-green);
+  color: var(--primary-green);
+  background: #f0fdf4;
+}
+
+.pager-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pager-status {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}

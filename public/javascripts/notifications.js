@@ -371,6 +371,14 @@ class NotificationSystem {
     
     this.updateUI();
     this.showNotificationToast(notification);
+
+    // Let any open page react instantly (e.g. refresh a revision panel) without
+    // needing its own separate socket connection.
+    if (notification.type === 'revision_limit_overridden' && notification.relatedId) {
+      document.dispatchEvent(new CustomEvent('scoreRevisionLimitOverridden', {
+        detail: { requestId: notification.relatedId }
+      }));
+    }
   }
 
   /**

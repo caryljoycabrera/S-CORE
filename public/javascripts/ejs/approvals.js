@@ -3114,22 +3114,24 @@ document.addEventListener("click", function(event) {
 // REVISION HISTORY FUNCTIONS (Admin Approvals - Observer Only)
 // ==========================================
 
-async function loadRevisionHistory(requestId, currentStatus = '') {
+async function loadRevisionHistory(requestId, currentStatus = '', page = Number.MAX_SAFE_INTEGER) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
-    
+    const pagerContainer = document.getElementById('revisionHistoryPager');
+
     console.log('[Admin Approvals - Revision History] Loading for request:', requestId, 'Status:', currentStatus);
-    
+
     if (!historyContainer) {
         console.warn('[Admin Approvals - Revision History] Container not found!');
         return;
     }
-    
+
     // Helper function to show empty state
     const showEmptyState = () => {
         if (historySection) {
             historySection.style.display = 'block';
         }
+        if (pagerContainer) pagerContainer.innerHTML = '';
         historyContainer.innerHTML = `
             <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
                 <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -3143,51 +3145,56 @@ async function loadRevisionHistory(requestId, currentStatus = '') {
             </div>
         `;
     };
-    
+
     try {
-        const response = await fetch(`/api/revision-history/${requestId}`);
+        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=5`);
         console.log('[Admin Approvals - Revision History] Response status:', response.status);
-        
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Admin Approvals - Revision History] API returned non-JSON response');
             showEmptyState();
             return;
         }
-        
+
         const result = await response.json();
         console.log('[Admin Approvals - Revision History] API Response:', result);
         console.log('[Admin Approvals - Revision History] Revisions count:', result.revisions?.length || 0);
-        
+
         if (result.success && result.revisions && result.revisions.length > 0) {
             console.log('[Admin Approvals - Revision History] Showing section with', result.revisions.length, 'revisions');
-            
+
             // Enable two-column layout when revisions exist
             const modalContent = document.querySelector('#detailsModal .modal-content');
             const modalBody = document.querySelector('#detailsModal .admin-modal-body');
             const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-            
+
             if (modalContent && modalBody) {
                 modalContent.style.maxWidth = '1600px';
                 modalBody.classList.add('has-revisions');
             }
-            
+
             if (historySection) {
                 historySection.style.display = 'block';
             }
-            
+
             historyContainer.innerHTML = '';
-            
+
             // Filter out initial submission and render all revisions
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
-            
+
             if (revisionsToShow.length > 0) {
+                const pagination = result.pagination || { page: 1, totalPages: 1 };
+                const isLastPage = pagination.page >= pagination.totalPages;
+
                 revisionsToShow.forEach((revision, index) => {
                     console.log('[Admin Approvals - Revision History] Rendering revision', index, ':', revision.type);
-                    const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length);
+                    const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
                     historyContainer.appendChild(entry);
                 });
-                
+
+                renderRevisionPager(pagerContainer, requestId, pagination, currentStatus);
+
                 console.log('[Admin Approvals - Revision History] All revisions rendered');
             } else {
                 showEmptyState();
@@ -3202,7 +3209,23 @@ async function loadRevisionHistory(requestId, currentStatus = '') {
     }
 }
 
-function createAdminRevisionEntry(revision, index, total) {
+// currentStatus is only used for a log line in loadRevisionHistory, but must be
+// re-passed on every pager click so the 3-arg call signature stays intact.
+function renderRevisionPager(pagerContainer, requestId, pagination, currentStatus) {
+    if (!pagerContainer) return;
+    const { page, totalPages } = pagination;
+    if (!totalPages || totalPages <= 1) {
+        pagerContainer.innerHTML = '';
+        return;
+    }
+    pagerContainer.innerHTML = `
+        <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', '${currentStatus}', ${page - 1})">‹ Prev</button>
+        <span class="pager-status">Page ${page} of ${totalPages}</span>
+        <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', '${currentStatus}', ${page + 1})">Next ›</button>
+    `;
+}
+
+function createAdminRevisionEntry(revision, index, total, isLastPage = true) {
     console.log('🔍 [Admin Approvals] Creating revision entry:', {
         index,
         total,

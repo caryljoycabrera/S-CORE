@@ -3088,6 +3088,18 @@ let currentPage = 1;
 const itemsPerPage = 10;
 let filteredRows = [];
 
+// Instantly reflect a unit granting one more revision, without waiting for a reload
+document.addEventListener('scoreRevisionLimitOverridden', (e) => {
+  const requestId = e.detail && e.detail.requestId;
+  if (!requestId) return;
+  if (typeof window.showAlert === 'function') {
+    window.showAlert('info', 'The unit has granted you one more revision for this request.');
+  }
+  if (currentConversationId === requestId && currentRequestType === 'Service Request') {
+    loadServiceRevisionHistory(requestId);
+  }
+});
+
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize organization filter based on user's organizations
@@ -4642,7 +4654,7 @@ async function loadRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     try {
         // page defaults to a huge number so the API clamps it to the true last page,
         // surfacing the most recent/actionable entry without an extra click.
-        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=10`);
+        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=5`);
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
@@ -4841,7 +4853,9 @@ async function loadRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
 }
 
 // Renders Prev/Page X of Y/Next controls for the revision history timeline
-function renderRevisionPager(pagerContainer, requestId, pagination) {
+// loaderFnName lets this single helper serve both loadRevisionHistory
+// (approval requests) and loadServiceRevisionHistory (service requests).
+function renderRevisionPager(pagerContainer, requestId, pagination, loaderFnName = 'loadRevisionHistory') {
     if (!pagerContainer) return;
     const { page, totalPages } = pagination;
     if (!totalPages || totalPages <= 1) {
@@ -4849,9 +4863,9 @@ function renderRevisionPager(pagerContainer, requestId, pagination) {
         return;
     }
     pagerContainer.innerHTML = `
-        <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', ${page - 1})">‹ Prev</button>
+        <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page - 1})">‹ Prev</button>
         <span class="pager-status">Page ${page} of ${totalPages}</span>
-        <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', ${page + 1})">Next ›</button>
+        <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page + 1})">Next ›</button>
     `;
 }
 
@@ -5335,11 +5349,12 @@ function removeRevisionLink(button) {
 
 // ========== SERVICE REQUEST REVISION HISTORY FUNCTIONS ==========
 
-async function loadServiceRevisionHistory(requestId) {
+async function loadServiceRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     console.log('[Service] ===== STARTING LOAD =====');
     console.log('[Service] Request ID:', requestId);
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
+    const pagerContainer = document.getElementById('revisionHistoryPager');
     const rightColumn = document.getElementById('requestorRightColumn');
     const modalBody = document.querySelector('.unit-modal-body');
     const modalContent = document.querySelector('.unit-modal-wide');
@@ -5357,9 +5372,9 @@ async function loadServiceRevisionHistory(requestId) {
     
     try {
         console.log('[Service] Fetching API...');
-        const response = await fetch(`/api/service-revision-history/${requestId}`);
+        const response = await fetch(`/api/service-revision-history/${requestId}?page=${page}&limit=5`);
         console.log('[Service] API status:', response.status);
-        
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.log('[Service] ❌ Non-JSON response');
@@ -5368,6 +5383,7 @@ async function loadServiceRevisionHistory(requestId) {
             if (rightColumn) rightColumn.style.display = 'flex'; // Keep right column visible for chat button
             if (modalBody) modalBody.classList.add('two-column'); // Keep two-column layout
             if (modalContent) modalContent.classList.add('has-revisions'); // Keep wider modal
+            if (pagerContainer) pagerContainer.innerHTML = '';
             return;
         }
         
@@ -5382,7 +5398,20 @@ async function loadServiceRevisionHistory(requestId) {
             // status and the real revision limit, independent of whether there are
             // any revision entries yet to render.
             const row = document.querySelector(`tr[data-id="${requestId}"]`);
-            const normalizedStatus = row ? row.dataset.status.toLowerCase().replace(/\s+/g, '-') : '';
+            // Prefer the status this same response just fetched from the server -
+            // the row's data-status can go stale (e.g. after a revision request or
+            // deliverable resubmission that never updated the DOM), which previously
+            // made the "limit reached" banner disappear even though the server-side
+            // status/limit truly called for showing it.
+            const normalizedStatus = (result.status || (row ? row.dataset.status : '') || '').toLowerCase().replace(/\s+/g, '-');
+            if (row) {
+                row.dataset.status = result.status || row.dataset.status;
+                const statusCell = row.querySelector('.status-badge');
+                if (statusCell && result.status) {
+                    statusCell.textContent = result.status;
+                    statusCell.className = `status-badge ${normalizedStatus}`;
+                }
+            }
             const actionButtons = document.getElementById('serviceActionButtons');
             const revisionLimitWarning = document.getElementById('serviceRevisionLimitWarning');
             const revisionLimitWarningText = document.getElementById('serviceRevisionLimitWarningText');
@@ -5413,8 +5442,13 @@ async function loadServiceRevisionHistory(requestId) {
                 if (showRevisionBtn) {
                     showRevisionBtn.style.display = (normalizedStatus === 'for-checking' && limitReached) ? 'none' : 'inline-flex';
                 }
+                // The "last revision used" note must persist once the limit is hit -
+                // not just while status is "for-checking". It should stay visible
+                // while the unit is still reviewing the final revision ("for-revision")
+                // too, and survive reloads (both statuses reach here via result.status).
+                const revisionLimitIrrelevant = normalizedStatus === 'approved' || normalizedStatus === 'completed';
                 if (revisionLimitWarning) {
-                    revisionLimitWarning.style.display = (normalizedStatus === 'for-checking' && limitReached) ? 'flex' : 'none';
+                    revisionLimitWarning.style.display = (limitReached && !revisionLimitIrrelevant) ? 'flex' : 'none';
                     if (revisionLimitWarningText && limitReached) {
                         revisionLimitWarningText.textContent = `You have used all ${revisionLimit} revision requests for this service request. If you need further changes, please submit a new service request and reference this one, or ask the assigned unit to allow one more revision.`;
                     }
@@ -5457,12 +5491,17 @@ async function loadServiceRevisionHistory(requestId) {
                 if (historySection) historySection.style.display = 'block';
                 
                 historyContainer.innerHTML = '';
-                
+
+                const pagination = result.pagination || { page: 1, totalPages: 1 };
+                const isLastPage = pagination.page >= pagination.totalPages;
+
                 revisionsToShow.forEach((revision, index) => {
                     console.log(`[Service] Creating entry ${index + 1}: ${revision.type}`);
-                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
                     historyContainer.appendChild(entry);
                 });
+
+                renderRevisionPager(pagerContainer, requestId, pagination, 'loadServiceRevisionHistory');
 
                 // Keep the revision-request composer hidden by default - it's revealed
                 // when the user clicks "Request Revision" (button visibility itself is
@@ -5471,6 +5510,7 @@ async function loadServiceRevisionHistory(requestId) {
             } else {
                 // No revisions to show, but still show the section with empty message
                 if (modalContent) modalContent.classList.remove('has-revisions');
+                if (pagerContainer) pagerContainer.innerHTML = '';
                 historyContainer.innerHTML = `
                     <div style="text-align: center; padding: 2rem; color: #64748b;">
                         <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -5484,6 +5524,7 @@ async function loadServiceRevisionHistory(requestId) {
         } else {
             // No revisions data - show empty message
             if (modalContent) modalContent.classList.remove('has-revisions');
+            if (pagerContainer) pagerContainer.innerHTML = '';
             historyContainer.innerHTML = `
                 <div style="text-align: center; padding: 2rem; color: #64748b;">
                     <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -5498,6 +5539,7 @@ async function loadServiceRevisionHistory(requestId) {
         console.error('[Service] Error loading revision history:', error);
         // Error case - show error message in revision history section
         if (modalContent) modalContent.classList.remove('has-revisions');
+        if (pagerContainer) pagerContainer.innerHTML = '';
         historyContainer.innerHTML = `
             <div style="text-align: center; padding: 2rem; color: #dc2626;">
                 <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -5512,7 +5554,7 @@ async function loadServiceRevisionHistory(requestId) {
     }
 }
 
-function createServiceRevisionEntry(revision, index, total) {
+function createServiceRevisionEntry(revision, index, total, isLastPage = true) {
     console.log('[Service] Creating revision entry:', revision);
     
     const entry = document.createElement('div');
@@ -5596,9 +5638,9 @@ function createServiceRevisionEntry(revision, index, total) {
         authorName = 'You';
     }
     
-    const isLast = index === total - 1;
+    const isLast = isLastPage && index === total - 1;
     let statusIndicator = '';
-    
+
     if (revision.type === 'completed') {
         statusIndicator = `
             <div class="status-indicator approved">

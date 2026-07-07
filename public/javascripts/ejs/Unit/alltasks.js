@@ -1217,6 +1217,12 @@ function openRequestDetails(requestId, requestType) {
             if (adminApproveBtn) adminApproveBtn.style.display = 'inline-block';
             if (adminRevisionBtn) adminRevisionBtn.style.display = 'inline-block';
         }
+
+        // Show/hide requestor resubmitted banner (for Checking after revision)
+        const resubmittedBanner = document.getElementById('requestorResubmittedBanner');
+        if (resubmittedBanner) {
+            resubmittedBanner.style.display = (status === 'For Checking') ? 'block' : 'none';
+        }
     }
 
     // Populate admin form with current status and units
@@ -1270,10 +1276,11 @@ function openRequestDetails(requestId, requestType) {
 }
 
 // Function: loadRevisionHistory
-async function loadRevisionHistory(requestId) {
+async function loadRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
-    
+    const pagerContainer = document.getElementById('revisionHistoryPager');
+
     console.log('[Revision History] Loading for request:', requestId);
     console.log('[Revision History] Section element:', historySection);
     console.log('[Revision History] Container element:', historyContainer);
@@ -1284,15 +1291,16 @@ async function loadRevisionHistory(requestId) {
     }
     
     try {
-        const response = await fetch(`/api/revision-history/${requestId}`);
+        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=5`);
         console.log('[Revision History] Response status:', response.status);
-        
+
         // Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Revision History] API returned non-JSON response');
             if (historySection) historySection.style.display = 'block';
             historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available</p>';
+            if (pagerContainer) pagerContainer.innerHTML = '';
             return;
         }
         
@@ -1335,14 +1343,19 @@ async function loadRevisionHistory(requestId) {
             }
             
             console.log('[Revision History] Unique revisions count:', uniqueRevisions.length, 'out of', revisionsToShow.length);
-            
+
+            const pagination = result.pagination || { page: 1, totalPages: 1 };
+            const isLastPage = pagination.page >= pagination.totalPages;
+
             // Render each revision entry with enumeration
             uniqueRevisions.forEach((revision, index) => {
                 console.log('[Revision History] Rendering revision', index, ':', revision.type);
-                const entry = createRevisionEntry(revision, index, uniqueRevisions.length);
+                const entry = createRevisionEntry(revision, index, uniqueRevisions.length, isLastPage);
                 historyContainer.appendChild(entry);
             });
-            
+
+            renderRevisionPager(pagerContainer, requestId, pagination, 'loadRevisionHistory');
+
             console.log('[Revision History] All revisions rendered');
             
             // Check if request has been approved before showing action buttons
@@ -1381,7 +1394,8 @@ async function loadRevisionHistory(requestId) {
             // Show section with empty state
             if (historySection) historySection.style.display = 'block';
             historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available</p>';
-            
+            if (pagerContainer) pagerContainer.innerHTML = '';
+
             // Note: Do NOT show approval panel here - let openRequestDetails handle panel display
             // based on requestType to avoid conflicts with service requests
         }
@@ -1390,13 +1404,15 @@ async function loadRevisionHistory(requestId) {
         // Show section with error message instead of hiding
         if (historySection) historySection.style.display = 'block';
         historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">Unable to load revision history</p>';
+        if (pagerContainer) pagerContainer.innerHTML = '';
     }
 }
 
 // Function: loadServiceRevisionHistory
-async function loadServiceRevisionHistory(requestId) {
+async function loadServiceRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
+    const pagerContainer = document.getElementById('revisionHistoryPager');
     const serviceActionsPanel = document.getElementById('serviceActionsPanel');
     const completeTaskPanel = document.getElementById('completeTaskPanel');
     
@@ -1414,7 +1430,7 @@ async function loadServiceRevisionHistory(requestId) {
     
     try {
         console.log('[Service Revision History] Fetching from API...');
-        const response = await fetch(`/api/service-revision-history/${requestId}`);
+        const response = await fetch(`/api/service-revision-history/${requestId}?page=${page}&limit=5`);
         console.log('[Service Revision History] Response status:', response.status);
         console.log('[Service Revision History] Response OK:', response.ok);
         
@@ -1435,12 +1451,13 @@ async function loadServiceRevisionHistory(requestId) {
         console.log('[Service Revision History] Full response:', result);
 
         if (result.success) {
-            // Determine current status (prefer modal status, fallback to row status)
+            // Determine current status (prefer server truth from this response,
+            // fallback to modal status, then row status)
             const modalStatusEl = document.getElementById('modalStatus');
             const currentStatusEarly = modalStatusEl ? modalStatusEl.textContent.toLowerCase().trim() : '';
             const tableRowEarly = document.querySelector(`tr[data-request-id="${requestId}"]`);
             const rowStatusEarly = tableRowEarly ? tableRowEarly.getAttribute('data-status')?.toLowerCase().trim() : '';
-            const statusForButtons = currentStatusEarly || rowStatusEarly;
+            const statusForButtons = (result.status ? result.status.toLowerCase().replace(/\s+/g, '-') : '') || currentStatusEarly || rowStatusEarly;
 
             // Start Service / Reject buttons and revision-limit-override control.
             // Both only make sense before the unit has started the service - once
@@ -1458,8 +1475,11 @@ async function loadServiceRevisionHistory(requestId) {
             const currentRevisionCount = result.revisionCount || 0;
             const currentRevisionLimit = result.revisionLimit || 2;
             if (revisionLimitOverridePanel) {
+                // Only surface once the unit has resubmitted deliverables for the
+                // limit-hitting revision (status back to "For Checking") - not the
+                // moment the requestor's revision request pushes the count to the cap.
                 revisionLimitOverridePanel.style.display =
-                    (currentRevisionCount >= currentRevisionLimit && statusForButtons !== 'rejected') ? 'flex' : 'none';
+                    (currentRevisionCount >= currentRevisionLimit && statusForButtons === 'for-checking') ? 'flex' : 'none';
             }
 
             // Decide serviceActionsPanel/completeTaskPanel visibility unconditionally,
@@ -1478,7 +1498,12 @@ async function loadServiceRevisionHistory(requestId) {
             } else if (statusForButtons === 'completed') {
                 if (serviceActionsPanel) serviceActionsPanel.style.display = 'none';
                 if (completeTaskPanel) completeTaskPanel.style.display = 'none';
-            } else if (statusForButtons !== 'queued') {
+            } else if (statusForButtons === 'in-progress' || statusForButtons === 'for-revision') {
+                // Only these two statuses are the unit's turn to submit/resubmit a
+                // deliverable. "For Checking" is the requestor's turn (they're
+                // reviewing what was just submitted) and must hide this panel -
+                // otherwise it stays open even while the revision-limit-reached
+                // banner and "Allow One More Revision" button are showing.
                 if (serviceActionsPanel) serviceActionsPanel.style.display = 'block';
                 if (completeTaskPanel) completeTaskPanel.style.display = 'none';
             } else {
@@ -1533,15 +1558,20 @@ async function loadServiceRevisionHistory(requestId) {
                 
                 // Clear container
                 historyContainer.innerHTML = '';
-                
+
+                const pagination = result.pagination || { page: 1, totalPages: 1 };
+                const isLastPage = pagination.page >= pagination.totalPages;
+
                 // Render each revision entry
                 revisionsToShow.forEach((revision, index) => {
                     console.log('[Service Revision History] Creating entry', index + 1, 'of', revisionsToShow.length);
                     console.log('[Service Revision History] Revision type:', revision.type);
-                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
                     historyContainer.appendChild(entry);
                 });
-                
+
+                renderRevisionPager(pagerContainer, requestId, pagination, 'loadServiceRevisionHistory');
+
                 // Enable two-column layout for revision history
                 const modalBody = document.querySelector('.unit-modal-body');
                 const rightColumn = document.querySelector('.unit-right-column');
@@ -1571,27 +1601,18 @@ async function loadServiceRevisionHistory(requestId) {
                 );
                 
                 const hasApproval = revisionsToShow.some(rev => rev.type === 'approved_by_requestor');
-                
+
                 console.log('[Service Revision History] Has deliverable:', hasDeliverable);
                 console.log('[Service Revision History] Has revision request:', hasRevisionRequest);
                 console.log('[Service Revision History] Has approval (override check):', hasApproval);
-                
-                // Don't override panel visibility if:
-                // 1. Deliverables are approved (complete task panel should be showing)
-                // 2. Task is completed (both panels should be hidden)
-                if (serviceActionsPanel && !hasApproval && actualStatus !== 'queued' && actualStatus !== 'completed' && actualStatus !== 'rejected') {
-                    // Show upload panel if service started AND no deliverables submitted OR if revisions are requested
-                    if (!hasDeliverable || hasRevisionRequest) {
-                        serviceActionsPanel.style.display = 'block';
-                        console.log('[Service Revision History] ✅ Showed service actions panel');
-                    } else {
-                        serviceActionsPanel.style.display = 'none';
-                        console.log('[Service Revision History] ✅ Hid service actions panel');
-                    }
-                } else {
-                    console.log('[Service Revision History] ⏭️ Skipped panel override (approved or completed)');
-                }
-                
+
+                // NOTE: serviceActionsPanel/completeTaskPanel visibility is already decided
+                // unconditionally above (using the fresh result.status), and must not be
+                // re-decided here from these all-time/aggregate flags (hasDeliverable and
+                // hasRevisionRequest stay true forever once any cycle ever had them, and
+                // actualStatus below is derived from potentially-stale modal/row text) -
+                // doing so previously re-hid the upload panel on later revision cycles.
+
                 // Show action buttons for non-completed requests
                 const isCompleted = revisionsToShow.some(rev => rev.type === 'completed');
                 const revisionHistoryActions = document.getElementById('revisionHistoryActions');
@@ -1604,6 +1625,7 @@ async function loadServiceRevisionHistory(requestId) {
                 console.log('[Service Revision History] No revisions after filtering');
                 if (historySection) historySection.style.display = 'block';
                 historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available yet</p>';
+                if (pagerContainer) pagerContainer.innerHTML = '';
                 const modalBody = document.querySelector('.unit-modal-body');
                 const rightColumn = document.querySelector('.unit-right-column');
                 if (modalBody) modalBody.classList.add('two-column');
@@ -1613,6 +1635,7 @@ async function loadServiceRevisionHistory(requestId) {
             console.log('[Service Revision History] No revisions to display');
             if (historySection) historySection.style.display = 'block';
             historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">No revision history available yet</p>';
+            if (pagerContainer) pagerContainer.innerHTML = '';
             const modalBody = document.querySelector('.unit-modal-body');
             const rightColumn = document.querySelector('.unit-right-column');
             if (modalBody) modalBody.classList.add('two-column');
@@ -1623,6 +1646,7 @@ async function loadServiceRevisionHistory(requestId) {
         console.error('[Service Revision History] Error stack:', error.stack);
         if (historySection) historySection.style.display = 'block';
         historyContainer.innerHTML = '<p style="color: #94a3b8; font-size: 0.875rem; text-align: center; padding: 2rem 0;">Unable to load revision history</p>';
+        if (pagerContainer) pagerContainer.innerHTML = '';
         const modalBody = document.querySelector('.unit-modal-body');
         const rightColumn = document.querySelector('.unit-right-column');
         if (modalBody) modalBody.classList.add('two-column');
@@ -1630,8 +1654,26 @@ async function loadServiceRevisionHistory(requestId) {
     }
 }
 
+// Renders Prev/Page X of Y/Next controls for a revision-history timeline.
+// loaderFnName lets this single helper serve both loadRevisionHistory
+// (approval requests) and loadServiceRevisionHistory (service requests),
+// since this shared modal can show either type.
+function renderRevisionPager(pagerContainer, requestId, pagination, loaderFnName) {
+    if (!pagerContainer) return;
+    const { page, totalPages } = pagination;
+    if (!totalPages || totalPages <= 1) {
+        pagerContainer.innerHTML = '';
+        return;
+    }
+    pagerContainer.innerHTML = `
+        <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page - 1})">‹ Prev</button>
+        <span class="pager-status">Page ${page} of ${totalPages}</span>
+        <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page + 1})">Next ›</button>
+    `;
+}
+
 // Function: createServiceRevisionEntry
-function createServiceRevisionEntry(revision, index, total) {
+function createServiceRevisionEntry(revision, index, total, isLastPage = true) {
     console.log('🔍 [Service Unit] Creating revision entry:', {
         index,
         total,
@@ -1721,7 +1763,7 @@ function createServiceRevisionEntry(revision, index, total) {
     }
     
     // Status indicator for last message
-    const isLast = index === total - 1;
+    const isLast = isLastPage && index === total - 1;
     let statusIndicator = '';
     
     if (revision.type === 'completed') {
@@ -1870,7 +1912,7 @@ function createServiceRevisionEntry(revision, index, total) {
 }
 
 // Function: createRevisionEntry
-function createRevisionEntry(revision, index, total) {
+function createRevisionEntry(revision, index, total, isLastPage = true) {
     console.log('🔍 [Unit] Creating revision entry:', {
         index,
         total,
@@ -1952,7 +1994,7 @@ function createRevisionEntry(revision, index, total) {
         badgeClass = 'badge-revision';
     }
     
-    const isLast = index === total - 1;
+    const isLast = isLastPage && index === total - 1;
     
     // Calculate revision/resubmission numbers
     let revisionNumber = 0;

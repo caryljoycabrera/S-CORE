@@ -1937,7 +1937,15 @@ router.post('/unit/task/override-revision-limit/:id', requireUnit, async (req, r
 
     await task.save();
 
-    res.json({ success: true, revisionLimitOverrides: task.revisionLimitOverrides, revisionLimit: 2 + task.revisionLimitOverrides });
+    const newRevisionLimit = 2 + task.revisionLimitOverrides;
+
+    try {
+      await notificationService.notifyRequestorRevisionLimitOverridden(task._id, task.userId, user.unitTeam, newRevisionLimit);
+    } catch (notifError) {
+      console.error('Error sending revision limit override notification:', notifError);
+    }
+
+    res.json({ success: true, revisionLimitOverrides: task.revisionLimitOverrides, revisionLimit: newRevisionLimit });
   } catch (error) {
     console.error('Error overriding revision limit:', error);
     res.status(500).json({ success: false, message: 'Error overriding revision limit: ' + error.message });

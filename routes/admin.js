@@ -84,15 +84,15 @@ router.get('/admin', requireAdmin, async (req, res) => {
       .map(a => {
         // Determine display organization
         let displayOrganization = a.organization || 'N/A';
-        if (a.userId) {
+        if ((!displayOrganization || displayOrganization === 'N/A') && a.userId) {
           if (a.userId.userType === 'nonstudent') {
             displayOrganization = Array.isArray(a.userId.affiliation)
               ? a.userId.affiliation.join(', ')
-              : (a.userId.affiliation || a.organization || 'N/A');
+              : (a.userId.affiliation || 'N/A');
           } else {
             displayOrganization = Array.isArray(a.userId.studentOrganization)
               ? a.userId.studentOrganization.join(', ')
-              : (a.userId.studentOrganization || a.organization || 'N/A');
+              : (a.userId.studentOrganization || 'N/A');
           }
         }
         return { ...a, requestType: 'approval', displayOrganization };
@@ -101,15 +101,15 @@ router.get('/admin', requireAdmin, async (req, res) => {
       .map(s => {
         // Determine display organization
         let displayOrganization = s.organization || 'N/A';
-        if (s.userId) {
+        if ((!displayOrganization || displayOrganization === 'N/A') && s.userId) {
           if (s.userId.userType === 'nonstudent') {
             displayOrganization = Array.isArray(s.userId.affiliation)
               ? s.userId.affiliation.join(', ')
-              : (s.userId.affiliation || s.organization || 'N/A');
+              : (s.userId.affiliation || 'N/A');
           } else {
             displayOrganization = Array.isArray(s.userId.studentOrganization)
               ? s.userId.studentOrganization.join(', ')
-              : (s.userId.studentOrganization || s.organization || 'N/A');
+              : (s.userId.studentOrganization || 'N/A');
           }
         }
         return { ...s, requestType: 'service', displayOrganization };
@@ -190,15 +190,15 @@ router.get('/admin', requireAdmin, async (req, res) => {
       
       // Determine display organization
       let displayOrganization = req.organization || 'N/A';
-      if (req.userId) {
+      if ((!displayOrganization || displayOrganization === 'N/A') && req.userId) {
         if (req.userId.userType === 'nonstudent') {
           displayOrganization = Array.isArray(req.userId.affiliation)
             ? req.userId.affiliation.join(', ')
-            : (req.userId.affiliation || req.organization || 'N/A');
+            : (req.userId.affiliation || 'N/A');
         } else {
           displayOrganization = Array.isArray(req.userId.studentOrganization)
             ? req.userId.studentOrganization.join(', ')
-            : (req.userId.studentOrganization || req.organization || 'N/A');
+            : (req.userId.studentOrganization || 'N/A');
         }
       }
       
@@ -427,15 +427,15 @@ router.get('/admin/analytics', requireAdmin, async (req, res) => {
       
       // Determine display organization
       let displayOrganization = req.organization || 'N/A';
-      if (req.userId) {
+      if ((!displayOrganization || displayOrganization === 'N/A') && req.userId) {
         if (req.userId.userType === 'nonstudent') {
           displayOrganization = Array.isArray(req.userId.affiliation)
             ? req.userId.affiliation.join(', ')
-            : (req.userId.affiliation || req.organization || 'N/A');
+            : (req.userId.affiliation || 'N/A');
         } else {
           displayOrganization = Array.isArray(req.userId.studentOrganization)
             ? req.userId.studentOrganization.join(', ')
-            : (req.userId.studentOrganization || req.organization || 'N/A');
+            : (req.userId.studentOrganization || 'N/A');
         }
       }
       
@@ -671,7 +671,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
     approvals = approvals.map(approval => {
       let displayOrganization = approval.organization;
 
-      if (approval.userId) {
+      if ((!displayOrganization || displayOrganization === 'N/A') && approval.userId) {
         if (approval.userId.userType === 'student') {
           displayOrganization = Array.isArray(approval.userId.studentOrganization)
             ? approval.userId.studentOrganization.join(', ')
@@ -725,10 +725,9 @@ router.get('/admin/approvals/:id', requireAdmin, async (req, res) => {
     // Add display organization logic
     approvals = approvals.map(approval => ({
       ...approval,
-      displayOrganization:
-        approval.userId?.userType === 'nonstudent'
-          ? approval.userId.affiliation
-          : approval.organization
+      displayOrganization: approval.organization || (approval.userId?.userType === 'nonstudent'
+        ? (Array.isArray(approval.userId.affiliation) ? approval.userId.affiliation.join(', ') : approval.userId.affiliation)
+        : 'N/A')
     }));
 
     // Status priority for sorting
@@ -845,9 +844,9 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
     // Add display organization and datetime logic
     const serviceRequestsWithDisplay = serviceRequests.map(service => ({
       ...service,
-      displayOrganization: service.userId?.userType === 'nonstudent'
+      displayOrganization: service.organization || (service.userId?.userType === 'nonstudent'
         ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
-        : service.organization,
+        : 'N/A'),
       datetime: service.datetime || service.createdAt,
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
@@ -926,9 +925,9 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
     // Add display organization logic
     const serviceRequestsWithDisplay = serviceRequests.map(service => ({
       ...service,
-      displayOrganization: service.userId?.userType === 'nonstudent'
+      displayOrganization: service.organization || (service.userId?.userType === 'nonstudent'
         ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
-        : service.organization,
+        : 'N/A'),
       datetime: service.datetime || service.createdAt,
       specificRequestType: service.specificRequestType || 'Not specified'
     }));
@@ -1009,11 +1008,11 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
         let userName = 'System User';
         let displayOrganization = r.organization || 'N/A';
 
-        if (r.userId && r.userId.fName) {
+        if ((!displayOrganization || displayOrganization === 'N/A') && r.userId && r.userId.fName) {
           userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
           displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || 'N/A')
+            : 'N/A';
         } else {
           userName = 'Unknown User';
         }
@@ -1030,11 +1029,11 @@ router.get('/admin/all-requests', requireAdmin, async (req, res) => {
         let userName = 'System User';
         let displayOrganization = r.organization || 'N/A';
 
-        if (r.userId && r.userId.fName) {
+        if ((!displayOrganization || displayOrganization === 'N/A') && r.userId && r.userId.fName) {
           userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
           displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || 'N/A')
+            : 'N/A';
         } else {
           userName = 'Unknown User';
         }
@@ -1385,11 +1384,11 @@ router.get('/api/admin/archived-records', requireAdmin, async (req, res) => {
       let userName = 'System User';
       let displayOrganization = r.organization || 'N/A';
       let deletedByName = source === 'auto' ? 'System (Auto-Archive)' : 'Unknown';
-      if (r.userId && r.userId.fName) {
+      if ((!displayOrganization || displayOrganization === 'N/A') && r.userId && r.userId.fName) {
         userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
         displayOrganization = r.userId.userType === 'nonstudent'
-          ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-          : r.organization || 'N/A';
+          ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || 'N/A')
+          : 'N/A';
       }
       return { 
         ...r, 
@@ -1447,11 +1446,11 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
         let displayOrganization = r.organization || 'N/A';
         let deletedByName = 'Unknown';
 
-        if (r.userId && r.userId.fName) {
+        if ((!displayOrganization || displayOrganization === 'N/A') && r.userId && r.userId.fName) {
           userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
           displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || 'N/A')
+            : 'N/A';
         }
 
         if (r.deletedBy && r.deletedBy.fName) {
@@ -1490,11 +1489,11 @@ router.get('/api/admin/deleted-requests', requireAdmin, async (req, res) => {
         let displayOrganization = r.organization || 'N/A';
         let deletedByName = 'Unknown';
 
-        if (r.userId && r.userId.fName) {
+        if ((!displayOrganization || displayOrganization === 'N/A') && r.userId && r.userId.fName) {
           userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
           displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || 'N/A')
+            : 'N/A';
         }
 
         if (r.deletedBy && r.deletedBy.fName) {
@@ -3618,19 +3617,17 @@ router.get('/admin/export/excel', requireAdmin, async (req, res) => {
 
     // Add data rows
     allRequests.forEach(req => {
-      let displayOrganization = 'N/A';
-      if (req.userId) {
+      let displayOrganization = req.organization || 'N/A';
+      if ((!displayOrganization || displayOrganization === 'N/A') && req.userId) {
         if (req.userId.userType === 'nonstudent') {
           displayOrganization = Array.isArray(req.userId.affiliation)
             ? req.userId.affiliation.join(', ')
-            : (req.userId.affiliation || req.organization || 'N/A');
+            : (req.userId.affiliation || 'N/A');
         } else {
           displayOrganization = Array.isArray(req.userId.studentOrganization)
             ? req.userId.studentOrganization.join(', ')
-            : (req.userId.studentOrganization || req.organization || 'N/A');
+            : (req.userId.studentOrganization || 'N/A');
         }
-      } else if (req.organization) {
-        displayOrganization = req.organization;
       }
 
       let completionDate = '';
@@ -3767,19 +3764,17 @@ router.get('/admin/export/pdf', requireAdmin, async (req, res) => {
         y = 30;
       }
 
-      let displayOrganization = 'N/A';
-      if (req.userId) {
+      let displayOrganization = req.organization || 'N/A';
+      if ((!displayOrganization || displayOrganization === 'N/A') && req.userId) {
         if (req.userId.userType === 'nonstudent') {
           displayOrganization = Array.isArray(req.userId.affiliation)
             ? req.userId.affiliation.join(', ')
-            : (req.userId.affiliation || req.organization || 'N/A');
+            : (req.userId.affiliation || 'N/A');
         } else {
           displayOrganization = Array.isArray(req.userId.studentOrganization)
             ? req.userId.studentOrganization.join(', ')
-            : (req.userId.studentOrganization || req.organization || 'N/A');
+            : (req.userId.studentOrganization || 'N/A');
         }
-      } else if (req.organization) {
-        displayOrganization = req.organization;
       }
 
       let completionDate = '';
@@ -6185,11 +6180,11 @@ router.get('/admin/configuration', requireAdmin, async (req, res) => {
         let userName = 'System User';
         let displayOrganization = r.organization || 'N/A';
         let deletedByName = source === 'auto' ? 'System (Auto-Archive)' : 'Unknown';
-        if (r.userId && r.userId.fName) {
+        if ((!displayOrganization || displayOrganization === 'N/A') && r.userId && r.userId.fName) {
           userName = `${r.userId.fName} ${r.userId.lName || ''}`.trim();
           displayOrganization = r.userId.userType === 'nonstudent'
-            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || r.organization)
-            : r.organization || 'N/A';
+            ? (Array.isArray(r.userId.affiliation) ? r.userId.affiliation.join(', ') : r.userId.affiliation || 'N/A')
+            : 'N/A';
         }
         if (source === 'deleted' && r.deletedBy && r.deletedBy.fName) {
           deletedByName = `${r.deletedBy.fName} ${r.deletedBy.lName || ''}`.trim();

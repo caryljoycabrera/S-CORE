@@ -2601,96 +2601,6 @@ function formatText(text) {
 // APPROVAL REQUEST REVISION HISTORY FUNCTIONS (Admin View)
 // ==========================================
 
-async function loadRevisionHistory(requestId) {
-    const historySection = document.getElementById('revisionHistorySection');
-    const historyContainer = document.getElementById('revisionHistoryContainer');
-    
-    console.log('[Approval Revision History] Starting load for request:', requestId);
-    
-    if (!historyContainer) {
-        console.warn('[Approval Revision History] Container not found');
-        return;
-    }
-    
-    // Helper function to show empty state
-    const showEmptyState = () => {
-        if (historySection) {
-            historySection.style.display = 'block';
-        }
-        historyContainer.innerHTML = `
-            <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
-                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                    <path d="M21 3v5h-5"/>
-                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                    <path d="M3 21v-5h5"/>
-                </svg>
-                <p style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">No Revision History</p>
-                <p style="font-size: 0.875rem;">This request has not gone through any revisions yet.</p>
-            </div>
-        `;
-    };
-    
-    try {
-        // Try to fetch approval revision history from API
-        const response = await fetch(`/api/approval-revision-history/${requestId}`);
-        const contentType = response.headers.get('content-type');
-        
-        if (!contentType || !contentType.includes('application/json')) {
-            console.warn('[Approval Revision History] API returned non-JSON response');
-            showEmptyState();
-            return;
-        }
-        
-        const result = await response.json();
-        console.log('[Approval Revision History] API Response:', result);
-        
-        if (result.success && result.revisions && result.revisions.length > 0) {
-            // Filter out initial submission for revision display
-            const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
-            
-            if (revisionsToShow.length > 0) {
-                // Show the revision history section
-                if (historySection) {
-                    historySection.style.display = 'block';
-                }
-                
-                // Clear container
-                historyContainer.innerHTML = '';
-                
-                // Render each revision entry
-                revisionsToShow.forEach((revision, index) => {
-                    const entry = createRevisionEntry(revision, index, revisionsToShow.length);
-                    historyContainer.appendChild(entry);
-                });
-                
-                // Enable two-column layout
-                const modalContent = document.querySelector('#detailsModal .modal-content');
-                const modalBody = document.querySelector('#detailsModal .admin-modal-body');
-                const rightColumn = document.querySelector('#detailsModal .admin-right-column');
-                
-                if (modalContent && modalBody) {
-                    modalContent.style.maxWidth = '1600px';
-                    modalBody.classList.add('has-revisions');
-                }
-                if (rightColumn) {
-                    rightColumn.style.display = 'flex';
-                }
-            } else {
-                // No revisions to show - display empty state
-                showEmptyState();
-            }
-        } else {
-            console.log('[Approval Revision History] No revisions available');
-            showEmptyState();
-        }
-    } catch (error) {
-        console.error('[Approval Revision History] Error loading:', error);
-        // Show empty state on error
-        showEmptyState();
-    }
-}
-
 function resetModalLayout() {
     const modalContent = document.querySelector('#detailsModal .modal-content');
     const modalBody = document.querySelector('#detailsModal .admin-modal-body');
@@ -2702,108 +2612,6 @@ function resetModalLayout() {
     }
     if (rightColumn) rightColumn.style.display = 'none';
 }
-
-function createRevisionEntry(revision, index, total) {
-    const entry = document.createElement('div');
-    entry.className = 'revision-conversation-item';
-    
-    // Format timestamp
-    const timestamp = new Date(revision.timestamp || revision.createdAt || Date.now());
-    const fullTimestamp = timestamp.toLocaleString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-    });
-    
-    // Get relative time
-    const now = new Date();
-    const diffMs = now - timestamp;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    let relativeTime;
-    if (diffMins < 1) relativeTime = 'Just now';
-    else if (diffMins < 60) relativeTime = `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    else if (diffHours < 24) relativeTime = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    else relativeTime = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    
-    // Determine badge and label
-    let typeLabel = 'Update';
-    let badgeClass = 'badge-revision';
-    
-    if (revision.type === 'approved') {
-        typeLabel = '✓ Approved';
-        badgeClass = 'badge-approved';
-    } else if (revision.type === 'rejected') {
-        typeLabel = '✕ Rejected';
-        badgeClass = 'badge-rejection';
-    } else if (revision.type === 'revision_requested') {
-        typeLabel = 'Revision Requested';
-        badgeClass = 'badge-revision';
-    }
-    
-    const isLast = index === total - 1;
-    let statusIndicator = '';
-    
-    if (revision.type === 'approved') {
-        statusIndicator = `
-            <div class="status-indicator approved">
-                <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="8 12 11 15 16 9"/>
-                </svg>
-                <span style="color: #10b981; font-weight: 600;">Request Approved</span>
-            </div>
-        `;
-    } else if (revision.type === 'rejected') {
-        statusIndicator = `
-            <div class="status-indicator rejected">
-                <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="8" y1="8" x2="16" y2="16"/>
-                    <line x1="16" y1="8" x2="8" y2="16"/>
-                </svg>
-                <span style="color: #ef4444; font-weight: 600;">Request Rejected</span>
-            </div>
-        `;
-    }
-    
-    const authorName = revision.by || revision.authorName || 'Admin';
-    const content = revision.notes || revision.description || 'No details provided';
-    
-    entry.innerHTML = `
-        <div class="revision-number-badge">#${index + 1}</div>
-        <div class="revision-message-bubble">
-            <div class="revision-bubble-header">
-                <div>
-                    <span class="revision-author">${escapeHtml(authorName)}</span>
-                    <span class="revision-badge ${badgeClass}" style="margin-left: 0.5rem;">${typeLabel}</span>
-                </div>
-                <div class="revision-timestamp">
-                    <span style="font-weight: 600; color: #1e293b;">${fullTimestamp}</span>
-                    <span style="font-size: 0.75rem; color: #94a3b8;">${relativeTime}</span>
-                </div>
-            </div>
-            
-            <div class="message-content-section">
-                <div class="content-label">APPROVAL DETAILS:</div>
-                <div class="content-text">${displayFormattedText(content)}</div>
-            </div>
-            
-            ${statusIndicator}
-        </div>
-    `;
-    
-    return entry;
-}
-
-
 
 // Send team message
 window.sendTeamMessage = function() {
@@ -3018,25 +2826,27 @@ document.addEventListener('DOMContentLoaded', function() {
 // REVISION HISTORY FUNCTIONS (Admin View - Observer Only)
 // ==========================================
 
-async function loadRevisionHistory(requestId) {
+async function loadRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
-    
+    const pagerContainer = document.getElementById('revisionHistoryPager');
+
     console.log('[Admin Revision History] Loading for request:', requestId);
-    
+
     if (!historyContainer) {
         console.warn('[Admin Revision History] Container not found!');
         return;
     }
-    
+
     try {
-        const response = await fetch(`/api/revision-history/${requestId}`);
+        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=5`);
         console.log('[Admin Revision History] Response status:', response.status);
-        
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Admin Revision History] API returned non-JSON response');
             if (historySection) historySection.style.display = 'none';
+            if (pagerContainer) pagerContainer.innerHTML = '';
             return;
         }
         
@@ -3062,25 +2872,31 @@ async function loadRevisionHistory(requestId) {
             }
             
             historyContainer.innerHTML = '';
-            
+
             // Filter out initial submission and render all revisions
             const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
-            
+
+            const pagination = result.pagination || { page: 1, totalPages: 1 };
+            const isLastPage = pagination.page >= pagination.totalPages;
+
             revisionsToShow.forEach((revision, index) => {
                 console.log('[Admin Revision History] Rendering revision', index, ':', revision.type);
-                const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length);
+                const entry = createAdminRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
                 historyContainer.appendChild(entry);
             });
-            
+
+            renderRevisionPager(pagerContainer, requestId, pagination, 'loadRevisionHistory');
+
             console.log('[Admin Revision History] All revisions rendered');
         } else {
             console.log('[Admin Revision History] No revisions to display');
-            
+
             // Always show revision history section with empty state message
             if (historySection) {
                 historySection.style.display = 'block';
             }
-            
+            if (pagerContainer) pagerContainer.innerHTML = '';
+
             // Show empty state message
             historyContainer.innerHTML = `
                 <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
@@ -3097,12 +2913,13 @@ async function loadRevisionHistory(requestId) {
         }
     } catch (error) {
         console.error('[Admin Revision History] Error loading revision history:', error);
-        
+
         // Always show revision history section with error/empty state
         if (historySection) {
             historySection.style.display = 'block';
         }
-        
+        if (pagerContainer) pagerContainer.innerHTML = '';
+
         // Show empty state message
         historyContainer.innerHTML = `
             <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
@@ -3119,7 +2936,25 @@ async function loadRevisionHistory(requestId) {
     }
 }
 
-function createAdminRevisionEntry(revision, index, total) {
+// Renders Prev/Page X of Y/Next controls for a revision-history timeline.
+// loaderFnName lets this single helper serve both loadRevisionHistory
+// (approval requests) and loadServiceRevisionHistory (service requests),
+// since this shared modal can show either type.
+function renderRevisionPager(pagerContainer, requestId, pagination, loaderFnName) {
+    if (!pagerContainer) return;
+    const { page, totalPages } = pagination;
+    if (!totalPages || totalPages <= 1) {
+        pagerContainer.innerHTML = '';
+        return;
+    }
+    pagerContainer.innerHTML = `
+        <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page - 1})">‹ Prev</button>
+        <span class="pager-status">Page ${page} of ${totalPages}</span>
+        <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="${loaderFnName}('${requestId}', ${page + 1})">Next ›</button>
+    `;
+}
+
+function createAdminRevisionEntry(revision, index, total, isLastPage = true) {
     console.log('🔍 [Admin] Creating revision entry:', {
         index,
         total,
@@ -3194,7 +3029,7 @@ function createAdminRevisionEntry(revision, index, total) {
         badgeClass = 'badge-revision';
     }
     
-    const isLast = index === total - 1;
+    const isLast = isLastPage && index === total - 1;
     
     // Determine status indicator for last message
     let statusIndicator = '';
@@ -3403,10 +3238,11 @@ function escapeHtml(text) {
 // SERVICE REVISION HISTORY FUNCTIONS (Admin View)
 // ==========================================
 
-async function loadServiceRevisionHistory(requestId) {
+async function loadServiceRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
-    
+    const pagerContainer = document.getElementById('revisionHistoryPager');
+
     console.log('[Service Revision History] ===== STARTING LOAD =====');
     console.log('[Service Revision History] Request ID:', requestId);
     console.log('[Service Revision History] History section element:', !!historySection);
@@ -3419,16 +3255,17 @@ async function loadServiceRevisionHistory(requestId) {
     
     try {
         console.log('[Service Revision History] Fetching from API...');
-        const response = await fetch(`/api/service-revision-history/${requestId}`);
+        const response = await fetch(`/api/service-revision-history/${requestId}?page=${page}&limit=5`);
         console.log('[Service Revision History] Response status:', response.status);
         console.log('[Service Revision History] Response OK:', response.ok);
-        
+
         const contentType = response.headers.get('content-type');
         console.log('[Service Revision History] Content-Type:', contentType);
-        
+
         if (!contentType || !contentType.includes('application/json')) {
             console.warn('[Service Revision History] ❌ API returned non-JSON response');
             if (historySection) historySection.style.display = 'none';
+            if (pagerContainer) pagerContainer.innerHTML = '';
             return;
         }
         
@@ -3468,15 +3305,20 @@ async function loadServiceRevisionHistory(requestId) {
                 
                 // Clear container
                 historyContainer.innerHTML = '';
-                
+
+                const pagination = result.pagination || { page: 1, totalPages: 1 };
+                const isLastPage = pagination.page >= pagination.totalPages;
+
                 // Render each revision entry
                 revisionsToShow.forEach((revision, index) => {
                     console.log('[Service Revision History] Creating entry', index + 1, 'of', revisionsToShow.length);
                     console.log('[Service Revision History] Revision type:', revision.type);
-                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length);
+                    const entry = createServiceRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
                     historyContainer.appendChild(entry);
                 });
-                
+
+                renderRevisionPager(pagerContainer, requestId, pagination, 'loadServiceRevisionHistory');
+
                 // Enable two-column layout for revision history
                 const modalContent = document.querySelector('#detailsModal .modal-content');
                 const modalBody = document.querySelector('#detailsModal .unit-modal-body');
@@ -3500,6 +3342,7 @@ async function loadServiceRevisionHistory(requestId) {
                 // No revisions to show, but keep section visible with empty state
                 console.log('[Service Revision History] No revisions after filtering');
                 if (historySection) historySection.style.display = 'block';
+                if (pagerContainer) pagerContainer.innerHTML = '';
                 historyContainer.innerHTML = `
                     <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
                         <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -3517,6 +3360,7 @@ async function loadServiceRevisionHistory(requestId) {
             console.log('[Service Revision History] No revisions to display');
             // Always show revision history section with empty state
             if (historySection) historySection.style.display = 'block';
+            if (pagerContainer) pagerContainer.innerHTML = '';
             historyContainer.innerHTML = `
                 <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
                     <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -3535,6 +3379,7 @@ async function loadServiceRevisionHistory(requestId) {
         console.error('[Service Revision History] Error stack:', error.stack);
         // Always show revision history section with empty state
         if (historySection) historySection.style.display = 'block';
+        if (pagerContainer) pagerContainer.innerHTML = '';
         historyContainer.innerHTML = `
             <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
                 <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -3550,7 +3395,7 @@ async function loadServiceRevisionHistory(requestId) {
     }
 }
 
-function createServiceRevisionEntry(revision, index, total) {
+function createServiceRevisionEntry(revision, index, total, isLastPage = true) {
     console.log('🔍 [Service Admin] Creating revision entry:', {
         index,
         total,
@@ -3602,12 +3447,21 @@ function createServiceRevisionEntry(revision, index, total) {
     if (revision.type === 'deliverable_submitted') {
         typeLabel = 'Deliverables Uploaded';
         badgeClass = 'badge-resubmitted';
+    } else if (revision.type === 'approved_by_requestor') {
+        typeLabel = '✓ Approved by Requestor';
+        badgeClass = 'badge-approved';
     } else if (revision.type === 'completed') {
         typeLabel = '✓ Completed';
         badgeClass = 'badge-approved';
     } else if (revision.type === 'revision_requested') {
         typeLabel = 'Revision Requested';
         badgeClass = 'badge-revision';
+    } else if (revision.type === 'rejected') {
+        typeLabel = '✕ Rejected';
+        badgeClass = 'badge-revoked';
+    } else if (revision.type === 'limit_override') {
+        typeLabel = 'Revision Limit Extended';
+        badgeClass = 'badge-approved';
     } else {
         typeLabel = 'Update';
         badgeClass = 'badge-revision';
@@ -3631,7 +3485,7 @@ function createServiceRevisionEntry(revision, index, total) {
     }
     
     // Status indicator for last message
-    const isLast = index === total - 1;
+    const isLast = isLastPage && index === total - 1;
     let statusIndicator = '';
     
     if (revision.type === 'completed') {

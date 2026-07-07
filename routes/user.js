@@ -723,17 +723,17 @@ router.get('/api/user-deadlines/:date/details', requireLogin, async (req, res) =
     // Process the data
     const processedApprovals = approvals.map(approval => ({
       ...approval,
-      displayOrganization: approval.userId?.userType === 'nonstudent'
-        ? approval.userId.affiliation
-        : approval.organization || 'N/A',
+      displayOrganization: approval.organization || (approval.userId?.userType === 'nonstudent'
+        ? (Array.isArray(approval.userId.affiliation) ? approval.userId.affiliation.join(', ') : approval.userId.affiliation)
+        : 'N/A'),
       dateType: approval.deadline ? 'deadline' : 'created'
     }));
 
     const processedServices = services.map(service => ({
       ...service,
-      displayOrganization: service.userId?.userType === 'nonstudent'
-        ? service.userId.affiliation
-        : service.organization || 'N/A',
+      displayOrganization: service.organization || (service.userId?.userType === 'nonstudent'
+        ? (Array.isArray(service.userId.affiliation) ? service.userId.affiliation.join(', ') : service.userId.affiliation)
+        : 'N/A'),
       dateType: service.deadline ? 'deadline' : 'created'
     }));
 
@@ -1466,7 +1466,7 @@ router.post('/user/service/request-revision/:id', requireLogin, async (req, res)
 
     // Notify unit team about the revision request
     try {
-      await notificationService.notifyUnitRevisionRequested(request._id, userId, request.assignedUnits, request.revisionCount);
+      await notificationService.notifyUnitRevisionRequested(request._id, userId, request.assignedUnits, request.revisionCount, effectiveLimit);
     } catch (notifError) {
       console.error('Error sending revision request notification:', notifError);
     }

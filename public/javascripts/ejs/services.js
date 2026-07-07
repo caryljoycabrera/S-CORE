@@ -2861,9 +2861,10 @@ window.openImagePreview = function(imageUrl, fileName) {
   // REVISION HISTORY FUNCTIONS (Admin Services)
   // ==========================================
   
-  async function loadRevisionHistory(requestId, currentStatus = '') {
+  async function loadRevisionHistory(requestId, currentStatus = '', page = Number.MAX_SAFE_INTEGER) {
     const historySection = document.getElementById('revisionHistorySection');
     const historyContainer = document.getElementById('revisionHistoryContainer');
+    const pagerContainer = document.getElementById('revisionHistoryPager');
     
     console.log('[Admin Services - Revision History] Loading for request:', requestId, 'Status:', currentStatus);
     
@@ -2877,6 +2878,7 @@ window.openImagePreview = function(imageUrl, fileName) {
       if (historySection) {
         historySection.style.display = 'block';
       }
+      if (pagerContainer) pagerContainer.innerHTML = '';
       historyContainer.innerHTML = `
         <div class="revision-empty-state" style="text-align: center; padding: 2rem; color: #6b7280;">
           <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.5;">
@@ -2892,7 +2894,7 @@ window.openImagePreview = function(imageUrl, fileName) {
     };
     
     try {
-      const response = await fetch(`/api/service-revision-history/${requestId}`);
+      const response = await fetch(`/api/service-revision-history/${requestId}?page=${page}&limit=5`);
       console.log('[Admin Services - Revision History] Response status:', response.status);
       
       const contentType = response.headers.get('content-type');
@@ -2928,14 +2930,20 @@ window.openImagePreview = function(imageUrl, fileName) {
         const revisionsToShow = result.revisions.filter(revision => revision.type !== 'initial');
         
         if (revisionsToShow.length > 0) {
+          const pagination = result.pagination || { page: 1, totalPages: 1 };
+          const isLastPage = pagination.page >= pagination.totalPages;
+          
           revisionsToShow.forEach((revision, index) => {
             console.log('[Admin Services - Revision History] Rendering revision', index, ':', revision.type);
-            const entry = createServiceAdminRevisionEntry(revision, index, revisionsToShow.length);
+            const entry = createServiceAdminRevisionEntry(revision, index, revisionsToShow.length, isLastPage);
             historyContainer.appendChild(entry);
           });
           
+          renderRevisionPager(pagerContainer, requestId, pagination, currentStatus);
+          
           console.log('[Admin Services - Revision History] All revisions rendered');
         } else {
+          if (pagerContainer) pagerContainer.innerHTML = '';
           showEmptyState();
         }
       } else {
@@ -2950,15 +2958,31 @@ window.openImagePreview = function(imageUrl, fileName) {
           modalBody.classList.remove('has-revisions');
         }
         
+        if (pagerContainer) pagerContainer.innerHTML = '';
         showEmptyState();
       }
     } catch (error) {
       console.error('[Admin Services - Revision History] Error loading revision history:', error);
+      if (pagerContainer) pagerContainer.innerHTML = '';
       showEmptyState();
     }
   }
   
-  function createServiceAdminRevisionEntry(revision, index, total) {
+  function renderRevisionPager(pagerContainer, requestId, pagination, currentStatus) {
+    if (!pagerContainer) return;
+    const { page, totalPages } = pagination;
+    if (!totalPages || totalPages <= 1) {
+      pagerContainer.innerHTML = '';
+      return;
+    }
+    pagerContainer.innerHTML = `
+      <button type="button" class="pager-btn" ${page <= 1 ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', '${currentStatus}', ${page - 1})">‹ Prev</button>
+      <span class="pager-status">Page ${page} of ${totalPages}</span>
+      <button type="button" class="pager-btn" ${page >= totalPages ? 'disabled' : ''} onclick="loadRevisionHistory('${requestId}', '${currentStatus}', ${page + 1})">Next ›</button>
+    `;
+  }
+
+  function createServiceAdminRevisionEntry(revision, index, total, isLastPage = true) {
     const entry = document.createElement('div');
     const isUnitAction = revision.requestedBy || revision.type === 'revision' || revision.type === 'revoked' || revision.type === 'approved';
     const isRequestorAction = revision.respondedBy || revision.type === 'initial' || revision.type === 'resubmitted';
@@ -2980,7 +3004,7 @@ window.openImagePreview = function(imageUrl, fileName) {
     
     let statusIndicator = '';
     if (revision.type === 'approved') statusIndicator = `<div class="status-indicator approved"><svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg><span style="color: #10b981; font-weight: 600;">Request Approved - Process Complete</span></div>`;
-    else if (index === total - 1) statusIndicator = isUnitAction ? `<div class="status-indicator waiting"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Waiting for Requestor Response</div>` : `<div class="status-indicator under-review"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Under Unit Review</div>`;
+    else if (isLastPage && index === total - 1) statusIndicator = isUnitAction ? `<div class="status-indicator waiting"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Waiting for Requestor Response</div>` : `<div class="status-indicator under-review"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Under Unit Review</div>`;
     
     let authorName = 'Unknown', authorUnit = '';
     if (revision.by) authorName = revision.by;

@@ -5821,7 +5821,7 @@ async function loadRevisionHistory(requestId, page = Number.MAX_SAFE_INTEGER) {
     try {
         // page defaults to a huge number so the API clamps it to the true last page,
         // surfacing the most recent/actionable entry without an extra click.
-        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=10`);
+        const response = await fetch(`/api/revision-history/${requestId}?page=${page}&limit=5`);
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {

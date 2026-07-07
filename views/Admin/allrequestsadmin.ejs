@@ -34,15 +34,6 @@
   <!-- Admin All Requests Page Specific Stylesheet -->
   <link rel="stylesheet" href="/stylesheets/ejs/allrequestsadmin.css" />
   <link rel="stylesheet" href="/stylesheets/admin-created-indicator.css" />
-  <style>
-    tr.priority-row {
-      border-left: 4px solid #ef4444 !important;
-      background-color: #fef2f2 !important;
-    }
-    tr.priority-row td:first-child {
-      border-left: none !important;
-    }
-  </style>
 </head>
 <body>
   <!-- SIDEBAR NAVIGATION -->
@@ -439,7 +430,7 @@
                 </td>
                 <td data-label="User"><%= displayUserName %></td>
                 <td data-label="Title"><div class="table-cell-wrapper"><%= request.title %></div></td>
-                <td data-label="Organization"><div class="table-cell-wrapper"><%= request.displayOrganization || request.organization %></div></td>
+                <td data-label="Organization" class="<%= (highPriorityOrgs || []).includes((request.displayOrganization || request.organization)) ? 'priority-org-cell' : '' %>"><div class="table-cell-wrapper"><%= request.displayOrganization || request.organization %></div></td>
                 <td data-label="Status">
                   <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                     <%= request.status %>
@@ -457,6 +448,10 @@
               <span class="admin-created-swatch"></span>
               <span>Rows highlighted in green are requests created by an admin on behalf of the requestor.</span>
             </div>
+          <% } %>
+
+          <% if (highPriorityOrgs && highPriorityOrgs.length > 0) { %>
+            <div class="priority-note">Requests with red organization text are high-priority tasks.</div>
           <% } %>
 
           <% if (allRequests.length === 0) { %>
@@ -813,6 +808,7 @@
             <div id="revisionHistoryContainer" class="revision-history-timeline">
               <!-- Dynamically populated by JavaScript -->
             </div>
+            <div id="revisionHistoryPager" class="revision-pager"></div>
           </div>
 
         </div>
