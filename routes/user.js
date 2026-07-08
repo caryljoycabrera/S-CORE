@@ -12,6 +12,7 @@ const ServiceRequest = require('../models/ServiceRequest');
 const Page = require('../models/Page');
 const BroadcastMessage = require('../models/BroadcastMessage');
 const { requireLogin } = require('../middleware/auth');
+const { requireMaintenanceCheck } = require('../middleware/maintenance');
 const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const { getAutoAssignedUnit, getDefaultDeadlineDays } = require('../utils/settingsHelpers');
@@ -20,6 +21,9 @@ const fs = require('fs');
 const bcrypt = require('bcrypt');
 const { requestLimiter } = require('../middleware/rateLimiter');
 const { sanitizeText, sanitizeMongoId, sanitizeString, sanitizeName, sanitizeEmail, sanitizePhone, escapeHtml, sanitizeRichText } = require('../utils/sanitize');
+
+// Apply maintenance check before all user routes
+router.use(requireMaintenanceCheck);
 
 /**
  * GET /

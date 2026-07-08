@@ -1722,39 +1722,64 @@ It's already a flex container, but we need to add two key properties:
   </div>
 
   <div class="guidelines-content" id="guidelinesContent" style="display: none;">
-    <div class="guidelines-section">
-      <h5 class="section-title">
+
+    <!-- Quick Steps — condensed -->
+    <div class="guidelines-section" style="background:#e8f5e9;border-color:#a5d6a7;">
+      <h5 class="section-title" style="color:#1b5e20;margin-bottom:0.5rem;">
         <span class="section-icon">
           <svg width="20" height="20" fill="none" stroke="#2e7d32" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </span>
+        How to Submit
+      </h5>
+      <ul class="guidelines-list" style="font-size:0.85rem;">
+        <li>Choose <strong>Approval</strong> (review finished file) or <strong>Service</strong> (SCO creates new work) in sidebar</li>
+        <li>Fill title, description, deadline, paste links — <em>links only, no file uploads</em></li>
+        <li>Submit → request is <strong>locked</strong>. If "For Revision," read Conversation tab, add new link, resubmit</li>
+      </ul>
+    </div>
+
+    <!-- Approval -->
+    <div class="guidelines-section" style="padding:1rem;">
+      <h5 class="section-title" style="margin-bottom:0.25rem;">
+        <span class="section-icon">
+          <svg width="18" height="18" fill="none" stroke="#2e7d32" stroke-width="2" viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <polyline points="14 2 14 8 20 8"></polyline>
             <line x1="16" y1="13" x2="8" y2="13"></line>
             <line x1="16" y1="17" x2="8" y2="17"></line>
-            <line x1="10" y1="9" x2="8" y2="9"></line>
           </svg>
         </span>
-        Request Approvals
+        Approval — submit <strong>3+ working days</strong> early
       </h5>
-      <ul class="guidelines-list">
-        <li>All requests must be submitted at least <strong>three (3) working days</strong> prior to the required date.</li>
-        <li>This lead time allows sufficient review, revisions, and endorsement.</li>
-      </ul>
     </div>
 
-    <div class="guidelines-section">
-        <h5 class="section-title">
-          <span class="section-icon">
-            <svg width="20" height="20" fill="none" stroke="#2e7d32" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M22.7 19.3l-6-6a7 7 0 1 1 2.1-2.1l6 6a1.5 1.5 0 1 1-2.1 2.1zM8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
-            </svg>
-          </span>
-          Service Requests
-        </h5>
-      <ul class="guidelines-list">
-        <li>All service requests must be submitted at least <strong>seven (7) working days</strong> prior to the required date.</li>
-        <li>This gives the team ample time to assess the request, assign resources, and schedule accordingly.</li>
-        <li>Requests involving large-scale projects or specialized requirements may require a longer lead time with a minimum of <strong>fourteen (14) working days</strong>, subject to assessment by the concerned unit/s and is case-to-case basis.</li>
-      </ul>
+    <!-- Service -->
+    <div class="guidelines-section" style="padding:1rem;">
+      <h5 class="section-title" style="margin-bottom:0.25rem;">
+        <span class="section-icon">
+          <svg width="18" height="18" fill="none" stroke="#2e7d32" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M22.7 19.3l-6-6a7 7 0 1 1 2.1-2.1l6 6a1.5 1.5 0 1 1-2.1 2.1zM8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+          </svg>
+        </span>
+        Service — submit <strong>7+ working days</strong> early (large projects may need 14)
+      </h5>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="guidelines-section" style="background:#fff8e1;border-color:#ffe082;padding:0.75rem 1rem;">
+      <p style="margin:0;font-size:0.85rem;color:#92400e;">
+        <strong>Tip:</strong> Submit early, be detailed, use the Conversation tab, and act on "For Revision" tasks ASAP.
+      </p>
+    </div>
+
+    <!-- Link to full guide -->
+    <div style="text-align:center;margin-top:0.75rem;">
+      <a href="/user-guide" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1.25rem;background:linear-gradient(135deg,#43a047,#2e7d32);color:white;border-radius:8px;font-size:0.9rem;font-weight:600;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(46,125,50,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Open Full Guide
+      </a>
     </div>
   </div>
 </div>

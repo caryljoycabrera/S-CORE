@@ -199,6 +199,28 @@ const systemSettingsSchema = new mongoose.Schema({
     type: String,
     default: 'System is under maintenance. Please try again later.'
   },
+  maintenanceTarget: {
+    type: String,
+    enum: ['unit', 'requestor', 'both'],
+    default: 'both'
+  },
+  maintenanceScheduleType: {
+    type: String,
+    enum: ['instant', 'scheduled', 'disabled'],
+    default: 'disabled'
+  },
+  maintenanceStartAt: {
+    type: Date,
+    default: null
+  },
+  maintenanceEndAt: {
+    type: Date,
+    default: null
+  },
+  maintenanceContactEmail: {
+    type: String,
+    default: 'sco@dlsud.edu.ph'
+  },
 
   // Audit & Logging
   enableDetailedLogs: {

@@ -119,15 +119,15 @@
                 <p class="guidelines-subtitle">Quick reference for efficient task handling</p>
               </div>
             </div>
-            <span class="guidelines-toggle" id="guidelinesToggle">▼</span>
+            <span class="guidelines-toggle" id="guidelinesToggle" style="transform: rotate(180deg);">▼</span>
           </div>
         </div>
 
-        <div class="guidelines-content" id="guidelinesContent" style="display: none;">
+        <div class="guidelines-content active" id="guidelinesContent" style="display: block;">
           
           <!-- Approval Requests -->
-          <div class="guidelines-section">
-            <h5 class="section-title">
+          <div class="guidelines-section" style="border-left-color: #2c5d31;">
+            <h5 class="section-title" style="color: #2c5d31;">
               <span class="section-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -136,34 +136,47 @@
                   <line x1="16" y1="17" x2="8" y2="17"></line>
                 </svg>
               </span>
-              Approval Requests
+              Type 1: Approval Requests
             </h5>
-            <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 12px; font-style: italic;">Your Goal: Review a file submitted by a requestor</p>
+            <p style="background: #f0fdf4; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; color: #2c5d31; margin: 0 0 12px; font-weight: 600;">You Review → They Already Created It</p>
             
             <div style="margin: 16px 0;">
-              <p style="margin: 0 0 8px;"><strong>Your Action:</strong> Use the "Approve" or "For Revision" buttons in the task modal.</p>
-              <p style="margin: 0; padding: 12px; background: #fef3c7; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.875rem;">
-                <strong>Tip:</strong> If you click "For Revision," you MUST use the Conversation tab to explain what changes are needed.
+              <p style="margin: 0 0 10px; font-size: 0.875rem;"><strong>Your Goal:</strong> Review and validate materials (like a pubmat, caption, or video) that a requestor already submitted.</p>
+              <p style="margin: 0 0 10px; font-size: 0.875rem;"><strong>Your Actions:</strong></p>
+              <ul style="margin: 0 0 10px; padding-left: 20px; font-size: 0.85rem;">
+                <li><strong>"Approve":</strong> If submission is correct, provide final remarks → Sets status to "Approved" (final).</li>
+                <li><strong>"For Revision":</strong> If errors exist → Explain what needs fixing in Conversation. Requestor resubmits → status becomes "For Checking" for re-review.</li>
+                <li><strong>"Revoke Approval":</strong> If approved by mistake, revoke it → sends back to "For Revision".</li>
+              </ul>
+              <p style="margin: 0; padding: 12px; background: #fef3c7; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.85rem;">
+                <strong>Tip:</strong> Always use the Conversation tab to explain what needs fixing when setting "For Revision." Be specific about changes required.
               </p>
             </div>
           </div>
 
           <!-- Service Requests -->
-          <div class="guidelines-section">
-            <h5 class="section-title">
+          <div class="guidelines-section" style="border-left-color: #1e40af;">
+            <h5 class="section-title" style="color: #1e40af;">
               <span class="section-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
                   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
                 </svg>
               </span>
-              Service Requests
+              Type 2: Service Requests
             </h5>
-            <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 12px; font-style: italic;">Your Goal: Create a new file for the requestor</p>
+            <p style="background: #eff6ff; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; color: #1e40af; margin: 0 0 12px; font-weight: 600;">You Create → You Deliver the Final Product</p>
             
             <div style="margin: 16px 0;">
-              <p style="margin: 0 0 8px;"><strong>Your Action:</strong> Use the "Upload Deliverable" button to attach your final file, then click "Mark as Completed."</p>
-              <p style="margin: 0; padding: 12px; background: #fef3c7; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.875rem;">
-                <strong>Tip:</strong> Use the Conversation tab to share drafts with the requestor before uploading the final deliverable.
+              <p style="margin: 0 0 10px; font-size: 0.875rem;"><strong>Your Goal:</strong> Create and deliver a new creative asset (like a graphic, video, or photo set) for a requestor.</p>
+              <p style="margin: 0 0 10px; font-size: 0.875rem;"><strong>Your Actions:</strong></p>
+              <ul style="margin: 0 0 10px; padding-left: 20px; font-size: 0.85rem;">
+                <li><strong>"Reject":</strong> Available only before you start (status "Queued"). Requires a reason → Sets to "Rejected" (final).</li>
+                <li><strong>"Start" / "Acknowledge":</strong> Begin working → Sets status to "In Progress".</li>
+                <li><strong>"Submit Deliverable":</strong> Paste link(s) to finished work + notes → Sets to "For Checking" for requestor review.</li>
+                <li><strong>"Mark Final Complete":</strong> After requestor approves deliverable, provide final remarks → Sets to "Completed" (true final).</li>
+              </ul>
+              <p style="margin: 0; padding: 12px; background: #fef3c7; border-left: 3px solid #d97706; border-radius: 4px; font-size: 0.85rem;">
+                <strong>Tip:</strong> Use the Conversation tab to share watermarked drafts with the requestor before submitting the final deliverable link.
               </p>
             </div>
           </div>
@@ -972,6 +985,25 @@
       
       if (tabBtn) tabBtn.classList.add('active');
       if (tabPane) tabPane.classList.add('active');
+    }
+
+    function toggleGuidelines() {
+      const content = document.getElementById('guidelinesContent');
+      const toggle = document.getElementById('guidelinesToggle');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.style.transform = 'rotate(180deg)';
+        setTimeout(() => {
+          content.classList.add('active');
+        }, 10);
+      } else {
+        content.classList.remove('active');
+        toggle.style.transform = 'rotate(0deg)';
+        setTimeout(() => {
+          content.style.display = 'none';
+        }, 300);
+      }
     }
   </script>
   

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Under Maintenance<% if (typeof siteTitle !== 'undefined' && siteTitle) { %> — <%= siteTitle %><% } %></title>
+  <link rel="icon" type="image/x-icon" href="/Picture/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary-green: #2c5d31;
+      --primary-green-rgb: 44, 93, 49;
+      --secondary-green: #4a7c59;
+      --accent-green: #6ba777;
+      --light-green: #e8f5ea;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .maintenance-wrapper {
+      max-width: 480px;
+      width: 100%;
+    }
+    .maintenance-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+      padding: 2rem 2rem 1.5rem;
+      text-align: center;
+    }
+    .card-header .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .card-header .logo-row img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: white;
+      padding: 2px;
+    }
+    .card-header .logo-row span {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: white;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(4px);
+      padding: 0.5rem 1.25rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: white;
+      letter-spacing: 0.02em;
+    }
+    .status-badge svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .card-body {
+      padding: 2rem 2rem 1.5rem;
+      text-align: center;
+    }
+    .card-body h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+    .message {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+    .message a {
+      color: var(--success);
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .message a:hover {
+      color: #059669;
+    }
+    .countdown {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .countdown-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9ca3af;
+      margin-bottom: 0.5rem;
+    }
+    .countdown-timer {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-green);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.05em;
+    }
+    .contact-section {
+      background: var(--light-green);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .contact-section p {
+      font-size: 0.875rem;
+      color: #374151;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    .contact-section .contact-email {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary-green);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border: 2px solid var(--primary-green);
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .contact-section .contact-email:hover {
+      background: var(--primary-green);
+      color: white;
+    }
+    .contact-section .contact-email svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .card-footer {
+      border-top: 1px solid #e5e7eb;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-footer a {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #9ca3af;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .card-footer a:hover { color: #6b7280; }
+    .refresh-note {
+      font-size: 0.75rem;
+      color: #d1d5db;
+    }
+    @media (max-width: 520px) {
+      body { padding: 1rem; }
+      .card-header { padding: 1.5rem 1.5rem 1.25rem; }
+      .card-body { padding: 1.5rem 1.5rem 1rem; }
+      .card-footer { padding: 0.75rem 1.5rem; flex-direction: column; gap: 0.5rem; }
+      .card-body h1 { font-size: 1.25rem; }
+      .countdown-timer { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="maintenance-wrapper">
+    <div class="maintenance-card">
+      <div class="card-header">
+        <div class="logo-row">
+          <img src="/Picture/logo.jpg" alt="S-CORE">
+          <span>S-CORE</span>
+        </div>
+        <div class="status-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+          </svg>
+          Scheduled Maintenance
+        </div>
+      </div>
+      <div class="card-body">
+        <h1>System Under Maintenance</h1>
+        <p class="message"><%- typeof message !== 'undefined' && message ? message.replace(/[<]/g, '&lt;').replace(/([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1">$1</a>') : 'The system is currently undergoing scheduled maintenance. Please check back later.' %></p>
+        <% if (typeof endTime !== 'undefined' && endTime) { %>
+        <div class="countdown">
+          <div class="countdown-label">Estimated time remaining</div>
+          <div class="countdown-timer" id="countdownTimer">--</div>
+        </div>
+        <% } %>
+        <% if (typeof contactEmail !== 'undefined' && contactEmail) { %>
+        <div class="contact-section">
+          <p>Need assistance? Contact us at</p>
+          <a href="mailto:<%= contactEmail %>" class="contact-email">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M22 7l-10 7L2 7"/>
+            </svg>
+            <%= contactEmail %>
+          </a>
+        </div>
+        <% } %>
+      </div>
+      <div class="card-footer">
+        <a href="/logout">Logout</a>
+        <span class="refresh-note">Auto-refreshes every 30 seconds</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var endTime = <% if (typeof endTime !== 'undefined' && endTime) { %>new Date('<%= endTime %>').getTime()<% } else { %>null<% } %>;
+      function updateCountdown() {
+        var el = document.getElementById('countdownTimer');
+        if (!el || !endTime) return;
+        var now = Date.now();
+        var diff = endTime - now;
+        if (diff <= 0) { el.textContent = 'Ending soon'; return; }
+        var h = Math.floor(diff / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        el.textContent =
+          String(h).padStart(2, '0') + ':' +
+          String(m).padStart(2, '0') + ':' +
+          String(s).padStart(2, '0');
+      }
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+      setTimeout(function() { location.reload(); }, 30000);
+    })();
+  </script>
+</body>
+</html>

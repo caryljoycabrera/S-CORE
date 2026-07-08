@@ -306,6 +306,7 @@ body.modal-open {
 /* Modal body allows content to flow */
 .modal-body {
   position: relative !important;
+  padding: 24px !important;
   /* Don't set overflow here - let it inherit from modal-content */
 }
 

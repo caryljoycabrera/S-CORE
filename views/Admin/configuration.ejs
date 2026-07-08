@@ -971,7 +971,35 @@
       font-size: 0.875rem;
     }
 
-
+    /* Unsaved changes indicator */
+    .config-sticky-bar.unsaved {
+      border-top-color: #f59e0b;
+      box-shadow: 0 -4px 12px rgba(245, 158, 11, 0.15);
+    }
+    .unsaved-indicator {
+      display: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #d97706;
+      align-items: center;
+      gap: 0.25rem;
+      margin-right: auto;
+    }
+    .config-sticky-bar.unsaved .unsaved-indicator {
+      display: inline-flex;
+    }
+    .unsaved-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
 
     /* Modal Styles */
     .modal {
@@ -1203,6 +1231,8 @@
     <symbol id="icon-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
     <symbol id="icon-smartphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></symbol>
     <symbol id="icon-alert-triangle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    <symbol id="icon-tool" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+    <symbol id="icon-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></symbol>
   </svg>
   <!-- SIDEBAR NAVIGATION -->
   <div class="admin-sidebar" id="adminSidebar">
@@ -1391,6 +1421,9 @@
         <button type="button" class="config-tab" onclick="switchTab('chatbot')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-help-circle"/></svg>Q&A Chatbot
         </button>
+        <button type="button" class="config-tab" onclick="switchTab('maintenance')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-tool"/></svg>Maintenance
+        </button>
       </div>
 
       <!-- Mobile tab dropdown (visible only on small screens) -->
@@ -1400,6 +1433,7 @@
         <option value="aboutscore">About S-CORE Page Configuration</option>
         <option value="archivemanager">Archive Manager</option>
         <option value="chatbot">Q&amp;A Chatbot</option>
+        <option value="maintenance">Maintenance</option>
       </select>
 
       <!-- Homepage Configuration Tab -->
@@ -3522,14 +3556,170 @@
                   <button type="button" id="chatbotSaveJsonBtn" style="padding: 8px 12px; border-radius: 8px; border: none; color: #fff; background: linear-gradient(135deg, #1d4ed8, #1e40af); cursor: pointer; font-weight: 600;">Save JSON</button>
                   <div id="chatbotJsonMsg" style="display: none; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;"></div>
                 </div>
+          </div>
+        </div> <!-- End chatbot-tab content wrapper -->
+      </div>  <!-- End chatbot-tab -->
+
+      <!-- MAINTENANCE TAB -->
+      <div id="maintenance-tab" class="tab-content">
+        <div class="config-header">
+          <h1>Maintenance Mode</h1>
+        </div>
+
+        <!-- Info Banner -->
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem;">
+          <p style="margin: 0; color: #92400e; font-weight: 500;">
+            <strong><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><use href="#icon-alert-triangle"/></svg> Maintenance:</strong> Control system downtime. Scheduled maintenance blocks non-admin users from accessing the platform. Admins always have access.
+          </p>
+        </div>
+
+        <form id="maintenanceConfigForm" method="POST" action="/admin/system-configuration">
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+
+            <!-- Status Banner (live indicator) -->
+            <div style="background:white;border:1px solid #e5e7eb;border-radius:0.75rem;padding:1.25rem;">
+              <h2 style="font-size:1rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-alert-triangle"/></svg>
+                Current Status
+              </h2>
+              <div style="margin:0.75rem 0;">
+                <div id="maintenanceStatusBadge" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-weight:700;font-size:0.95rem;">
+                  <% 
+                    const maintMode = settings && settings.maintenanceMode;
+                    const maintSchedule = settings && settings.maintenanceScheduleType;
+                    let statusText = 'Disabled';
+                    let statusColor = '#10b981';
+                    let statusBg = '#d1fae5';
+                    if (maintMode && maintSchedule === 'instant') {
+                      statusText = 'Active Now';
+                      statusColor = '#dc2626';
+                      statusBg = '#fee2e2';
+                    } else if (maintMode && maintSchedule === 'scheduled') {
+                      statusText = 'Scheduled';
+                      statusColor = '#d97706';
+                      statusBg = '#fef3c7';
+                    }
+                  %>
+                  <span style="width:10px;height:10px;border-radius:50%;background:<%= statusColor %>;display:inline-block;"></span>
+                  <span style="color:<%= statusColor %>;"><%= statusText %></span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Add global tab switching function at end of body -->
-          <script>
-            // ── Archiving trigger from Configuration page ─────────────────────
-            async function configTriggerArchiving() {
+            <!-- Schedule Type -->
+            <div style="background:white;border:1px solid #e5e7eb;border-radius:0.75rem;padding:1.25rem;">
+              <h2 style="font-size:1rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-clock"/></svg>
+                Schedule Type
+              </h2>
+              <div style="margin:0.75rem 0;display:flex;flex-direction:column;gap:12px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                  <input type="radio" name="maintenanceScheduleType" value="disabled" <%= (!settings.maintenanceMode || settings.maintenanceScheduleType === 'disabled') ? 'checked' : '' %>>
+                  <span><strong>Disabled</strong> — No maintenance. System operates normally.</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                  <input type="radio" name="maintenanceScheduleType" value="instant" <%= (settings.maintenanceMode && settings.maintenanceScheduleType === 'instant') ? 'checked' : '' %>>
+                  <span><strong>Instant</strong> — Activate maintenance immediately. Stays active until disabled.</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                  <input type="radio" name="maintenanceScheduleType" value="scheduled" <%= (settings.maintenanceMode && settings.maintenanceScheduleType === 'scheduled') ? 'checked' : '' %>>
+                  <span><strong>Scheduled</strong> — Set a specific start and end time.</span>
+                </label>
+              </div>
+
+              <!-- Scheduled datetime pickers (shown when scheduled is selected) -->
+              <div id="scheduledTimes" style="display:<%= (settings.maintenanceMode && settings.maintenanceScheduleType === 'scheduled') ? 'block' : 'none' %>;margin-top:0.75rem;">
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:200px;">
+                    <label for="maintenanceStartAt" style="display:block;font-weight:600;color:#374151;margin-bottom:0.5rem;font-size:0.875rem;">Start Date &amp; Time</label>
+                    <input type="datetime-local" id="maintenanceStartAt" name="maintenanceStartAt" value="<%= settings.maintenanceStartAt ? new Date(settings.maintenanceStartAt).toISOString().slice(0,16) : '' %>" style="width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:0.95rem;font-family:'Inter',sans-serif;box-sizing:border-box;">
+                  </div>
+                  <div style="flex:1;min-width:200px;">
+                    <label for="maintenanceEndAt" style="display:block;font-weight:600;color:#374151;margin-bottom:0.5rem;font-size:0.875rem;">End Date &amp; Time</label>
+                    <input type="datetime-local" id="maintenanceEndAt" name="maintenanceEndAt" value="<%= settings.maintenanceEndAt ? new Date(settings.maintenanceEndAt).toISOString().slice(0,16) : '' %>" style="width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:0.95rem;font-family:'Inter',sans-serif;box-sizing:border-box;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Target Audience -->
+            <div style="background:white;border:1px solid #e5e7eb;border-radius:0.75rem;padding:1.25rem;">
+              <h2 style="font-size:1rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-users"/></svg>
+                Target Audience
+              </h2>
+              <div style="margin:0.75rem 0;display:flex;flex-direction:column;gap:12px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                  <input type="radio" name="maintenanceTarget" value="both" <%= (!settings.maintenanceTarget || settings.maintenanceTarget === 'both') ? 'checked' : '' %>>
+                  <span><strong>All Users</strong> — All non-admin users are blocked.</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                  <input type="radio" name="maintenanceTarget" value="unit" <%= settings.maintenanceTarget === 'unit' ? 'checked' : '' %>>
+                  <span><strong>Unit Members Only</strong> — Only unit/team members are blocked.</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                  <input type="radio" name="maintenanceTarget" value="requestor" <%= settings.maintenanceTarget === 'requestor' ? 'checked' : '' %>>
+                  <span><strong>Requestors Only</strong> — Only requestors (students/non-students) are blocked.</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Maintenance Message -->
+            <div style="background:white;border:1px solid #e5e7eb;border-radius:0.75rem;padding:1.25rem;">
+              <h2 style="font-size:1rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-file-text"/></svg>
+                Custom Message
+              </h2>
+              <div style="margin:0.75rem 0;">
+                <label for="maintenanceMessage" style="display:block;font-weight:600;color:#374151;margin-bottom:0.5rem;font-size:0.875rem;">Maintenance Message</label>
+                <textarea id="maintenanceMessage" name="maintenanceMessage" rows="3" placeholder="System is under maintenance. Please try again later." style="width:100%;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:0.95rem;font-family:'Inter',sans-serif;box-sizing:border-box;resize:vertical;min-height:80px;"><%= settings.maintenanceMessage || '' %></textarea>
+                <p style="font-size:0.85rem;color:#6b7280;margin-top:0.25rem;">Plain text. Email addresses (e.g., support@example.com) auto-convert to clickable links on the maintenance page.</p>
+              </div>
+            </div>
+
+            <!-- Contact Email -->
+            <div style="background:white;border:1px solid #e5e7eb;border-radius:0.75rem;padding:1.25rem;">
+              <h2 style="font-size:1rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:0.5rem;margin:0 0 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-mail"/></svg>
+                Contact Email
+              </h2>
+              <div style="margin:0.75rem 0;">
+                <label for="maintenanceContactEmail" style="display:block;font-weight:600;color:#374151;margin-bottom:0.5rem;font-size:0.875rem;">Support Email Address</label>
+                <input type="email" id="maintenanceContactEmail" name="maintenanceContactEmail" value="<%= settings.maintenanceContactEmail || 'sco@dlsud.edu.ph' %>" style="width:100%;max-width:400px;padding:0.75rem 1rem;border:2px solid #e5e7eb;border-radius:0.5rem;font-size:0.95rem;font-family:'Inter',sans-serif;box-sizing:border-box;">
+                <p style="font-size:0.85rem;color:#6b7280;margin-top:0.25rem;">Shown on the maintenance page so affected users can contact your support team.</p>
+              </div>
+            </div>
+
+            <!-- Save Button -->
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:0.5rem;">
+              <button type="button" onclick="confirmMaintenanceSave()" style="background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;padding:0.75rem 1.5rem;border-radius:0.5rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.9rem;display:inline-flex;align-items:center;gap:0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-save"/></svg> Save Changes
+              </button>
+            </div>
+
+          </div>
+        </form>
+      </div>  <!-- End maintenance-tab -->
+
+      <script>
+        // Maintenance tab: toggle scheduled date-time pickers
+        document.addEventListener('DOMContentLoaded', function() {
+          var radios = document.querySelectorAll('input[name="maintenanceScheduleType"]');
+          var scheduledDiv = document.getElementById('scheduledTimes');
+          if (radios.length && scheduledDiv) {
+            radios.forEach(function(r) {
+              r.addEventListener('change', function() {
+                scheduledDiv.style.display = this.value === 'scheduled' ? 'block' : 'none';
+              });
+            });
+          }
+        });
+      </script>
+
+      <!-- Add global tab switching function at end of body -->
+      <script>
+        // ── Archiving trigger from Configuration page ─────────────────────
+        async function configTriggerArchiving() {
               const btn = document.getElementById('configRunArchivingBtn');
               const msgDiv = document.getElementById('archivingResultMsg');
 
@@ -5413,6 +5603,23 @@
     </div>
   </div>
 
+  <!-- Unsaved Changes Modal -->
+  <div id="unsavedModal" class="preview-modal">
+    <div class="preview-content" style="max-width:440px;">
+      <div class="preview-header">
+        <h2>Unsaved Changes</h2>
+      </div>
+      <div class="preview-body">
+        <p style="margin-bottom:1.5rem;color:#6b7280;">You have unsaved changes. What would you like to do?</p>
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end;flex-wrap:wrap;">
+          <button type="button" class="btn-close-preview" onclick="closeUnsavedModal()" style="background:#f3f4f6;color:#4b5563;padding:0.625rem 1.25rem;border:none;border-radius:0.5rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">Cancel</button>
+          <button type="button" onclick="discardUnsaved()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;padding:0.625rem 1.25rem;border:none;border-radius:0.5rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">Discard</button>
+          <button type="button" onclick="saveUnsaved()" style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:0.625rem 1.25rem;border:none;border-radius:0.5rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/javascripts/ejs/configuration.js"></script>
   <script>
     // Sidebar hover effect
@@ -5461,6 +5668,7 @@
 
   <!-- Sticky Bottom Action Bar -->
   <div class="config-sticky-bar">
+    <span class="unsaved-indicator"><span class="unsaved-dot"></span> Unsaved changes</span>
     <button type="button" id="stickyPreviewBtn" class="btn-preview">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><use href="#icon-eye"/></svg> Preview Changes
     </button>
@@ -5487,6 +5695,7 @@
         if (activeTab.id === 'system-tab') return 'system';
         if (activeTab.id === 'archivemanager-tab') return 'archivemanager';
         if (activeTab.id === 'chatbot-tab') return 'chatbot';
+        if (activeTab.id === 'maintenance-tab') return 'maintenance';
         return null;
       }
 
@@ -5549,6 +5758,173 @@
       }
 
       updateStickyBar();
+    });
+  </script>
+
+  <!-- ── Unsaved Changes Protection ── -->
+  <script>
+    // Store state on body dataset so interceptors always see current value
+    document.body.dataset.hasUnsaved = 'false';
+    var _pendingNav = null;
+    var _FORM_IDS = ['configurationForm', 'aboutScoreConfigForm', 'systemConfigForm', 'maintenanceConfigForm'];
+    var _origData = {};
+
+    function _getActiveTabName() {
+      var t = document.querySelector('.tab-content.active');
+      if (!t) return null;
+      if (t.id === 'homepage-tab') return 'homepage';
+      if (t.id === 'aboutscore-tab') return 'aboutscore';
+      if (t.id === 'system-tab') return 'system';
+      if (t.id === 'archivemanager-tab') return 'archivemanager';
+      if (t.id === 'chatbot-tab') return 'chatbot';
+      if (t.id === 'maintenance-tab') return 'maintenance';
+      return null;
+    }
+
+    // Robust serialization — walks every input manually (no FormData quirks)
+    function _serializeForm(f) {
+      if (!f) return '';
+      var data = {};
+      var els = f.querySelectorAll('input, textarea, select');
+      var len = els.length;
+      for (var i = 0; i < len; i++) {
+        var el = els[i];
+        if (!el.name || el.disabled) continue;
+        if (el.type === 'submit' || el.type === 'button' || el.type === 'file') continue;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          if (el.checked) {
+            if (!data[el.name]) data[el.name] = [];
+            data[el.name].push(el.value || 'on');
+          }
+        } else {
+          if (!data[el.name]) data[el.name] = [];
+          data[el.name].push(el.value);
+        }
+      }
+      return JSON.stringify(data);
+    }
+
+    function _captureAll() {
+      for (var i = 0; i < _FORM_IDS.length; i++) {
+        var f = document.getElementById(_FORM_IDS[i]);
+        if (f) _origData[_FORM_IDS[i]] = _serializeForm(f);
+      }
+    }
+
+    function _check() {
+      var c = false;
+      for (var i = 0; i < _FORM_IDS.length; i++) {
+        var id = _FORM_IDS[i];
+        var f = document.getElementById(id);
+        if (f && _origData[id] && _serializeForm(f) !== _origData[id]) { c = true; break; }
+      }
+      var changed = c ? 'true' : 'false';
+      if (document.body.dataset.hasUnsaved !== changed) {
+        document.body.dataset.hasUnsaved = changed;
+        var bar = document.querySelector('.config-sticky-bar');
+        if (bar) {
+          if (c) bar.classList.add('unsaved');
+          else bar.classList.remove('unsaved');
+        }
+      }
+    }
+
+    function _showModal() {
+      var m = document.getElementById('unsavedModal');
+      if (m) { m.classList.add('active'); document.body.classList.add('modal-open'); }
+    }
+
+    window.closeUnsavedModal = function() {
+      var m = document.getElementById('unsavedModal');
+      if (m) m.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      _pendingNav = null;
+    };
+
+    window.discardUnsaved = function() {
+      document.body.dataset.hasUnsaved = 'false';
+      var bar = document.querySelector('.config-sticky-bar');
+      if (bar) bar.classList.remove('unsaved');
+      closeUnsavedModal();
+      if (_pendingNav) { var cb = _pendingNav; _pendingNav = null; cb(); }
+    };
+
+      window.saveUnsaved = function() {
+        closeUnsavedModal();
+        var tab = _getActiveTabName();
+        if (tab === 'homepage') { var b = document.getElementById('saveBtn'); if (b) b.click(); }
+        else if (tab === 'aboutscore') { var b = document.getElementById('aboutScoreSaveBtn'); if (b) b.click(); }
+        else if (tab === 'system') { var b = document.getElementById('systemSaveBtn'); if (b) b.click(); }
+      };
+
+    // ── beforeunload — reads body dataset ──
+    window.addEventListener('beforeunload', function(e) {
+      if (document.body.dataset.hasUnsaved === 'true') { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    // ── Intercept sidebar nav / logout / any leave link ──
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('.sidebar-item, .dropdown-menu a, a[href="/logout"]');
+      if (!link || document.body.dataset.hasUnsaved !== 'true') return;
+      var href = link.getAttribute('href');
+      if (!href || href === '#' || href === '' || href === window.location.pathname) return;
+      e.preventDefault();
+      e.stopPropagation();
+      _pendingNav = function() { window.location.href = href; };
+      _showModal();
+    }, true);
+
+    // ── Init (must run after sticky-bar DOMContentLoaded wraps switchTab) ──
+    document.addEventListener('DOMContentLoaded', function() {
+      _captureAll();
+
+      // Attach input/change listeners on all known form elements
+      for (var i = 0; i < _FORM_IDS.length; i++) {
+        var f = document.getElementById(_FORM_IDS[i]);
+        if (!f) continue;
+        // Direct listeners on known elements (also catches changes from user typing)
+        var inputs = f.querySelectorAll('input, textarea, select');
+        for (var j = 0; j < inputs.length; j++) {
+          inputs[j].addEventListener('input', _check);
+          inputs[j].addEventListener('change', _check);
+        }
+        // Delegated — catches dynamically added items
+        f.addEventListener('input', _check);
+        f.addEventListener('change', _check);
+      }
+
+      // ── Poll every 800ms to catch structural changes (add/remove items) ──
+      setInterval(_check, 800);
+
+      // ── Wrap switchTab AFTER sticky-bar wrapper is in place ──
+      var _origTab = window.switchTab;
+      if (_origTab) {
+        window.switchTab = function(tabName) {
+          if (document.body.dataset.hasUnsaved === 'true') {
+            _pendingNav = function() { _origTab(tabName); };
+            _showModal();
+            return;
+          }
+          _origTab(tabName);
+        };
+      }
+
+      // Clear unsaved flag BEFORE form.submit() (confirmXxx use form.submit() which skips submit event)
+      var _clearThen = function(fn) {
+        return function() {
+          document.body.dataset.hasUnsaved = 'false';
+          return fn.apply(this, arguments);
+        };
+      };
+      if (window.confirmSave) window.confirmSave = _clearThen(window.confirmSave);
+      if (window.confirmSystemSave) window.confirmSystemSave = _clearThen(window.confirmSystemSave);
+      if (window.confirmMaintenanceSave) window.confirmMaintenanceSave = _clearThen(window.confirmMaintenanceSave);
+      if (window.confirmAboutScoreSave) window.confirmAboutScoreSave = _clearThen(window.confirmAboutScoreSave);
+      // Re-capture after reset
+      ['cancelBtn','aboutScoreResetBtn','systemResetBtn'].forEach(function(id) {
+        var b = document.getElementById(id);
+        if (b) b.addEventListener('click', function() { setTimeout(_captureAll, 200); });
+      });
     });
   </script>
 

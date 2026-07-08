@@ -395,7 +395,7 @@
                   displayUserName = `${request.userId.fName} ${request.userId.lName || ''}`.trim();
                 }
               %>
-              <tr class="request-row <%= (highPriorityOrgs || []).includes((request.displayOrganization || request.organization)) ? 'priority-row' : '' %>"
+              <tr class="request-row <%= (highPriorityOrgs || []).some(hp => hp.toLowerCase() === (request.displayOrganization || request.organization).toLowerCase()) ? 'priority-row' : '' %>"
                 data-id="<%= request._id %>"
                 data-request-id="<%= request._id.toString().slice(-6) %>"
                 data-type="<%= request.type %>"
@@ -430,7 +430,7 @@
                 </td>
                 <td data-label="User"><%= displayUserName %></td>
                 <td data-label="Title"><div class="table-cell-wrapper"><%= request.title %></div></td>
-                <td data-label="Organization" class="<%= (highPriorityOrgs || []).includes((request.displayOrganization || request.organization)) ? 'priority-org-cell' : '' %>"><div class="table-cell-wrapper"><%= request.displayOrganization || request.organization %></div></td>
+                <td data-label="Organization" class="<%= (highPriorityOrgs || []).some(hp => hp.toLowerCase() === (request.displayOrganization || request.organization).toLowerCase()) ? 'priority-org-cell' : '' %>"><div class="table-cell-wrapper"><%= request.displayOrganization || request.organization %></div></td>
                 <td data-label="Status">
                   <span class="status-badge <%= request.status.toLowerCase().replace(/\s+/g, '-') %>">
                     <%= request.status %>

@@ -221,6 +221,71 @@ function getMaintenanceMessage() {
   return settingsService.getSetting('maintenanceMessage', 'System is currently under maintenance. Please check back later.');
 }
 
+/**
+ * Get maintenance target audience
+ * @returns {string} 'unit', 'requestor', or 'both'
+ */
+function getMaintenanceTarget() {
+  return settingsService.getSetting('maintenanceTarget', 'both');
+}
+
+/**
+ * Get maintenance schedule type
+ * @returns {string} 'instant', 'scheduled', or 'disabled'
+ */
+function getMaintenanceScheduleType() {
+  return settingsService.getSetting('maintenanceScheduleType', 'disabled');
+}
+
+/**
+ * Check if maintenance is currently active
+ * @returns {{active: boolean, remaining: number|null, message: string, target: string, endTime: Date|null}}
+ */
+function isMaintenanceActive() {
+  const mode = isMaintenanceMode();
+  const scheduleType = getMaintenanceScheduleType();
+  
+  if (!mode || scheduleType === 'disabled') {
+    return { active: false, remaining: null, message: '', target: 'both', endTime: null };
+  }
+  
+  const now = new Date();
+  
+  if (scheduleType === 'scheduled') {
+    const startAt = settingsService.getSetting('maintenanceStartAt', null);
+    const endAt = settingsService.getSetting('maintenanceEndAt', null);
+    
+    if (!startAt || !endAt) {
+      return { active: false, remaining: null, message: '', target: 'both', endTime: null };
+    }
+    
+    const startTime = new Date(startAt);
+    const endTime = new Date(endAt);
+    
+    if (now < startTime || now > endTime) {
+      return { active: false, remaining: null, message: '', target: 'both', endTime: null };
+    }
+    
+    const remaining = endTime.getTime() - now.getTime();
+    return {
+      active: true,
+      remaining: remaining,
+      message: getMaintenanceMessage(),
+      target: getMaintenanceTarget(),
+      endTime: endTime
+    };
+  }
+  
+  // instant mode — active until turned off
+  return {
+    active: true,
+    remaining: null,
+    message: getMaintenanceMessage(),
+    target: getMaintenanceTarget(),
+    endTime: null
+  };
+}
+
 module.exports = {
   getOrganizations,
   getOffices,
@@ -242,5 +307,8 @@ module.exports = {
   isEmailNotificationsEnabled,
   getSiteConfig,
   isMaintenanceMode,
-  getMaintenanceMessage
+  getMaintenanceMessage,
+  getMaintenanceTarget,
+  getMaintenanceScheduleType,
+  isMaintenanceActive
 };

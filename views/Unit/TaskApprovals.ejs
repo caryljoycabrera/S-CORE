@@ -305,7 +305,7 @@
                       const description = request.description || '';
                       const requestorEmail = request.userId ? request.userId.email : '';
                     %>
-                    <tr class="request-row clickable <%= (highPriorityOrgs || []).includes(organization) ? 'priority-row' : '' %>" 
+                    <tr class="request-row clickable <%= (highPriorityOrgs || []).some(hp => hp.toLowerCase() === organization.toLowerCase()) ? 'priority-row' : '' %>" 
                         data-request-id="<%= request._id %>"
                         data-request-type="<%= type %>"
                         data-title="<%= title.replace(/"/g, '&quot;') %>"
@@ -328,7 +328,7 @@
                       </td>
                       <td class="title-cell"><%= title %></td>
                       <td><%= requestor %></td>
-                      <td class="<%= (highPriorityOrgs || []).includes(organization) ? 'priority-org-cell' : '' %>"><%= organization %></td>
+                      <td class="<%= (highPriorityOrgs || []).some(hp => hp.toLowerCase() === organization.toLowerCase()) ? 'priority-org-cell' : '' %>"><%= organization %></td>
                       <td><%= dateSubmitted %></td>
                       <td>
                         <span class="status-badge <%= status.toLowerCase().replace(/\s+/g, '-') %>"><%= status %></span>

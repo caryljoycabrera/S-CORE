@@ -23,7 +23,6 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
-  margin-left: 25rem;
 }
 
 .trash-btn:hover {

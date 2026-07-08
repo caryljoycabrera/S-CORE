@@ -436,6 +436,13 @@ document.addEventListener('DOMContentLoaded', function () {
       window.confirmSystemReset = confirmSystemReset;
       window.closeSystemResetConfirm = closeSystemResetConfirm;
 
+      // Maintenance tab save function
+      function confirmMaintenanceSave() {
+        showToast('Saving maintenance settings...');
+        document.getElementById('maintenanceConfigForm').submit();
+      }
+      window.confirmMaintenanceSave = confirmMaintenanceSave;
+
       // About S-CORE tab modal confirmation functions
       function showAboutScorePreview() {
         const previewBody = document.getElementById('aboutScorePreviewContent');

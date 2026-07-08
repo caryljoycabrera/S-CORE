@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="/stylesheets/modal-centered.css" />
   <link rel="stylesheet" href="/stylesheets/no-animations.css" />
   <link rel="stylesheet" href="/stylesheets/ejs/Unit/unitguide.css">
+  <link rel="stylesheet" href="/stylesheets/ejs/adminguide.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="/javascripts/alert-handler.js"></script>
 </head>
@@ -182,321 +183,558 @@
     </div>
 
     <div class="guide-container">
+      <!-- HERO -->
       <div class="guide-hero">
         <h1>Admin Guide</h1>
         <p>Your official guide to overseeing S-CORE's workflow, configuration, and content</p>
       </div>
 
-      <!-- Getting Started -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21,15 16,10 5,21"></polyline>
-            </svg>
+      <!-- OVERVIEW CARDS — visual section index -->
+      <div class="guide-overview">
+        <a href="#section-getting-started" class="overview-card">
+          <div class="overview-card-icon" style="background:#d1fae5;color:#065f46;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21,15 16,10 5,21"></polyline></svg>
           </div>
-          <h2>Getting Started</h2>
-        </div>
-        <p>Welcome to the S-CORE Admin panel. As an Admin (Director or Secretary), you have full oversight of the platform: you configure the system, oversee every request across all units, manage user accounts, publish announcements, and control the public-facing website content. This guide covers everything available to you.</p>
-      </div>
-
-      <!-- Your Dashboard -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-          </div>
-          <h2>Your Dashboard</h2>
-        </div>
-        <p>Your dashboard (<strong>Dashboard</strong> in the sidebar) gives you an at-a-glance view of the whole system:</p>
-        <ul>
-          <li>Action cards for quick navigation to All Requests, Approvals, Services, and Users</li>
-          <li>A calendar of upcoming deadlines across all units</li>
-          <li>KPI counters: Pending Assignment, Awaiting Approval, In Revision, Unassigned Tasks</li>
-          <li>Charts: Current Request Status, Active Tasks by Unit, Request Volume Over Time</li>
-          <li>Tables: Very Recent Requests, Urgent &amp; Overdue Tasks, Top Requests by Revision Count</li>
-        </ul>
-      </div>
-
-      <!-- Configuration -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><circle cx="12" cy="12" r="3"></circle>
-            </svg>
-          </div>
-          <h2>Configuration</h2>
-        </div>
-        <p>The <strong>Configuration</strong> page is the control center for the entire platform. It has five tabs:</p>
-
-        <div class="guide-step">
-          <h4>System Configuration</h4>
-          <p>Define the master lists used as dropdown options everywhere else in the app: Organizations, Offices/Departments, Units &amp; Request Types, Request Statuses, User Roles &amp; Permissions, Announcement Priority Levels, and Announcement Types. This tab also holds the Automated Workflow &amp; Archiving day-limit settings (see Archiving below).</p>
-        </div>
-
-        <div class="guide-step">
-          <h4>Homepage Configuration</h4>
-          <p><strong>Changes here are visible to every visitor of the public website.</strong> Edit the Hero section, SCO Pledge, About section, Services section, Team section, Contact section, Social Media links, and Footer.</p>
-        </div>
-
-        <div class="guide-step">
-          <h4>About S-CORE Page Configuration</h4>
-          <p>Edit the public "/about-s-core" page: Header, System Overview, Platform Features, and Call-to-Action buttons.</p>
-        </div>
-
-        <div class="guide-step">
-          <h4>Archive Manager</h4>
-          <p>See the Archiving section below — this tab is where you configure and run archiving.</p>
-        </div>
-
-        <div class="guide-step">
-          <h4>Q&amp;A Chatbot</h4>
-          <p>Manage the chatbot's per-page visibility, greetings, manual-reference links, and the role-based Q&amp;A/starter-suggestion content shown to requestors, units, and admins.</p>
-        </div>
-      </div>
-
-      <!-- Archiving -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 8v13H3V8"></path>
-              <path d="M1 3h22v5H1z"></path>
-              <line x1="10" y1="12" x2="14" y2="12"></line>
-            </svg>
-          </div>
-          <h2>Archiving</h2>
-        </div>
-        <p>Archiving is managed from <strong>Configuration → Archive Manager</strong>.</p>
-        <ul>
-          <li><strong>Automatic archiving:</strong> A background job runs nightly and archives requests on its own — no action needed from you. It archives "Completed"/"Approved" requests once they pass their configured day-limit, and "For Revision" requests with no activity past their limit.</li>
-          <li><strong>Day-limit settings:</strong> Configure how many days each status waits before auto-archiving (defaults: 30 days for Completed, 30 for Approved, 14 for For Revision with no activity).</li>
-          <li><strong>Run Archiving Now:</strong> Trigger the same archiving logic immediately instead of waiting for the nightly job.</li>
-          <li><strong>Pending Restoration Requests:</strong> Requestors and units can ask for an archived request to be restored — review and approve/dismiss these here.</li>
-          <li><strong>Browse Archived Records:</strong> Search, filter, restore, or permanently delete archived requests.</li>
-        </ul>
-        <div class="guide-tip">
-          <strong>Note:</strong> Both requestors and units can ask for an archived request to be reactivated — the "Allow Users to Restore Their Own Archived Requests" setting governs this.
-        </div>
-      </div>
-
-      <!-- Monitoring All Requests -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 11l3 3L22 4"></path>
-              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-            </svg>
-          </div>
-          <h2>Monitoring All Requests</h2>
-        </div>
-        <p>Three pages give you full visibility into requests across every unit:</p>
-        <ul>
-          <li><strong>Track All Requests:</strong> Every request, both types, in one table.</li>
-          <li><strong>Manage Approvals:</strong> Only Request Approvals.</li>
-          <li><strong>Manage Services:</strong> Only Service Requests.</li>
-        </ul>
-        <p>On any of these pages you can:</p>
-        <ul>
-          <li>Filter by Request ID, requestor name, status, assigned unit, organization, office/department, and date range</li>
-          <li>Open a request's details, edit it, or update its status or deadline directly</li>
-          <li>Click <strong>Open Request Discussion</strong> to join the same Conversation thread used by the requestor and the assigned unit — you can message, clarify, or intervene on any request</li>
-          <li>View a Deleted Requests list, and restore or permanently delete from there</li>
-        </ul>
-      </div>
-
-      <!-- Reports -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-          </div>
-          <h2>Generating Reports</h2>
-        </div>
-        <ol>
-          <li>Go to <strong>Generate Reports</strong> in the sidebar.</li>
-          <li>Set your filters: a date-range preset or custom range, request type (all/approval/service), one or more units, one or more statuses, and a sort order.</li>
-          <li>Generate a preview, customize the export (file name, report title, colors, paper size, orientation).</li>
-          <li>Download as PDF or Excel.</li>
-        </ol>
-        <p>Every report you generate is saved to <strong>Generated Reports History</strong>, where you can view, edit, duplicate, delete, restore, or re-download it later.</p>
-      </div>
-
-      <!-- Analytics -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="20" x2="12" y2="10"></line>
-              <line x1="18" y1="20" x2="18" y2="4"></line>
-              <line x1="6" y1="20" x2="6" y2="16"></line>
-            </svg>
-          </div>
-          <h2>Analytics</h2>
-        </div>
-        <p>The <strong>Analytics</strong> page gives deeper performance insight, filterable by date range, unit, request type, and status:</p>
-        <ul>
-          <li>At-a-glance KPIs</li>
-          <li>Request Status and Request Type distribution</li>
-          <li>Top Requestors and Request Volume Over Time</li>
-          <li>Active Workload, Average Turnaround Time, Total Workload, and Average Response Time — all broken down by unit</li>
-        </ul>
-        <p>Analytics data can also be exported to PDF, with its own history of past exports.</p>
-      </div>
-
-      <!-- User Management -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-          </div>
-          <h2>User Management</h2>
-        </div>
-        <p>The <strong>User Accounts</strong> page manages every account in the system, split into All / Approved / Pending / Denied tabs.</p>
-        <ul>
-          <li><strong>New registrations:</strong> Approve (grants the default Requestor role), Deny (with a reason), or Reset back to pending.</li>
-          <li><strong>Change Role:</strong> Promote or change a user between Requestor, Unit, and Admin. When you set a role to Unit, you must also assign which unit team (e.g., Graphics, Multimedia) they belong to — they'll only see tasks assigned to that team.</li>
-          <li><strong>Create User Invitation:</strong> Invite a new account directly.</li>
-          <li><strong>Deleted Users:</strong> Restore or permanently delete removed accounts.</li>
-        </ul>
-      </div>
-
-      <!-- Announcements -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
-            </svg>
-          </div>
-          <h2>Announcements</h2>
-        </div>
-        <p>Go to <strong>Announcements</strong> to broadcast messages to your users:</p>
-        <ul>
-          <li>Compose a title, rich-text message, priority level, and announcement type (both configurable in System Configuration)</li>
-          <li>Choose recipients: All Users, By Organization, By Office/Department, or Specific Users</li>
-          <li>Optionally set a future <strong>Schedule Send Date &amp; Time</strong> — scheduled announcements are sent automatically by a background job at the scheduled time, you don't need to be online</li>
-          <li>Manage sent announcements: view, edit, delete, and restore from the Trash</li>
-        </ul>
-      </div>
-
-      <!-- More Information -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-          </div>
-          <h2>Need More Information?</h2>
-        </div>
-        <p>For additional details and reference material, you may check the official <a href="https://s-core-digital-user-manual.pages.dev/" target="_blank" rel="noopener noreferrer">S-CORE Digital User Manual</a>.</p>
-      </div>
-
-      <!-- Quick Access -->
-      <div class="guide-section">
-        <div class="guide-section-header">
-          <div class="guide-section-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-          </div>
-          <h2>Quick Access</h2>
-        </div>
-        <div class="quick-links">
-          <a href="/admin" class="quick-link-card">
-            <div class="quick-link-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-              </svg>
-            </div>
-            <h3>Dashboard</h3>
-            <p>View overview and KPIs</p>
-          </a>
-          <a href="/admin/all-requests" class="quick-link-card">
-            <div class="quick-link-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 11l3 3L22 4"></path>
-                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-              </svg>
-            </div>
-            <h3>Track All Requests</h3>
-            <p>Monitor every request</p>
-          </a>
-          <a href="/admin/configuration" class="quick-link-card">
-            <div class="quick-link-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </div>
-            <h3>Configuration</h3>
-            <p>System &amp; homepage settings</p>
-          </a>
-          <a href="/admin/reports" class="quick-link-card">
-            <div class="quick-link-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14,2 14,8 20,8"></polyline>
-              </svg>
-            </div>
-            <h3>Reports</h3>
-            <p>Generate and export reports</p>
-          </a>
-          <a href="/admin/users" class="quick-link-card">
-            <div class="quick-link-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <h3>User Accounts</h3>
-            <p>Manage roles and approvals</p>
-          </a>
-          <a href="/admin/announcement" class="quick-link-card">
-            <div class="quick-link-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m3 11 18-5v12L3 14v-3z"></path>
-              </svg>
-            </div>
-            <h3>Announcements</h3>
-            <p>Broadcast to users</p>
-          </a>
-        </div>
-      </div>
-
-      <div style="text-align: center;">
-        <a href="/admin" class="back-to-dashboard">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12,19 5,12 12,5"></polyline>
-          </svg>
-          Back to Dashboard
+          <h3>Getting Started</h3>
+          <span class="overview-card-badge" style="background:#d1fae5;color:#065f46;">Start</span>
         </a>
+        <a href="#section-dashboard" class="overview-card">
+          <div class="overview-card-icon" style="background:#e8f5e9;color:#2d7a4a;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          </div>
+          <h3>Dashboard</h3>
+          <span class="overview-card-badge" style="background:#e8f5e9;color:#2d7a4a;">Overview</span>
+        </a>
+        <a href="#section-configuration" class="overview-card">
+          <div class="overview-card-icon" style="background:#ede9fe;color:#5b21b6;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </div>
+          <h3>Configuration</h3>
+          <span class="overview-card-badge" style="background:#ede9fe;color:#5b21b6;">Setup</span>
+        </a>
+        <a href="#section-archiving" class="overview-card">
+          <div class="overview-card-icon" style="background:#fef3c7;color:#92400e;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8v13H3V8"></path><path d="M1 3h22v5H1z"></path><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+          </div>
+          <h3>Archiving</h3>
+          <span class="overview-card-badge" style="background:#fef3c7;color:#92400e;">Manage</span>
+        </a>
+        <a href="#section-monitoring-requests" class="overview-card">
+          <div class="overview-card-icon" style="background:#ccfbf1;color:#0f766e;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path></svg>
+          </div>
+          <h3>All Requests</h3>
+          <span class="overview-card-badge" style="background:#ccfbf1;color:#0f766e;">Monitor</span>
+        </a>
+        <a href="#section-admin-requests" class="overview-card">
+          <div class="overview-card-icon" style="background:#fef3c7;color:#92400e;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          </div>
+          <h3>Admin Requests</h3>
+          <span class="overview-card-badge" style="background:#fef3c7;color:#92400e;">Manage</span>
+        </a>
+        <a href="#section-reports" class="overview-card">
+          <div class="overview-card-icon" style="background:#fee2e2;color:#991b1b;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          </div>
+          <h3>Reports</h3>
+          <span class="overview-card-badge" style="background:#fee2e2;color:#991b1b;">Analyze</span>
+        </a>
+        <a href="#section-analytics" class="overview-card">
+          <div class="overview-card-icon" style="background:#fce7f3;color:#9d174d;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+          </div>
+          <h3>Analytics</h3>
+          <span class="overview-card-badge" style="background:#fce7f3;color:#9d174d;">Analyze</span>
+        </a>
+        <a href="#section-user-management" class="overview-card">
+          <div class="overview-card-icon" style="background:#fef3c7;color:#92400e;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </div>
+          <h3>Users</h3>
+          <span class="overview-card-badge" style="background:#fef3c7;color:#92400e;">Manage</span>
+        </a>
+        <a href="#section-announcements" class="overview-card">
+          <div class="overview-card-icon" style="background:#cffafe;color:#0e7490;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg>
+          </div>
+          <h3>Announcements</h3>
+          <span class="overview-card-badge" style="background:#cffafe;color:#0e7490;">Communicate</span>
+        </a>
+        <a href="#section-more-info" class="overview-card">
+          <div class="overview-card-icon" style="background:#f3f4f6;color:#4b5563;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </div>
+          <h3>More Info</h3>
+          <span class="overview-card-badge" style="background:#f3f4f6;color:#4b5563;">Help</span>
+        </a>
+      </div>
+
+      <!-- LAYOUT: content + sticky TOC -->
+      <div class="guide-layout">
+        <div class="guide-content">
+
+          <!-- Getting Started -->
+          <div class="guide-section" id="section-getting-started" data-category="start">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21,15 16,10 5,21"></polyline>
+                </svg>
+              </div>
+              <h2>Getting Started <span class="guide-badge guide-badge-start">Start</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>Welcome to the S-CORE Admin panel. As an Admin (Director or Secretary), you have full oversight of the platform: you configure the system, oversee every request across all units, manage user accounts, publish announcements, and control the public-facing website content. This guide covers everything available to you.</p>
+            </div>
+          </div>
+
+          <!-- Your Dashboard -->
+          <div class="guide-section" id="section-dashboard" data-category="overview">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+              </div>
+              <h2>Your Dashboard <span class="guide-badge guide-badge-overview">Overview</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>Your dashboard (<strong>Dashboard</strong> in the sidebar) gives you an at-a-glance view of the whole system:</p>
+              <ul>
+                <li>Action cards for quick navigation to All Requests, Approvals, Services, and Users</li>
+                <li>A calendar of upcoming deadlines across all units</li>
+                <li>KPI counters: Pending Assignment, Awaiting Approval, In Revision, Unassigned Tasks</li>
+                <li>Charts: Current Request Status, Active Tasks by Unit, Request Volume Over Time</li>
+                <li>Tables: Very Recent Requests, Urgent &amp; Overdue Tasks, Top Requests by Revision Count</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Configuration -->
+          <div class="guide-section" id="section-configuration" data-category="setup">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path><circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </div>
+              <h2>Configuration <span class="guide-badge guide-badge-setup">Setup</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>The <strong>Configuration</strong> page is the control center for the entire platform, organised into six tabs across the top of the page. Click a tab to open it; the active tab is highlighted. Any changes you make are tracked — a sticky bar appears at the bottom of the page showing "You have unsaved changes" when something is modified. Click <strong>Save Changes</strong> in the sticky bar to persist all settings at once.</p>
+              <p>Each tab is described below, in the order you would typically set them up:</p>
+
+              <div class="guide-steps">
+                <div class="guide-step-card">
+                  <div class="guide-step-card-header">
+                    <div class="guide-step-number">1</div>
+                    <h4>System Configuration (start here)</h4>
+                  </div>
+                  <p>Define the master lists used as dropdown options everywhere else in the app. Start by adding your <strong>Organizations</strong>, <strong>Offices/Departments</strong>, <strong>Units &amp; Request Types</strong>, and <strong>Request Statuses</strong> in the multi-input fields at the top. Below these, configure <strong>User Roles &amp; Permissions</strong> (which roles can access which features), <strong>Announcement Priority Levels</strong>, and <strong>Announcement Types</strong>. Scrolling further, you will find other general system settings like site title, timezone, notification preferences, file upload limits, and the <strong>Automated Workflow &amp; Archiving</strong> day-limit settings (see Archiving section below).</p>
+                  <div class="guide-tip"><strong>Tip:</strong> For multi-value fields (Organizations, Offices, Units, Request Types), type each entry and press Enter or click Add to include it. A tag appears for each entry; click the x on a tag to remove it.</div>
+                </div>
+
+                <div class="guide-step-card">
+                  <div class="guide-step-card-header">
+                    <div class="guide-step-number">2</div>
+                    <h4>Homepage Configuration</h4>
+                  </div>
+                  <p><strong>Changes here are visible to every visitor of the public website.</strong> Each collapsible section corresponds to a part of the homepage: Hero, SCO Pledge, About, Services, Team, Contact, Social Media links, and Footer. Expand a section, edit the fields, then collapse it. The <strong>Save Changes</strong> button in the sticky bar persists everything across all sections at once.</p>
+                </div>
+
+                <div class="guide-step-card">
+                  <div class="guide-step-card-header">
+                    <div class="guide-step-number">3</div>
+                    <h4>About S-CORE Page Configuration</h4>
+                  </div>
+                  <p>Edit the public "/about-s-core" page: Header, System Overview, Platform Features, and Call-to-Action buttons. Same collapsible-section layout as the Homepage tab.</p>
+                </div>
+
+                <div class="guide-step-card">
+                  <div class="guide-step-card-header">
+                    <div class="guide-step-number">4</div>
+                    <h4>Archive Manager</h4>
+                  </div>
+                  <p>See the <strong>Archiving</strong> section below — this tab is where you configure auto-archive day-limits, trigger immediate archiving, review pending restoration requests, and browse archived records.</p>
+                </div>
+
+                <div class="guide-step-card">
+                  <div class="guide-step-card-header">
+                    <div class="guide-step-number">5</div>
+                    <h4>Q&amp;A Chatbot</h4>
+                  </div>
+                  <p>Manage the chatbot that appears on every page. Toggle its visibility per page, edit the greeting message and manual-reference links, and configure the role-based Q&amp;A and starter-suggestion content shown to requestors, unit members, and admins. Changes save through the sticky bar.</p>
+                </div>
+
+                <div class="guide-step-card">
+                  <div class="guide-step-card-header">
+                    <div class="guide-step-number">6</div>
+                    <h4>Maintenance</h4>
+                  </div>
+                  <p>Control system downtime. Unlike other tabs, the Maintenance tab has its own inline <strong>Save Changes</strong> button inside the tab — changes here are saved independently and are not tracked by the sticky bar.</p>
+                  <ul>
+                    <li><strong>Current Status:</strong> A live badge shows whether maintenance is Disabled, Active Now, or Scheduled.</li>
+                    <li><strong>Schedule Type:</strong> Choose <strong>Instant</strong> to activate immediately (stays on until you disable it), <strong>Scheduled</strong> to set a start and end date-time, or <strong>Disabled</strong> to keep the system running normally. Selecting Scheduled reveals date-time pickers for the maintenance window.</li>
+                    <li><strong>Target Audience:</strong> Choose who gets blocked: <strong>All Users</strong> (every non-admin), <strong>Unit Members Only</strong>, or <strong>Requestors Only</strong>.</li>
+                    <li><strong>Custom Message:</strong> Write a plain-text message shown on the maintenance notice page. Any email address you type (e.g., support@example.com) automatically becomes a clickable mailto link.</li>
+                    <li><strong>Contact Email:</strong> Set a support email address that appears prominently on the maintenance notice page so affected users can reach your team.</li>
+                  </ul>
+                  <div class="guide-tip"><strong>Note:</strong> Admins always bypass maintenance and retain full access, so you can navigate back to Configuration to disable it when ready.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Archiving -->
+          <div class="guide-section" id="section-archiving" data-category="manage">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 8v13H3V8"></path>
+                  <path d="M1 3h22v5H1z"></path>
+                  <line x1="10" y1="12" x2="14" y2="12"></line>
+                </svg>
+              </div>
+              <h2>Archiving <span class="guide-badge guide-badge-manage">Manage</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>Archiving is managed from <strong>Configuration → Archive Manager</strong>.</p>
+              <ul>
+                <li><strong>Automatic archiving:</strong> A background job runs nightly and archives requests on its own — no action needed from you. It archives "Completed"/"Approved" requests once they pass their configured day-limit, and "For Revision" requests with no activity past their limit.</li>
+                <li><strong>Day-limit settings:</strong> Configure how many days each status waits before auto-archiving (defaults: 30 days for Completed, 30 for Approved, 14 for For Revision with no activity).</li>
+                <li><strong>Run Archiving Now:</strong> Trigger the same archiving logic immediately instead of waiting for the nightly job.</li>
+                <li><strong>Pending Restoration Requests:</strong> Requestors and units can ask for an archived request to be restored — review and approve/dismiss these here.</li>
+                <li><strong>Browse Archived Records:</strong> Search, filter, restore, or permanently delete archived requests.</li>
+              </ul>
+              <div class="guide-tip">
+                <strong>Note:</strong> Both requestors and units can ask for an archived request to be reactivated — the "Allow Users to Restore Their Own Archived Requests" setting governs this.
+              </div>
+            </div>
+          </div>
+
+          <!-- Monitoring All Requests -->
+          <div class="guide-section" id="section-monitoring-requests" data-category="monitor">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11l3 3L22 4"></path>
+                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                </svg>
+              </div>
+              <h2>Monitoring All Requests <span class="guide-badge guide-badge-monitor">Monitor</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>Three pages give you full visibility into requests across every unit:</p>
+              <ul>
+                <li><strong>Track All Requests:</strong> Every request, both types, in one table.</li>
+                <li><strong>Manage Approvals:</strong> Only Request Approvals.</li>
+                <li><strong>Manage Services:</strong> Only Service Requests.</li>
+              </ul>
+              <p>On any of these pages you can:</p>
+              <ul>
+                <li>Filter by Request ID, requestor name, status, assigned unit, organization, office/department, and date range</li>
+                <li>Open a request's details, edit it, or update its status or deadline directly</li>
+                <li>Click <strong>Open Request Discussion</strong> to join the same Conversation thread used by the requestor and the assigned unit — you can message, clarify, or intervene on any request</li>
+                <li>View a Deleted Requests list, and restore or permanently delete from there</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Admin Request Capabilities -->
+          <div class="guide-section" id="section-admin-requests" data-category="manage">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="12" y1="8" x2="12" y2="16"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+              </div>
+              <h2>Creating &amp; Managing Requests as Admin <span class="guide-badge guide-badge-manage">Manage</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>As an admin, you are not limited to just monitoring requests. You can create, assign, edit, and manage every request in the system with full control.</p>
+
+              <div class="guide-step">
+                <h4>Creating Requests On Behalf of Users</h4>
+                <p>From the <strong>Manage Approvals</strong> and <strong>Manage Services</strong> pages, click the <strong>+ Create</strong> button to open the request form. At the top of the form, you will see a <strong>"Create Request For User"</strong> field:</p>
+                <ul>
+                  <li><strong>Leave it empty</strong> — the request is created under your name as admin (useful for internal unit tasks or testing).</li>
+                  <li><strong>Search and select a user</strong> — type a name or email to find a user; the request is created on their behalf. The requestor will receive a notification that the request was created for them, and it will appear in their personal dashboard as if they filed it themselves.</li>
+                </ul>
+                <p>When creating on behalf of a user, the organization/office field auto-fills based on the selected user's profile, so you do not need to look up that information.</p>
+              </div>
+
+              <div class="guide-step">
+                <h4>Assigning Requests Directly to a Unit</h4>
+                <p>Below the request type selection, the <strong>"Assign to Unit"</strong> dropdown gives you two options:</p>
+                <ul>
+                  <li><strong>Auto-assign</strong> (default) — the system picks the recommended unit based on the request type you selected, or leaves it unassigned for a custom type.</li>
+                  <li><strong>Choose a specific unit</strong> — override the auto-assignment and send the task directly to the unit of your choice. This is useful when you know exactly which team should handle the request, or when a requestor specifically requests a certain unit.</li>
+                </ul>
+                <p>You can also set a deadline while creating service requests. The assigned unit will see the task in their dashboard immediately after submission.</p>
+              </div>
+
+              <div class="guide-step">
+                <h4>Updating Status, Reassigning, and Editing Requests</h4>
+                <p>From <strong>Track All Requests</strong>, <strong>Manage Approvals</strong>, or <strong>Manage Services</strong>, click any request row to open its detail view. There you can:</p>
+                <ul>
+                  <li><strong>Update Request Status</strong> — change status to Queued, In Progress, Approved, Rejected, Completed, For Revision, or Archived as needed.</li>
+                  <li><strong>Reassign to a Different Unit</strong> — change the assigned unit mid-process if the request needs to be moved to another team.</li>
+                  <li><strong>Edit Deadline</strong> — extend or shorten the deadline for service requests.</li>
+                  <li><strong>Edit Request Details</strong> — modify the title, description, organization, links, or other details of any request.</li>
+                  <li><strong>Join the Discussion</strong> — click <strong>Open Request Discussion</strong> to read and participate in the conversation thread between the requestor and the assigned unit.</li>
+                  <li><strong>Delete or Restore</strong> — soft-delete a request (moves it to the Deleted Requests list) or restore it from there. Permanently delete only when absolutely necessary.</li>
+                </ul>
+                <p>Whenever you update a request, the requestor and the assigned unit receive automatic notifications about the change.</p>
+              </div>
+
+              <div class="guide-step">
+                <h4>Managing Request Discussions</h4>
+                <p>Every request has a built-in <strong>Conversation</strong> thread visible to the requestor, the assigned unit, and all admins. Use it to:</p>
+                <ul>
+                  <li>Clarify requirements or ask for additional details from the requestor.</li>
+                  <li>Provide guidance to the unit on how to handle the request.</li>
+                  <li>Intervene when there is a dispute or delay — all messages are visible to everyone involved.</li>
+                </ul>
+                <div class="guide-tip"><strong>Tip:</strong> Since conversations are visible to the requestor, prefer private messages or settings changes for sensitive internal coordination.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reports -->
+          <div class="guide-section" id="section-reports" data-category="analyze">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </div>
+              <h2>Generating Reports <span class="guide-badge guide-badge-analyze">Analyze</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <ol>
+                <li>Go to <strong>Generate Reports</strong> in the sidebar.</li>
+                <li>Set your filters: a date-range preset or custom range, request type (all/approval/service), one or more units, one or more statuses, and a sort order.</li>
+                <li>Generate a preview, customize the export (file name, report title, colors, paper size, orientation).</li>
+                <li>Download as PDF or Excel.</li>
+              </ol>
+              <p>Every report you generate is saved to <strong>Generated Reports History</strong>, where you can view, edit, duplicate, delete, restore, or re-download it later.</p>
+            </div>
+          </div>
+
+          <!-- Analytics -->
+          <div class="guide-section" id="section-analytics" data-category="analyze">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="20" x2="12" y2="10"></line>
+                  <line x1="18" y1="20" x2="18" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="16"></line>
+                </svg>
+              </div>
+              <h2>Analytics <span class="guide-badge guide-badge-analyze">Analyze</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>The <strong>Analytics</strong> page gives deeper performance insight, filterable by date range, unit, request type, and status:</p>
+              <ul>
+                <li>At-a-glance KPIs</li>
+                <li>Request Status and Request Type distribution</li>
+                <li>Top Requestors and Request Volume Over Time</li>
+                <li>Active Workload, Average Turnaround Time, Total Workload, and Average Response Time — all broken down by unit</li>
+              </ul>
+              <p>Analytics data can also be exported to PDF, with its own history of past exports.</p>
+            </div>
+          </div>
+
+          <!-- User Management -->
+          <div class="guide-section" id="section-user-management" data-category="manage">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <h2>User Management <span class="guide-badge guide-badge-manage">Manage</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>The <strong>User Accounts</strong> page manages every account in the system, split into All / Approved / Pending / Denied tabs.</p>
+              <ul>
+                <li><strong>New registrations:</strong> Approve (grants the default Requestor role), Deny (with a reason), or Reset back to pending.</li>
+                <li><strong>Change Role:</strong> Promote or change a user between Requestor, Unit, and Admin. When you set a role to Unit, you must also assign which unit team (e.g., Graphics, Multimedia) they belong to — they'll only see tasks assigned to that team.</li>
+                <li><strong>Create User Invitation:</strong> Invite a new account directly.</li>
+                <li><strong>Deleted Users:</strong> Restore or permanently delete removed accounts.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Announcements -->
+          <div class="guide-section" id="section-announcements" data-category="communicate">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+                </svg>
+              </div>
+              <h2>Announcements <span class="guide-badge guide-badge-communicate">Communicate</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>Go to <strong>Announcements</strong> to broadcast messages to your users:</p>
+              <ul>
+                <li>Compose a title, rich-text message, priority level, and announcement type (both configurable in System Configuration)</li>
+                <li>Choose recipients: All Users, By Organization, By Office/Department, or Specific Users</li>
+                <li>Optionally set a future <strong>Schedule Send Date &amp; Time</strong> — scheduled announcements are sent automatically by a background job at the scheduled time, you don't need to be online</li>
+                <li>Manage sent announcements: view, edit, delete, and restore from the Trash</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- More Information -->
+          <div class="guide-section" id="section-more-info" data-category="help">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </div>
+              <h2>Need More Information? <span class="guide-badge guide-badge-help">Help</span></h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <p>For additional details and reference material, you may check the official <a href="https://s-core-digital-user-manual.pages.dev/" target="_blank" rel="noopener noreferrer">S-CORE Digital User Manual</a>.</p>
+            </div>
+          </div>
+
+          <!-- Quick Access -->
+          <div class="guide-section" id="section-quick-access">
+            <div class="guide-section-header" onclick="toggleSection(this)">
+              <div class="guide-section-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+              </div>
+              <h2>Quick Access</h2>
+              <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="guide-section-body">
+              <div class="quick-links">
+                <a href="/admin" class="quick-link-card">
+                  <div class="quick-link-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                  </div>
+                  <h3>Dashboard</h3>
+                  <p>View overview and KPIs</p>
+                </a>
+                <a href="/admin/all-requests" class="quick-link-card">
+                  <div class="quick-link-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 11l3 3L22 4"></path>
+                      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+                    </svg>
+                  </div>
+                  <h3>Track All Requests</h3>
+                  <p>Monitor every request</p>
+                </a>
+                <a href="/admin/configuration" class="quick-link-card">
+                  <div class="quick-link-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </div>
+                  <h3>Configuration</h3>
+                  <p>System &amp; homepage settings</p>
+                </a>
+                <a href="/admin/reports" class="quick-link-card">
+                  <div class="quick-link-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14,2 14,8 20,8"></polyline>
+                    </svg>
+                  </div>
+                  <h3>Reports</h3>
+                  <p>Generate and export reports</p>
+                </a>
+                <a href="/admin/users" class="quick-link-card">
+                  <div class="quick-link-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <h3>User Accounts</h3>
+                  <p>Manage roles and approvals</p>
+                </a>
+                <a href="/admin/announcement" class="quick-link-card">
+                  <div class="quick-link-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m3 11 18-5v12L3 14v-3z"></path>
+                    </svg>
+                  </div>
+                  <h3>Announcements</h3>
+                  <p>Broadcast to users</p>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center;">
+            <a href="/admin" class="back-to-dashboard">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12,19 5,12 12,5"></polyline>
+              </svg>
+              Back to Dashboard
+            </a>
+          </div>
+        </div>
+
+        <!-- STICKY TABLE OF CONTENTS -->
+        <nav class="guide-toc" id="guideToc">
+          <h4>On This Page</h4>
+          <ul>
+            <li><a href="#section-getting-started" class="toc-link"><span class="toc-dot" style="background:#10b981"></span>Getting Started</a></li>
+            <li><a href="#section-dashboard" class="toc-link"><span class="toc-dot" style="background:#2d7a4a"></span>Your Dashboard</a></li>
+            <li><a href="#section-configuration" class="toc-link"><span class="toc-dot" style="background:#8b5cf6"></span>Configuration</a></li>
+            <li><a href="#section-archiving" class="toc-link"><span class="toc-dot" style="background:#f59e0b"></span>Archiving</a></li>
+            <li><a href="#section-monitoring-requests" class="toc-link"><span class="toc-dot" style="background:#14b8a6"></span>Monitoring Requests</a></li>
+            <li><a href="#section-admin-requests" class="toc-link"><span class="toc-dot" style="background:#f59e0b"></span>Admin Requests</a></li>
+            <li><a href="#section-reports" class="toc-link"><span class="toc-dot" style="background:#ef4444"></span>Reports</a></li>
+            <li><a href="#section-analytics" class="toc-link"><span class="toc-dot" style="background:#ec4899"></span>Analytics</a></li>
+            <li><a href="#section-user-management" class="toc-link"><span class="toc-dot" style="background:#f59e0b"></span>User Management</a></li>
+            <li><a href="#section-announcements" class="toc-link"><span class="toc-dot" style="background:#06b6d4"></span>Announcements</a></li>
+            <li><a href="#section-more-info" class="toc-link"><span class="toc-dot" style="background:#6b7280"></span>More Info</a></li>
+          </ul>
+        </nav>
       </div>
     </div>
   </div>
@@ -590,6 +828,99 @@
       }
 
       initMobileNavigation();
+    });
+
+    // --- NEW: Guide page interactivity ---
+    function toggleSection(header) {
+      const section = header.parentElement;
+      section.classList.toggle('collapsed');
+    }
+
+    // TOC scroll spy — highlight active section
+    document.addEventListener('DOMContentLoaded', function() {
+      const tocLinks = document.querySelectorAll('.toc-link');
+      const sections = [];
+
+      tocLinks.forEach(function(link) {
+        const href = link.getAttribute('href');
+        if (href) {
+          const id = href.substring(1); // remove #
+          const el = document.getElementById(id);
+          if (el) {
+            sections.push({ el: el, link: link });
+          }
+        }
+      });
+
+      if (sections.length === 0) return;
+
+      function updateActiveToc() {
+        const scrollY = window.scrollY + 120; // offset for header
+        let currentSection = sections[0];
+
+        for (let i = 0; i < sections.length; i++) {
+          const sec = sections[i];
+          if (sec.el.offsetTop <= scrollY) {
+            currentSection = sec;
+          } else {
+            break;
+          }
+        }
+
+        tocLinks.forEach(function(l) { l.classList.remove('active'); });
+        if (currentSection && currentSection.link) {
+          currentSection.link.classList.add('active');
+        }
+      }
+
+      // Throttled scroll handler
+      let ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          window.requestAnimationFrame(function() {
+            updateActiveToc();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      });
+
+      updateActiveToc();
+
+      // Open section from URL hash on load
+      if (window.location.hash) {
+        const targetId = window.location.hash.substring(1);
+        const target = document.getElementById(targetId);
+        if (target && target.classList.contains('guide-section')) {
+          // Ensure it's not collapsed
+          target.classList.remove('collapsed');
+          // Scroll to it with offset
+          setTimeout(function() {
+            const rect = target.getBoundingClientRect();
+            window.scrollBy(0, rect.top - 100);
+          }, 100);
+        }
+      }
+
+      // Handle TOC link clicks with smooth scroll
+      tocLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          if (href && href.startsWith('#')) {
+            const target = document.getElementById(href.substring(1));
+            if (target) {
+              e.preventDefault();
+              target.classList.remove('collapsed');
+              const rect = target.getBoundingClientRect();
+              window.scrollBy({
+                top: rect.top - 100,
+                behavior: 'smooth'
+              });
+              history.replaceState(null, '', href);
+            }
+          }
+        });
+      });
     });
   </script>
 

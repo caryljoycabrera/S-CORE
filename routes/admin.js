@@ -6662,8 +6662,13 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
       smtpPort: parseInt(req.body.smtpPort) || 587,
       
       // Maintenance & backup
-      maintenanceMode: req.body.maintenanceMode === 'on',
+      maintenanceMode: req.body.maintenanceScheduleType ? (req.body.maintenanceScheduleType !== 'disabled') : (req.body.maintenanceMode === 'on'),
       maintenanceMessage: req.body.maintenanceMessage,
+      maintenanceTarget: req.body.maintenanceTarget || 'both',
+      maintenanceScheduleType: req.body.maintenanceScheduleType || 'disabled',
+      maintenanceStartAt: req.body.maintenanceStartAt || null,
+      maintenanceEndAt: req.body.maintenanceEndAt || null,
+      maintenanceContactEmail: req.body.maintenanceContactEmail || 'sco@dlsud.edu.ph',
       backupEnabled: req.body.backupEnabled === 'on',
       backupFrequency: req.body.backupFrequency || 'weekly',
       backupRetentionDays: parseInt(req.body.backupRetentionDays) || 90,

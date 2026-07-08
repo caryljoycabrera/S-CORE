@@ -1292,8 +1292,7 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
     }
   }
 
-  // Notify admins when unit uploads deliverable
-  // Notify admins when unit uploads deliverables
+  // Notify admins when unit submits deliverables
   async notifyAdminUnitDeliverable(serviceId, unitMemberId, serviceData, filesCount) {
     try {
       const admins = await User.find({ role: 'admin', status: 'approved' });
@@ -1303,8 +1302,8 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
       const unitName = unitMember ? unitMember.unitTeam : 'Unit';
 
       const notificationData = {
-        title: 'Deliverable Uploaded',
-        message: `${unitName} team uploaded ${filesCount} file(s) for: "${serviceData.title}"`,
+        title: 'Deliverable Submitted',
+        message: `${unitName} team submitted deliverables for: "${serviceData.title}"`,
         type: 'service_updated',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',
@@ -1366,7 +1365,7 @@ async notifySystem(recipientIds, title, message, priority = 'medium', actionUrl 
         recipient: requestorId,
         sender: unitMemberId,
         title: 'Deliverables Ready for Review',
-        message: `${unitName} team uploaded deliverables for your service request. Please review and approve or request revisions.`,
+        message: `${unitName} team submitted deliverables for your service request. Please review and approve or request revisions.`,
         type: 'deliverables_uploaded',
         relatedId: serviceId,
         relatedModel: 'ServiceRequest',

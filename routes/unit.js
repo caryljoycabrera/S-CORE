@@ -10,10 +10,14 @@ const ServiceRequest = require('../models/ServiceRequest');
 const BroadcastMessage = require('../models/BroadcastMessage');
 const Notification = require('../models/Notification');
 const { requireUnit } = require('../middleware/auth');
+const { requireMaintenanceCheck } = require('../middleware/maintenance');
 const notificationService = require('../services/notificationService');
 const uploadConfig = require('../config/upload');
 const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
 const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
+
+// Apply maintenance check before all unit routes
+router.use(requireMaintenanceCheck);
 
 function isForRevisionStatus(status) {
   const normalized = String(status || '').toLowerCase().trim();
