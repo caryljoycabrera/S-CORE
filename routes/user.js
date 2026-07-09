@@ -13,7 +13,8 @@ const Page = require('../models/Page');
 const BroadcastMessage = require('../models/BroadcastMessage');
 const { requireLogin } = require('../middleware/auth');
 const { requireMaintenanceCheck } = require('../middleware/maintenance');
-const { upload, UPLOADS_DIR } = require('../config/upload');
+// File uploads disabled
+// const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const { getAutoAssignedUnit, getDefaultDeadlineDays } = require('../utils/settingsHelpers');
 const path = require('path');
@@ -931,21 +932,8 @@ router.post('/profile/request-password-reset', async (req, res) => {
  * POST /profile/upload-picture
  * Uploads and updates user profile picture
  */
-router.post('/profile/upload-picture', upload.single('profilePicture'), async (req, res) => {
-  if (!req.session.userId) return res.status(401).send('Unauthorized');
-
-  try {
-    const user = await User.findById(req.session.userId);
-    if (!user) return res.status(404).send('User not found');
-
-    user.profilePicture = req.file.filename;
-    await user.save();
-
-    res.status(200).send('Profile picture updated');
-  } catch (err) {
-    console.error('Error updating profile picture:', err);
-    res.status(500).send('Upload failed');
-  }
+router.post('/profile/upload-picture', async (req, res) => {
+  res.status(400).send('Profile picture uploads are disabled in the free tier.');
 });
 
 /**
@@ -959,13 +947,6 @@ router.post('/profile/delete-picture', async (req, res) => {
     const user = await User.findById(req.session.userId);
     if (!user || !user.profilePicture) {
       return res.status(400).send('No profile picture to delete.');
-    }
-
-    const imagePath = path.join(UPLOADS_DIR, user.profilePicture);
-
-    // Delete file from uploads folder
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
     }
 
     // Remove reference from database
@@ -1727,43 +1708,8 @@ router.post('/settings/profile', requireLogin, async (req, res) => {
  * POST /user/settings/profile-pic
  * Upload user profile picture
  */
-router.post('/settings/profile-pic', requireLogin, upload.single('profilePic'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
-    }
-
-    const userId = req.user._id;
-    const fileName = `${userId}_${Date.now()}_${req.file.originalname}`;
-    const filePath = path.join(UPLOADS_DIR, fileName);
-
-    // Move file from temp to uploads directory
-    fs.renameSync(req.file.path, filePath);
-
-    // Delete old profile picture if exists
-    if (req.user.profilePicture) {
-      const oldPath = path.join(UPLOADS_DIR, req.user.profilePicture);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
-    }
-
-    // Update user with new profile picture
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { profilePicture: fileName },
-      { new: true }
-    );
-
-    res.json({ 
-      success: true, 
-      message: 'Profile picture uploaded successfully',
-      profilePicture: fileName
-    });
-  } catch (error) {
-    console.error('Error uploading profile picture:', error);
-    res.status(500).json({ success: false, message: 'Error uploading profile picture: ' + error.message });
-  }
+router.post('/settings/profile-pic', requireLogin, async (req, res) => {
+  res.status(400).json({ success: false, message: 'Profile picture uploads are disabled in the free tier.' });
 });
 
 /**
@@ -1773,14 +1719,6 @@ router.post('/settings/profile-pic', requireLogin, upload.single('profilePic'), 
 router.delete('/settings/profile-pic', requireLogin, async (req, res) => {
   try {
     const userId = req.user._id;
-
-    // Delete file from filesystem
-    if (req.user.profilePicture) {
-      const filePath = path.join(UPLOADS_DIR, req.user.profilePicture);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
 
     // Update user to remove picture reference
     await User.findByIdAndUpdate(
@@ -2042,19 +1980,6 @@ router.delete('/settings/account', requireLogin, async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ success: false, message: 'Incorrect password' });
-    }
-
-    // Delete profile picture if exists
-    // Delete profile picture if exists (use non-blocking async fs)
-    if (user.profilePicture) {
-      const filePath = path.join(UPLOADS_DIR, user.profilePicture);
-      try {
-        await fs.promises.unlink(filePath).catch(err => {
-          if (err && err.code !== 'ENOENT') console.error('Error deleting profile picture:', err);
-        });
-      } catch (err) {
-        console.error('Error deleting profile picture:', err);
-      }
     }
 
     // Delete user and related data. Run related deletes in parallel to avoid blocking.

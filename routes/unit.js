@@ -12,7 +12,8 @@ const Notification = require('../models/Notification');
 const { requireUnit } = require('../middleware/auth');
 const { requireMaintenanceCheck } = require('../middleware/maintenance');
 const notificationService = require('../services/notificationService');
-const uploadConfig = require('../config/upload');
+// File uploads disabled
+// const uploadConfig = require('../config/upload');
 const { getUnits, getRequestStatuses, getOrganizations, getOffices } = require('../utils/settingsHelpers');
 const { sanitizeText, sanitizeMongoId, sanitizeString, escapeHtml, validateEnum } = require('../utils/sanitize');
 
@@ -1239,72 +1240,9 @@ router.post('/unit/profile/request-password-reset', requireUnit, async (req, res
  * POST /unit/profile/upload-picture
  * Upload profile picture for unit member
  */
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-// Configure multer for profile picture upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, 'upload-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: function (req, file, cb) {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only image files (JPEG, PNG, GIF) are allowed'));
-    }
-  }
-});
-
-router.post('/unit/profile/upload-picture', requireUnit, upload.single('profilePicture'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).send('No file uploaded');
-    }
-
-    const userId = req.session.userId;
-    const user = await User.findById(userId);
-
-    if (!user) {
-      // Delete uploaded file if user not found
-      fs.unlinkSync(req.file.path);
-      return res.status(404).send('User not found');
-    }
-
-    // Delete old profile picture if exists
-    if (user.profilePicture && user.profilePicture !== 'default-profile.png') {
-      const oldPicturePath = path.join('uploads', user.profilePicture);
-      if (fs.existsSync(oldPicturePath)) {
-        fs.unlinkSync(oldPicturePath);
-      }
-    }
-
-    // Update user with new picture filename
-    user.profilePicture = req.file.filename;
-    await user.save();
-
-    res.status(200).send('Profile picture uploaded successfully');
-  } catch (err) {
-    console.error('Error uploading picture:', err);
-    // Delete uploaded file on error
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-    res.status(500).send('Error uploading picture: ' + err.message);
-  }
+// File uploads disabled
+router.post('/unit/profile/upload-picture', requireUnit, async (req, res) => {
+  res.status(400).send('Profile picture uploads are disabled in the free tier.');
 });
 
 /**
@@ -1318,14 +1256,6 @@ router.post('/unit/profile/delete-picture', requireUnit, async (req, res) => {
 
     if (!user) {
       return res.status(404).send('User not found');
-    }
-
-    // Delete picture file if exists
-    if (user.profilePicture && user.profilePicture !== 'default-profile.png') {
-      const picturePath = path.join('uploads', user.profilePicture);
-      if (fs.existsSync(picturePath)) {
-        fs.unlinkSync(picturePath);
-      }
     }
 
     // Reset to default

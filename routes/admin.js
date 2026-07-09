@@ -14,7 +14,8 @@ const SystemSettings = require('../models/SystemSettings');
 const RequestType = require('../models/RequestType');
 const Page = require('../models/Page');
 const { requireAdmin, requireAdminAPI } = require('../middleware/auth');
-const { upload, UPLOADS_DIR } = require('../config/upload');
+// File uploads disabled
+// const { upload, UPLOADS_DIR } = require('../config/upload');
 const notificationService = require('../services/notificationService');
 const emailService = require('../services/emailService');
 const settingsService = require('../services/settingsService');
@@ -3112,30 +3113,8 @@ router.post('/admin/profile/request-password-reset', async (req, res) => {
  * POST /profileadmin/upload-picture
  * Uploads admin profile picture
  */
-router.post('/profileadmin/upload-picture', requireAdmin, upload.single('profilePicture'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).send('No file uploaded.');
-
-    const user = await User.findById(req.session.userId).lean();
-    if (!user) return res.status(404).send('User not found.');
-
-    if (user.profilePicture) {
-      const oldPath = path.join(UPLOADS_DIR, user.profilePicture);
-      if (fs.existsSync(oldPath)) {
-        try { fs.unlinkSync(oldPath); } catch (e) { console.warn('Could not delete old file', e); }
-      }
-    }
-
-    await User.findByIdAndUpdate(req.session.userId,
-      { $set: { profilePicture: req.file.filename } },
-      { runValidators: false }
-    );
-
-    res.status(200).send('Profile picture updated.');
-  } catch (err) {
-    console.error('Error uploading admin picture:', err);
-    res.status(500).send('Error uploading picture');
-  }
+router.post('/profileadmin/upload-picture', requireAdmin, async (req, res) => {
+  res.status(400).send('Profile picture uploads are disabled in the free tier.');
 });
 
 /**
@@ -3148,11 +3127,6 @@ router.post('/profileadmin/delete-picture', requireAdmin, async (req, res) => {
     if (!user) return res.status(404).send('User not found.');
 
     if (user.profilePicture) {
-      const oldPath = path.join(UPLOADS_DIR, user.profilePicture);
-      if (fs.existsSync(oldPath)) {
-        try { fs.unlinkSync(oldPath); } catch (e) { console.warn('Could not delete file', e); }
-      }
-
       await User.findByIdAndUpdate(req.session.userId, { $unset: { profilePicture: "" } }, { runValidators: false });
     }
 
@@ -5542,31 +5516,8 @@ router.post('/admin/announcement', requireAdmin, async (req, res) => {
  * POST /admin/announcement/upload
  * Upload files/images for announcements
  */
-router.post('/admin/announcement/upload', requireAdmin, upload.single('file'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No file uploaded' 
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'File uploaded successfully',
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      path: `/uploads/${req.file.filename}`
-    });
-  } catch (error) {
-    console.error('Error uploading file:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || 'File upload failed' 
-    });
-  }
+router.post('/admin/announcement/upload', requireAdmin, async (req, res) => {
+  res.status(400).json({ success: false, message: 'File uploads are disabled in the free tier.' });
 });
 
 /**

@@ -171,7 +171,7 @@
         <div class="profile-pic-container">
           <img id="profilePic" src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" alt="Profile" class="profile-pic-display">
           <div class="profile-pic-actions">
-            <input type="file" id="profilePicInput" accept="image/*" style="display: none;" onchange="uploadProfilePic(event)">
+            <input type="file" id="profilePicInput" accept="image/*" style="display: none;" onchange="alert('Profile picture uploads are disabled in the free tier.');" disabled>
             <button class="btn btn-primary" onclick="document.getElementById('profilePicInput').click()">Change Photo</button>
             <button class="btn btn-secondary" onclick="removeProfilePic()">Remove</button>
           </div>

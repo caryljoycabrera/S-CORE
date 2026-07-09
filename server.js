@@ -13,7 +13,8 @@ require('dotenv').config();
 
 // Import configuration modules
 const { connectDB } = require('./config/database');
-const { upload, ensureUploadsDirectory, UPLOADS_DIR } = require('./config/upload');
+// File uploads have been disabled for free tier deployment
+// const { upload, ensureUploadsDirectory, UPLOADS_DIR } = require('./config/upload');
 const { clerkMiddleware } = require('./config/clerk');
 const MongoStore = require('connect-mongo').default;
 
@@ -56,12 +57,12 @@ connectDB();
 socketService.initialize(server);
 
 // ======= Uploads Directory Setup =======
-ensureUploadsDirectory();
+// ensureUploadsDirectory();
 
 // ======= Middleware Configuration ========
 
 // Static file serving
-app.use('/uploads', express.static(UPLOADS_DIR));
+// app.use('/uploads', express.static(UPLOADS_DIR)); // Disabled file uploads
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Body parsers

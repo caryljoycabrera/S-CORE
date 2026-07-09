@@ -311,7 +311,7 @@ body > .select2-container--default {
           <div class="profile-actions">
             <button id="openUpdateProfile">Update Profile</button>
             <button id="openChangePassword">Change Password</button>
-            <button id="openPictureModal" type="button">Update Picture</button>
+
             <a href="/admin" class="back-to-dashboard-btn">
               <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -762,97 +762,7 @@ body > .select2-container--default {
     </div>
   </div>
 
-  <!-- Enhanced Picture Upload Modal -->
-  <div id="pictureModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 800px;">
-      <div class="modal-header">
-        <h2 class="modal-title">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <circle cx="8" cy="8" r="2"/>
-            <path d="M21 21l-6-6a2 2 0 0 0-2.83 0L3 21"/>
-          </svg>
-          Update Profile Picture
-        </h2>
-        <span class="close" onclick="closeModal('pictureModal')">&times;</span>
-      </div>
-      <div class="modal-body">
-        <div class="picture-modal-body">
-          
-          <!-- Current Picture Section at the top -->
-          <div class="current-picture-header">
-            <img src="<%= user.profilePicture ? '/uploads/' + user.profilePicture : '/Picture/user-placeholder.svg' %>" 
-                 alt="Current Profile Picture" id="currentProfileImg" />
-            <h4>Current Picture</h4>
-            <p>This is your current profile picture that others will see.</p>
-          </div>
 
-          <!-- Upload Selection Section -->
-          <div class="upload-selection-section">
-            
-            <!-- Drop Zone -->
-            <div class="file-upload-container" id="fileUploadContainer">
-              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7,10 12,15 17,10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <p class="upload-text">Drop your image here</p>
-              <p class="upload-subtext">or click to browse from your device</p>
-              <input type="file" id="fileInput" name="profilePicture" accept="image/*" class="file-input-hidden" />
-              <button type="button" class="browse-button" onclick="document.getElementById('fileInput').click()">
-          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14,2 14,8 20,8"/>
-            <path d="M16 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-            <path d="M14 5v4a2 2 0 0 1-2 2H8"/>
-          </svg>
-          Choose File
-        </button>
-            </div>
-
-            <!-- Selected Image Preview -->
-            <div class="selected-image-preview" id="selectedImagePreview">
-              <h4>Selected Image</h4>
-              <div id="imagePreviewContent">
-                <p class="no-image-placeholder">No image selected</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="picture-actions">
-            <!-- Upload Section -->
-            <div class="action-section upload-section">
-              <p>Replace your current profile picture with a new one.</p>
-              <button type="button" id="uploadBtn" class="upload-action-btn" disabled>
-            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7,10 12,15 17,10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Upload Picture
-          </button>
-            </div>
-
-            <!-- Delete Section -->
-            <div class="action-section delete-section">
-              <p>Delete your current profile picture and use the default avatar.</p>
-              <button type="button" id="deleteBtn" class="delete-action-btn">
-            <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24" style="display: inline; vertical-align: middle; margin-right: 0.5rem;">
-              <polyline points="3,6 5,6 21,6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              <line x1="10" y1="11" x2="10" y2="17"/>
-              <line x1="14" y1="11" x2="14" y2="17"/>
-            </svg>
-            Delete Picture
-          </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Notification Modal -->
 <div id="notificationModal" class="notification-modal">
@@ -1502,7 +1412,7 @@ function closeModal(id) {
 }
 
 window.onclick = function (e) {
-  ['updateProfileModal', 'passwordModal', 'pictureModal'].forEach(id => {
+  ['updateProfileModal', 'passwordModal'].forEach(id => {
     if (e.target.id === id) closeModal(id);
   });
 };
