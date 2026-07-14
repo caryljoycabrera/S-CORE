@@ -74,6 +74,9 @@ app.use(express.json({ limit: process.env.MAX_FILE_SIZE || '50mb' }));
 // This removes MongoDB operators ($) from request body, query, and params
 app.use(sanitizeAll);
 
+// Trust the reverse proxy (nginx) so secure cookies work behind HTTPS termination
+app.set('trust proxy', 1);
+
 // Session handling with MongoDB persistence
 app.use(session({
   secret: process.env.SESSION_SECRET || 's-core-secret',
