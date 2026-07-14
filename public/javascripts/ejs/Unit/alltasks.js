@@ -2725,11 +2725,15 @@ async function submitRevokeApproval() {
             // Update table row status in background without reload
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
             if (tableRow) {
-                const statusCell = tableRow.querySelector('.status');
+                const statusCell = tableRow.querySelector('.status-badge');
                 if (statusCell) {
-                    statusCell.textContent = 'FOR REVISION';
-                    statusCell.className = 'status for-revision';
+                    statusCell.textContent = 'For Revision';
+                    statusCell.className = 'status-badge for-revision';
                 }
+                // Keep dataset in sync so reopening the modal without a page
+                // reload reflects the revoked state, not the stale "Approved"
+                tableRow.dataset.status = 'For Revision';
+                tableRow.dataset.awaitingResubmission = 'true';
             }
         } else {
             showErrorMessage(result.message || 'Failed to revoke approval');

@@ -232,6 +232,33 @@ const requestApprovalSchema = new mongoose.Schema({
   timestamps: true // Automatically adds createdAt and updatedAt fields
 });
 
+// ===== Conversation cascade cleanup =====
+// When a request is PERMANENTLY deleted (findByIdAndDelete, deleteOne, or
+// deleteMany), also delete its team conversation so the chat messages don't
+// linger as orphans. Soft deletes/archiving (isDeleted = true) never pass
+// through these hooks, so archived requests keep their chat history until
+// they are actually purged.
+requestApprovalSchema.post('findOneAndDelete', async function (doc) {
+  if (!doc) return;
+  try {
+    const Conversation = require('./Conversation');
+    await Conversation.deleteMany({ approvalRequestId: doc._id });
+  } catch (err) {
+    console.error('[RequestApproval] Failed to cascade-delete conversation:', err);
+  }
+});
+
+requestApprovalSchema.pre(['deleteOne', 'deleteMany'], async function () {
+  try {
+    const docs = await this.model.find(this.getFilter()).select('_id').lean();
+    if (docs.length === 0) return;
+    const Conversation = require('./Conversation');
+    await Conversation.deleteMany({ approvalRequestId: { $in: docs.map(d => d._id) } });
+  } catch (err) {
+    console.error('[RequestApproval] Failed to cascade-delete conversations:', err);
+  }
+});
+
 /**
  * RequestApproval Model
  * Provides interface for interacting with RequestApproval documents in MongoDB

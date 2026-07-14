@@ -1320,6 +1320,14 @@ router.post('/unit/task/revoke-approval/:id', requireUnit, async (req, res) => {
     const socketService = require('../services/socketService');
     socketService.updateActiveRequestsCount();
 
+    // Push real-time update to the requestor so their open page immediately
+    // shows the new status and the "Resubmit Your Request" form
+    socketService.emitToUser(task.userId._id.toString(), 'approvalRevoked', {
+      requestId: task._id.toString(),
+      newStatus: 'For Revision',
+      reason: reason || ''
+    });
+
     // Note: Revocation details are stored in revisionHistory only, not in conversation
     // This keeps the chat clean and focuses revision details in the revision history section
 
