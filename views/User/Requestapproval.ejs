@@ -3510,7 +3510,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Fetch and populate approved request types
   async function loadApprovedRequestTypes() {
     try {
-      const response = await fetch('/api/request-types/approved');
+      const response = await fetch('/api/request-types/approved', { cache: 'no-store' });
       const data = await response.json();
 
       if (data.success && data.requestTypes && data.requestTypes.length > 0) {

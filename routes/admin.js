@@ -6510,8 +6510,7 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
     // corrected entry (e.g. a fixed typo) — and must not keep appearing in
     // the requestor-facing dropdown with no live unit mapping behind it.
     const currentMappingNames = new Set(requestTypeMappings.map(m => m.requestType));
-    console.log('[CONFIG] Reconcile check — units:', units, '| currentMappingNames:', [...currentMappingNames]);
-    const reconcileResult = await RequestType.updateMany(
+    await RequestType.updateMany(
       {
         status: 'approved',
         assignedUnit: { $in: units },
@@ -6519,7 +6518,6 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
       },
       { $set: { status: 'rejected', reviewedBy: user._id, reviewedAt: new Date() } }
     );
-    console.log('[CONFIG] Reconcile result — matched:', reconcileResult.matchedCount, 'modified:', reconcileResult.modifiedCount);
 
     // Process offices/departments
     const offices = req.body.officesList ? 
