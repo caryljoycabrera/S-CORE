@@ -6485,7 +6485,7 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
             // Sync to RequestType collection
             await RequestType.findOneAndUpdate(
               { name: requestType },
-              { 
+              {
                 $set: {
                   assignedUnit: unitName.trim(),
                   status: 'approved',
@@ -6503,6 +6503,21 @@ router.post('/admin/system-configuration', requireAdmin, async (req, res) => {
         }
       }
     }
+
+    // Reconcile RequestType collection: any admin-managed type (i.e. one that
+    // matches an assignedUnit still present in `units`) that is no longer in
+    // the freshly-submitted requestTypeMappings is stale — a removed or
+    // corrected entry (e.g. a fixed typo) — and must not keep appearing in
+    // the requestor-facing dropdown with no live unit mapping behind it.
+    const currentMappingNames = new Set(requestTypeMappings.map(m => m.requestType));
+    await RequestType.updateMany(
+      {
+        status: 'approved',
+        assignedUnit: { $in: units },
+        name: { $nin: [...currentMappingNames] }
+      },
+      { $set: { status: 'rejected', reviewedBy: user._id, reviewedAt: new Date() } }
+    );
 
     // Process offices/departments
     const offices = req.body.officesList ? 
