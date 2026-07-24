@@ -3266,6 +3266,9 @@
                   data-links='<%= JSON.stringify(request.links || []) %>'
                   data-revision-count="<%= request.revisionCount || 0 %>"
                   data-createdbyadmin="<%= request.createdByAdmin ? 'true' : 'false' %>"
+                  data-meeting-requested="<%= request.meetingRequested ? 'true' : 'false' %>"
+                  data-meeting-scheduled-at="<%= request.meetingScheduledAt ? new Date(request.meetingScheduledAt).toISOString() : '' %>"
+                  data-meeting-notes="<%= request.meetingNotes || '' %>"
                   title="<%= request.createdByAdmin ? 'Created for you by admin' : '' %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
@@ -3456,11 +3459,11 @@
           <!-- Row 6: Meeting Request (Full Width) -->
           <div class="form-group full-width">
             <label class="checkbox-container">
-              <input type="checkbox" id="meetingRequest" name="meetingRequest">
+              <input type="checkbox" id="meetingRequested" name="meetingRequested">
               <div class="checkbox-text">
                 Request a meeting with SCO for collaboration and conceptualization
                 <div class="checkbox-description">
-                  Check this if you would like to schedule a meeting to discuss your request in detail.
+                  Checking this does not confirm a meeting — SCO will reach out to you to let you know if a meeting can be arranged.
                 </div>
               </div>
             </label>
@@ -4025,6 +4028,11 @@ function getLinkValues() {
                     <span id="detailDeadline"></span>
                   </span>
                 </div>
+              </div>
+
+              <div class="details-field" id="meetingRequestSection" style="display: none;">
+                <div class="details-label">Meeting Request</div>
+                <div class="details-value" id="detailMeetingStatus"></div>
               </div>
             </div>
           </div>
@@ -4881,6 +4889,13 @@ function getLinkValues() {
       return div.innerHTML;
     }
 
+    // Renders meeting-status text with any URLs turned into clickable links
+    function linkifyMeetingNotes(text) {
+      const escaped = escapeHtml(text);
+      return escaped.replace(/(https?:\/\/[^\s<]+)/g, url =>
+        `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;text-decoration:underline;word-break:break-all;">${url}</a>`);
+    }
+
     // formatText is provided by the shared /javascripts/ejs/User/user-conversation.js
     // script (window.formatText) — no local override here.
     // Message formatting (bold/italic/underline) and Enter-to-send are handled by
@@ -5584,6 +5599,25 @@ document.querySelectorAll('.request-row').forEach(row => {
           deadlineSection.style.display = 'block';
         } else if (deadlineSection) {
           deadlineSection.style.display = 'none';
+        }
+
+        // Meeting request status (read-only; only SCO can schedule)
+        const meetingRequestSection = document.getElementById('meetingRequestSection');
+        const detailMeetingStatus = document.getElementById('detailMeetingStatus');
+        if (meetingRequestSection && detailMeetingStatus) {
+          if (row.dataset.meetingRequested === 'true') {
+            const meetingScheduledAt = row.dataset.meetingScheduledAt;
+            const meetingNotes = row.dataset.meetingNotes;
+            if (meetingScheduledAt) {
+              const when = new Date(meetingScheduledAt).toLocaleString();
+              detailMeetingStatus.innerHTML = `Scheduled for ${escapeHtml(when)}` + (meetingNotes ? ` — ${linkifyMeetingNotes(meetingNotes)}` : '');
+            } else {
+              detailMeetingStatus.innerText = 'Requested — SCO will reach out to confirm.';
+            }
+            meetingRequestSection.style.display = 'block';
+          } else {
+            meetingRequestSection.style.display = 'none';
+          }
         }
 
         // Populate links

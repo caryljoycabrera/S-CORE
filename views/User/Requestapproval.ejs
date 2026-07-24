@@ -302,6 +302,47 @@
   min-height: 120px;
 }
 
+/* Meeting Request Checkbox */
+.checkbox-container {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(145deg, #f8fdf9, #f0f9f1);
+  border: 2px solid #d1fae5;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.checkbox-container:hover {
+  background: linear-gradient(145deg, #f0f9f1, #e8f5e9);
+  border-color: #a7f3d0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.checkbox-container input[type="checkbox"] {
+  accent-color: var(--primary-green);
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  flex: 1;
+  font-weight: 500;
+  color: #065f46;
+}
+
+.checkbox-description {
+  margin-top: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
 /* Links Section Styles */
 #linksContainer {
   margin-bottom: 1rem;
@@ -2631,6 +2672,9 @@ option:hover {
     data-files="<%= request.files ? request.files.join(',') : '' %>"
     data-allowadditionalfileupload="<%= request.allowAdditionalFileUpload ? 'true' : 'false' %>"
     data-createdbyadmin="<%= request.createdByAdmin ? 'true' : 'false' %>"
+    data-meeting-requested="<%= request.meetingRequested ? 'true' : 'false' %>"
+    data-meeting-scheduled-at="<%= request.meetingScheduledAt ? new Date(request.meetingScheduledAt).toISOString() : '' %>"
+    data-meeting-notes="<%= request.meetingNotes || '' %>"
     title="<%= request.createdByAdmin ? 'Created for you by admin' : '' %>">
                   <td><%= request._id.toString().slice(-6) %></td>
                   <td><%= request.title %></td>
@@ -2803,6 +2847,20 @@ option:hover {
             <div id="descriptionEditor" style="background: white; min-height: 150px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
             <input type="hidden" id="description" name="description" required>
           </div>
+
+          <!-- Row 6: Meeting Request (Full Width) -->
+          <div class="form-group full-width">
+            <label class="checkbox-container">
+              <input type="checkbox" id="meetingRequested" name="meetingRequested">
+              <div class="checkbox-text">
+                Request a meeting with SCO for collaboration and conceptualization
+                <div class="checkbox-description">
+                  Checking this does not confirm a meeting — SCO will reach out to you to let you know if a meeting can be arranged.
+                </div>
+              </div>
+            </label>
+          </div>
+
           <!-- Form Actions -->
           <div class="form-actions">
             <button type="button" id="cancelModalBtn">Cancel</button>
@@ -2969,6 +3027,11 @@ option:hover {
                     <span id="detailDeadline"></span>
                   </span>
                 </div>
+              </div>
+
+              <div class="details-field" id="meetingRequestSection" style="display: none;">
+                <div class="details-label">Meeting Request</div>
+                <div class="details-value" id="detailMeetingStatus"></div>
               </div>
             </div>
           </div>
@@ -3959,6 +4022,13 @@ function getLinkValues() {
     return div.innerHTML;
   }
 
+  // Renders meeting-status text with any URLs turned into clickable links
+  function linkifyMeetingNotes(text) {
+    const escaped = escapeHtml(text);
+    return escaped.replace(/(https?:\/\/[^\s<]+)/g, url =>
+      `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;text-decoration:underline;word-break:break-all;">${url}</a>`);
+  }
+
   // Helper function to display formatted text (for revision history display)
   // opts.skipMarkdown: set true for content that is already sanitized, real HTML
   // (e.g. a requestor's Quill-produced resubmission) so literal */_ characters
@@ -4731,7 +4801,8 @@ async function submitFormData() {
       const formObj = {};
       const formElements = form.elements;
       for (let el of formElements) {
-        if (el.name) formObj[el.name] = el.value;
+        if (!el.name) continue;
+        formObj[el.name] = el.type === 'checkbox' ? el.checked : el.value;
       }
       formObj.links = getLinkValues();
 
@@ -4854,6 +4925,25 @@ document.querySelectorAll('.request-row').forEach(row => {
         detailStatus.innerText = status;
         detailStatusBadge.className = `status-badge-large ${status.toLowerCase().replace(/\s+/g, '-')}`;
 
+      }
+
+      // Meeting request status (read-only; only SCO can schedule)
+      const meetingRequestSection = document.getElementById('meetingRequestSection');
+      const detailMeetingStatus = document.getElementById('detailMeetingStatus');
+      if (meetingRequestSection && detailMeetingStatus) {
+        if (row.dataset.meetingRequested === 'true') {
+          const meetingScheduledAt = row.dataset.meetingScheduledAt;
+          const meetingNotes = row.dataset.meetingNotes;
+          if (meetingScheduledAt) {
+            const when = new Date(meetingScheduledAt).toLocaleString();
+            detailMeetingStatus.innerHTML = `Scheduled for ${escapeHtml(when)}` + (meetingNotes ? ` — ${linkifyMeetingNotes(meetingNotes)}` : '');
+          } else {
+            detailMeetingStatus.innerText = 'Requested — SCO will reach out to confirm.';
+          }
+          meetingRequestSection.style.display = 'block';
+        } else {
+          meetingRequestSection.style.display = 'none';
+        }
       }
 
       // Populate links

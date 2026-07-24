@@ -2256,6 +2256,9 @@
     data-file="<%= request.file ? request.file : '' %>"
     data-files="<%= request.files ? request.files.join(',') : '' %>"
     data-createdbyadmin="<%= request.createdByAdmin ? 'true' : 'false' %>"
+    data-meeting-requested="<%= request.meetingRequested ? 'true' : 'false' %>"
+    data-meeting-scheduled-at="<%= request.meetingScheduledAt ? new Date(request.meetingScheduledAt).toISOString() : '' %>"
+    data-meeting-notes="<%= request.meetingNotes || '' %>"
     title="<%= request.createdByAdmin ? 'Created for you by admin' : '' %>">
     <td><%= request._id.toString().slice(-6) %></td>
     <td>
@@ -2390,6 +2393,11 @@
                   <span id="detailDeadline"></span>
                 </span>
               </div>
+            </div>
+
+            <div class="details-field" id="meetingRequestSection" style="display: none;">
+              <div class="details-label">Meeting Request</div>
+              <div class="details-value" id="detailMeetingStatus"></div>
             </div>
           </div>
         </div>
@@ -3442,6 +3450,26 @@ document.querySelectorAll('.request-row').forEach(row => {
       deadlineSection.style.display = 'none';
     }
 
+    // Meeting request status (read-only; only SCO can schedule)
+    const meetingRequestSection = document.getElementById('meetingRequestSection');
+    const detailMeetingStatus = document.getElementById('detailMeetingStatus');
+    const meetingRequested = row.dataset.meetingRequested === 'true';
+    if (meetingRequestSection && detailMeetingStatus) {
+      if (meetingRequested) {
+        const meetingScheduledAt = row.dataset.meetingScheduledAt;
+        const meetingNotes = row.dataset.meetingNotes;
+        if (meetingScheduledAt) {
+          const when = new Date(meetingScheduledAt).toLocaleString();
+          detailMeetingStatus.innerHTML = `Scheduled for ${escapeHtml(when)}` + (meetingNotes ? ` — ${linkifyMeetingNotes(meetingNotes)}` : '');
+        } else {
+          detailMeetingStatus.innerText = 'Requested — SCO will reach out to confirm.';
+        }
+        meetingRequestSection.style.display = 'block';
+      } else {
+        meetingRequestSection.style.display = 'none';
+      }
+    }
+
     // Populate links
     const detailLinksSection = document.getElementById('detailsLinksSection');
     const detailLinks = document.getElementById('detailLinks');
@@ -4455,6 +4483,13 @@ window.sendTeamMessage = function() {
         alert('Error sending message');
     });
 };
+
+// Renders meeting-status text with any URLs turned into clickable links
+function linkifyMeetingNotes(text) {
+  const escaped = escapeHtml(text);
+  return escaped.replace(/(https?:\/\/[^\s<]+)/g, url =>
+    `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;text-decoration:underline;word-break:break-all;">${url}</a>`);
+}
 
 // Helper function to escape HTML
 function escapeHtml(unsafe) {

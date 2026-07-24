@@ -458,6 +458,34 @@ hr {
   flex: 1;
 }
 
+/* Clean label/value grid (matches Unit request-details layout) */
+.unit-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.unit-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.unit-info-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.unit-info-value {
+  font-size: 0.9375rem;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
+}
+
 /* Admin Controls Section - Separate from General Info */
 .admin-controls-section {
   background: #ffffff;

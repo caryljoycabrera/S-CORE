@@ -1866,4 +1866,63 @@ router.get('/api/request-types/approved', requireLogin, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/schedule-meeting
+ * Admin/unit sets (or updates) the meeting date/time for a request whose
+ * requestor checked "Request a meeting with SCO". Notifies the requestor.
+ */
+router.post('/api/schedule-meeting', requireLogin, async (req, res) => {
+  try {
+    if (req.session.role !== 'admin' && req.session.role !== 'unit') {
+      return res.status(403).json({ success: false, message: 'Only admins and unit members can schedule meetings' });
+    }
+
+    const { requestId, requestType, meetingScheduledAt, meetingNotes } = req.body;
+    if (!requestId || !requestType || !meetingScheduledAt) {
+      return res.status(400).json({ success: false, message: 'requestId, requestType, and meetingScheduledAt are required' });
+    }
+
+    const Model = requestType === 'approval' ? RequestApproval : ServiceRequest;
+    const request = await Model.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    const scheduledDate = new Date(meetingScheduledAt);
+    if (isNaN(scheduledDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'Invalid meeting date/time' });
+    }
+
+    request.meetingScheduledAt = scheduledDate;
+    request.meetingNotes = meetingNotes ? String(meetingNotes).trim() : null;
+    await request.save();
+
+    try {
+      const actionUrl = requestType === 'approval'
+        ? `/request-approvals?modal=true&requestId=${request._id}&type=approval`
+        : `/service-requests?modal=true&requestId=${request._id}&type=service`;
+      const notesSuffix = request.meetingNotes ? ` Notes: ${request.meetingNotes}` : '';
+      await notificationService.notifySystem(
+        request.userId,
+        'Meeting Scheduled',
+        `SCO has scheduled a meeting for your request "${request.title}" on ${scheduledDate.toLocaleString()}.${notesSuffix}`,
+        'high',
+        actionUrl
+      );
+    } catch (notifError) {
+      console.error('Error notifying requestor about scheduled meeting:', notifError);
+    }
+
+    res.json({
+      success: true,
+      message: 'Meeting scheduled successfully',
+      meetingScheduledAt: request.meetingScheduledAt,
+      meetingNotes: request.meetingNotes
+    });
+  } catch (error) {
+    console.error('Error scheduling meeting:', error);
+    res.status(500).json({ success: false, message: 'Failed to schedule meeting' });
+  }
+});
+
 module.exports = router;

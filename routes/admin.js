@@ -665,7 +665,7 @@ router.get('/admin/approvals', requireAdmin, async (req, res) => {
   try {
     let approvals = await RequestApproval.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt meetingRequested meetingScheduledAt meetingNotes')
       .lean();
 
     // Add display organization logic
@@ -798,7 +798,7 @@ router.get('/admin/services', requireAdmin, async (req, res) => {
   try {
     let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt meetingRequested meetingScheduledAt meetingNotes')
       .lean();
 
     // Status priority for sorting
@@ -880,7 +880,7 @@ router.get('/admin/services/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     let serviceRequests = await ServiceRequest.find({ isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
       .populate('userId')
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links allowAdditionalFileUpload createdByAdmin createdAt updatedAt meetingRequested meetingScheduledAt meetingNotes')
       .lean();
 
     // Status priority for sorting

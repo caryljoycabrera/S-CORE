@@ -167,6 +167,23 @@ const requestApprovalSchema = new mongoose.Schema({
     default: false
   },
 
+  // Requestor asked to meet with SCO for collaboration/conceptualization.
+  // Checking the box does not confirm a meeting — SCO reaches out and, if
+  // one is arranged, sets meetingScheduledAt/meetingNotes.
+  meetingRequested: {
+    type: Boolean,
+    default: false
+  },
+  meetingScheduledAt: {
+    type: Date,
+    default: null
+  },
+  meetingNotes: {
+    type: String,
+    trim: true,
+    default: null
+  },
+
   // Soft delete tracking (Archive/Trash functionality)
   isDeleted: {
     type: Boolean,

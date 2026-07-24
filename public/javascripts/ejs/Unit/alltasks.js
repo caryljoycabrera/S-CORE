@@ -3,6 +3,23 @@ let currentRequestId = null;
 let currentRequestType = null;
 let selectedFiles = [];
 
+// Converts an ISO timestamp (e.g. meetingScheduledAt) to the local
+// "YYYY-MM-DDTHH:mm" format a <input type="datetime-local"> expects.
+// Renders meeting-status text with any URLs turned into clickable links
+function linkifyMeetingNotes(text) {
+    const escaped = escapeHtml(text);
+    return escaped.replace(/(https?:\/\/[^\s<]+)/g, url =>
+        `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;text-decoration:underline;word-break:break-all;">${url}</a>`);
+}
+
+function isoToDateTimeLocal(isoString) {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '';
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function isRevisionStatus(status) {
     const normalized = (status || '').toLowerCase().trim();
     return normalized === 'for revision' || normalized === 'revision';
@@ -382,6 +399,11 @@ function initializeEventListeners() {
     const confirmRevokeBtn = document.getElementById('confirmRevokeBtn');
     if (confirmRevokeBtn) {
         confirmRevokeBtn.addEventListener('click', submitRevokeApproval);
+    }
+
+    const unitSaveMeetingBtn = document.getElementById('unitSaveMeetingBtn');
+    if (unitSaveMeetingBtn) {
+        unitSaveMeetingBtn.addEventListener('click', saveMeetingSchedule);
     }
 
     const cancelRevokeBtn = document.getElementById('cancelRevokeBtn');
@@ -1046,6 +1068,9 @@ function openRequestDetails(requestId, requestType) {
     const serviceType = row.getAttribute('data-service-type') || '';
     const specificRequestType = row.getAttribute('data-specific-request-type') || '';
     const linksJson = row.getAttribute('data-links') || '[]';
+    const meetingRequested = row.getAttribute('data-meeting-requested') === 'true';
+    const meetingScheduledAt = row.getAttribute('data-meeting-scheduled-at') || '';
+    const meetingNotes = row.getAttribute('data-meeting-notes') || '';
 
     // Populate modal with data
     document.getElementById('modalTitle').textContent = title;
@@ -1098,6 +1123,30 @@ function openRequestDetails(requestId, requestType) {
         } else {
             document.getElementById('modalServiceType').textContent = '—';
         }
+    }
+
+    // Meeting request info + scheduling control
+    const meetingRequestField = document.getElementById('meetingRequestField');
+    const meetingScheduleSection = document.getElementById('meetingScheduleSection');
+    const modalMeetingStatus = document.getElementById('modalMeetingStatus');
+    const unitMeetingDateInput = document.getElementById('unitMeetingDateInput');
+    const unitMeetingNotesInput = document.getElementById('unitMeetingNotesInput');
+
+    if (meetingRequestField) meetingRequestField.style.display = meetingRequested ? 'block' : 'none';
+    if (meetingScheduleSection) meetingScheduleSection.style.display = meetingRequested ? 'block' : 'none';
+    if (modalMeetingStatus) {
+        if (meetingScheduledAt) {
+            const when = new Date(meetingScheduledAt).toLocaleString();
+            modalMeetingStatus.innerHTML = `Scheduled for ${escapeHtml(when)}` + (meetingNotes ? ` — ${linkifyMeetingNotes(meetingNotes)}` : '');
+        } else {
+            modalMeetingStatus.textContent = 'Requested — not yet scheduled';
+        }
+    }
+    if (unitMeetingDateInput) {
+        unitMeetingDateInput.value = meetingScheduledAt ? isoToDateTimeLocal(meetingScheduledAt) : '';
+    }
+    if (unitMeetingNotesInput) {
+        unitMeetingNotesInput.value = meetingNotes || '';
     }
 
     // Show links if they exist
@@ -1165,7 +1214,7 @@ function openRequestDetails(requestId, requestType) {
         }
         
         // Hide admin form section (Unit Actions) for service requests
-        const adminFormSection = document.querySelector('.admin-form-section');
+        const adminFormSection = document.getElementById('approvalActionsFormSection');
         if (adminFormSection) adminFormSection.style.display = 'none';
 
         // Hide approve button for service requests
@@ -1201,7 +1250,7 @@ function openRequestDetails(requestId, requestType) {
         if (serviceTopActions) serviceTopActions.style.display = 'none';
 
         // Show admin form section (Unit Actions) for approval requests
-        const adminFormSection = document.querySelector('.admin-form-section');
+        const adminFormSection = document.getElementById('approvalActionsFormSection');
         if (adminFormSection) adminFormSection.style.display = 'block';
 
         const adminApproveBtn = document.getElementById('adminApproveBtn');
@@ -1241,7 +1290,7 @@ function openRequestDetails(requestId, requestType) {
 
     // Handle approved status - for approval requests, "Approved" is the final state
     if (status.toLowerCase() === 'approved' && requestType === 'approval') {
-        const adminFormSection = document.querySelector('.admin-form-section');
+        const adminFormSection = document.getElementById('approvalActionsFormSection');
         if (adminFormSection) {
             // Hide the approve/revision buttons since request is already approved;
             // show the Approved indicator with the Revoke Approval action instead.
@@ -1254,7 +1303,7 @@ function openRequestDetails(requestId, requestType) {
         if (approvalStatusIndicator) approvalStatusIndicator.style.display = 'block';
     } else if (status.toLowerCase() === 'completed') {
         // Hide all action panels when already completed (for service requests)
-        const adminFormSection = document.querySelector('.admin-form-section');
+        const adminFormSection = document.getElementById('approvalActionsFormSection');
         if (adminFormSection) {
             adminFormSection.style.display = 'none';
         }
@@ -2570,7 +2619,7 @@ async function completeApproval() {
             }
             
             // Hide all action buttons and sections since Approved is the final state
-            const adminFormSection = document.querySelector('.admin-form-section');
+            const adminFormSection = document.getElementById('approvalActionsFormSection');
             if (adminFormSection) {
                 adminFormSection.style.display = 'none';
             }
@@ -2741,6 +2790,58 @@ async function submitRevokeApproval() {
     } catch (error) {
         console.error('Error revoking approval:', error);
         showErrorMessage('An error occurred while revoking the approval');
+    }
+}
+
+// Function: saveMeetingSchedule
+// Saves the meeting date/time and notes for the currently open request
+async function saveMeetingSchedule() {
+    if (!currentRequestId) {
+        showErrorMessage('No request selected');
+        return;
+    }
+
+    const dateInput = document.getElementById('unitMeetingDateInput');
+    const notesInput = document.getElementById('unitMeetingNotesInput');
+    const meetingScheduledAt = dateInput ? dateInput.value : '';
+
+    if (!meetingScheduledAt) {
+        showErrorMessage('Please choose a meeting date and time.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/schedule-meeting', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                requestId: currentRequestId,
+                requestType: currentRequestType,
+                meetingScheduledAt,
+                meetingNotes: notesInput ? notesInput.value.trim() : ''
+            })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            showSuccessMessage('Meeting scheduled and requestor notified.');
+
+            const modalMeetingStatus = document.getElementById('modalMeetingStatus');
+            const when = new Date(result.meetingScheduledAt).toLocaleString();
+            const summary = `Scheduled for ${escapeHtml(when)}` + (result.meetingNotes ? ` — ${linkifyMeetingNotes(result.meetingNotes)}` : '');
+            if (modalMeetingStatus) modalMeetingStatus.innerHTML = summary;
+
+            const row = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);
+            if (row) {
+                row.setAttribute('data-meeting-scheduled-at', result.meetingScheduledAt);
+                row.setAttribute('data-meeting-notes', result.meetingNotes || '');
+            }
+        } else {
+            showErrorMessage(result.message || 'Failed to schedule meeting');
+        }
+    } catch (error) {
+        console.error('Error scheduling meeting:', error);
+        showErrorMessage('An error occurred while scheduling the meeting');
     }
 }
 
@@ -2983,7 +3084,7 @@ async function rejectService() {
                 modalStatus.textContent = 'REJECTED';
                 modalStatus.className = 'status-badge rejected';
             }
-            const adminFormSection = document.querySelector('.admin-form-section');
+            const adminFormSection = document.getElementById('approvalActionsFormSection');
             if (adminFormSection) adminFormSection.style.display = 'none';
 
             const tableRow = document.querySelector(`tr[data-request-id="${currentRequestId}"]`);

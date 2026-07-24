@@ -390,7 +390,7 @@ router.get('/service-requests', async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     let serviceRequests = await ServiceRequest.find({ userId: user._id, isDeleted: { $ne: true }, status: { $nin: ['Archived', 'ARCHIVED', 'archived'] } })
-      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links createdByAdmin createdAt updatedAt')
+      .select('title organization description specificRequestType datetime deadline userId status assignedUnits files file links createdByAdmin createdAt updatedAt meetingRequested meetingScheduledAt meetingNotes')
       .lean();
 
     // Status priority for sorting services
@@ -970,7 +970,7 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const { projectTitle, organization, description, specificRequestType, links, requestForUserId, assignedUnits: requestedUnit } = req.body;
+  const { projectTitle, organization, description, specificRequestType, links, requestForUserId, assignedUnits: requestedUnit, meetingRequested } = req.body;
 
   console.log('Organization received:', organization);
   console.log('Specific Request Type received:', specificRequestType);
@@ -1058,7 +1058,8 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
       assignedUnits: assignedUnits,
       originalAssignedUnits: chosenUnit, // Store original assignment
       createdByAdmin: isAdmin ? true : false,
-      createdBy: isAdmin ? req.session.userId : null
+      createdBy: isAdmin ? req.session.userId : null,
+      meetingRequested: meetingRequested === true || meetingRequested === 'true' || meetingRequested === 'on'
     });
 
     await newRequest.save();
@@ -1131,7 +1132,7 @@ router.post('/submit-request-approval', requestLimiter, async (req, res) => {
 router.post('/submit-service-request', requestLimiter, async (req, res) => {
   if (!req.session.userId) return res.status(401).send('Unauthorized');
 
-  const { projectTitle, organization, description, deadline, specificRequestType, isCustomType, links, requestForUserId, assignedUnits: requestedUnit } = req.body;
+  const { projectTitle, organization, description, deadline, specificRequestType, isCustomType, links, requestForUserId, assignedUnits: requestedUnit, meetingRequested } = req.body;
 
   console.log('Organization received:', organization);
   console.log('Specific Request Type received:', specificRequestType);
@@ -1197,7 +1198,8 @@ router.post('/submit-service-request', requestLimiter, async (req, res) => {
       assignedUnits: assignedUnits,
       originalAssignedUnits: chosenUnit, // Store original assignment
       createdByAdmin: isAdmin ? true : false,
-      createdBy: isAdmin ? req.session.userId : null
+      createdBy: isAdmin ? req.session.userId : null,
+      meetingRequested: meetingRequested === true || meetingRequested === 'true' || meetingRequested === 'on'
     });
 
     await newRequest.save();

@@ -442,7 +442,10 @@ function openModalFromRow(row) {
     formattedDeadline: row.dataset.formattedDeadline,
     student: row.dataset.student,
     specifictype: row.dataset.specifictype,
-    adminCreated: row.dataset.adminCreated
+    adminCreated: row.dataset.adminCreated,
+    meetingRequested: row.dataset.meetingRequested === 'true',
+    meetingScheduledAt: row.dataset.meetingScheduledAt || '',
+    meetingNotes: row.dataset.meetingNotes || ''
   };
 
   openModal(rowData);
@@ -1185,6 +1188,21 @@ function populateModalData(rowData) {
 
   setDetailText('detailDeadlineInfo', rowData.formattedDeadline);
 
+  // Meeting request info (read-only summary)
+  const meetingRequestInfo = document.getElementById('meetingRequestInfo');
+  if (meetingRequestInfo) {
+    meetingRequestInfo.style.display = rowData.meetingRequested ? 'block' : 'none';
+  }
+  const detailMeetingStatus = document.getElementById('detailMeetingStatus');
+  if (detailMeetingStatus) {
+    if (rowData.meetingScheduledAt) {
+      const when = new Date(rowData.meetingScheduledAt).toLocaleString();
+      detailMeetingStatus.innerHTML = `Scheduled for ${escapeHtml(when)}` + (rowData.meetingNotes ? ` — ${linkifyMeetingNotes(rowData.meetingNotes)}` : '');
+    } else {
+      detailMeetingStatus.textContent = 'Requested — not yet scheduled';
+    }
+  }
+
   populateAdminForm(rowData);
   // Clear file-preview (legacy); links shown in detailsLinksSection below
   const filePreviewEl = document.getElementById('file-preview');
@@ -1286,7 +1304,90 @@ function populateAdminForm(rowData) {
     currentDeadlineValueEl.textContent =
       rowData.formattedDeadlineDisplay || rowData.formattedDeadline || 'N/A';
   }
+
+  // Meeting scheduling (only relevant when the requestor asked for a meeting)
+  const adminMeetingField = document.getElementById('adminMeetingField');
+  const meetingDateInput = document.getElementById('adminMeetingDateInput');
+  const meetingNotesInput = document.getElementById('adminMeetingNotesInput');
+  const currentMeetingValueEl = document.getElementById('currentMeetingValue');
+  if (adminMeetingField) {
+    adminMeetingField.style.display = rowData.meetingRequested ? 'block' : 'none';
+  }
+  if (meetingDateInput) {
+    meetingDateInput.value = rowData.meetingScheduledAt ? isoToDateTimeLocal(rowData.meetingScheduledAt) : '';
+  }
+  if (meetingNotesInput) {
+    meetingNotesInput.value = rowData.meetingNotes || '';
+  }
+  if (currentMeetingValueEl) {
+    currentMeetingValueEl.innerHTML = rowData.meetingScheduledAt
+      ? escapeHtml(new Date(rowData.meetingScheduledAt).toLocaleString()) + (rowData.meetingNotes ? ` — ${linkifyMeetingNotes(rowData.meetingNotes)}` : '')
+      : 'Not scheduled';
+  }
 }
+
+// Renders meeting-status text with any URLs turned into clickable links
+function linkifyMeetingNotes(text) {
+  const escaped = escapeHtml(text);
+  return escaped.replace(/(https?:\/\/[^\s<]+)/g, url =>
+    `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#0891b2;text-decoration:underline;word-break:break-all;">${url}</a>`);
+}
+
+// Save the meeting date/notes for the currently open request
+async function saveMeetingSchedule() {
+  const meetingDateInput = document.getElementById('adminMeetingDateInput');
+  const meetingNotesInput = document.getElementById('adminMeetingNotesInput');
+  const meetingScheduledAt = meetingDateInput ? meetingDateInput.value : '';
+
+  if (!meetingScheduledAt) {
+    if (typeof window.showAlert === 'function') window.showAlert('Please choose a meeting date and time.', 'error');
+    return;
+  }
+
+  const requestType = currentRequestType === 'Request Approval' ? 'approval' : 'service';
+
+  try {
+    const response = await fetch('/api/schedule-meeting', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requestId: currentRequestId,
+        requestType,
+        meetingScheduledAt,
+        meetingNotes: meetingNotesInput ? meetingNotesInput.value.trim() : ''
+      })
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      if (typeof window.showAlert === 'function') window.showAlert('Meeting scheduled and requestor notified.', 'success');
+      const currentMeetingValueEl = document.getElementById('currentMeetingValue');
+      const detailMeetingStatus = document.getElementById('detailMeetingStatus');
+      const when = new Date(result.meetingScheduledAt).toLocaleString();
+      const summary = escapeHtml(when) + (result.meetingNotes ? ` — ${linkifyMeetingNotes(result.meetingNotes)}` : '');
+      if (currentMeetingValueEl) currentMeetingValueEl.innerHTML = summary;
+      if (detailMeetingStatus) detailMeetingStatus.innerHTML = `Scheduled for ${summary}`;
+
+      const row = document.querySelector(`tr[data-id="${currentRequestId}"]`);
+      if (row) {
+        row.dataset.meetingScheduledAt = result.meetingScheduledAt;
+        row.dataset.meetingNotes = result.meetingNotes || '';
+      }
+    } else {
+      if (typeof window.showAlert === 'function') window.showAlert(result.message || 'Failed to schedule meeting.', 'error');
+    }
+  } catch (error) {
+    console.error('Error scheduling meeting:', error);
+    if (typeof window.showAlert === 'function') window.showAlert('An error occurred while scheduling the meeting.', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const adminSaveMeetingBtn = document.getElementById('adminSaveMeetingBtn');
+  if (adminSaveMeetingBtn) {
+    adminSaveMeetingBtn.addEventListener('click', saveMeetingSchedule);
+  }
+});
 
 function getStatusOptions(type) {
   const baseStatuses = ['Approved', 'Rejected', 'Archived'];
@@ -1349,6 +1450,16 @@ function populateUnitsDropdown(rowData) {
 
   // Also set the value programmatically as backup
   unitsSelect.value = currentUnitsValue;
+}
+
+// Converts an ISO timestamp (e.g. meetingScheduledAt) to the local
+// "YYYY-MM-DDTHH:mm" format a <input type="datetime-local"> expects.
+function isoToDateTimeLocal(isoString) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatDateForInput(dateStr) {
