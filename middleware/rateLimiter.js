@@ -13,6 +13,9 @@ const apiLimiter = rateLimit({
   message: { success: false, message: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  // Some requests (bots/scanners that disconnect immediately) arrive with no
+  // resolvable IP even with trust proxy configured correctly; don't crash on those.
+  validate: { ip: false },
   skip: (req) => {
     // Skip rate limiting for admin users
     return req.user && req.user.role === 'admin';
@@ -30,6 +33,7 @@ const authLimiter = rateLimit({
   message: { success: false, message: 'Too many login attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { ip: false },
   skipSuccessfulRequests: true // Don't count successful requests
 });
 
@@ -45,7 +49,7 @@ const strictLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     // Use user ID instead of IP if authenticated
-    return req.user ? req.user._id.toString() : req.ip;
+    return req.user ? req.user._id.toString() : (req.ip || 'unknown');
   }
 });
 
@@ -61,7 +65,7 @@ const messageLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     // Rate limit by user ID
-    return req.user ? req.user._id.toString() : req.ip;
+    return req.user ? req.user._id.toString() : (req.ip || 'unknown');
   },
   skip: (req) => {
     // Skip for admins
@@ -80,7 +84,7 @@ const uploadLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    return req.user ? req.user._id.toString() : req.ip;
+    return req.user ? req.user._id.toString() : (req.ip || 'unknown');
   }
 });
 
@@ -95,7 +99,7 @@ const requestLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    return req.user ? req.user._id.toString() : req.ip;
+    return req.user ? req.user._id.toString() : (req.ip || 'unknown');
   }
 });
 
@@ -110,7 +114,7 @@ const emailLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    return req.user ? req.user._id.toString() : req.ip;
+    return req.user ? req.user._id.toString() : (req.ip || 'unknown');
   },
   skip: (req) => {
     // Skip for admins

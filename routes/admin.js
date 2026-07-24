@@ -1811,7 +1811,7 @@ router.post('/admin/all-requests/update-status', requireAdmin, async (req, res) 
 
     // Send appropriate notifications based on status and request type
     try {
-      const statusLower = status?.toLowerCase();
+      const statusLower = (status || '').toLowerCase();
       
       if (requestType === 'Request Approval') {
         // Populate userId if it's not already populated
@@ -2006,7 +2006,7 @@ router.post('/admin/approval/update-status', requireAdmin, async (req, res) => {
       const User = require('../models/User');
       
       if (result && result.userId) {
-        const statusLower = status?.toLowerCase();
+        const statusLower = (status || '').toLowerCase();
         
         if (statusLower === 'approved') {
           await notificationService.notifyApprovalApproved(requestId, result.userId._id, req.user._id);
@@ -2182,7 +2182,7 @@ router.post('/admin/service/update-status', requireAdmin, async (req, res) => {
       const User = require('../models/User');
       
       if (result && result.userId) {
-        const statusLower = status?.toLowerCase();
+        const statusLower = (status || '').toLowerCase();
         
         if (statusLower === 'approved') {
           await notificationService.notifyServiceApproved(requestId, result.userId._id, req.user._id, assignedUnits);
